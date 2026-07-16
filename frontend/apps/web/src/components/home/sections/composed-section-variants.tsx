@@ -671,17 +671,17 @@ export function ProgrammeFinderSection({
         sizes="100vw"
       />
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(255,255,255,.94),rgba(239,246,255,.88)_48%,rgba(255,255,255,.96))]" />
-      <div className="programme-scroll-scene mx-auto max-w-[1680px] px-4 sm:px-6 lg:min-h-[280vh] lg:px-8 xl:px-10 2xl:px-12">
+      <div className="programme-scroll-scene mx-auto max-w-[1680px] px-4 sm:px-6 lg:min-h-[190vh] lg:px-8 xl:px-10 2xl:px-12">
         <nav
           aria-label="Programme finder steps"
           className="mb-6 flex gap-2 overflow-x-auto scroll-smooth lg:sticky lg:top-[calc(var(--public-header-offset,96px)+1rem)] lg:z-40"
         >
           {[
             ["Find programme", "#programme-search"],
-            ["How to join", "#programme-journey"],
-            ...(hasAdmissionDates
-              ? ([["Admissions dates", "#programme-dates"]] as const)
-              : []),
+            [
+              hasAdmissionDates ? "How to join & key dates" : "How to join",
+              "#programme-journey",
+            ],
           ].map(([label, href]) => (
             <a
               key={href}
@@ -732,102 +732,122 @@ export function ProgrammeFinderSection({
           id="programme-journey"
           className="programme-panel relative z-20 mt-6 scroll-mt-28 lg:sticky lg:top-[calc(var(--public-header-offset,96px)+4.5rem)] lg:mt-0 lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px)-4.5rem)] lg:w-screen lg:ml-[calc(50%-50vw)] lg:items-center lg:bg-accent lg:px-8 lg:py-10 xl:px-10 2xl:px-12 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:delay-150"
         >
-          <div className="mx-auto grid w-full max-w-[1680px] overflow-hidden bg-white shadow-xl shadow-primary/10 transition duration-500 lg:grid-cols-[0.6fr_0.4fr] lg:shadow-2xl lg:shadow-primary/14">
-            <div className="flex flex-col justify-center p-5 sm:p-7 lg:p-8">
-              <SectionEyebrow value="How to join Kisii University" />
-              <h3 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground">
-                From choice to campus reporting.
-              </h3>
-              <div className="mt-7 grid gap-3 sm:grid-cols-5 lg:grid-cols-1">
+          <div
+            className={`mx-auto grid w-full max-w-[1680px] overflow-hidden bg-white shadow-xl shadow-primary/10 transition duration-500 lg:shadow-2xl lg:shadow-primary/14 ${
+              hasAdmissionDates
+                ? "lg:grid-cols-[minmax(0,1.65fr)_minmax(340px,0.85fr)]"
+                : ""
+            }`}
+          >
+            <div className="flex flex-col justify-center p-5 sm:p-7 lg:p-8 xl:p-10">
+              <SectionEyebrow value="Your journey to Kisii University" />
+              <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h3 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground lg:text-4xl">
+                    Five clear steps. One destination.
+                  </h3>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                    Move from choosing a programme to joining the KSU community.
+                  </p>
+                </div>
+                <LinkWrapper
+                  href="/admissions/how-to-apply"
+                  className="inline-flex min-h-10 w-fit shrink-0 items-center justify-center gap-2 text-sm font-bold text-primary transition hover:text-secondary"
+                >
+                  Application guide
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </LinkWrapper>
+              </div>
+
+              <div className="relative mt-8 grid gap-1 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
+                <span
+                  className="absolute left-[10%] right-[10%] top-5 hidden h-px bg-border lg:block"
+                  aria-hidden
+                />
                 {journey.slice(0, 5).map((item, index) => (
                   <div
                     key={item.id}
-                    className="group flex gap-4 border-l-2 border-border py-2 pl-4 transition hover:border-primary sm:block sm:border-l-0 sm:border-t-2 sm:pl-0 sm:pt-4 lg:flex lg:border-l-2 lg:border-t-0 lg:py-2 lg:pl-4 lg:pt-2"
+                    className="group relative flex gap-4 border-b border-border py-4 last:border-b-0 sm:border-b-0 sm:px-2 lg:block lg:px-3 lg:py-0 lg:text-center"
                   >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-white transition group-hover:bg-secondary">
+                    <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-white ring-8 ring-white transition group-hover:bg-secondary lg:mx-auto">
                       {itemContentNumber(item, "step") ?? index + 1}
                     </span>
-                    <div className="min-w-0 sm:mt-3 lg:mt-0">
-                      <h4 className="text-sm font-semibold text-foreground">
+                    <div className="min-w-0 lg:mt-4">
+                      <h4 className="text-sm font-bold text-foreground">
                         {item.title}
                       </h4>
-                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      <p className="mt-1 line-clamp-3 text-xs leading-5 text-muted-foreground">
                         {item.body_text}
                       </p>
                     </div>
                   </div>
                 ))}
               </div>
-              <LinkWrapper
-                href="/admissions/how-to-apply"
-                className="mt-7 inline-flex min-h-11 w-fit items-center justify-center gap-2 bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90"
-              >
-                View application guide
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </LinkWrapper>
             </div>
-            <PublicImage
-              src="/images/Home/um-hero.jpg"
-              alt="Kisii University administration building"
-              ratio="news"
-              className="hidden min-h-[360px] rounded-none lg:block"
-              imageClassName="object-cover"
-            />
-          </div>
-        </div>
 
-        {hasAdmissionDates ? (
-          <div
-            id="programme-dates"
-            className="programme-panel relative z-30 mt-6 scroll-mt-28 lg:sticky lg:top-[calc(var(--public-header-offset,96px)+4.5rem)] lg:mt-0 lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px)-4.5rem)] lg:w-screen lg:ml-[calc(50%-50vw)] lg:items-center lg:bg-primary lg:px-8 lg:py-10 xl:px-10 2xl:px-12 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:delay-300"
-          >
-            <div className="mx-auto grid w-full max-w-[1680px] overflow-hidden bg-primary text-white shadow-xl shadow-primary/15 transition duration-500 lg:grid-cols-[0.42fr_0.58fr] lg:shadow-2xl lg:shadow-primary/20">
-              <PublicImage
-                src="/images/Home/KSUGreenLandscaping.jpg"
-                alt="Kisii University green campus"
-                ratio="news"
-                className="hidden min-h-[320px] rounded-none lg:block"
-                imageClassName="object-cover"
-              />
-              <div className="p-5 sm:p-7 lg:p-8">
+            {hasAdmissionDates ? (
+              <aside className="relative overflow-hidden bg-primary p-5 text-white sm:p-7 lg:flex lg:flex-col lg:justify-center lg:p-8">
+                <div className="absolute inset-x-0 top-0 h-1 bg-secondary" />
                 <SectionEyebrow
                   value={
                     academicDatesSection?.subtitle ?? "Admissions and reporting"
                   }
                   light
                 />
-                <h3 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white">
-                  Key admission dates
-                </h3>
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  {intakes.slice(0, 2).map((intake) => (
-                    <LinkWrapper
-                      key={intake.id}
-                      href={intake.href}
-                      className="border border-white/15 bg-white/10 p-4 transition hover:bg-white/15"
-                    >
-                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
-                        {intake.isOpen ? "Open intake" : "Intake"}
-                      </p>
-                      <h4 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold text-white">
-                        {intake.name}
-                      </h4>
-                      <p className="mt-2 text-sm leading-6 text-white/72">
-                        {formatDateRange(
-                          intake.applicationStart,
-                          intake.applicationEnd ?? intake.lateApplicationEnd,
-                        )}
-                      </p>
-                    </LinkWrapper>
-                  ))}
-                  {dateItems.map((item, index) => (
-                    <DateMiniItem key={item.id} item={item} index={index} />
-                  ))}
+                <div className="mt-2 flex items-center justify-between gap-4">
+                  <h3 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white">
+                    Key dates
+                  </h3>
+                  <CalendarDays
+                    className="h-7 w-7 text-secondary"
+                    aria-hidden
+                  />
                 </div>
-              </div>
-            </div>
+
+                {intakes.slice(0, 1).map((intake) => (
+                  <LinkWrapper
+                    key={intake.id}
+                    href={intake.href}
+                    className="mt-5 block border-y border-white/20 py-4 transition hover:border-secondary/70"
+                  >
+                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-secondary">
+                      {intake.isOpen ? "Open intake" : "Intake"}
+                    </p>
+                    <h4 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-white">
+                      {intake.name}
+                    </h4>
+                    <p className="mt-1 text-sm leading-6 text-white/72">
+                      {formatDateRange(
+                        intake.applicationStart,
+                        intake.applicationEnd ?? intake.lateApplicationEnd,
+                      )}
+                    </p>
+                  </LinkWrapper>
+                ))}
+
+                <div className="mt-2 divide-y divide-white/15">
+                  {dateItems
+                    .slice(0, intakes.length ? 3 : 4)
+                    .map((item, index) => (
+                      <AdmissionDateLine
+                        key={item.id}
+                        item={item}
+                        index={index}
+                      />
+                    ))}
+                </div>
+
+                <LinkWrapper
+                  href="/admissions"
+                  className="mt-5 inline-flex min-h-10 w-fit items-center justify-center gap-2 bg-secondary px-4 text-sm font-bold text-white transition hover:bg-secondary/90"
+                >
+                  Explore admissions
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </LinkWrapper>
+              </aside>
+            ) : null}
           </div>
-        ) : null}
+        </div>
       </div>
     </section>
   );
@@ -1422,7 +1442,9 @@ export function NewsGridSection({
   socialLinks,
 }: SectionVariantProps) {
   const items = displayItems(section).slice(0, 4);
-  const eventItems = eventsSection ? displayItems(eventsSection).slice(0, 3) : [];
+  const eventItems = eventsSection
+    ? displayItems(eventsSection).slice(0, 3)
+    : [];
   const [featured, ...rest] = items;
   return (
     <section
@@ -1432,7 +1454,9 @@ export function NewsGridSection({
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mb-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
           <div>
-            <SectionEyebrow value={section.subtitle ?? "Kisii University Updates"} />
+            <SectionEyebrow
+              value={section.subtitle ?? "Kisii University Updates"}
+            />
             <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-bold leading-[0.95] text-primary sm:text-5xl lg:text-6xl">
               {section.title ?? "Stories, News & Events"}
             </h2>
@@ -1773,7 +1797,9 @@ function ComposedEventAgendaItem({
         <span className="block font-[family-name:var(--font-display)] text-3xl font-bold leading-none">
           {dateParts.day}
         </span>
-        <span className="block text-xs font-bold uppercase">{dateParts.weekday}</span>
+        <span className="block text-xs font-bold uppercase">
+          {dateParts.weekday}
+        </span>
       </div>
       <div className="min-w-0">
         <h3 className="font-[family-name:var(--font-display)] text-xl font-bold leading-tight text-secondary">
@@ -1931,15 +1957,27 @@ function partnerDisplayItems(section: HomepageSection): PartnerDisplayItem[] {
       const partner = item.content_enriched?.research_partner;
       const partnerName = partner?.acronym ?? partner?.name ?? null;
       const logoUrl =
-        partner?.logo_url ?? itemContentText(item, "logoUrl") ?? itemImageUrl(item) ?? undefined;
-      const name = itemContentText(item, "label") ?? partnerName ?? item.title ?? "Partner";
+        partner?.logo_url ??
+        itemContentText(item, "logoUrl") ??
+        itemImageUrl(item) ??
+        undefined;
+      const name =
+        itemContentText(item, "label") ??
+        partnerName ??
+        item.title ??
+        "Partner";
 
       return {
         id: item.id,
         name,
-        href: item.cta_url ?? partner?.website ?? itemContentText(item, "url") ?? undefined,
+        href:
+          item.cta_url ??
+          partner?.website ??
+          itemContentText(item, "url") ??
+          undefined,
         logoUrl,
-        logoAlt: item.media_alt_text ?? partner?.name ?? item.title ?? "Partner logo",
+        logoAlt:
+          item.media_alt_text ?? partner?.name ?? item.title ?? "Partner logo",
       };
     });
 }
@@ -2245,7 +2283,7 @@ function DateLineItem({
   );
 }
 
-function DateMiniItem({
+function AdmissionDateLine({
   item,
   index,
 }: {
@@ -2253,16 +2291,18 @@ function DateMiniItem({
   index: number;
 }) {
   const body = (
-    <article className="group border border-white/15 bg-white/10 p-4 transition hover:bg-white/15">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
-        {itemContentText(item, "date") ?? item.subtitle ?? `Date ${index + 1}`}
-      </p>
-      <h4 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold text-white">
-        {item.title}
-      </h4>
-      <p className="mt-2 text-sm leading-6 text-white/72">
-        {item.body_text ?? item.cta_description}
-      </p>
+    <article className="group grid grid-cols-[auto_minmax(0,1fr)] gap-3 py-3 transition">
+      <span className="pt-0.5 font-[family-name:var(--font-display)] text-sm font-semibold text-secondary">
+        {String(index + 1).padStart(2, "0")}
+      </span>
+      <div className="min-w-0">
+        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/60">
+          {itemContentText(item, "date") ?? item.subtitle ?? "Important date"}
+        </p>
+        <h4 className="mt-1 text-sm font-semibold leading-5 text-white transition group-hover:text-secondary">
+          {item.title}
+        </h4>
+      </div>
     </article>
   );
 
@@ -2336,7 +2376,9 @@ function FeaturedActivity({ item }: { item: HomepageSectionItem }) {
           <p className="text-xs font-bold uppercase tracking-[0.15em] text-primary">
             {typeLabel}
             {date ? (
-              <span className="ml-4 font-medium text-muted-foreground">{date}</span>
+              <span className="ml-4 font-medium text-muted-foreground">
+                {date}
+              </span>
             ) : null}
           </p>
           <h4 className="mt-1.5 line-clamp-2 max-w-4xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground transition group-hover:text-primary lg:text-[1.45rem] xl:text-2xl">
@@ -2701,7 +2743,7 @@ function composedEventDateParts(item: HomepageSectionItem, index: number) {
       day: String(index + 1).padStart(2, "0"),
       weekday: "",
       time: rawDate
-        ? formatPublicDate(rawDate) ?? rawDate
+        ? (formatPublicDate(rawDate) ?? rawDate)
         : "Time to be confirmed",
       location,
     };

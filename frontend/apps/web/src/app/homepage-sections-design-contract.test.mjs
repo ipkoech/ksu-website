@@ -46,12 +46,12 @@ test("programme finder receives dynamic academic data and admissions dates", () 
   assert.match(variantsSource, /intakes/);
 });
 
-test("programme finder uses desktop sticky stacked scroll panels", () => {
+test("programme finder uses two desktop sticky scroll chapters", () => {
   assert.match(variantsSource, /programme-scroll-scene/);
   assert.match(variantsSource, /programme-panel/);
   assert.match(variantsSource, /lg:sticky/);
   assert.match(variantsSource, /lg:top-\[calc\(var\(--public-header-offset/);
-  assert.match(variantsSource, /lg:min-h-\[280vh\]/);
+  assert.match(variantsSource, /lg:min-h-\[190vh\]/);
   assert.match(
     variantsSource,
     /lg:min-h-\[calc\(100svh-var\(--public-header-offset/,
@@ -62,10 +62,9 @@ test("programme finder uses desktop sticky stacked scroll panels", () => {
     variantsSource,
     /programme-journey"[\s\S]*?lg:top-\[calc\(var\(--public-header-offset,96px\)\+5\.5rem\)/,
   );
-  assert.doesNotMatch(
-    variantsSource,
-    /programme-dates"[\s\S]*?lg:top-\[calc\(var\(--public-header-offset,96px\)\+6\.5rem\)/,
-  );
+  assert.doesNotMatch(variantsSource, /id="programme-dates"/);
+  assert.match(variantsSource, /How to join & key dates/);
+  assert.match(variantsSource, /AdmissionDateLine/);
 });
 
 test("leadership, partner, alumni, and facts sections have complete fallbacks", () => {
