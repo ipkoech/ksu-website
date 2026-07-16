@@ -27,6 +27,7 @@ import {
   Settings,
   ShieldCheck,
   Sprout,
+  Target,
   Trophy,
   UserCheck,
   Users,
@@ -6975,6 +6976,18 @@ export const portalConfigs: Record<string, PortalConfig> = {
             title: "Numbers & Facts",
             href: "/corporate-communication/page-cms/numbers-facts",
             icon: BarChart3,
+            scope: ["about.manage", "admin:*"],
+          },
+          {
+            title: "University Service Charter",
+            href: "/corporate-communication/page-cms/service-charter",
+            icon: FileText,
+            scope: ["about.manage", "admin:*"],
+          },
+          {
+            title: "Strategic Plan",
+            href: "/corporate-communication/page-cms/strategic-plan",
+            icon: Target,
             scope: ["about.manage", "admin:*"],
           },
           {

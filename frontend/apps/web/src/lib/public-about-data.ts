@@ -46,6 +46,67 @@ export type PublicHistoryMilestone = {
   display_order?: number | null;
 };
 
+export type PublicDocument = {
+  id?: string | null;
+  title?: string | null;
+  slug?: string | null;
+  description?: string | null;
+  public_label?: string | null;
+  is_featured?: boolean;
+  file?: PublicMedia;
+} | null;
+
+export type PublicInstitutionalItem = {
+  id: string;
+  title: string;
+  description?: string | null;
+  supporting_label?: string | null;
+  supporting_value?: string | null;
+  icon_key?: string | null;
+  image?: PublicMedia;
+  image_alt_text?: string | null;
+  link_label?: string | null;
+  link_url?: string | null;
+  display_order?: number;
+};
+
+export type PublicInstitutionalSection = {
+  id: string;
+  slug: string;
+  section_type: "narrative" | "commitments" | "process" | "priorities" | "outcomes" | "quote" | "document_collection" | "related_links" | "governance_links" | "institutional_profile";
+  eyebrow?: string | null;
+  heading: string;
+  summary?: string | null;
+  body?: string | null;
+  layout_variant?: string | null;
+  theme?: "light" | "ivory" | "blue" | "green" | null;
+  primary_media?: PublicMedia;
+  media_alt_text?: string | null;
+  video_url?: string | null;
+  display_order?: number;
+  items: PublicInstitutionalItem[];
+  documents: Array<NonNullable<PublicDocument>>;
+};
+
+export type PublicInstitutionalPage = {
+  id: string;
+  page_type: "about" | "service_charter" | "strategic_plan";
+  slug: string;
+  eyebrow?: string | null;
+  title: string;
+  introduction: string;
+  hero_media?: PublicMedia;
+  mobile_hero_media?: PublicMedia;
+  hero_alt_text?: string | null;
+  primary_document?: PublicDocument;
+  reporting_period_label?: string | null;
+  effective_date?: string | null;
+  review_date?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  sections: PublicInstitutionalSection[];
+};
+
 export type PublicAboutData = {
   university: PublicAboutUniversity;
   content: {
@@ -75,6 +136,7 @@ export type PublicAboutData = {
     milestones: PublicHistoryMilestone[];
     document?: { url?: string | null; title?: string | null } | null;
   };
+  institutional_page?: PublicInstitutionalPage | null;
 };
 
 export type PublicFactItem = {
@@ -142,6 +204,18 @@ export async function getPublicFactsData(
     return response.data;
   } catch (error) {
     console.error("Failed to load public institutional facts:", error);
+    return null;
+  }
+}
+
+export async function getPublicInstitutionalPage(slug: string): Promise<PublicInstitutionalPage | null> {
+  try {
+    const response = await mainApi.get<DataResponse<PublicInstitutionalPage>>(
+      `/api/v1/public/institutional-pages/${slug}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to load public institutional page ${slug}:`, error);
     return null;
   }
 }

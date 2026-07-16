@@ -211,6 +211,168 @@ class FactItemUpdate(StrictContentSchema):
     is_enabled: bool | None = None
 
 
+InstitutionalPageType = Literal["about", "service_charter", "strategic_plan"]
+InstitutionalSectionType = Literal[
+    "narrative", "commitments", "process", "priorities", "outcomes", "quote",
+    "document_collection", "related_links", "governance_links", "institutional_profile",
+]
+InstitutionalSectionTheme = Literal["light", "ivory", "blue", "green"]
+
+
+class InstitutionalPageCreate(StrictContentSchema):
+    university_info_id: uuid.UUID
+    page_type: InstitutionalPageType
+    slug: SlugStr
+    eyebrow: str | None = Field(default=None, max_length=255)
+    title: str = Field(min_length=1, max_length=255)
+    introduction: str = Field(min_length=1)
+    hero_media_id: uuid.UUID | None = None
+    mobile_hero_media_id: uuid.UUID | None = None
+    hero_alt_text: str | None = Field(default=None, max_length=255)
+    primary_document_id: uuid.UUID | None = None
+    reporting_period_label: str | None = Field(default=None, max_length=128)
+    effective_date: date | None = None
+    review_date: date | None = None
+    seo_title: str | None = Field(default=None, max_length=255)
+    seo_description: str | None = Field(default=None, max_length=512)
+    is_enabled: bool = True
+
+    @model_validator(mode="after")
+    def validate_page_dates_and_media(self):
+        if self.effective_date and self.review_date and self.review_date < self.effective_date:
+            raise ValueError("review date must be on or after effective date")
+        if (self.hero_media_id or self.mobile_hero_media_id) and not self.hero_alt_text:
+            raise ValueError("hero alt text is required when hero media is supplied")
+        return self
+
+
+class InstitutionalPageUpdate(StrictContentSchema):
+    eyebrow: str | None = Field(default=None, max_length=255)
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    introduction: str | None = None
+    hero_media_id: uuid.UUID | None = None
+    mobile_hero_media_id: uuid.UUID | None = None
+    hero_alt_text: str | None = Field(default=None, max_length=255)
+    primary_document_id: uuid.UUID | None = None
+    reporting_period_label: str | None = Field(default=None, max_length=128)
+    effective_date: date | None = None
+    review_date: date | None = None
+    seo_title: str | None = Field(default=None, max_length=255)
+    seo_description: str | None = Field(default=None, max_length=512)
+    is_enabled: bool | None = None
+
+
+class InstitutionalPageRead(BaseReadSchema, InstitutionalPageCreate):
+    status: str
+    workflow_status: str
+    published_at: datetime | None = None
+
+
+class InstitutionalPageSectionCreate(StrictContentSchema):
+    institutional_page_id: uuid.UUID
+    slug: SlugStr
+    section_type: InstitutionalSectionType
+    eyebrow: str | None = Field(default=None, max_length=255)
+    heading: str = Field(min_length=1, max_length=255)
+    summary: str | None = None
+    body: str | None = None
+    layout_variant: str = Field(default="default", min_length=1, max_length=32)
+    theme: InstitutionalSectionTheme = "light"
+    primary_media_id: uuid.UUID | None = None
+    media_alt_text: str | None = Field(default=None, max_length=255)
+    video_url: str | None = Field(default=None, max_length=1024)
+    display_order: int = 100
+    is_enabled: bool = True
+
+    @model_validator(mode="after")
+    def validate_section_media(self):
+        if self.primary_media_id and not self.media_alt_text:
+            raise ValueError("media alt text is required when section media is supplied")
+        if not _valid_link(self.video_url):
+            raise ValueError("video URL must be an internal path or HTTPS")
+        return self
+
+
+class InstitutionalPageSectionUpdate(StrictContentSchema):
+    eyebrow: str | None = Field(default=None, max_length=255)
+    heading: str | None = Field(default=None, min_length=1, max_length=255)
+    summary: str | None = None
+    body: str | None = None
+    layout_variant: str | None = Field(default=None, min_length=1, max_length=32)
+    theme: InstitutionalSectionTheme | None = None
+    primary_media_id: uuid.UUID | None = None
+    media_alt_text: str | None = Field(default=None, max_length=255)
+    video_url: str | None = Field(default=None, max_length=1024)
+    display_order: int | None = None
+    is_enabled: bool | None = None
+
+
+class InstitutionalPageSectionRead(BaseReadSchema, InstitutionalPageSectionCreate):
+    status: str
+    workflow_status: str
+    published_at: datetime | None = None
+
+
+class InstitutionalPageItemCreate(StrictContentSchema):
+    section_id: uuid.UUID
+    title: str = Field(min_length=1, max_length=255)
+    description: str | None = None
+    supporting_label: str | None = Field(default=None, max_length=128)
+    supporting_value: str | None = Field(default=None, max_length=255)
+    icon_key: str | None = Field(default=None, max_length=64)
+    image_id: uuid.UUID | None = None
+    image_alt_text: str | None = Field(default=None, max_length=255)
+    link_label: str | None = Field(default=None, max_length=255)
+    link_url: str | None = Field(default=None, max_length=1024)
+    display_order: int = 100
+    is_enabled: bool = True
+
+    @model_validator(mode="after")
+    def validate_item_links_and_media(self):
+        if self.image_id and not self.image_alt_text:
+            raise ValueError("image alt text is required when item media is supplied")
+        if bool(self.link_label) != bool(self.link_url):
+            raise ValueError("link label and URL must be supplied together")
+        if not _valid_link(self.link_url):
+            raise ValueError("link URL must be an internal path or HTTPS")
+        return self
+
+
+class InstitutionalPageItemUpdate(StrictContentSchema):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = None
+    supporting_label: str | None = Field(default=None, max_length=128)
+    supporting_value: str | None = Field(default=None, max_length=255)
+    icon_key: str | None = Field(default=None, max_length=64)
+    image_id: uuid.UUID | None = None
+    image_alt_text: str | None = Field(default=None, max_length=255)
+    link_label: str | None = Field(default=None, max_length=255)
+    link_url: str | None = Field(default=None, max_length=1024)
+    display_order: int | None = None
+    is_enabled: bool | None = None
+
+
+class InstitutionalPageItemRead(BaseReadSchema, InstitutionalPageItemCreate):
+    status: str
+    workflow_status: str
+    published_at: datetime | None = None
+
+
+class InstitutionalSectionDocumentCreate(StrictContentSchema):
+    document_id: uuid.UUID
+    public_label: str | None = Field(default=None, max_length=255)
+    display_order: int = 100
+    is_featured: bool = False
+    is_enabled: bool = True
+
+
+class InstitutionalSectionDocumentUpdate(StrictContentSchema):
+    public_label: str | None = Field(default=None, max_length=255)
+    display_order: int | None = None
+    is_featured: bool | None = None
+    is_enabled: bool | None = None
+
+
 class AboutWorkflowAction(StrictContentSchema):
     action: Literal["submit", "request_changes", "approve", "publish", "unpublish", "archive"]
     reason: str | None = None

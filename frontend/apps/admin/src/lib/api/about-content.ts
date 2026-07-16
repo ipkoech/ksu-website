@@ -20,7 +20,9 @@ export const ABOUT_WORKFLOW_ACTIONS = [
 
 export type AboutWorkflowStatus = (typeof ABOUT_WORKFLOW_STATUSES)[number];
 export type AboutWorkflowAction = (typeof ABOUT_WORKFLOW_ACTIONS)[number];
-export type AboutWorkflowKind = "about" | "milestone" | "edition" | "group" | "item";
+export type AboutWorkflowKind =
+  | "about" | "milestone" | "edition" | "group" | "item"
+  | "institutional_page" | "institutional_section" | "institutional_item";
 
 interface EditorialRecord {
   id: string;
@@ -143,6 +145,74 @@ export type FactItemPayload = Omit<FactItem, keyof EditorialRecord | "id"> & {
   is_enabled?: boolean;
 };
 
+export type InstitutionalPageType = "about" | "service_charter" | "strategic_plan";
+export type InstitutionalSectionType = "narrative" | "commitments" | "process" | "priorities" | "outcomes" | "quote" | "document_collection" | "related_links" | "governance_links" | "institutional_profile";
+export type InstitutionalSectionTheme = "light" | "ivory" | "blue" | "green";
+
+export interface InstitutionalPage extends EditorialRecord {
+  university_info_id: string;
+  page_type: InstitutionalPageType;
+  slug: string;
+  eyebrow?: string | null;
+  title: string;
+  introduction: string;
+  hero_media_id?: string | null;
+  mobile_hero_media_id?: string | null;
+  hero_alt_text?: string | null;
+  primary_document_id?: string | null;
+  reporting_period_label?: string | null;
+  effective_date?: string | null;
+  review_date?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+}
+
+export type InstitutionalPagePayload = Partial<Omit<InstitutionalPage, keyof EditorialRecord | "id" | "slug" | "page_type" | "university_info_id">> & { is_enabled?: boolean };
+
+export interface InstitutionalPageSection extends EditorialRecord {
+  institutional_page_id: string;
+  slug: string;
+  section_type: InstitutionalSectionType;
+  eyebrow?: string | null;
+  heading: string;
+  summary?: string | null;
+  body?: string | null;
+  layout_variant: string;
+  theme: InstitutionalSectionTheme;
+  primary_media_id?: string | null;
+  media_alt_text?: string | null;
+  video_url?: string | null;
+  display_order: number;
+}
+
+export type InstitutionalSectionPayload = Omit<InstitutionalPageSection, keyof EditorialRecord | "id"> & { is_enabled?: boolean };
+
+export interface InstitutionalPageItem extends EditorialRecord {
+  section_id: string;
+  title: string;
+  description?: string | null;
+  supporting_label?: string | null;
+  supporting_value?: string | null;
+  icon_key?: string | null;
+  image_id?: string | null;
+  image_alt_text?: string | null;
+  link_label?: string | null;
+  link_url?: string | null;
+  display_order: number;
+}
+
+export type InstitutionalItemPayload = Omit<InstitutionalPageItem, keyof EditorialRecord | "id"> & { is_enabled?: boolean };
+
+export interface InstitutionalSectionDocument {
+  id: string;
+  section_id: string;
+  document_id: string;
+  public_label?: string | null;
+  display_order: number;
+  is_featured: boolean;
+  is_enabled: boolean;
+}
+
 export const aboutContentApi = {
   get: () => api.get<AboutPageContent | null>("/about-content"),
   create: (payload: AboutPageContentPayload) =>
@@ -206,6 +276,24 @@ export const factItemsApi = {
   update: (id: string, payload: Partial<FactItemPayload>) =>
     api.patch<FactItem>(`/fact-items/${id}`, payload),
   delete: (id: string) => api.delete<void>(`/fact-items/${id}`),
+};
+
+export const institutionalPagesApi = {
+  getBySlug: (slug: string) => api.get<InstitutionalPage[]>("/institutional-pages", { params: { slug } }),
+  update: (id: string, payload: InstitutionalPagePayload) => api.patch<InstitutionalPage>(`/institutional-pages/${id}`, payload),
+  listSections: (pageId: string) => api.get<InstitutionalPageSection[]>(`/institutional-pages/${pageId}/sections`),
+  createSection: (pageId: string, payload: InstitutionalSectionPayload) => api.post<InstitutionalPageSection>(`/institutional-pages/${pageId}/sections`, payload),
+  updateSection: (id: string, payload: Partial<InstitutionalSectionPayload>) => api.patch<InstitutionalPageSection>(`/institutional-sections/${id}`, payload),
+  deleteSection: (id: string) => api.delete<void>(`/institutional-sections/${id}`),
+  reorderSections: (pageId: string, items: Array<{ id: string; display_order: number }>) => api.post<InstitutionalPageSection[]>(`/institutional-pages/${pageId}/sections/reorder`, { items }),
+  listItems: (sectionId: string) => api.get<InstitutionalPageItem[]>(`/institutional-sections/${sectionId}/items`),
+  createItem: (sectionId: string, payload: InstitutionalItemPayload) => api.post<InstitutionalPageItem>(`/institutional-sections/${sectionId}/items`, payload),
+  updateItem: (id: string, payload: Partial<InstitutionalItemPayload>) => api.patch<InstitutionalPageItem>(`/institutional-items/${id}`, payload),
+  deleteItem: (id: string) => api.delete<void>(`/institutional-items/${id}`),
+  reorderItems: (sectionId: string, items: Array<{ id: string; display_order: number }>) => api.post<InstitutionalPageItem[]>(`/institutional-sections/${sectionId}/items/reorder`, { items }),
+  listDocuments: (sectionId: string) => api.get<InstitutionalSectionDocument[]>(`/institutional-sections/${sectionId}/documents`),
+  attachDocument: (sectionId: string, payload: Omit<InstitutionalSectionDocument, "id" | "section_id">) => api.post<InstitutionalSectionDocument>(`/institutional-sections/${sectionId}/documents`, payload),
+  deleteDocument: (id: string) => api.delete<void>(`/institutional-section-documents/${id}`),
 };
 
 export const aboutWorkflowApi = {

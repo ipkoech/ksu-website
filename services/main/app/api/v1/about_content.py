@@ -8,14 +8,22 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ...deps import CurrentUser, DbSession, permissions_for_user, require_scope
-from ...models import AboutPageContent, FactEdition, FactGroup, FactItem, HistoryMilestone
+from ...models import (
+    AboutPageContent, FactEdition, FactGroup, FactItem, HistoryMilestone,
+    InstitutionalPage, InstitutionalPageItem, InstitutionalPageSection,
+    InstitutionalSectionDocument,
+)
 from ...schemas import (
     AboutPageContentCreate, AboutPageContentUpdate, AboutWorkflowAction,
     FactEditionClone, FactEditionCreate, FactEditionUpdate, FactGroupCreate,
     FactGroupUpdate, FactItemCreate, FactItemUpdate, HistoryMilestoneCreate,
-    HistoryMilestoneUpdate, ReorderRequest,
+    HistoryMilestoneUpdate, InstitutionalPageCreate, InstitutionalPageItemCreate,
+    InstitutionalPageItemUpdate, InstitutionalPageSectionCreate,
+    InstitutionalPageSectionUpdate, InstitutionalPageUpdate,
+    InstitutionalSectionDocumentCreate, InstitutionalSectionDocumentUpdate,
+    ReorderRequest,
 )
-from ...services import AboutContentAdminService, AboutContentService, FactsService
+from ...services import AboutContentAdminService, AboutContentService, FactsService, InstitutionalPageService
 
 router = APIRouter()
 
@@ -41,6 +49,15 @@ async def get_public_facts(db: DbSession, year: int | None = Query(default=None,
     payload = await FactsService.get_public_facts(db, year=year)
     if payload is None:
         raise HTTPException(status_code=404, detail="Published facts edition not found")
+    return success(data=payload)
+
+
+@router.get("/public/institutional-pages/{slug}")
+@cached_public(timeout=600, vary_on=("slug",))
+async def get_public_institutional_page(slug: str, db: DbSession):
+    payload = await InstitutionalPageService.public_payload(db, slug)
+    if payload is None:
+        raise HTTPException(status_code=404, detail="Published institutional page not found")
     return success(data=payload)
 
 
@@ -217,9 +234,139 @@ async def delete_fact_item(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
         raise _bad_request(error) from error
 
 
+@router.get("/institutional-pages", dependencies=[Depends(require_scope("about.manage"))])
+async def list_institutional_pages(db: DbSession, _: CurrentUser, slug: str | None = None):
+    filters = (InstitutionalPage.slug == slug,) if slug else ()
+    return success(data=await AboutContentAdminService.list(db, InstitutionalPage, *filters))
+
+
+@router.post("/institutional-pages", status_code=201, dependencies=[Depends(require_scope("about.manage"))])
+async def create_institutional_page(data: InstitutionalPageCreate, db: DbSession, user: CurrentUser):
+    return success(data=await AboutContentAdminService.create(db, InstitutionalPage, data.model_dump(), user.id))
+
+
+@router.patch("/institutional-pages/{item_id}", dependencies=[Depends(require_scope("about.manage"))])
+async def update_institutional_page(item_id: uuid.UUID, data: InstitutionalPageUpdate, db: DbSession, user: CurrentUser):
+    item = await _item_or_404(db, InstitutionalPage, item_id)
+    return success(data=await AboutContentAdminService.update(db, item, data.model_dump(exclude_unset=True), user.id))
+
+
+@router.get("/institutional-pages/{page_id}/sections", dependencies=[Depends(require_scope("about.manage"))])
+async def list_institutional_sections(page_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    return success(data=await AboutContentAdminService.list(db, InstitutionalPageSection, InstitutionalPageSection.institutional_page_id == page_id))
+
+
+@router.post("/institutional-pages/{page_id}/sections", status_code=201, dependencies=[Depends(require_scope("about.manage"))])
+async def create_institutional_section(page_id: uuid.UUID, data: InstitutionalPageSectionCreate, db: DbSession, user: CurrentUser):
+    await _item_or_404(db, InstitutionalPage, page_id)
+    payload = data.model_dump()
+    payload["institutional_page_id"] = page_id
+    return success(data=await AboutContentAdminService.create(db, InstitutionalPageSection, payload, user.id))
+
+
+@router.patch("/institutional-sections/{item_id}", dependencies=[Depends(require_scope("about.manage"))])
+async def update_institutional_section(item_id: uuid.UUID, data: InstitutionalPageSectionUpdate, db: DbSession, user: CurrentUser):
+    item = await _item_or_404(db, InstitutionalPageSection, item_id)
+    return success(data=await AboutContentAdminService.update(db, item, data.model_dump(exclude_unset=True), user.id))
+
+
+@router.delete("/institutional-sections/{item_id}", status_code=204, dependencies=[Depends(require_scope("about.manage"))])
+async def delete_institutional_section(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    try:
+        await AboutContentAdminService.soft_delete(db, await _item_or_404(db, InstitutionalPageSection, item_id))
+    except ValueError as error:
+        raise _bad_request(error) from error
+
+
+@router.post("/institutional-pages/{page_id}/sections/reorder", dependencies=[Depends(require_scope("about.manage"))])
+async def reorder_institutional_sections(page_id: uuid.UUID, data: ReorderRequest, db: DbSession, _: CurrentUser):
+    try:
+        records = await AboutContentAdminService.reorder(
+            db, InstitutionalPageSection, "institutional_page_id", page_id,
+            [(item.id, item.display_order) for item in data.items],
+        )
+    except ValueError as error:
+        raise _bad_request(error) from error
+    return success(data=records)
+
+
+@router.get("/institutional-sections/{section_id}/items", dependencies=[Depends(require_scope("about.manage"))])
+async def list_institutional_items(section_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    return success(data=await AboutContentAdminService.list(db, InstitutionalPageItem, InstitutionalPageItem.section_id == section_id))
+
+
+@router.post("/institutional-sections/{section_id}/items", status_code=201, dependencies=[Depends(require_scope("about.manage"))])
+async def create_institutional_item(section_id: uuid.UUID, data: InstitutionalPageItemCreate, db: DbSession, user: CurrentUser):
+    await _item_or_404(db, InstitutionalPageSection, section_id)
+    payload = data.model_dump()
+    payload["section_id"] = section_id
+    return success(data=await AboutContentAdminService.create(db, InstitutionalPageItem, payload, user.id))
+
+
+@router.patch("/institutional-items/{item_id}", dependencies=[Depends(require_scope("about.manage"))])
+async def update_institutional_item(item_id: uuid.UUID, data: InstitutionalPageItemUpdate, db: DbSession, user: CurrentUser):
+    item = await _item_or_404(db, InstitutionalPageItem, item_id)
+    return success(data=await AboutContentAdminService.update(db, item, data.model_dump(exclude_unset=True), user.id))
+
+
+@router.delete("/institutional-items/{item_id}", status_code=204, dependencies=[Depends(require_scope("about.manage"))])
+async def delete_institutional_item(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    try:
+        await AboutContentAdminService.soft_delete(db, await _item_or_404(db, InstitutionalPageItem, item_id))
+    except ValueError as error:
+        raise _bad_request(error) from error
+
+
+@router.post("/institutional-sections/{section_id}/items/reorder", dependencies=[Depends(require_scope("about.manage"))])
+async def reorder_institutional_items(section_id: uuid.UUID, data: ReorderRequest, db: DbSession, _: CurrentUser):
+    try:
+        records = await AboutContentAdminService.reorder(
+            db, InstitutionalPageItem, "section_id", section_id,
+            [(item.id, item.display_order) for item in data.items],
+        )
+    except ValueError as error:
+        raise _bad_request(error) from error
+    return success(data=records)
+
+
+@router.get("/institutional-sections/{section_id}/documents", dependencies=[Depends(require_scope("about.manage"))])
+async def list_institutional_documents(section_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    return success(data=await AboutContentAdminService.list(db, InstitutionalSectionDocument, InstitutionalSectionDocument.section_id == section_id))
+
+
+@router.post("/institutional-sections/{section_id}/documents", status_code=201, dependencies=[Depends(require_scope("about.manage"))])
+async def attach_institutional_document(section_id: uuid.UUID, data: InstitutionalSectionDocumentCreate, db: DbSession, _: CurrentUser):
+    await _item_or_404(db, InstitutionalPageSection, section_id)
+    link = InstitutionalSectionDocument(section_id=section_id, **data.model_dump())
+    db.add(link)
+    await db.flush()
+    await db.refresh(link)
+    return success(data=link)
+
+
+@router.patch("/institutional-section-documents/{item_id}", dependencies=[Depends(require_scope("about.manage"))])
+async def update_institutional_document(item_id: uuid.UUID, data: InstitutionalSectionDocumentUpdate, db: DbSession, _: CurrentUser):
+    link = await _item_or_404(db, InstitutionalSectionDocument, item_id)
+    for key, value in data.model_dump(exclude_unset=True).items():
+        setattr(link, key, value)
+    await db.flush()
+    await db.refresh(link)
+    return success(data=link)
+
+
+@router.delete("/institutional-section-documents/{item_id}", status_code=204, dependencies=[Depends(require_scope("about.manage"))])
+async def delete_institutional_document(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    link = await _item_or_404(db, InstitutionalSectionDocument, item_id)
+    link.soft_delete()
+    await db.flush()
+
+
 _WORKFLOW_MODELS = {
     "about": AboutPageContent, "milestone": HistoryMilestone, "edition": FactEdition,
     "group": FactGroup, "item": FactItem,
+    "institutional_page": InstitutionalPage,
+    "institutional_section": InstitutionalPageSection,
+    "institutional_item": InstitutionalPageItem,
 }
 
 

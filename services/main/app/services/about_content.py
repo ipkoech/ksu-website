@@ -10,7 +10,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ..models import AboutPageContent, Document, FactEdition, FactGroup, FactItem, HistoryMilestone
+from ..models import (
+    AboutPageContent, Document, FactEdition, FactGroup, FactItem, HistoryMilestone,
+    InstitutionalPage, InstitutionalPageItem, InstitutionalPageSection,
+    InstitutionalSectionDocument,
+)
 from .university import UniversityInfoService
 
 
@@ -87,6 +91,90 @@ def _group(group: FactGroup, now: datetime) -> dict[str, Any]:
     }
 
 
+def _institutional_item(item: InstitutionalPageItem) -> dict[str, Any]:
+    return {
+        "id": str(item.id), "title": item.title, "description": item.description,
+        "supporting_label": item.supporting_label, "supporting_value": item.supporting_value,
+        "icon_key": item.icon_key, "image": _media(item.image),
+        "image_alt_text": item.image_alt_text, "link_label": item.link_label,
+        "link_url": item.link_url, "display_order": item.display_order,
+    }
+
+
+def _section_document(link: InstitutionalSectionDocument) -> dict[str, Any]:
+    payload = _document(link.document) or {}
+    payload.update({
+        "link_id": str(link.id), "public_label": link.public_label,
+        "display_order": link.display_order, "is_featured": link.is_featured,
+    })
+    return payload
+
+
+def _institutional_section(section: InstitutionalPageSection, now: datetime) -> dict[str, Any]:
+    items = sorted(
+        (item for item in section.items if is_publicly_publishable(item, now=now)),
+        key=lambda item: (item.display_order, str(item.id)),
+    )
+    documents = sorted(
+        (
+            link for link in section.documents
+            if link.deleted_at is None and link.is_enabled and link.document.is_public
+            and link.document.is_active and not link.document.requires_login
+        ),
+        key=lambda link: (link.display_order, str(link.id)),
+    )
+    return {
+        "id": str(section.id), "slug": section.slug, "section_type": section.section_type,
+        "eyebrow": section.eyebrow, "heading": section.heading, "summary": section.summary,
+        "body": section.body, "layout_variant": section.layout_variant, "theme": section.theme,
+        "primary_media": _media(section.primary_media), "media_alt_text": section.media_alt_text,
+        "video_url": section.video_url, "display_order": section.display_order,
+        "items": [_institutional_item(item) for item in items],
+        "documents": [_section_document(link) for link in documents],
+    }
+
+
+class InstitutionalPageService:
+    @staticmethod
+    async def get_published(db: AsyncSession, slug: str, *, now: datetime | None = None) -> InstitutionalPage | None:
+        instant = now or datetime.now(timezone.utc)
+        result = await db.execute(
+            select(InstitutionalPage)
+            .options(
+                selectinload(InstitutionalPage.hero_media),
+                selectinload(InstitutionalPage.mobile_hero_media),
+                selectinload(InstitutionalPage.primary_document).selectinload(Document.file),
+                selectinload(InstitutionalPage.sections).selectinload(InstitutionalPageSection.primary_media),
+                selectinload(InstitutionalPage.sections).selectinload(InstitutionalPageSection.items).selectinload(InstitutionalPageItem.image),
+                selectinload(InstitutionalPage.sections).selectinload(InstitutionalPageSection.documents).selectinload(InstitutionalSectionDocument.document).selectinload(Document.file),
+            )
+            .where(InstitutionalPage.slug == slug, InstitutionalPage.deleted_at.is_(None))
+        )
+        page = result.scalars().first()
+        return page if page and is_publicly_publishable(page, now=instant) else None
+
+    @staticmethod
+    async def public_payload(db: AsyncSession, slug: str, *, now: datetime | None = None) -> dict[str, Any] | None:
+        instant = now or datetime.now(timezone.utc)
+        page = await InstitutionalPageService.get_published(db, slug, now=instant)
+        if page is None:
+            return None
+        sections = sorted(
+            (section for section in page.sections if is_publicly_publishable(section, now=instant)),
+            key=lambda section: (section.display_order, section.slug),
+        )
+        return {
+            "id": str(page.id), "page_type": page.page_type, "slug": page.slug,
+            "eyebrow": page.eyebrow, "title": page.title, "introduction": page.introduction,
+            "hero_media": _media(page.hero_media), "mobile_hero_media": _media(page.mobile_hero_media),
+            "hero_alt_text": page.hero_alt_text, "primary_document": _document(page.primary_document),
+            "reporting_period_label": page.reporting_period_label,
+            "effective_date": page.effective_date, "review_date": page.review_date,
+            "seo_title": page.seo_title, "seo_description": page.seo_description,
+            "sections": [_institutional_section(section, instant) for section in sections],
+        }
+
+
 class AboutContentService:
     @staticmethod
     async def get_published_content(db: AsyncSession, *, now: datetime | None = None) -> AboutPageContent | None:
@@ -155,7 +243,11 @@ class AboutContentService:
                 "physical_address", "city", "county", "country",
             )
         }
-        return {"university": university_payload, "content": content_payload, "history": await AboutContentService.get_public_history(db, now=now)}
+        return {
+            "university": university_payload, "content": content_payload,
+            "history": await AboutContentService.get_public_history(db, now=now),
+            "institutional_page": await InstitutionalPageService.public_payload(db, "about", now=now),
+        }
 
 
 class FactsService:
@@ -271,6 +363,27 @@ class AboutContentAdminService:
         elif isinstance(item, FactItem):
             if not item.source_title or item.verified_on is None:
                 raise ValueError("Fact source and verification date are required")
+        elif isinstance(item, InstitutionalPage):
+            if not item.title or not item.introduction:
+                raise ValueError("Institutional page title and introduction are required")
+            if (item.hero_media_id or item.mobile_hero_media_id) and not item.hero_alt_text:
+                raise ValueError("Hero alt text is required")
+            if item.effective_date and item.review_date and item.review_date < item.effective_date:
+                raise ValueError("Review date must be on or after effective date")
+            if item.page_type in {"service_charter", "strategic_plan"} and not item.primary_document_id:
+                raise ValueError("A primary document is required for this institutional page")
+        elif isinstance(item, InstitutionalPageSection):
+            if not item.heading:
+                raise ValueError("Section heading is required")
+            if item.primary_media_id and not item.media_alt_text:
+                raise ValueError("Section media alt text is required")
+        elif isinstance(item, InstitutionalPageItem):
+            if not item.title:
+                raise ValueError("Section item title is required")
+            if item.image_id and not item.image_alt_text:
+                raise ValueError("Section item image alt text is required")
+            if bool(item.link_label) != bool(item.link_url):
+                raise ValueError("Section item link label and URL must be supplied together")
 
     @staticmethod
     async def transition(db: AsyncSession, item: Any, action: str, actor_id: uuid.UUID, reason: str | None = None):
@@ -355,4 +468,7 @@ class AboutContentAdminService:
         return target
 
 
-__all__ = ["AboutContentService", "FactsService", "AboutContentAdminService", "is_publicly_publishable"]
+__all__ = [
+    "AboutContentService", "FactsService", "InstitutionalPageService",
+    "AboutContentAdminService", "is_publicly_publishable",
+]

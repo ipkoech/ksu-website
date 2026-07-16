@@ -75,6 +75,10 @@ from .about_content import (
     FactGroup,
     FactItem,
     HistoryMilestone,
+    InstitutionalPage,
+    InstitutionalPageItem,
+    InstitutionalPageSection,
+    InstitutionalSectionDocument,
 )
 
 # System
@@ -177,6 +181,10 @@ __all__ = [
     "FactEdition",
     "FactGroup",
     "FactItem",
+    "InstitutionalPage",
+    "InstitutionalPageSection",
+    "InstitutionalPageItem",
+    "InstitutionalSectionDocument",
     "Setting",
     "UserPreference",
     "ApiKey",

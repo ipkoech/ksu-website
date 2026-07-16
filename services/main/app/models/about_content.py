@@ -25,6 +25,11 @@ ABOUT_WORKFLOW_STATUSES = (
     "draft", "in_review", "changes_requested", "approved", "published", "archived"
 )
 FACT_KINDS = ("evergreen", "annual")
+INSTITUTIONAL_PAGE_TYPES = ("about", "service_charter", "strategic_plan")
+INSTITUTIONAL_SECTION_TYPES = (
+    "narrative", "commitments", "process", "priorities", "outcomes", "quote",
+    "document_collection", "related_links", "governance_links", "institutional_profile",
+)
 _WORKFLOW_SQL = "'draft', 'in_review', 'changes_requested', 'approved', 'published', 'archived'"
 
 
@@ -192,7 +197,122 @@ class FactItem(Base, AboutPublishingMixin):
     )
 
 
+class InstitutionalPage(Base, AboutPublishingMixin):
+    __tablename__ = "institutional_pages"
+
+    university_info_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey("university_info.id", ondelete="CASCADE"), nullable=False)
+    page_type: Mapped[str] = mapped_column(sa.String(32), nullable=False)
+    slug: Mapped[str] = mapped_column(sa.String(128), nullable=False, unique=True, index=True)
+    eyebrow: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    title: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    introduction: Mapped[str] = mapped_column(sa.Text, nullable=False)
+    hero_media_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True)
+    mobile_hero_media_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True)
+    hero_alt_text: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    primary_document_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("documents.id", ondelete="SET NULL"), nullable=True)
+    reporting_period_label: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    effective_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
+    review_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
+    seo_title: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    seo_description: Mapped[Optional[str]] = mapped_column(sa.String(512), nullable=True)
+
+    hero_media: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[hero_media_id])
+    mobile_hero_media: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[mobile_hero_media_id])
+    primary_document: Mapped[Optional["Document"]] = relationship("Document", foreign_keys=[primary_document_id])
+    sections: Mapped[list["InstitutionalPageSection"]] = relationship(
+        "InstitutionalPageSection", back_populates="page", cascade="all, delete-orphan", lazy="selectin"
+    )
+
+    __table_args__ = (
+        sa.CheckConstraint("page_type IN ('about', 'service_charter', 'strategic_plan')", name="ck_institutional_pages_type"),
+        sa.CheckConstraint(f"workflow_status IN ({_WORKFLOW_SQL})", name="ck_institutional_pages_workflow_status"),
+    )
+
+
+class InstitutionalPageSection(Base, AboutPublishingMixin):
+    __tablename__ = "institutional_page_sections"
+
+    institutional_page_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey("institutional_pages.id", ondelete="CASCADE"), nullable=False, index=True)
+    slug: Mapped[str] = mapped_column(sa.String(128), nullable=False)
+    section_type: Mapped[str] = mapped_column(sa.String(32), nullable=False)
+    eyebrow: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    heading: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    body: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    layout_variant: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="default")
+    theme: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="light")
+    primary_media_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True)
+    media_alt_text: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    video_url: Mapped[Optional[str]] = mapped_column(sa.String(1024), nullable=True)
+    display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+
+    page: Mapped["InstitutionalPage"] = relationship("InstitutionalPage", back_populates="sections")
+    primary_media: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[primary_media_id])
+    items: Mapped[list["InstitutionalPageItem"]] = relationship(
+        "InstitutionalPageItem", back_populates="section", cascade="all, delete-orphan", lazy="selectin"
+    )
+    documents: Mapped[list["InstitutionalSectionDocument"]] = relationship(
+        "InstitutionalSectionDocument", back_populates="section", cascade="all, delete-orphan", lazy="selectin"
+    )
+
+    __table_args__ = (
+        sa.UniqueConstraint("institutional_page_id", "slug", name="uq_institutional_sections_page_slug"),
+        sa.CheckConstraint(
+            "section_type IN ('narrative', 'commitments', 'process', 'priorities', 'outcomes', 'quote', 'document_collection', 'related_links', 'governance_links', 'institutional_profile')",
+            name="ck_institutional_sections_type",
+        ),
+        sa.CheckConstraint("theme IN ('light', 'ivory', 'blue', 'green')", name="ck_institutional_sections_theme"),
+        sa.CheckConstraint(f"workflow_status IN ({_WORKFLOW_SQL})", name="ck_institutional_sections_workflow_status"),
+        sa.Index("ix_institutional_sections_page_order", "institutional_page_id", "display_order"),
+    )
+
+
+class InstitutionalPageItem(Base, AboutPublishingMixin):
+    __tablename__ = "institutional_page_items"
+
+    section_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey("institutional_page_sections.id", ondelete="CASCADE"), nullable=False, index=True)
+    title: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    supporting_label: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    supporting_value: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    icon_key: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True)
+    image_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True)
+    image_alt_text: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    link_label: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    link_url: Mapped[Optional[str]] = mapped_column(sa.String(1024), nullable=True)
+    display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+
+    section: Mapped["InstitutionalPageSection"] = relationship("InstitutionalPageSection", back_populates="items")
+    image: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[image_id])
+
+    __table_args__ = (
+        sa.CheckConstraint(f"workflow_status IN ({_WORKFLOW_SQL})", name="ck_institutional_items_workflow_status"),
+        sa.Index("ix_institutional_items_section_order", "section_id", "display_order"),
+    )
+
+
+class InstitutionalSectionDocument(Base):
+    __tablename__ = "institutional_section_documents"
+
+    section_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey("institutional_page_sections.id", ondelete="CASCADE"), nullable=False, index=True)
+    document_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
+    public_label: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+    is_featured: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
+    is_enabled: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+
+    section: Mapped["InstitutionalPageSection"] = relationship("InstitutionalPageSection", back_populates="documents")
+    document: Mapped["Document"] = relationship("Document")
+
+    __table_args__ = (
+        sa.UniqueConstraint("section_id", "document_id", name="uq_institutional_section_document"),
+        sa.Index("ix_institutional_section_documents_order", "section_id", "display_order"),
+    )
+
+
 __all__ = [
     "ABOUT_WORKFLOW_STATUSES", "FACT_KINDS", "AboutPageContent",
     "HistoryMilestone", "FactEdition", "FactGroup", "FactItem",
+    "INSTITUTIONAL_PAGE_TYPES", "INSTITUTIONAL_SECTION_TYPES", "InstitutionalPage",
+    "InstitutionalPageSection", "InstitutionalPageItem", "InstitutionalSectionDocument",
 ]
