@@ -59,6 +59,14 @@ class ReviewEvent:
 
 
 @dataclass(frozen=True, slots=True)
+class CandidateAttempt:
+    attempt: int
+    relative_path: str
+    sha256: str
+    created_at: str
+
+
+@dataclass(frozen=True, slots=True)
 class ReviewItem:
     programme_slug: str
     programme_name: str
@@ -67,6 +75,7 @@ class ReviewItem:
     candidate_path: str | None = None
     sha256: str | None = None
     attempt: int = 0
+    candidate_attempts: tuple[CandidateAttempt, ...] = ()
     automatic_regenerations: int = 0
     review_notes: tuple[str, ...] = ()
     events: tuple[ReviewEvent, ...] = ()
@@ -145,6 +154,7 @@ def _append_event(
     candidate_path: str | None = None,
     sha256: str | None = None,
     attempt: int | None = None,
+    candidate_attempt: CandidateAttempt | None = None,
 ) -> ReviewItem:
     event = ReviewEvent(
         from_status=item.status,
@@ -159,6 +169,8 @@ def _append_event(
         candidate_path=item.candidate_path if candidate_path is None else candidate_path,
         sha256=item.sha256 if sha256 is None else sha256,
         attempt=item.attempt if attempt is None else attempt,
+        candidate_attempts=item.candidate_attempts
+        + ((candidate_attempt,) if candidate_attempt is not None else ()),
         review_notes=notes,
         events=item.events + (event,),
     )
@@ -191,6 +203,18 @@ def transition_item(
     elif any(value is not None for value in metadata):
         raise ValueError("Candidate metadata can only be recorded when entering generated")
 
+    candidate_attempt = None
+    if to_status is ReviewStatus.GENERATED:
+        assert candidate_path is not None
+        assert sha256 is not None
+        assert attempt is not None
+        candidate_attempt = CandidateAttempt(
+            attempt=attempt,
+            relative_path=candidate_path,
+            sha256=sha256,
+            created_at=_utc_timestamp(),
+        )
+
     return _append_event(
         item,
         to_status,
@@ -198,6 +222,7 @@ def transition_item(
         candidate_path=candidate_path,
         sha256=sha256,
         attempt=attempt,
+        candidate_attempt=candidate_attempt,
     )
 
 
@@ -213,25 +238,19 @@ def record_failed_candidate(
         raise ValueError("A failed candidate requires a review note")
     if item.status is ReviewStatus.NEEDS_MANUAL_REVIEW:
         raise ValueError("Candidate is awaiting manual review and cannot be mutated automatically")
-    if item.status not in {
-        ReviewStatus.GENERATED,
-        ReviewStatus.ORCHESTRATOR_REVIEW,
-        ReviewStatus.NEEDS_REGENERATION,
-    }:
+    if item.status is not ReviewStatus.GENERATED:
         raise ValueError(f"Cannot record a failed candidate from {item.status.value}")
 
     if not automatic or item.automatic_regenerations >= 2:
-        failed = item
-        if failed.status is not ReviewStatus.NEEDS_REGENERATION:
-            failed = _append_event(
-                failed,
-                ReviewStatus.NEEDS_REGENERATION,
-                note="",
-            )
+        failed = _append_event(
+            item,
+            ReviewStatus.NEEDS_REGENERATION,
+            note=note,
+        )
         return _append_event(
             failed,
             ReviewStatus.NEEDS_MANUAL_REVIEW,
-            note=note,
+            note="",
         )
 
     failed = _append_event(
@@ -263,6 +282,15 @@ def _item_to_dict(item: ReviewItem) -> dict[str, object]:
         "candidate_path": item.candidate_path,
         "sha256": item.sha256,
         "attempt": item.attempt,
+        "candidate_attempts": [
+            {
+                "attempt": candidate.attempt,
+                "relative_path": candidate.relative_path,
+                "sha256": candidate.sha256,
+                "created_at": candidate.created_at,
+            }
+            for candidate in item.candidate_attempts
+        ],
         "automatic_regenerations": item.automatic_regenerations,
         "review_notes": list(item.review_notes),
         "events": [_event_to_dict(event) for event in item.events],
@@ -321,9 +349,18 @@ def _item_from_dict(data: dict[str, object]) -> ReviewItem:
     raw_events = data.get("events", [])
     if not isinstance(raw_events, list):
         raise ValueError("Manifest item events must be a list")
+    for index, event in enumerate(raw_events):
+        if not isinstance(event, dict):
+            raise ValueError(f"Manifest item event {index} must be an object")
     raw_notes = data.get("review_notes", [])
     if not isinstance(raw_notes, list):
         raise ValueError("Manifest item review notes must be a list")
+    raw_attempts = data.get("candidate_attempts", [])
+    if not isinstance(raw_attempts, list):
+        raise ValueError("Manifest candidate attempts must be a list")
+    for index, candidate in enumerate(raw_attempts):
+        if not isinstance(candidate, dict):
+            raise ValueError(f"Manifest candidate attempt {index} must be an object")
     return ReviewItem(
         programme_slug=str(data["programme_slug"]),
         programme_name=str(data["programme_name"]),
@@ -332,9 +369,18 @@ def _item_from_dict(data: dict[str, object]) -> ReviewItem:
         candidate_path=None if data.get("candidate_path") is None else str(data["candidate_path"]),
         sha256=None if data.get("sha256") is None else str(data["sha256"]),
         attempt=int(data.get("attempt", 0)),
+        candidate_attempts=tuple(
+            CandidateAttempt(
+                attempt=int(candidate["attempt"]),
+                relative_path=str(candidate["relative_path"]),
+                sha256=str(candidate["sha256"]),
+                created_at=str(candidate["created_at"]),
+            )
+            for candidate in raw_attempts
+        ),
         automatic_regenerations=int(data.get("automatic_regenerations", 0)),
         review_notes=tuple(str(note) for note in raw_notes),
-        events=tuple(_event_from_dict(event) for event in raw_events if isinstance(event, dict)),
+        events=tuple(_event_from_dict(event) for event in raw_events),
     )
 
 
@@ -350,6 +396,9 @@ def load_manifest(path: Path) -> SchoolReviewManifest:
     raw_items = data.get("items")
     if not isinstance(raw_items, dict):
         raise ValueError("Programme cover manifest items must be an object")
+    for slug, item in raw_items.items():
+        if not isinstance(item, dict):
+            raise ValueError(f"Programme cover manifest item {slug} must be an object")
 
     return SchoolReviewManifest(
         version=MANIFEST_VERSION,
@@ -361,6 +410,5 @@ def load_manifest(path: Path) -> SchoolReviewManifest:
         items={
             str(slug): _item_from_dict(item)
             for slug, item in raw_items.items()
-            if isinstance(item, dict)
         },
     )

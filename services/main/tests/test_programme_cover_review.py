@@ -6,6 +6,7 @@ import pytest
 
 from app.seeders.programme_cover_concepts import load_programme_cover_concepts
 from app.seeders.programme_cover_review import (
+    ALLOWED_TRANSITIONS,
     ReviewStatus,
     SchoolReviewManifest,
     create_manifest,
@@ -102,21 +103,62 @@ def test_illegal_transition_from_generated_to_published_is_rejected(
 def test_third_failed_candidate_requires_manual_review(manifest: SchoolReviewManifest) -> None:
     item = _generated_item(manifest)
     item = record_failed_candidate(item, note="composition", automatic=True)
+    item = transition_item(
+        item,
+        ReviewStatus.GENERATED,
+        note="second candidate",
+        candidate_path="generated/bachelor-of-laws/attempt-2.webp",
+        sha256="b" * 64,
+        attempt=2,
+    )
     item = record_failed_candidate(item, note="accidental text", automatic=True)
+    item = transition_item(
+        item,
+        ReviewStatus.GENERATED,
+        note="third candidate",
+        candidate_path="generated/bachelor-of-laws/attempt-3.webp",
+        sha256="c" * 64,
+        attempt=3,
+    )
     item = record_failed_candidate(item, note="malformed scales", automatic=True)
 
     assert item.status is ReviewStatus.NEEDS_MANUAL_REVIEW
     assert item.automatic_regenerations == 2
-    assert item.review_notes[-3:] == ("composition", "accidental text", "malformed scales")
+    assert item.review_notes[-1] == "malformed scales"
+    assert all(
+        event.to_status in ALLOWED_TRANSITIONS[event.from_status]
+        for event in item.events
+    )
 
     with pytest.raises(ValueError, match="manual review"):
         record_failed_candidate(item, note="another automatic attempt", automatic=True)
 
 
+def test_failure_requires_a_new_generated_candidate(manifest: SchoolReviewManifest) -> None:
+    item = record_failed_candidate(_generated_item(manifest), note="composition", automatic=True)
+
+    with pytest.raises(ValueError, match="needs_regeneration"):
+        record_failed_candidate(item, note="no new candidate", automatic=True)
+
+
 def test_manual_review_cannot_be_approved_directly(manifest: SchoolReviewManifest) -> None:
     item = _generated_item(manifest)
     item = record_failed_candidate(item, note="composition", automatic=True)
+    item = transition_item(
+        item,
+        ReviewStatus.GENERATED,
+        candidate_path="generated/bachelor-of-laws/attempt-2.webp",
+        sha256="b" * 64,
+        attempt=2,
+    )
     item = record_failed_candidate(item, note="accidental text", automatic=True)
+    item = transition_item(
+        item,
+        ReviewStatus.GENERATED,
+        candidate_path="generated/bachelor-of-laws/attempt-3.webp",
+        sha256="c" * 64,
+        attempt=3,
+    )
     item = record_failed_candidate(item, note="malformed scales", automatic=True)
 
     with pytest.raises(ValueError, match="needs_manual_review.*human_approved"):
@@ -148,6 +190,76 @@ def test_atomic_save_and_restart_preserve_manifest_state(
     reloaded = load_manifest(path)
     assert reloaded.items["bachelor-of-laws"].status is ReviewStatus.ORCHESTRATOR_REVIEW
     assert len(reloaded.items["bachelor-of-laws"].events) == 2
+
+
+def test_candidate_attempt_history_survives_manifest_restart(
+    tmp_path: Path,
+    manifest: SchoolReviewManifest,
+) -> None:
+    item = _generated_item(manifest)
+    item = record_failed_candidate(item, note="composition", automatic=True)
+    item = transition_item(
+        item,
+        ReviewStatus.GENERATED,
+        candidate_path="generated/bachelor-of-laws/attempt-2.webp",
+        sha256="b" * 64,
+        attempt=2,
+    )
+    manifest.items[item.programme_slug] = item
+    path = tmp_path / "manifest.json"
+
+    save_manifest_atomic(path, manifest)
+    reloaded = load_manifest(path)
+
+    assert [(attempt.attempt, attempt.relative_path, attempt.sha256) for attempt in reloaded.items[item.programme_slug].candidate_attempts] == [
+        (1, "generated/bachelor-of-laws/attempt-1.webp", "a" * 64),
+        (2, "generated/bachelor-of-laws/attempt-2.webp", "b" * 64),
+    ]
+    assert all(
+        datetime.fromisoformat(attempt.created_at).utcoffset().total_seconds() == 0
+        for attempt in reloaded.items[item.programme_slug].candidate_attempts
+    )
+
+
+def test_atomic_save_replaces_existing_manifest(tmp_path: Path, manifest: SchoolReviewManifest) -> None:
+    path = tmp_path / "manifest.json"
+    save_manifest_atomic(path, manifest)
+    planned_contents = path.read_text(encoding="utf-8")
+
+    item = _generated_item(manifest)
+    manifest.items[item.programme_slug] = item
+    save_manifest_atomic(path, manifest)
+
+    assert path.read_text(encoding="utf-8") != planned_contents
+    assert load_manifest(path).items[item.programme_slug].status is ReviewStatus.GENERATED
+    assert not list(tmp_path.glob("*.tmp"))
+
+
+@pytest.mark.parametrize(
+    ("field", "invalid_value", "message"),
+    [
+        ("events", ["not an object"], "event 0 must be an object"),
+        ("items", {"bachelor-of-laws": "not an object"}, "item bachelor-of-laws must be an object"),
+    ],
+)
+def test_load_manifest_rejects_non_object_entries(
+    tmp_path: Path,
+    manifest: SchoolReviewManifest,
+    field: str,
+    invalid_value: object,
+    message: str,
+) -> None:
+    path = tmp_path / "manifest.json"
+    save_manifest_atomic(path, manifest)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if field == "events":
+        data["items"]["bachelor-of-laws"][field] = invalid_value
+    else:
+        data[field] = invalid_value
+    path.write_text(json.dumps(data), encoding="utf-8")
+
+    with pytest.raises(ValueError, match=message):
+        load_manifest(path)
 
 
 def test_load_manifest_rejects_unknown_versions(tmp_path: Path) -> None:
