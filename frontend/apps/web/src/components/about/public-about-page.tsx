@@ -7,14 +7,12 @@ import {
   ArrowRight,
   Award,
   Building2,
-  CalendarDays,
   Check,
   ChevronDown,
   Download,
   Eye,
   Landmark,
   Lightbulb,
-  MapPin,
   Play,
   School,
   Sparkles,
@@ -25,14 +23,16 @@ import {
 import { useEffect, useRef, useState } from "react";
 import type {
   PublicAboutData,
+  PublicFactItem,
+  PublicFactsData,
   PublicHistoryMilestone,
 } from "@/lib/public-about-data";
 import { ImageComparison } from "./image-comparison";
 import { AboutReveal } from "./about-reveal";
 import { InstitutionalIcon } from "./institutional-icon";
 
-const heroFallback = "/images/backgrounds/about-hero.jpg";
-const identityFallback = "/images/about/about-overview.webp";
+const heroFallback = "/images/about/about-overview-branded.webp";
+const identityFallback = "/images/about/about-mission-vision.webp";
 
 function paragraphs(value?: string | null) {
   return (value ?? "").split(/\n\s*\n/).map((item) => item.trim()).filter(Boolean);
@@ -44,6 +44,15 @@ function mediaUrl(media: { url?: string | null } | null | undefined, fallback: s
 
 function mediaAlt(media: { alt?: string | null; alt_text?: string | null } | null | undefined, fallback: string) {
   return media?.alt_text?.trim() || media?.alt?.trim() || fallback;
+}
+
+function findFact(items: PublicFactItem[], terms: string[]) {
+  return items.find((item) => terms.some((term) => item.label.toLowerCase().includes(term)));
+}
+
+function factValue(item?: PublicFactItem | null) {
+  if (!item) return null;
+  return `${item.prefix || ""}${item.display_value}${item.suffix || ""}${item.unit ? ` ${item.unit}` : ""}`;
 }
 
 const valueDetails = [
@@ -229,7 +238,7 @@ function VirtualTourDialog({
   );
 }
 
-export function PublicAboutPage({ data, historyInitiallyOpen = false }: { data: PublicAboutData; historyInitiallyOpen?: boolean }) {
+export function PublicAboutPage({ data, facts, historyInitiallyOpen = false }: { data: PublicAboutData; facts?: PublicFactsData | null; historyInitiallyOpen?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const [historyOpen, setHistoryOpen] = useState(historyInitiallyOpen);
@@ -242,6 +251,7 @@ export function PublicAboutPage({ data, historyInitiallyOpen = false }: { data: 
   const heroParagraphs = paragraphs(content?.hero_introduction || university.overview).slice(0, 1);
   const coreValues = (university.core_values ?? "").split(/[;|\n]+/).map((item) => item.trim()).filter(Boolean);
   const quickFacts = university.quick_facts ?? {};
+  const publishedFacts = facts?.groups.flatMap((group) => group.items) ?? [];
   const institutionalSections = data.institutional_page?.sections ?? [];
   const coreValuesSection = institutionalSections.find((section) => section.slug === "core-values");
   const mandateSection = institutionalSections.find((section) => section.slug === "university-mandate");
@@ -264,90 +274,93 @@ export function PublicAboutPage({ data, historyInitiallyOpen = false }: { data: 
     if (!open) window.setTimeout(() => tourTriggerRef.current?.focus(), 0);
   };
 
+  const totalStudents = findFact(publishedFacts, ["total student enrolment", "total enrolment"]);
+  const undergraduate = findFact(publishedFacts, ["undergraduate students", "undergraduate"]);
+  const postgraduate = findFact(publishedFacts, ["postgraduate students", "postgraduate"]);
+  const teachingDepartments = findFact(publishedFacts, ["teaching departments", "departments"]);
+  const researchOutput = findFact(publishedFacts, ["peer-reviewed journal articles", "publications"]);
+  const graduates = findFact(publishedFacts, ["graduates"]);
   const profile = [
-    { label: "Established", value: String(university.founding_year || quickFacts.founding_year || "1965"), icon: CalendarDays },
-    { label: "Chartered", value: String(quickFacts.charter_year || "2013"), icon: Landmark },
-    { label: "Schools", value: String(quickFacts.schools || "8"), icon: School },
-    { label: "Research Centres", value: "13+", icon: Lightbulb },
-    { label: "Campuses", value: String(quickFacts.main_campus || university.physical_address || "Main Campus, Kisii County"), icon: MapPin },
-    { label: "Legal Status", value: "Public University", icon: Building2 },
-  ];
+    { label: totalStudents?.label || "Established", value: factValue(totalStudents) || String(university.founding_year || quickFacts.founding_year), icon: Users },
+    { label: undergraduate?.label || "Chartered", value: factValue(undergraduate) || String(quickFacts.charter_year), icon: Award },
+    { label: postgraduate?.label || "Schools", value: factValue(postgraduate) || String(quickFacts.schools), icon: School },
+    { label: teachingDepartments?.label || "Main Campus", value: factValue(teachingDepartments) || String(quickFacts.main_campus), icon: Building2 },
+    { label: researchOutput?.label || "County", value: factValue(researchOutput) || String(university.county), icon: Lightbulb },
+    { label: graduates?.label || "Legal Status", value: factValue(graduates) || "Public University", icon: Landmark },
+  ].filter((item) => item.value && item.value !== "undefined");
   const identityFacts = [
-    { label: "Year Chartered", value: String(quickFacts.charter_year || "2013"), icon: Landmark },
-    { label: "Students", value: String(quickFacts.students || quickFacts.student_enrolment || "14,000+"), icon: Users },
-    { label: "Schools", value: String(quickFacts.schools || "8"), icon: School },
-    { label: "Academic Programmes", value: String(quickFacts.programmes || quickFacts.academic_programmes || "60+"), icon: Award },
-  ];
+    { label: "Year Chartered", value: String(quickFacts.charter_year || university.founding_year), icon: Landmark },
+    { label: totalStudents?.label || "Students", value: factValue(totalStudents), icon: Users },
+    { label: "Schools", value: quickFacts.schools ? String(quickFacts.schools) : null, icon: School },
+    { label: teachingDepartments?.label || "Teaching Departments", value: factValue(teachingDepartments), icon: Award },
+  ].filter((item): item is { label: string; value: string; icon: typeof Landmark } => Boolean(item.value));
 
   return (
     <div className="bg-surface text-foreground">
-      <section className="relative isolate min-h-[520px] overflow-hidden bg-primary text-white">
+      <section className="relative isolate min-h-[610px] overflow-hidden bg-[#062d62] text-white lg:min-h-[640px]">
         <Image src={mediaUrl(content?.hero_media, heroFallback)} alt={mediaAlt(content?.hero_media, "Aerial view of Kisii University campus")} fill priority sizes="100vw" className="object-cover motion-safe:animate-[kenburns_24s_ease-in-out_infinite_alternate]" />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,28,68,.96)_0%,rgba(4,38,83,.84)_43%,rgba(4,38,83,.16)_80%)]" />
-        <div className="relative mx-auto flex min-h-[520px] w-full flex-col justify-center px-5 py-9 sm:px-8 lg:px-10">
-          <nav aria-label="Breadcrumb" className="mb-7 text-xs font-semibold text-white/80"><Link href="/" className="hover:text-white">Home</Link><span className="mx-2">/</span><span>{content?.hero_eyebrow || "About Kisii University"}</span></nav>
-          <div className="max-w-2xl">
+        <div className="relative mx-auto flex min-h-[610px] w-full flex-col justify-center px-5 py-10 sm:px-8 lg:min-h-[640px] lg:px-16 xl:px-20">
+          <nav aria-label="Breadcrumb" className="mb-10 text-sm font-semibold text-white/80"><Link href="/" className="hover:text-white">Home</Link><span className="mx-3">/</span><span>{content?.hero_eyebrow || "About Kisii University"}</span></nav>
+          <div className="max-w-[46rem]">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">{content?.hero_eyebrow || "About Kisii University"}</p>
-            <h1 className="mt-3 whitespace-pre-line font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.04] sm:text-5xl lg:text-6xl">{(content?.hero_headline || "A Legacy of Excellence. A Future of Impact.").replace(". A Future", ".\nA Future")}</h1>
-            <p className="mt-5 text-sm font-bold text-secondary">More Than a University. A Force for Good.</p>
-            <div className="mt-3 max-w-xl text-sm leading-7 text-white/85">{heroParagraphs.map((item) => <p key={item}>{item}</p>)}</div>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <button ref={historyTriggerRef} type="button" onClick={() => setHistory(true)} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-secondary px-4 py-2.5 text-xs font-bold uppercase text-foreground transition hover:-translate-y-0.5 hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-white motion-reduce:transform-none">Discover Our Journey <ArrowRight className="h-4 w-4" aria-hidden /></button>
-              {content?.video_url ? <button type="button" onClick={() => setVideoOpen(true)} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-white/60 bg-white/5 px-4 py-2.5 text-xs font-bold uppercase text-white backdrop-blur transition hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white"><Play className="h-4 w-4" aria-hidden /> Watch Our Story</button> : null}
+            <h1 className="mt-4 whitespace-pre-line font-[family-name:var(--font-display)] text-[2.8rem] font-medium leading-[1.02] sm:text-6xl lg:text-[4.6rem]">{(content?.hero_headline || "A Legacy of Excellence. A Future of Impact.").replace(". A Future", ".\nA Future")}</h1>
+            <p className="mt-7 text-base font-bold text-secondary">More Than a University. A Force for Good.</p>
+            <div className="mt-3 max-w-[36rem] text-base leading-7 text-white/85">{heroParagraphs.map((item) => <p key={item}>{item}</p>)}</div>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <button ref={historyTriggerRef} type="button" onClick={() => setHistory(true)} className="inline-flex min-h-12 items-center gap-3 rounded-md bg-secondary px-6 py-3 text-xs font-bold uppercase text-foreground transition hover:-translate-y-0.5 hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-white motion-reduce:transform-none">Discover Our Journey <ArrowRight className="h-4 w-4" aria-hidden /></button>
+              {content?.video_url ? <button type="button" onClick={() => setVideoOpen(true)} className="inline-flex min-h-12 items-center gap-3 rounded-md border border-white/70 bg-white/5 px-6 py-3 text-xs font-bold uppercase text-white backdrop-blur transition hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white"><Play className="h-4 w-4" aria-hidden /> Watch Our Story</button> : null}
             </div>
           </div>
         </div>
       </section>
 
-      <AboutReveal className="mx-auto grid w-full gap-10 border-b border-primary/10 px-5 py-14 sm:px-8 lg:grid-cols-[.78fr_1.22fr] lg:items-center lg:px-10 lg:py-16">
+      <AboutReveal className="mx-auto grid w-full gap-10 border-b border-primary/10 px-5 py-14 sm:px-8 lg:grid-cols-[.78fr_1.22fr] lg:items-center lg:px-16 lg:py-16 xl:px-20">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Our identity</p>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-primary sm:text-4xl">{content?.identity_heading || "Who We Are"}</h2>
-          <p className="mt-4 text-sm leading-7 text-muted-foreground">{content?.identity_narrative || university.overview}</p>
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-medium leading-tight text-primary sm:text-5xl">Who We Are</h2>
+          <p className="mt-5 max-w-xl text-base leading-8 text-muted-foreground">{content?.identity_narrative || university.overview}</p>
           <div className="mt-8 grid grid-cols-2 border-t border-primary/15 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
             {identityFacts.map(({ label, value, icon: Icon }) => <div key={label} className="border-b border-primary/15 px-3 py-5 first:pl-0 sm:border-r sm:last:border-r-0 lg:border-r-0 xl:border-r"><Icon className="h-6 w-6 text-primary" aria-hidden /><p className="mt-3 font-[family-name:var(--font-display)] text-xl font-semibold text-primary">{value}</p><p className="mt-1 text-[0.68rem] font-bold uppercase tracking-wider text-muted-foreground">{label}</p></div>)}
           </div>
         </div>
-        <div className="relative min-h-[320px] overflow-hidden rounded-xl bg-primary shadow-lg">
-          <Image src={mediaUrl(content?.identity_media, identityFallback)} alt={mediaAlt(content?.identity_media, "Kisii University campus and learning environment")} fill sizes="(min-width:1024px) 58vw, 100vw" className="object-cover transition duration-1000 hover:scale-[1.03] motion-reduce:transition-none" />
+        <div className="relative min-h-[390px] overflow-hidden rounded-sm bg-primary shadow-lg lg:min-h-[440px]">
+          <Image src={mediaUrl(content?.identity_media, identityFallback)} alt={mediaAlt(content?.identity_media, "Kisii University research and learning environment")} fill sizes="(min-width:1024px) 58vw, 100vw" className={`object-cover transition duration-1000 motion-reduce:transition-none ${content?.identity_media?.url ? "hover:scale-[1.03]" : "origin-top-right scale-[2.35] object-right-top"}`} />
           {hasVirtualTour ? (
             <button ref={tourTriggerRef} type="button" onClick={() => setTour(true)} className="absolute left-1/2 top-1/2 z-10 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 border-white/80 bg-white text-primary shadow-xl transition hover:scale-105 hover:bg-secondary focus:outline-none focus:ring-4 focus:ring-white/70 motion-reduce:transition-none" aria-label={`Open ${content?.virtual_tour_title || "Kisii University virtual campus tour"}`}>
               <Play className="ml-1 h-6 w-6 fill-current" aria-hidden />
             </button>
           ) : null}
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary via-primary/85 to-transparent px-6 pb-6 pt-20 text-white">
-            <p className="font-[family-name:var(--font-display)] text-2xl font-semibold">Discover Kisii University</p>
-          </div>
         </div>
       </AboutReveal>
 
-      <section className="border-y border-primary/10 bg-[#f8f6f0] px-5 py-12 sm:px-8 lg:px-10 lg:py-16">
+      <section className="border-y border-primary/10 bg-white px-5 py-14 sm:px-8 lg:px-16 lg:py-16 xl:px-20">
         <AboutReveal className="mx-auto w-full">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Our beliefs</p>
           <div className="mt-8 grid gap-8 md:grid-cols-3 md:gap-0">
-            {[{ title: "Our Mission", body: university.mission, icon: Target }, { title: "Our Vision", body: university.vision, icon: Eye }, { title: "Our Philosophy", body: university.philosophy, icon: Sparkles }].map(({ title, body, icon: Icon }) => (
-              <article key={title} className="group border-primary/15 py-2 transition hover:-translate-y-1 motion-reduce:transform-none md:border-l md:px-8 md:first:border-l-0 md:first:pl-0"><span className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/20 text-primary transition group-hover:border-secondary group-hover:bg-primary group-hover:text-secondary"><Icon className="h-5 w-5" aria-hidden /></span><h3 className="mt-5 font-[family-name:var(--font-display)] text-2xl font-semibold text-primary">{title}</h3><p className="mt-3 max-w-sm text-sm leading-7 text-muted-foreground">{body || "This institutional statement will appear when published."}</p></article>
+            {[{ title: "Mission", body: university.mission, icon: Target }, { title: "Vision", body: university.vision, icon: Eye }, { title: "Philosophy", body: university.philosophy, icon: Sparkles }].map(({ title, body, icon: Icon }) => (
+              <article key={title} className="group border-primary/15 py-2 transition hover:-translate-y-1 motion-reduce:transform-none md:border-l md:px-10 md:first:border-l-0 md:first:pl-0"><span className="flex h-14 w-14 items-center justify-center rounded-full border border-[#225b35]/30 text-[#225b35] transition group-hover:bg-[#225b35] group-hover:text-white"><Icon className="h-6 w-6" aria-hidden /></span><h3 className="mt-5 font-[family-name:var(--font-display)] text-3xl font-medium text-[#225b35]">{title}</h3><p className="mt-3 max-w-sm text-base leading-7 text-muted-foreground">{body || "This institutional statement will appear when published."}</p></article>
             ))}
           </div>
         </AboutReveal>
       </section>
 
-      <section className="relative overflow-hidden bg-primary px-5 py-14 text-white sm:px-8 lg:px-10 lg:py-20">
+      <section className="relative overflow-hidden bg-[linear-gradient(110deg,#052e63_0%,#074387_100%)] px-5 py-14 text-white sm:px-8 lg:px-16 lg:py-20 xl:px-20">
         <div className="absolute -left-20 top-0 h-full w-80 opacity-[0.06] [background-image:radial-gradient(circle_at_center,white_0,white_1px,transparent_1.5px)] [background-size:18px_18px]" aria-hidden />
         <AboutReveal className="relative mx-auto grid w-full gap-12 lg:grid-cols-2">
-          <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">{coreValuesSection?.eyebrow || "Core values"}</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-white">{coreValuesSection?.heading || "What guides how we work"}</h2><div className="mt-8 grid gap-6 sm:grid-cols-2">{displayedValues.filter((item) => Boolean(coreValuesSection) || !coreValues.length || coreValues.some((value) => value.toLowerCase().includes(item.title.toLowerCase()))).map((item) => <article key={item.title} className="group flex gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/30 text-secondary transition group-hover:border-secondary group-hover:bg-white/10"><InstitutionalIcon name={item.icon_key} className="h-5 w-5" /></span><div><h3 className="font-bold text-white">{item.title}</h3><p className="mt-2 text-sm leading-6 text-white/70">{item.description}</p></div></article>)}</div></div>
-          <div className="border-t border-white/20 pt-10 lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0"><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">{mandateSection?.eyebrow || "Our mandate"}</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-white">{mandateSection?.heading || "Knowledge in service of society"}</h2><p className="mt-4 text-sm leading-7 text-white/70">{mandateSection?.summary || content?.mandate_introduction}</p><div className="mt-8 grid gap-6 sm:grid-cols-2">{displayedMandate.map((item) => <article key={item.title} className="flex gap-4"><InstitutionalIcon name={item.icon_key} className="mt-1 h-5 w-5 shrink-0 text-secondary" /><div><h3 className="font-bold text-white">{item.title}</h3><p className="mt-1 text-sm leading-6 text-white/70">{item.description}</p></div></article>)}</div></div>
+          <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">{coreValuesSection?.eyebrow || "Core values"}</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-medium text-white">What Guides Us</h2><div className="mt-9 grid gap-x-8 gap-y-7 sm:grid-cols-2">{displayedValues.filter((item) => Boolean(coreValuesSection) || !coreValues.length || coreValues.some((value) => value.toLowerCase().includes(item.title.toLowerCase()))).map((item) => <article key={item.title} className="group flex gap-4"><span className="flex h-12 w-12 shrink-0 items-center justify-center text-white"><InstitutionalIcon name={item.icon_key} className="h-8 w-8" /></span><div><h3 className="font-[family-name:var(--font-display)] text-xl font-semibold text-white">{item.title}</h3><p className="mt-2 text-sm leading-6 text-white/72">{item.description}</p></div></article>)}</div></div>
+          <div className="border-t border-white/20 pt-10 lg:border-l lg:border-t-0 lg:pl-14 lg:pt-0"><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">{mandateSection?.eyebrow || "Our mandate"}</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-medium text-white">Why We Exist</h2><p className="mt-5 max-w-xl text-base leading-8 text-white/75">{mandateSection?.summary || content?.mandate_introduction}</p><ul className="mt-8 space-y-4">{displayedMandate.map((item) => <li key={item.title} className="flex items-center gap-3 text-sm font-semibold text-white"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-lime-400 text-lime-400"><Check className="h-3 w-3" aria-hidden /></span>{item.title}</li>)}</ul></div>
         </AboutReveal>
       </section>
 
-      <section className="bg-[#f8f6f0] px-5 py-14 sm:px-8 lg:px-10 lg:py-16">
+      <section className="bg-white px-5 py-14 sm:px-8 lg:px-16 lg:py-16 xl:px-20">
         <AboutReveal className="mx-auto w-full">
           <div className="grid gap-5 lg:grid-cols-2 lg:items-end"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">From Our Roots. To Our Future.</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-primary sm:text-4xl">A Campus in Transformation</h2></div><p className="text-sm leading-7 text-muted-foreground">Our journey is one of growth, vision and impact. From humble beginnings to a modern university, we continue to invest in people, infrastructure and innovation for a better tomorrow.</p></div>
-          <div className="mt-8 min-h-[300px] overflow-hidden rounded-sm border border-primary/10"><ImageComparison before={mediaUrl(content?.old_campus_media, "/images/history/KSUGreenLandscapingMay2026-3810.jpg")} after={mediaUrl(content?.modern_campus_media, heroFallback)} beforeAlt={content?.old_campus_media?.alt || "Historic Kisii University campus"} afterAlt={content?.modern_campus_media?.alt || "Modern Kisii University campus"} /></div>
+          <div className="mt-8 min-h-[260px] overflow-hidden rounded-sm border border-primary/10"><ImageComparison before={mediaUrl(content?.old_campus_media, "/images/history/KSUGreenLandscapingMay2026-3810.jpg")} after={mediaUrl(content?.modern_campus_media, heroFallback)} beforeAlt={content?.old_campus_media?.alt || "Historic Kisii University campus"} afterAlt={content?.modern_campus_media?.alt || "Modern Kisii University campus"} /></div>
         </AboutReveal>
       </section>
 
-      <section className="bg-white px-5 py-9 sm:px-8 lg:px-10">
+      <section className="bg-white px-5 pb-10 sm:px-8 lg:px-16 xl:px-20">
         <AboutReveal className="mx-auto w-full"><div className="flex flex-col gap-5 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between"><h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-primary">Kisii University at a glance</h2><Link href="/about/numbers-and-facts" className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-primary hover:underline">KSU Numbers & Facts <ArrowRight className="h-4 w-4" aria-hidden /></Link></div><div className="grid grid-cols-2 lg:grid-cols-6">{profile.map(({ label, value, icon: Icon }) => <div key={label} className="border-b border-border px-3 py-6 text-center lg:border-r lg:last:border-r-0"><Icon className="mx-auto h-7 w-7 text-primary" aria-hidden /><p className="mt-3 font-[family-name:var(--font-display)] text-lg font-semibold text-primary">{value}</p><p className="mt-1 text-[0.68rem] font-bold uppercase tracking-wider text-muted-foreground">{label}</p></div>)}</div></AboutReveal>
       </section>
 

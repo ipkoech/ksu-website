@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { PublicAboutPage } from "@/components/about/public-about-page";
 import { PageShell } from "@/components/site-shell";
-import { getPublicAboutData } from "@/lib/public-about-data";
+import { getPublicAboutData, getPublicFactsData } from "@/lib/public-about-data";
 
 export const metadata = {
   title: "About Kisii University",
@@ -9,7 +9,7 @@ export const metadata = {
 };
 
 export default async function AboutPage({ searchParams }: { searchParams: Promise<{ history?: string }> }) {
-  const [data, params] = await Promise.all([getPublicAboutData(), searchParams]);
+  const [data, facts, params] = await Promise.all([getPublicAboutData(), getPublicFactsData(), searchParams]);
   if (!data) notFound();
-  return <PageShell><PublicAboutPage data={data} historyInitiallyOpen={params.history === "open"} /></PageShell>;
+  return <PageShell><PublicAboutPage data={data} facts={facts} historyInitiallyOpen={params.history === "open"} /></PageShell>;
 }
