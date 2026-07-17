@@ -415,6 +415,13 @@ class SeederDataTests(unittest.TestCase):
 
         self.assertIn("title", LEADERSHIP_PEOPLE["dean_ist"]["clear_fields"])
 
+    def test_live_staff_profile_names_are_normalized_from_all_caps(self):
+        specs_by_source_path = {spec["source_path"]: spec for spec in LIVE_STAFF_PROFILE_SPECS}
+        sbe_dean = specs_by_source_path["/profile_view/dr-caleb-n-akuku"]
+
+        self.assertEqual("Caleb N. Akuku", sbe_dean["full_name"])
+        self.assertEqual("Dr.", sbe_dean["title"])
+
     def test_school_dean_portal_users_are_scoped_school_admins(self):
         expected = {
             spec["code"]: spec["dean_key"]

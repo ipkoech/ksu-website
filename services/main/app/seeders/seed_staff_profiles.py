@@ -15,6 +15,25 @@ from .live_staff_profile_snapshot import LIVE_STAFF_PROFILE_PAGES
 
 TITLE_PATTERN = re.compile(r"^(Prof\. Dr\.|Prof\.|Dr\.|Mr\.|Mrs\.|Ms\.|Miss\.)\s+", re.IGNORECASE)
 SUFFIX_PATTERN = re.compile(r",?\s*(PhD|PHD|MSc|MBA|CPA|CPS)\.?$", re.IGNORECASE)
+LOWERCASE_NAME_PARTICLES = {"de", "del", "da", "di", "du", "la", "le", "van", "von", "wa"}
+
+
+def _normalize_name_token(token: str) -> str:
+    if not token:
+        return token
+    if len(token.rstrip(".")) == 1:
+        return token.upper()
+    if token.lower() in LOWERCASE_NAME_PARTICLES:
+        return token.lower()
+    return "-".join(part[:1].upper() + part[1:].lower() for part in token.split("-") if part)
+
+
+def _normalize_profile_full_name(full_name: str) -> str:
+    """Convert all-caps scraped profile names to readable display casing."""
+
+    if not full_name or full_name != full_name.upper():
+        return full_name
+    return " ".join(_normalize_name_token(token) for token in full_name.split())
 
 
 def _profile_name(spec: dict[str, Any]) -> str:
@@ -49,7 +68,7 @@ def _split_title(display_name: str) -> tuple[str | None, str, str | None]:
     if suffix_match:
         suffix = suffix_match.group(1).upper().replace("PHD", "PhD")
         name = SUFFIX_PATTERN.sub("", name).strip()
-    return title, name, suffix
+    return title, _normalize_profile_full_name(name), suffix
 
 
 def _between(text: str, start_marker: str, end_markers: tuple[str, ...]) -> str | None:
