@@ -11,7 +11,38 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ksu_common import PaginatedResult
 from ksu_common.models import AuditLog
 
+from ..schemas.school_portal_audit import SchoolPortalAuditCreate
 from ._base import paginate_query
+
+
+async def record_school_portal_audit(
+    db: AsyncSession,
+    data: SchoolPortalAuditCreate,
+) -> AuditLog:
+    """Persist one mutation audit event with its server-derived school scope."""
+    details = {
+        **data.details,
+        "school_id": str(data.school_id),
+        "request_id": data.request_id,
+    }
+    record = AuditLog(
+        service_name="main",
+        action=data.action,
+        resource_type=data.resource_type,
+        resource_id=str(data.resource_id),
+        request_method=data.request_method.upper(),
+        request_path=data.request_path,
+        status_code=200,
+        status="success",
+        user_id=data.actor_id,
+        ip_address=data.ip_address,
+        user_agent=data.user_agent,
+        details=details,
+        changes=data.changed_fields,
+    )
+    db.add(record)
+    await db.flush()
+    return record
 
 
 class AuditService:
