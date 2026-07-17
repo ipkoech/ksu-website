@@ -332,6 +332,11 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "email": "jodhiambo@kisiiuniversity.ac.ke",
         "institutional_role": "dean_agriculture_and_natural_resources_management",
         "bio": "Dean of the School of Agriculture and Natural Resources Management as listed on the official Academic Division page.",
+        "leadership_message": (
+            "Welcome to the School of Agriculture and Natural Resources Management. Our school is committed to practical training, "
+            "applied research, and responsible stewardship of agricultural and natural resources. We prepare learners to respond to "
+            "food security, environmental, and community development needs through innovation, field engagement, and professional excellence."
+        ),
         "academic_rank": "dean",
     },
     "dean_business": {
@@ -339,6 +344,11 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "title": "Dr.",
         "institutional_role": "dean_business_and_economics",
         "bio": "Dean of the School of Business and Economics as listed on the official Academic Division page.",
+        "leadership_message": (
+            "Welcome to the School of Business and Economics. We focus on developing ethical, innovative, and market-ready graduates "
+            "in business, finance, economics, hospitality, and management. Our programmes connect classroom learning with enterprise, "
+            "leadership, research, and service to Kenya's growing economy."
+        ),
         "academic_rank": "dean",
     },
     "dean_education": {
@@ -346,6 +356,11 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "title": "Sr. Dr.",
         "institutional_role": "dean_education_and_human_resource_development",
         "bio": "Dean SEDHURED as listed on the official Academic Division page.",
+        "leadership_message": (
+            "Welcome to the School of Education and Human Resource Development. Our work is anchored in quality teacher preparation, "
+            "educational leadership, research, and professional service. We are committed to nurturing educators and human resource "
+            "professionals who can transform learning institutions and communities."
+        ),
         "academic_rank": "dean",
     },
     "dean_health": {
@@ -353,6 +368,11 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "title": "Dr.",
         "institutional_role": "dean_health_sciences",
         "bio": "Dean of the School of Health Sciences as displayed on the school page.",
+        "leadership_message": (
+            "Welcome to the School of Health Sciences. We train health professionals who combine competence, compassion, research, "
+            "and service. Through our programmes, students are prepared to strengthen healthcare practice, advance public health, "
+            "and contribute meaningfully to the wellbeing of communities."
+        ),
         "academic_rank": "dean",
     },
     "dean_ist": {
@@ -361,6 +381,11 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "clear_fields": ("title",),
         "institutional_role": "dean_information_science_and_technology",
         "bio": "Dean of the School of Information Science & Technology as listed on the official Academic Division page.",
+        "leadership_message": (
+            "Welcome to the School of Information Science & Technology. Our school advances learning in computing, communication media, "
+            "information science, and library science. We prepare students to solve real-world problems through digital skills, creativity, "
+            "research, and responsible use of technology."
+        ),
         "academic_rank": "dean",
     },
     "dean_pure_sciences": {
@@ -368,6 +393,11 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "title": "Dr.",
         "institutional_role": "dean_pure_and_applied_sciences",
         "bio": "Dean of the School of Pure and Applied Sciences as listed on the official Academic Division page.",
+        "leadership_message": (
+            "Welcome to the School of Pure and Applied Sciences. We provide a strong foundation in scientific inquiry, laboratory practice, "
+            "and quantitative reasoning. Our goal is to develop scientists and problem-solvers who can support research, industry, education, "
+            "and evidence-based development."
+        ),
         "academic_rank": "dean",
     },
     "dean_arts": {
@@ -375,6 +405,11 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "title": "Dr.",
         "institutional_role": "dean_arts_and_social_sciences",
         "bio": "Dean SASS as listed on the official Academic Division page.",
+        "leadership_message": (
+            "Welcome to the School of Arts and Social Sciences. Our school promotes critical inquiry into language, society, culture, "
+            "governance, history, and human development. We prepare students to think deeply, communicate clearly, serve ethically, "
+            "and contribute to social transformation."
+        ),
         "academic_rank": "dean",
     },
     "dean_law": {
@@ -382,6 +417,11 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "title": "Dr.",
         "institutional_role": "head_school_of_law",
         "bio": "Dean of the School of Law as listed on the official Academic Division page.",
+        "leadership_message": (
+            "Welcome to the School of Law. We are committed to rigorous legal education, ethical practice, research, and public service. "
+            "Our students are prepared to understand the law in context, defend justice, and contribute to legal and institutional development "
+            "at local, regional, and international levels."
+        ),
         "academic_rank": "dean",
     },
     "council_member_peter_mageto": {

@@ -406,6 +406,7 @@ class SeederDataTests(unittest.TestCase):
             dean = LEADERSHIP_PEOPLE[dean_key]
             self.assertEqual(title, dean["title"])
             self.assertEqual(full_name, dean["full_name"])
+            self.assertGreater(len(dean.get("leadership_message", "")), 120)
 
         self.assertIn("title", LEADERSHIP_PEOPLE["dean_ist"]["clear_fields"])
 
