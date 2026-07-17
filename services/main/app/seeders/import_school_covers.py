@@ -8,7 +8,6 @@ import hashlib
 import json
 import os
 import shutil
-import struct
 import uuid
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
@@ -16,6 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
+from PIL import Image, UnidentifiedImageError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -52,7 +52,7 @@ class SchoolCoverBatchError(ValueError):
         details = {
             "missing": self.missing,
             "unexpected": self.unexpected,
-            "invalid": self.invalid,
+            "invalid_webp": self.invalid,
             "unapproved": self.unapproved,
             "hash_mismatches": self.hash_mismatches,
             "duplicates": self.duplicates,
@@ -139,58 +139,17 @@ def _manifest_items(
     return cast(Mapping[str, Mapping[str, object]], items)
 
 
-def _webp_dimensions(path: Path) -> tuple[int, int] | None:
-    data = path.read_bytes()
-    if (
-        len(data) < 20
-        or data[:4] != b"RIFF"
-        or data[8:12] != b"WEBP"
-        or struct.unpack_from("<I", data, 4)[0] != len(data) - 8
-    ):
-        return None
-    offset = 12
-    extended_dimensions: tuple[int, int] | None = None
-    image_dimensions: tuple[int, int] | None = None
-    while offset + 8 <= len(data):
-        kind = data[offset : offset + 4]
-        size = struct.unpack_from("<I", data, offset + 4)[0]
-        chunk = data[offset + 8 : offset + 8 + size]
-        if len(chunk) != size:
-            return None
-        if kind == b"VP8X" and size == 10:
-            extended_dimensions = (
-                1 + int.from_bytes(chunk[4:7], "little"),
-                1 + int.from_bytes(chunk[7:10], "little"),
-            )
-        elif kind == b"VP8 " and size >= 20 and chunk[3:6] == b"\x9d\x01\x2a":
-            frame_tag = int.from_bytes(chunk[:3], "little")
-            first_partition_size = frame_tag >> 5
-            if (
-                frame_tag & 1
-                or first_partition_size == 0
-                or 10 + first_partition_size > size
-            ):
-                return None
-            image_dimensions = (
-                struct.unpack_from("<H", chunk, 6)[0] & 0x3FFF,
-                struct.unpack_from("<H", chunk, 8)[0] & 0x3FFF,
-            )
-        elif kind == b"VP8L" and size >= 10 and chunk[0] == 0x2F:
-            bits = int.from_bytes(chunk[1:5], "little")
-            if (bits >> 29) & 0x07:
-                return None
-            image_dimensions = (
-                1 + (bits & 0x3FFF),
-                1 + ((bits >> 14) & 0x3FFF),
-            )
-        offset += 8 + size + (size % 2)
-    if offset != len(data) or image_dimensions is None:
-        return None
-    return (
-        image_dimensions
-        if extended_dimensions in (None, image_dimensions)
-        else None
-    )
+def _is_decodable_school_webp(path: Path) -> bool:
+    try:
+        with Image.open(path) as image:
+            if image.format != "WEBP" or image.size != (1600, 900):
+                return False
+            image.verify()
+        with Image.open(path) as image:
+            image.load()
+            return image.format == "WEBP" and image.size == (1600, 900)
+    except (OSError, SyntaxError, UnidentifiedImageError):
+        return False
 
 
 def validate_school_cover_batch(
@@ -214,7 +173,7 @@ def validate_school_cover_batch(
     unexpected = actual - expected
     paths = {name: source_dir / name for name in expected & actual}
     invalid = {
-        name for name, path in paths.items() if _webp_dimensions(path) != (1600, 900)
+        name for name, path in paths.items() if not _is_decodable_school_webp(path)
     }
 
     items = _manifest_items(manifest)
@@ -393,6 +352,7 @@ async def import_school_covers(
                         is_public=True,
                         is_published=True,
                         status="published",
+                        workflow_status="published",
                     )
                 )
             else:
@@ -400,6 +360,7 @@ async def import_school_covers(
                 link.is_public = True
                 link.is_published = True
                 link.status = "published"
+                link.workflow_status = "published"
                 link.display_order = 1
             school.cover_image_id = media.id
             await db.flush()

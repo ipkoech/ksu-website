@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import struct
 import subprocess
 import uuid
 from pathlib import Path
@@ -10,6 +11,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
+from app.models import Media, MediaLink
 from app.seeders import import_school_covers as importer
 from app.seeders.import_school_covers import (
     SchoolCoverBatchError,
@@ -56,6 +58,17 @@ def _batch(tmp_path: Path, *, status: str = "approved") -> tuple[Path, Path]:
     manifest_path = tmp_path / "manifest.json"
     manifest_path.write_text(json.dumps({"items": items}), encoding="utf-8")
     return source_dir, manifest_path
+
+
+def _write_dimensioned_corrupt_webp(path: Path) -> None:
+    payload = (
+        b"\x20\x00\x00"
+        + b"\x9d\x01\x2a"
+        + struct.pack("<HH", 1600, 900)
+        + b"\x00" * 10
+    )
+    chunk = b"VP8 " + struct.pack("<I", len(payload)) + payload
+    path.write_bytes(b"RIFF" + struct.pack("<I", len(chunk) + 4) + b"WEBP" + chunk)
 
 
 def test_validator_requires_exact_complete_approved_batch(tmp_path: Path) -> None:
@@ -106,6 +119,26 @@ def test_validator_rejects_vp8x_metadata_without_image_payload(tmp_path: Path) -
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     manifest["items"][concept.school_code]["sha256"] = hashlib.sha256(
         synthetic
+    ).hexdigest()
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(SchoolCoverBatchError) as error:
+        validate_school_cover_batch(source_dir, manifest_path)
+
+    assert concept.filename in error.value.invalid
+    assert "invalid_webp" in str(error.value)
+
+
+def test_validator_rejects_dimensioned_but_undecodable_vp8_payload(
+    tmp_path: Path,
+) -> None:
+    source_dir, manifest_path = _batch(tmp_path)
+    concept = SCHOOL_COVER_CONCEPTS[0]
+    path = source_dir / concept.filename
+    _write_dimensioned_corrupt_webp(path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["items"][concept.school_code]["sha256"] = hashlib.sha256(
+        path.read_bytes()
     ).hexdigest()
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
@@ -176,11 +209,13 @@ async def test_import_assigns_school_media_link_and_panorama_metadata(
         link.is_public,
         link.is_published,
         link.status,
+        link.workflow_status,
     ) == (
         "school",
         "cover-image",
         True,
         True,
+        "published",
         "published",
     )
 
@@ -201,6 +236,7 @@ async def test_import_rerun_updates_without_duplicate_media_or_links(
             is_public=False,
             is_published=False,
             status="draft",
+            workflow_status="draft",
             display_order=99,
         )
         for _ in SCHOOL_COVER_CONCEPTS
@@ -226,8 +262,14 @@ async def test_import_rerun_updates_without_duplicate_media_or_links(
         for school, existing in zip(schools, media, strict=True)
     )
     assert all(
-        (link.is_public, link.is_published, link.status, link.display_order)
-        == (True, True, "published", 1)
+        (
+            link.is_public,
+            link.is_published,
+            link.status,
+            link.workflow_status,
+            link.display_order,
+        )
+        == (True, True, "published", "published", 1)
         for link in links
     )
     assert all(
@@ -245,33 +287,38 @@ async def test_import_retargets_existing_generic_cover_link_without_adding_link(
         SimpleNamespace(id=uuid.uuid4(), code=concept.school_code, cover_image_id=None)
         for concept in SCHOOL_COVER_CONCEPTS
     ]
-    media = [SimpleNamespace(id=uuid.uuid4()) for _ in SCHOOL_COVER_CONCEPTS]
     links = [
         SimpleNamespace(
             media_id=uuid.uuid4(),
             is_public=False,
             is_published=False,
             status="draft",
+            workflow_status="draft",
             display_order=99,
         )
         for _ in SCHOOL_COVER_CONCEPTS
     ]
     results = [_Result(school) for school in schools]
-    for existing_media, link in zip(media, links, strict=True):
-        results.extend((_Result(existing_media), _Result(link)))
+    for link in links:
+        results.extend((_Result(None), _Result(link)))
     db = SimpleNamespace(
         execute=AsyncMock(side_effect=results), add=Mock(), flush=AsyncMock()
     )
 
-    await import_school_covers(
+    summary = await import_school_covers(
         db,
         source_dir,
         manifest=manifest_path,
         upload_root=tmp_path / "uploads",
     )
 
-    db.add.assert_not_called()
-    assert [link.media_id for link in links] == [item.id for item in media]
+    assert summary == importer.ImportSummary(imported=8, updated=0)
+    added = [call.args[0] for call in db.add.call_args_list]
+    assert len(added) == 8
+    assert all(isinstance(item, Media) for item in added)
+    assert not any(isinstance(item, MediaLink) for item in added)
+    assert [link.media_id for link in links] == [item.id for item in added]
+    assert all(link.workflow_status == "published" for link in links)
 
 
 @pytest.mark.asyncio
