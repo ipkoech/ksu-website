@@ -290,6 +290,17 @@ async def get_public_team(
     )
 
 
+@router.get("/academic-organization")
+@cached_public(timeout=300, vary_on=("fields", "include"))
+async def get_public_academic_organization(
+    request: Request,
+    db: DbSession,
+    fields: FieldSelection = FieldsDep,
+):
+    payload = await _academic_organization_data(db)
+    return success(data=apply_field_selection(payload, fields, always_include={"id", "key"}))
+
+
 ACADEMIC_TEAM_ROLES = {
     "professor",
     "associate_professor",
@@ -329,6 +340,121 @@ def _member_payload(
         "photo_url": photo_url,
         "hierarchy_level": assignment.hierarchy_level,
         "display_order": assignment.display_order,
+    }
+
+
+def _organization_position(assignment: StaffAssignment) -> str:
+    return (
+        getattr(assignment, "public_role_label", None)
+        or getattr(assignment, "official_designation", None)
+        or assignment.title
+        or _role_label(assignment.role)
+    )
+
+
+def _organization_entity_payload(entity_type: str, entity: Any) -> dict[str, Any]:
+    return {
+        "id": str(entity.id),
+        "type": entity_type,
+        "name": entity.name,
+        "slug": getattr(entity, "slug", None),
+        "code": getattr(entity, "code", None),
+    }
+
+
+def _organization_photo_url(person: Person, photos: dict[uuid.UUID, str | None] | None) -> str | None:
+    if photos is not None and person.id in photos:
+        return photos[person.id]
+    return get_media_public_url(getattr(person, "photo", None))
+
+
+def _organization_member_payload(
+    assignment: StaffAssignment,
+    entity_type: str,
+    entity: Any,
+    photos: dict[uuid.UUID, str | None] | None = None,
+) -> dict[str, Any]:
+    person = assignment.person
+    profile_slug = getattr(person, "slug", None) or str(person.id)
+    return {
+        "id": str(assignment.id),
+        "person_id": str(person.id),
+        "profile_slug": profile_slug,
+        "profile_url": f"/staff/{profile_slug}",
+        "name": _display_name(person),
+        "title": person.title,
+        "position": _organization_position(assignment),
+        "role": assignment.role,
+        "photo_url": _organization_photo_url(person, photos),
+        "hierarchy_level": assignment.hierarchy_level,
+        "display_order": assignment.display_order,
+        "entity": _organization_entity_payload(entity_type, entity),
+    }
+
+
+def _academic_organization_payload(
+    *,
+    division: Division,
+    registrar_wing: Wing | None,
+    dvc_assignments: list[StaffAssignment],
+    registrar_assignments: list[StaffAssignment],
+    dean_assignments: list[StaffAssignment],
+    schools_by_id: dict[uuid.UUID, School],
+    photos: dict[uuid.UUID, str | None] | None = None,
+) -> dict[str, Any]:
+    tier_specs = [
+        (
+            "dvc",
+            "Deputy Vice Chancellor",
+            [
+                _organization_member_payload(assignment, "division", division, photos)
+                for assignment in dvc_assignments
+                if assignment.person is not None
+            ],
+        ),
+        (
+            "registrar",
+            "Registrar",
+            [
+                _organization_member_payload(assignment, "wing", registrar_wing, photos)
+                for assignment in registrar_assignments
+                if assignment.person is not None and registrar_wing is not None
+            ],
+        ),
+        (
+            "deans",
+            "Deans",
+            [
+                _organization_member_payload(assignment, "school", schools_by_id[assignment.entity_id], photos)
+                for assignment in dean_assignments
+                if assignment.person is not None and assignment.entity_id in schools_by_id
+            ],
+        ),
+    ]
+    tiers = [
+        {
+            "key": key,
+            "label": label,
+            "members": members,
+            "count": len(members),
+        }
+        for key, label, members in tier_specs
+        if members
+    ]
+    return {
+        "key": "academic_organization",
+        "label": "Academic Organization",
+        "entity": _organization_entity_payload("division", division),
+        "tiers": tiers,
+        "hierarchy": [
+            {"key": tier["key"], "label": tier["label"], "assignment_ids": [member["id"] for member in tier["members"]]}
+            for tier in tiers
+        ],
+        "counts": {
+            "tiers": len(tiers),
+            "members": sum(tier["count"] for tier in tiers),
+            "deans": next((tier["count"] for tier in tiers if tier["key"] == "deans"), 0),
+        },
     }
 
 
@@ -375,6 +501,115 @@ async def _load_entity_assignments(
     )
     result = await db.execute(query)
     return list(result.scalars().unique().all())
+
+
+async def _load_academic_organization_assignments(
+    db: DbSession,
+    *,
+    entity_type: str,
+    entity_id: uuid.UUID,
+    roles: set[str],
+) -> list[StaffAssignment]:
+    query = (
+        select(StaffAssignment)
+        .join(Person, StaffAssignment.person_id == Person.id)
+        .options(selectinload(StaffAssignment.person))
+        .where(
+            StaffAssignment.entity_type == entity_type,
+            StaffAssignment.entity_id == entity_id,
+            StaffAssignment.role.in_(roles),
+            StaffAssignment.status == "active",
+            StaffAssignment.is_public.is_(True),
+            StaffAssignment.deleted_at.is_(None),
+            Person.deleted_at.is_(None),
+            Person.is_active.is_(True),
+            Person.is_public.is_(True),
+            Person.show_on_directory.is_(True),
+        )
+        .order_by(StaffAssignment.hierarchy_level.asc(), StaffAssignment.display_order.asc(), Person.full_name.asc())
+    )
+    result = await db.execute(query)
+    return list(result.scalars().unique().all())
+
+
+async def _academic_organization_data(db: DbSession) -> dict[str, Any]:
+    division_result = await db.execute(
+        select(Division).where(
+            Division.code == "ARSA",
+            Division.deleted_at.is_(None),
+            Division.is_active.is_(True),
+            Division.is_public.is_(True),
+        )
+    )
+    division = division_result.scalar_one_or_none()
+    if division is None:
+        raise HTTPException(status_code=404, detail="Academic division not found")
+
+    wing_result = await db.execute(
+        select(Wing).where(
+            Wing.division_id == division.id,
+            Wing.code == "RAA",
+            Wing.deleted_at.is_(None),
+            Wing.is_active.is_(True),
+            Wing.is_public.is_(True),
+        )
+    )
+    registrar_wing = wing_result.scalar_one_or_none()
+
+    dvc_assignments = await _load_academic_organization_assignments(
+        db,
+        entity_type="division",
+        entity_id=division.id,
+        roles={"dvc", "deputy_vice_chancellor", "dvc_arsa"},
+    )
+    registrar_assignments = (
+        await _load_academic_organization_assignments(
+            db,
+            entity_type="wing",
+            entity_id=registrar_wing.id,
+            roles={"registrar", "registrar_academic"},
+        )
+        if registrar_wing is not None
+        else []
+    )
+
+    schools_result = await db.execute(
+        select(School).where(
+            School.deleted_at.is_(None),
+            School.is_active.is_(True),
+            School.is_public.is_(True),
+        )
+    )
+    schools = list(schools_result.scalars().all())
+    schools_by_id = {school.id: school for school in schools}
+    dean_assignments = [
+        assignment
+        for assignment in await _load_entity_assignments(db, [("school", school.id) for school in schools])
+        if assignment.role == "dean"
+    ]
+    dean_assignments = sorted(
+        dean_assignments,
+        key=lambda assignment: (
+            getattr(schools_by_id.get(assignment.entity_id), "display_order", 100),
+            getattr(schools_by_id.get(assignment.entity_id), "name", ""),
+            assignment.display_order,
+        ),
+    )
+    people = [
+        assignment.person
+        for assignment in [*dvc_assignments, *registrar_assignments, *dean_assignments]
+        if assignment.person is not None
+    ]
+    photos = await _photo_urls(db, people)
+    return _academic_organization_payload(
+        division=division,
+        registrar_wing=registrar_wing,
+        dvc_assignments=dvc_assignments,
+        registrar_assignments=registrar_assignments,
+        dean_assignments=dean_assignments,
+        schools_by_id=schools_by_id,
+        photos=photos,
+    )
 
 
 def _tier(key: str, label: str, assignments: list[StaffAssignment], photos: dict[uuid.UUID, str | None]):
