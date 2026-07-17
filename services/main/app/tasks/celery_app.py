@@ -37,6 +37,7 @@ celery_app.conf.update(
         "main.imports.commit": {"queue": "main.imports"},
         "main.media.process_upload_file": {"queue": "main.media"},
         "main.media.cleanup_expired_batches": {"queue": "main.maintenance"},
+        "main.inquiries.send_reply": {"queue": "main.email"},
     },
     beat_schedule={
         "expire-notifications-every-15-minutes": {
@@ -66,4 +67,5 @@ celery_app.conf.imports = (
     "app.tasks.notifications",
     "app.tasks.social_posts",
     "app.tasks.media",
+    "app.tasks.inquiries",
 )

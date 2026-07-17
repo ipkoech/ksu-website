@@ -47,6 +47,7 @@ from .public_pages import router as public_pages_router
 from .public_research_context import router as public_research_context_router
 from .public_entity_content import router as public_entity_content_router
 from .public_team import router as public_team_router
+from .public.inquiries import router as public_inquiries_router
 from .realtime import router as realtime_router
 from .programmes import router as programmes_router
 from .search import router as search_router
@@ -134,3 +135,4 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(public_research_context_router, prefix="/api/v1/public/research/context", tags=["Public"])
     app.include_router(public_entity_content_router, prefix="/api/v1/public/content", tags=["Public"])
     app.include_router(public_team_router, prefix="/api/v1/public", tags=["Public"])
+    app.include_router(public_inquiries_router, prefix="/api/v1/public", tags=["Public"])

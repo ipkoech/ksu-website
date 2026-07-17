@@ -107,6 +107,7 @@ from .public_page import PublicSitePage
 
 # Support and notifications
 from .support import ContactDirectory, FAQ, SupportTicket
+from .contact_inquiry import ContactInquiry, ContactInquiryMessage
 from .notification import Notification, NotificationDelivery, NotificationTemplate
 
 __all__ = [
@@ -222,6 +223,8 @@ __all__ = [
     "FAQ",
     "ContactDirectory",
     "SupportTicket",
+    "ContactInquiry",
+    "ContactInquiryMessage",
     "Notification",
     "NotificationTemplate",
     "NotificationDelivery",
