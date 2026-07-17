@@ -333,9 +333,9 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "institutional_role": "dean_agriculture_and_natural_resources_management",
         "bio": "Dean of the School of Agriculture and Natural Resources Management as listed on the official Academic Division page.",
         "leadership_message": (
-            "Welcome to the School of Agriculture and Natural Resources Management. Our school is committed to practical training, "
-            "applied research, and responsible stewardship of agricultural and natural resources. We prepare learners to respond to "
-            "food security, environmental, and community development needs through innovation, field engagement, and professional excellence."
+            "Agriculture and natural resources sit at the centre of food security, livelihoods, and climate resilience. In this school, "
+            "we want students to learn from the farm, the laboratory, and the community with equal seriousness. Our priority is to graduate "
+            "professionals who can improve production systems, conserve resources, and turn research into practical solutions for households and industry."
         ),
         "academic_rank": "dean",
     },
@@ -345,9 +345,9 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "institutional_role": "dean_business_and_economics",
         "bio": "Dean of the School of Business and Economics as listed on the official Academic Division page.",
         "leadership_message": (
-            "Welcome to the School of Business and Economics. We focus on developing ethical, innovative, and market-ready graduates "
-            "in business, finance, economics, hospitality, and management. Our programmes connect classroom learning with enterprise, "
-            "leadership, research, and service to Kenya's growing economy."
+            "Business education must help learners read markets, manage people, account responsibly, and build enterprises that last. Our school "
+            "brings together economics, finance, hospitality, management, and entrepreneurship so that students can connect theory with decisions "
+            "made in boardrooms, public institutions, hotels, banks, small businesses, and emerging ventures."
         ),
         "academic_rank": "dean",
     },
@@ -357,9 +357,9 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "institutional_role": "dean_education_and_human_resource_development",
         "bio": "Dean SEDHURED as listed on the official Academic Division page.",
         "leadership_message": (
-            "Welcome to the School of Education and Human Resource Development. Our work is anchored in quality teacher preparation, "
-            "educational leadership, research, and professional service. We are committed to nurturing educators and human resource "
-            "professionals who can transform learning institutions and communities."
+            "Teacher preparation is a public trust. Our school trains educators, counsellors, curriculum specialists, and education managers who understand "
+            "the learner, the classroom, and the wider community. We place strong emphasis on professional discipline, research, mentorship, and the ability "
+            "to improve schools through thoughtful leadership."
         ),
         "academic_rank": "dean",
     },
@@ -369,9 +369,9 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "institutional_role": "dean_health_sciences",
         "bio": "Dean of the School of Health Sciences as displayed on the school page.",
         "leadership_message": (
-            "Welcome to the School of Health Sciences. We train health professionals who combine competence, compassion, research, "
-            "and service. Through our programmes, students are prepared to strengthen healthcare practice, advance public health, "
-            "and contribute meaningfully to the wellbeing of communities."
+            "Health training carries a direct responsibility to patients, families, and communities. We expect our students to pursue competence with humility, "
+            "compassion, and evidence-based practice. Across our health programmes, clinical exposure, laboratory learning, public health thinking, and research "
+            "work together to prepare graduates for service in demanding healthcare environments."
         ),
         "academic_rank": "dean",
     },
@@ -382,9 +382,9 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "institutional_role": "dean_information_science_and_technology",
         "bio": "Dean of the School of Information Science & Technology as listed on the official Academic Division page.",
         "leadership_message": (
-            "Welcome to the School of Information Science & Technology. Our school advances learning in computing, communication media, "
-            "information science, and library science. We prepare students to solve real-world problems through digital skills, creativity, "
-            "research, and responsible use of technology."
+            "Technology changes quickly, but the need for clear thinking, reliable systems, and responsible communication remains constant. Our school brings "
+            "computing, media, information science, and library science into one learning environment where students build, analyse, communicate, and manage "
+            "knowledge for organisations and society."
         ),
         "academic_rank": "dean",
     },
@@ -394,9 +394,9 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "institutional_role": "dean_pure_and_applied_sciences",
         "bio": "Dean of the School of Pure and Applied Sciences as listed on the official Academic Division page.",
         "leadership_message": (
-            "Welcome to the School of Pure and Applied Sciences. We provide a strong foundation in scientific inquiry, laboratory practice, "
-            "and quantitative reasoning. Our goal is to develop scientists and problem-solvers who can support research, industry, education, "
-            "and evidence-based development."
+            "Science asks students to be patient with evidence and bold in seeking explanations. In our laboratories, field activities, and quantitative courses, "
+            "we train learners to observe carefully, test ideas, and communicate results clearly. The school supports scientific talent that can serve research, "
+            "teaching, industry, and public problem-solving."
         ),
         "academic_rank": "dean",
     },
@@ -406,9 +406,9 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "institutional_role": "dean_arts_and_social_sciences",
         "bio": "Dean SASS as listed on the official Academic Division page.",
         "leadership_message": (
-            "Welcome to the School of Arts and Social Sciences. Our school promotes critical inquiry into language, society, culture, "
-            "governance, history, and human development. We prepare students to think deeply, communicate clearly, serve ethically, "
-            "and contribute to social transformation."
+            "Societies need graduates who can interpret people, institutions, cultures, histories, conflicts, and ideas with care. Our school gives students "
+            "space to ask difficult questions, strengthen communication, understand human behaviour, and apply social knowledge to peace, governance, development, "
+            "heritage, and community life."
         ),
         "academic_rank": "dean",
     },
@@ -418,9 +418,9 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "institutional_role": "head_school_of_law",
         "bio": "Dean of the School of Law as listed on the official Academic Division page.",
         "leadership_message": (
-            "Welcome to the School of Law. We are committed to rigorous legal education, ethical practice, research, and public service. "
-            "Our students are prepared to understand the law in context, defend justice, and contribute to legal and institutional development "
-            "at local, regional, and international levels."
+            "Legal education is more than mastering statutes and cases; it is learning judgment, ethics, argument, and service. The School of Law prepares "
+            "students to understand legal rules in their social context, defend justice with discipline, and contribute to institutions that protect rights, "
+            "resolve disputes, and serve the public good."
         ),
         "academic_rank": "dean",
     },

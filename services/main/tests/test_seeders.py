@@ -22,7 +22,11 @@ from app.seeders.seed_handbook import (
     HANDBOOK_STUDENT_AFFAIRS_SERVICES,
 )
 from app.seeders.programme_catalogue import BROCHURE_PROGRAMMES
-from app.seeders.seed_portal_users import PORTAL_USER_SPECS, SCHOOL_DEAN_PORTAL_USER_SPECS
+from app.seeders.seed_portal_users import (
+    PORTAL_USER_SPECS,
+    SCHOOL_DEAN_PORTAL_USER_PASSWORD,
+    SCHOOL_DEAN_PORTAL_USER_SPECS,
+)
 from app.seeders.seed_rbac import RECONCILED_ROLE_NAMES, ROLE_SPECS
 from app.seeders.seed_programmes import programme_code
 from app.seeders.seed_public_records import CLUB_SPECS, CONTACT_SPECS, DOWNLOAD_SPECS, FAQ_SPECS
@@ -407,6 +411,7 @@ class SeederDataTests(unittest.TestCase):
             self.assertEqual(title, dean["title"])
             self.assertEqual(full_name, dean["full_name"])
             self.assertGreater(len(dean.get("leadership_message", "")), 120)
+            self.assertFalse(dean["leadership_message"].startswith("Welcome to the School"))
 
         self.assertIn("title", LEADERSHIP_PEOPLE["dean_ist"]["clear_fields"])
 
@@ -423,6 +428,7 @@ class SeederDataTests(unittest.TestCase):
         self.assertEqual(expected, actual)
         self.assertTrue(all(spec["role"] == "school_admin" for spec in SCHOOL_DEAN_PORTAL_USER_SPECS))
         self.assertEqual([], duplicates(spec["key"] for spec in SCHOOL_DEAN_PORTAL_USER_SPECS))
+        self.assertEqual("ChangeMe@26", SCHOOL_DEAN_PORTAL_USER_PASSWORD)
 
     def test_legacy_content_admin_is_explicitly_reconciled_after_reseeding(self):
         roles_by_name = {spec["name"]: spec for spec in ROLE_SPECS}

@@ -73,6 +73,8 @@ PORTAL_USER_SPECS = [
     },
 ]
 
+SCHOOL_DEAN_PORTAL_USER_PASSWORD = "ChangeMe@26"
+
 SCHOOL_DEAN_PORTAL_USER_SPECS = [
     {
         "key": f"school_dean_{school_spec['code'].lower()}",
@@ -171,13 +173,12 @@ async def seed_portal_users(db: AsyncSession, ctx: SeedContext) -> None:
             note="Seeded portal-specific assignment for browser QA",
         )
 
-    await _seed_school_dean_portal_users(db, ctx, password)
+    await _seed_school_dean_portal_users(db, ctx)
 
 
 async def _seed_school_dean_portal_users(
     db: AsyncSession,
     ctx: SeedContext,
-    password: str,
 ) -> None:
     role = ctx.roles.get("school_admin")
     if role is None:
@@ -195,7 +196,7 @@ async def _seed_school_dean_portal_users(
             ctx,
             spec["key"],
             email=person.email,
-            password=password,
+            password=SCHOOL_DEAN_PORTAL_USER_PASSWORD,
             full_name=person.full_name,
             phone=person.phone,
             avatar_url=None,
