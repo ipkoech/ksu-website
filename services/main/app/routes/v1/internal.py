@@ -140,6 +140,29 @@ async def get_department_snapshot(department_id: uuid.UUID, db: AsyncSession = D
     }
 
 
+@router.get(
+    "/schools/{school_id}/departments/{department_id}",
+    dependencies=[Depends(verify_internal_key)],
+)
+async def check_department_school(
+    school_id: uuid.UUID,
+    department_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Validate the cross-service school/department ownership pair."""
+    department = await DepartmentService.get_by_id(db, department_id, is_active=None)
+    if department is None or department.school_id != school_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Department does not belong to school",
+        )
+    return {
+        "school_id": str(school_id),
+        "department_id": str(department_id),
+        "exists": True,
+    }
+
+
 @router.get("/media/{media_id}", dependencies=[Depends(verify_internal_key)])
 async def get_public_media_snapshot(media_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """Return browser-safe fields for public media referenced by sibling services."""
