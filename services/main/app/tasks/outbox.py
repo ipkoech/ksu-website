@@ -90,13 +90,16 @@ async def _publish_one(event_id: uuid.UUID) -> str:
     serialized = json.dumps(envelope, separators=(",", ":"), sort_keys=True)
     try:
         redis = await get_redis()
-        await redis.xadd(
+        cursor = await redis.xadd(
             "ksu:domain-events",
             {"event_id": str(event.id), "event": serialized},
             maxlen=20_000,
             approximate=True,
         )
-        await redis.publish("ksu:domain-events", serialized)
+        await redis.publish(
+            "ksu:domain-events",
+            json.dumps({"cursor": cursor, "event": envelope}, separators=(",", ":")),
+        )
     except Exception as exc:
         async with AsyncSessionLocal() as db:
             current = await OutboxEvent.get_by_id(db, event.id)

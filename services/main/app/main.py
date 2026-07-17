@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import select
 
 from ksu_common import configure_service_logging, invalidate_prefix, persist_audit_log, should_skip_audit
+from ksu_common.cache import close_redis
 
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal
@@ -18,6 +19,8 @@ from .api.v1 import register_routes
 from .cache_invalidation import should_invalidate_public_cache
 from .helpers.storage import normalize_storage_path
 from .models import Media
+from .realtime.connection_manager import manager
+from .realtime.redis_subscriber import subscriber
 
 settings = get_settings()
 
@@ -30,7 +33,13 @@ configure_service_logging(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    yield
+    await subscriber.start()
+    try:
+        yield
+    finally:
+        await subscriber.stop()
+        await manager.close_all()
+        await close_redis()
 
 
 def create_app() -> FastAPI:
