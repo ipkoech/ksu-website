@@ -49,6 +49,63 @@ def _user(*, role_assignments=None, staff_assignments=None):
 
 
 class PortalAccessTests(unittest.TestCase):
+    def test_school_editor_permissions_emit_one_locked_school_portal(self):
+        school_id = uuid.uuid4()
+        user = _user(
+            role_assignments=[
+                _assignment(
+                    "school_editor",
+                    scope_type="school",
+                    scope_id=school_id,
+                    permissions=[
+                        "school.dashboard.view",
+                        "school.content.view",
+                        "school.content.manage",
+                    ],
+                ),
+            ],
+        )
+
+        records = build_portal_access_records(
+            user,
+            scope_labels={("school", school_id): "School of Computing"},
+        )
+
+        self.assertEqual(1, len(records))
+        portal = records[0]
+        self.assertEqual("schools", portal.key)
+        self.assertEqual("school", portal.scope_type)
+        self.assertEqual(school_id, portal.scope_id)
+        self.assertTrue(portal.locked_scope)
+        self.assertEqual(
+            [
+                "school.content.manage",
+                "school.content.view",
+                "school.dashboard.view",
+            ],
+            portal.permissions,
+        )
+
+    def test_central_academic_admin_keeps_global_schools_portal(self):
+        user = _user(
+            role_assignments=[
+                _assignment(
+                    "academic_admin",
+                    permissions=["academic.view", "academic.manage_schools"],
+                ),
+            ],
+        )
+
+        records = build_portal_access_records(user, scope_labels={})
+
+        portal = next(record for record in records if record.key == "schools")
+        self.assertEqual("global", portal.scope_type)
+        self.assertIsNone(portal.scope_id)
+        self.assertEqual(
+            ["academic.manage_schools", "academic.view"],
+            portal.permissions,
+        )
+
     def test_staff_role_with_media_upload_gets_profile_and_corporate_communication_portals(self):
         user = _user(
             role_assignments=[

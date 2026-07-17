@@ -14,42 +14,13 @@ from sqlalchemy.orm import joinedload
 
 from ..deps import CurrentUser, DbSession
 from ..models import Department, School, User
+from ..security.scopes import SCHOOL_PORTAL_PERMISSION_NAMES
 
 SCHOOL_ADMIN_ROLE = "school_admin"
 SCHOOL_EDITOR_ROLE = "school_editor"
 SCHOOL_PORTAL_ROLE_NAMES = frozenset({SCHOOL_ADMIN_ROLE, SCHOOL_EDITOR_ROLE})
 
-SCHOOL_PORTAL_PERMISSIONS = (
-    "school.audit.view",
-    "school.content.bulk",
-    "school.content.manage",
-    "school.content.submit",
-    "school.content.view",
-    "school.dashboard.view",
-    "school.departments.bulk",
-    "school.departments.manage",
-    "school.departments.view",
-    "school.inquiries.manage",
-    "school.inquiries.reply",
-    "school.inquiries.view",
-    "school.media.bulk",
-    "school.media.manage",
-    "school.media.view",
-    "school.notifications.manage",
-    "school.notifications.view",
-    "school.profile.manage",
-    "school.profile.view",
-    "school.programmes.bulk",
-    "school.programmes.manage",
-    "school.programmes.view",
-    "school.publications.manage",
-    "school.publications.submit",
-    "school.publications.view",
-    "school.team.bulk",
-    "school.team.manage",
-    "school.team.roles",
-    "school.team.view",
-)
+SCHOOL_PORTAL_PERMISSIONS = SCHOOL_PORTAL_PERMISSION_NAMES
 
 SCHOOL_PORTAL_NAVIGATION_PERMISSIONS = (
     ("dashboard", "school.dashboard.view"),

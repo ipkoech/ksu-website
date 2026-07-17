@@ -12,6 +12,7 @@ from ksu_common import PaginatedResult
 
 from ..models import Permission, Role, RolePermission, UserRole
 from ._base import apply_updates, ilike_any, paginate_query
+from .user import UserService
 
 
 class RBACService:
@@ -47,6 +48,16 @@ class RBACService:
         expires_at=None,
         note: str | None = None,
     ) -> UserRole:
+        role = await db.get(Role, role_id)
+        if role is None or not role.is_active:
+            raise ValueError("Role not found or inactive")
+        await UserService.validate_school_administration_assignment(
+            db,
+            user_id=user_id,
+            role=role,
+            scope_type=scope_type,
+            scope_id=scope_id,
+        )
         result = await db.execute(
             select(UserRole).where(
                 UserRole.user_id == user_id,

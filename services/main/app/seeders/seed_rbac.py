@@ -8,6 +8,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Role, RolePermission, UserRole
+from app.security.scopes import (
+    SCHOOL_PORTAL_PERMISSION_NAMES,
+    SCHOOL_PORTAL_VIEW_PERMISSION_NAMES,
+)
 from ksu_common.roles import ALL_PERMISSIONS, ROLE_DEFINITIONS
 
 from ._shared import SeedContext, upsert_permission, upsert_role, upsert_role_permission
@@ -67,6 +71,17 @@ PERMISSION_SPECS = [
     ("clubs.events_manage", "Manage assigned student club events", "clubs", "events_manage"),
     ("clubs.stories_manage", "Manage assigned student club stories", "clubs", "stories_manage"),
 ]
+
+for permission_name in SCHOOL_PORTAL_PERMISSION_NAMES:
+    section, action = permission_name.removeprefix("school.").split(".", 1)
+    PERMISSION_SPECS.append(
+        (
+            permission_name,
+            f"{action.replace('_', ' ').title()} the School Portal {section.replace('_', ' ')} section",
+            f"school.{section}",
+            action,
+        )
+    )
 
 
 def _split_permission_name(permission_name: str) -> tuple[str, str]:
@@ -173,6 +188,20 @@ ROLE_SPECS = [
         "description": "Administrative role for schools, departments, programmes, and admissions.",
         "is_system": True,
         "permission_names": ["academic:read", "academic:write", "academic:delete", "staff:read"],
+    },
+    {
+        "name": "school_admin",
+        "display_name": "School Administrator",
+        "description": "Full administration of one assigned school through the School Portal.",
+        "is_system": True,
+        "permission_names": list(SCHOOL_PORTAL_PERMISSION_NAMES),
+    },
+    {
+        "name": "school_editor",
+        "display_name": "School Editor",
+        "description": "View access to one assigned school; additional actions are explicitly granted.",
+        "is_system": True,
+        "permission_names": list(SCHOOL_PORTAL_VIEW_PERMISSION_NAMES),
     },
     {
         "name": "content_admin",

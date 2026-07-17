@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 from typing import Sequence
 
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -15,6 +17,19 @@ from ..helpers.password import hash_password
 from ..models import Person, Role, RolePermission, User, UserRole
 from ..tasks.email import queue_account_created_email
 from ._base import apply_updates, ilike_any, paginate_query
+
+
+SCHOOL_ADMINISTRATION_ROLE_NAMES = frozenset({"school_admin", "school_editor"})
+
+
+class SchoolAdministrationRoleConflict(HTTPException):
+    """Raised when a school administrator would become scoped to two schools."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="School administrators and editors can be assigned to only one school",
+        )
 
 
 class UserService:
@@ -29,6 +44,41 @@ class UserService:
             .selectinload(Role.role_permissions)
             .selectinload(RolePermission.permission),
         )
+
+    @staticmethod
+    async def validate_school_administration_assignment(
+        db: AsyncSession,
+        *,
+        user_id: uuid.UUID,
+        role: Role,
+        scope_type: str | None,
+        scope_id: uuid.UUID | None,
+    ) -> None:
+        """Reject a second active school for school-admin/editor roles."""
+        role_name = (role.name or "").strip().lower().replace("-", "_")
+        if role_name not in SCHOOL_ADMINISTRATION_ROLE_NAMES:
+            return
+        if scope_type != "school" or scope_id is None:
+            raise ValueError("school_admin and school_editor roles require a school scope")
+
+        now = datetime.now(timezone.utc)
+        result = await db.execute(
+            select(UserRole)
+            .join(Role, UserRole.role_id == Role.id)
+            .where(
+                UserRole.user_id == user_id,
+                UserRole.is_active.is_(True),
+                UserRole.deleted_at.is_(None),
+                UserRole.scope_type == "school",
+                UserRole.scope_id.is_not(None),
+                Role.name.in_(SCHOOL_ADMINISTRATION_ROLE_NAMES),
+                Role.is_active.is_(True),
+                (UserRole.expires_at.is_(None) | (UserRole.expires_at > now)),
+            )
+        )
+        existing_assignments = result.scalars().all()
+        if any(assignment.scope_id != scope_id for assignment in existing_assignments):
+            raise SchoolAdministrationRoleConflict()
 
     @staticmethod
     async def get_by_id(db: AsyncSession, user_id: uuid.UUID, *, load_options: Sequence = ()) -> User | None:

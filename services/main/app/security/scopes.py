@@ -139,6 +139,44 @@ CLUB_ASSIGNMENT_PERMISSIONS = frozenset(
     }
 )
 
+SCHOOL_PORTAL_PERMISSION_NAMES = (
+    "school.audit.view",
+    "school.content.bulk",
+    "school.content.manage",
+    "school.content.submit",
+    "school.content.view",
+    "school.dashboard.view",
+    "school.departments.bulk",
+    "school.departments.manage",
+    "school.departments.view",
+    "school.inquiries.manage",
+    "school.inquiries.reply",
+    "school.inquiries.view",
+    "school.media.bulk",
+    "school.media.manage",
+    "school.media.view",
+    "school.notifications.manage",
+    "school.notifications.view",
+    "school.profile.manage",
+    "school.profile.view",
+    "school.programmes.bulk",
+    "school.programmes.manage",
+    "school.programmes.view",
+    "school.publications.manage",
+    "school.publications.submit",
+    "school.publications.view",
+    "school.team.bulk",
+    "school.team.manage",
+    "school.team.roles",
+    "school.team.view",
+)
+
+SCHOOL_PORTAL_VIEW_PERMISSION_NAMES = tuple(
+    permission
+    for permission in SCHOOL_PORTAL_PERMISSION_NAMES
+    if permission.endswith(".view")
+)
+
 GOVERNANCE_PERMISSIONS = frozenset(
     {
         "governance.manage_roles",

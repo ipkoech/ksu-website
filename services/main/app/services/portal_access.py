@@ -13,6 +13,7 @@ from ..schemas.access import PortalAccessRead
 from ..security.scopes import (
     LIBRARY_LEADERSHIP_SCOPE_ROLES,
     RESEARCH_LEADERSHIP_SCOPE_ROLES,
+    SCHOOL_PORTAL_PERMISSION_NAMES,
 )
 
 ScopeKey = tuple[str, uuid.UUID]
@@ -95,7 +96,11 @@ PORTAL_DEFINITIONS = {
         "label": "Schools Portal",
         "service": "main",
         "href": "/schools",
-        "permissions": {"academic.view", "academic.manage_schools"},
+        "permissions": {
+            "academic.view",
+            "academic.manage_schools",
+            *SCHOOL_PORTAL_PERMISSION_NAMES,
+        },
     },
     "departments": {
         "label": "Departmental Portal",
