@@ -17,6 +17,8 @@ from .programme_cover_schools import SCHOOL_COVER_SCOPES, school_programme_specs
 
 _CONCEPT_DATA_FILES: Mapping[str, str] = MappingProxyType(
     {
+        "SEHRD": "education-human-resource-development.json",
+        "SHS": "health-sciences.json",
         "SIST": "ict.json",
         "SOL": "law.json",
     }

@@ -40,7 +40,12 @@ CONCEPT_KEYS = {
     "alt_text",
     "distinctiveness",
 }
-CONCEPT_FILENAMES = {"SIST": "ict.json", "SOL": "law.json"}
+CONCEPT_FILENAMES = {
+    "SEHRD": "education-human-resource-development.json",
+    "SHS": "health-sciences.json",
+    "SIST": "ict.json",
+    "SOL": "law.json",
+}
 
 
 def _concept_dicts(school_code: str) -> list[dict[str, str]]:
@@ -107,8 +112,13 @@ def test_ict_cover_concepts_match_the_complete_catalogue_scope() -> None:
 def test_available_school_registries_load_complete_typed_concepts() -> None:
     registries = programme_cover_concepts_by_school()
 
-    assert set(registries) == {"SIST", "SOL"}
-    assert {code: len(concepts) for code, concepts in registries.items()} == {"SIST": 22, "SOL": 2}
+    assert set(registries) == {"SEHRD", "SHS", "SIST", "SOL"}
+    assert {code: len(concepts) for code, concepts in registries.items()} == {
+        "SEHRD": 25,
+        "SHS": 21,
+        "SIST": 22,
+        "SOL": 2,
+    }
     for school_code, concepts in registries.items():
         scope_slugs = {
             slugify(str(programme["name"]))
@@ -121,7 +131,7 @@ def test_available_school_registries_load_complete_typed_concepts() -> None:
 
 def test_registry_json_items_have_exact_schema() -> None:
     data_dir = Path(concept_registry.__file__).with_name("programme_cover_concept_data")
-    for filename in ("ict.json", "law.json"):
+    for filename in CONCEPT_FILENAMES.values():
         items = json.loads((data_dir / filename).read_text(encoding="utf-8"))
         assert items
         assert all(set(item) == CONCEPT_KEYS for item in items)

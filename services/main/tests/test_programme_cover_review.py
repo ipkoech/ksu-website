@@ -76,6 +76,24 @@ def test_legal_review_path_appends_immutable_event_history(manifest: SchoolRevie
         assert datetime.fromisoformat(event.timestamp).utcoffset().total_seconds() == 0
 
 
+def test_approved_candidate_can_return_to_regeneration_before_publication(
+    manifest: SchoolReviewManifest,
+) -> None:
+    item = _generated_item(manifest)
+    item = transition_item(item, ReviewStatus.ORCHESTRATOR_REVIEW)
+    item = transition_item(item, ReviewStatus.HUMAN_APPROVED)
+
+    item = transition_item(
+        item,
+        ReviewStatus.NEEDS_REGENERATION,
+        note="independent visual review rejected the approved candidate",
+    )
+
+    assert item.status is ReviewStatus.NEEDS_REGENERATION
+    assert item.events[-1].from_status is ReviewStatus.HUMAN_APPROVED
+    assert item.events[-1].to_status is ReviewStatus.NEEDS_REGENERATION
+
+
 def test_generated_candidate_metadata_is_relative_and_complete(manifest: SchoolReviewManifest) -> None:
     item = _generated_item(manifest)
 

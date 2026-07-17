@@ -45,7 +45,10 @@ ALLOWED_TRANSITIONS = {
     },
     ReviewStatus.NEEDS_MANUAL_REVIEW: {ReviewStatus.GENERATED},
     ReviewStatus.HUMAN_REJECTED: {ReviewStatus.GENERATED},
-    ReviewStatus.HUMAN_APPROVED: {ReviewStatus.PUBLISHED},
+    ReviewStatus.HUMAN_APPROVED: {
+        ReviewStatus.NEEDS_REGENERATION,
+        ReviewStatus.PUBLISHED,
+    },
     ReviewStatus.PUBLISHED: set(),
 }
 
