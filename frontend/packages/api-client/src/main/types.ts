@@ -81,6 +81,102 @@ export interface SchoolPortalCapabilitiesResponse {
   allowed_navigation: SchoolPortalNavigationKey[];
 }
 
+export type SchoolPortalDashboardRange = "7d" | "30d" | "90d" | "12m";
+
+export interface SchoolPortalDashboardResponse {
+  school_id: string;
+  range: SchoolPortalDashboardRange;
+  generated_at: string;
+  summary_cards: Array<{
+    key: string;
+    label: string;
+    value: number;
+    previous_value: number | null;
+    change_percent: number | null;
+    href: string | null;
+    collection_started_after_deployment: boolean;
+  }>;
+  trends: Array<{ bucket: string; value: number }>;
+  distributions: Record<
+    string,
+    Array<{ key: string; label: string; value: number }>
+  >;
+  attention_items: Array<{
+    key: string;
+    label: string;
+    count: number;
+    severity: "info" | "warning" | "critical";
+    href: string;
+  }>;
+  recent_activity: Array<{
+    id: string;
+    event_type: string;
+    resource_type: string;
+    resource_id: string;
+    occurred_at: string;
+    summary: string;
+  }>;
+  quick_links: Array<{
+    key: string;
+    label: string;
+    count: number;
+    href: string;
+  }>;
+  profile_completeness: {
+    percent: number;
+    completed_fields: number;
+    total_fields: number;
+    missing_fields: string[];
+  };
+  collection_notes: Record<string, string>;
+}
+
+export interface SchoolPortalProfile {
+  id: string;
+  name: string;
+  slug: string;
+  code: string;
+  school_type: string;
+  campus_id: string | null;
+  administrative_wing_id: string | null;
+  dean_id: string | null;
+  establishment_date: string | null;
+  about: string | null;
+  head_message: string | null;
+  mission: string | null;
+  vision: string | null;
+  mandate: string | null;
+  core_values: string | null;
+  email: string | null;
+  phone: string | null;
+  office_location: string | null;
+  website: string | null;
+  logo_image_id: string | null;
+  cover_image_id: string | null;
+  brochure_id: string | null;
+  is_active: boolean;
+  is_public: boolean;
+  logo_image: SchoolPortalMediaSummary | null;
+  cover_image: SchoolPortalMediaSummary | null;
+  brochure: SchoolPortalMediaSummary | null;
+  gallery: SchoolPortalMediaSummary[];
+}
+
+export interface SchoolPortalProfileUpdate {
+  establishment_date?: string | null;
+  about?: string | null;
+  head_message?: string | null;
+  mission?: string | null;
+  vision?: string | null;
+  mandate?: string | null;
+  core_values?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  office_location?: string | null;
+  website?: string | null;
+  is_public?: boolean | null;
+}
+
 export interface PublicStatItem {
   key: string;
   label: string;
