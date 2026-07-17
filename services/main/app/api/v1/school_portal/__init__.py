@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from .context import router as context_router
+from .audit import router as audit_router
 from .content import router as content_router
 from .dashboard import router as dashboard_router
 from .departments import router as departments_router
@@ -14,6 +15,7 @@ from .programmes import router as programmes_router
 from .team import router as team_router
 
 router = APIRouter()
+router.include_router(audit_router)
 router.include_router(content_router)
 router.include_router(context_router)
 router.include_router(dashboard_router)

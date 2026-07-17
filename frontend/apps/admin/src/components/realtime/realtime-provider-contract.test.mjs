@@ -18,3 +18,23 @@ assert.match(
   /clearTimeout\(connectTimer\)/,
   "RealtimeProvider must cancel a deferred socket connection during effect cleanup.",
 );
+assert.match(
+  source,
+  /event\.type === "event"/,
+  "RealtimeProvider must process scoped domain events.",
+);
+assert.match(
+  source,
+  /event\.type === "sync\.required"/,
+  "RealtimeProvider must recover from an expired resume cursor.",
+);
+assert.match(
+  source,
+  /schoolPortalQueryKeys/,
+  "School events must invalidate exact scoped School Portal query roots.",
+);
+assert.match(
+  source,
+  /seenNotificationIds/,
+  "Notification inserts must be deduplicated by event ID.",
+);

@@ -5,6 +5,9 @@ import { SchoolTeamPage } from "@/components/schools/team/school-team-page";
 import { SchoolContentStudio } from "@/components/schools/content/school-content-studio";
 import { MediaBatchUploader } from "@/components/schools/media/media-batch-uploader";
 import { SchoolPublicationsPage } from "@/components/schools/publications/school-publications-page";
+import { SchoolInquiryInbox } from "@/components/schools/inquiries/school-inquiry-inbox";
+import { SchoolAuditPage } from "@/components/schools/audit/school-audit-page";
+import { redirect } from "next/navigation";
 
 export function generateStaticParams() {
   return [
@@ -39,6 +42,12 @@ export default async function SchoolsResourcePage({
       return <MediaBatchUploader />;
     case "publications":
       return <SchoolPublicationsPage />;
+    case "inquiries":
+      return <SchoolInquiryInbox />;
+    case "audit":
+      return <SchoolAuditPage />;
+    case "notifications":
+      redirect("/system/notifications");
     default:
       break;
   }

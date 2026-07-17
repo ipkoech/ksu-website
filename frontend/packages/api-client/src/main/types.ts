@@ -406,6 +406,74 @@ export interface SchoolUploadBatch {
   files: SchoolUploadBatchFile[];
 }
 
+export type SchoolInquiryStatus =
+  | "new"
+  | "open"
+  | "in_progress"
+  | "waiting_for_requester"
+  | "replied"
+  | "resolved"
+  | "closed"
+  | "spam";
+
+export interface SchoolInquiryMessage {
+  id: string;
+  inquiry_id: string;
+  sender_type: string;
+  sender_user_id?: string | null;
+  sender_name?: string | null;
+  sender_email?: string | null;
+  body: string;
+  is_internal_note: boolean;
+  delivery_status: string;
+  delivery_attempts: number;
+  delivery_error?: string | null;
+  sent_at?: string | null;
+  failed_at?: string | null;
+  created_at: string;
+}
+
+export interface SchoolInquiry {
+  id: string;
+  school_id: string;
+  reference_number: string;
+  sender_name: string;
+  sender_email: string;
+  sender_phone?: string | null;
+  subject: string;
+  category: string;
+  priority: string;
+  assigned_to_user_id?: string | null;
+  status: SchoolInquiryStatus;
+  consent_to_contact: boolean;
+  first_response_at?: string | null;
+  last_message_at?: string | null;
+  resolved_at?: string | null;
+  closed_at?: string | null;
+  meta_data?: Record<string, unknown> | null;
+  messages: SchoolInquiryMessage[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SchoolAuditLog {
+  id: string;
+  service_name: string;
+  action: string;
+  resource_type?: string | null;
+  resource_id?: string | null;
+  request_method: string;
+  request_path: string;
+  status_code: number;
+  status: string;
+  user_id?: string | null;
+  ip_address?: string | null;
+  details?: Record<string, unknown> | null;
+  changes?: Record<string, unknown> | null;
+  happened_at: string;
+  created_at: string;
+}
+
 export interface PublicStatItem {
   key: string;
   label: string;

@@ -7,6 +7,7 @@ import type {
   PaginatedResponse,
   SchoolDepartmentPayload,
   SchoolDepartmentRecord,
+  SchoolAuditLog,
   SchoolContentListItem,
   SchoolContentRecord,
   SchoolContentType,
@@ -16,6 +17,9 @@ import type {
   SchoolPortalDashboardResponse,
   SchoolPortalProfile,
   SchoolPortalProfileUpdate,
+  SchoolInquiry,
+  SchoolInquiryMessage,
+  SchoolInquiryStatus,
   SchoolProgrammePayload,
   SchoolProgrammeRecord,
   SchoolPublicationPayload,
@@ -90,6 +94,8 @@ export const schoolPortalQueryKeys = {
     [...schoolPortalQueryKeys.root(schoolId), "media"] as const,
   inquiries: (schoolId: string) =>
     [...schoolPortalQueryKeys.root(schoolId), "inquiries"] as const,
+  audit: (schoolId: string) =>
+    [...schoolPortalQueryKeys.root(schoolId), "audit"] as const,
 };
 
 export const schoolPortalApi = {
@@ -371,6 +377,61 @@ export const schoolPortalApi = {
     retryFile: (batchId: string, fileId: string) =>
       mainApi.post<{ data: SchoolUploadBatchFile }>(
         `${BASE_PATH}/media/batches/${batchId}/files/${fileId}/retry`,
+      ),
+  },
+  inquiries: {
+    list: (params?: {
+      page?: number;
+      per_page?: number;
+      status?: string;
+      category?: string;
+      priority?: string;
+      assigned_to_user_id?: string;
+      created_from?: string;
+      created_to?: string;
+    }) =>
+      mainApi.get<PaginatedResponse<SchoolInquiry>>(
+        `${BASE_PATH}/inquiries`,
+        params,
+      ),
+    get: (id: string) =>
+      mainApi.get<{ data: SchoolInquiry }>(`${BASE_PATH}/inquiries/${id}`),
+    assign: (id: string, assignedToUserId: string | null) =>
+      mainApi.patch<{ data: SchoolInquiry }>(
+        `${BASE_PATH}/inquiries/${id}/assign`,
+        { assigned_to_user_id: assignedToUserId },
+      ),
+    updateStatus: (id: string, status: SchoolInquiryStatus) =>
+      mainApi.patch<{ data: SchoolInquiry }>(
+        `${BASE_PATH}/inquiries/${id}/status`,
+        { status },
+      ),
+    addNote: (id: string, body: string) =>
+      mainApi.post<{ data: SchoolInquiryMessage }>(
+        `${BASE_PATH}/inquiries/${id}/notes`,
+        { body },
+      ),
+    reply: (id: string, body: string, idempotencyKey: string) =>
+      mainApi.post<{ data: SchoolInquiryMessage }>(
+        `${BASE_PATH}/inquiries/${id}/replies`,
+        { body, idempotency_key: idempotencyKey },
+      ),
+    retryMessage: (id: string, messageId: string) =>
+      mainApi.post<{ data: SchoolInquiryMessage }>(
+        `${BASE_PATH}/inquiries/${id}/messages/${messageId}/retry`,
+      ),
+  },
+  audit: {
+    list: (params?: {
+      page?: number;
+      per_page?: number;
+      action?: string;
+      resource_type?: string;
+      status?: string;
+    }) =>
+      mainApi.get<PaginatedResponse<SchoolAuditLog>>(
+        `${BASE_PATH}/audit`,
+        params,
       ),
   },
 };

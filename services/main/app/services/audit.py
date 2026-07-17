@@ -88,3 +88,30 @@ class AuditService:
         if status is not None:
             query = query.where(AuditLog.status == status)
         return await paginate_query(db, query, page=page, per_page=per_page)
+
+    @staticmethod
+    async def list_for_school(
+        db: AsyncSession,
+        *,
+        school_id: uuid.UUID,
+        page: int = 1,
+        per_page: int = 20,
+        action: str | None = None,
+        resource_type: str | None = None,
+        status: str | None = None,
+    ) -> PaginatedResult:
+        query = (
+            select(AuditLog)
+            .where(
+                AuditLog.service_name == "main",
+                AuditLog.details["school_id"].as_string() == str(school_id),
+            )
+            .order_by(AuditLog.happened_at.desc(), AuditLog.created_at.desc())
+        )
+        if action is not None:
+            query = query.where(AuditLog.action == action)
+        if resource_type is not None:
+            query = query.where(AuditLog.resource_type == resource_type)
+        if status is not None:
+            query = query.where(AuditLog.status == status)
+        return await paginate_query(db, query, page=page, per_page=per_page)
