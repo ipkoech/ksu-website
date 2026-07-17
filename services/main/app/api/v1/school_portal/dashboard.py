@@ -3,19 +3,27 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query, Request
-from ksu_common.schemas.responses import success
+from ksu_common import rate_limit
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ....clients.research import ResearchClient
 from ....core.config import get_settings
 from ....deps import DbSession
-from ....schemas.school_portal_dashboard import DashboardRange
+from ....schemas.school_portal_dashboard import (
+    DashboardRange,
+    SchoolPortalDashboardResponse,
+)
 from ....services.school_portal_context import CurrentSchoolContext
 from ....services.school_portal_dashboard import SchoolPortalDashboardService
 
 router = APIRouter()
 
 
-@router.get("/dashboard")
+@router.get(
+    "/dashboard",
+    response_model=SuccessResponse[SchoolPortalDashboardResponse],
+)
+@rate_limit(requests=120, window=60, prefix="main:school-dashboard")
 async def get_school_dashboard(
     request: Request,
     db: DbSession,

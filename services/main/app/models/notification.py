@@ -50,7 +50,11 @@ class Notification(Base):
         index=True,
     )
     source_event_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        sa.ForeignKey("outbox_events.id", ondelete="SET NULL"),
+        sa.ForeignKey(
+            "outbox_events.id",
+            ondelete="SET NULL",
+            name="fk_notifications_source_event_id_outbox_events",
+        ),
         nullable=True,
         index=True,
     )

@@ -9,7 +9,477 @@ Shared university CMS, institutional structure, admissions, content, media, supp
 
 This file is generated from the live FastAPI OpenAPI schema. Treat it as the frontend contract for request shapes, auth expectations, and response envelopes.
 
+## About
+
+### `GET /api/v1/about-content`
+
+Get About Content Admin
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/about-content`
+
+Create About Content
+
+- Auth: HTTPBearer
+- Request body: AboutPageContentCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/about-content/history-milestones`
+
+List History Milestones
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `about_page_content_id` (query, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/about-content/history-milestones`
+
+Create History Milestone
+
+- Auth: HTTPBearer
+- Request body: HistoryMilestoneCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `PATCH /api/v1/about-content/history-milestones/{item_id}`
+
+Update History Milestone
+
+- Auth: HTTPBearer
+- Request body: HistoryMilestoneUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/about-content/history-milestones/{item_id}`
+
+Delete History Milestone
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `POST /api/v1/about-content/history-order`
+
+Reorder History
+
+- Auth: HTTPBearer
+- Request body: ReorderRequest
+- Parameters: `about_page_content_id` (query, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/about-content/workflow/{kind}/{item_id}`
+
+Transition About Content
+
+- Auth: HTTPBearer
+- Request body: AboutWorkflowAction
+- Parameters: `kind` (path, string), `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/about-content/{item_id}`
+
+Update About Content
+
+- Auth: HTTPBearer
+- Request body: AboutPageContentUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/about-content/{item_id}`
+
+Delete About Content
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/fact-editions`
+
+List Fact Editions
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/fact-editions`
+
+Create Fact Edition
+
+- Auth: HTTPBearer
+- Request body: FactEditionCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `POST /api/v1/fact-editions/{edition_id}/groups`
+
+Create Fact Group
+
+- Auth: HTTPBearer
+- Request body: FactGroupCreate
+- Parameters: `edition_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/fact-editions/{edition_id}/groups`
+
+List Fact Groups
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `edition_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/fact-editions/{item_id}`
+
+Update Fact Edition
+
+- Auth: HTTPBearer
+- Request body: FactEditionUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/fact-editions/{item_id}`
+
+Delete Fact Edition
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `POST /api/v1/fact-editions/{item_id}/clone`
+
+Clone Fact Edition
+
+- Auth: HTTPBearer
+- Request body: FactEditionClone
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/fact-groups/evergreen`
+
+List Evergreen Fact Groups
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/fact-groups/evergreen`
+
+Create Evergreen Fact Group
+
+- Auth: HTTPBearer
+- Request body: FactGroupCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `POST /api/v1/fact-groups/{group_id}/items`
+
+Create Fact Item
+
+- Auth: HTTPBearer
+- Request body: FactItemCreate
+- Parameters: `group_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/fact-groups/{group_id}/items`
+
+List Fact Items
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `group_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/fact-groups/{item_id}`
+
+Update Fact Group
+
+- Auth: HTTPBearer
+- Request body: FactGroupUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/fact-groups/{item_id}`
+
+Delete Fact Group
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `PATCH /api/v1/fact-items/{item_id}`
+
+Update Fact Item
+
+- Auth: HTTPBearer
+- Request body: FactItemUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/fact-items/{item_id}`
+
+Delete Fact Item
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `PATCH /api/v1/institutional-items/{item_id}`
+
+Update Institutional Item
+
+- Auth: HTTPBearer
+- Request body: InstitutionalPageItemUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/institutional-items/{item_id}`
+
+Delete Institutional Item
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/institutional-pages`
+
+List Institutional Pages
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `slug` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/institutional-pages`
+
+Create Institutional Page
+
+- Auth: HTTPBearer
+- Request body: InstitutionalPageCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `PATCH /api/v1/institutional-pages/{item_id}`
+
+Update Institutional Page
+
+- Auth: HTTPBearer
+- Request body: InstitutionalPageUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/institutional-pages/{page_id}/sections`
+
+List Institutional Sections
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/institutional-pages/{page_id}/sections`
+
+Create Institutional Section
+
+- Auth: HTTPBearer
+- Request body: InstitutionalPageSectionCreate
+- Parameters: `page_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `POST /api/v1/institutional-pages/{page_id}/sections/reorder`
+
+Reorder Institutional Sections
+
+- Auth: HTTPBearer
+- Request body: ReorderRequest
+- Parameters: `page_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/institutional-section-documents/{item_id}`
+
+Update Institutional Document
+
+- Auth: HTTPBearer
+- Request body: InstitutionalSectionDocumentUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/institutional-section-documents/{item_id}`
+
+Delete Institutional Document
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `PATCH /api/v1/institutional-sections/{item_id}`
+
+Update Institutional Section
+
+- Auth: HTTPBearer
+- Request body: InstitutionalPageSectionUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/institutional-sections/{item_id}`
+
+Delete Institutional Section
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/institutional-sections/{section_id}/documents`
+
+List Institutional Documents
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `section_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/institutional-sections/{section_id}/documents`
+
+Attach Institutional Document
+
+- Auth: HTTPBearer
+- Request body: InstitutionalSectionDocumentCreate
+- Parameters: `section_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/institutional-sections/{section_id}/items`
+
+List Institutional Items
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `section_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/institutional-sections/{section_id}/items`
+
+Create Institutional Item
+
+- Auth: HTTPBearer
+- Request body: InstitutionalPageItemCreate
+- Parameters: `section_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `POST /api/v1/institutional-sections/{section_id}/items/reorder`
+
+Reorder Institutional Items
+
+- Auth: HTTPBearer
+- Request body: ReorderRequest
+- Parameters: `section_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/public/about`
+
+Get Public About
+
+- Auth: public
+- Request body: -
+- Parameters: -
+- Success response: 200 -
+
+### `GET /api/v1/public/about/facts`
+
+Get Public Facts
+
+- Auth: public
+- Request body: -
+- Parameters: `year` (query, integer | null)
+- Success response: 200 -
+
+### `GET /api/v1/public/about/history`
+
+Get Public History
+
+- Auth: public
+- Request body: -
+- Parameters: -
+- Success response: 200 -
+
+### `GET /api/v1/public/institutional-pages/{slug}`
+
+Get Public Institutional Page
+
+- Auth: public
+- Request body: -
+- Parameters: `slug` (path, string)
+- Success response: 200 -
+
 ## Academic
+
+### `GET /api/v1/academic-calendars`
+
+List Academic Calendars
+
+- Auth: public
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `academic_year` (query, string | null), `status` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/academic-calendars`
+
+Create Academic Calendar
+
+- Auth: HTTPBearer
+- Request body: AcademicCalendarCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/academic-calendars/admin`
+
+List Admin Academic Calendars
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `academic_year` (query, string | null), `status` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/academic-calendars/id/{calendar_id}`
+
+Get Academic Calendar
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `calendar_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/academic-calendars/{calendar_id}`
+
+Update Academic Calendar
+
+- Auth: HTTPBearer
+- Request body: AcademicCalendarUpdate
+- Parameters: `calendar_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/academic-calendars/{calendar_id}`
+
+Delete Academic Calendar
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `calendar_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
 
 ### `GET /api/v1/campuses`
 
@@ -17,7 +487,7 @@ List Campuses
 
 - Auth: public
 - Request body: -
-- Parameters: `is_active` (query, boolean | null)
+- Parameters: `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/campuses`
@@ -26,7 +496,7 @@ Create Campus
 
 - Auth: HTTPBearer
 - Request body: CampusCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `PATCH /api/v1/campuses/{campus_id}`
@@ -35,7 +505,7 @@ Update Campus
 
 - Auth: HTTPBearer
 - Request body: CampusUpdate
-- Parameters: `campus_id` (path, string)
+- Parameters: `campus_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/campuses/{slug}`
@@ -44,8 +514,53 @@ Get Campus
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
+
+### `POST /api/v1/department-services`
+
+Create Department Service
+
+- Auth: HTTPBearer
+- Request body: DepartmentServiceCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/department-services/admin`
+
+List Admin Department Services
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `department_id` (query, string | null), `search` (query, string | null), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/department-services/{service_id}`
+
+Get Department Service
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `service_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/department-services/{service_id}`
+
+Update Department Service
+
+- Auth: HTTPBearer
+- Request body: DepartmentServiceUpdate
+- Parameters: `service_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/department-services/{service_id}`
+
+Delete Department Service
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `service_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
 
 ### `GET /api/v1/departments`
 
@@ -53,7 +568,7 @@ List Departments
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `school_id` (query, string | null), `wing_id` (query, string | null), `department_type` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `school_id` (query, string | null), `wing_id` (query, string | null), `department_type` (query, string | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/departments`
@@ -62,8 +577,26 @@ Create Department
 
 - Auth: HTTPBearer
 - Request body: DepartmentCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/departments/admin`
+
+List Admin Departments
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `school_id` (query, string | null), `wing_id` (query, string | null), `department_type` (query, string | null), `search` (query, string | null), `is_active` (query, boolean | null), `is_public` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/departments/id/{department_id}`
+
+Get Department By Id
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `department_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/departments/{department_id}`
 
@@ -71,7 +604,7 @@ Update Department
 
 - Auth: HTTPBearer
 - Request body: DepartmentUpdate
-- Parameters: `department_id` (path, string)
+- Parameters: `department_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/departments/{department_id}`
@@ -80,7 +613,7 @@ Delete Department
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `department_id` (path, string)
+- Parameters: `department_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/departments/{slug}`
@@ -89,7 +622,7 @@ Get Department
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/departments/{slug}/programmes`
@@ -98,7 +631,7 @@ Get Department Programmes
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `page` (query, integer), `per_page` (query, integer)
+- Parameters: `slug` (path, string), `page` (query, integer), `per_page` (query, integer), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/departments/{slug}/services`
@@ -107,7 +640,7 @@ Get Department Services
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/departments/{slug}/staff`
@@ -116,7 +649,7 @@ Get Department Staff
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/schools`
@@ -125,7 +658,7 @@ List Schools
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `campus_id` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `campus_id` (query, string | null), `administrative_wing_id` (query, string | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/schools`
@@ -134,8 +667,26 @@ Create School
 
 - Auth: HTTPBearer
 - Request body: SchoolCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/schools/admin`
+
+List Admin Schools
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `campus_id` (query, string | null), `administrative_wing_id` (query, string | null), `search` (query, string | null), `is_active` (query, boolean | null), `is_public` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/schools/id/{school_id}`
+
+Get School By Id
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `school_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/schools/{school_id}`
 
@@ -143,7 +694,7 @@ Update School
 
 - Auth: HTTPBearer
 - Request body: SchoolUpdate
-- Parameters: `school_id` (path, string)
+- Parameters: `school_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/schools/{school_id}`
@@ -152,7 +703,7 @@ Delete School
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `school_id` (path, string)
+- Parameters: `school_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/schools/{slug}`
@@ -161,7 +712,7 @@ Get School
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/schools/{slug}/departments`
@@ -170,7 +721,7 @@ Get School Departments
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/schools/{slug}/programmes`
@@ -179,7 +730,7 @@ Get School Programmes
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string), `page` (query, integer), `per_page` (query, integer)
+- Parameters: `slug` (path, string), `page` (query, integer), `per_page` (query, integer), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/schools/{slug}/staff`
@@ -188,7 +739,7 @@ Get School Staff
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ## Admin
@@ -199,7 +750,7 @@ List Audit Logs
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `service_name` (query, string | null), `user_id` (query, string | null), `resource_type` (query, string | null), `status` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `service_name` (query, string | null), `user_id` (query, string | null), `resource_type` (query, string | null), `status` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/admin/audit/{audit_id}`
@@ -208,7 +759,7 @@ Get Audit Log
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `audit_id` (path, string)
+- Parameters: `audit_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/admin/notifications/broadcast`
@@ -217,7 +768,7 @@ Broadcast Notification
 
 - Auth: HTTPBearer
 - Request body: NotificationBroadcastCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 202 -
 
 ### `POST /api/v1/admin/notifications/broadcast/preview`
@@ -226,7 +777,7 @@ Preview Broadcast
 
 - Auth: HTTPBearer
 - Request body: NotificationBroadcastCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/admin/notifications/deliveries`
@@ -235,7 +786,7 @@ List Deliveries
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `status` (query, string | null), `channel` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `status` (query, string | null), `channel` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/admin/notifications/send`
@@ -244,7 +795,7 @@ Send Notification
 
 - Auth: HTTPBearer
 - Request body: NotificationCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `GET /api/v1/admin/notifications/templates`
@@ -253,7 +804,7 @@ List Templates
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: -
+- Parameters: `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/admin/notifications/templates`
@@ -262,8 +813,17 @@ Create Template
 
 - Auth: HTTPBearer
 - Request body: NotificationTemplateCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/admin/notifications/templates/{template_id}`
+
+Get Template
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `template_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/admin/notifications/templates/{template_id}`
 
@@ -271,7 +831,7 @@ Update Template
 
 - Auth: HTTPBearer
 - Request body: NotificationTemplateUpdate
-- Parameters: `template_id` (path, string)
+- Parameters: `template_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/admin/notifications/templates/{template_id}`
@@ -280,7 +840,7 @@ Delete Template
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `template_id` (path, string)
+- Parameters: `template_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/admin/permissions`
@@ -289,7 +849,7 @@ List Permissions
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: -
+- Parameters: `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/admin/permissions`
@@ -298,8 +858,53 @@ Create Permission
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `name` (query, string), `description` (query, string | null), `resource` (query, string | null), `action` (query, string | null)
+- Parameters: `name` (query, string), `description` (query, string | null), `resource` (query, string | null), `action` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/admin/reports/admin-activity`
+
+Admin Activity
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `days` (query, integer), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/admin/reports/content`
+
+Content
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `days` (query, integer), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/admin/reports/exports/{report_name}`
+
+Export Report
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `report_name` (path, string), `days` (query, integer), `format` (query, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/admin/reports/overview`
+
+Overview
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `days` (query, integer), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/admin/reports/traffic`
+
+Traffic
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `days` (query, integer), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/admin/roles`
 
@@ -307,7 +912,7 @@ List Roles
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `system` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/admin/roles`
@@ -315,9 +920,27 @@ List Roles
 Create Role
 
 - Auth: HTTPBearer
-- Request body: RoleCreate
-- Parameters: -
+- Request body: RoleCreatePayload
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/admin/roles/{role_id}`
+
+Get Role
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `role_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PUT /api/v1/admin/roles/{role_id}`
+
+Update Role
+
+- Auth: HTTPBearer
+- Request body: RoleUpdate
+- Parameters: `role_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/admin/roles/{role_id}`
 
@@ -325,7 +948,34 @@ Update Role
 
 - Auth: HTTPBearer
 - Request body: RoleUpdate
-- Parameters: `role_id` (path, string)
+- Parameters: `role_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/admin/roles/{role_id}`
+
+Delete Role
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `role_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/admin/roles/{role_id}/permissions`
+
+Get Role Permissions
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `role_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PUT /api/v1/admin/roles/{role_id}/permissions`
+
+Update Role Permissions
+
+- Auth: HTTPBearer
+- Request body: RolePermissionsUpdatePayload
+- Parameters: `role_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/admin/system/api-keys`
@@ -334,7 +984,7 @@ List Api Keys
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `is_active` (query, boolean | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/admin/system/api-keys`
@@ -343,8 +993,26 @@ Create Api Key
 
 - Auth: HTTPBearer
 - Request body: ApiKeyCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/admin/system/api-keys/{item_id}`
+
+Get Api Key
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PUT /api/v1/admin/system/api-keys/{item_id}`
+
+Update Api Key
+
+- Auth: HTTPBearer
+- Request body: ApiKeyUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/admin/system/api-keys/{item_id}`
 
@@ -352,7 +1020,7 @@ Update Api Key
 
 - Auth: HTTPBearer
 - Request body: ApiKeyUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/admin/system/api-keys/{item_id}`
@@ -361,7 +1029,7 @@ Revoke Api Key
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/admin/system/settings`
@@ -370,7 +1038,7 @@ List Settings
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `category` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `category` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/admin/system/settings`
@@ -379,8 +1047,35 @@ Create Setting
 
 - Auth: HTTPBearer
 - Request body: SettingCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `PUT /api/v1/admin/system/settings`
+
+Bulk Update Settings
+
+- Auth: HTTPBearer
+- Request body: BulkSettingsUpdatePayload
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/admin/system/settings/{item_id}`
+
+Get Setting
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PUT /api/v1/admin/system/settings/{item_id}`
+
+Update Setting
+
+- Auth: HTTPBearer
+- Request body: SettingUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/admin/system/settings/{item_id}`
 
@@ -388,7 +1083,7 @@ Update Setting
 
 - Auth: HTTPBearer
 - Request body: SettingUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/admin/system/settings/{item_id}`
@@ -397,7 +1092,7 @@ Delete Setting
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/admin/system/webhooks`
@@ -406,7 +1101,7 @@ List Webhooks
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `is_active` (query, boolean | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/admin/system/webhooks`
@@ -415,8 +1110,26 @@ Create Webhook
 
 - Auth: HTTPBearer
 - Request body: WebhookCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/admin/system/webhooks/{item_id}`
+
+Get Webhook
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PUT /api/v1/admin/system/webhooks/{item_id}`
+
+Update Webhook
+
+- Auth: HTTPBearer
+- Request body: WebhookUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/admin/system/webhooks/{item_id}`
 
@@ -424,7 +1137,7 @@ Update Webhook
 
 - Auth: HTTPBearer
 - Request body: WebhookUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/admin/system/webhooks/{item_id}`
@@ -433,7 +1146,7 @@ Delete Webhook
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/admin/users`
@@ -442,7 +1155,7 @@ List Admin Users
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `role` (query, string | null), `sort` (query, string), `order` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/admin/users`
@@ -451,8 +1164,26 @@ Create Admin User
 
 - Auth: HTTPBearer
 - Request body: UserCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/admin/users/{user_id}`
+
+Get Admin User
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `user_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PUT /api/v1/admin/users/{user_id}`
+
+Update Admin User
+
+- Auth: HTTPBearer
+- Request body: UserUpdate
+- Parameters: `user_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/admin/users/{user_id}`
 
@@ -460,7 +1191,34 @@ Update Admin User
 
 - Auth: HTTPBearer
 - Request body: UserUpdate
-- Parameters: `user_id` (path, string)
+- Parameters: `user_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/admin/users/{user_id}`
+
+Delete Admin User
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `user_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/admin/users/{user_id}/roles`
+
+List Admin User Roles
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `user_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PUT /api/v1/admin/users/{user_id}/roles`
+
+Update Admin User Roles
+
+- Auth: HTTPBearer
+- Request body: UserRolesUpdatePayload
+- Parameters: `user_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/admin/users/{user_id}/roles/{role_id}`
@@ -469,7 +1227,7 @@ Assign User Role
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `user_id` (path, string), `role_id` (path, string), `scope_type` (query, string | null), `scope_id` (query, string | null)
+- Parameters: `user_id` (path, string), `role_id` (path, string), `scope_type` (query, string | null), `scope_id` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ## Admissions
@@ -480,7 +1238,7 @@ List Admission Info
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `content_type` (query, string | null), `audience_level` (query, string | null), `school_id` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `content_type` (query, string | null), `audience_level` (query, string | null), `school_id` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/admissions`
@@ -489,8 +1247,26 @@ Create Admission Info
 
 - Auth: HTTPBearer
 - Request body: AdmissionInfoCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/admissions/admin`
+
+List Admin Admission Info
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `content_type` (query, string | null), `audience_level` (query, string | null), `school_id` (query, string | null), `is_published` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/admissions/id/{item_id}`
+
+Get Admission Info By Id
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/admissions/{item_id}`
 
@@ -498,7 +1274,7 @@ Update Admission Info
 
 - Auth: HTTPBearer
 - Request body: AdmissionInfoUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/admissions/{item_id}`
@@ -507,7 +1283,7 @@ Delete Admission Info
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/admissions/{slug}`
@@ -516,7 +1292,7 @@ Get Admission Info
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/intakes`
@@ -525,7 +1301,7 @@ List Intakes
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `academic_calendar_id` (query, string | null), `is_open` (query, boolean | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `academic_calendar_id` (query, string | null), `is_open` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/intakes`
@@ -534,8 +1310,44 @@ Create Intake
 
 - Auth: HTTPBearer
 - Request body: IntakeCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/intakes/admin`
+
+List Admin Intakes
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `academic_calendar_id` (query, string | null), `is_open` (query, boolean | null), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/intakes/id/{intake_id}`
+
+Get Intake By Id
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `intake_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/intakes/id/{intake_id}/homepage-admission`
+
+Get Homepage Admission
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `intake_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/intakes/id/{intake_id}/homepage-admission`
+
+Update Homepage Admission
+
+- Auth: HTTPBearer
+- Request body: IntakeHomepageAdmissionUpdate
+- Parameters: `intake_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/intakes/{intake_id}`
 
@@ -543,7 +1355,7 @@ Update Intake
 
 - Auth: HTTPBearer
 - Request body: IntakeUpdate
-- Parameters: `intake_id` (path, string)
+- Parameters: `intake_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/intakes/{intake_id}`
@@ -552,7 +1364,7 @@ Delete Intake
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `intake_id` (path, string)
+- Parameters: `intake_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/intakes/{slug}`
@@ -561,7 +1373,7 @@ Get Intake
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/programmes`
@@ -570,7 +1382,7 @@ List Programmes
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `school_id` (query, string | null), `department_id` (query, string | null), `level` (query, string | null), `mode_of_study` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `school_id` (query, string | null), `department_id` (query, string | null), `level` (query, string | null), `mode_of_study` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/programmes`
@@ -579,8 +1391,48 @@ Create Programme
 
 - Auth: HTTPBearer
 - Request body: ProgrammeCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/programmes/admin`
+
+List Admin Programmes
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `school_id` (query, string | null), `department_id` (query, string | null), `level` (query, string | null), `mode_of_study` (query, string | null), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/programmes/api/list`
+
+List Programmes Api Key
+
+List programmes via API key authentication.
+
+- Auth: public
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `school_id` (query, string | null), `department_id` (query, string | null), `level` (query, string | null), `mode_of_study` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `X-API-Key` (header, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/programmes/api/{slug}`
+
+Get Programme Api Key
+
+Get programme by slug via API key authentication.
+
+- Auth: public
+- Request body: -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `X-API-Key` (header, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/programmes/id/{programme_id}`
+
+Get Programme By Id
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `programme_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/programmes/{programme_id}`
 
@@ -588,7 +1440,7 @@ Update Programme
 
 - Auth: HTTPBearer
 - Request body: ProgrammeUpdate
-- Parameters: `programme_id` (path, string)
+- Parameters: `programme_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/programmes/{programme_id}`
@@ -597,7 +1449,7 @@ Delete Programme
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `programme_id` (path, string)
+- Parameters: `programme_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `POST /api/v1/programmes/{programme_id}/intakes`
@@ -606,7 +1458,7 @@ Attach Programme Intake
 
 - Auth: HTTPBearer
 - Request body: ProgrammeIntakeCreate
-- Parameters: `programme_id` (path, string)
+- Parameters: `programme_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `POST /api/v1/programmes/{programme_id}/tutors`
@@ -615,7 +1467,7 @@ Add Programme Tutor
 
 - Auth: HTTPBearer
 - Request body: ProgrammeTutorCreate
-- Parameters: `programme_id` (path, string)
+- Parameters: `programme_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `GET /api/v1/programmes/{slug}`
@@ -624,7 +1476,7 @@ Get Programme
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/programmes/{slug}/staff`
@@ -633,7 +1485,7 @@ Get Programme Staff
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ## Alumni
@@ -644,7 +1496,7 @@ List Alumni
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `school_id` (query, string | null), `programme_id` (query, string | null), `graduation_year` (query, integer | null), `mentor_only` (query, boolean)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `school_id` (query, string | null), `programme_id` (query, string | null), `graduation_year` (query, integer | null), `mentor_only` (query, boolean), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/alumni`
@@ -653,7 +1505,7 @@ Create Alumnus
 
 - Auth: HTTPBearer
 - Request body: AlumniCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `GET /api/v1/alumni-associations`
@@ -662,7 +1514,7 @@ List Alumni Associations
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `association_type` (query, string | null), `school_id` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `association_type` (query, string | null), `school_id` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/alumni-associations`
@@ -671,7 +1523,7 @@ Create Alumni Association
 
 - Auth: HTTPBearer
 - Request body: AlumniAssociationCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `POST /api/v1/alumni-associations/{association_id}/members`
@@ -680,7 +1532,7 @@ Add Alumni Association Member
 
 - Auth: HTTPBearer
 - Request body: AlumniAssociationMemberCreate
-- Parameters: `association_id` (path, string)
+- Parameters: `association_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `DELETE /api/v1/alumni-associations/{association_id}/members/{alumni_id}`
@@ -689,7 +1541,7 @@ Remove Alumni Association Member
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `association_id` (path, string), `alumni_id` (path, string)
+- Parameters: `association_id` (path, string), `alumni_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `PATCH /api/v1/alumni-associations/{item_id}`
@@ -698,7 +1550,7 @@ Update Alumni Association
 
 - Auth: HTTPBearer
 - Request body: AlumniAssociationUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/alumni-associations/{item_id}`
@@ -707,7 +1559,7 @@ Delete Alumni Association
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/alumni-associations/{slug}`
@@ -716,7 +1568,7 @@ Get Alumni Association
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/alumni-associations/{slug}/members`
@@ -725,7 +1577,7 @@ Get Alumni Association Members
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/alumni/{item_id}`
@@ -734,7 +1586,7 @@ Get Alumnus
 
 - Auth: public
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/alumni/{item_id}`
@@ -743,7 +1595,7 @@ Update Alumnus
 
 - Auth: HTTPBearer
 - Request body: AlumniUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/alumni/{item_id}`
@@ -752,8 +1604,19 @@ Delete Alumnus
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
+
+## Analytics
+
+### `POST /api/v1/analytics/events`
+
+Ingest Events
+
+- Auth: public
+- Request body: AnalyticsEventBatchCreate
+- Parameters: -
+- Success response: 202 -
 
 ## Auth
 
@@ -763,7 +1626,7 @@ Change Password
 
 - Auth: HTTPBearer
 - Request body: ChangePasswordRequest
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/auth/forgot-password`
@@ -790,7 +1653,7 @@ Logout
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/auth/logout-all`
@@ -799,7 +1662,7 @@ Logout All
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/auth/me`
@@ -808,7 +1671,7 @@ Get Me
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: -
+- Parameters: `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/auth/refresh`
@@ -846,7 +1709,7 @@ List Announcements
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `is_published` (query, boolean | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/announcements`
@@ -855,8 +1718,26 @@ Create Announcement
 
 - Auth: HTTPBearer
 - Request body: AnnouncementCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/announcements/admin`
+
+List Admin Announcements
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `is_published` (query, boolean | null), `status` (query, string | null), `workflow_status` (query, string | null), `owner_portal` (query, string | null), `owner_scope_type` (query, string | null), `owner_scope_id` (query, string | null), `scheduled_from` (query, string | null), `scheduled_to` (query, string | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/announcements/id/{announcement_id}`
+
+Get Announcement By Id
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `announcement_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/announcements/{announcement_id}`
 
@@ -864,7 +1745,7 @@ Update Announcement
 
 - Auth: HTTPBearer
 - Request body: AnnouncementUpdate
-- Parameters: `announcement_id` (path, string)
+- Parameters: `announcement_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/announcements/{announcement_id}`
@@ -873,8 +1754,26 @@ Delete Announcement
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `announcement_id` (path, string)
+- Parameters: `announcement_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
+
+### `POST /api/v1/announcements/{announcement_id}/publish`
+
+Publish Announcement
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `announcement_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/announcements/{announcement_id}/unpublish`
+
+Unpublish Announcement
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `announcement_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/announcements/{slug}`
 
@@ -882,7 +1781,7 @@ Get Announcement
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/blogs`
@@ -891,7 +1790,7 @@ List Blogs
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `is_published` (query, boolean | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/blogs`
@@ -900,26 +1799,62 @@ Create Blog
 
 - Auth: HTTPBearer
 - Request body: BlogCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
-### `PATCH /api/v1/blogs/{blog_id}`
+### `GET /api/v1/blogs/admin`
+
+List Admin Blogs
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `is_published` (query, boolean | null), `status` (query, string | null), `workflow_status` (query, string | null), `owner_portal` (query, string | null), `owner_scope_type` (query, string | null), `owner_scope_id` (query, string | null), `scheduled_from` (query, string | null), `scheduled_to` (query, string | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/blogs/id/{blog_id}`
+
+Get Blog By Id
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `blog_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/blogs/id/{blog_id}`
 
 Update Blog
 
 - Auth: HTTPBearer
 - Request body: BlogUpdate
-- Parameters: `blog_id` (path, string)
+- Parameters: `blog_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
-### `DELETE /api/v1/blogs/{blog_id}`
+### `DELETE /api/v1/blogs/id/{blog_id}`
 
 Delete Blog
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `blog_id` (path, string)
+- Parameters: `blog_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
+
+### `POST /api/v1/blogs/id/{blog_id}/publish`
+
+Publish Blog
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `blog_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/blogs/id/{blog_id}/unpublish`
+
+Unpublish Blog
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `blog_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/blogs/{slug}`
 
@@ -927,7 +1862,36 @@ Get Blog
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/content-workflow/queue`
+
+List Content Workflow Queue
+
+Return reviewable public content in a single CoCMS-oriented queue.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `source_portal` (query, string | null), `content_type` (query, string | null), `status` (query, string | null), `submitted_date` (query, string | null), `scheduled_date` (query, string | null), `reviewer` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/content-workflow/{content_type}/{content_id}/logs`
+
+List Content Workflow Logs
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `content_type` (path, string), `content_id` (path, string), `page` (query, integer), `per_page` (query, integer), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/content-workflow/{content_type}/{content_id}/{action}`
+
+Run Content Workflow Action
+
+- Auth: HTTPBearer
+- Request body: ContentWorkflowActionRequest
+- Parameters: `content_type` (path, string), `content_id` (path, string), `action` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/events`
@@ -936,7 +1900,7 @@ List Events
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `upcoming` (query, boolean | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `is_published` (query, boolean | null), `upcoming` (query, boolean | null), `search` (query, string | null), `include_scope` (query, boolean), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/events`
@@ -945,8 +1909,26 @@ Create Event
 
 - Auth: HTTPBearer
 - Request body: EventCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/events/admin`
+
+List Admin Events
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `is_published` (query, boolean | null), `upcoming` (query, boolean | null), `status` (query, string | null), `workflow_status` (query, string | null), `owner_portal` (query, string | null), `owner_scope_type` (query, string | null), `owner_scope_id` (query, string | null), `scheduled_from` (query, string | null), `scheduled_to` (query, string | null), `search` (query, string | null), `include_scope` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/events/id/{event_id}`
+
+Get Event By Id
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `event_id` (path, string), `include_scope` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/events/{event_id}`
 
@@ -954,7 +1936,7 @@ Update Event
 
 - Auth: HTTPBearer
 - Request body: EventUpdate
-- Parameters: `event_id` (path, string)
+- Parameters: `event_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/events/{event_id}`
@@ -963,8 +1945,26 @@ Delete Event
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `event_id` (path, string)
+- Parameters: `event_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
+
+### `POST /api/v1/events/{event_id}/publish`
+
+Publish Event
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `event_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/events/{event_id}/unpublish`
+
+Unpublish Event
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `event_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/events/{slug}`
 
@@ -972,7 +1972,16 @@ Get Event
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `include_scope` (query, boolean), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/homepage`
+
+Get Homepage
+
+- Auth: public
+- Request body: -
+- Parameters: `scope_type` (query, string), `scope_id` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/news`
@@ -981,7 +1990,7 @@ List News
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `is_published` (query, boolean | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/news`
@@ -990,8 +1999,26 @@ Create News
 
 - Auth: HTTPBearer
 - Request body: NewsCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/news/admin`
+
+List Admin News
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `is_published` (query, boolean | null), `status` (query, string | null), `workflow_status` (query, string | null), `owner_portal` (query, string | null), `owner_scope_type` (query, string | null), `owner_scope_id` (query, string | null), `scheduled_from` (query, string | null), `scheduled_to` (query, string | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/news/id/{news_id}`
+
+Get News By Id
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `news_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/news/{news_id}`
 
@@ -999,7 +2026,7 @@ Update News
 
 - Auth: HTTPBearer
 - Request body: NewsUpdate
-- Parameters: `news_id` (path, string)
+- Parameters: `news_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/news/{news_id}`
@@ -1008,8 +2035,26 @@ Delete News
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `news_id` (path, string)
+- Parameters: `news_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
+
+### `POST /api/v1/news/{news_id}/publish`
+
+Publish News
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `news_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/news/{news_id}/unpublish`
+
+Unpublish News
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `news_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/news/{slug}`
 
@@ -1017,7 +2062,124 @@ Get News
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/page-sections`
+
+Create Page Section
+
+- Auth: HTTPBearer
+- Request body: PageSectionCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/page-sections/admin`
+
+List Admin Page Sections
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `page_key` (query, string | null), `scope_type` (query, string | null), `scope_id` (query, string | null), `status` (query, string | null), `search` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/page-sections/{section_id}`
+
+Get Admin Page Section
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `section_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/page-sections/{section_id}`
+
+Update Page Section
+
+- Auth: HTTPBearer
+- Request body: PageSectionUpdate
+- Parameters: `section_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/page-sections/{section_id}/items`
+
+Create Section Item
+
+- Auth: HTTPBearer
+- Request body: SectionItemCreate
+- Parameters: `section_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `POST /api/v1/page-sections/{section_id}/{action}`
+
+Run Page Section Workflow Action
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `section_id` (path, string), `action` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/pages/{page_key}`
+
+Get Page Composition
+
+- Auth: public
+- Request body: -
+- Parameters: `page_key` (path, string), `scope_type` (query, string), `scope_id` (query, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/partnership-spotlights`
+
+Create Partnership Spotlight
+
+- Auth: HTTPBearer
+- Request body: PartnershipSpotlightCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/partnership-spotlights/admin`
+
+List Admin Partnership Spotlights
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `status` (query, string | null), `search` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/partnership-spotlights/{spotlight_id}`
+
+Update Partnership Spotlight
+
+- Auth: HTTPBearer
+- Request body: PartnershipSpotlightUpdate
+- Parameters: `spotlight_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/partnership-spotlights/{spotlight_id}`
+
+Get Admin Partnership Spotlight
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `spotlight_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/partnership-spotlights/{spotlight_id}/{action}`
+
+Run Partnership Spotlight Workflow Action
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `spotlight_id` (path, string), `action` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/section-items/{item_id}`
+
+Update Section Item
+
+- Auth: HTTPBearer
+- Request body: SectionItemUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/sliders`
@@ -1026,7 +2188,7 @@ List Sliders
 
 - Auth: public
 - Request body: -
-- Parameters: `slider_group_id` (query, string | null), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null)
+- Parameters: `slider_group_id` (query, string | null), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/sliders`
@@ -1035,8 +2197,17 @@ Create Slider
 
 - Auth: HTTPBearer
 - Request body: SliderCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/sliders/admin`
+
+List Admin Sliders
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `slider_group_id` (query, string | null), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `status` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/sliders/groups`
 
@@ -1044,7 +2215,7 @@ List Slider Groups
 
 - Auth: public
 - Request body: -
-- Parameters: `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null)
+- Parameters: `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/sliders/groups`
@@ -1053,8 +2224,17 @@ Create Slider Group
 
 - Auth: HTTPBearer
 - Request body: SliderGroupCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/sliders/groups/id/{group_id}`
+
+Get Slider Group By Id
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `group_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/sliders/groups/{group_id}`
 
@@ -1062,8 +2242,17 @@ Update Slider Group
 
 - Auth: HTTPBearer
 - Request body: SliderGroupUpdate
-- Parameters: `group_id` (path, string)
+- Parameters: `group_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
+
+### `DELETE /api/v1/sliders/groups/{group_id}`
+
+Delete Slider Group
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `group_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
 
 ### `GET /api/v1/sliders/groups/{slug}`
 
@@ -1071,7 +2260,16 @@ Get Slider Group
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/sliders/{slider_id}`
+
+Get Slider
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `slider_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/sliders/{slider_id}`
@@ -1080,8 +2278,17 @@ Update Slider
 
 - Auth: HTTPBearer
 - Request body: SliderUpdate
-- Parameters: `slider_id` (path, string)
+- Parameters: `slider_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
+
+### `DELETE /api/v1/sliders/{slider_id}`
+
+Delete Slider
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `slider_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
 
 ## Documents
 
@@ -1091,7 +2298,7 @@ List Documents
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `document_type` (query, string | null), `category` (query, string | null), `scope_type` (query, string | null), `scope_id` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `document_type` (query, string | null), `category` (query, string | null), `scope_type` (query, string | null), `scope_id` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/documents`
@@ -1100,8 +2307,17 @@ Create Document
 
 - Auth: HTTPBearer
 - Request body: DocumentCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/documents/admin`
+
+List Admin Documents
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `document_type` (query, string | null), `category` (query, string | null), `scope_type` (query, string | null), `scope_id` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/documents/{item_id}`
 
@@ -1109,7 +2325,7 @@ Update Document
 
 - Auth: HTTPBearer
 - Request body: DocumentUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/documents/{item_id}`
@@ -1118,7 +2334,7 @@ Delete Document
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/documents/{slug}`
@@ -1127,7 +2343,7 @@ Get Document
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/policies`
@@ -1136,7 +2352,7 @@ List Policies
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `category` (query, string | null), `division_id` (query, string | null), `department_id` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `category` (query, string | null), `division_id` (query, string | null), `department_id` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/policies`
@@ -1145,7 +2361,7 @@ Create Policy
 
 - Auth: HTTPBearer
 - Request body: PolicyCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `PATCH /api/v1/policies/{item_id}`
@@ -1154,7 +2370,7 @@ Update Policy
 
 - Auth: HTTPBearer
 - Request body: PolicyUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/policies/{item_id}`
@@ -1163,7 +2379,7 @@ Delete Policy
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/policies/{slug}`
@@ -1172,7 +2388,7 @@ Get Policy
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ## Exchange
@@ -1183,7 +2399,7 @@ List Exchange Programmes
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `programme_type` (query, string | null), `school_id` (query, string | null), `accepting_only` (query, boolean)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `programme_type` (query, string | null), `school_id` (query, string | null), `accepting_only` (query, boolean), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/exchange-programmes`
@@ -1192,7 +2408,7 @@ Create Exchange Programme
 
 - Auth: HTTPBearer
 - Request body: ExchangeProgrammeCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `PATCH /api/v1/exchange-programmes/{item_id}`
@@ -1201,7 +2417,7 @@ Update Exchange Programme
 
 - Auth: HTTPBearer
 - Request body: ExchangeProgrammeUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/exchange-programmes/{item_id}`
@@ -1210,7 +2426,7 @@ Delete Exchange Programme
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/exchange-programmes/{slug}`
@@ -1219,10 +2435,424 @@ Get Exchange Programme
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ## Governance
+
+### `GET /api/v1/governance/admin/council/audit-log`
+
+List Council Audit Log
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/governance/admin/council/dashboard`
+
+Council Dashboard
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/governance/admin/council/members`
+
+List Council Members
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `workflow_status` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/council/members`
+
+Create Council Member
+
+- Auth: HTTPBearer
+- Request body: CouncilMemberCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/governance/admin/council/members/{assignment_id}`
+
+Get Council Member
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/governance/admin/council/members/{assignment_id}`
+
+Update Council Member
+
+- Auth: HTTPBearer
+- Request body: CouncilMemberUpdate
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/governance/admin/council/members/{assignment_id}`
+
+Delete Council Member
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `POST /api/v1/governance/admin/council/members/{assignment_id}/approve`
+
+Approve Council Member
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `comment` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/council/members/{assignment_id}/archive`
+
+Archive Council Member
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `comment` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/council/members/{assignment_id}/publish`
+
+Publish Council Member
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `comment` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/council/members/{assignment_id}/submit-review`
+
+Submit Council Member For Review
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `comment` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/council/members/{assignment_id}/unpublish`
+
+Unpublish Council Member
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `comment` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/governance/admin/council/order`
+
+Get Council Order
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PUT /api/v1/governance/admin/council/order`
+
+Update Council Order
+
+- Auth: HTTPBearer
+- Request body: CouncilOrderUpdate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/governance/admin/council/page-content`
+
+Get Council Page Content
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/governance/admin/council/page-content`
+
+Update Council Page Content
+
+- Auth: HTTPBearer
+- Request body: GovernancePageContentUpdate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/council/page-content/approve`
+
+Approve Council Page Content
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/council/page-content/archive`
+
+Archive Council Page Content
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/council/page-content/publish`
+
+Publish Council Page Content
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/council/page-content/submit-review`
+
+Submit Council Page Content For Review
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/council/page-content/unpublish`
+
+Unpublish Council Page Content
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/governance/admin/council/preview`
+
+Preview Council
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/governance/admin/management-board/dashboard`
+
+Management Board Dashboard
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/governance/admin/management-board/members`
+
+List Management Board Members
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `workflow_status` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/management-board/members`
+
+Create Management Board Member
+
+- Auth: HTTPBearer
+- Request body: CouncilMemberCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/governance/admin/management-board/members/{assignment_id}`
+
+Get Management Board Member
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/governance/admin/management-board/members/{assignment_id}`
+
+Update Management Board Member
+
+- Auth: HTTPBearer
+- Request body: CouncilMemberUpdate
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/governance/admin/management-board/members/{assignment_id}`
+
+Delete Management Board Member
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `POST /api/v1/governance/admin/management-board/members/{assignment_id}/approve`
+
+Approve Management Board Member
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `comment` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/management-board/members/{assignment_id}/archive`
+
+Archive Management Board Member
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `comment` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/management-board/members/{assignment_id}/publish`
+
+Publish Management Board Member
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `comment` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/management-board/members/{assignment_id}/submit-review`
+
+Submit Management Board Member For Review
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `comment` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/management-board/members/{assignment_id}/unpublish`
+
+Unpublish Management Board Member
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `comment` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/governance/admin/management-board/order`
+
+Get Management Board Order
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PUT /api/v1/governance/admin/management-board/order`
+
+Update Management Board Order
+
+- Auth: HTTPBearer
+- Request body: CouncilOrderUpdate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/governance/admin/management-board/page-content`
+
+Get Management Board Page Content
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/governance/admin/management-board/page-content`
+
+Update Management Board Page Content
+
+- Auth: HTTPBearer
+- Request body: GovernancePageContentUpdate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/management-board/page-content/approve`
+
+Approve Management Board Page Content
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/management-board/page-content/archive`
+
+Archive Management Board Page Content
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/management-board/page-content/publish`
+
+Publish Management Board Page Content
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/management-board/page-content/submit-review`
+
+Submit Management Board Page Content For Review
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/management-board/page-content/unpublish`
+
+Unpublish Management Board Page Content
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/governance/admin/management-board/preview`
+
+Preview Management Board
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/governance/admin/roles`
+
+List Governance Roles
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `active_only` (query, boolean), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/admin/roles`
+
+Create Governance Role
+
+- Auth: HTTPBearer
+- Request body: GovernanceRoleCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `PATCH /api/v1/governance/admin/roles/{role_id}`
+
+Update Governance Role
+
+- Auth: HTTPBearer
+- Request body: GovernanceRoleUpdate
+- Parameters: `role_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/governance/boards`
 
@@ -1230,8 +2860,71 @@ List Boards
 
 - Auth: public
 - Request body: -
-- Parameters: `board_type` (query, string | null)
+- Parameters: `board_type` (query, string | null), `parent_entity_type` (query, string | null), `parent_entity_id` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
+
+### `POST /api/v1/governance/boards`
+
+Create Board
+
+- Auth: HTTPBearer
+- Request body: BoardCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/governance/boards/id/{board_id}`
+
+Get Board By Id
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `board_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/governance/boards/id/{board_id}`
+
+Update Board
+
+- Auth: HTTPBearer
+- Request body: BoardUpdate
+- Parameters: `board_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/governance/boards/id/{board_id}`
+
+Delete Board
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `board_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/governance/boards/id/{board_id}/members`
+
+Get Board Members By Id
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `board_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/governance/boards/id/{board_id}/members`
+
+Add Board Member By Id
+
+- Auth: HTTPBearer
+- Request body: BoardMemberCreate
+- Parameters: `board_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `DELETE /api/v1/governance/boards/id/{board_id}/members/{person_id}`
+
+Remove Board Member By Id
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `board_id` (path, string), `person_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
 
 ### `GET /api/v1/governance/boards/{slug}`
 
@@ -1239,7 +2932,7 @@ Get Board
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/governance/boards/{slug}/members`
@@ -1248,8 +2941,26 @@ Get Board Members
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
+
+### `POST /api/v1/governance/boards/{slug}/members`
+
+Add Board Member
+
+- Auth: HTTPBearer
+- Request body: BoardMemberCreate
+- Parameters: `slug` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `DELETE /api/v1/governance/boards/{slug}/members/{person_id}`
+
+Remove Board Member
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `slug` (path, string), `person_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
 
 ### `GET /api/v1/governance/council`
 
@@ -1257,7 +2968,7 @@ Get Council
 
 - Auth: public
 - Request body: -
-- Parameters: -
+- Parameters: `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/governance/management-board`
@@ -1266,7 +2977,25 @@ Get Management Board
 
 - Auth: public
 - Request body: -
+- Parameters: `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/governance/public/university-council`
+
+Public University Council
+
+- Auth: public
+- Request body: -
 - Parameters: -
+- Success response: 200 -
+
+### `GET /api/v1/governance/public/university-council/{slug}`
+
+Public University Council Profile
+
+- Auth: public
+- Request body: -
+- Parameters: `slug` (path, string)
 - Success response: 200 -
 
 ### `GET /api/v1/governance/senate`
@@ -1275,7 +3004,7 @@ Get Senate
 
 - Auth: public
 - Request body: -
-- Parameters: -
+- Parameters: `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ## Health
@@ -1289,7 +3018,110 @@ Health
 - Parameters: -
 - Success response: 200 -
 
+## Imports
+
+### `GET /api/v1/imports/jobs/{job_id}`
+
+Get Import Job
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `job_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/imports/resources`
+
+List Import Resources
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/imports/resources/{resource_key}`
+
+Get Import Resource
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `resource_key` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/imports/{resource_key}/commit`
+
+Commit Import
+
+- Auth: HTTPBearer
+- Request body: ImportCommitRequest
+- Parameters: `resource_key` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `POST /api/v1/imports/{resource_key}/commit-async`
+
+Queue Import Commit
+
+- Auth: HTTPBearer
+- Request body: ImportCommitRequest
+- Parameters: `resource_key` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 202 -
+
+### `POST /api/v1/imports/{resource_key}/preview`
+
+Preview Import
+
+- Auth: HTTPBearer
+- Request body: Body_preview_import_api_v1_imports__resource_key__preview_post
+- Parameters: `resource_key` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/imports/{resource_key}/template`
+
+Download Import Template
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `resource_key` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ## Internal
+
+### `GET /api/v1/internal/departments/{department_id}`
+
+Get Department Snapshot
+
+- Auth: public
+- Request body: -
+- Parameters: `department_id` (path, string), `x-internal-key` (header, string)
+- Success response: 200 -
+
+### `POST /api/v1/internal/email/send`
+
+Send Internal Email
+
+- Auth: public
+- Request body: InternalEmailPayload
+- Parameters: `x-internal-key` (header, string)
+- Success response: 200 -
+
+### `GET /api/v1/internal/media/{media_id}`
+
+Get Public Media Snapshot
+
+Return browser-safe fields for public media referenced by sibling services.
+
+- Auth: public
+- Request body: -
+- Parameters: `media_id` (path, string), `x-internal-key` (header, string)
+- Success response: 200 -
+
+### `POST /api/v1/internal/notifications/broadcast`
+
+Broadcast Internal Notification
+
+- Auth: public
+- Request body: InternalNotificationBroadcastPayload
+- Parameters: `x-internal-key` (header, string)
+- Success response: 200 -
 
 ### `GET /api/v1/internal/persons/{person_id}`
 
@@ -1302,6 +3134,37 @@ Return a minimal person snapshot for sibling services (Research, Library).
 - Parameters: `person_id` (path, string), `x-internal-key` (header, string)
 - Success response: 200 -
 
+### `GET /api/v1/internal/references/{kind}/{item_id}`
+
+Check Reference
+
+Validate shared main-owned references for sibling services.
+
+- Auth: public
+- Request body: -
+- Parameters: `kind` (path, string), `item_id` (path, string), `x-internal-key` (header, string)
+- Success response: 200 -
+
+### `GET /api/v1/internal/schools/{school_id}/departments/{department_id}`
+
+Check Department School
+
+Validate the cross-service school/department ownership pair.
+
+- Auth: public
+- Request body: -
+- Parameters: `school_id` (path, string), `department_id` (path, string), `x-internal-key` (header, string)
+- Success response: 200 -
+
+### `GET /api/v1/internal/staff-assignments/{assignment_id}`
+
+Get Staff Assignment Snapshot
+
+- Auth: public
+- Request body: -
+- Parameters: `assignment_id` (path, string), `x-internal-key` (header, string)
+- Success response: 200 -
+
 ## Marketing
 
 ### `GET /api/v1/newsletters`
@@ -1310,7 +3173,7 @@ List Newsletters
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/newsletters`
@@ -1319,8 +3182,26 @@ Create Newsletter
 
 - Auth: HTTPBearer
 - Request body: NewsletterCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/newsletters/admin`
+
+List Newsletters Admin
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `status` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/newsletters/admin/{item_id}`
+
+Get Newsletter Admin
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `POST /api/v1/newsletters/subscribe`
 
@@ -1330,6 +3211,15 @@ Subscribe Newsletter
 - Request body: NewsletterSubscriberCreate
 - Parameters: -
 - Success response: 201 -
+
+### `GET /api/v1/newsletters/subscribers`
+
+List Newsletter Subscribers
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `status` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `POST /api/v1/newsletters/unsubscribe`
 
@@ -1346,7 +3236,7 @@ Update Newsletter
 
 - Auth: HTTPBearer
 - Request body: NewsletterUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/newsletters/{item_id}`
@@ -1355,7 +3245,7 @@ Delete Newsletter
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/newsletters/{slug}`
@@ -1364,7 +3254,7 @@ Get Newsletter
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/social-posts`
@@ -1373,7 +3263,7 @@ List Social Posts
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `status` (query, string | null), `source_type` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `status` (query, string | null), `source_type` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/social-posts`
@@ -1382,7 +3272,7 @@ Create Social Post
 
 - Auth: HTTPBearer
 - Request body: SocialMediaPostCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `GET /api/v1/social-posts/accounts`
@@ -1391,7 +3281,7 @@ List Social Accounts
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `provider` (query, string | null), `active_only` (query, boolean)
+- Parameters: `provider` (query, string | null), `active_only` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/social-posts/accounts`
@@ -1400,7 +3290,7 @@ Create Social Account
 
 - Auth: HTTPBearer
 - Request body: SocialPlatformAccountCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `PATCH /api/v1/social-posts/accounts/{item_id}`
@@ -1409,7 +3299,7 @@ Update Social Account
 
 - Auth: HTTPBearer
 - Request body: SocialPlatformAccountUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/social-posts/accounts/{item_id}`
@@ -1418,7 +3308,7 @@ Delete Social Account
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `POST /api/v1/social-posts/accounts/{item_id}/validate`
@@ -1427,7 +3317,7 @@ Validate Social Account
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/social-posts/{item_id}`
@@ -1436,7 +3326,7 @@ Get Social Post
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/social-posts/{item_id}`
@@ -1445,7 +3335,7 @@ Update Social Post
 
 - Auth: HTTPBearer
 - Request body: SocialMediaPostUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/social-posts/{item_id}`
@@ -1454,7 +3344,7 @@ Delete Social Post
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/social-posts/{item_id}/deliveries`
@@ -1463,7 +3353,7 @@ List Social Post Deliveries
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/social-posts/{item_id}/publish`
@@ -1472,7 +3362,7 @@ Publish Social Post
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/social-posts/{item_id}/validate`
@@ -1481,7 +3371,7 @@ Validate Social Post
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/testimonials`
@@ -1490,7 +3380,7 @@ List Testimonials
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `testimonial_type` (query, string | null), `school_id` (query, string | null), `department_id` (query, string | null), `programme_id` (query, string | null), `featured_only` (query, boolean)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `testimonial_type` (query, string | null), `school_id` (query, string | null), `department_id` (query, string | null), `programme_id` (query, string | null), `featured_only` (query, boolean), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/testimonials`
@@ -1499,8 +3389,17 @@ Create Testimonial
 
 - Auth: HTTPBearer
 - Request body: TestimonialCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/testimonials/admin`
+
+List Admin Testimonials
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `testimonial_type` (query, string | null), `school_id` (query, string | null), `department_id` (query, string | null), `programme_id` (query, string | null), `featured_only` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/testimonials/{item_id}`
 
@@ -1508,7 +3407,7 @@ Get Testimonial
 
 - Auth: public
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/testimonials/{item_id}`
@@ -1517,7 +3416,7 @@ Update Testimonial
 
 - Auth: HTTPBearer
 - Request body: TestimonialUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/testimonials/{item_id}`
@@ -1526,8 +3425,65 @@ Delete Testimonial
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
+
+## Me
+
+### `GET /api/v1/me/portal-access`
+
+Get My Portal Access
+
+Return backend-authoritative portal access records for the authenticated user.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/me/preferences`
+
+Get My Preferences
+
+Return generic preferences owned by the authenticated user.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/me/preferences`
+
+Update My Preferences
+
+Upsert generic preferences owned by the authenticated user.
+
+- Auth: HTTPBearer
+- Request body: UserPreferencesUpdate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/me/profile`
+
+Get My Profile
+
+Return the authenticated user's linked public staff profile.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/me/profile`
+
+Update My Profile
+
+Update editable fields on the authenticated user's linked public staff profile.
+
+- Auth: HTTPBearer
+- Request body: MyProfileUpdate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ## Media
 
@@ -1537,7 +3493,7 @@ List Media
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `folder_id` (query, string | null), `media_type` (query, string | null), `uploaded_by_id` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `folder_id` (query, string | null), `media_type` (query, string | null), `uploaded_by_id` (query, string | null), `entity_type` (query, string | null), `entity_id` (query, string | null), `role` (query, string | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/media/folders`
@@ -1546,7 +3502,7 @@ List Folders
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `parent_id` (query, string | null)
+- Parameters: `parent_id` (query, string | null), `scope_type` (query, string | null), `scope_id` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/media/folders`
@@ -1555,8 +3511,35 @@ Create Folder
 
 - Auth: HTTPBearer
 - Request body: MediaFolderCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/media/folders/{folder_id}`
+
+Get Folder
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `folder_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/media/folders/{folder_id}`
+
+Update Folder
+
+- Auth: HTTPBearer
+- Request body: MediaFolderUpdate
+- Parameters: `folder_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/media/folders/{folder_id}`
+
+Delete Folder
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `folder_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
 
 ### `GET /api/v1/media/links`
 
@@ -1564,7 +3547,7 @@ List Media Links
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `entity_type` (query, string), `entity_id` (query, string), `role` (query, string | null)
+- Parameters: `entity_type` (query, string), `entity_id` (query, string), `role` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/media/links`
@@ -1573,8 +3556,35 @@ Create Media Link
 
 - Auth: HTTPBearer
 - Request body: MediaLinkCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/media/links/{link_id}`
+
+Get Media Link
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `link_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/media/links/{link_id}`
+
+Update Media Link
+
+- Auth: HTTPBearer
+- Request body: MediaLinkUpdate
+- Parameters: `link_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/media/links/{link_id}`
+
+Delete Media Link
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `link_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
 
 ### `POST /api/v1/media/upload`
 
@@ -1582,8 +3592,26 @@ Upload Media
 
 - Auth: HTTPBearer
 - Request body: Body_upload_media_api_v1_media_upload_post
-- Parameters: `folder_id` (query, string | null), `is_public` (query, boolean)
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/media/{media_id}`
+
+Get Media
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `media_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/media/{media_id}`
+
+Update Media
+
+- Auth: HTTPBearer
+- Request body: MediaUpdate
+- Parameters: `media_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `DELETE /api/v1/media/{media_id}`
 
@@ -1591,7 +3619,7 @@ Delete Media
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `media_id` (path, string)
+- Parameters: `media_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ## Organization
@@ -1602,7 +3630,7 @@ List Divisions
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `is_active` (query, boolean | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/divisions`
@@ -1611,17 +3639,44 @@ Create Division
 
 - Auth: HTTPBearer
 - Request body: DivisionCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
-### `PATCH /api/v1/divisions/{division_id}`
+### `GET /api/v1/divisions/admin`
+
+List Admin Divisions
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/divisions/id/{division_id}`
+
+Get Division By Id
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `division_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/divisions/id/{division_id}`
 
 Update Division
 
 - Auth: HTTPBearer
 - Request body: DivisionUpdate
-- Parameters: `division_id` (path, string)
+- Parameters: `division_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
+
+### `DELETE /api/v1/divisions/id/{division_id}`
+
+Delete Division
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `division_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
 
 ### `GET /api/v1/divisions/{slug}`
 
@@ -1629,7 +3684,7 @@ Get Division
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/wings`
@@ -1638,8 +3693,17 @@ Create Wing
 
 - Auth: HTTPBearer
 - Request body: WingCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/wings/admin`
+
+List Admin Wings
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `division_id` (query, string | null), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/wings/division/{division_id}`
 
@@ -1647,7 +3711,16 @@ List Wings By Division
 
 - Auth: public
 - Request body: -
-- Parameters: `division_id` (path, string), `is_active` (query, boolean | null)
+- Parameters: `division_id` (path, string), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/wings/slug/{slug}`
+
+Get Wing By Slug
+
+- Auth: public
+- Request body: -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/wings/{wing_id}`
@@ -1656,7 +3729,7 @@ Get Wing
 
 - Auth: public
 - Request body: -
-- Parameters: `wing_id` (path, string)
+- Parameters: `wing_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/wings/{wing_id}`
@@ -1665,7 +3738,7 @@ Update Wing
 
 - Auth: HTTPBearer
 - Request body: WingUpdate
-- Parameters: `wing_id` (path, string)
+- Parameters: `wing_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ## Persons
@@ -1676,7 +3749,7 @@ List Persons
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `department_id` (query, string | null), `academic_rank` (query, string | null), `employment_type` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `department_id` (query, string | null), `school_id` (query, string | null), `academic_rank` (query, string | null), `employment_type` (query, string | null), `is_researcher` (query, boolean | null), `status` (query, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/persons`
@@ -1685,8 +3758,17 @@ Create Person
 
 - Auth: HTTPBearer
 - Request body: PersonCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/persons/admin`
+
+List Admin Persons
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `department_id` (query, string | null), `school_id` (query, string | null), `academic_rank` (query, string | null), `employment_type` (query, string | null), `is_researcher` (query, boolean | null), `status` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/persons/{person_id}`
 
@@ -1694,7 +3776,7 @@ Get Person
 
 - Auth: public
 - Request body: -
-- Parameters: `person_id` (path, string)
+- Parameters: `person_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/persons/{person_id}`
@@ -1703,7 +3785,878 @@ Update Person
 
 - Auth: HTTPBearer
 - Request body: PersonUpdate
+- Parameters: `person_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/persons/{person_id}`
+
+Delete Person
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `person_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `PATCH /api/v1/persons/{person_id}/activate`
+
+Activate Person
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `person_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/persons/{person_id}/cv`
+
+Upload Person Cv
+
+- Auth: HTTPBearer
+- Request body: Body_upload_person_cv_api_v1_persons__person_id__cv_post
+- Parameters: `person_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/persons/{person_id}/cv`
+
+Remove Person Cv
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `person_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/persons/{person_id}/deactivate`
+
+Deactivate Person
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `person_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/persons/{person_id}/photo`
+
+Upload Person Photo
+
+- Auth: HTTPBearer
+- Request body: Body_upload_person_photo_api_v1_persons__person_id__photo_post
+- Parameters: `person_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/persons/{person_id}/photo`
+
+Remove Person Photo
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `person_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+## Public
+
+### `GET /api/v1/public-pages`
+
+List Public Site Pages
+
+- Auth: public
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `page_type` (query, string | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/public-pages/{slug}`
+
+Get Public Site Page
+
+- Auth: public
+- Request body: -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/public/academic-organization`
+
+Get Public Academic Organization
+
+- Auth: public
+- Request body: -
+- Parameters: `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/public/content/{entity_type}/{entity_id}`
+
+Get Public Entity Content
+
+- Auth: public
+- Request body: -
+- Parameters: `entity_type` (path, string), `entity_id` (path, string), `content_type` (query, string), `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/public/departments/{department_id}/team`
+
+Get Public Department Team
+
+- Auth: public
+- Request body: -
+- Parameters: `department_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/public/leadership/`
+
+Get Leader
+
+Get a leader by role and entity.
+
+- Auth: public
+- Request body: -
+- Parameters: `role` (query, string), `entity_type` (query, string), `entity_id` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/public/leadership/chancellor`
+
+Get Chancellor
+
+Get the current Chancellor.
+
+- Auth: public
+- Request body: -
+- Parameters: `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/public/leadership/dean/{school_id}`
+
+Get Dean
+
+Get the Dean of a school.
+
+- Auth: public
+- Request body: -
+- Parameters: `school_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/public/leadership/director/{division_id}`
+
+Get Director
+
+Get the Director of a division/directorate.
+
+- Auth: public
+- Request body: -
+- Parameters: `division_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/public/leadership/hod/{department_id}`
+
+Get Hod
+
+Get the Head of Department.
+
+- Auth: public
+- Request body: -
+- Parameters: `department_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/public/leadership/list`
+
+List Leaders
+
+List all public leadership assignments for an entity.
+
+- Auth: public
+- Request body: -
+- Parameters: `entity_type` (query, string), `entity_id` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/public/leadership/vice-chancellor`
+
+Get Vice Chancellor
+
+Get the current Vice Chancellor.
+
+- Auth: public
+- Request body: -
+- Parameters: `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/public/media`
+
+List Public Media
+
+- Auth: public
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `media_type` (query, string | null), `search` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/public/media/links`
+
+List Public Media Links
+
+- Auth: public
+- Request body: -
+- Parameters: `entity_type` (query, string), `entity_id` (query, string), `role` (query, string | null), `per_page` (query, integer)
+- Success response: 200 -
+
+### `GET /api/v1/public/media/{media_id}`
+
+Get Public Media
+
+- Auth: public
+- Request body: -
+- Parameters: `media_id` (path, string)
+- Success response: 200 -
+
+### `GET /api/v1/public/people/{person_id}`
+
+Get Public Person
+
+- Auth: public
+- Request body: -
 - Parameters: `person_id` (path, string)
+- Success response: 200 -
+
+### `GET /api/v1/public/research/context`
+
+Get Public Research Context
+
+Return the merged public context for the research portal.
+
+REIRM has a public wing used for navigation and a hidden administrative
+department used for richer editable content. This endpoint intentionally
+merges both into one public-safe research context.
+
+- Auth: public
+- Request body: -
+- Parameters: `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/public/research/context`
+
+Update Public Research Context
+
+Edit the research wing and hidden/public research department context.
+
+- Auth: HTTPBearer
+- Request body: ResearchContextUpdate
+- Parameters: `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/public/schools/{school_id}/team`
+
+Get Public School Team
+
+- Auth: public
+- Request body: -
+- Parameters: `school_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/public/schools/{school_slug}/inquiries`
+
+Create Public School Inquiry
+
+- Auth: public
+- Request body: PublicSchoolInquiryCreate
+- Parameters: `school_slug` (path, string)
+- Success response: 201 -
+
+### `GET /api/v1/public/team`
+
+Get Public Team
+
+- Auth: public
+- Request body: -
+- Parameters: `entity_type` (query, string), `entity_id` (query, string | null)
+- Success response: 200 -
+
+## Realtime
+
+### `GET /api/v1/realtime/metrics`
+
+Get Realtime Metrics
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/realtime/research/config`
+
+Get Research Realtime Config
+
+- Auth: public
+- Request body: -
+- Parameters: -
+- Success response: 200 -
+
+### `POST /api/v1/realtime/ticket`
+
+Create Realtime Ticket
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+## Research
+
+### `GET /api/v1/partners`
+
+List Partners
+
+- Auth: public
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null)
+- Success response: 200 -
+
+### `GET /api/v1/partners/{slug}`
+
+Get Partner
+
+- Auth: public
+- Request body: -
+- Parameters: `slug` (path, string)
+- Success response: 200 -
+
+## School Portal
+
+### `GET /api/v1/school-portal/capabilities`
+
+Get Capabilities
+
+Return the current school's permission and navigation capability map.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/school-portal/content`
+
+List Content
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `content_type` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/content`
+
+Create Content
+
+- Auth: HTTPBearer
+- Request body: SchoolContentCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/school-portal/content/{content_type}/{content_id}`
+
+Get Content
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `content_type` (path, string), `content_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/school-portal/content/{content_type}/{content_id}`
+
+Patch Content
+
+- Auth: HTTPBearer
+- Request body: SchoolContentUpdate
+- Parameters: `content_type` (path, string), `content_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/school-portal/content/{content_type}/{content_id}`
+
+Delete Content
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `content_type` (path, string), `content_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `POST /api/v1/school-portal/content/{content_type}/{content_id}/submit`
+
+Submit Content
+
+- Auth: HTTPBearer
+- Request body: SchoolContentAction
+- Parameters: `content_type` (path, string), `content_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/content/{content_type}/{content_id}/withdraw`
+
+Withdraw Content
+
+- Auth: HTTPBearer
+- Request body: SchoolContentAction
+- Parameters: `content_type` (path, string), `content_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/school-portal/context`
+
+Get Context
+
+Return the one school and capabilities derived from server-side grants.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/school-portal/dashboard`
+
+Get School Dashboard
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `range` (query, string), `ksu_access` (cookie, string | null)
+- Success response: 200 SuccessResponse_SchoolPortalDashboardResponse_
+
+### `GET /api/v1/school-portal/departments`
+
+List Departments
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `department_type` (query, string | null), `is_active` (query, boolean | null), `is_public` (query, boolean | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/departments`
+
+Post Department
+
+- Auth: HTTPBearer
+- Request body: SchoolDepartmentCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `POST /api/v1/school-portal/departments/imports`
+
+Commit Department Import
+
+- Auth: HTTPBearer
+- Request body: SchoolAcademicImportRequest
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/departments/imports/preview`
+
+Preview Department Import
+
+- Auth: HTTPBearer
+- Request body: SchoolAcademicImportRequest
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/school-portal/departments/{department_id}`
+
+Get Department
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `department_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/school-portal/departments/{department_id}`
+
+Patch Department
+
+- Auth: HTTPBearer
+- Request body: SchoolDepartmentUpdate
+- Parameters: `department_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/school-portal/departments/{department_id}`
+
+Delete Department
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `department_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/school-portal/inquiries`
+
+List Inquiries
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `status` (query, string | null), `category` (query, string | null), `priority` (query, string | null), `assigned_to_user_id` (query, string | null), `created_from` (query, string | null), `created_to` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/school-portal/inquiries/{inquiry_id}`
+
+Get Inquiry
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `inquiry_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/school-portal/inquiries/{inquiry_id}/assign`
+
+Assign Inquiry
+
+- Auth: HTTPBearer
+- Request body: InquiryAssign
+- Parameters: `inquiry_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/inquiries/{inquiry_id}/messages/{message_id}/retry`
+
+Retry Inquiry Reply
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `inquiry_id` (path, string), `message_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/inquiries/{inquiry_id}/notes`
+
+Add Inquiry Note
+
+- Auth: HTTPBearer
+- Request body: InquiryNoteCreate
+- Parameters: `inquiry_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/inquiries/{inquiry_id}/replies`
+
+Reply To Inquiry
+
+- Auth: HTTPBearer
+- Request body: InquiryReplyCreate
+- Parameters: `inquiry_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/school-portal/inquiries/{inquiry_id}/status`
+
+Update Inquiry Status
+
+- Auth: HTTPBearer
+- Request body: InquiryStatusUpdate
+- Parameters: `inquiry_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/media/batches`
+
+Create Media Batch
+
+- Auth: HTTPBearer
+- Request body: Body_create_media_batch_api_v1_school_portal_media_batches_post
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/school-portal/media/batches/{batch_id}`
+
+Get Media Batch
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `batch_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/media/batches/{batch_id}/files/{file_id}/retry`
+
+Retry Media File
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `batch_id` (path, string), `file_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/media/content-imports`
+
+Commit Content Metadata Import
+
+- Auth: HTTPBearer
+- Request body: SchoolContentMetadataImport
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/media/content-imports/preview`
+
+Preview Content Metadata Import
+
+- Auth: HTTPBearer
+- Request body: SchoolContentMetadataImport
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/school-portal/profile`
+
+Get School Profile
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/school-portal/profile`
+
+Patch School Profile
+
+- Auth: HTTPBearer
+- Request body: SchoolPortalProfileUpdate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PUT /api/v1/school-portal/profile/dean`
+
+Put School Dean
+
+- Auth: HTTPBearer
+- Request body: SchoolPortalDeanUpdate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/profile/media`
+
+Post School Profile Media
+
+- Auth: HTTPBearer
+- Request body: SchoolPortalMediaLinkCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/school-portal/programmes`
+
+List Programmes
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `department_id` (query, string | null), `level` (query, string | null), `mode_of_study` (query, string | null), `is_active` (query, boolean | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/programmes`
+
+Post Programme
+
+- Auth: HTTPBearer
+- Request body: SchoolProgrammeCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `POST /api/v1/school-portal/programmes/imports`
+
+Commit Programme Import
+
+- Auth: HTTPBearer
+- Request body: SchoolAcademicImportRequest
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/programmes/imports/preview`
+
+Preview Programme Import
+
+- Auth: HTTPBearer
+- Request body: SchoolAcademicImportRequest
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/school-portal/programmes/{programme_id}`
+
+Get Programme
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `programme_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/school-portal/programmes/{programme_id}`
+
+Patch Programme
+
+- Auth: HTTPBearer
+- Request body: SchoolProgrammeUpdate
+- Parameters: `programme_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/school-portal/programmes/{programme_id}`
+
+Delete Programme
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `programme_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/school-portal/publications`
+
+List Publications
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `status` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/publications`
+
+Create Publication
+
+- Auth: HTTPBearer
+- Request body: SchoolPublicationCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/school-portal/publications/{publication_id}`
+
+Get Publication
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `publication_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/school-portal/publications/{publication_id}`
+
+Update Publication
+
+- Auth: HTTPBearer
+- Request body: SchoolPublicationUpdate
+- Parameters: `publication_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/publications/{publication_id}/submit`
+
+Submit Publication
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `publication_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/publications/{publication_id}/withdraw`
+
+Withdraw Publication
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `publication_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/school-portal/team`
+
+Get Team
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `role` (query, string | null), `sort` (query, string), `order` (query, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/team`
+
+Post Team Member
+
+- Auth: HTTPBearer
+- Request body: SchoolTeamMemberCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `POST /api/v1/school-portal/team/imports`
+
+Queue Team Import
+
+- Auth: HTTPBearer
+- Request body: SchoolTeamImportRequest
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 202 -
+
+### `POST /api/v1/school-portal/team/imports/preview`
+
+Preview Team Import
+
+- Auth: HTTPBearer
+- Request body: Body_preview_team_import_api_v1_school_portal_team_imports_preview_post
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/school-portal/team/imports/template`
+
+Download Team Import Template
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `format` (query, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/school-portal/team/{assignment_id}`
+
+Get Team Member
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/school-portal/team/{assignment_id}`
+
+Patch Team Member
+
+- Auth: HTTPBearer
+- Request body: SchoolTeamMemberUpdate
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/school-portal/team/{assignment_id}`
+
+Delete Team Member
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `POST /api/v1/school-portal/team/{assignment_id}/activate`
+
+Activate Team Member
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/team/{assignment_id}/deactivate`
+
+Deactivate Team Member
+
+- Auth: HTTPBearer
+- Request body: SchoolTeamLifecycleRequest
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/team/{assignment_id}/end`
+
+End Team Member
+
+- Auth: HTTPBearer
+- Request body: SchoolTeamLifecycleRequest
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/team/{assignment_id}/resend-invite`
+
+Resend Team Member Invite
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/team/{assignment_id}/revoke-access`
+
+Revoke Team Member Access
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/team/{assignment_id}/transfer`
+
+Transfer Team Member
+
+- Auth: HTTPBearer
+- Request body: SchoolTeamTransferRequest
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ## Search
@@ -1714,10 +4667,21 @@ Search
 
 - Auth: public
 - Request body: -
-- Parameters: `q` (query, string), `limit_per_type` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null)
+- Parameters: `q` (query, string), `limit_per_type` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `news_fields` (query, string | null), `news_include` (query, string | null), `blogs_fields` (query, string | null), `blogs_include` (query, string | null), `announcements_fields` (query, string | null), `announcements_include` (query, string | null), `events_fields` (query, string | null), `events_include` (query, string | null), `persons_fields` (query, string | null), `persons_include` (query, string | null), `schools_fields` (query, string | null), `schools_include` (query, string | null), `departments_fields` (query, string | null), `departments_include` (query, string | null)
 - Success response: 200 -
 
 ## Staff
+
+### `GET /api/v1/staff/academic-ranks`
+
+List Academic Ranks
+
+List all academic ranks in order.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/staff/assignments`
 
@@ -1725,7 +4689,7 @@ List Assignments
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `entity_type` (query, string | null), `entity_id` (query, string | null), `person_id` (query, string | null)
+- Parameters: `entity_type` (query, string | null), `entity_id` (query, string | null), `person_id` (query, string | null), `status` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/staff/assignments`
@@ -1734,8 +4698,17 @@ Create Assignment
 
 - Auth: HTTPBearer
 - Request body: StaffAssignmentCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `POST /api/v1/staff/assignments/check-conflict`
+
+Check Conflict
+
+- Auth: HTTPBearer
+- Request body: StaffAssignmentConflictCheck
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/staff/assignments/{assignment_id}`
 
@@ -1743,7 +4716,34 @@ Get Assignment
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `assignment_id` (path, string)
+- Parameters: `assignment_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/staff/assignments/{assignment_id}`
+
+Update Assignment
+
+- Auth: HTTPBearer
+- Request body: StaffAssignmentUpdate
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/staff/assignments/{assignment_id}`
+
+Delete Assignment
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `PATCH /api/v1/staff/assignments/{assignment_id}/activate`
+
+Activate Assignment
+
+- Auth: HTTPBearer
+- Request body: StaffAssignmentActivate
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/staff/assignments/{assignment_id}/direct-reports`
@@ -1752,7 +4752,7 @@ Get Direct Reports
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `assignment_id` (path, string)
+- Parameters: `assignment_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/staff/assignments/{assignment_id}/end`
@@ -1760,8 +4760,17 @@ Get Direct Reports
 End Assignment
 
 - Auth: HTTPBearer
-- Request body: -
-- Parameters: `assignment_id` (path, string)
+- Request body: StaffAssignmentEnd
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/staff/assignments/{assignment_id}/reassign`
+
+Reassign Assignment
+
+- Auth: HTTPBearer
+- Request body: StaffAssignmentReassign
+- Parameters: `assignment_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/staff/assignments/{assignment_id}/reporting-chain`
@@ -1770,7 +4779,85 @@ Get Reporting Chain
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `assignment_id` (path, string)
+- Parameters: `assignment_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/staff/entities`
+
+List Staff Entities
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `entity_type` (query, string), `search` (query, string | null), `limit` (query, integer), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/staff/entity-types`
+
+List Entity Types
+
+List all entity types with their available roles.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/staff/roles`
+
+List Roles
+
+List roles, optionally filtered by entity type.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `entity_type` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+## Stats
+
+### `GET /api/v1/stats`
+
+Get Public Stats
+
+- Auth: public
+- Request body: -
+- Parameters: `scope` (query, string), `slug` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/stats/admin`
+
+Get Admin Stats
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/stats/portal/corporate-communication/dashboard`
+
+Get Corporate Communication Dashboard
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `date_from` (query, string | null), `date_to` (query, string | null), `compare` (query, string), `bucket` (query, string), `content_type` (query, string | null), `owner_portal` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/stats/portal/corporate-communication/dashboard/export`
+
+Export Corporate Communication Dashboard
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `date_from` (query, string | null), `date_to` (query, string | null), `compare` (query, string), `bucket` (query, string), `content_type` (query, string | null), `owner_portal` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/stats/portal/{portal}`
+
+Get Portal Stats
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `portal` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ## Student Life
@@ -1781,7 +4868,7 @@ List Accommodations
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `campus_id` (query, string | null), `accommodation_type` (query, string | null), `gender` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `campus_id` (query, string | null), `accommodation_type` (query, string | null), `gender` (query, string | null), `is_active` (query, boolean | null), `is_accepting_applications` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/accommodations`
@@ -1790,7 +4877,7 @@ Create Accommodation
 
 - Auth: HTTPBearer
 - Request body: AccommodationCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `PATCH /api/v1/accommodations/{item_id}`
@@ -1799,7 +4886,7 @@ Update Accommodation
 
 - Auth: HTTPBearer
 - Request body: AccommodationUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/accommodations/{item_id}`
@@ -1808,7 +4895,7 @@ Delete Accommodation
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/accommodations/{slug}`
@@ -1817,7 +4904,7 @@ Get Accommodation
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/arts-culture`
@@ -1826,7 +4913,7 @@ List Arts Culture
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `category` (query, string | null), `school_id` (query, string | null), `club_id` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `category` (query, string | null), `school_id` (query, string | null), `club_id` (query, string | null), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/arts-culture`
@@ -1835,7 +4922,7 @@ Create Arts Culture
 
 - Auth: HTTPBearer
 - Request body: ArtsCultureCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `PATCH /api/v1/arts-culture/{item_id}`
@@ -1844,7 +4931,7 @@ Update Arts Culture
 
 - Auth: HTTPBearer
 - Request body: ArtsCultureUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/arts-culture/{item_id}`
@@ -1853,7 +4940,7 @@ Delete Arts Culture
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/arts-culture/{slug}`
@@ -1862,7 +4949,7 @@ Get Arts Culture
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/clubs`
@@ -1871,7 +4958,7 @@ List Clubs
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `club_type` (query, string | null), `school_id` (query, string | null), `department_id` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `club_type` (query, string | null), `school_id` (query, string | null), `department_id` (query, string | null), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/clubs`
@@ -1880,7 +4967,7 @@ Create Club
 
 - Auth: HTTPBearer
 - Request body: ClubCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `PATCH /api/v1/clubs/activities/{activity_id}`
@@ -1889,7 +4976,7 @@ Update Club Activity
 
 - Auth: HTTPBearer
 - Request body: ClubActivityUpdate
-- Parameters: `activity_id` (path, string)
+- Parameters: `activity_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/clubs/activities/{activity_id}`
@@ -1898,8 +4985,190 @@ Delete Club Activity
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `activity_id` (path, string)
+- Parameters: `activity_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
+
+### `POST /api/v1/clubs/activities/{activity_id}/workflow/{action}`
+
+Transition Club Activity
+
+- Auth: HTTPBearer
+- Request body: ContentWorkflowActionRequest
+- Parameters: `activity_id` (path, string), `action` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/clubs/announcements/{announcement_id}`
+
+Update Club Announcement
+
+- Auth: HTTPBearer
+- Request body: AnnouncementUpdate
+- Parameters: `announcement_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/clubs/announcements/{announcement_id}`
+
+Delete Club Announcement
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `announcement_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `POST /api/v1/clubs/announcements/{announcement_id}/workflow/{action}`
+
+Transition Club Announcement
+
+- Auth: HTTPBearer
+- Request body: ContentWorkflowActionRequest
+- Parameters: `announcement_id` (path, string), `action` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/clubs/id/{club_id}/activities`
+
+List Managed Club Activities
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `club_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/clubs/id/{club_id}/activities`
+
+Create Club Activity
+
+- Auth: HTTPBearer
+- Request body: ClubActivityCreate
+- Parameters: `club_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/clubs/id/{club_id}/announcements`
+
+List Club Announcements
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `club_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/clubs/id/{club_id}/announcements`
+
+Create Club Announcement
+
+- Auth: HTTPBearer
+- Request body: AnnouncementCreate
+- Parameters: `club_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/clubs/id/{club_id}/leaders`
+
+List Club Leaders
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `club_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/clubs/id/{club_id}/media`
+
+List Club Media
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `club_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/clubs/id/{club_id}/media`
+
+Attach Club Media
+
+- Auth: HTTPBearer
+- Request body: ClubMediaCreate
+- Parameters: `club_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `PATCH /api/v1/clubs/id/{club_id}/media/{link_id}`
+
+Update Club Media
+
+- Auth: HTTPBearer
+- Request body: ClubMediaUpdate
+- Parameters: `link_id` (path, string), `club_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/clubs/id/{club_id}/media/{link_id}/publication`
+
+Set Club Media Publication
+
+Compatibility wrapper that records publication changes through workflow logs.
+
+- Auth: HTTPBearer
+- Request body: ClubMediaPublicationUpdate
+- Parameters: `link_id` (path, string), `club_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/clubs/id/{club_id}/media/{link_id}/workflow/{action}`
+
+Transition Club Media
+
+- Auth: HTTPBearer
+- Request body: ContentWorkflowActionRequest
+- Parameters: `link_id` (path, string), `club_id` (path, string), `action` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/clubs/id/{club_id}/stories`
+
+List Club Stories
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `club_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/clubs/id/{club_id}/stories`
+
+Create Club Story
+
+- Auth: HTTPBearer
+- Request body: BlogCreate
+- Parameters: `club_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/clubs/managed`
+
+List Managed Clubs
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `club_id` (query, string | null), `page` (query, integer), `per_page` (query, integer), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/clubs/stories/{story_id}`
+
+Update Club Story
+
+- Auth: HTTPBearer
+- Request body: BlogUpdate
+- Parameters: `story_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/clubs/stories/{story_id}`
+
+Delete Club Story
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `story_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `POST /api/v1/clubs/stories/{story_id}/workflow/{action}`
+
+Transition Club Story
+
+- Auth: HTTPBearer
+- Request body: ContentWorkflowActionRequest
+- Parameters: `story_id` (path, string), `action` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/clubs/{club_id}`
 
@@ -1907,7 +5176,7 @@ Update Club
 
 - Auth: HTTPBearer
 - Request body: ClubUpdate
-- Parameters: `club_id` (path, string)
+- Parameters: `club_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/clubs/{club_id}`
@@ -1916,17 +5185,8 @@ Delete Club
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `club_id` (path, string)
+- Parameters: `club_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
-
-### `POST /api/v1/clubs/{club_id}/activities`
-
-Create Club Activity
-
-- Auth: HTTPBearer
-- Request body: ClubActivityCreate
-- Parameters: `club_id` (path, string)
-- Success response: 201 -
 
 ### `GET /api/v1/clubs/{slug}`
 
@@ -1934,7 +5194,7 @@ Get Club
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/clubs/{slug}/activities`
@@ -1943,7 +5203,7 @@ Get Club Activities
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/sports-facilities`
@@ -1952,7 +5212,7 @@ List Sports Facilities
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `campus_id` (query, string | null), `facility_type` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `campus_id` (query, string | null), `facility_type` (query, string | null), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/sports-facilities`
@@ -1961,7 +5221,7 @@ Create Sports Facility
 
 - Auth: HTTPBearer
 - Request body: SportsFacilityCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `PATCH /api/v1/sports-facilities/{item_id}`
@@ -1970,7 +5230,7 @@ Update Sports Facility
 
 - Auth: HTTPBearer
 - Request body: SportsFacilityUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/sports-facilities/{item_id}`
@@ -1979,7 +5239,7 @@ Delete Sports Facility
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/sports-facilities/{slug}`
@@ -1988,7 +5248,7 @@ Get Sports Facility
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/student-governance`
@@ -1997,7 +5257,7 @@ List Student Governance
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `governance_type` (query, string | null), `school_id` (query, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `governance_type` (query, string | null), `school_id` (query, string | null), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/student-governance`
@@ -2006,7 +5266,7 @@ Create Student Governance
 
 - Auth: HTTPBearer
 - Request body: StudentGovernanceCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `PATCH /api/v1/student-governance/{item_id}`
@@ -2015,7 +5275,7 @@ Update Student Governance
 
 - Auth: HTTPBearer
 - Request body: StudentGovernanceUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/student-governance/{item_id}`
@@ -2024,7 +5284,7 @@ Delete Student Governance
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/student-governance/{slug}`
@@ -2033,10 +5293,19 @@ Get Student Governance
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ## Support
+
+### `GET /api/v1/contact-directory`
+
+Get Public Contact Directory
+
+- Auth: public
+- Request body: -
+- Parameters: `q` (query, string | null), `contact_type` (query, string | null), `scope_type` (query, string | null), `scope_id` (query, string | null), `page` (query, integer), `per_page` (query, integer)
+- Success response: 200 -
 
 ### `GET /api/v1/contacts`
 
@@ -2044,7 +5313,7 @@ List Contacts
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `q` (query, string | null), `contact_type` (query, string | null), `sort` (query, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/contacts`
@@ -2053,8 +5322,35 @@ Create Contact
 
 - Auth: HTTPBearer
 - Request body: ContactDirectoryCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/contacts/admin`
+
+List Admin Contacts
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_public` (query, boolean | null), `is_main` (query, boolean | null), `status` (query, string | null), `q` (query, string | null), `contact_type` (query, string | null), `sort` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/contacts/admin/{contact_id}`
+
+Get Admin Contact
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `contact_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/contacts/owners`
+
+List Contact Owners
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `scope_type` (query, string), `q` (query, string | null), `limit` (query, integer), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/contacts/{contact_id}`
 
@@ -2062,7 +5358,7 @@ Get Contact
 
 - Auth: public
 - Request body: -
-- Parameters: `contact_id` (path, string)
+- Parameters: `contact_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/contacts/{contact_id}`
@@ -2071,7 +5367,7 @@ Update Contact
 
 - Auth: HTTPBearer
 - Request body: ContactDirectoryUpdate
-- Parameters: `contact_id` (path, string)
+- Parameters: `contact_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/faqs`
@@ -2080,7 +5376,7 @@ List Faqs
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/faqs`
@@ -2089,8 +5385,26 @@ Create Faq
 
 - Auth: HTTPBearer
 - Request body: FAQCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/faqs/admin`
+
+List Admin Faqs
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/faqs/admin/{faq_id}`
+
+Get Admin Faq
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `faq_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/faqs/{faq_id}`
 
@@ -2098,7 +5412,7 @@ Get Faq
 
 - Auth: public
 - Request body: -
-- Parameters: `faq_id` (path, string)
+- Parameters: `faq_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/faqs/{faq_id}`
@@ -2107,8 +5421,17 @@ Update Faq
 
 - Auth: HTTPBearer
 - Request body: FAQUpdate
-- Parameters: `faq_id` (path, string)
+- Parameters: `faq_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
+
+### `DELETE /api/v1/faqs/{faq_id}`
+
+Delete Faq
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `faq_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
 
 ### `GET /api/v1/support/tickets`
 
@@ -2116,7 +5439,7 @@ List Tickets
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `status` (query, string | null), `mine` (query, boolean)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `status` (query, string | null), `mine` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/support/tickets`
@@ -2125,7 +5448,7 @@ Create Ticket
 
 - Auth: HTTPBearer
 - Request body: SupportTicketCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `GET /api/v1/support/tickets/{ticket_id}`
@@ -2134,7 +5457,7 @@ Get Ticket
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `ticket_id` (path, string)
+- Parameters: `ticket_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/support/tickets/{ticket_id}`
@@ -2143,7 +5466,7 @@ Update Ticket
 
 - Auth: HTTPBearer
 - Request body: SupportTicketUpdate
-- Parameters: `ticket_id` (path, string)
+- Parameters: `ticket_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ## System
@@ -2154,7 +5477,18 @@ List Public Settings
 
 - Auth: public
 - Request body: -
-- Parameters: `category` (query, string | null)
+- Parameters: `category` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/settings/public`
+
+List Public Settings Authenticated
+
+Public settings via API key authentication.
+
+- Auth: public
+- Request body: -
+- Parameters: `category` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `X-API-Key` (header, string | null)
 - Success response: 200 -
 
 ## University
@@ -2165,7 +5499,7 @@ Get University Info
 
 - Auth: public
 - Request body: -
-- Parameters: -
+- Parameters: `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/university-info`
@@ -2174,7 +5508,7 @@ Create University Info
 
 - Auth: HTTPBearer
 - Request body: UniversityInfoCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `PATCH /api/v1/university-info/{item_id}`
@@ -2183,7 +5517,7 @@ Update University Info
 
 - Auth: HTTPBearer
 - Request body: UniversityInfoUpdate
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/university-info/{item_id}`
@@ -2192,7 +5526,7 @@ Delete University Info
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `item_id` (path, string)
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/university-info/{slug}`
@@ -2201,7 +5535,7 @@ Get University Info By Slug
 
 - Auth: public
 - Request body: -
-- Parameters: `slug` (path, string)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ## Users
@@ -2212,7 +5546,43 @@ List Notifications
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `unread_only` (query, boolean)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `unread_only` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/notifications/preferences`
+
+Get Notification Preferences
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PUT /api/v1/notifications/preferences`
+
+Put Notification Preferences
+
+- Auth: HTTPBearer
+- Request body: NotificationPreferences
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/notifications/read-all`
+
+Mark All Notifications Read
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/notifications/unread-count`
+
+Unread Notification Count
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/notifications/{notification_id}`
@@ -2221,8 +5591,17 @@ Delete Notification
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `notification_id` (path, string)
+- Parameters: `notification_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
+
+### `POST /api/v1/notifications/{notification_id}/archive`
+
+Archive Notification
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `notification_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/notifications/{notification_id}/read`
 
@@ -2230,7 +5609,7 @@ Mark Notification As Read
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `notification_id` (path, string)
+- Parameters: `notification_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/users`
@@ -2239,7 +5618,7 @@ List Users
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `is_active` (query, boolean | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/users`
@@ -2248,7 +5627,7 @@ Create User
 
 - Auth: HTTPBearer
 - Request body: UserCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `GET /api/v1/users/{user_id}`
@@ -2257,7 +5636,7 @@ Get User
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `user_id` (path, string)
+- Parameters: `user_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/users/{user_id}`
@@ -2266,7 +5645,7 @@ Update User
 
 - Auth: HTTPBearer
 - Request body: UserUpdate
-- Parameters: `user_id` (path, string)
+- Parameters: `user_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/users/{user_id}`
@@ -2275,12 +5654,109 @@ Delete User
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `user_id` (path, string)
+- Parameters: `user_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ## Schemas
 
-Generated component schemas: `100`
+Generated component schemas: `213`
+
+### `AboutPageContentCreate`
+
+- `hero_eyebrow`: `string | null` (optional)
+- `hero_headline`: `string | null` (optional)
+- `hero_introduction`: `string | null` (optional)
+- `hero_media_id`: `string | null` (optional)
+- `history_document_id`: `string | null` (optional)
+- `identity_heading`: `string | null` (optional)
+- `identity_media_id`: `string | null` (optional)
+- `identity_narrative`: `string | null` (optional)
+- `is_enabled`: `boolean` (optional)
+- `mandate_introduction`: `string | null` (optional)
+- `modern_campus_media_id`: `string | null` (optional)
+- `old_campus_media_id`: `string | null` (optional)
+- `section_settings`: `object | null` (optional)
+- `university_info_id`: `string` (required)
+- `video_poster_media_id`: `string | null` (optional)
+- `video_title`: `string | null` (optional)
+- `video_transcript_url`: `string | null` (optional)
+- `video_url`: `string | null` (optional)
+- `virtual_tour_accessibility_url`: `string | null` (optional)
+- `virtual_tour_media_id`: `string | null` (optional)
+- `virtual_tour_poster_media_id`: `string | null` (optional)
+- `virtual_tour_provider`: `string | null` (optional)
+- `virtual_tour_title`: `string | null` (optional)
+- `virtual_tour_type`: `string | null` (optional)
+- `virtual_tour_url`: `string | null` (optional)
+
+### `AboutPageContentUpdate`
+
+- `hero_eyebrow`: `string | null` (optional)
+- `hero_headline`: `string | null` (optional)
+- `hero_introduction`: `string | null` (optional)
+- `hero_media_id`: `string | null` (optional)
+- `history_document_id`: `string | null` (optional)
+- `identity_heading`: `string | null` (optional)
+- `identity_media_id`: `string | null` (optional)
+- `identity_narrative`: `string | null` (optional)
+- `is_enabled`: `boolean` (optional)
+- `mandate_introduction`: `string | null` (optional)
+- `modern_campus_media_id`: `string | null` (optional)
+- `old_campus_media_id`: `string | null` (optional)
+- `section_settings`: `object | null` (optional)
+- `university_info_id`: `string | null` (optional)
+- `video_poster_media_id`: `string | null` (optional)
+- `video_title`: `string | null` (optional)
+- `video_transcript_url`: `string | null` (optional)
+- `video_url`: `string | null` (optional)
+- `virtual_tour_accessibility_url`: `string | null` (optional)
+- `virtual_tour_media_id`: `string | null` (optional)
+- `virtual_tour_poster_media_id`: `string | null` (optional)
+- `virtual_tour_provider`: `string | null` (optional)
+- `virtual_tour_title`: `string | null` (optional)
+- `virtual_tour_type`: `string | null` (optional)
+- `virtual_tour_url`: `string | null` (optional)
+
+### `AboutWorkflowAction`
+
+- `action`: `string` (required)
+- `reason`: `string | null` (optional)
+
+### `AcademicCalendarCreate`
+
+- `academic_year`: `string` (required)
+- `end_date`: `string` (required)
+- `events`: `array<object> | null` (optional)
+- `exam_end`: `string | null` (optional)
+- `exam_start`: `string | null` (optional)
+- `holidays`: `array<object> | null` (optional)
+- `late_registration_end`: `string | null` (optional)
+- `registration_end`: `string | null` (optional)
+- `registration_start`: `string | null` (optional)
+- `results_release`: `string | null` (optional)
+- `semester`: `integer` (required)
+- `start_date`: `string` (required)
+- `status`: `string` (optional)
+- `teaching_end`: `string | null` (optional)
+- `teaching_start`: `string | null` (optional)
+
+### `AcademicCalendarUpdate`
+
+- `academic_year`: `string | null` (optional)
+- `end_date`: `string | null` (optional)
+- `events`: `array<object> | null` (optional)
+- `exam_end`: `string | null` (optional)
+- `exam_start`: `string | null` (optional)
+- `holidays`: `array<object> | null` (optional)
+- `late_registration_end`: `string | null` (optional)
+- `registration_end`: `string | null` (optional)
+- `registration_start`: `string | null` (optional)
+- `results_release`: `string | null` (optional)
+- `semester`: `integer | null` (optional)
+- `start_date`: `string | null` (optional)
+- `status`: `string | null` (optional)
+- `teaching_end`: `string | null` (optional)
+- `teaching_start`: `string | null` (optional)
 
 ### `AccommodationCreate`
 
@@ -2452,62 +5928,77 @@ Generated component schemas: `100`
 - `verified_at`: `string | null` (optional)
 - `website`: `string | null` (optional)
 
+### `AnalyticsEventBatchCreate`
+
+- `events`: `array<AnalyticsEventCreate>` (required)
+
+### `AnalyticsEventCreate`
+
+- `browser`: `string | null` (optional)
+- `country_code`: `string | null` (optional)
+- `device_type`: `string | null` (optional)
+- `entity_id`: `string | null` (optional)
+- `entity_slug`: `string | null` (optional)
+- `entity_title`: `string | null` (optional)
+- `entity_type`: `string | null` (optional)
+- `event_metadata`: `object | null` (optional)
+- `event_type`: `string` (required)
+- `occurred_at`: `string | null` (optional)
+- `os`: `string | null` (optional)
+- `path`: `string` (required)
+- `referrer`: `string | null` (optional)
+- `referrer_host`: `string | null` (optional)
+- `session_hash`: `string | null` (optional)
+- `source_app`: `string` (required)
+- `user_agent`: `string | null` (optional)
+
 ### `AnnouncementCreate`
 
 - `audience`: `string` (optional)
-- `author_user_id`: `string | null` (optional)
 - `category`: `string | null` (optional)
 - `display_order`: `integer` (optional)
 - `featured_media_id`: `string | null` (optional)
 - `is_main`: `boolean` (optional)
-- `is_public`: `boolean` (optional)
-- `is_published`: `boolean` (optional)
 - `keywords`: `object | null` (optional)
 - `meta_description`: `string | null` (optional)
 - `meta_title`: `string | null` (optional)
 - `plain_text`: `string | null` (optional)
 - `priority`: `string` (optional)
-- `published_at`: `string | null` (optional)
 - `related_links`: `array<object> | null` (optional)
 - `rich_text`: `string | null` (optional)
 - `scope_id`: `string | null` (optional)
 - `scope_type`: `string | null` (optional)
 - `slug`: `string` (required)
-- `status`: `string` (optional)
 - `structured_content`: `object | null` (optional)
 - `summary`: `string | null` (optional)
 - `title`: `string` (required)
 - `valid_from`: `string | null` (optional)
 - `valid_to`: `string | null` (optional)
+- `youtube_url`: `string | null` (optional)
 
 ### `AnnouncementUpdate`
 
-- `archived_at`: `string | null` (optional)
 - `audience`: `string | null` (optional)
-- `author_user_id`: `string | null` (optional)
 - `category`: `string | null` (optional)
 - `display_order`: `integer | null` (optional)
 - `featured_media_id`: `string | null` (optional)
 - `is_main`: `boolean | null` (optional)
-- `is_public`: `boolean | null` (optional)
-- `is_published`: `boolean | null` (optional)
 - `keywords`: `object | null` (optional)
 - `meta_description`: `string | null` (optional)
 - `meta_title`: `string | null` (optional)
 - `plain_text`: `string | null` (optional)
 - `priority`: `string | null` (optional)
-- `published_at`: `string | null` (optional)
 - `related_links`: `array<object> | null` (optional)
 - `rich_text`: `string | null` (optional)
 - `scope_id`: `string | null` (optional)
 - `scope_type`: `string | null` (optional)
 - `slug`: `string | null` (optional)
-- `status`: `string | null` (optional)
 - `structured_content`: `object | null` (optional)
 - `summary`: `string | null` (optional)
 - `title`: `string | null` (optional)
 - `valid_from`: `string | null` (optional)
 - `valid_to`: `string | null` (optional)
+- `youtube_url`: `string | null` (optional)
 
 ### `ApiKeyCreate`
 
@@ -2550,25 +6041,20 @@ Generated component schemas: `100`
 
 ### `BlogCreate`
 
-- `author_user_id`: `string | null` (optional)
 - `display_order`: `integer` (optional)
 - `excerpt`: `string | null` (optional)
 - `featured_media_id`: `string | null` (optional)
 - `is_featured`: `boolean` (optional)
 - `is_main`: `boolean` (optional)
-- `is_public`: `boolean` (optional)
-- `is_published`: `boolean` (optional)
 - `keywords`: `object | null` (optional)
 - `meta_description`: `string | null` (optional)
 - `meta_title`: `string | null` (optional)
 - `plain_text`: `string | null` (optional)
-- `published_at`: `string | null` (optional)
 - `related_links`: `array<object> | null` (optional)
 - `rich_text`: `string | null` (optional)
 - `scope_id`: `string | null` (optional)
 - `scope_type`: `string | null` (optional)
 - `slug`: `string` (required)
-- `status`: `string` (optional)
 - `structured_content`: `object | null` (optional)
 - `summary`: `string | null` (optional)
 - `title`: `string` (required)
@@ -2577,35 +6063,143 @@ Generated component schemas: `100`
 
 ### `BlogUpdate`
 
-- `archived_at`: `string | null` (optional)
-- `author_user_id`: `string | null` (optional)
 - `display_order`: `integer | null` (optional)
 - `excerpt`: `string | null` (optional)
 - `featured_media_id`: `string | null` (optional)
 - `is_featured`: `boolean | null` (optional)
 - `is_main`: `boolean | null` (optional)
-- `is_public`: `boolean | null` (optional)
-- `is_published`: `boolean | null` (optional)
 - `keywords`: `object | null` (optional)
 - `meta_description`: `string | null` (optional)
 - `meta_title`: `string | null` (optional)
 - `plain_text`: `string | null` (optional)
-- `published_at`: `string | null` (optional)
 - `related_links`: `array<object> | null` (optional)
 - `rich_text`: `string | null` (optional)
 - `scope_id`: `string | null` (optional)
 - `scope_type`: `string | null` (optional)
 - `slug`: `string | null` (optional)
-- `status`: `string | null` (optional)
 - `structured_content`: `object | null` (optional)
 - `summary`: `string | null` (optional)
 - `title`: `string | null` (optional)
 - `valid_from`: `string | null` (optional)
 - `valid_to`: `string | null` (optional)
 
-### `Body_upload_media_api_v1_media_upload_post`
+### `BoardCreate`
+
+- `board_type`: `string` (optional)
+- `chairperson_id`: `string | null` (optional)
+- `cover_image_id`: `string | null` (optional)
+- `description`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `division_id`: `string | null` (optional)
+- `establishment_date`: `string | null` (optional)
+- `head_message`: `string | null` (optional)
+- `is_active`: `boolean` (optional)
+- `is_public`: `boolean` (optional)
+- `mandate`: `string | null` (optional)
+- `max_terms`: `integer | null` (optional)
+- `meeting_schedule`: `string | null` (optional)
+- `member_count`: `integer | null` (optional)
+- `mission`: `string | null` (optional)
+- `name`: `string` (required)
+- `parent_entity_id`: `string | null` (optional)
+- `parent_entity_type`: `string | null` (optional)
+- `quorum`: `integer | null` (optional)
+- `secretary_id`: `string | null` (optional)
+- `show_member_terms`: `boolean` (optional)
+- `slug`: `string` (required)
+- `standard_term_years`: `integer | null` (optional)
+- `status`: `string` (optional)
+- `vice_chairperson_id`: `string | null` (optional)
+- `vision`: `string | null` (optional)
+
+### `BoardMemberCreate`
+
+- `display_order`: `integer` (optional)
+- `end_date`: `string | null` (optional)
+- `hierarchy_level`: `integer | null` (optional)
+- `is_acting`: `boolean` (optional)
+- `is_primary`: `boolean` (optional)
+- `is_public`: `boolean` (optional)
+- `notes`: `string | null` (optional)
+- `person_id`: `string` (required)
+- `reports_to_id`: `string | null` (optional)
+- `role`: `string` (optional)
+- `show_term_dates`: `boolean` (optional)
+- `start_date`: `string | null` (optional)
+- `status`: `string` (optional)
+- `term_renewable`: `boolean` (optional)
+- `term_years`: `integer | null` (optional)
+- `title`: `string | null` (optional)
+
+### `BoardUpdate`
+
+- `board_type`: `string | null` (optional)
+- `chairperson_id`: `string | null` (optional)
+- `cover_image_id`: `string | null` (optional)
+- `description`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `division_id`: `string | null` (optional)
+- `establishment_date`: `string | null` (optional)
+- `head_message`: `string | null` (optional)
+- `is_active`: `boolean | null` (optional)
+- `is_public`: `boolean | null` (optional)
+- `mandate`: `string | null` (optional)
+- `max_terms`: `integer | null` (optional)
+- `meeting_schedule`: `string | null` (optional)
+- `member_count`: `integer | null` (optional)
+- `mission`: `string | null` (optional)
+- `name`: `string | null` (optional)
+- `parent_entity_id`: `string | null` (optional)
+- `parent_entity_type`: `string | null` (optional)
+- `quorum`: `integer | null` (optional)
+- `secretary_id`: `string | null` (optional)
+- `show_member_terms`: `boolean | null` (optional)
+- `slug`: `string | null` (optional)
+- `standard_term_years`: `integer | null` (optional)
+- `status`: `string | null` (optional)
+- `vice_chairperson_id`: `string | null` (optional)
+- `vision`: `string | null` (optional)
+
+### `Body_create_media_batch_api_v1_school_portal_media_batches_post`
+
+- `files`: `array<string>` (required)
+- `target_entity_id`: `string | null` (optional)
+- `target_entity_type`: `string | null` (optional)
+- `target_role`: `string` (optional)
+
+### `Body_preview_import_api_v1_imports__resource_key__preview_post`
 
 - `file`: `string` (required)
+
+### `Body_preview_team_import_api_v1_school_portal_team_imports_preview_post`
+
+- `file`: `string` (required)
+
+### `Body_upload_media_api_v1_media_upload_post`
+
+- `entity_id`: `string | null` (optional)
+- `entity_type`: `string | null` (optional)
+- `file`: `string` (required)
+- `folder_id`: `string | null` (optional)
+- `is_public`: `boolean` (optional)
+- `role`: `string | null` (optional)
+
+### `Body_upload_person_cv_api_v1_persons__person_id__cv_post`
+
+- `file`: `string` (required)
+
+### `Body_upload_person_photo_api_v1_persons__person_id__photo_post`
+
+- `file`: `string` (required)
+
+### `BulkSettingUpdateItem`
+
+- `key`: `string` (required)
+- `value`: `object` (required)
+
+### `BulkSettingsUpdatePayload`
+
+- `settings`: `array<BulkSettingUpdateItem>` (optional)
 
 ### `CampusCreate`
 
@@ -2656,13 +6250,11 @@ Generated component schemas: `100`
 - `cover_image_id`: `string | null` (optional)
 - `description`: `string | null` (optional)
 - `end_datetime`: `string | null` (optional)
-- `is_public`: `boolean` (optional)
 - `is_virtual`: `boolean` (optional)
 - `location`: `string | null` (optional)
 - `meeting_link`: `string | null` (optional)
 - `slug`: `string | null` (optional)
 - `start_datetime`: `string` (required)
-- `status`: `string` (optional)
 - `title`: `string` (required)
 
 ### `ClubActivityUpdate`
@@ -2671,13 +6263,11 @@ Generated component schemas: `100`
 - `cover_image_id`: `string | null` (optional)
 - `description`: `string | null` (optional)
 - `end_datetime`: `string | null` (optional)
-- `is_public`: `boolean | null` (optional)
 - `is_virtual`: `boolean | null` (optional)
 - `location`: `string | null` (optional)
 - `meeting_link`: `string | null` (optional)
 - `slug`: `string | null` (optional)
 - `start_datetime`: `string | null` (optional)
-- `status`: `string | null` (optional)
 - `title`: `string | null` (optional)
 
 ### `ClubCreate`
@@ -2707,6 +6297,21 @@ Generated component schemas: `100`
 - `social_media`: `object | null` (optional)
 - `treasurer_id`: `string | null` (optional)
 - `vice_chairperson_id`: `string | null` (optional)
+
+### `ClubMediaCreate`
+
+- `display_order`: `integer` (optional)
+- `media_id`: `string` (required)
+- `role`: `string` (optional)
+
+### `ClubMediaPublicationUpdate`
+
+- `is_public`: `boolean` (required)
+
+### `ClubMediaUpdate`
+
+- `display_order`: `integer | null` (optional)
+- `role`: `string | null` (optional)
 
 ### `ClubUpdate`
 
@@ -2772,6 +6377,135 @@ Generated component schemas: `100`
 - `scope_type`: `string | null` (optional)
 - `status`: `string | null` (optional)
 
+### `ContentWorkflowActionRequest`
+
+- `changed_fields`: `object | null` (optional)
+- `comments`: `string | null` (optional)
+- `scheduled_for`: `string | null` (optional)
+
+### `CouncilMemberCreate`
+
+- `appointing_authority`: `string | null` (optional)
+- `appointment_category`: `string | null` (optional)
+- `appointment_reference`: `string | null` (optional)
+- `appointment_status`: `string` (optional)
+- `current_office`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `end_date`: `string | null` (optional)
+- `governance_role_id`: `string` (required)
+- `hierarchy_level`: `integer | null` (optional)
+- `is_acting`: `boolean` (optional)
+- `is_ex_officio`: `boolean` (optional)
+- `is_voting_member`: `boolean` (optional)
+- `official_designation`: `string | null` (optional)
+- `person_id`: `string` (required)
+- `portrait_media_id`: `string | null` (optional)
+- `profile_slug`: `string | null` (optional)
+- `profile_summary`: `string | null` (optional)
+- `public_role_label`: `string` (required)
+- `publication_notes`: `string | null` (optional)
+- `publish_without_portrait_override`: `boolean` (optional)
+- `reports_to_id`: `string | null` (optional)
+- `represented_institution`: `string | null` (optional)
+- `show_contact_publicly`: `boolean` (optional)
+- `start_date`: `string | null` (optional)
+- `term_number`: `integer | null` (optional)
+- `term_years`: `integer | null` (optional)
+- `workflow_status`: `string` (optional)
+
+### `CouncilMemberUpdate`
+
+- `appointing_authority`: `string | null` (optional)
+- `appointment_category`: `string | null` (optional)
+- `appointment_reference`: `string | null` (optional)
+- `appointment_status`: `string | null` (optional)
+- `current_office`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `end_date`: `string | null` (optional)
+- `governance_role_id`: `string | null` (optional)
+- `hierarchy_level`: `integer | null` (optional)
+- `is_acting`: `boolean | null` (optional)
+- `is_ex_officio`: `boolean | null` (optional)
+- `is_voting_member`: `boolean | null` (optional)
+- `official_designation`: `string | null` (optional)
+- `portrait_media_id`: `string | null` (optional)
+- `profile_slug`: `string | null` (optional)
+- `profile_summary`: `string | null` (optional)
+- `public_role_label`: `string | null` (optional)
+- `publication_notes`: `string | null` (optional)
+- `publish_without_portrait_override`: `boolean | null` (optional)
+- `reports_to_id`: `string | null` (optional)
+- `represented_institution`: `string | null` (optional)
+- `show_contact_publicly`: `boolean | null` (optional)
+- `start_date`: `string | null` (optional)
+- `term_number`: `integer | null` (optional)
+- `term_years`: `integer | null` (optional)
+- `workflow_status`: `string | null` (optional)
+
+### `CouncilOrderNode`
+
+- `assignment_id`: `string` (required)
+- `display_group`: `string` (required)
+- `display_order`: `integer` (required)
+- `hierarchy_level`: `integer` (required)
+- `reports_to_id`: `string | null` (optional)
+
+### `CouncilOrderUpdate`
+
+- `nodes`: `array<CouncilOrderNode>` (required)
+
+### `DashboardActivityItem`
+
+- `event_type`: `string` (required)
+- `id`: `string` (required)
+- `occurred_at`: `string` (required)
+- `resource_id`: `string` (required)
+- `resource_type`: `string` (required)
+- `summary`: `string` (required)
+
+### `DashboardAttentionItem`
+
+- `count`: `integer` (required)
+- `href`: `string` (required)
+- `key`: `string` (required)
+- `label`: `string` (required)
+- `severity`: `string` (required)
+
+### `DashboardDistributionItem`
+
+- `key`: `string` (required)
+- `label`: `string` (required)
+- `value`: `integer` (required)
+
+### `DashboardProfileCompleteness`
+
+- `completed_fields`: `integer` (required)
+- `missing_fields`: `array<string>` (required)
+- `percent`: `integer` (required)
+- `total_fields`: `integer` (required)
+
+### `DashboardQuickLink`
+
+- `count`: `integer` (required)
+- `href`: `string` (required)
+- `key`: `string` (required)
+- `label`: `string` (required)
+
+### `DashboardSummaryCard`
+
+- `change_percent`: `number | null` (optional)
+- `collection_started_after_deployment`: `boolean` (optional)
+- `href`: `string | null` (optional)
+- `key`: `string` (required)
+- `label`: `string` (required)
+- `previous_value`: `integer | null` (optional)
+- `value`: `integer` (required)
+
+### `DashboardTrendPoint`
+
+- `bucket`: `string` (required)
+- `value`: `integer` (required)
+
 ### `DepartmentCreate`
 
 - `about`: `string | null` (optional)
@@ -2802,6 +6536,36 @@ Generated component schemas: `100`
 - `student_count`: `integer` (optional)
 - `vision`: `string | null` (optional)
 - `wing_id`: `string | null` (optional)
+
+### `DepartmentServiceCreate`
+
+- `contact_email`: `string | null` (optional)
+- `contact_phone`: `string | null` (optional)
+- `department_id`: `string` (required)
+- `description`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `fee`: `string | null` (optional)
+- `is_active`: `boolean` (optional)
+- `name`: `string` (required)
+- `process`: `string | null` (optional)
+- `requirements`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `turnaround_time`: `string | null` (optional)
+
+### `DepartmentServiceUpdate`
+
+- `contact_email`: `string | null` (optional)
+- `contact_phone`: `string | null` (optional)
+- `department_id`: `string | null` (optional)
+- `description`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `fee`: `string | null` (optional)
+- `is_active`: `boolean | null` (optional)
+- `name`: `string | null` (optional)
+- `process`: `string | null` (optional)
+- `requirements`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `turnaround_time`: `string | null` (optional)
 
 ### `DepartmentUpdate`
 
@@ -2912,14 +6676,11 @@ Generated component schemas: `100`
 
 ### `EventCreate`
 
-- `author_user_id`: `string | null` (optional)
 - `display_order`: `integer` (optional)
 - `end_date`: `string | null` (optional)
 - `featured_media_id`: `string | null` (optional)
 - `is_featured`: `boolean` (optional)
 - `is_main`: `boolean` (optional)
-- `is_public`: `boolean` (optional)
-- `is_published`: `boolean` (optional)
 - `is_virtual`: `boolean` (optional)
 - `keywords`: `object | null` (optional)
 - `location`: `string | null` (optional)
@@ -2927,14 +6688,12 @@ Generated component schemas: `100`
 - `meta_description`: `string | null` (optional)
 - `meta_title`: `string | null` (optional)
 - `plain_text`: `string | null` (optional)
-- `published_at`: `string | null` (optional)
 - `related_links`: `array<object> | null` (optional)
 - `rich_text`: `string | null` (optional)
 - `scope_id`: `string | null` (optional)
 - `scope_type`: `string | null` (optional)
 - `slug`: `string` (required)
 - `start_date`: `string` (required)
-- `status`: `string` (optional)
 - `structured_content`: `object | null` (optional)
 - `summary`: `string | null` (optional)
 - `title`: `string` (required)
@@ -2943,15 +6702,11 @@ Generated component schemas: `100`
 
 ### `EventUpdate`
 
-- `archived_at`: `string | null` (optional)
-- `author_user_id`: `string | null` (optional)
 - `display_order`: `integer | null` (optional)
 - `end_date`: `string | null` (optional)
 - `featured_media_id`: `string | null` (optional)
 - `is_featured`: `boolean | null` (optional)
 - `is_main`: `boolean | null` (optional)
-- `is_public`: `boolean | null` (optional)
-- `is_published`: `boolean | null` (optional)
 - `is_virtual`: `boolean | null` (optional)
 - `keywords`: `object | null` (optional)
 - `location`: `string | null` (optional)
@@ -2959,14 +6714,12 @@ Generated component schemas: `100`
 - `meta_description`: `string | null` (optional)
 - `meta_title`: `string | null` (optional)
 - `plain_text`: `string | null` (optional)
-- `published_at`: `string | null` (optional)
 - `related_links`: `array<object> | null` (optional)
 - `rich_text`: `string | null` (optional)
 - `scope_id`: `string | null` (optional)
 - `scope_type`: `string | null` (optional)
 - `slug`: `string | null` (optional)
 - `start_date`: `string | null` (optional)
-- `status`: `string | null` (optional)
 - `structured_content`: `object | null` (optional)
 - `summary`: `string | null` (optional)
 - `title`: `string | null` (optional)
@@ -3047,9 +6800,136 @@ Generated component schemas: `100`
 - `scope_type`: `string | null` (optional)
 - `status`: `string | null` (optional)
 
+### `FactEditionClone`
+
+- `reporting_year`: `integer` (required)
+
+### `FactEditionCreate`
+
+- `introduction`: `string | null` (optional)
+- `is_current`: `boolean` (optional)
+- `is_enabled`: `boolean` (optional)
+- `methodology_note`: `string | null` (optional)
+- `reporting_year`: `integer` (required)
+- `source_document_id`: `string | null` (optional)
+- `title`: `string` (required)
+- `verified_on`: `string | null` (optional)
+
+### `FactEditionUpdate`
+
+- `introduction`: `string | null` (optional)
+- `is_current`: `boolean | null` (optional)
+- `is_enabled`: `boolean | null` (optional)
+- `methodology_note`: `string | null` (optional)
+- `source_document_id`: `string | null` (optional)
+- `title`: `string | null` (optional)
+- `verified_on`: `string | null` (optional)
+
+### `FactGroupCreate`
+
+- `display_order`: `integer` (optional)
+- `fact_edition_id`: `string | null` (optional)
+- `heading`: `string` (required)
+- `image_alt_text`: `string | null` (optional)
+- `image_id`: `string | null` (optional)
+- `is_enabled`: `boolean` (optional)
+- `slug`: `string` (required)
+- `summary`: `string | null` (optional)
+
+### `FactGroupUpdate`
+
+- `display_order`: `integer | null` (optional)
+- `heading`: `string | null` (optional)
+- `image_alt_text`: `string | null` (optional)
+- `image_id`: `string | null` (optional)
+- `is_enabled`: `boolean | null` (optional)
+- `summary`: `string | null` (optional)
+
+### `FactItemCreate`
+
+- `display_order`: `integer` (optional)
+- `display_value`: `string` (required)
+- `explanation`: `string | null` (optional)
+- `fact_group_id`: `string` (required)
+- `fact_kind`: `string` (required)
+- `icon_key`: `string | null` (optional)
+- `is_enabled`: `boolean` (optional)
+- `is_featured`: `boolean` (optional)
+- `label`: `string` (required)
+- `link_label`: `string | null` (optional)
+- `link_url`: `string | null` (optional)
+- `numeric_value`: `number | string | null` (optional)
+- `prefix`: `string | null` (optional)
+- `source_title`: `string | null` (optional)
+- `source_url`: `string | null` (optional)
+- `suffix`: `string | null` (optional)
+- `unit`: `string | null` (optional)
+- `verified_on`: `string | null` (optional)
+
+### `FactItemUpdate`
+
+- `display_order`: `integer | null` (optional)
+- `display_value`: `string | null` (optional)
+- `explanation`: `string | null` (optional)
+- `icon_key`: `string | null` (optional)
+- `is_enabled`: `boolean | null` (optional)
+- `is_featured`: `boolean | null` (optional)
+- `label`: `string | null` (optional)
+- `link_label`: `string | null` (optional)
+- `link_url`: `string | null` (optional)
+- `numeric_value`: `number | string | null` (optional)
+- `prefix`: `string | null` (optional)
+- `source_title`: `string | null` (optional)
+- `source_url`: `string | null` (optional)
+- `suffix`: `string | null` (optional)
+- `unit`: `string | null` (optional)
+- `verified_on`: `string | null` (optional)
+
 ### `ForgotPasswordRequest`
 
 - `email`: `string` (required)
+- `frontend_service`: `string | null` (optional)
+
+### `GovernancePageContentUpdate`
+
+- `breadcrumb_label`: `string | null` (optional)
+- `document_cta_label`: `string | null` (optional)
+- `document_cta_url`: `string | null` (optional)
+- `hero_focal_point`: `string | null` (optional)
+- `hero_image_id`: `string | null` (optional)
+- `intro`: `string | null` (optional)
+- `mandate_body`: `string | null` (optional)
+- `mandate_heading`: `string | null` (optional)
+- `mandate_icon`: `string | null` (optional)
+- `mandate_label`: `string | null` (optional)
+- `overlay_intensity`: `integer | null` (optional)
+- `title`: `string | null` (optional)
+
+### `GovernanceRoleCreate`
+
+- `badge_style`: `string | null` (optional)
+- `category`: `string` (required)
+- `default_display_order`: `integer` (optional)
+- `default_hierarchy_level`: `integer` (optional)
+- `description`: `string | null` (optional)
+- `display_group`: `string` (required)
+- `is_active`: `boolean` (optional)
+- `name`: `string` (required)
+- `public_label`: `string` (required)
+- `slug`: `string` (required)
+
+### `GovernanceRoleUpdate`
+
+- `badge_style`: `string | null` (optional)
+- `category`: `string | null` (optional)
+- `default_display_order`: `integer | null` (optional)
+- `default_hierarchy_level`: `integer | null` (optional)
+- `description`: `string | null` (optional)
+- `display_group`: `string | null` (optional)
+- `is_active`: `boolean | null` (optional)
+- `name`: `string | null` (optional)
+- `public_label`: `string | null` (optional)
+- `slug`: `string | null` (optional)
 
 ### `HTTPValidationError`
 
@@ -3064,33 +6944,273 @@ Generated component schemas: `100`
 - `role_key`: `string` (required)
 - `title`: `string` (required)
 
+### `HistoryMilestoneCreate`
+
+- `about_page_content_id`: `string` (required)
+- `display_order`: `integer` (optional)
+- `event_date`: `string | null` (optional)
+- `expanded_body`: `string | null` (optional)
+- `image_alt_text`: `string | null` (optional)
+- `image_id`: `string | null` (optional)
+- `is_enabled`: `boolean` (optional)
+- `is_featured`: `boolean` (optional)
+- `is_public`: `boolean` (optional)
+- `slug`: `string` (required)
+- `source_document_id`: `string | null` (optional)
+- `source_title`: `string | null` (optional)
+- `source_url`: `string | null` (optional)
+- `summary`: `string` (required)
+- `title`: `string` (required)
+- `year_label`: `string` (required)
+
+### `HistoryMilestoneUpdate`
+
+- `display_order`: `integer | null` (optional)
+- `event_date`: `string | null` (optional)
+- `expanded_body`: `string | null` (optional)
+- `image_alt_text`: `string | null` (optional)
+- `image_id`: `string | null` (optional)
+- `is_enabled`: `boolean | null` (optional)
+- `is_featured`: `boolean | null` (optional)
+- `is_public`: `boolean | null` (optional)
+- `source_document_id`: `string | null` (optional)
+- `source_title`: `string | null` (optional)
+- `source_url`: `string | null` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string | null` (optional)
+- `year_label`: `string | null` (optional)
+
+### `HomepageActionConfigUpdate`
+
+- `enabled`: `boolean | null` (optional)
+- `ends_at`: `string | null` (optional)
+- `label`: `string | null` (optional)
+- `starts_at`: `string | null` (optional)
+- `url`: `string | null` (optional)
+
+### `HomepageReportingConfigUpdate`
+
+- `enabled`: `boolean | null` (optional)
+- `ends_at`: `string | null` (optional)
+- `instructions_url`: `string | null` (optional)
+- `location`: `string | null` (optional)
+- `starts_at`: `string | null` (optional)
+- `title`: `string | null` (optional)
+
+### `ImportCommitRequest`
+
+- `mode`: `string` (optional)
+- `rows`: `array<object>` (required)
+
+### `InquiryAssign`
+
+- `assigned_to_user_id`: `string | null` (optional)
+
+### `InquiryNoteCreate`
+
+- `body`: `string` (required)
+
+### `InquiryReplyCreate`
+
+- `body`: `string` (required)
+- `idempotency_key`: `string` (required)
+
+### `InquiryStatusUpdate`
+
+- `status`: `string` (required)
+
+### `InstitutionalPageCreate`
+
+- `effective_date`: `string | null` (optional)
+- `eyebrow`: `string | null` (optional)
+- `hero_alt_text`: `string | null` (optional)
+- `hero_media_id`: `string | null` (optional)
+- `introduction`: `string` (required)
+- `is_enabled`: `boolean` (optional)
+- `mobile_hero_media_id`: `string | null` (optional)
+- `page_type`: `string` (required)
+- `primary_document_id`: `string | null` (optional)
+- `reporting_period_label`: `string | null` (optional)
+- `review_date`: `string | null` (optional)
+- `seo_description`: `string | null` (optional)
+- `seo_title`: `string | null` (optional)
+- `slug`: `string` (required)
+- `title`: `string` (required)
+- `university_info_id`: `string` (required)
+
+### `InstitutionalPageItemCreate`
+
+- `description`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `icon_key`: `string | null` (optional)
+- `image_alt_text`: `string | null` (optional)
+- `image_id`: `string | null` (optional)
+- `is_enabled`: `boolean` (optional)
+- `link_label`: `string | null` (optional)
+- `link_url`: `string | null` (optional)
+- `section_id`: `string` (required)
+- `supporting_label`: `string | null` (optional)
+- `supporting_value`: `string | null` (optional)
+- `title`: `string` (required)
+
+### `InstitutionalPageItemUpdate`
+
+- `description`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `icon_key`: `string | null` (optional)
+- `image_alt_text`: `string | null` (optional)
+- `image_id`: `string | null` (optional)
+- `is_enabled`: `boolean | null` (optional)
+- `link_label`: `string | null` (optional)
+- `link_url`: `string | null` (optional)
+- `supporting_label`: `string | null` (optional)
+- `supporting_value`: `string | null` (optional)
+- `title`: `string | null` (optional)
+
+### `InstitutionalPageSectionCreate`
+
+- `body`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `eyebrow`: `string | null` (optional)
+- `heading`: `string` (required)
+- `institutional_page_id`: `string` (required)
+- `is_enabled`: `boolean` (optional)
+- `layout_variant`: `string` (optional)
+- `media_alt_text`: `string | null` (optional)
+- `primary_media_id`: `string | null` (optional)
+- `section_type`: `string` (required)
+- `slug`: `string` (required)
+- `summary`: `string | null` (optional)
+- `theme`: `string` (optional)
+- `video_url`: `string | null` (optional)
+
+### `InstitutionalPageSectionUpdate`
+
+- `body`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `eyebrow`: `string | null` (optional)
+- `heading`: `string | null` (optional)
+- `is_enabled`: `boolean | null` (optional)
+- `layout_variant`: `string | null` (optional)
+- `media_alt_text`: `string | null` (optional)
+- `primary_media_id`: `string | null` (optional)
+- `summary`: `string | null` (optional)
+- `theme`: `string | null` (optional)
+- `video_url`: `string | null` (optional)
+
+### `InstitutionalPageUpdate`
+
+- `effective_date`: `string | null` (optional)
+- `eyebrow`: `string | null` (optional)
+- `hero_alt_text`: `string | null` (optional)
+- `hero_media_id`: `string | null` (optional)
+- `introduction`: `string | null` (optional)
+- `is_enabled`: `boolean | null` (optional)
+- `mobile_hero_media_id`: `string | null` (optional)
+- `primary_document_id`: `string | null` (optional)
+- `reporting_period_label`: `string | null` (optional)
+- `review_date`: `string | null` (optional)
+- `seo_description`: `string | null` (optional)
+- `seo_title`: `string | null` (optional)
+- `title`: `string | null` (optional)
+
+### `InstitutionalSectionDocumentCreate`
+
+- `display_order`: `integer` (optional)
+- `document_id`: `string` (required)
+- `is_enabled`: `boolean` (optional)
+- `is_featured`: `boolean` (optional)
+- `public_label`: `string | null` (optional)
+
+### `InstitutionalSectionDocumentUpdate`
+
+- `display_order`: `integer | null` (optional)
+- `is_enabled`: `boolean | null` (optional)
+- `is_featured`: `boolean | null` (optional)
+- `public_label`: `string | null` (optional)
+
 ### `IntakeCreate`
 
 - `academic_calendar_id`: `string` (required)
+- `application_closes_at`: `string | null` (optional)
 - `application_end`: `string` (required)
+- `application_opens_at`: `string | null` (optional)
+- `application_override`: `string` (optional)
 - `application_start`: `string` (required)
 - `code`: `string` (required)
 - `cover_image_id`: `string | null` (optional)
+- `homepage_priority`: `integer` (optional)
 - `is_active`: `boolean` (optional)
+- `is_featured_on_homepage`: `boolean` (optional)
 - `is_open`: `boolean` (optional)
+- `late_application_closes_at`: `string | null` (optional)
 - `late_application_end`: `string | null` (optional)
+- `late_applications_enabled`: `boolean` (optional)
 - `max_students`: `integer | null` (optional)
 - `name`: `string` (required)
+- `override_expires_at`: `string | null` (optional)
 - `slug`: `string | null` (optional)
+- `timezone`: `string` (optional)
+
+### `IntakeHomepageAdmissionUpdate`
+
+- `admission_letter`: `HomepageActionConfigUpdate | null` (optional)
+- `application_closes_at`: `string | null` (optional)
+- `application_opens_at`: `string | null` (optional)
+- `application_override`: `string | null` (optional)
+- `apply`: `HomepageActionConfigUpdate | null` (optional)
+- `check_requirements`: `HomepageActionConfigUpdate | null` (optional)
+- `explore_programmes`: `HomepageActionConfigUpdate | null` (optional)
+- `homepage_priority`: `integer | null` (optional)
+- `is_featured_on_homepage`: `boolean | null` (optional)
+- `late_application_closes_at`: `string | null` (optional)
+- `late_applications_enabled`: `boolean | null` (optional)
+- `override_expires_at`: `string | null` (optional)
+- `reporting`: `HomepageReportingConfigUpdate | null` (optional)
+- `reporting_instructions`: `HomepageActionConfigUpdate | null` (optional)
+- `timezone`: `string | null` (optional)
 
 ### `IntakeUpdate`
 
 - `academic_calendar_id`: `string | null` (optional)
+- `application_closes_at`: `string | null` (optional)
 - `application_end`: `string | null` (optional)
+- `application_opens_at`: `string | null` (optional)
+- `application_override`: `string | null` (optional)
 - `application_start`: `string | null` (optional)
 - `code`: `string | null` (optional)
 - `cover_image_id`: `string | null` (optional)
+- `homepage_priority`: `integer | null` (optional)
 - `is_active`: `boolean | null` (optional)
+- `is_featured_on_homepage`: `boolean | null` (optional)
 - `is_open`: `boolean | null` (optional)
+- `late_application_closes_at`: `string | null` (optional)
 - `late_application_end`: `string | null` (optional)
+- `late_applications_enabled`: `boolean | null` (optional)
 - `max_students`: `integer | null` (optional)
 - `name`: `string | null` (optional)
+- `override_expires_at`: `string | null` (optional)
 - `slug`: `string | null` (optional)
+- `timezone`: `string | null` (optional)
+
+### `InternalEmailPayload`
+
+- `html_body`: `string | null` (optional)
+- `subject`: `string` (required)
+- `text_body`: `string` (required)
+- `to_email`: `string` (required)
+
+### `InternalNotificationBroadcastPayload`
+
+- `action_url`: `string | null` (optional)
+- `channels`: `array<string>` (optional)
+- `message`: `string` (required)
+- `notification_type`: `string` (optional)
+- `payload`: `object | null` (optional)
+- `priority`: `string` (optional)
+- `role_names`: `array<string>` (optional)
+- `subject`: `string | null` (optional)
+- `title`: `string` (required)
 
 ### `MediaFolderCreate`
 
@@ -3102,6 +7222,16 @@ Generated component schemas: `100`
 - `scope_type`: `string | null` (optional)
 - `slug`: `string` (required)
 
+### `MediaFolderUpdate`
+
+- `description`: `string | null` (optional)
+- `is_public`: `boolean | null` (optional)
+- `name`: `string | null` (optional)
+- `parent_id`: `string | null` (optional)
+- `scope_id`: `string | null` (optional)
+- `scope_type`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+
 ### `MediaLinkCreate`
 
 - `display_order`: `integer` (optional)
@@ -3112,26 +7242,83 @@ Generated component schemas: `100`
 - `media_id`: `string` (required)
 - `role`: `string` (optional)
 
+### `MediaLinkUpdate`
+
+- `display_order`: `integer | null` (optional)
+- `entity_id`: `string | null` (optional)
+- `entity_type`: `string | null` (optional)
+- `folder_id`: `string | null` (optional)
+- `is_public`: `boolean | null` (optional)
+- `media_id`: `string | null` (optional)
+- `role`: `string | null` (optional)
+
+### `MediaUpdate`
+
+- `alt_text`: `string | null` (optional)
+- `caption`: `string | null` (optional)
+- `credit`: `string | null` (optional)
+- `description`: `string | null` (optional)
+- `folder_id`: `string | null` (optional)
+- `is_public`: `boolean | null` (optional)
+- `media_type`: `string | null` (optional)
+- `metadata`: `object | null` (optional)
+- `tags`: `array<string> | null` (optional)
+- `thumbnail_url`: `string | null` (optional)
+- `thumbnails`: `object | null` (optional)
+- `title`: `string | null` (optional)
+
+### `MyProfileUpdate`
+
+- `alternative_email`: `string | null` (optional)
+- `alternative_phone`: `string | null` (optional)
+- `awards_honors`: `array<object> | null` (optional)
+- `bio`: `string | null` (optional)
+- `courses_taught`: `array<string> | null` (optional)
+- `cv_file_id`: `string | null` (optional)
+- `education_background`: `array<object> | null` (optional)
+- `email`: `string | null` (optional)
+- `first_name`: `string | null` (optional)
+- `full_bio`: `string | null` (optional)
+- `full_name`: `string | null` (optional)
+- `google_scholar_id`: `string | null` (optional)
+- `google_scholar_url`: `string | null` (optional)
+- `is_researcher`: `boolean | null` (optional)
+- `last_name`: `string | null` (optional)
+- `linkedin_url`: `string | null` (optional)
+- `middle_name`: `string | null` (optional)
+- `office_hours`: `object | null` (optional)
+- `office_location`: `string | null` (optional)
+- `office_phone`: `string | null` (optional)
+- `orcid`: `string | null` (optional)
+- `phone`: `string | null` (optional)
+- `photo_id`: `string | null` (optional)
+- `professional_memberships`: `array<object> | null` (optional)
+- `publication_records`: `array<object> | null` (optional)
+- `qualifications`: `array<QualificationItem> | null` (optional)
+- `research_grants_won`: `array<object> | null` (optional)
+- `research_interests`: `array<string> | null` (optional)
+- `researchgate_url`: `string | null` (optional)
+- `scopus_id`: `string | null` (optional)
+- `specialization`: `string | null` (optional)
+- `teaching_areas`: `array<string> | null` (optional)
+- `title`: `string | null` (optional)
+- `website_url`: `string | null` (optional)
+
 ### `NewsCreate`
 
-- `author_user_id`: `string | null` (optional)
 - `display_order`: `integer` (optional)
 - `featured_media_id`: `string | null` (optional)
 - `is_featured`: `boolean` (optional)
 - `is_main`: `boolean` (optional)
-- `is_public`: `boolean` (optional)
-- `is_published`: `boolean` (optional)
 - `keywords`: `object | null` (optional)
 - `meta_description`: `string | null` (optional)
 - `meta_title`: `string | null` (optional)
 - `plain_text`: `string | null` (optional)
-- `published_at`: `string | null` (optional)
 - `related_links`: `array<object> | null` (optional)
 - `rich_text`: `string | null` (optional)
 - `scope_id`: `string | null` (optional)
 - `scope_type`: `string | null` (optional)
 - `slug`: `string` (required)
-- `status`: `string` (optional)
 - `structured_content`: `object | null` (optional)
 - `summary`: `string | null` (optional)
 - `title`: `string` (required)
@@ -3140,25 +7327,19 @@ Generated component schemas: `100`
 
 ### `NewsUpdate`
 
-- `archived_at`: `string | null` (optional)
-- `author_user_id`: `string | null` (optional)
 - `display_order`: `integer | null` (optional)
 - `featured_media_id`: `string | null` (optional)
 - `is_featured`: `boolean | null` (optional)
 - `is_main`: `boolean | null` (optional)
-- `is_public`: `boolean | null` (optional)
-- `is_published`: `boolean | null` (optional)
 - `keywords`: `object | null` (optional)
 - `meta_description`: `string | null` (optional)
 - `meta_title`: `string | null` (optional)
 - `plain_text`: `string | null` (optional)
-- `published_at`: `string | null` (optional)
 - `related_links`: `array<object> | null` (optional)
 - `rich_text`: `string | null` (optional)
 - `scope_id`: `string | null` (optional)
 - `scope_type`: `string | null` (optional)
 - `slug`: `string | null` (optional)
-- `status`: `string | null` (optional)
 - `structured_content`: `object | null` (optional)
 - `summary`: `string | null` (optional)
 - `title`: `string | null` (optional)
@@ -3173,6 +7354,10 @@ Generated component schemas: `100`
 - `is_public`: `boolean` (optional)
 - `pdf_file_id`: `string | null` (optional)
 - `published_at`: `string | null` (optional)
+- `scheduled_send_at`: `string | null` (optional)
+- `send_error`: `string | null` (optional)
+- `send_status`: `string` (optional)
+- `sent_at`: `string | null` (optional)
 - `slug`: `string | null` (optional)
 - `status`: `string` (optional)
 - `summary`: `string | null` (optional)
@@ -3193,6 +7378,10 @@ Generated component schemas: `100`
 - `is_public`: `boolean | null` (optional)
 - `pdf_file_id`: `string | null` (optional)
 - `published_at`: `string | null` (optional)
+- `scheduled_send_at`: `string | null` (optional)
+- `send_error`: `string | null` (optional)
+- `send_status`: `string | null` (optional)
+- `sent_at`: `string | null` (optional)
 - `slug`: `string | null` (optional)
 - `status`: `string | null` (optional)
 - `summary`: `string | null` (optional)
@@ -3234,6 +7423,13 @@ Generated component schemas: `100`
 - `title`: `string` (required)
 - `user_id`: `string` (required)
 
+### `NotificationPreferences`
+
+- `email`: `boolean` (optional)
+- `in_app`: `boolean` (optional)
+- `push`: `boolean` (optional)
+- `sms`: `boolean` (optional)
+
 ### `NotificationTemplateCreate`
 
 - `channels`: `array<string>` (optional)
@@ -3257,23 +7453,97 @@ Generated component schemas: `100`
 - `title_template`: `string | null` (optional)
 - `variables`: `array<string> | null` (optional)
 
+### `PageSectionCreate`
+
+- `description`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `is_enabled`: `boolean` (optional)
+- `items`: `array<SectionItemCreate>` (optional)
+- `layout_variant`: `string` (optional)
+- `page_key`: `string` (required)
+- `scope_id`: `string | null` (optional)
+- `scope_type`: `string` (optional)
+- `section_key`: `string` (required)
+- `settings`: `object | null` (optional)
+- `subtitle`: `string | null` (optional)
+- `title`: `string | null` (optional)
+- `valid_from`: `string | null` (optional)
+- `valid_to`: `string | null` (optional)
+
+### `PageSectionUpdate`
+
+- `description`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `is_enabled`: `boolean | null` (optional)
+- `items`: `array<SectionItemUpdate> | null` (optional)
+- `layout_variant`: `string | null` (optional)
+- `page_key`: `string | null` (optional)
+- `scope_id`: `string | null` (optional)
+- `scope_type`: `string | null` (optional)
+- `section_key`: `string | null` (optional)
+- `settings`: `object | null` (optional)
+- `subtitle`: `string | null` (optional)
+- `title`: `string | null` (optional)
+- `valid_from`: `string | null` (optional)
+- `valid_to`: `string | null` (optional)
+
+### `PartnershipSpotlightCreate`
+
+- `headline`: `string` (required)
+- `is_enabled`: `boolean` (optional)
+- `opportunities`: `array<object> | null` (optional)
+- `pillars`: `array<object> | null` (optional)
+- `primary_cta_label`: `string | null` (optional)
+- `primary_cta_source`: `string` (optional)
+- `primary_cta_url`: `string | null` (optional)
+- `source_id`: `string` (required)
+- `source_type`: `string` (optional)
+- `summary`: `string | null` (optional)
+- `valid_from`: `string | null` (optional)
+- `valid_to`: `string | null` (optional)
+
+### `PartnershipSpotlightUpdate`
+
+- `headline`: `string | null` (optional)
+- `is_enabled`: `boolean | null` (optional)
+- `opportunities`: `array<object> | null` (optional)
+- `pillars`: `array<object> | null` (optional)
+- `primary_cta_label`: `string | null` (optional)
+- `primary_cta_source`: `string | null` (optional)
+- `primary_cta_url`: `string | null` (optional)
+- `source_id`: `string | null` (optional)
+- `source_type`: `string | null` (optional)
+- `summary`: `string | null` (optional)
+- `valid_from`: `string | null` (optional)
+- `valid_to`: `string | null` (optional)
+
 ### `PersonCreate`
 
 - `academic_rank`: `string | null` (optional)
 - `alternative_email`: `string | null` (optional)
 - `alternative_phone`: `string | null` (optional)
+- `awards_honors`: `array<object> | null` (optional)
 - `bio`: `string | null` (optional)
+- `contract_type`: `string | null` (optional)
+- `courses_taught`: `array<string> | null` (optional)
+- `cv_file_id`: `string | null` (optional)
+- `date_of_appointment`: `string | null` (optional)
 - `department_id`: `string | null` (optional)
+- `education_background`: `array<object> | null` (optional)
 - `email`: `string` (required)
 - `employee_number`: `string | null` (optional)
 - `employment_end_date`: `string | null` (optional)
 - `employment_start_date`: `string | null` (optional)
 - `employment_type`: `string` (optional)
 - `first_name`: `string` (required)
+- `full_bio`: `string | null` (optional)
 - `full_name`: `string` (required)
+- `google_scholar_id`: `string | null` (optional)
 - `google_scholar_url`: `string | null` (optional)
+- `h_index`: `integer | null` (optional)
 - `institutional_role`: `string | null` (optional)
 - `is_active`: `boolean` (optional)
+- `is_featured`: `boolean` (optional)
 - `is_public`: `boolean` (optional)
 - `is_researcher`: `boolean` (optional)
 - `job_group`: `string | null` (optional)
@@ -3287,9 +7557,15 @@ Generated component schemas: `100`
 - `orcid`: `string | null` (optional)
 - `phone`: `string | null` (optional)
 - `photo_id`: `string | null` (optional)
+- `professional_memberships`: `array<object> | null` (optional)
+- `publication_records`: `array<object> | null` (optional)
+- `publications_count`: `integer` (optional)
 - `qualifications`: `array<QualificationItem> | null` (optional)
+- `research_grants_won`: `array<object> | null` (optional)
 - `research_interests`: `array<string> | null` (optional)
 - `researchgate_url`: `string | null` (optional)
+- `scopus_id`: `string | null` (optional)
+- `show_on_directory`: `boolean` (optional)
 - `specialization`: `string | null` (optional)
 - `teaching_areas`: `array<string> | null` (optional)
 - `tenure_status`: `string | null` (optional)
@@ -3302,18 +7578,28 @@ Generated component schemas: `100`
 - `academic_rank`: `string | null` (optional)
 - `alternative_email`: `string | null` (optional)
 - `alternative_phone`: `string | null` (optional)
+- `awards_honors`: `array<object> | null` (optional)
 - `bio`: `string | null` (optional)
+- `contract_type`: `string | null` (optional)
+- `courses_taught`: `array<string> | null` (optional)
+- `cv_file_id`: `string | null` (optional)
+- `date_of_appointment`: `string | null` (optional)
 - `department_id`: `string | null` (optional)
+- `education_background`: `array<object> | null` (optional)
 - `email`: `string | null` (optional)
 - `employee_number`: `string | null` (optional)
 - `employment_end_date`: `string | null` (optional)
 - `employment_start_date`: `string | null` (optional)
 - `employment_type`: `string | null` (optional)
 - `first_name`: `string | null` (optional)
+- `full_bio`: `string | null` (optional)
 - `full_name`: `string | null` (optional)
+- `google_scholar_id`: `string | null` (optional)
 - `google_scholar_url`: `string | null` (optional)
+- `h_index`: `integer | null` (optional)
 - `institutional_role`: `string | null` (optional)
 - `is_active`: `boolean | null` (optional)
+- `is_featured`: `boolean | null` (optional)
 - `is_public`: `boolean | null` (optional)
 - `is_researcher`: `boolean | null` (optional)
 - `job_group`: `string | null` (optional)
@@ -3327,9 +7613,15 @@ Generated component schemas: `100`
 - `orcid`: `string | null` (optional)
 - `phone`: `string | null` (optional)
 - `photo_id`: `string | null` (optional)
+- `professional_memberships`: `array<object> | null` (optional)
+- `publication_records`: `array<object> | null` (optional)
+- `publications_count`: `integer | null` (optional)
 - `qualifications`: `array<QualificationItem> | null` (optional)
+- `research_grants_won`: `array<object> | null` (optional)
 - `research_interests`: `array<string> | null` (optional)
 - `researchgate_url`: `string | null` (optional)
+- `scopus_id`: `string | null` (optional)
+- `show_on_directory`: `boolean | null` (optional)
 - `specialization`: `string | null` (optional)
 - `teaching_areas`: `array<string> | null` (optional)
 - `tenure_status`: `string | null` (optional)
@@ -3445,6 +7737,17 @@ Generated component schemas: `100`
 - `objectives`: `string | null` (optional)
 - `slug`: `string | null` (optional)
 
+### `PublicSchoolInquiryCreate`
+
+- `category`: `string` (optional)
+- `consent_to_contact`: `boolean` (required)
+- `message`: `string` (required)
+- `sender_email`: `string` (required)
+- `sender_name`: `string` (required)
+- `sender_phone`: `string | null` (optional)
+- `subject`: `string` (required)
+- `website`: `string` (optional)
+
 ### `QualificationItem`
 
 - `degree`: `string` (required)
@@ -3456,18 +7759,80 @@ Generated component schemas: `100`
 
 - `refresh_token`: `string` (required)
 
+### `ReorderItem`
+
+- `display_order`: `integer` (required)
+- `id`: `string` (required)
+
+### `ReorderRequest`
+
+- `items`: `array<ReorderItem>` (required)
+
+### `ResearchContextUpdate`
+
+- `department`: `ResearchDepartmentUpdate | null` (optional)
+- `wing`: `ResearchWingUpdate | null` (optional)
+
+### `ResearchDepartmentUpdate`
+
+- `about`: `string | null` (optional)
+- `allows_staff_management`: `boolean | null` (optional)
+- `code`: `string | null` (optional)
+- `core_values`: `string | null` (optional)
+- `cover_image_id`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `email`: `string | null` (optional)
+- `guidelines`: `string | null` (optional)
+- `head_id`: `string | null` (optional)
+- `head_message`: `string | null` (optional)
+- `is_active`: `boolean | null` (optional)
+- `is_public`: `boolean | null` (optional)
+- `mandate`: `string | null` (optional)
+- `mission`: `string | null` (optional)
+- `name`: `string | null` (optional)
+- `office_location`: `string | null` (optional)
+- `phone`: `string | null` (optional)
+- `service_charter`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `vision`: `string | null` (optional)
+
+### `ResearchWingUpdate`
+
+- `code`: `string | null` (optional)
+- `cover_image_id`: `string | null` (optional)
+- `description`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `email`: `string | null` (optional)
+- `head_id`: `string | null` (optional)
+- `head_message`: `string | null` (optional)
+- `is_active`: `boolean | null` (optional)
+- `is_public`: `boolean | null` (optional)
+- `mandate`: `string | null` (optional)
+- `name`: `string | null` (optional)
+- `office_location`: `string | null` (optional)
+- `operating_hours`: `object | null` (optional)
+- `phone`: `string | null` (optional)
+- `service_charter`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `wing_type`: `string | null` (optional)
+
 ### `ResetPasswordRequest`
 
 - `new_password`: `string` (required)
 - `token`: `string` (required)
 
-### `RoleCreate`
+### `RoleCreatePayload`
 
 - `description`: `string | null` (optional)
 - `display_name`: `string | null` (optional)
 - `is_active`: `boolean` (optional)
 - `is_system`: `boolean` (optional)
 - `name`: `string` (required)
+- `permissions`: `array<string>` (optional)
+
+### `RolePermissionsUpdatePayload`
+
+- `permissions`: `array<string>` (optional)
 
 ### `RoleUpdate`
 
@@ -3476,9 +7841,42 @@ Generated component schemas: `100`
 - `is_active`: `boolean | null` (optional)
 - `is_system`: `boolean | null` (optional)
 
+### `SchoolAcademicImportRequest`
+
+- `idempotency_key`: `string` (required)
+- `mode`: `string` (optional)
+- `resource`: `string` (required)
+- `rows`: `array<object>` (required)
+
+### `SchoolContentAction`
+
+- `comments`: `string | null` (optional)
+
+### `SchoolContentCreate`
+
+- `content_type`: `string` (required)
+- `data`: `object` (optional)
+
+### `SchoolContentImportRow`
+
+- `client_reference`: `string` (required)
+- `content_type`: `string` (required)
+- `data`: `object` (optional)
+
+### `SchoolContentMetadataImport`
+
+- `batch_id`: `string | null` (optional)
+- `rows`: `array<SchoolContentImportRow>` (required)
+
+### `SchoolContentUpdate`
+
+- `content_type`: `string` (required)
+- `data`: `object` (optional)
+
 ### `SchoolCreate`
 
 - `about`: `string | null` (optional)
+- `administrative_wing_id`: `string | null` (optional)
 - `brochure_id`: `string | null` (optional)
 - `campus_id`: `string | null` (optional)
 - `code`: `string` (required)
@@ -3502,9 +7900,257 @@ Generated component schemas: `100`
 - `vision`: `string | null` (optional)
 - `website`: `string | null` (optional)
 
+### `SchoolDepartmentCreate`
+
+- `about`: `string | null` (optional)
+- `allows_staff_management`: `boolean` (optional)
+- `code`: `string` (required)
+- `core_values`: `string | null` (optional)
+- `cover_image_id`: `string | null` (optional)
+- `department_type`: `string` (optional)
+- `display_order`: `integer` (optional)
+- `email`: `string | null` (optional)
+- `establishment_date`: `string | null` (optional)
+- `guidelines`: `string | null` (optional)
+- `head_id`: `string | null` (optional)
+- `head_message`: `string | null` (optional)
+- `is_public`: `boolean` (optional)
+- `mandate`: `string | null` (optional)
+- `mission`: `string | null` (optional)
+- `name`: `string` (required)
+- `office_location`: `string | null` (optional)
+- `parent_department_id`: `string | null` (optional)
+- `phone`: `string | null` (optional)
+- `postgraduate_coordinator_id`: `string | null` (optional)
+- `service_charter`: `string | null` (optional)
+- `slug`: `string` (required)
+- `vision`: `string | null` (optional)
+
+### `SchoolDepartmentUpdate`
+
+- `about`: `string | null` (optional)
+- `allows_staff_management`: `boolean | null` (optional)
+- `code`: `string | null` (optional)
+- `core_values`: `string | null` (optional)
+- `cover_image_id`: `string | null` (optional)
+- `department_type`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `email`: `string | null` (optional)
+- `establishment_date`: `string | null` (optional)
+- `guidelines`: `string | null` (optional)
+- `head_id`: `string | null` (optional)
+- `head_message`: `string | null` (optional)
+- `is_active`: `boolean | null` (optional)
+- `is_public`: `boolean | null` (optional)
+- `mandate`: `string | null` (optional)
+- `mission`: `string | null` (optional)
+- `name`: `string | null` (optional)
+- `office_location`: `string | null` (optional)
+- `parent_department_id`: `string | null` (optional)
+- `phone`: `string | null` (optional)
+- `postgraduate_coordinator_id`: `string | null` (optional)
+- `service_charter`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `vision`: `string | null` (optional)
+
+### `SchoolPortalDashboardResponse`
+
+- `attention_items`: `array<DashboardAttentionItem>` (required)
+- `collection_notes`: `object` (required)
+- `distributions`: `object` (required)
+- `generated_at`: `string` (required)
+- `profile_completeness`: `DashboardProfileCompleteness` (required)
+- `quick_links`: `array<DashboardQuickLink>` (required)
+- `range`: `string` (required)
+- `recent_activity`: `array<DashboardActivityItem>` (required)
+- `school_id`: `string` (required)
+- `summary_cards`: `array<DashboardSummaryCard>` (required)
+- `trends`: `array<DashboardTrendPoint>` (required)
+
+### `SchoolPortalDeanUpdate`
+
+- `person_id`: `string` (required)
+- `reassign_existing`: `boolean` (optional)
+
+### `SchoolPortalMediaLinkCreate`
+
+- `display_order`: `integer` (optional)
+- `media_id`: `string` (required)
+- `role`: `string` (required)
+
+### `SchoolPortalProfileUpdate`
+
+- `about`: `string | null` (optional)
+- `core_values`: `string | null` (optional)
+- `email`: `string | null` (optional)
+- `establishment_date`: `string | null` (optional)
+- `head_message`: `string | null` (optional)
+- `is_public`: `boolean | null` (optional)
+- `mandate`: `string | null` (optional)
+- `mission`: `string | null` (optional)
+- `office_location`: `string | null` (optional)
+- `phone`: `string | null` (optional)
+- `vision`: `string | null` (optional)
+- `website`: `string | null` (optional)
+
+### `SchoolProgrammeCreate`
+
+- `about`: `string | null` (optional)
+- `accreditation_status`: `string | null` (optional)
+- `accrediting_body`: `string | null` (optional)
+- `brochure_id`: `string | null` (optional)
+- `career_prospects`: `string | null` (optional)
+- `cluster_subjects`: `array<object> | null` (optional)
+- `code`: `string` (required)
+- `cover_image_id`: `string | null` (optional)
+- `credits_required`: `integer | null` (optional)
+- `curriculum_overview`: `string | null` (optional)
+- `department_id`: `string` (required)
+- `display_order`: `integer` (optional)
+- `duration`: `string` (required)
+- `entry_requirements`: `string | null` (optional)
+- `fees_structure`: `object | null` (optional)
+- `intake_ids`: `array<string>` (optional)
+- `intake_months`: `array<string> | null` (optional)
+- `is_active`: `boolean` (optional)
+- `level`: `string` (required)
+- `max_students`: `integer | null` (optional)
+- `min_students`: `integer | null` (optional)
+- `mode_of_study`: `string` (optional)
+- `name`: `string` (required)
+- `objectives`: `string | null` (optional)
+- `slug`: `string` (required)
+- `tutor_ids`: `array<string>` (optional)
+
+### `SchoolProgrammeUpdate`
+
+- `about`: `string | null` (optional)
+- `accreditation_status`: `string | null` (optional)
+- `accrediting_body`: `string | null` (optional)
+- `brochure_id`: `string | null` (optional)
+- `career_prospects`: `string | null` (optional)
+- `cluster_subjects`: `array<object> | null` (optional)
+- `code`: `string | null` (optional)
+- `cover_image_id`: `string | null` (optional)
+- `credits_required`: `integer | null` (optional)
+- `curriculum_overview`: `string | null` (optional)
+- `department_id`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `duration`: `string | null` (optional)
+- `entry_requirements`: `string | null` (optional)
+- `fees_structure`: `object | null` (optional)
+- `intake_ids`: `array<string> | null` (optional)
+- `intake_months`: `array<string> | null` (optional)
+- `is_active`: `boolean | null` (optional)
+- `level`: `string | null` (optional)
+- `max_students`: `integer | null` (optional)
+- `min_students`: `integer | null` (optional)
+- `mode_of_study`: `string | null` (optional)
+- `name`: `string | null` (optional)
+- `objectives`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `tutor_ids`: `array<string> | null` (optional)
+
+### `SchoolPublicationCreate`
+
+- `abstract`: `string | null` (optional)
+- `center_id`: `string | null` (optional)
+- `cover_image_url`: `string | null` (optional)
+- `department_id`: `string | null` (optional)
+- `doi`: `string | null` (optional)
+- `funding_acknowledgment`: `string | null` (optional)
+- `grant_numbers`: `array<string> | null` (optional)
+- `is_open_access`: `boolean` (optional)
+- `journal_id`: `string | null` (optional)
+- `journal_name`: `string | null` (optional)
+- `keywords`: `array<string> | null` (optional)
+- `pdf_url`: `string | null` (optional)
+- `project_id`: `string | null` (optional)
+- `publication_date`: `string | null` (optional)
+- `publication_type`: `string` (optional)
+- `publisher`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `title`: `string` (required)
+- `url`: `string | null` (optional)
+- `year`: `integer | null` (optional)
+
+### `SchoolPublicationUpdate`
+
+- `abstract`: `string | null` (optional)
+- `center_id`: `string | null` (optional)
+- `cover_image_url`: `string | null` (optional)
+- `department_id`: `string | null` (optional)
+- `doi`: `string | null` (optional)
+- `funding_acknowledgment`: `string | null` (optional)
+- `grant_numbers`: `array<string> | null` (optional)
+- `is_open_access`: `boolean | null` (optional)
+- `journal_id`: `string | null` (optional)
+- `journal_name`: `string | null` (optional)
+- `keywords`: `array<string> | null` (optional)
+- `pdf_url`: `string | null` (optional)
+- `project_id`: `string | null` (optional)
+- `publication_date`: `string | null` (optional)
+- `publication_type`: `string | null` (optional)
+- `publisher`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `title`: `string | null` (optional)
+- `url`: `string | null` (optional)
+- `year`: `integer | null` (optional)
+
+### `SchoolTeamImportRequest`
+
+- `idempotency_key`: `string` (required)
+- `mode`: `string` (optional)
+- `rows`: `array<object>` (required)
+
+### `SchoolTeamLifecycleRequest`
+
+- `acknowledge_vacancy`: `boolean` (optional)
+- `effective_date`: `string | null` (optional)
+- `notes`: `string | null` (optional)
+- `replacement_person_id`: `string | null` (optional)
+
+### `SchoolTeamMemberCreate`
+
+- `department_id`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `email`: `string | null` (optional)
+- `employee_number`: `string | null` (optional)
+- `first_name`: `string | null` (optional)
+- `full_name`: `string | null` (optional)
+- `invite_user`: `boolean` (optional)
+- `is_primary`: `boolean` (optional)
+- `is_public`: `boolean` (optional)
+- `last_name`: `string | null` (optional)
+- `middle_name`: `string | null` (optional)
+- `person_id`: `string | null` (optional)
+- `phone`: `string | null` (optional)
+- `portal_role`: `string | null` (optional)
+- `role`: `string` (required)
+- `start_date`: `string | null` (optional)
+- `temporary_password`: `string | null` (optional)
+- `title`: `string | null` (optional)
+
+### `SchoolTeamMemberUpdate`
+
+- `department_id`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `is_primary`: `boolean | null` (optional)
+- `is_public`: `boolean | null` (optional)
+- `phone`: `string | null` (optional)
+- `role`: `string | null` (optional)
+- `title`: `string | null` (optional)
+
+### `SchoolTeamTransferRequest`
+
+- `department_id`: `string | null` (optional)
+- `role`: `string | null` (optional)
+- `title`: `string | null` (optional)
+
 ### `SchoolUpdate`
 
 - `about`: `string | null` (optional)
+- `administrative_wing_id`: `string | null` (optional)
 - `brochure_id`: `string | null` (optional)
 - `campus_id`: `string | null` (optional)
 - `code`: `string | null` (optional)
@@ -3528,6 +8174,44 @@ Generated component schemas: `100`
 - `vision`: `string | null` (optional)
 - `website`: `string | null` (optional)
 
+### `SectionItemCreate`
+
+- `body_text`: `string | null` (optional)
+- `content`: `object | null` (optional)
+- `cta_description`: `string | null` (optional)
+- `cta_label`: `string | null` (optional)
+- `cta_url`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `is_enabled`: `boolean` (optional)
+- `item_type`: `string` (optional)
+- `media_alt_text`: `string | null` (optional)
+- `media_caption`: `string | null` (optional)
+- `page_section_id`: `string | null` (optional)
+- `subtitle`: `string | null` (optional)
+- `title`: `string | null` (optional)
+- `video_duration_seconds`: `integer | null` (optional)
+- `video_provider`: `string | null` (optional)
+- `video_url`: `string | null` (optional)
+
+### `SectionItemUpdate`
+
+- `body_text`: `string | null` (optional)
+- `content`: `object | null` (optional)
+- `cta_description`: `string | null` (optional)
+- `cta_label`: `string | null` (optional)
+- `cta_url`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `is_enabled`: `boolean | null` (optional)
+- `item_type`: `string | null` (optional)
+- `media_alt_text`: `string | null` (optional)
+- `media_caption`: `string | null` (optional)
+- `page_section_id`: `string | null` (optional)
+- `subtitle`: `string | null` (optional)
+- `title`: `string | null` (optional)
+- `video_duration_seconds`: `integer | null` (optional)
+- `video_provider`: `string | null` (optional)
+- `video_url`: `string | null` (optional)
+
 ### `SettingCreate`
 
 - `category`: `string` (required)
@@ -3547,14 +8231,12 @@ Generated component schemas: `100`
 
 ### `SliderCreate`
 
-- `archived_at`: `string | null` (optional)
 - `desktop_media_id`: `string | null` (optional)
 - `display_order`: `integer` (optional)
 - `end_datetime`: `string | null` (optional)
 - `external_url`: `string | null` (optional)
 - `is_active`: `boolean` (optional)
 - `is_main`: `boolean` (optional)
-- `is_public`: `boolean` (optional)
 - `link_text`: `string | null` (optional)
 - `mobile_media_id`: `string | null` (optional)
 - `open_in_new_tab`: `boolean` (optional)
@@ -3604,14 +8286,12 @@ Generated component schemas: `100`
 
 ### `SliderUpdate`
 
-- `archived_at`: `string | null` (optional)
 - `desktop_media_id`: `string | null` (optional)
 - `display_order`: `integer | null` (optional)
 - `end_datetime`: `string | null` (optional)
 - `external_url`: `string | null` (optional)
 - `is_active`: `boolean | null` (optional)
 - `is_main`: `boolean | null` (optional)
-- `is_public`: `boolean | null` (optional)
 - `link_text`: `string | null` (optional)
 - `mobile_media_id`: `string | null` (optional)
 - `open_in_new_tab`: `boolean | null` (optional)
@@ -3701,8 +8381,26 @@ Generated component schemas: `100`
 - `slug`: `string | null` (optional)
 - `sport_types`: `array<string> | null` (optional)
 
+### `StaffAssignmentActivate`
+
+- `conflict_end_date`: `string | null` (optional)
+- `conflict_notes`: `string | null` (optional)
+- `conflict_resolution`: `string | null` (optional)
+- `notes`: `string | null` (optional)
+- `start_date`: `string | null` (optional)
+
+### `StaffAssignmentConflictCheck`
+
+- `entity_id`: `string | null` (optional)
+- `entity_type`: `string` (required)
+- `exclude_assignment_id`: `string | null` (optional)
+- `role`: `string` (required)
+
 ### `StaffAssignmentCreate`
 
+- `conflict_end_date`: `string | null` (optional)
+- `conflict_notes`: `string | null` (optional)
+- `conflict_resolution`: `string | null` (optional)
 - `display_order`: `integer` (optional)
 - `end_date`: `string | null` (optional)
 - `entity_id`: `string | null` (optional)
@@ -3715,8 +8413,51 @@ Generated component schemas: `100`
 - `person_id`: `string` (required)
 - `reports_to_id`: `string | null` (optional)
 - `role`: `string` (required)
+- `show_term_dates`: `boolean` (optional)
 - `start_date`: `string | null` (optional)
 - `status`: `string` (optional)
+- `term_renewable`: `boolean` (optional)
+- `term_years`: `integer | null` (optional)
+- `title`: `string | null` (optional)
+- `user_id`: `string | null` (optional)
+
+### `StaffAssignmentEnd`
+
+- `end_date`: `string | null` (optional)
+- `notes`: `string | null` (optional)
+
+### `StaffAssignmentReassign`
+
+- `conflict_end_date`: `string | null` (optional)
+- `conflict_notes`: `string | null` (optional)
+- `conflict_resolution`: `string | null` (optional)
+- `end_previous_date`: `string | null` (optional)
+- `notes`: `string | null` (optional)
+- `person_id`: `string` (required)
+- `start_date`: `string | null` (optional)
+- `title`: `string | null` (optional)
+
+### `StaffAssignmentUpdate`
+
+- `conflict_end_date`: `string | null` (optional)
+- `conflict_notes`: `string | null` (optional)
+- `conflict_resolution`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `end_date`: `string | null` (optional)
+- `entity_id`: `string | null` (optional)
+- `entity_type`: `string | null` (optional)
+- `hierarchy_level`: `integer | null` (optional)
+- `is_acting`: `boolean | null` (optional)
+- `is_primary`: `boolean | null` (optional)
+- `is_public`: `boolean | null` (optional)
+- `notes`: `string | null` (optional)
+- `reports_to_id`: `string | null` (optional)
+- `role`: `string | null` (optional)
+- `show_term_dates`: `boolean | null` (optional)
+- `start_date`: `string | null` (optional)
+- `status`: `string | null` (optional)
+- `term_renewable`: `boolean | null` (optional)
+- `term_years`: `integer | null` (optional)
 - `title`: `string | null` (optional)
 - `user_id`: `string | null` (optional)
 
@@ -3761,6 +8502,13 @@ Generated component schemas: `100`
 - `term_end`: `string | null` (optional)
 - `term_start`: `string | null` (optional)
 - `vice_chairperson_id`: `string | null` (optional)
+
+### `SuccessResponse_SchoolPortalDashboardResponse_`
+
+- `data`: `SchoolPortalDashboardResponse | null` (optional)
+- `message`: `string` (optional)
+- `meta`: `object | null` (optional)
+- `status`: `string` (optional)
 
 ### `SupportTicketCreate`
 
@@ -3861,6 +8609,7 @@ Generated component schemas: `100`
 - `motto`: `string | null` (optional)
 - `name`: `string` (required)
 - `overview`: `string | null` (optional)
+- `philosophy`: `string | null` (optional)
 - `phone`: `string | null` (optional)
 - `physical_address`: `string | null` (optional)
 - `postal_address`: `string | null` (optional)
@@ -3869,6 +8618,7 @@ Generated component schemas: `100`
 - `short_name`: `string | null` (optional)
 - `slug`: `string | null` (optional)
 - `social_links`: `object | null` (optional)
+- `strategic_plan_summary`: `string | null` (optional)
 - `strategic_priorities`: `array<object> | null` (optional)
 - `vc_id`: `string | null` (optional)
 - `vc_message`: `string | null` (optional)
@@ -3906,6 +8656,7 @@ Generated component schemas: `100`
 - `motto`: `string | null` (optional)
 - `name`: `string | null` (optional)
 - `overview`: `string | null` (optional)
+- `philosophy`: `string | null` (optional)
 - `phone`: `string | null` (optional)
 - `physical_address`: `string | null` (optional)
 - `postal_address`: `string | null` (optional)
@@ -3914,6 +8665,7 @@ Generated component schemas: `100`
 - `short_name`: `string | null` (optional)
 - `slug`: `string | null` (optional)
 - `social_links`: `object | null` (optional)
+- `strategic_plan_summary`: `string | null` (optional)
 - `strategic_priorities`: `array<object> | null` (optional)
 - `vc_id`: `string | null` (optional)
 - `vc_message`: `string | null` (optional)
@@ -3937,6 +8689,28 @@ Generated component schemas: `100`
 
 - `email`: `string` (required)
 - `password`: `string` (required)
+
+### `UserPreferenceInput`
+
+- `key`: `string` (required)
+- `namespace`: `string` (required)
+- `value`: `object` (required)
+
+### `UserPreferencesUpdate`
+
+- `preferences`: `array<UserPreferenceInput>` (required)
+
+### `UserRoleAssignmentPayload`
+
+- `expires_at`: `string | null` (optional)
+- `note`: `string | null` (optional)
+- `role_id`: `string` (required)
+- `scope_id`: `string | null` (optional)
+- `scope_type`: `string | null` (optional)
+
+### `UserRolesUpdatePayload`
+
+- `roles`: `array<UserRoleAssignmentPayload>` (optional)
 
 ### `UserUpdate`
 
@@ -4007,6 +8781,7 @@ Generated component schemas: `100`
 - `cover_image_id`: `string | null` (optional)
 - `description`: `string | null` (optional)
 - `display_order`: `integer | null` (optional)
+- `division_id`: `string | null` (optional)
 - `email`: `string | null` (optional)
 - `head_id`: `string | null` (optional)
 - `head_message`: `string | null` (optional)

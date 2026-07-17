@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+import re
 from typing import Any, Literal
 
 from pydantic import ConfigDict, Field, field_validator
@@ -45,6 +46,12 @@ SERVER_MANAGED_FIELDS = frozenset(
         "archived_at",
     }
 )
+UNSAFE_RICH_TEXT = re.compile(
+    r"<\s*/?\s*(?:script|iframe|object|embed|style)\b"
+    r"|\son[a-z]+\s*="
+    r"|(?:href|src)\s*=\s*['\"]?\s*(?:(?:javascript|vbscript)\s*:|data\s*:\s*text/html)",
+    re.IGNORECASE,
+)
 
 
 class _SchoolContentPayload(BaseSchema):
@@ -61,6 +68,10 @@ class _SchoolContentPayload(BaseSchema):
             raise ValueError(
                 f"Server-managed fields are not accepted: {', '.join(sorted(forbidden))}"
             )
+        for field in ("rich_text", "content"):
+            candidate = value.get(field)
+            if isinstance(candidate, str) and UNSAFE_RICH_TEXT.search(candidate):
+                raise ValueError(f"{field} contains unsafe HTML")
         return value
 
 

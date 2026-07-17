@@ -710,6 +710,17 @@ async def preview_school_team_import(
         role = str(row.get("role") or "").strip().lower()
         errors = []
         row_status = "valid"
+        formula_fields = [
+            key
+            for key, value in raw.items()
+            if isinstance(value, str)
+            and value.lstrip().startswith(("=", "+", "-", "@"))
+        ]
+        if formula_fields:
+            errors.append(
+                "Potential spreadsheet formula is not allowed in: "
+                + ", ".join(sorted(formula_fields))
+            )
         if not email:
             errors.append("email is required")
         if role not in TEAM_ROLES:
