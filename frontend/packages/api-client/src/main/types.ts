@@ -177,6 +177,130 @@ export interface SchoolPortalProfileUpdate {
   is_public?: boolean | null;
 }
 
+export type SchoolTeamRole =
+  | "dean"
+  | "deputy_dean"
+  | "cod"
+  | "hod"
+  | "coordinator"
+  | "school_administrator"
+  | "administrative_staff"
+  | "lecturer"
+  | "technician"
+  | "support_staff";
+
+export interface SchoolTeamMember {
+  id: string;
+  person_id: string;
+  full_name?: string;
+  title?: string | null;
+  role: SchoolTeamRole;
+  department_id?: string | null;
+  department?: { id: string; name: string } | null;
+  email?: string | null;
+  phone?: string | null;
+  employee_number?: string | null;
+  is_primary: boolean;
+  is_public: boolean;
+  is_active: boolean;
+  display_order: number;
+  portal_role?: "school_admin" | "school_editor" | null;
+  user_id?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  created_at?: string;
+}
+
+export interface SchoolTeamMemberCreate {
+  person_id?: string | null;
+  first_name?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
+  full_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  employee_number?: string | null;
+  department_id?: string | null;
+  role: SchoolTeamRole;
+  title?: string | null;
+  start_date?: string | null;
+  is_primary?: boolean;
+  is_public?: boolean;
+  display_order?: number;
+  invite_user?: boolean;
+  portal_role?: "school_admin" | "school_editor" | null;
+  temporary_password?: string | null;
+}
+
+export interface SchoolDepartmentRecord {
+  id: string;
+  name: string;
+  slug: string;
+  code: string;
+  department_type: string;
+  parent_department_id?: string | null;
+  head_id?: string | null;
+  postgraduate_coordinator_id?: string | null;
+  establishment_date?: string | null;
+  about?: string | null;
+  mission?: string | null;
+  vision?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  office_location?: string | null;
+  cover_image_id?: string | null;
+  is_active: boolean;
+  is_public: boolean;
+  allows_staff_management: boolean;
+  display_order: number;
+}
+
+export type SchoolDepartmentPayload = Pick<
+  SchoolDepartmentRecord,
+  "name" | "slug" | "code"
+> &
+  Partial<Omit<SchoolDepartmentRecord, "id" | "name" | "slug" | "code">>;
+
+export interface SchoolProgrammeRecord {
+  id: string;
+  name: string;
+  code: string;
+  slug: string;
+  level: string;
+  mode_of_study: string;
+  duration: string;
+  credits_required?: number | null;
+  department_id: string;
+  department?: { id: string; name: string } | null;
+  about?: string | null;
+  objectives?: string | null;
+  career_prospects?: string | null;
+  curriculum_overview?: string | null;
+  entry_requirements?: string | null;
+  intake_months?: string[] | null;
+  min_students?: number | null;
+  max_students?: number | null;
+  accreditation_status?: string | null;
+  accrediting_body?: string | null;
+  cover_image_id?: string | null;
+  brochure_id?: string | null;
+  is_active: boolean;
+  display_order: number;
+  tutor_ids?: string[];
+  intake_ids?: string[];
+}
+
+export type SchoolProgrammePayload = Pick<
+  SchoolProgrammeRecord,
+  "name" | "code" | "slug" | "level" | "duration" | "department_id"
+> &
+  Partial<
+    Omit<
+      SchoolProgrammeRecord,
+      "id" | "department" | "name" | "code" | "slug" | "level" | "duration" | "department_id"
+    >
+  >;
+
 export interface PublicStatItem {
   key: string;
   label: string;
