@@ -7,6 +7,9 @@ import type {
   PaginatedResponse,
   SchoolDepartmentPayload,
   SchoolDepartmentRecord,
+  SchoolContentListItem,
+  SchoolContentRecord,
+  SchoolContentType,
   SchoolPortalCapabilitiesResponse,
   SchoolPortalContextResponse,
   SchoolPortalDashboardRange,
@@ -15,8 +18,12 @@ import type {
   SchoolPortalProfileUpdate,
   SchoolProgrammePayload,
   SchoolProgrammeRecord,
+  SchoolPublicationPayload,
+  SchoolPublicationRecord,
   SchoolTeamMember,
   SchoolTeamMemberCreate,
+  SchoolUploadBatch,
+  SchoolUploadBatchFile,
 } from "./types";
 
 const BASE_PATH = "/api/v1/school-portal";
@@ -24,6 +31,28 @@ const BASE_PATH = "/api/v1/school-portal";
 async function schoolPortalUpload<T>(path: string, file: File): Promise<T> {
   const formData = new FormData();
   formData.append("file", file);
+  const token = getStoredAccessToken();
+  const response = await fetch(`${getMainApiBaseUrl()}${path}`, {
+    method: "POST",
+    credentials: "include",
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: formData,
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || error.message || "Upload failed");
+  }
+  return response.json() as Promise<T>;
+}
+
+async function schoolPortalUploadFiles<T>(
+  path: string,
+  files: File[],
+  fields: Record<string, string> = {},
+): Promise<T> {
+  const formData = new FormData();
+  files.forEach((file) => formData.append("files", file));
+  Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
   const token = getStoredAccessToken();
   const response = await fetch(`${getMainApiBaseUrl()}${path}`, {
     method: "POST",
@@ -249,6 +278,99 @@ export const schoolPortalApi = {
       mainApi.post<{ data: ImportCommitResult }>(
         `${BASE_PATH}/programmes/imports`,
         { resource: "programmes", rows, mode },
+      ),
+  },
+  content: {
+    list: (contentType?: SchoolContentType) =>
+      mainApi.get<{ data: SchoolContentListItem[] }>(
+        `${BASE_PATH}/content`,
+        contentType ? { content_type: contentType } : undefined,
+      ),
+    get: (contentType: SchoolContentType, id: string) =>
+      mainApi.get<{ data: SchoolContentRecord }>(
+        `${BASE_PATH}/content/${contentType}/${id}`,
+      ),
+    create: (contentType: SchoolContentType, data: Record<string, unknown>) =>
+      mainApi.post<{ data: SchoolContentRecord }>(`${BASE_PATH}/content`, {
+        content_type: contentType,
+        data,
+      }),
+    update: (
+      contentType: SchoolContentType,
+      id: string,
+      data: Record<string, unknown>,
+    ) =>
+      mainApi.patch<{ data: SchoolContentRecord }>(
+        `${BASE_PATH}/content/${contentType}/${id}`,
+        { content_type: contentType, data },
+      ),
+    remove: (contentType: SchoolContentType, id: string) =>
+      mainApi.delete<void>(`${BASE_PATH}/content/${contentType}/${id}`),
+    action: (
+      contentType: SchoolContentType,
+      id: string,
+      action: "submit" | "withdraw",
+      comments?: string,
+    ) =>
+      mainApi.post<{ data: SchoolContentRecord }>(
+        `${BASE_PATH}/content/${contentType}/${id}/${action}`,
+        { comments: comments || null },
+      ),
+  },
+  publications: {
+    list: (params?: { page?: number; per_page?: number; status?: string }) =>
+      mainApi.get<PaginatedResponse<SchoolPublicationRecord>>(
+        `${BASE_PATH}/publications`,
+        params,
+      ),
+    get: (id: string) =>
+      mainApi.get<{ data: SchoolPublicationRecord }>(
+        `${BASE_PATH}/publications/${id}`,
+      ),
+    create: (data: SchoolPublicationPayload) =>
+      mainApi.post<{ data: SchoolPublicationRecord }>(
+        `${BASE_PATH}/publications`,
+        data,
+      ),
+    update: (id: string, data: SchoolPublicationPayload) =>
+      mainApi.patch<{ data: SchoolPublicationRecord }>(
+        `${BASE_PATH}/publications/${id}`,
+        data,
+      ),
+    action: (id: string, action: "submit" | "withdraw") =>
+      mainApi.post<{ data: SchoolPublicationRecord }>(
+        `${BASE_PATH}/publications/${id}/${action}`,
+      ),
+  },
+  media: {
+    createBatch: (
+      files: File[],
+      options?: {
+        targetEntityType?: string;
+        targetEntityId?: string;
+        targetRole?: string;
+      },
+    ) =>
+      schoolPortalUploadFiles<{ data: SchoolUploadBatch }>(
+        `${BASE_PATH}/media/batches`,
+        files,
+        {
+          ...(options?.targetEntityType
+            ? { target_entity_type: options.targetEntityType }
+            : {}),
+          ...(options?.targetEntityId
+            ? { target_entity_id: options.targetEntityId }
+            : {}),
+          target_role: options?.targetRole ?? "attachment",
+        },
+      ),
+    getBatch: (batchId: string) =>
+      mainApi.get<{ data: SchoolUploadBatch }>(
+        `${BASE_PATH}/media/batches/${batchId}`,
+      ),
+    retryFile: (batchId: string, fileId: string) =>
+      mainApi.post<{ data: SchoolUploadBatchFile }>(
+        `${BASE_PATH}/media/batches/${batchId}/files/${fileId}/retry`,
       ),
   },
 };

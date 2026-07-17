@@ -301,6 +301,111 @@ export type SchoolProgrammePayload = Pick<
     >
   >;
 
+export type SchoolContentType =
+  | "news"
+  | "event"
+  | "story"
+  | "announcement"
+  | "calendar_entry"
+  | "gallery_link"
+  | "document"
+  | "download";
+
+export interface SchoolContentRecord {
+  id: string;
+  title?: string;
+  name?: string;
+  slug?: string;
+  summary?: string | null;
+  description?: string | null;
+  rich_text?: string | null;
+  plain_text?: string | null;
+  content?: string | null;
+  workflow_status?: string;
+  status?: string;
+  revision_notes?: string | null;
+  rejection_reason?: string | null;
+  featured_media_id?: string | null;
+  file_id?: string | null;
+  media_id?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  location?: string | null;
+  updated_at?: string;
+  created_at?: string;
+  [key: string]: unknown;
+}
+
+export interface SchoolContentListItem {
+  content_type: SchoolContentType;
+  record: SchoolContentRecord;
+}
+
+export interface SchoolPublicationRecord {
+  id: string;
+  title: string;
+  slug: string;
+  publication_type: string;
+  department_id?: string | null;
+  abstract?: string | null;
+  keywords?: string[] | null;
+  journal_name?: string | null;
+  publisher?: string | null;
+  publication_date?: string | null;
+  year?: number | null;
+  doi?: string | null;
+  url?: string | null;
+  pdf_url?: string | null;
+  is_open_access: boolean;
+  funding_acknowledgment?: string | null;
+  grant_numbers?: string[] | null;
+  cover_image_url?: string | null;
+  status: string;
+  reviewer_comments?: string | null;
+  submitted_at?: string | null;
+  reviewed_at?: string | null;
+}
+
+export type SchoolPublicationPayload = Pick<
+  SchoolPublicationRecord,
+  "title"
+> &
+  Partial<
+    Omit<
+      SchoolPublicationRecord,
+      "id" | "title" | "status" | "reviewer_comments" | "submitted_at" | "reviewed_at"
+    >
+  >;
+
+export interface SchoolUploadBatchFile {
+  id: string;
+  client_reference: string;
+  original_filename: string;
+  mime_type: string;
+  file_size: number;
+  bytes_received: number;
+  target_role: string;
+  display_order: number;
+  status: string;
+  error?: string | null;
+  attempts: number;
+  media_id?: string | null;
+}
+
+export interface SchoolUploadBatch {
+  id: string;
+  school_id: string;
+  status: string;
+  total_files: number;
+  completed_files: number;
+  failed_files: number;
+  total_bytes: number;
+  received_bytes: number;
+  expires_at: string;
+  completed_at?: string | null;
+  files: SchoolUploadBatchFile[];
+}
+
 export interface PublicStatItem {
   key: string;
   label: string;

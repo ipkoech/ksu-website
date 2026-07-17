@@ -2,6 +2,9 @@ import { PortalResourcePage } from "@/components/portals/portal-resource-page";
 import { SchoolDepartmentsPage } from "@/components/schools/academics/school-departments-page";
 import { SchoolProgrammesPage } from "@/components/schools/academics/school-programmes-page";
 import { SchoolTeamPage } from "@/components/schools/team/school-team-page";
+import { SchoolContentStudio } from "@/components/schools/content/school-content-studio";
+import { MediaBatchUploader } from "@/components/schools/media/media-batch-uploader";
+import { SchoolPublicationsPage } from "@/components/schools/publications/school-publications-page";
 
 export function generateStaticParams() {
   return [
@@ -30,6 +33,12 @@ export default async function SchoolsResourcePage({
       return <SchoolDepartmentsPage />;
     case "programmes":
       return <SchoolProgrammesPage />;
+    case "content":
+      return <SchoolContentStudio />;
+    case "media":
+      return <MediaBatchUploader />;
+    case "publications":
+      return <SchoolPublicationsPage />;
     default:
       break;
   }

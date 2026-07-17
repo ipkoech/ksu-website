@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   schoolPortalApi,
   schoolPortalQueryKeys,
-  type SchoolTeamMember,
   type SchoolTeamRole,
 } from "@ksu/api-client";
 import { Download, Plus, Search, Upload, UserRound } from "lucide-react";
@@ -63,7 +62,7 @@ export function SchoolTeamPage() {
         status: status === "all" ? undefined : status,
       }),
   });
-  const members = teamQuery.data?.data ?? [];
+  const members = useMemo(() => teamQuery.data?.data ?? [], [teamQuery.data?.data]);
   const focused = members.find((member) => member.id === focusedId) ?? null;
   const grouped = useMemo(
     () =>
