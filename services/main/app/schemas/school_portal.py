@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import uuid
+from datetime import date
+from typing import Literal
 
-from pydantic import Field
+from pydantic import ConfigDict, EmailStr, Field
 
-from .base import BaseSchema
+from .base import BaseSchema, PhoneStr, UrlStr
 
 
 class SchoolPortalUserSummary(BaseSchema):
@@ -72,13 +74,83 @@ class SchoolPortalCapabilitiesResponse(BaseSchema):
     allowed_navigation: list[str]
 
 
+class SchoolPortalProfileUpdate(BaseSchema):
+    """Editable school profile fields; identity and ownership are server controlled."""
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        str_strip_whitespace=True,
+        extra="forbid",
+    )
+
+    establishment_date: date | None = None
+    about: str | None = None
+    head_message: str | None = None
+    mission: str | None = None
+    vision: str | None = None
+    mandate: str | None = None
+    core_values: str | None = None
+    email: EmailStr | None = None
+    phone: PhoneStr | None = None
+    office_location: str | None = Field(default=None, max_length=255)
+    website: UrlStr | None = None
+    is_public: bool | None = None
+
+
+class SchoolPortalDeanUpdate(BaseSchema):
+    person_id: uuid.UUID
+    reassign_existing: bool = False
+
+
+class SchoolPortalMediaLinkCreate(BaseSchema):
+    media_id: uuid.UUID
+    role: Literal["logo", "cover", "brochure", "gallery"]
+    display_order: int = Field(default=100, ge=0)
+
+
+class SchoolPortalProfileResponse(BaseSchema):
+    id: uuid.UUID
+    name: str
+    slug: str
+    code: str
+    school_type: str
+    campus_id: uuid.UUID | None = None
+    administrative_wing_id: uuid.UUID | None = None
+    dean_id: uuid.UUID | None = None
+    establishment_date: date | None = None
+    about: str | None = None
+    head_message: str | None = None
+    mission: str | None = None
+    vision: str | None = None
+    mandate: str | None = None
+    core_values: str | None = None
+    email: EmailStr | None = None
+    phone: str | None = None
+    office_location: str | None = None
+    website: str | None = None
+    logo_image_id: uuid.UUID | None = None
+    cover_image_id: uuid.UUID | None = None
+    brochure_id: uuid.UUID | None = None
+    is_active: bool
+    is_public: bool
+    logo_image: SchoolPortalMediaSummary | None = None
+    cover_image: SchoolPortalMediaSummary | None = None
+    brochure: SchoolPortalMediaSummary | None = None
+    gallery: list[SchoolPortalMediaSummary] = Field(default_factory=list)
+
+
 __all__ = [
     "SchoolPortalCapabilitiesResponse",
     "SchoolPortalContextResponse",
+    "SchoolPortalDeanUpdate",
     "SchoolPortalDepartmentSummary",
     "SchoolPortalEntitySummary",
     "SchoolPortalMediaSummary",
+    "SchoolPortalMediaLinkCreate",
     "SchoolPortalPersonSummary",
     "SchoolPortalSchoolSummary",
+    "SchoolPortalProfileResponse",
+    "SchoolPortalProfileUpdate",
     "SchoolPortalUserSummary",
 ]

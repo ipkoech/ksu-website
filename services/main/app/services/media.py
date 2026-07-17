@@ -29,7 +29,7 @@ from ..models import (
     SliderGroup,
     User,
 )
-from ..helpers.storage import delete_file, upload_file
+from ..helpers.storage import upload_file
 from ..models import Media, MediaFolder, MediaLink
 from ._base import apply_updates, ilike_any, paginate_query
 
@@ -118,6 +118,24 @@ def build_entity_upload_folder(entity_type: str, entity_id: uuid.UUID, role: str
 
 class MediaService:
     """Media upload and management."""
+
+    @staticmethod
+    def is_owned_by_school(media: Media, school_id: uuid.UUID) -> bool:
+        """Return whether media belongs to the server-selected school's folder."""
+        folder = getattr(media, "folder", None)
+        return bool(
+            folder
+            and folder.scope_type == "school"
+            and folder.scope_id == school_id
+        )
+
+    @staticmethod
+    def validate_profile_media(media: Media, role: str) -> None:
+        """Validate media type for a school profile slot."""
+        if role in {"logo", "cover", "gallery"} and media.media_type != "image":
+            raise ValueError(f"{role.title()} media must be an image")
+        if role == "brochure" and media.media_type != "document":
+            raise ValueError("Brochure media must be a document")
 
     @staticmethod
     def validate_cv_mime_type(mime_type: str | None) -> None:
