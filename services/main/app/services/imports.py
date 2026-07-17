@@ -6,10 +6,12 @@ import csv
 import io
 import json
 import uuid
-from dataclasses import dataclass, field
+import xml.etree.ElementTree as ET
+from dataclasses import dataclass
 from datetime import date
 from types import NoneType, UnionType
 from typing import Any, Awaitable, Callable, Union, get_args, get_origin
+from zipfile import BadZipFile, ZipFile
 
 import httpx
 from pydantic import BaseModel, ValidationError
@@ -1244,6 +1246,8 @@ class ImportService:
     @staticmethod
     async def parse_upload(filename: str, content: bytes) -> list[dict[str, Any]]:
         suffix = filename.rsplit(".", 1)[-1].lower() if "." in filename else "csv"
+        if suffix == "xlsx":
+            return _parse_xlsx(content)
         text = content.decode("utf-8-sig")
         if suffix == "json":
             payload = json.loads(text)
@@ -1342,6 +1346,66 @@ def _normalize_row(row: dict[str, Any]) -> dict[str, Any]:
         else:
             normalized[cleaned_key] = value
     return normalized
+
+
+def _parse_xlsx(content: bytes) -> list[dict[str, Any]]:
+    """Read the first worksheet from a standard XLSX archive."""
+    namespace = {"x": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+    try:
+        with ZipFile(io.BytesIO(content)) as workbook:
+            shared_strings: list[str] = []
+            if "xl/sharedStrings.xml" in workbook.namelist():
+                root = ET.fromstring(workbook.read("xl/sharedStrings.xml"))
+                shared_strings = [
+                    "".join(node.itertext())
+                    for node in root.findall("x:si", namespace)
+                ]
+            sheet_paths = sorted(
+                name
+                for name in workbook.namelist()
+                if name.startswith("xl/worksheets/sheet") and name.endswith(".xml")
+            )
+            if not sheet_paths:
+                raise ValueError("XLSX file does not contain a worksheet")
+            sheet = ET.fromstring(workbook.read(sheet_paths[0]))
+    except (BadZipFile, ET.ParseError, KeyError) as exc:
+        raise ValueError("Invalid XLSX file") from exc
+
+    values: list[list[Any]] = []
+    for row in sheet.findall(".//x:sheetData/x:row", namespace):
+        cells: dict[int, Any] = {}
+        for cell in row.findall("x:c", namespace):
+            reference = cell.attrib.get("r", "A1")
+            letters = "".join(char for char in reference if char.isalpha())
+            column = 0
+            for letter in letters.upper():
+                column = column * 26 + ord(letter) - 64
+            value_node = cell.find("x:v", namespace)
+            inline_node = cell.find("x:is", namespace)
+            value: Any = None
+            if inline_node is not None:
+                value = "".join(inline_node.itertext())
+            elif value_node is not None:
+                value = value_node.text
+                if cell.attrib.get("t") == "s" and value is not None:
+                    value = shared_strings[int(value)]
+            cells[max(column - 1, 0)] = value
+        if cells:
+            values.append([cells.get(index) for index in range(max(cells) + 1)])
+    if not values:
+        return []
+    headers = [str(value or "").strip() for value in values[0]]
+    return [
+        _normalize_row(
+            {
+                header: row[index] if index < len(row) else None
+                for index, header in enumerate(headers)
+                if header
+            }
+        )
+        for row in values[1:]
+        if any(value not in (None, "") for value in row)
+    ]
 
 
 async def _validate_row(
