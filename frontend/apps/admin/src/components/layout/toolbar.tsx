@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, ChevronRight, Home, Settings } from "lucide-react";
+import { Search, ChevronRight, Home, Menu, Settings } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
@@ -24,6 +24,7 @@ import { useAuth } from "@ksu/auth";
 import { NotificationBell } from "./notification-bell";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 import type { PortalConfig } from "@/lib/portals/types";
+import { useSidebar } from "@/hooks/use-sidebar";
 
 type ToolbarProps = {
   portal?: Pick<PortalConfig, "shortTitle" | "title" | "baseHref">;
@@ -64,6 +65,7 @@ export function Toolbar({ portal }: ToolbarProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { status } = useRealtime();
+  const { setMobileOpen } = useSidebar();
   const [search, setSearch] = useState("");
 
   // Generate breadcrumbs from pathname
@@ -80,6 +82,15 @@ export function Toolbar({ portal }: ToolbarProps) {
       transition={{ duration: 0.3, ease: "easeOut" }}
       className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:gap-4 md:px-6"
     >
+      <Button
+        variant="ghost"
+        size="icon"
+        className="md:hidden"
+        aria-label="Open navigation"
+        onClick={() => setMobileOpen(true)}
+      >
+        <Menu className="size-5" />
+      </Button>
       {/* Breadcrumbs */}
       <nav className="hidden min-w-0 items-center gap-1 text-sm sm:flex">
         <Link

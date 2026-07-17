@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import event as sqlalchemy_event
 from sqlalchemy.orm import Session
 
+from ..core.config import get_settings
 from ..models.outbox_event import OutboxEvent
 from ..schemas.domain_events import (
     DomainEventEnvelope,
@@ -59,8 +60,10 @@ def enqueue_domain_event(
     event_version: int = 1,
     event_id: uuid.UUID | None = None,
     occurred_at: datetime | None = None,
-) -> OutboxEvent:
+) -> OutboxEvent | None:
     """Attach an event to the current unit of work without flushing or committing."""
+    if not get_settings().SCHOOL_PORTAL_EVENTS_ENABLED:
+        return None
     if event_version < 1:
         raise ValueError("event_version must be at least 1")
     normalized_type = event_type.strip()

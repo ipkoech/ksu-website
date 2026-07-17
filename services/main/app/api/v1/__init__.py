@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI
 
+from ...core.config import get_settings
 from ...routes.v1.health import router as health_router
 from ...routes.v1.internal import router as internal_router
 from .accommodations import router as accommodations_router
@@ -100,11 +101,12 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(divisions_router, prefix="/api/v1/divisions", tags=["Organization"])
     app.include_router(wings_router, prefix="/api/v1/wings", tags=["Organization"])
     app.include_router(schools_router, prefix="/api/v1/schools", tags=["Academic"])
-    app.include_router(
-        school_portal_router,
-        prefix="/api/v1/school-portal",
-        tags=["School Portal"],
-    )
+    if get_settings().SCHOOL_PORTAL_ROUTES_ENABLED:
+        app.include_router(
+            school_portal_router,
+            prefix="/api/v1/school-portal",
+            tags=["School Portal"],
+        )
     app.include_router(departments_router, prefix="/api/v1/departments", tags=["Academic"])
     app.include_router(department_services_router, prefix="/api/v1/department-services", tags=["Academic"])
     app.include_router(campuses_router, prefix="/api/v1/campuses", tags=["Academic"])

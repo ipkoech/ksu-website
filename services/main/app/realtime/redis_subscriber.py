@@ -9,6 +9,7 @@ import re
 
 from ksu_common.cache import get_redis
 
+from ..core.config import get_settings
 from .connection_manager import manager
 from .events import protocol_event, rooms_for_event
 
@@ -21,6 +22,9 @@ class RedisRealtimeSubscriber:
         self.task: asyncio.Task | None = None
 
     async def start(self):
+        if not get_settings().SCHOOL_PORTAL_WEBSOCKET_FANOUT_ENABLED:
+            logger.info("realtime Redis fan-out disabled by feature flag")
+            return
         if self.task is None:
             self.task = asyncio.create_task(self._run())
 
