@@ -206,6 +206,43 @@ class ResearchImportSchema(BaseModel):
 
 _settings = get_settings()
 
+SCHOOL_PORTAL_IMPORT_RESOURCES = {
+    "departments": {
+        "accepted_formats": ("csv", "xlsx"),
+        "columns": (
+            "name",
+            "code",
+            "slug",
+            "department_type",
+            "parent_department_id",
+            "head_id",
+            "postgraduate_coordinator_id",
+            "email",
+            "phone",
+            "office_location",
+            "is_public",
+            "display_order",
+        ),
+    },
+    "programmes": {
+        "accepted_formats": ("csv", "xlsx"),
+        "columns": (
+            "name",
+            "code",
+            "slug",
+            "level",
+            "mode_of_study",
+            "duration",
+            "department_id",
+            "entry_requirements",
+            "curriculum_overview",
+            "fees_structure",
+            "accreditation_status",
+            "display_order",
+        ),
+    },
+}
+
 
 def _make_research_create(api_path: str) -> CreateFunc:
     """Factory that creates records by POSTing to the research service."""
