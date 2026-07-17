@@ -51,6 +51,7 @@ from .realtime import router as realtime_router
 from .programmes import router as programmes_router
 from .search import router as search_router
 from .schools import router as schools_router
+from .school_portal import router as school_portal_router
 from .sliders import router as sliders_router
 from .social_posts import router as social_posts_router
 from .sports import router as sports_router
@@ -98,6 +99,11 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(divisions_router, prefix="/api/v1/divisions", tags=["Organization"])
     app.include_router(wings_router, prefix="/api/v1/wings", tags=["Organization"])
     app.include_router(schools_router, prefix="/api/v1/schools", tags=["Academic"])
+    app.include_router(
+        school_portal_router,
+        prefix="/api/v1/school-portal",
+        tags=["School Portal"],
+    )
     app.include_router(departments_router, prefix="/api/v1/departments", tags=["Academic"])
     app.include_router(department_services_router, prefix="/api/v1/department-services", tags=["Academic"])
     app.include_router(campuses_router, prefix="/api/v1/campuses", tags=["Academic"])

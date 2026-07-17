@@ -99,6 +99,16 @@ from .auth import (
     VerifyEmailRequest,
 )
 from .base import APIResponse, BaseReadSchema, BaseSchema, PaginatedResponse
+from .school_portal import (
+    SchoolPortalCapabilitiesResponse,
+    SchoolPortalContextResponse,
+    SchoolPortalDepartmentSummary,
+    SchoolPortalEntitySummary,
+    SchoolPortalMediaSummary,
+    SchoolPortalPersonSummary,
+    SchoolPortalSchoolSummary,
+    SchoolPortalUserSummary,
+)
 from .content_workflow import (
     ContentWorkflowAction,
     ContentWorkflowActionRequest,
