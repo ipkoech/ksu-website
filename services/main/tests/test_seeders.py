@@ -32,7 +32,7 @@ from app.seeders.seed_rbac import RECONCILED_ROLE_NAMES, ROLE_SPECS
 from app.seeders.seed_programmes import programme_code
 from app.seeders.seed_public_records import CLUB_SPECS, CONTACT_SPECS, DOWNLOAD_SPECS, FAQ_SPECS
 from app.seeders.seed_public_records import _merged_download_specs
-from app.seeders.seed_staff_profiles import LIVE_STAFF_PROFILE_SPECS
+from app.seeders.seed_staff_profiles import LIVE_STAFF_PROFILE_SPECS, SCHOOL_DEAN_PROFILE_KEYS
 from app.seeders.seed_leadership_media import LEADERSHIP_PORTRAITS
 from app.seeders.seed_runner import run as seed_runner_run
 from app.seeders.seed_university_info import HANDBOOK_SOURCE, HANDBOOK_SOURCE_PHRASES
@@ -458,6 +458,21 @@ class SeederDataTests(unittest.TestCase):
 
         self.assertEqual("Caleb N. Akuku", sbe_dean["full_name"])
         self.assertEqual("Dr.", sbe_dean["title"])
+
+    def test_school_dean_staff_profiles_are_mapped_to_canonical_people(self):
+        self.assertEqual(
+            {
+                "/profile_view/dr-caleb-n-akuku": "dean_business",
+                "/profile_view/dr-charles-otuke-moitui": "dean_law",
+                "/profile_view/dr-judith-achieng-odhiambo": "dean_agriculture",
+                "/profile_view/dr-peter-nyansera-otieno": "dean_arts",
+                "/profile_view/dr-raymond-oigara": "dean_health",
+                "/profile_view/dr-robert-karieko-obogi": "dean_pure_sciences",
+                "/profile_view/jane-cherono-maina": "dean_ist",
+                "/profile_view/sr-drjustina-ndaita": "dean_education",
+            },
+            SCHOOL_DEAN_PROFILE_KEYS,
+        )
 
     def test_school_dean_portal_users_are_scoped_school_admins(self):
         expected = {

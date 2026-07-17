@@ -5,17 +5,35 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Department
+from app.models import Department, Person, StaffAssignment
 from app.schemas.base import slugify
 
-from ._shared import SeedContext, get_or_create_person
+from ._shared import LEADERSHIP_PEOPLE, SeedContext, get_or_create_person
 from .live_staff_profile_snapshot import LIVE_STAFF_PROFILE_PAGES
 
 TITLE_PATTERN = re.compile(r"^(Prof\. Dr\.|Prof\.|Dr\.|Mr\.|Mrs\.|Ms\.|Miss\.)\s+", re.IGNORECASE)
 SUFFIX_PATTERN = re.compile(r",?\s*(PhD|PHD|MSc|MBA|CPA|CPS)\.?$", re.IGNORECASE)
 LOWERCASE_NAME_PARTICLES = {"de", "del", "da", "di", "du", "la", "le", "van", "von", "wa"}
+
+SCHOOL_DEAN_PROFILE_KEYS = {
+    "/profile_view/dr-caleb-n-akuku": "dean_business",
+    "/profile_view/dr-charles-otuke-moitui": "dean_law",
+    "/profile_view/dr-judith-achieng-odhiambo": "dean_agriculture",
+    "/profile_view/dr-peter-nyansera-otieno": "dean_arts",
+    "/profile_view/dr-raymond-oigara": "dean_health",
+    "/profile_view/dr-robert-karieko-obogi": "dean_pure_sciences",
+    "/profile_view/jane-cherono-maina": "dean_ist",
+    "/profile_view/sr-drjustina-ndaita": "dean_education",
+}
+SCHOOL_DEAN_LEADERSHIP_KEYS = frozenset(SCHOOL_DEAN_PROFILE_KEYS.values())
+SCHOOL_DEAN_INSTITUTIONAL_ROLES = frozenset(
+    str(LEADERSHIP_PEOPLE[key]["institutional_role"])
+    for key in SCHOOL_DEAN_LEADERSHIP_KEYS
+)
+DEAN_STUDENTS_INSTITUTIONAL_ROLE = str(LEADERSHIP_PEOPLE["dean_students"]["institutional_role"])
 
 
 def _normalize_name_token(token: str) -> str:
@@ -214,20 +232,26 @@ LIVE_STAFF_PROFILE_SPECS = [
 
 async def seed_staff_profiles(db: AsyncSession, ctx: SeedContext) -> None:
     for spec in LIVE_STAFF_PROFILE_SPECS:
-        person = await get_or_create_person(
-            db,
-            ctx,
-            f"live_profile:{slugify(spec['source_path'])}",
-            full_name=spec["full_name"],
-            title=spec["title"],
-            bio=spec["bio"],
-            qualifications=spec["qualifications"],
-            academic_rank=None,
-            specialization=spec["specialization"],
-            research_interests=spec["research_interests"],
-            institutional_role=spec["institutional_role"],
-            is_researcher=spec["is_researcher"],
-        )
+        leadership_key = SCHOOL_DEAN_PROFILE_KEYS.get(spec["source_path"])
+        if leadership_key:
+            person = ctx.people.get(leadership_key)
+            if person is None:
+                person = await get_or_create_person(db, ctx, leadership_key, **LEADERSHIP_PEOPLE[leadership_key])
+        else:
+            person = await get_or_create_person(
+                db,
+                ctx,
+                f"live_profile:{slugify(spec['source_path'])}",
+                full_name=spec["full_name"],
+                title=spec["title"],
+                bio=spec["bio"],
+                qualifications=spec["qualifications"],
+                academic_rank=None,
+                specialization=spec["specialization"],
+                research_interests=spec["research_interests"],
+                institutional_role=spec["institutional_role"],
+                is_researcher=spec["is_researcher"],
+            )
         department = _department_from_role(spec["official_role"], ctx.departments)
         person.department_id = department.id if department else person.department_id
         person.website_url = spec["website_url"]
@@ -241,6 +265,46 @@ async def seed_staff_profiles(db: AsyncSession, ctx: SeedContext) -> None:
         person.show_on_directory = spec["show_on_directory"]
         person.is_public = True
         await db.flush()
+    await delete_unassigned_legacy_dean_profiles(db, ctx)
 
 
-__all__ = ["LIVE_STAFF_PROFILE_SPECS", "seed_staff_profiles"]
+async def delete_unassigned_legacy_dean_profiles(db: AsyncSession, ctx: SeedContext) -> int:
+    canonical_ids = {
+        person.id
+        for key, person in ctx.people.items()
+        if key in SCHOOL_DEAN_LEADERSHIP_KEYS and person is not None
+    }
+    candidate_roles = {"dean", *SCHOOL_DEAN_INSTITUTIONAL_ROLES}
+    if DEAN_STUDENTS_INSTITUTIONAL_ROLE in candidate_roles:
+        candidate_roles.remove(DEAN_STUDENTS_INSTITUTIONAL_ROLE)
+    has_assignment = (
+        select(StaffAssignment.id)
+        .where(
+            StaffAssignment.person_id == Person.id,
+            StaffAssignment.deleted_at.is_(None),
+        )
+        .exists()
+    )
+    query = select(Person).where(
+        Person.deleted_at.is_(None),
+        Person.user_id.is_(None),
+        Person.institutional_role.in_(candidate_roles),
+        ~has_assignment,
+    )
+    if canonical_ids:
+        query = query.where(Person.id.not_in(canonical_ids))
+    result = await db.execute(query)
+    people = list(result.scalars().all())
+    for person in people:
+        await db.delete(person)
+    if people:
+        await db.flush()
+    return len(people)
+
+
+__all__ = [
+    "LIVE_STAFF_PROFILE_SPECS",
+    "SCHOOL_DEAN_PROFILE_KEYS",
+    "delete_unassigned_legacy_dean_profiles",
+    "seed_staff_profiles",
+]
