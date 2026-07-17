@@ -87,6 +87,9 @@ class ResearchClient:
     async def get_school_publication(self, publication_id: uuid.UUID) -> dict[str, Any]:
         return await self._request("GET", f"/api/v1/school-publications/{publication_id}")
 
+    async def get_school_publication_summary(self) -> dict[str, Any]:
+        return await self._request("GET", "/api/v1/school-publications/summary")
+
     async def create_school_publication(self, payload: dict[str, Any]) -> dict[str, Any]:
         return await self._request("POST", "/api/v1/school-publications", json=payload)
 

@@ -9,7 +9,7 @@ from typing import Any
 from fastapi import HTTPException, status
 from ksu_common import PaginatedResult, paginate
 from ksu_common.auth import TokenPayload
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from ..core.auth import resolve_exact_school_grant
 from ..models import EditorialBoardMember, Journal, Publication, PublicationAuthor
@@ -45,6 +45,28 @@ class PublicationService(CRUDService[Publication]):
             query = query.where(Publication.status == status_filter)
         query = query.order_by(Publication.updated_at.desc())
         return await paginate(db, query, page=page, per_page=per_page)
+
+    @classmethod
+    async def status_summary_for_school(
+        cls,
+        db,
+        user: TokenPayload,
+    ) -> dict[str, int]:
+        school_id = resolve_exact_school_grant(
+            user,
+            "school.publications.view",
+        )
+        rows = (
+            await db.execute(
+                select(Publication.status, func.count(Publication.id))
+                .where(
+                    Publication.school_id == school_id,
+                    Publication.deleted_at.is_(None),
+                )
+                .group_by(Publication.status)
+            )
+        ).all()
+        return {str(status_value): int(total) for status_value, total in rows}
 
     @classmethod
     async def get_for_school(

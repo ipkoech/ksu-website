@@ -54,6 +54,16 @@ async def create_school_publication(
     return success(data=await PublicationService.create_for_school(db, data, user))
 
 
+@router.get("/school-publications/summary", tags=["School Publications"])
+async def summarize_school_publications(
+    db=Depends(get_db),
+    user=Depends(get_current_user),
+):
+    return success(
+        data=await PublicationService.status_summary_for_school(db, user)
+    )
+
+
 @router.get("/school-publications/{publication_id}", tags=["School Publications"])
 async def get_school_publication(
     publication_id: uuid.UUID,

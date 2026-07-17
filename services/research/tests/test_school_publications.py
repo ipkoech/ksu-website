@@ -141,6 +141,7 @@ class SchoolPublicationTests(unittest.IsolatedAsyncioTestCase):
         paths = app.openapi()["paths"]
 
         self.assertIn("/api/v1/school-publications", paths)
+        self.assertIn("/api/v1/school-publications/summary", paths)
         self.assertIn("/api/v1/school-publications/{publication_id}", paths)
         self.assertIn(
             "/api/v1/school-publications/{publication_id}/submit", paths
