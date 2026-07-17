@@ -17,10 +17,14 @@ from .programme_cover_schools import SCHOOL_COVER_SCOPES, school_programme_specs
 
 _CONCEPT_DATA_FILES: Mapping[str, str] = MappingProxyType(
     {
+        "SANRM": "agriculture-natural-resources-management.json",
+        "SASS": "arts-social-sciences.json",
+        "SBE": "business-economics.json",
         "SEHRD": "education-human-resource-development.json",
         "SHS": "health-sciences.json",
         "SIST": "ict.json",
         "SOL": "law.json",
+        "SPAS": "pure-applied-sciences.json",
     }
 )
 _CONCEPT_KEYS = frozenset(

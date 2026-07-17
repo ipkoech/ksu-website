@@ -41,10 +41,14 @@ CONCEPT_KEYS = {
     "distinctiveness",
 }
 CONCEPT_FILENAMES = {
+    "SANRM": "agriculture-natural-resources-management.json",
+    "SASS": "arts-social-sciences.json",
+    "SBE": "business-economics.json",
     "SEHRD": "education-human-resource-development.json",
     "SHS": "health-sciences.json",
     "SIST": "ict.json",
     "SOL": "law.json",
+    "SPAS": "pure-applied-sciences.json",
 }
 
 
@@ -112,12 +116,25 @@ def test_ict_cover_concepts_match_the_complete_catalogue_scope() -> None:
 def test_available_school_registries_load_complete_typed_concepts() -> None:
     registries = programme_cover_concepts_by_school()
 
-    assert set(registries) == {"SEHRD", "SHS", "SIST", "SOL"}
+    assert set(registries) == {
+        "SANRM",
+        "SASS",
+        "SBE",
+        "SEHRD",
+        "SHS",
+        "SIST",
+        "SOL",
+        "SPAS",
+    }
     assert {code: len(concepts) for code, concepts in registries.items()} == {
+        "SANRM": 43,
+        "SASS": 62,
+        "SBE": 60,
         "SEHRD": 25,
         "SHS": 21,
         "SIST": 22,
         "SOL": 2,
+        "SPAS": 50,
     }
     for school_code, concepts in registries.items():
         scope_slugs = {
