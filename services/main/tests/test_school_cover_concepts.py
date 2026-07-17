@@ -60,7 +60,17 @@ def test_prompt_locks_approved_panorama_direction_and_constraints() -> None:
         assert "royal-blue" in prompt
         assert "pale-blue" in prompt
         assert "gold" in prompt
-        assert "No text" in prompt
-        assert "no logos" in prompt
-        assert "no people" in prompt
-        assert "no watermark" in prompt
+        for prohibition in (
+            "No text",
+            "no letters",
+            "no numbers",
+            "no logos",
+            "no university crest",
+            "no people",
+            "no faces",
+            "no watermark",
+            "no photorealism",
+            "no dark background",
+            "no decorative clutter",
+        ):
+            assert prohibition in prompt

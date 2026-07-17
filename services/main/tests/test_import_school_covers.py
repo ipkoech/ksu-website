@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-import struct
+import subprocess
 import uuid
 from pathlib import Path
 from types import SimpleNamespace
@@ -16,19 +16,23 @@ from app.seeders.import_school_covers import (
     import_school_covers,
     validate_school_cover_batch,
 )
-from app.seeders.school_cover_concepts import SCHOOL_COVER_CONCEPTS
+from app.seeders.school_cover_concepts import SCHOOL_COVER_CONCEPTS, school_cover_prompt
 
 
 def _write_webp(
     path: Path, *, marker: int, width: int = 1600, height: int = 900
 ) -> None:
-    vp8x = (
-        bytes((0, 0, 0, marker % 256))
-        + (width - 1).to_bytes(3, "little")
-        + (height - 1).to_bytes(3, "little")
-    )
-    chunk = b"VP8X" + struct.pack("<I", len(vp8x)) + vp8x
-    path.write_bytes(b"RIFF" + struct.pack("<I", len(chunk) + 4) + b"WEBP" + chunk)
+    ppm = path.with_suffix(".ppm")
+    color = bytes((marker % 251, (marker * 29) % 251, (marker * 71) % 251))
+    ppm.write_bytes(f"P6\n{width} {height}\n255\n".encode() + color * width * height)
+    try:
+        subprocess.run(
+            ["cwebp", "-quiet", str(ppm), "-o", str(path)],
+            check=True,
+            capture_output=True,
+        )
+    finally:
+        ppm.unlink(missing_ok=True)
 
 
 def _batch(tmp_path: Path, *, status: str = "approved") -> tuple[Path, Path]:
@@ -44,6 +48,10 @@ def _batch(tmp_path: Path, *, status: str = "approved") -> tuple[Path, Path]:
             "filename": concept.filename,
             "status": status,
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "prompt": school_cover_prompt(concept),
+            "subject": concept.subject,
+            "alt_text": concept.alt_text,
+            "distinctiveness": concept.distinctiveness,
         }
     manifest_path = tmp_path / "manifest.json"
     manifest_path.write_text(json.dumps({"items": items}), encoding="utf-8")
@@ -83,6 +91,45 @@ def test_validator_rejects_unapproved_wrong_size_hash_and_duplicate_assets(
     assert second.filename in error.value.invalid
     assert any(third.filename in group for group in error.value.duplicates)
     assert second.school_code in error.value.hash_mismatches
+
+
+def test_validator_rejects_vp8x_metadata_without_image_payload(tmp_path: Path) -> None:
+    source_dir, manifest_path = _batch(tmp_path)
+    concept = SCHOOL_COVER_CONCEPTS[0]
+    synthetic = (
+        b"RIFF\x16\x00\x00\x00WEBPVP8X\n\x00\x00\x00"
+        + b"\x00\x00\x00\x00"
+        + (1599).to_bytes(3, "little")
+        + (899).to_bytes(3, "little")
+    )
+    (source_dir / concept.filename).write_bytes(synthetic)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["items"][concept.school_code]["sha256"] = hashlib.sha256(
+        synthetic
+    ).hexdigest()
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(SchoolCoverBatchError) as error:
+        validate_school_cover_batch(source_dir, manifest_path)
+
+    assert concept.filename in error.value.invalid
+
+
+@pytest.mark.parametrize("field", ["prompt", "subject", "alt_text", "distinctiveness"])
+def test_validator_requires_canonical_review_metadata(tmp_path: Path, field: str) -> None:
+    source_dir, manifest_path = _batch(tmp_path)
+    concept = SCHOOL_COVER_CONCEPTS[0]
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["items"][concept.school_code][field] = ""
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(SchoolCoverBatchError) as error:
+        validate_school_cover_batch(source_dir, manifest_path)
+
+    assert any(
+        concept.school_code in message and field in message
+        for message in error.value.manifest_errors
+    )
 
 
 @pytest.mark.asyncio
@@ -150,6 +197,7 @@ async def test_import_rerun_updates_without_duplicate_media_or_links(
     media = [SimpleNamespace(id=uuid.uuid4()) for _ in SCHOOL_COVER_CONCEPTS]
     links = [
         SimpleNamespace(
+            media_id=uuid.uuid4(),
             is_public=False,
             is_published=False,
             status="draft",
@@ -182,6 +230,48 @@ async def test_import_rerun_updates_without_duplicate_media_or_links(
         == (True, True, "published", 1)
         for link in links
     )
+    assert all(
+        link.media_id == existing.id
+        for link, existing in zip(links, media, strict=True)
+    )
+
+
+@pytest.mark.asyncio
+async def test_import_retargets_existing_generic_cover_link_without_adding_link(
+    tmp_path: Path,
+) -> None:
+    source_dir, manifest_path = _batch(tmp_path)
+    schools = [
+        SimpleNamespace(id=uuid.uuid4(), code=concept.school_code, cover_image_id=None)
+        for concept in SCHOOL_COVER_CONCEPTS
+    ]
+    media = [SimpleNamespace(id=uuid.uuid4()) for _ in SCHOOL_COVER_CONCEPTS]
+    links = [
+        SimpleNamespace(
+            media_id=uuid.uuid4(),
+            is_public=False,
+            is_published=False,
+            status="draft",
+            display_order=99,
+        )
+        for _ in SCHOOL_COVER_CONCEPTS
+    ]
+    results = [_Result(school) for school in schools]
+    for existing_media, link in zip(media, links, strict=True):
+        results.extend((_Result(existing_media), _Result(link)))
+    db = SimpleNamespace(
+        execute=AsyncMock(side_effect=results), add=Mock(), flush=AsyncMock()
+    )
+
+    await import_school_covers(
+        db,
+        source_dir,
+        manifest=manifest_path,
+        upload_root=tmp_path / "uploads",
+    )
+
+    db.add.assert_not_called()
+    assert [link.media_id for link in links] == [item.id for item in media]
 
 
 @pytest.mark.asyncio
@@ -243,6 +333,88 @@ async def test_cli_rolls_back_import_failure(
 
     db.commit.assert_not_awaited()
     db.rollback.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+async def test_cli_restores_existing_storage_when_commit_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source_dir, manifest_path = _batch(tmp_path)
+    upload_root = tmp_path / "uploads"
+    live_root = upload_root / "seed/school-covers"
+    live_root.mkdir(parents=True)
+    before: dict[str, bytes] = {}
+    for marker, concept in enumerate(SCHOOL_COVER_CONCEPTS, start=101):
+        path = live_root / concept.filename
+        _write_webp(path, marker=marker)
+        before[concept.filename] = path.read_bytes()
+
+    schools = [
+        SimpleNamespace(id=uuid.uuid4(), code=concept.school_code, cover_image_id=None)
+        for concept in SCHOOL_COVER_CONCEPTS
+    ]
+    results = [_Result(school) for school in schools]
+    results.extend(_Result(None) for _ in range(16))
+    db = SimpleNamespace(
+        execute=AsyncMock(side_effect=results),
+        add=Mock(),
+        flush=AsyncMock(),
+        commit=AsyncMock(side_effect=RuntimeError("commit failed")),
+        rollback=AsyncMock(),
+    )
+    _patch_cli(monkeypatch, db, upload_root)
+
+    with pytest.raises(RuntimeError, match="commit failed"):
+        await importer._run_cli(source_dir, manifest_path)
+
+    assert {path.name: path.read_bytes() for path in live_root.iterdir()} == before
+    db.rollback.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+async def test_cli_removes_new_storage_when_import_fails_mid_batch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source_dir, manifest_path = _batch(tmp_path)
+    upload_root = tmp_path / "uploads"
+    schools = [
+        SimpleNamespace(id=uuid.uuid4(), code=concept.school_code, cover_image_id=None)
+        for concept in SCHOOL_COVER_CONCEPTS
+    ]
+    results: list[object] = [_Result(school) for school in schools]
+    results.extend((_Result(None), _Result(None), RuntimeError("mid-import failure")))
+    db = SimpleNamespace(
+        execute=AsyncMock(side_effect=results),
+        add=Mock(),
+        flush=AsyncMock(),
+        commit=AsyncMock(),
+        rollback=AsyncMock(),
+    )
+    _patch_cli(monkeypatch, db, upload_root)
+
+    with pytest.raises(RuntimeError, match="mid-import failure"):
+        await importer._run_cli(source_dir, manifest_path)
+
+    live_root = upload_root / "seed/school-covers"
+    assert not live_root.exists() or not list(live_root.iterdir())
+    db.rollback.assert_awaited_once_with()
+
+
+def _patch_cli(monkeypatch: pytest.MonkeyPatch, db: object, upload_root: Path) -> None:
+    class _SessionContext:
+        async def __aenter__(self):
+            return db
+
+        async def __aexit__(self, exc_type, exc, traceback):
+            return False
+
+    monkeypatch.setattr(
+        "app.core.database.AsyncSessionLocal", lambda: _SessionContext()
+    )
+    monkeypatch.setattr(
+        "app.core.config.get_settings",
+        lambda: SimpleNamespace(upload_dir_path=upload_root),
+    )
 
 
 class _Result:

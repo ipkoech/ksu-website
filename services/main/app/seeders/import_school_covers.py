@@ -6,6 +6,7 @@ import argparse
 import asyncio
 import hashlib
 import json
+import os
 import shutil
 import struct
 import uuid
@@ -20,7 +21,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Media, MediaLink, School
 
-from .school_cover_concepts import SCHOOL_COVER_CONCEPTS, SchoolCoverConcept
+from .school_cover_concepts import (
+    SCHOOL_COVER_CONCEPTS,
+    SchoolCoverConcept,
+    school_cover_prompt,
+)
 
 
 class SchoolCoverBatchError(ValueError):
@@ -63,6 +68,52 @@ class ImportSummary:
     updated: int
 
 
+class SchoolCoverStorageJournal:
+    """Install cover files atomically and restore the previous bytes on failure."""
+
+    def __init__(self, upload_root: Path) -> None:
+        self._backup_root = upload_root / ".school-cover-journal" / uuid.uuid4().hex
+        self._entries: dict[Path, Path | None] = {}
+
+    def install(self, source: Path, destination: Path) -> None:
+        if destination not in self._entries:
+            backup: Path | None = None
+            if destination.exists():
+                backup = self._backup_root / f"{len(self._entries):02d}.webp"
+                backup.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(destination, backup)
+            self._entries[destination] = backup
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        staged = destination.with_name(f".{destination.name}.{uuid.uuid4().hex}.tmp")
+        try:
+            shutil.copy2(source, staged)
+            os.replace(staged, destination)
+        finally:
+            staged.unlink(missing_ok=True)
+
+    def rollback(self) -> None:
+        for destination, backup in reversed(tuple(self._entries.items())):
+            if backup is None:
+                destination.unlink(missing_ok=True)
+            else:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                os.replace(backup, destination)
+        self._cleanup()
+
+    def finalize(self) -> None:
+        self._cleanup()
+
+    def _cleanup(self) -> None:
+        shutil.rmtree(self._backup_root, ignore_errors=True)
+        parent = self._backup_root.parent
+        try:
+            if parent.is_dir() and not any(parent.iterdir()):
+                parent.rmdir()
+        except OSError:
+            pass
+        self._entries.clear()
+
+
 def _manifest_items(
     manifest: Path | Mapping[str, object],
 ) -> Mapping[str, Mapping[str, object]]:
@@ -90,30 +141,56 @@ def _manifest_items(
 
 def _webp_dimensions(path: Path) -> tuple[int, int] | None:
     data = path.read_bytes()
-    if len(data) < 20 or data[:4] != b"RIFF" or data[8:12] != b"WEBP":
+    if (
+        len(data) < 20
+        or data[:4] != b"RIFF"
+        or data[8:12] != b"WEBP"
+        or struct.unpack_from("<I", data, 4)[0] != len(data) - 8
+    ):
         return None
     offset = 12
+    extended_dimensions: tuple[int, int] | None = None
+    image_dimensions: tuple[int, int] | None = None
     while offset + 8 <= len(data):
         kind = data[offset : offset + 4]
         size = struct.unpack_from("<I", data, offset + 4)[0]
         chunk = data[offset + 8 : offset + 8 + size]
         if len(chunk) != size:
             return None
-        if kind == b"VP8X" and size >= 10:
-            return (
+        if kind == b"VP8X" and size == 10:
+            extended_dimensions = (
                 1 + int.from_bytes(chunk[4:7], "little"),
                 1 + int.from_bytes(chunk[7:10], "little"),
             )
-        if kind == b"VP8 " and size >= 10 and chunk[3:6] == b"\x9d\x01\x2a":
-            return (
+        elif kind == b"VP8 " and size >= 20 and chunk[3:6] == b"\x9d\x01\x2a":
+            frame_tag = int.from_bytes(chunk[:3], "little")
+            first_partition_size = frame_tag >> 5
+            if (
+                frame_tag & 1
+                or first_partition_size == 0
+                or 10 + first_partition_size > size
+            ):
+                return None
+            image_dimensions = (
                 struct.unpack_from("<H", chunk, 6)[0] & 0x3FFF,
                 struct.unpack_from("<H", chunk, 8)[0] & 0x3FFF,
             )
-        if kind == b"VP8L" and size >= 5 and chunk[0] == 0x2F:
+        elif kind == b"VP8L" and size >= 10 and chunk[0] == 0x2F:
             bits = int.from_bytes(chunk[1:5], "little")
-            return (1 + (bits & 0x3FFF), 1 + ((bits >> 14) & 0x3FFF))
+            if (bits >> 29) & 0x07:
+                return None
+            image_dimensions = (
+                1 + (bits & 0x3FFF),
+                1 + ((bits >> 14) & 0x3FFF),
+            )
         offset += 8 + size + (size % 2)
-    return None
+    if offset != len(data) or image_dimensions is None:
+        return None
+    return (
+        image_dimensions
+        if extended_dimensions in (None, image_dimensions)
+        else None
+    )
 
 
 def validate_school_cover_batch(
@@ -162,6 +239,17 @@ def validate_school_cover_batch(
             manifest_errors.append(
                 f"{concept.school_code} identity does not match registry"
             )
+        canonical_review_fields = {
+            "prompt": school_cover_prompt(concept),
+            "subject": concept.subject,
+            "alt_text": concept.alt_text,
+            "distinctiveness": concept.distinctiveness,
+        }
+        for field_name, expected_value in canonical_review_fields.items():
+            if item.get(field_name) != expected_value:
+                manifest_errors.append(
+                    f"{concept.school_code} {field_name} does not match registry"
+                )
         if item.get("status") != "approved":
             unapproved.append(concept.school_code)
         path = paths.get(concept.filename)
@@ -245,6 +333,7 @@ async def import_school_covers(
     *,
     manifest: Path | Mapping[str, object],
     upload_root: Path,
+    storage_journal: SchoolCoverStorageJournal | None = None,
 ) -> ImportSummary:
     assets = validate_school_cover_batch(source_dir, manifest)
     schools: dict[str, School] = {}
@@ -258,60 +347,68 @@ async def import_school_covers(
 
     storage_root = "seed/school-covers"
     destination_root = upload_root / storage_root
-    destination_root.mkdir(parents=True, exist_ok=True)
+    owns_storage_journal = storage_journal is None
+    journal = storage_journal or SchoolCoverStorageJournal(upload_root)
     imported = 0
     updated = 0
-    for concept in SCHOOL_COVER_CONCEPTS:
-        school = schools[concept.school_code]
-        storage_path = f"{storage_root}/{concept.filename}"
-        destination = destination_root / concept.filename
-        shutil.copy2(assets[concept.filename], destination)
-        payload = _media_payload(concept, destination, storage_path)
-        media = (
-            await db.execute(select(Media).where(Media.storage_path == storage_path))
-        ).scalar_one_or_none()
-        if media is None:
-            media = Media(id=uuid.uuid4(), **payload)
-            db.add(media)
-            imported += 1
-        else:
-            for field_name, value in payload.items():
-                setattr(media, field_name, value)
-            updated += 1
-        await db.flush()
+    try:
+        for concept in SCHOOL_COVER_CONCEPTS:
+            school = schools[concept.school_code]
+            storage_path = f"{storage_root}/{concept.filename}"
+            destination = destination_root / concept.filename
+            journal.install(assets[concept.filename], destination)
+            payload = _media_payload(concept, destination, storage_path)
+            media = (
+                await db.execute(select(Media).where(Media.storage_path == storage_path))
+            ).scalar_one_or_none()
+            if media is None:
+                media = Media(id=uuid.uuid4(), **payload)
+                db.add(media)
+                imported += 1
+            else:
+                for field_name, value in payload.items():
+                    setattr(media, field_name, value)
+                updated += 1
+            await db.flush()
 
-        link = (
-            await db.execute(
-                select(MediaLink).where(
-                    MediaLink.media_id == media.id,
-                    MediaLink.entity_type == "school",
-                    MediaLink.entity_id == school.id,
-                    MediaLink.role == "cover-image",
+            link = (
+                await db.execute(
+                    select(MediaLink).where(
+                        MediaLink.entity_type == "school",
+                        MediaLink.entity_id == school.id,
+                        MediaLink.role == "cover-image",
+                    )
                 )
-            )
-        ).scalar_one_or_none()
-        if link is None:
-            db.add(
-                MediaLink(
-                    id=uuid.uuid4(),
-                    media_id=media.id,
-                    entity_type="school",
-                    entity_id=school.id,
-                    role="cover-image",
-                    folder_id=None,
-                    display_order=1,
-                    is_public=True,
-                    is_published=True,
-                    status="published",
+            ).scalar_one_or_none()
+            if link is None:
+                db.add(
+                    MediaLink(
+                        id=uuid.uuid4(),
+                        media_id=media.id,
+                        entity_type="school",
+                        entity_id=school.id,
+                        role="cover-image",
+                        folder_id=None,
+                        display_order=1,
+                        is_public=True,
+                        is_published=True,
+                        status="published",
+                    )
                 )
-            )
-        else:
-            link.is_public = True
-            link.is_published = True
-            link.status = "published"
-            link.display_order = 1
-        school.cover_image_id = media.id
-        await db.flush()
+            else:
+                link.media_id = media.id
+                link.is_public = True
+                link.is_published = True
+                link.status = "published"
+                link.display_order = 1
+            school.cover_image_id = media.id
+            await db.flush()
+    except Exception:
+        if owns_storage_journal:
+            journal.rollback()
+        raise
+    if owns_storage_journal:
+        journal.finalize()
     return ImportSummary(imported=imported, updated=updated)
 
 
@@ -319,18 +416,25 @@ async def _run_cli(source_dir: Path, manifest_path: Path) -> ImportSummary:
     from app.core.config import get_settings
     from app.core.database import AsyncSessionLocal
 
+    upload_root = get_settings().upload_dir_path
+    journal = SchoolCoverStorageJournal(upload_root)
     async with AsyncSessionLocal() as db:
         try:
             summary = await import_school_covers(
                 db,
                 source_dir,
                 manifest=manifest_path,
-                upload_root=get_settings().upload_dir_path,
+                upload_root=upload_root,
+                storage_journal=journal,
             )
             await db.commit()
+            journal.finalize()
             return summary
         except Exception:
-            await db.rollback()
+            try:
+                await db.rollback()
+            finally:
+                journal.rollback()
             raise
 
 
