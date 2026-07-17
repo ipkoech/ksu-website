@@ -35,6 +35,8 @@ celery_app.conf.update(
         "main.email.send_password_reset": {"queue": "main.email"},
         "main.email.send_verification": {"queue": "main.email"},
         "main.imports.commit": {"queue": "main.imports"},
+        "main.media.process_upload_file": {"queue": "main.media"},
+        "main.media.cleanup_expired_batches": {"queue": "main.maintenance"},
     },
     beat_schedule={
         "expire-notifications-every-15-minutes": {
@@ -49,6 +51,10 @@ celery_app.conf.update(
             "task": "main.newsletters.send_due",
             "schedule": crontab(minute="*/5"),
         },
+        "cleanup-expired-upload-batches-hourly": {
+            "task": "main.media.cleanup_expired_batches",
+            "schedule": crontab(minute=15),
+        },
     },
 )
 
@@ -59,4 +65,5 @@ celery_app.conf.imports = (
     "app.tasks.newsletters",
     "app.tasks.notifications",
     "app.tasks.social_posts",
+    "app.tasks.media",
 )

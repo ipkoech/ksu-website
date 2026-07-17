@@ -81,6 +81,8 @@ class Settings(BaseSettings):
     MAX_UPLOAD_MB: int
     ALLOWED_IMAGE_TYPES: str
     ALLOWED_DOCUMENT_TYPES: str
+    UPLOAD_BATCH_EXPIRY_HOURS: int = 24
+    UPLOAD_PROGRESS_STEP_PERCENT: int = 10
 
     X_API_BASE_URL: str
     X_UPLOAD_BASE_URL: str
