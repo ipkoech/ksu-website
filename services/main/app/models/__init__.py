@@ -84,6 +84,7 @@ from .about_content import (
 # System
 from .system import ApiKey, Setting, UserPreference, Webhook
 from .analytics import AnalyticsEvent
+from .outbox_event import OutboxEvent
 
 # Media
 from .media import Media, MediaFolder, MediaLink
@@ -190,6 +191,7 @@ __all__ = [
     "ApiKey",
     "Webhook",
     "AnalyticsEvent",
+    "OutboxEvent",
     # Media
     "Media",
     "MediaFolder",
