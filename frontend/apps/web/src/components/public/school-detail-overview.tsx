@@ -27,6 +27,7 @@ import {
   buildSchoolQuickLinks,
 } from "@/components/public/school-detail-navigation";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
+import { publicFileUrl } from "@/lib/public-media";
 import type { SchoolDetailOverviewData } from "@/lib/school-detail-data";
 
 type StatementCard = {
@@ -122,6 +123,33 @@ function SectionKicker({ children }: { children: string }) {
     <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
       {children}
     </p>
+  );
+}
+
+function SchoolCoverBanner({
+  schoolName,
+  imageUrl,
+}: {
+  schoolName: string;
+  imageUrl: string | null;
+}) {
+  if (!imageUrl) return null;
+
+  return (
+    <section
+      aria-label={`${schoolName} academic panorama`}
+      className="overflow-hidden rounded-[1.5rem] border border-border bg-white shadow-sm"
+    >
+      <PublicImage
+        src={imageUrl}
+        alt={`${schoolName} academic panorama`}
+        ratio="fill"
+        priority
+        sizes="(min-width: 1536px) 56vw, (min-width: 1280px) 60vw, 100vw"
+        className="aspect-[16/7] min-h-[220px] sm:min-h-[280px]"
+        imageClassName="object-cover"
+      />
+    </section>
   );
 }
 
@@ -389,6 +417,7 @@ export function SchoolDetailOverview({
 }) {
   const { school, dean, counts } = data;
   const schoolName = school.name;
+  const schoolCoverUrl = publicFileUrl(school.cover_image_id);
   const baseHref = `/academics/schools/${school.slug}`;
   const deanName =
     present(dean?.name) ?? present(school.dean_name) ?? "Dean profile";
@@ -457,6 +486,10 @@ export function SchoolDetailOverview({
             </aside>
 
             <ScrollReveal as="main" className="grid min-w-0 gap-4">
+              <SchoolCoverBanner
+                schoolName={schoolName}
+                imageUrl={schoolCoverUrl}
+              />
               {showDeanCard ? (
                 <DeanMessageCard
                   deanName={deanName}
