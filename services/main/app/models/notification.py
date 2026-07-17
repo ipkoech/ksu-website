@@ -31,6 +31,13 @@ class NotificationTemplate(Base):
 
 class Notification(Base):
     __tablename__ = "notifications"
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "user_id",
+            "source_event_id",
+            name="uq_notifications_user_source_event",
+        ),
+    )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         sa.ForeignKey("users.id", ondelete="CASCADE"),
@@ -39,6 +46,11 @@ class Notification(Base):
     )
     template_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         sa.ForeignKey("notification_templates.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    source_event_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("outbox_events.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )

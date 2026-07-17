@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import event as sqlalchemy_event
+from sqlalchemy.orm import Session
 
 from ..models.outbox_event import OutboxEvent
 from ..schemas.domain_events import (
@@ -16,6 +18,32 @@ from ..schemas.domain_events import (
 )
 
 UNTRUSTED_SCOPE_PAYLOAD_KEYS = frozenset({"scope", "scope_id", "school_id"})
+
+
+def enqueue_celery_after_commit(
+    db: AsyncSession,
+    task_name: str,
+    *,
+    args: list[Any] | None = None,
+    kwargs: dict[str, Any] | None = None,
+) -> None:
+    """Schedule a Celery task only after the surrounding transaction commits."""
+    info = getattr(db, "info", None)
+    if info is not None:
+        info.setdefault("celery_after_commit", []).append(
+            (task_name, list(args or []), dict(kwargs or {}))
+        )
+
+
+@sqlalchemy_event.listens_for(Session, "after_commit")
+def _dispatch_after_commit(session: Session) -> None:
+    tasks = session.info.pop("celery_after_commit", [])
+    if not tasks:
+        return
+    from ..tasks.celery_app import celery_app
+
+    for task_name, args, kwargs in tasks:
+        celery_app.send_task(task_name, args=args, kwargs=kwargs)
 
 
 def enqueue_domain_event(
@@ -61,6 +89,11 @@ def enqueue_domain_event(
         publish_attempts=0,
     )
     db.add(event)
+    enqueue_celery_after_commit(
+        db,
+        "main.outbox.publish_one",
+        args=[str(event.id)],
+    )
     return event
 
 
@@ -81,4 +114,8 @@ def domain_event_envelope(event: OutboxEvent) -> DomainEventEnvelope:
     )
 
 
-__all__ = ["domain_event_envelope", "enqueue_domain_event"]
+__all__ = [
+    "domain_event_envelope",
+    "enqueue_celery_after_commit",
+    "enqueue_domain_event",
+]

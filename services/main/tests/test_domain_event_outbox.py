@@ -9,6 +9,7 @@ from app.services.domain_events import (
     domain_event_envelope,
     enqueue_domain_event,
 )
+from app.tasks.outbox import mark_publish_failed, mark_published
 
 
 ROOT = Path(__file__).parents[1]
@@ -40,6 +41,45 @@ class _TransactionalDb:
 
 
 class DomainEventOutboxTests(unittest.IsolatedAsyncioTestCase):
+    def test_publish_state_retries_then_dead_letters(self):
+        now = datetime.now(timezone.utc)
+        event = OutboxEvent(
+            event_type="school.profile.updated",
+            scope_type="school",
+            scope_id=uuid.uuid4(),
+            resource_type="school",
+            resource_id=uuid.uuid4(),
+            publish_attempts=1,
+            delivery_status="publishing",
+        )
+        mark_publish_failed(event, "redis unavailable", now=now, max_attempts=3)
+        self.assertEqual("failed", event.delivery_status)
+        self.assertIsNotNone(event.next_attempt_at)
+        self.assertIsNone(event.dead_lettered_at)
+
+        event.publish_attempts = 3
+        mark_publish_failed(event, "still unavailable", now=now, max_attempts=3)
+        self.assertEqual("dead_letter", event.delivery_status)
+        self.assertEqual(now, event.dead_lettered_at)
+
+    def test_published_event_clears_retry_state(self):
+        now = datetime.now(timezone.utc)
+        event = OutboxEvent(
+            event_type="school.profile.updated",
+            scope_type="school",
+            scope_id=uuid.uuid4(),
+            resource_type="school",
+            resource_id=uuid.uuid4(),
+            delivery_status="publishing",
+            next_attempt_at=now,
+            last_error="old",
+        )
+        mark_published(event, now=now)
+        self.assertEqual("published", event.delivery_status)
+        self.assertEqual(now, event.published_at)
+        self.assertIsNone(event.next_attempt_at)
+        self.assertIsNone(event.last_error)
+
     async def test_enqueue_uses_callers_transaction_without_commit_flush_or_network(self):
         db = _TransactionalDb()
         school_id = uuid.uuid4()
