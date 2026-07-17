@@ -58,27 +58,24 @@ class NewsScopeApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("school", sent["owner_scope_type"])
         self.assertEqual(scope_id, sent["owner_scope_id"])
 
-    async def test_update_published_news_resets_workflow_before_persisting(self):
+    async def test_update_published_news_is_rejected_instead_of_resetting_review(self):
         user = SimpleNamespace(id=uuid.uuid4())
         item = _news("wing", uuid.uuid4())
         item.status = "published"
         item.workflow_status = "published"
         payload = NewsUpdate(title="Revised title")
         db = SimpleNamespace()
-        reset = AsyncMock(return_value=True)
-
         with (
             patch.object(news.NewsService, "get_by_id", AsyncMock(return_value=item)),
             patch.object(news.NewsService, "update", AsyncMock(return_value=item)),
-            patch.object(news.ContentWorkflowService, "reset_after_authoring_edit", reset),
             patch.object(news, "permissions_for_user", return_value={"content.edit"}),
             patch("app.api.v1._scoped._can_access_scope", return_value=True),
         ):
-            await news.update_news(item.id, payload, db=db, user=user)
+            with self.assertRaises(HTTPException) as caught:
+                await news.update_news(item.id, payload, db=db, user=user)
 
-        reset.assert_awaited_once_with(
-            db, item, "news", user.id, changed_fields={"title": "Revised title"},
-        )
+        self.assertEqual(409, caught.exception.status_code)
+
     async def test_admin_news_list_filters_by_user_scope(self):
         own_wing_id = uuid.uuid4()
         other_wing_id = uuid.uuid4()

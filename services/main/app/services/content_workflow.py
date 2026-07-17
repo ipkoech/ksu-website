@@ -13,7 +13,7 @@ from ..models import ContentWorkflowLog
 
 ALLOWED_TRANSITIONS = {
     "draft": {"submit": "submitted", "archive": "archived"},
-    "submitted": {"start_review": "in_review", "archive": "archived"},
+    "submitted": {"start_review": "in_review", "withdraw": "draft", "archive": "archived"},
     "in_review": {
         "request_changes": "changes_requested", "approve": "approved",
         "reject": "rejected", "archive": "archived",
@@ -124,6 +124,41 @@ class ContentWorkflowService:
         return True
 
     @classmethod
+    async def apply_edit_policy(
+        cls,
+        db: AsyncSession,
+        content: Any,
+        content_type: str,
+        actor_id: uuid.UUID,
+        *,
+        actor_kind: str,
+        changed_fields: dict[str, Any] | None = None,
+    ) -> bool:
+        """Apply role-aware edits without corrupting editorial state.
+
+        Authors may edit only drafts and change-requested records. CoCMS
+        reviewers may correct a record only while it remains in review.
+        """
+        current = getattr(content, "workflow_status", None) or getattr(content, "status", "draft")
+        allowed = {
+            "author": {"draft", "changes_requested"},
+            "reviewer": {"in_review"},
+        }
+        if actor_kind not in allowed or current not in allowed[actor_kind]:
+            raise ValueError(f"{actor_kind} cannot edit content in {current} state")
+        if actor_kind == "reviewer" and changed_fields:
+            db.add(ContentWorkflowLog(
+                content_type=content_type,
+                content_id=content.id,
+                from_status=current,
+                to_status=current,
+                action="review_edit",
+                actor_id=actor_id,
+                changed_fields=changed_fields,
+            ))
+        return False
+
+    @classmethod
     async def transition(
         cls,
         db: AsyncSession,
@@ -159,6 +194,9 @@ class ContentWorkflowService:
         if action == "submit":
             content.submitted_by_id = actor_id
             content.submitted_at = now
+        elif action == "withdraw":
+            content.submitted_by_id = None
+            content.submitted_at = None
         elif action == "start_review":
             content.reviewed_by_id = actor_id
             content.reviewed_at = now

@@ -19,6 +19,7 @@ from ...models import (
     ClubActivity,
     ContentWorkflowLog,
     Event,
+    Document,
     MediaLink,
     News,
     PageSection,
@@ -42,6 +43,8 @@ CONTENT_MODELS = {
     "page-sections": PageSection,
     "partnership-spotlights": PartnershipSpotlight,
     "sliders": Slider,
+    "documents": Document,
+    "school-gallery": MediaLink,
 }
 CUSTOM_WORKFLOW_CONTENT_TYPES = {"page-sections", "partnership-spotlights"}
 REVIEW_ACTIONS = {"start_review", "request_changes", "approve", "reject"}
@@ -69,6 +72,8 @@ CONTENT_TYPE_LABELS = {
     "page-sections": "Page Section",
     "partnership-spotlights": "Partnership Spotlight",
     "sliders": "Slider",
+    "documents": "Document",
+    "school-gallery": "School Gallery",
 }
 PREVIEW_PATH_PREFIXES = {
     "news": "/news",
@@ -82,10 +87,12 @@ EDIT_PATHS = {
     "announcements": "/corporate-communication/newsroom/notices",
     "events": "/corporate-communication/newsroom/events",
     "club-events": "/student-clubs/events",
-    "club-media": "/corporate-communication/review-queue",
-    "page-sections": "/corporate-communication/page-cms/sections/{id}",
+    "club-media": "/cocms/review-queue",
+    "page-sections": "/page-cms/sections/{id}",
     "partnership-spotlights": "/corporate-communication/page-cms/spotlights",
     "sliders": "/corporate-communication/media/sliders",
+    "documents": "/corporate-communication/review-queue",
+    "school-gallery": "/corporate-communication/review-queue",
 }
 WORKFLOW_ACTION_PATHS = {
     "page-sections": "/api/v1/page-sections/{id}/{action}",
@@ -264,6 +271,12 @@ async def list_content_workflow_queue(
                 MediaLink.owner_portal == "student-clubs",
                 MediaLink.owner_scope_type == "club",
             )
+        elif item_type == "school-gallery":
+            query = query.options(selectinload(MediaLink.media)).where(
+                MediaLink.owner_portal == "schools",
+                MediaLink.owner_scope_type == "school",
+                MediaLink.entity_type == "school",
+            )
         if source_portal == "main":
             query = query.where(or_(model.owner_portal.is_(None), model.owner_portal == "main"))
         elif source_portal:
@@ -393,6 +406,19 @@ async def run_content_workflow_action(
                 content.is_public = False
                 content.is_published = False
                 media.is_public = False
+    if getattr(content, "owner_portal", None) == "schools":
+        from ...services.domain_events import enqueue_domain_event
+
+        enqueue_domain_event(
+            db,
+            event_type="school.content.workflow_changed",
+            scope_type="school",
+            scope_id=getattr(content, "owner_scope_id", None),
+            actor_id=user.id,
+            resource_type=content_type,
+            resource_id=content.id,
+            data={"action": action, "workflow_status": content.workflow_status},
+        )
     await db.flush()
     await db.refresh(content)
     return success(data=content, message="Content workflow updated")

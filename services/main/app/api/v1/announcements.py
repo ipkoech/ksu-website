@@ -189,11 +189,25 @@ async def update_announcement(announcement_id: uuid.UUID, data: AnnouncementUpda
         resource_name="announcement",
     )
     current_status = item.workflow_status or item.status
+    permissions = permissions_for_user(user)
     if current_status in {"submitted", "in_review", "approved", "scheduled"}:
-        authorize_content_workflow_action(user, item, "edit", permissions_for_user(user))
-    await ContentWorkflowService.reset_after_authoring_edit(
-        db, item, "announcements", user.id, changed_fields=payload,
-    )
+        authorize_content_workflow_action(user, item, "edit", permissions)
+    try:
+        await ContentWorkflowService.apply_edit_policy(
+            db,
+            item,
+            "announcements",
+            user.id,
+            actor_kind=(
+                "reviewer"
+                if current_status == "in_review"
+                and {"content.review", "content.manage"}.intersection(permissions)
+                else "author"
+            ),
+            changed_fields=payload,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     item = await AnnouncementService.update(db, item, **payload)
     return success(data=item, message="Announcement updated")
 
