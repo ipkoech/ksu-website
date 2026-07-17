@@ -1,4 +1,5 @@
 import unittest
+import inspect
 from collections import Counter
 from pathlib import Path
 
@@ -32,6 +33,8 @@ from app.seeders.seed_programmes import programme_code
 from app.seeders.seed_public_records import CLUB_SPECS, CONTACT_SPECS, DOWNLOAD_SPECS, FAQ_SPECS
 from app.seeders.seed_public_records import _merged_download_specs
 from app.seeders.seed_staff_profiles import LIVE_STAFF_PROFILE_SPECS
+from app.seeders.seed_leadership_media import LEADERSHIP_PORTRAITS
+from app.seeders.seed_runner import run as seed_runner_run
 from app.seeders.seed_university_info import HANDBOOK_SOURCE, HANDBOOK_SOURCE_PHRASES
 from app.schemas.base import slugify
 
@@ -414,6 +417,40 @@ class SeederDataTests(unittest.TestCase):
             self.assertFalse(dean["leadership_message"].startswith("Welcome to the School"))
 
         self.assertIn("title", LEADERSHIP_PEOPLE["dean_ist"]["clear_fields"])
+
+    def test_school_deans_have_live_profile_sources_and_portraits(self):
+        expected_profile_paths = {
+            "dean_agriculture": "/profile_view/dr-judith-achieng-odhiambo",
+            "dean_arts": "/profile_view/dr-peter-nyansera-otieno",
+            "dean_business": "/profile_view/dr-caleb-n-akuku",
+            "dean_education": "/profile_view/sr-drjustina-ndaita",
+            "dean_health": "/profile_view/dr-raymond-oigara",
+            "dean_law": "/profile_view/dr-charles-otuke-moitui",
+            "dean_pure_sciences": "/profile_view/dr-robert-karieko-obogi",
+        }
+
+        for dean_key, profile_path in expected_profile_paths.items():
+            self.assertEqual(
+                f"https://kisiiuniversity.ac.ke{profile_path}",
+                LEADERSHIP_PEOPLE[dean_key]["website_url"],
+            )
+            self.assertIn(dean_key, LEADERSHIP_PORTRAITS)
+            self.assertTrue(LEADERSHIP_PORTRAITS[dean_key].startswith("https://"))
+
+        self.assertEqual(
+            "https://kisiiuniversity.ac.ke/admin_departments/academic-division",
+            LEADERSHIP_PEOPLE["dean_ist"]["website_url"],
+        )
+        self.assertIn("dean_ist", LEADERSHIP_PORTRAITS)
+        self.assertEqual("0000-0002-3863-4362", LEADERSHIP_PEOPLE["dean_agriculture"]["orcid"])
+
+    def test_leadership_media_runs_after_school_deans_exist(self):
+        runner_source = inspect.getsource(seed_runner_run)
+
+        self.assertLess(
+            runner_source.index("await seed_schools(db, ctx)"),
+            runner_source.index("await seed_leadership_media(db, ctx)"),
+        )
 
     def test_live_staff_profile_names_are_normalized_from_all_caps(self):
         specs_by_source_path = {spec["source_path"]: spec for spec in LIVE_STAFF_PROFILE_SPECS}

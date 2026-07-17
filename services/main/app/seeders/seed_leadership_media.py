@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import uuid
 from pathlib import PurePosixPath
+from urllib.parse import urlparse
 
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +16,7 @@ from ._shared import SeedContext
 
 
 OFFICIAL_SITE = "https://kisiiuniversity.ac.ke"
+ACADEMIC_DIVISION_URL = f"{OFFICIAL_SITE}/admin_departments/academic-division"
 
 LEADERSHIP_PORTRAITS = {
     "council_chair": "/storage/staffprofiles/images/NzacepgtIhwzcYKztRJGgDheyWoyI4uBDohTMtjQ.jpg",
@@ -32,7 +34,50 @@ LEADERSHIP_PORTRAITS = {
     "registrar_academic": "/storage/public/offices/We17qhjxKOZzQC7M548OpiXUiqaCdf26b1kHsfMM.jpg",
     "registrar_reirm": "/storage/public/offices/OGp85GB6otkYGQjQg5N6qB5VDaM3vs6C7uv7Zw74.jpg",
     "finance_officer": "/storage/public/offices/L5xQkM1NP5blIoZzyLvHdm7wp2zyVVvxvKaiflsH.jpg",
+    "dean_agriculture": "https://digital.kisiiuniversity.ac.ke/storage/avatars/QEEcNPoWSruiXOyJXdMVytXNfOwuhrVu3abjRFGG.jpg",
+    "dean_arts": "https://digital.kisiiuniversity.ac.ke/storage/avatars/Cf85DMmfe0gRnDDoihizE6ygsVDgbQ9AsBWGFxQz.jpg",
+    "dean_business": "https://digital.kisiiuniversity.ac.ke/storage/avatars/TRTeh1olBKTCjpFb9x5g7Z0rvJoGTpSwJyKdF87m.jpg",
+    "dean_education": "https://digital.kisiiuniversity.ac.ke/storage/avatars/cXWIRez52e0fxAcHL1cScCdnXDsZbtXLZpjaBRIg.jpg",
+    "dean_health": "https://digital.kisiiuniversity.ac.ke/storage/avatars/a0bNVqlcYBiKl2w0MdmMwbBGMUyhGH839hNhXHsr.png",
+    "dean_ist": "https://digital.kisiiuniversity.ac.ke/storage/avatars/fKjazDzl3QuO9vJIrzP1KU97DJoiPid24ADdhMAO.jpg",
+    "dean_law": "https://digital.kisiiuniversity.ac.ke/storage/avatars/kPyjyHI3H9v9wlxnU7OuqmY8dpX1ZlJofVrlPNTo.png",
+    "dean_pure_sciences": "https://digital.kisiiuniversity.ac.ke/storage/avatars/C20CHjrgSVMPPmXU0BpE9lEQkmP6H9xal8oEYr4w.jpg",
 }
+
+LEADERSHIP_PORTRAIT_SOURCE_PAGES = {
+    "dean_agriculture": f"{OFFICIAL_SITE}/profile_view/dr-judith-achieng-odhiambo",
+    "dean_arts": f"{OFFICIAL_SITE}/profile_view/dr-peter-nyansera-otieno",
+    "dean_business": f"{OFFICIAL_SITE}/profile_view/dr-caleb-n-akuku",
+    "dean_education": f"{OFFICIAL_SITE}/profile_view/sr-drjustina-ndaita",
+    "dean_health": f"{OFFICIAL_SITE}/profile_view/dr-raymond-oigara",
+    "dean_ist": ACADEMIC_DIVISION_URL,
+    "dean_law": f"{OFFICIAL_SITE}/profile_view/dr-charles-otuke-moitui",
+    "dean_pure_sciences": f"{OFFICIAL_SITE}/profile_view/dr-robert-karieko-obogi",
+}
+
+
+def _public_url(source_path: str) -> str:
+    if source_path.startswith(("http://", "https://")):
+        return source_path
+    return f"{OFFICIAL_SITE}{source_path}"
+
+
+def _source_path_name(source_path: str) -> str:
+    parsed_path = urlparse(source_path).path
+    return PurePosixPath(parsed_path).name
+
+
+def _source_path_suffix(source_path: str) -> str:
+    parsed_path = urlparse(source_path).path
+    return PurePosixPath(parsed_path).suffix.lower() or ".jpg"
+
+
+def _source_page_url(key: str) -> str:
+    if key in LEADERSHIP_PORTRAIT_SOURCE_PAGES:
+        return LEADERSHIP_PORTRAIT_SOURCE_PAGES[key]
+    if key.startswith("council_") or key == "vice_chancellor":
+        return f"{OFFICIAL_SITE}/about_adminstration"
+    return f"{OFFICIAL_SITE}/university_management_board"
 
 
 async def seed_leadership_media(db: AsyncSession, ctx: SeedContext) -> None:
@@ -41,8 +86,8 @@ async def seed_leadership_media(db: AsyncSession, ctx: SeedContext) -> None:
         if person is None:
             continue
 
-        public_url = f"{OFFICIAL_SITE}{source_path}"
-        suffix = PurePosixPath(source_path).suffix.lower() or ".jpg"
+        public_url = _public_url(source_path)
+        suffix = _source_path_suffix(source_path)
         storage_path = f"seed/external/leadership/{key}{suffix}"
         media = (
             await db.execute(
@@ -53,7 +98,7 @@ async def seed_leadership_media(db: AsyncSession, ctx: SeedContext) -> None:
         ).scalar_one_or_none()
         payload = {
             "filename": f"{key}{suffix}",
-            "original_filename": PurePosixPath(source_path).name,
+            "original_filename": _source_path_name(source_path),
             "mime_type": "image/png" if suffix == ".png" else "image/jpeg",
             "file_size": 0,
             "file_hash": hashlib.sha256(public_url.encode("utf-8")).hexdigest(),
@@ -71,11 +116,7 @@ async def seed_leadership_media(db: AsyncSession, ctx: SeedContext) -> None:
             "extra_metadata": {
                 "source": "kisiiuniversity.ac.ke",
                 "seed_asset": True,
-                "source_page_url": (
-                    f"{OFFICIAL_SITE}/about_adminstration"
-                    if key.startswith("council_") or key == "vice_chancellor"
-                    else f"{OFFICIAL_SITE}/university_management_board"
-                ),
+                "source_page_url": _source_page_url(key),
             },
         }
         if media is None:

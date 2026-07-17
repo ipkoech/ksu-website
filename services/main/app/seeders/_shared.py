@@ -332,6 +332,40 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "email": "jodhiambo@kisiiuniversity.ac.ke",
         "institutional_role": "dean_agriculture_and_natural_resources_management",
         "bio": "Dean of the School of Agriculture and Natural Resources Management as listed on the official Academic Division page.",
+        "full_bio": (
+            "Dr. Judith Achieng Odhiambo is Dean of the School of Agriculture and Natural Resources "
+            "Management and a Senior Lecturer in Agronomy. Her academic and development work spans "
+            "crop production, soil health, conservation agriculture, climate-smart agriculture, indigenous "
+            "food systems, agribusiness, and agricultural education."
+        ),
+        "website_url": "https://kisiiuniversity.ac.ke/profile_view/dr-judith-achieng-odhiambo",
+        "research_interests": [
+            "Climate-smart agriculture",
+            "Conservation agriculture",
+            "Soil health",
+            "Crop production",
+            "Agricultural education",
+            "Indigenous food systems",
+            "Agribusiness",
+        ],
+        "education_background": [
+            {
+                "raw": (
+                    "Menengai High School 1987 - 1990 C Plain; University of Wyoming 2011 Jan - "
+                    "2014 Dec Doctor of Philosophy (PhD); Egerton University 2006 July - 2009 March "
+                    "Masters; Egerton University 2002 July - 2006 Jan Bachelors; Egerton University "
+                    "1992 July - 1995 June Diploma"
+                ),
+                "source": "official_profile",
+                "source_url": "https://kisiiuniversity.ac.ke/profile_view/dr-judith-achieng-odhiambo",
+            }
+        ],
+        "orcid": "0000-0002-3863-4362",
+        "researchgate_url": "https://www.researchgate.net/profile/Judith-Odhiambo-5",
+        "google_scholar_url": (
+            "https://scholar.google.com/citations?view_op=search_authors&mauthors=judith+achieng+odhiambo&hl=en&oi=ao"
+        ),
+        "is_researcher": True,
         "leadership_message": (
             "Agriculture and natural resources sit at the centre of food security, livelihoods, and climate resilience. In this school, "
             "we want students to learn from the farm, the laboratory, and the community with equal seriousness. Our priority is to graduate "
@@ -344,6 +378,30 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "title": "Dr.",
         "institutional_role": "dean_business_and_economics",
         "bio": "Dean of the School of Business and Economics as listed on the official Academic Division page.",
+        "website_url": "https://kisiiuniversity.ac.ke/profile_view/dr-caleb-n-akuku",
+        "research_interests": ["Technology adoption and business performance"],
+        "education_background": [
+            {
+                "raw": (
+                    "Ambira Secondary 1984 - 1987 Division One; St. Mary's Yala High 1988 - 1991 "
+                    "3 Principals and 1 subsidiary; Jomo Kenyatta University of Agriculture and "
+                    "Technology 2008 Sep - 2009 Dec Masters; Moi University 2010 Sep - 2017 Dec "
+                    "Doctor of Philosophy (PhD)"
+                ),
+                "source": "official_profile",
+                "source_url": "https://kisiiuniversity.ac.ke/profile_view/dr-caleb-n-akuku",
+            }
+        ],
+        "professional_memberships": [
+            {
+                "type": "work_experience",
+                "raw": "Kisii University Jan 2023 - present; Kisii University May 2016 - 2023",
+                "source": "official_profile",
+                "source_url": "https://kisiiuniversity.ac.ke/profile_view/dr-caleb-n-akuku",
+            }
+        ],
+        "teaching_areas": ["Strategic Management", "Machinery and Equipment"],
+        "is_researcher": True,
         "leadership_message": (
             "Business education must help learners read markets, manage people, account responsibly, and build enterprises that last. Our school "
             "brings together economics, finance, hospitality, management, and entrepreneurship so that students can connect theory with decisions "
@@ -356,6 +414,7 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "title": "Sr. Dr.",
         "institutional_role": "dean_education_and_human_resource_development",
         "bio": "Dean SEDHURED as listed on the official Academic Division page.",
+        "website_url": "https://kisiiuniversity.ac.ke/profile_view/sr-drjustina-ndaita",
         "leadership_message": (
             "Teacher preparation is a public trust. Our school trains educators, counsellors, curriculum specialists, and education managers who understand "
             "the learner, the classroom, and the wider community. We place strong emphasis on professional discipline, research, mentorship, and the ability "
@@ -368,6 +427,7 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "title": "Dr.",
         "institutional_role": "dean_health_sciences",
         "bio": "Dean of the School of Health Sciences as displayed on the school page.",
+        "website_url": "https://kisiiuniversity.ac.ke/profile_view/dr-raymond-oigara",
         "leadership_message": (
             "Health training carries a direct responsibility to patients, families, and communities. We expect our students to pursue competence with humility, "
             "compassion, and evidence-based practice. Across our health programmes, clinical exposure, laboratory learning, public health thinking, and research "
@@ -381,6 +441,7 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "clear_fields": ("title",),
         "institutional_role": "dean_information_science_and_technology",
         "bio": "Dean of the School of Information Science & Technology as listed on the official Academic Division page.",
+        "website_url": "https://kisiiuniversity.ac.ke/admin_departments/academic-division",
         "leadership_message": (
             "Technology changes quickly, but the need for clear thinking, reliable systems, and responsible communication remains constant. Our school brings "
             "computing, media, information science, and library science into one learning environment where students build, analyse, communicate, and manage "
@@ -393,6 +454,38 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "title": "Dr.",
         "institutional_role": "dean_pure_and_applied_sciences",
         "bio": "Dean of the School of Pure and Applied Sciences as listed on the official Academic Division page.",
+        "website_url": "https://kisiiuniversity.ac.ke/profile_view/dr-robert-karieko-obogi",
+        "education_background": [
+            {
+                "raw": "Egerton University 2001 Sep - 2005 April Bachelors",
+                "source": "official_profile",
+                "source_url": "https://kisiiuniversity.ac.ke/profile_view/dr-robert-karieko-obogi",
+            }
+        ],
+        "publication_records": [
+            {
+                "title": "Lie Symmetry Solutions of Coupled Lotka-Volterra Competition-Diffusion Model",
+                "citation": (
+                    "Peter O. Ojwala, Michael O. Okoya, Robert Obogi. International Journal of "
+                    "Mathematics Trends and Technology, 66(3), 39-52, 2020."
+                ),
+                "year": 2020,
+                "source": "official_profile",
+                "url": "https://kisiiuniversity.ac.ke/profile_view/dr-robert-karieko-obogi",
+            },
+            {
+                "title": "Convergence of Positive and Completely Positive Operators on Non-Unital C*-Algebras",
+                "citation": (
+                    "Obogi Robert Karieko. International Journal of Functional Analysis, Operator "
+                    "Theory and Applications, 11(2), 71-78, 2019."
+                ),
+                "year": 2019,
+                "source": "official_profile",
+                "url": "https://kisiiuniversity.ac.ke/profile_view/dr-robert-karieko-obogi",
+            },
+        ],
+        "publications_count": 2,
+        "is_researcher": True,
         "leadership_message": (
             "Science asks students to be patient with evidence and bold in seeking explanations. In our laboratories, field activities, and quantitative courses, "
             "we train learners to observe carefully, test ideas, and communicate results clearly. The school supports scientific talent that can serve research, "
@@ -405,6 +498,34 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "title": "Dr.",
         "institutional_role": "dean_arts_and_social_sciences",
         "bio": "Dean SASS as listed on the official Academic Division page.",
+        "website_url": "https://kisiiuniversity.ac.ke/profile_view/dr-peter-nyansera-otieno",
+        "education_background": [
+            {
+                "raw": (
+                    "Kisii University 2015 May - 2020 Dec Doctor of Philosophy (PhD); University "
+                    "of Nairobi 2010 Oct - 2012 Dec Masters; Egerton University 1996 Oct - 2000 Dec Bachelors"
+                ),
+                "source": "official_profile",
+                "source_url": "https://kisiiuniversity.ac.ke/profile_view/dr-peter-nyansera-otieno",
+            }
+        ],
+        "research_grants_won": [
+            {
+                "title": "Acoustic Analysis of Ekegusii Vowels and Stops",
+                "funder": "National Research Fund",
+                "role": "Principal Investigator",
+                "source": "official_profile",
+                "source_url": "https://kisiiuniversity.ac.ke/profile_view/dr-peter-nyansera-otieno",
+            },
+            {
+                "title": "Use of Telehealth to Improve Timely Quality Care In Type 2 Diabetes Mellitus: A Pilot Study",
+                "funder": "MicroResearch International",
+                "role": "Principal Investigator",
+                "source": "official_profile",
+                "source_url": "https://kisiiuniversity.ac.ke/profile_view/dr-peter-nyansera-otieno",
+            },
+        ],
+        "is_researcher": True,
         "leadership_message": (
             "Societies need graduates who can interpret people, institutions, cultures, histories, conflicts, and ideas with care. Our school gives students "
             "space to ask difficult questions, strengthen communication, understand human behaviour, and apply social knowledge to peace, governance, development, "
@@ -417,6 +538,7 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "title": "Dr.",
         "institutional_role": "head_school_of_law",
         "bio": "Dean of the School of Law as listed on the official Academic Division page.",
+        "website_url": "https://kisiiuniversity.ac.ke/profile_view/dr-charles-otuke-moitui",
         "leadership_message": (
             "Legal education is more than mastering statutes and cases; it is learning judgment, ethics, argument, and service. The School of Law prepares "
             "students to understand legal rules in their social context, defend justice with discipline, and contribute to institutions that protect rights, "
