@@ -15,6 +15,72 @@ export interface User {
   roles: string[];
 }
 
+export type SchoolPortalNavigationKey =
+  | "dashboard"
+  | "profile"
+  | "team"
+  | "departments"
+  | "programmes"
+  | "publications"
+  | "content"
+  | "media"
+  | "inquiries"
+  | "notifications"
+  | "audit";
+
+export interface SchoolPortalEntitySummary {
+  id: string;
+  name: string;
+  code: string | null;
+  slug: string | null;
+}
+
+export interface SchoolPortalDepartmentSummary
+  extends SchoolPortalEntitySummary {
+  display_order: number;
+}
+
+export interface SchoolPortalMediaSummary {
+  id: string;
+  url: string;
+  alt_text: string | null;
+}
+
+export interface SchoolPortalSchoolSummary extends SchoolPortalEntitySummary {
+  school_type: string;
+  campus_id: string | null;
+  administrative_wing_id: string | null;
+  dean_id: string | null;
+  logo_image_id: string | null;
+  cover_image_id: string | null;
+  brochure_id: string | null;
+  is_active: boolean;
+  is_public: boolean;
+  campus: SchoolPortalEntitySummary | null;
+  administrative_wing: SchoolPortalEntitySummary | null;
+  dean: { id: string; display_name: string } | null;
+  logo_image: SchoolPortalMediaSummary | null;
+  cover_image: SchoolPortalMediaSummary | null;
+  brochure: SchoolPortalMediaSummary | null;
+  departments: SchoolPortalDepartmentSummary[];
+}
+
+export interface SchoolPortalContextResponse {
+  school: SchoolPortalSchoolSummary;
+  user: { id: string; email: string; full_name: string };
+  permissions: string[];
+  role_names: Array<"school_admin" | "school_editor" | string>;
+  capabilities: Record<string, boolean>;
+  allowed_navigation: SchoolPortalNavigationKey[];
+}
+
+export interface SchoolPortalCapabilitiesResponse {
+  school_id: string;
+  permissions: string[];
+  capabilities: Record<string, boolean>;
+  allowed_navigation: SchoolPortalNavigationKey[];
+}
+
 export interface PublicStatItem {
   key: string;
   label: string;

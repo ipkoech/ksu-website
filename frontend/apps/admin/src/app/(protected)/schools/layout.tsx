@@ -1,7 +1,5 @@
-"use client";
-
-import { PortalShell } from "@/components/portals/portal-shell";
+import { SchoolPortalProvider } from "@/components/schools/school-portal-provider";
 
 export default function SchoolsLayout({ children }: { children: React.ReactNode }) {
-  return <PortalShell portalKey="schools">{children}</PortalShell>;
+  return <SchoolPortalProvider>{children}</SchoolPortalProvider>;
 }

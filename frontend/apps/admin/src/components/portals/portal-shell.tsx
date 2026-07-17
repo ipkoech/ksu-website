@@ -36,16 +36,23 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 interface PortalShellProps {
   portalKey: PortalKey;
   children: ReactNode;
+  navOverride?: PortalNavItem[];
 }
 
-export function PortalShell({ portalKey, children }: PortalShellProps) {
+export function PortalShell({
+  portalKey,
+  children,
+  navOverride,
+}: PortalShellProps) {
   const portal = getPortalConfig(portalKey);
 
   if (!portal) return null;
 
+  const scopedPortal = navOverride ? { ...portal, nav: navOverride } : portal;
+
   return (
     <ServiceGuard service={portal.service}>
-      <PortalChrome portal={portal}>{children}</PortalChrome>
+      <PortalChrome portal={scopedPortal}>{children}</PortalChrome>
     </ServiceGuard>
   );
 }
