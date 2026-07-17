@@ -327,22 +327,23 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
         "bio": "Director of eLearning listed on the academic division page.",
     },
     "dean_agriculture": {
-        "full_name": "Simion Omasaki",
+        "full_name": "Judith Achieng Odhiambo",
         "title": "Dr.",
+        "email": "jodhiambo@kisiiuniversity.ac.ke",
         "institutional_role": "dean_agriculture_and_natural_resources_management",
-        "bio": "Dean SANRM as listed on the official Academic Division page.",
+        "bio": "Dean of the School of Agriculture and Natural Resources Management as listed on the official Academic Division page.",
         "academic_rank": "dean",
     },
     "dean_business": {
-        "full_name": "Caleb Akuku",
+        "full_name": "Caleb N. Akuku",
         "title": "Dr.",
         "institutional_role": "dean_business_and_economics",
-        "bio": "Dean of the School of Business and Economics as displayed on the school page.",
+        "bio": "Dean of the School of Business and Economics as listed on the official Academic Division page.",
         "academic_rank": "dean",
     },
     "dean_education": {
-        "full_name": "Benard Nyatuka",
-        "title": "Prof.",
+        "full_name": "Justina Ndaita",
+        "title": "Sr. Dr.",
         "institutional_role": "dean_education_and_human_resource_development",
         "bio": "Dean SEDHURED as listed on the official Academic Division page.",
         "academic_rank": "dean",
@@ -356,30 +357,31 @@ LEADERSHIP_PEOPLE: dict[str, dict[str, Any]] = {
     },
     "dean_ist": {
         "full_name": "Jane Cherono Maina",
-        "title": "Dr.",
+        "title": None,
+        "clear_fields": ("title",),
         "institutional_role": "dean_information_science_and_technology",
-        "bio": "Acting Dean of the School of Information Science & Technology as listed on the school and Academic Division pages.",
+        "bio": "Dean of the School of Information Science & Technology as listed on the official Academic Division page.",
         "academic_rank": "dean",
     },
     "dean_pure_sciences": {
-        "full_name": "Robert Obogi",
+        "full_name": "Robert Karieko Obogi",
         "title": "Dr.",
         "institutional_role": "dean_pure_and_applied_sciences",
-        "bio": "Dean of the School of Pure and Applied Sciences as referenced in current official university publications.",
+        "bio": "Dean of the School of Pure and Applied Sciences as listed on the official Academic Division page.",
         "academic_rank": "dean",
     },
     "dean_arts": {
-        "full_name": "Oino Gutwa",
+        "full_name": "Peter Nyansera Otieno",
         "title": "Dr.",
         "institutional_role": "dean_arts_and_social_sciences",
         "bio": "Dean SASS as listed on the official Academic Division page.",
         "academic_rank": "dean",
     },
     "dean_law": {
-        "full_name": "Charles Moitui",
+        "full_name": "Charles Otuke Moitui",
         "title": "Dr.",
         "institutional_role": "head_school_of_law",
-        "bio": "Dean of the School of Law as referenced in current official university publications.",
+        "bio": "Dean of the School of Law as listed on the official Academic Division page.",
         "academic_rank": "dean",
     },
     "council_member_peter_mageto": {
@@ -875,6 +877,8 @@ async def get_or_create_person(session: AsyncSession, ctx: SeedContext, key: str
         for field_name, value in payload.items():
             if value is not None:
                 setattr(person, field_name, value)
+        for field_name in spec.get("clear_fields", ()):
+            setattr(person, field_name, None)
     cv_asset_filename = spec.get("cv_asset_filename")
     if cv_asset_filename:
         asset_path = Path(__file__).resolve().parent / "assets" / "staff" / str(cv_asset_filename)

@@ -22,7 +22,7 @@ from app.seeders.seed_handbook import (
     HANDBOOK_STUDENT_AFFAIRS_SERVICES,
 )
 from app.seeders.programme_catalogue import BROCHURE_PROGRAMMES
-from app.seeders.seed_portal_users import PORTAL_USER_SPECS
+from app.seeders.seed_portal_users import PORTAL_USER_SPECS, SCHOOL_DEAN_PORTAL_USER_SPECS
 from app.seeders.seed_rbac import RECONCILED_ROLE_NAMES, ROLE_SPECS
 from app.seeders.seed_programmes import programme_code
 from app.seeders.seed_public_records import CLUB_SPECS, CONTACT_SPECS, DOWNLOAD_SPECS, FAQ_SPECS
@@ -387,6 +387,41 @@ class SeederDataTests(unittest.TestCase):
             expected_user_roles,
             {key: users_by_key[key]["role"] for key in expected_user_roles},
         )
+
+    def test_school_deans_match_official_academic_division_listing(self):
+        expected_deans = {
+            "SANRM": ("Dr.", "Judith Achieng Odhiambo"),
+            "SASS": ("Dr.", "Peter Nyansera Otieno"),
+            "SBE": ("Dr.", "Caleb N. Akuku"),
+            "SEHRD": ("Sr. Dr.", "Justina Ndaita"),
+            "SHS": ("Dr.", "Raymond Oigara"),
+            "SIST": (None, "Jane Cherono Maina"),
+            "SOL": ("Dr.", "Charles Otuke Moitui"),
+            "SPAS": ("Dr.", "Robert Karieko Obogi"),
+        }
+
+        specs_by_code = {spec["code"]: spec for spec in SCHOOL_SPECS}
+        for school_code, (title, full_name) in expected_deans.items():
+            dean_key = specs_by_code[school_code]["dean_key"]
+            dean = LEADERSHIP_PEOPLE[dean_key]
+            self.assertEqual(title, dean["title"])
+            self.assertEqual(full_name, dean["full_name"])
+
+        self.assertIn("title", LEADERSHIP_PEOPLE["dean_ist"]["clear_fields"])
+
+    def test_school_dean_portal_users_are_scoped_school_admins(self):
+        expected = {
+            spec["code"]: spec["dean_key"]
+            for spec in SCHOOL_SPECS
+        }
+        actual = {
+            spec["school_code"]: spec["dean_key"]
+            for spec in SCHOOL_DEAN_PORTAL_USER_SPECS
+        }
+
+        self.assertEqual(expected, actual)
+        self.assertTrue(all(spec["role"] == "school_admin" for spec in SCHOOL_DEAN_PORTAL_USER_SPECS))
+        self.assertEqual([], duplicates(spec["key"] for spec in SCHOOL_DEAN_PORTAL_USER_SPECS))
 
     def test_legacy_content_admin_is_explicitly_reconciled_after_reseeding(self):
         roles_by_name = {spec["name"]: spec for spec in ROLE_SPECS}

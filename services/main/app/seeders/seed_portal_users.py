@@ -8,9 +8,11 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import User, UserRole
+from app.models import StaffAssignment, User, UserRole
 
 from ._shared import (
+    LEADERSHIP_PEOPLE,
+    SCHOOL_SPECS,
     SeedContext,
     get_or_create_person,
     upsert_user,
@@ -69,6 +71,16 @@ PORTAL_USER_SPECS = [
         "role": "library_admin",
         "institutional_role": "library_admin",
     },
+]
+
+SCHOOL_DEAN_PORTAL_USER_SPECS = [
+    {
+        "key": f"school_dean_{school_spec['code'].lower()}",
+        "school_code": school_spec["code"],
+        "dean_key": school_spec["dean_key"],
+        "role": "school_admin",
+    }
+    for school_spec in SCHOOL_SPECS
 ]
 
 PORTAL_ROLE_EXTRA_PERMISSIONS = {
@@ -157,6 +169,70 @@ async def seed_portal_users(db: AsyncSession, ctx: SeedContext) -> None:
             scope_type=None,
             scope_id=None,
             note="Seeded portal-specific assignment for browser QA",
+        )
+
+    await _seed_school_dean_portal_users(db, ctx, password)
+
+
+async def _seed_school_dean_portal_users(
+    db: AsyncSession,
+    ctx: SeedContext,
+    password: str,
+) -> None:
+    role = ctx.roles.get("school_admin")
+    if role is None:
+        raise ValueError("school_admin role must be seeded before dean portal users")
+
+    for spec in SCHOOL_DEAN_PORTAL_USER_SPECS:
+        school = ctx.schools.get(spec["school_code"])
+        if school is None:
+            raise ValueError(f"{spec['school_code']} school must be seeded before dean portal users")
+
+        dean_spec = LEADERSHIP_PEOPLE[spec["dean_key"]]
+        person = await get_or_create_person(db, ctx, spec["dean_key"], **dean_spec)
+        user = await upsert_user(
+            db,
+            ctx,
+            spec["key"],
+            email=person.email,
+            password=password,
+            full_name=person.full_name,
+            phone=person.phone,
+            avatar_url=None,
+            push_tokens=None,
+            is_active=True,
+            is_verified=True,
+            mfa_enabled=False,
+            mfa_secret=None,
+            failed_login_attempts=0,
+        )
+        person.user_id = user.id
+
+        assignment = ctx.assignments.get(f"school-{spec['school_code']}-dean")
+        if assignment is None:
+            assignment = (
+                await db.execute(
+                    select(StaffAssignment).where(
+                        StaffAssignment.entity_type == "school",
+                        StaffAssignment.entity_id == school.id,
+                        StaffAssignment.role == "dean",
+                        StaffAssignment.status == "active",
+                        StaffAssignment.deleted_at.is_(None),
+                    )
+                )
+            ).scalar_one_or_none()
+        if assignment is not None:
+            assignment.person_id = person.id
+            assignment.user_id = user.id
+
+        await upsert_user_role(
+            db,
+            user,
+            role,
+            assigned_by_id=user.id,
+            scope_type="school",
+            scope_id=school.id,
+            note=f"Seeded school admin assignment for {school.name}",
         )
 
 
