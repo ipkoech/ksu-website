@@ -8,7 +8,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import StaffAssignment, User, UserRole
+from app.models import Person, StaffAssignment, User, UserRole
 
 from ._shared import (
     LEADERSHIP_PEOPLE,
@@ -148,8 +148,7 @@ async def seed_portal_users(db: AsyncSession, ctx: SeedContext) -> None:
             mfa_secret=None,
             failed_login_attempts=0,
         )
-        person.user_id = user.id
-        await db.flush()
+        await _assign_user_to_person(db, person, user)
 
         role = ctx.roles.get(spec["role"])
         if role is None:
@@ -207,7 +206,7 @@ async def _seed_school_dean_portal_users(
             mfa_secret=None,
             failed_login_attempts=0,
         )
-        person.user_id = user.id
+        await _assign_user_to_person(db, person, user)
 
         assignment = ctx.assignments.get(f"school-{spec['school_code']}-dean")
         if assignment is None:
@@ -235,6 +234,24 @@ async def _seed_school_dean_portal_users(
             scope_id=school.id,
             note=f"Seeded school admin assignment for {school.name}",
         )
+
+
+async def _assign_user_to_person(db: AsyncSession, person: Person, user: User) -> None:
+    """Link a seeded user to its canonical person without violating one-to-one links."""
+    existing_link = (
+        await db.execute(
+            select(Person).where(
+                Person.user_id == user.id,
+                Person.id != person.id,
+                Person.deleted_at.is_(None),
+            )
+        )
+    ).scalar_one_or_none()
+    if existing_link is not None:
+        existing_link.user_id = None
+
+    person.user_id = user.id
+    await db.flush()
 
 
 async def _retire_legacy_portal_users(db: AsyncSession) -> None:
