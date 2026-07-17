@@ -28,6 +28,7 @@ SERVICE_SPECS = {
             "CELERY_BROKER_URL": "redis://localhost:6379/0",
             "CELERY_RESULT_BACKEND": "redis://localhost:6379/0",
             "UPLOAD_DIR": str(ROOT / ".tmp" / "docs" / "main" / "uploads"),
+            "LOG_DIR": str(ROOT / ".tmp" / "docs" / "main" / "logs"),
             "INTERNAL_API_KEY": "docs-internal",
         },
     },
@@ -44,6 +45,25 @@ SERVICE_SPECS = {
             "CELERY_RESULT_BACKEND": "redis://localhost:6379/1",
             "MAIN_SERVICE_URL": "http://main:8000",
             "INTERNAL_API_KEY": "docs-internal",
+            "LOG_DIR": str(ROOT / ".tmp" / "docs" / "library" / "logs"),
+        },
+    },
+    "research": {
+        "service_dir": ROOT / "services" / "research",
+        "module": "app.main",
+        "app_factory": "create_app",
+        "env": {
+            "APP_ENV": "development",
+            "DATABASE_URL": "postgresql+asyncpg://docs:docs@localhost:5432/docs",
+            "JWT_SECRET_KEY": "docs-secret",
+            "REDIS_URL": "redis://localhost:6379/2",
+            "CELERY_BROKER_URL": "redis://localhost:6379/2",
+            "CELERY_RESULT_BACKEND": "redis://localhost:6379/2",
+            "MAIN_SERVICE_URL": "http://main:8000",
+            "INTERNAL_API_KEY": "docs-internal",
+            "REFERENCE_VALIDATION_MODE": "strict",
+            "LOG_DIR": str(ROOT / ".tmp" / "docs" / "research" / "logs"),
+            "EXPORT_DIR": str(ROOT / ".tmp" / "docs" / "research" / "exports"),
         },
     },
 }
@@ -51,7 +71,7 @@ SERVICE_SPECS = {
 
 def ensure_env(env: dict[str, str]) -> None:
     for key, value in env.items():
-        os.environ.setdefault(key, value)
+        os.environ[key] = value
 
 
 def load_app(service_name: str):
@@ -65,8 +85,12 @@ def load_app(service_name: str):
     for name in list(sys.modules):
         if name == "app" or name.startswith("app."):
             sys.modules.pop(name, None)
-    if service_dir not in sys.path:
-        sys.path.insert(0, service_dir)
+    service_dirs = {
+        str(candidate["service_dir"])
+        for candidate in SERVICE_SPECS.values()
+    }
+    sys.path[:] = [entry for entry in sys.path if entry not in service_dirs]
+    sys.path.insert(0, service_dir)
     common_dir = str(COMMON_DIR)
     if common_dir not in sys.path:
         sys.path.insert(0, common_dir)
@@ -225,7 +249,12 @@ def write_contracts(service_name: str, schema: dict[str, Any]) -> None:
 
 def main() -> int:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    for service_name in SERVICE_SPECS:
+    requested = sys.argv[1:] or list(SERVICE_SPECS)
+    unknown = set(requested) - set(SERVICE_SPECS)
+    if unknown:
+        print(f"Unknown services: {', '.join(sorted(unknown))}", file=sys.stderr)
+        return 2
+    for service_name in requested:
         app = load_app(service_name)
         schema = app.openapi()
         write_contracts(service_name, schema)
