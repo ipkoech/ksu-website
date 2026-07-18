@@ -23,7 +23,8 @@ const compiled = ts.transpileModule(source, {
 await writeFile(compiledPath, compiled.outputText);
 
 try {
-  const { resolvePortalAccessDestination } = await import(pathToFileURL(compiledPath).href);
+  const { resolvePortalAccessDestination, resolvePostLoginDestination } =
+    await import(pathToFileURL(compiledPath).href);
 
   const user = {
     id: "user-1",
@@ -78,6 +79,33 @@ try {
     "/admin",
     "canonical portal priority selects Admin over Corporate Communication",
   );
+
+  for (const role of ["school_admin", "school_editor"]) {
+    const schoolUser = {
+      ...user,
+      roles: [role],
+      services: [{ service: "main", roles: [role], scopes: [] }],
+    };
+    assert.deepEqual(
+      resolvePostLoginDestination(schoolUser),
+      { href: "/schools", service: "main" },
+      `${role} is routed to the scoped Schools Portal`,
+    );
+    assert.deepEqual(
+      resolvePostLoginDestination(schoolUser, "/admin"),
+      { href: "/schools", service: "main" },
+      `${role} cannot be redirected away from the required Schools Portal`,
+    );
+    assert.deepEqual(
+      resolvePortalAccessDestination(
+        [portal("admin", "/admin"), portal("schools", "/schools")],
+        schoolUser,
+        "/admin",
+      ),
+      { href: "/schools", service: "main" },
+      `${role} takes precedence over conflicting portal records and redirect parameters`,
+    );
+  }
 } finally {
   await unlink(compiledPath).catch(() => {});
 }

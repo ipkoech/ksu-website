@@ -17,7 +17,7 @@ const roleDestinations: RoleDestination[] = [
   { roles: ["research-sustainability"], href: "/research/sustainability", service: "research" },
   { roles: ["research-admin", "research-manager", "research-staff", "innovation-officer", "publications-admin"], href: "/research", service: "research" },
   { roles: ["researcher", "lecturer"], href: "/research/publications/submissions", service: "research" },
-  { roles: ["school-admin", "academic-admin"], href: "/schools", service: "main" },
+  { roles: ["school-admin", "school-editor", "academic-admin"], href: "/schools", service: "main" },
   { roles: ["dept-admin", "dept-staff"], href: "/departments", service: "main" },
   { roles: ["staff"], href: "/settings/profile", service: "main" },
 ];
@@ -66,6 +66,14 @@ function normalizeRole(role: string) {
   return role.trim().toLowerCase().replace(/_/g, "-");
 }
 
+function requiredRoleDestination(user: User) {
+  const roles = new Set(user.roles.map(normalizeRole));
+  if (roles.has("school-admin") || roles.has("school-editor")) {
+    return { href: "/schools", service: "main" as Service };
+  }
+  return null;
+}
+
 function userHasService(user: User, service: Service) {
   return user.services.some((access) => access.service === service);
 }
@@ -76,6 +84,9 @@ function normalizePortalAccess(portal: PortalAccess): PortalAccess {
 }
 
 export function resolvePostLoginDestination(user: User, redirect?: string | null) {
+  const requiredDestination = requiredRoleDestination(user);
+  if (requiredDestination) return requiredDestination;
+
   if (redirect?.startsWith("/")) {
     return { href: redirect, service: null };
   }
@@ -106,6 +117,9 @@ export function resolvePortalAccessDestination(
   user: User,
   redirect?: string | null,
 ) {
+  const requiredDestination = requiredRoleDestination(user);
+  if (requiredDestination) return requiredDestination;
+
   if (redirect?.startsWith("/")) {
     return { href: redirect, service: null };
   }
