@@ -21,7 +21,7 @@ InquiryStatus = Literal[
 ]
 
 
-class PublicSchoolInquiryCreate(BaseSchema):
+class PublicEntityInquiryCreate(BaseSchema):
     model_config = ConfigDict(extra="forbid")
 
     sender_name: str = Field(min_length=2, max_length=255)
@@ -32,6 +32,10 @@ class PublicSchoolInquiryCreate(BaseSchema):
     category: str = Field("general", max_length=64)
     consent_to_contact: bool
     website: str = Field("", max_length=500, exclude=True)
+    source_page_url: str | None = Field(None, max_length=1024)
+
+
+PublicSchoolInquiryCreate = PublicEntityInquiryCreate
 
 
 class InquiryAssign(BaseSchema):

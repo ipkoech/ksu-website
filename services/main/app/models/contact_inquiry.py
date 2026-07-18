@@ -16,7 +16,14 @@ from ksu_common.models.base import Base
 class ContactInquiry(Base):
     __tablename__ = "contact_inquiries"
 
-    school_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey("schools.id", ondelete="CASCADE"), nullable=False, index=True)
+    school_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("schools.id", ondelete="CASCADE"), nullable=True, index=True)
+    target_entity_type: Mapped[str] = mapped_column(sa.String(32), nullable=False, index=True)
+    target_entity_id: Mapped[uuid.UUID] = mapped_column(sa.Uuid, nullable=False, index=True)
+    target_entity_name: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    target_entity_slug: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    owner_scope_type: Mapped[str] = mapped_column(sa.String(32), nullable=False, index=True)
+    owner_scope_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
+    source_page_url: Mapped[Optional[str]] = mapped_column(sa.String(1024), nullable=True)
     reference_number: Mapped[str] = mapped_column(sa.String(32), nullable=False, unique=True, index=True)
     sender_name: Mapped[str] = mapped_column(sa.String(255), nullable=False)
     sender_email: Mapped[str] = mapped_column(sa.String(320), nullable=False, index=True)

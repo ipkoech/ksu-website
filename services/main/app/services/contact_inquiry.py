@@ -11,7 +11,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from ..models import ContactInquiry, ContactInquiryMessage, UserRole
-from ..schemas.contact_inquiry import PublicSchoolInquiryCreate
+from ..schemas.contact_inquiry import PublicEntityInquiryCreate
+from .public_inquiry_target import PublicInquiryTarget
 from ._base import paginate_query
 from .domain_events import enqueue_domain_event
 from ..tasks.inquiries import queue_inquiry_reply
@@ -50,15 +51,35 @@ class ContactInquiryService:
     async def create_public(
         db,
         *,
-        school,
-        data: PublicSchoolInquiryCreate,
+        data: PublicEntityInquiryCreate,
         source_ip: str | None,
         user_agent: str | None,
+        target: PublicInquiryTarget | None = None,
+        school=None,
     ) -> ContactInquiry:
+        if target is None:
+            if school is None:
+                raise ValueError("An inquiry target is required")
+            target = PublicInquiryTarget(
+                entity_type="school",
+                entity_id=school.id,
+                name=school.name,
+                slug=school.slug,
+                owner_scope_type="school",
+                owner_scope_id=school.id,
+                school_id=school.id,
+            )
         is_spam, spam_score = classify_inquiry_spam(data.message, honeypot=data.website)
         now = datetime.now(timezone.utc)
         inquiry = ContactInquiry(
-            school_id=school.id,
+            school_id=target.school_id,
+            target_entity_type=target.entity_type,
+            target_entity_id=target.entity_id,
+            target_entity_name=target.name,
+            target_entity_slug=target.slug,
+            owner_scope_type=target.owner_scope_type,
+            owner_scope_id=target.owner_scope_id,
+            source_page_url=data.source_page_url,
             reference_number=f"INQ-{now:%y%m%d}-{uuid.uuid4().hex[:8].upper()}",
             sender_name=data.sender_name,
             sender_email=str(data.sender_email),
@@ -68,7 +89,7 @@ class ContactInquiryService:
             priority="normal",
             status="spam" if is_spam else "new",
             consent_to_contact=data.consent_to_contact,
-            source="school_website",
+            source="public_entity_website",
             source_ip=source_ip,
             user_agent=(user_agent or "")[:512] or None,
             spam_score=spam_score,
@@ -88,13 +109,18 @@ class ContactInquiryService:
         db.add(message)
         enqueue_domain_event(
             db,
-            event_type="school.inquiry.spam_detected" if is_spam else "school.inquiry.created",
-            scope_type="school",
-            scope_id=school.id,
+            event_type="entity.inquiry.spam_detected" if is_spam else "entity.inquiry.created",
+            scope_type=target.owner_scope_type,
+            scope_id=target.owner_scope_id,
             actor_id=None,
             resource_type="contact_inquiry",
             resource_id=inquiry.id,
-            data={"category": inquiry.category, "priority": inquiry.priority},
+            data={
+                "category": inquiry.category,
+                "priority": inquiry.priority,
+                "target_entity_type": target.entity_type,
+                "target_entity_id": str(target.entity_id),
+            },
         )
         await db.flush()
         await db.refresh(inquiry)

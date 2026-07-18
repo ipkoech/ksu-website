@@ -33,6 +33,7 @@ import {
 } from "./entity-quick-links";
 import { PublicImage } from "@/components/public/public-image";
 import { EntityTeamSection } from "@/components/public/entity-team-section";
+import { EntityInquiryLauncher } from "@/components/public/entity-inquiry-launcher";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import type { DepartmentDetailData } from "@/lib/department-detail-data";
 import {
@@ -1509,6 +1510,13 @@ export function DepartmentDetailSection({
           </div>
         </section>
       </AboutPageLenis>
+      <EntityInquiryLauncher
+        target={{
+          type: data.isAcademic ? "department" : "office",
+          slug: data.department.slug,
+          name: data.department.name,
+        }}
+      />
     </PageShell>
   );
 }

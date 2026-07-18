@@ -25,6 +25,7 @@ import { ScrollReveal } from "@ksu/ui/components";
 import { PageShell } from "@/components/site-shell";
 import { PublicImage } from "@/components/public/public-image";
 import { PublicTeamSection } from "@/components/public/public-team-section";
+import { EntityInquiryLauncher } from "@/components/public/entity-inquiry-launcher";
 import {
   QuickLinksPanel,
   buildMediaTypeLinks,
@@ -1504,6 +1505,13 @@ export function AdministrationOfficeDetailSection({
           </div>
         </section>
       </AboutPageLenis>
+      <EntityInquiryLauncher
+        target={{
+          type: "office",
+          slug: data.entity.slug,
+          name: data.entity.name,
+        }}
+      />
     </PageShell>
   );
 }

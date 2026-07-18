@@ -18,6 +18,7 @@ import type { LucideIcon } from "lucide-react";
 import { ScrollReveal } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { EntityTeamSection } from "@/components/public/entity-team-section";
+import { EntityInquiryLauncher } from "@/components/public/entity-inquiry-launcher";
 import {
   ExploreMorePanel,
   MobileSchoolLinksGrid,
@@ -656,6 +657,13 @@ export function SchoolDetailSection({
           </div>
         </section>
       </AboutPageLenis>
+      <EntityInquiryLauncher
+        target={{
+          type: "school",
+          slug: data.school.slug,
+          name: data.school.name,
+        }}
+      />
     </PageShell>
   );
 }

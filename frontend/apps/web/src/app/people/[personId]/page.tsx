@@ -15,6 +15,7 @@ import Link from "next/link";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { ExpandableRichText } from "@/components/public/expandable-rich-text";
 import { PublicImage } from "@/components/public/public-image";
+import { EntityInquiryLauncher } from "@/components/public/entity-inquiry-launcher";
 import {
   PublicPersonTabs,
   type PublicPersonTab,
@@ -1012,6 +1013,9 @@ export default async function PublicPersonPage({
           </div>
         </section>
       </AboutPageLenis>
+      <EntityInquiryLauncher
+        target={{ type: "person", slug: String(person.id), name }}
+      />
     </PageShell>
   );
 }
