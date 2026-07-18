@@ -94,7 +94,7 @@ export function SchoolDepartmentsPage() {
         icon={Building2}
         actions={<>
           {can("school.departments.bulk") ? <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-2 size-4" /> Import</Button> : null}
-          {can("school.departments.create") ? <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 size-4" /> Add department</Button> : null}
+          {can("school.departments.manage") ? <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 size-4" /> Add department</Button> : null}
         </>}
       />
       <SchoolMetricGrid items={[

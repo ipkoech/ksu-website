@@ -55,6 +55,7 @@ export function SchoolTeamPage() {
   const search = searchParams.get("search") ?? "";
   const status = searchParams.get("status") ?? "active";
   const focusedId = searchParams.get("member");
+  const createRequested = searchParams.get("action") === "create";
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
 
@@ -100,7 +101,7 @@ export function SchoolTeamPage() {
               <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-2 size-4" /> Import</Button>
             </>
           ) : null}
-          {can("school.team.create") ? <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 size-4" /> Add member</Button> : null}
+          {can("school.team.manage") ? <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 size-4" /> Add member</Button> : null}
         </>}
       />
       <SchoolMetricGrid items={[
@@ -161,11 +162,11 @@ export function SchoolTeamPage() {
       )}
       <TeamMemberSheet
         member={focused}
-        open={Boolean(focusedId) || createOpen}
+        open={Boolean(focusedId) || createOpen || createRequested}
         onOpenChange={(open) => {
           if (!open) {
             setCreateOpen(false);
-            updateUrl("member");
+            updateUrl(createRequested ? "action" : "member");
           }
         }}
       />

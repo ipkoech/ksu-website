@@ -22,13 +22,16 @@ from ..models import (
     Programme,
     StaffAssignment,
     UploadBatch,
+    User,
 )
 from ..schemas.school_portal_dashboard import (
     DashboardActivityItem,
+    DashboardActivitySummary,
     DashboardAttentionItem,
     DashboardDistributionItem,
     DashboardProfileCompleteness,
     DashboardQuickLink,
+    DashboardQuickAction,
     DashboardRange,
     DashboardSummaryCard,
     DashboardTrendPoint,
@@ -78,6 +81,14 @@ QUICK_LINKS = (
     ("media", "Uploads", "school.media.view", "/schools/media"),
 )
 
+QUICK_ACTIONS = (
+    ("add_staff", "Add staff", "Create a staff profile", "school.team.manage", "/schools/team?action=create"),
+    ("new_content", "New content", "Create a school story", "school.content.manage", "/schools/content?action=create"),
+    ("upload_media", "Upload media", "Add images or documents", "school.media.manage", "/schools/media?action=upload"),
+    ("add_programme", "Add programme", "Create an academic offering", "school.programmes.manage", "/schools/programmes?action=create"),
+    ("edit_profile", "Edit profile", "Complete the public profile", "school.profile.manage", "/schools/profile?edit=true"),
+)
+
 
 def dashboard_window(
     range_value: DashboardRange,
@@ -120,6 +131,17 @@ def permission_quick_links(
     return [
         DashboardQuickLink(key=key, label=label, count=counts.get(key, 0), href=href)
         for key, label, permission, href in QUICK_LINKS
+        if permission in allowed
+    ]
+
+
+def permission_quick_actions(
+    permissions: set[str] | tuple[str, ...],
+) -> list[DashboardQuickAction]:
+    allowed = set(permissions)
+    return [
+        DashboardQuickAction(key=key, label=label, description=description, href=href)
+        for key, label, description, permission, href in QUICK_ACTIONS
         if permission in allowed
     ]
 
@@ -262,16 +284,20 @@ class SchoolPortalDashboardService:
         )
 
         analytics_scope = _school_analytics_filter(school_id, school.slug)
-        current_views = await _analytics_count(
+        current_views, current_visitors = await _analytics_totals(
             db, analytics_scope, window.start, window.end
         )
-        previous_views = await _analytics_count(
+        previous_views, previous_visitors = await _analytics_totals(
             db, analytics_scope, window.previous_start, window.start
         )
         bucket = func.date_trunc(window.bucket, AnalyticsEvent.occurred_at)
         trend_rows = (
             await db.execute(
-                select(bucket.label("bucket"), func.count(AnalyticsEvent.id))
+                select(
+                    bucket.label("bucket"),
+                    func.count(AnalyticsEvent.id),
+                    func.count(func.distinct(AnalyticsEvent.session_hash)),
+                )
                 .where(
                     AnalyticsEvent.deleted_at.is_(None),
                     AnalyticsEvent.event_type == "page_view",
@@ -295,6 +321,15 @@ class SchoolPortalDashboardService:
                 .limit(10)
             )
         ).scalars().all()
+        actor_ids = {item.actor_id for item in activity_rows if item.actor_id}
+        actors: dict[uuid.UUID, str] = {}
+        if actor_ids:
+            actor_rows = (
+                await db.execute(
+                    select(User.id, User.full_name).where(User.id.in_(actor_ids))
+                )
+            ).all()
+            actors = {actor_id: full_name for actor_id, full_name in actor_rows}
         imports_completed = int(
             (
                 await db.execute(
@@ -345,10 +380,11 @@ class SchoolPortalDashboardService:
         attention = _attention_items(
             permissions=set(permissions),
             overdue_inquiries=overdue_inquiries,
-            content_attention=sum(
+            content_in_review=sum(
                 content_by_status.get(key, 0)
-                for key in ("changes_requested", "draft", "failed")
+                for key in ("submitted", "in_review")
             ),
+            changes_requested=content_by_status.get("changes_requested", 0),
             failed_uploads=uploads_by_status.get("failed", 0),
             completeness=completeness,
         )
@@ -357,32 +393,35 @@ class SchoolPortalDashboardService:
             ("team", "Active team", total_team, "/schools/team"),
             ("departments", "Departments", departments, "/schools/departments"),
             ("programmes", "Programmes", total_programmes, "/schools/programmes"),
-            ("content", "Content", total_content, "/schools/content"),
+            ("content", "Draft content", content_by_status.get("draft", 0), "/schools/content?status=draft"),
+            (
+                "inquiries",
+                "Pending inquiries",
+                sum(
+                    inquiries_by_status.get(key, 0)
+                    for key in ("new", "open", "in_progress", "waiting_for_requester")
+                ),
+                "/schools/inquiries?status=open",
+            ),
             ("publications", "Publications", total_publications, "/schools/publications"),
-            ("inquiries", "Inquiries", total_inquiries, "/schools/inquiries"),
-            ("uploads", "Upload batches", total_uploads, "/schools/media"),
-            ("imports", "Completed imports", imports_completed, "/schools/departments"),
-            ("downloads", "Downloads", downloads, None),
         ]
         summary_cards = [
             DashboardSummaryCard(key=key, label=label, value=value, href=href)
             for key, label, value, href in cards
         ]
-        summary_cards.append(
-            DashboardSummaryCard(
-                key="traffic",
-                label="School page views",
-                value=current_views,
-                previous_value=previous_views,
-                change_percent=_change(current_views, previous_views),
-                collection_started_after_deployment=True,
-            )
-        )
         return SchoolPortalDashboardResponse(
             school_id=school_id,
             range=range_value,
             generated_at=window.end,
             summary_cards=summary_cards,
+            activity_summary=DashboardActivitySummary(
+                page_views=current_views,
+                previous_page_views=previous_views,
+                page_views_change_percent=_change(current_views, previous_views),
+                visitors=current_visitors,
+                previous_visitors=previous_visitors,
+                visitors_change_percent=_change(current_visitors, previous_visitors),
+            ),
             trends=[
                 DashboardTrendPoint(
                     bucket=(
@@ -391,6 +430,7 @@ class SchoolPortalDashboardService:
                         else str(row[0])
                     ),
                     value=int(row[1] or 0),
+                    visitors=int(row[2] or 0),
                 )
                 for row in trend_rows
             ],
@@ -415,27 +455,35 @@ class SchoolPortalDashboardService:
                         or (item.payload or {}).get("title")
                         or item.event_type.replace(".", " ")
                     ),
+                    actor_name=actors.get(item.actor_id),
                 )
                 for item in activity_rows
             ],
             quick_links=permission_quick_links(permissions, counts),
+            quick_actions=permission_quick_actions(permissions),
             profile_completeness=completeness,
             collection_notes={
                 "traffic": "Collected from first-party analytics after deployment.",
                 "downloads": "Current cumulative document download totals.",
+                "imports": f"{imports_completed} imports completed in the selected period.",
+                "uploads": f"{total_uploads} upload batches currently belong to this school.",
+                "documents": f"{downloads} cumulative document downloads.",
                 "inquiry_sla": "An inquiry needs attention after 24 hours without a first response.",
             },
         )
 
 
-async def _analytics_count(
+async def _analytics_totals(
     db: AsyncSession,
     scope_filter,
     start: datetime,
     end: datetime,
-) -> int:
+) -> tuple[int, int]:
     result = await db.execute(
-        select(func.count(AnalyticsEvent.id)).where(
+        select(
+            func.count(AnalyticsEvent.id),
+            func.count(func.distinct(AnalyticsEvent.session_hash)),
+        ).where(
             AnalyticsEvent.deleted_at.is_(None),
             AnalyticsEvent.event_type == "page_view",
             AnalyticsEvent.occurred_at >= start,
@@ -443,14 +491,16 @@ async def _analytics_count(
             scope_filter,
         )
     )
-    return int(result.scalar() or 0)
+    page_views, visitors = result.one()
+    return int(page_views or 0), int(visitors or 0)
 
 
 def _attention_items(
     *,
     permissions: set[str],
     overdue_inquiries: int,
-    content_attention: int,
+    content_in_review: int,
+    changes_requested: int,
     failed_uploads: int,
     completeness: DashboardProfileCompleteness,
 ) -> list[DashboardAttentionItem]:
@@ -464,12 +514,20 @@ def _attention_items(
             "/schools/inquiries?attention=sla",
         ),
         (
-            content_attention,
+            content_in_review,
             "school.content.view",
-            "content_attention",
-            "Content requiring action",
+            "content_in_review",
+            "Content awaiting review",
             "warning",
-            "/schools/content?attention=required",
+            "/schools/content?status=in_review",
+        ),
+        (
+            changes_requested,
+            "school.content.view",
+            "changes_requested",
+            "Content with changes requested",
+            "critical",
+            "/schools/content?status=changes_requested",
         ),
         (
             failed_uploads,
@@ -506,5 +564,6 @@ __all__ = [
     "SchoolPortalDashboardService",
     "dashboard_window",
     "permission_quick_links",
+    "permission_quick_actions",
     "profile_completeness",
 ]

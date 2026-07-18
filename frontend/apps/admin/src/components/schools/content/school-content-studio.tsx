@@ -54,6 +54,7 @@ export function SchoolContentStudio() {
   const status = params.get("status") || "all";
   const search = params.get("search") || "";
   const focusedId = params.get("record");
+  const createRequested = params.get("action") === "create";
   const [createOpen, setCreateOpen] = useState(false);
   const contentQuery = useQuery({
     queryKey: [...schoolPortalQueryKeys.content(school.id), contentType],
@@ -123,8 +124,8 @@ export function SchoolContentStudio() {
       <ContentEditorSheet
         contentType={contentType}
         record={focused}
-        open={createOpen || Boolean(focusedId)}
-        onOpenChange={(open) => { if (!open) { setCreateOpen(false); updateUrl("record"); } }}
+        open={createOpen || Boolean(focusedId) || createRequested}
+        onOpenChange={(open) => { if (!open) { setCreateOpen(false); updateUrl(createRequested ? "action" : "record"); } }}
         onSaved={async () => { await contentQuery.refetch(); }}
       />
     </SchoolWorkspace>

@@ -1,75 +1,85 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@ksu/auth";
 import {
   schoolPortalApi,
   schoolPortalQueryKeys,
   type SchoolPortalDashboardRange,
+  type SchoolPortalDashboardResponse,
 } from "@ksu/api-client";
-import {
-  AlertCircle,
-  ArrowRight,
-  CheckCircle2,
-  Clock3,
-  LayoutDashboard,
-  RefreshCw,
-} from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
-  Badge,
   Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Progress,
   Skeleton,
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import { SchoolWorkspace } from "@/components/schools/shared/school-workspace";
+import { SchoolDashboardHeader } from "./school-dashboard-header";
 import {
-  SchoolWorkspace,
-  SchoolWorkspaceHeader,
-} from "@/components/schools/shared/school-workspace";
+  SchoolActivityPanel,
+  SchoolAttentionPanel,
+  SchoolDistributionPanel,
+  SchoolQuickActions,
+  SchoolRecentActivity,
+} from "./school-dashboard-panels";
 import { SchoolStatCard } from "./school-stat-card";
-import { SchoolTrendChart } from "./school-trend-chart";
 
-const RANGES: Array<{ value: SchoolPortalDashboardRange; label: string }> = [
-  { value: "7d", label: "7 days" },
-  { value: "30d", label: "30 days" },
-  { value: "90d", label: "90 days" },
-  { value: "12m", label: "12 months" },
-];
+const VALID_RANGES = new Set<SchoolPortalDashboardRange>(["7d", "30d", "90d", "12m"]);
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-5 p-4 sm:p-6 lg:p-8">
-      <Skeleton className="h-10 w-72" />
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 8 }, (_, index) => (
-          <Skeleton key={index} className="h-32" />
-        ))}
+    <div className="min-h-full bg-muted/20 p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-[1600px] space-y-5">
+        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+          <div className="space-y-2"><Skeleton className="h-5 w-64" /><Skeleton className="h-9 w-80" /><Skeleton className="h-4 w-72" /></div>
+          <Skeleton className="h-10 w-56" />
+        </div>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          {Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-32" />)}
+        </div>
+        <div className="grid gap-4 xl:grid-cols-12">
+          <Skeleton className="h-[22rem] xl:col-span-6" />
+          <Skeleton className="h-[22rem] xl:col-span-3" />
+          <Skeleton className="h-[22rem] xl:col-span-3" />
+        </div>
+        <div className="grid gap-4 xl:grid-cols-12">
+          {Array.from({ length: 3 }, (_, index) => <Skeleton key={index} className="h-[20rem] xl:col-span-4" />)}
+        </div>
       </div>
-      <Skeleton className="h-72" />
     </div>
   );
 }
 
 export function SchoolDashboard() {
   const { school } = useSchoolPortal();
-  const [range, setRange] = useState<SchoolPortalDashboardRange>("30d");
+  const { user } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const requestedRange = params.get("range") as SchoolPortalDashboardRange | null;
+  const range = requestedRange && VALID_RANGES.has(requestedRange) ? requestedRange : "30d";
   const dashboardQuery = useQuery({
     queryKey: schoolPortalQueryKeys.dashboard(school.id, range),
     queryFn: async () => (await schoolPortalApi.dashboard(range)).data,
+    placeholderData: keepPreviousData,
   });
   const dashboard = dashboardQuery.data;
 
+  const changeRange = (nextRange: SchoolPortalDashboardRange) => {
+    const next = new URLSearchParams(params);
+    if (nextRange === "30d") next.delete("range");
+    else next.set("range", nextRange);
+    const query = next.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
+
   if (dashboardQuery.isPending) return <DashboardSkeleton />;
-  if (dashboardQuery.error) {
+  if (!dashboard && dashboardQuery.error) {
     return (
       <div className="p-4 sm:p-6 lg:p-8">
         <Alert variant="destructive">
@@ -87,172 +97,98 @@ export function SchoolDashboard() {
   }
   if (!dashboard) return null;
 
+  const contentWorkflow = combineDistribution(
+    dashboard.distributions.content_by_status ?? [],
+    [
+      ["draft", "Draft", ["draft"]],
+      ["review", "In review", ["submitted", "in_review", "under_review"]],
+      ["changes_requested", "Changes requested", ["changes_requested"]],
+      ["published", "Published", ["approved", "published"]],
+      ["archived", "Archived", ["archived"]],
+    ],
+  );
+  const inquiryStatus = combineDistribution(
+    dashboard.distributions.inquiries_by_status ?? [],
+    [
+      ["new", "New", ["new"]],
+      ["active", "In progress", ["open", "in_progress", "replied"]],
+      ["waiting", "Waiting", ["waiting_for_requester"]],
+      ["resolved", "Resolved", ["resolved"]],
+      ["closed", "Closed", ["closed", "spam"]],
+    ],
+  );
+
   return (
     <SchoolWorkspace>
-      <SchoolWorkspaceHeader
-        eyebrow="School operations"
-        title="Administration dashboard"
-        description="A live view of your people, academic portfolio, publishing workflow, and requester activity."
+      <SchoolDashboardHeader
+        userName={user?.name || "School Admin"}
         schoolName={school.name}
-        icon={LayoutDashboard}
-        meta={<p className="text-xs text-muted-foreground">Updated {new Date(dashboard.generated_at).toLocaleString()}</p>}
-        actions={<div className="flex flex-wrap gap-1 rounded-lg border bg-background p-1" aria-label="Dashboard range">
-          {RANGES.map((item) => (
-            <Button
-              key={item.value}
-              size="sm"
-              variant={range === item.value ? "default" : "ghost"}
-              className="cursor-pointer"
-              onClick={() => setRange(item.value)}
-            >
-              {item.label}
-            </Button>
-          ))}
-        </div>}
+        generatedAt={dashboard.generated_at}
+        range={range}
+        fetching={dashboardQuery.isFetching}
+        onRangeChange={changeRange}
       />
 
-      <section aria-label="School summary" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {dashboard.summary_cards.map((card) => (
-          <SchoolStatCard key={card.key} card={card} />
-        ))}
+      {dashboardQuery.error ? (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription className="flex items-center justify-between gap-3">
+            <span>The latest range could not be loaded. Showing the last available dashboard.</span>
+            <Button size="sm" variant="outline" onClick={() => dashboardQuery.refetch()}><RefreshCw className="mr-2 size-4" /> Retry</Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      <section aria-label="School summary" className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        {dashboard.summary_cards.map((card) => <SchoolStatCard key={card.key} card={card} />)}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(18rem,0.8fr)]">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Activity trend</CardTitle>
-            <CardDescription>School changes during the selected period</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <SchoolTrendChart points={dashboard.trends} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Profile completeness</CardTitle>
-            <CardDescription>
-              {dashboard.profile_completeness.completed_fields} of{" "}
-              {dashboard.profile_completeness.total_fields} fields complete
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between text-sm">
-              <span>Public profile readiness</span>
-              <strong>{dashboard.profile_completeness.percent}%</strong>
-            </div>
-            <Progress value={dashboard.profile_completeness.percent} />
-            {dashboard.profile_completeness.missing_fields.length > 0 ? (
-              <p className="text-xs text-muted-foreground">
-                Next: {dashboard.profile_completeness.missing_fields.slice(0, 3).join(", ")}
-              </p>
-            ) : (
-              <p className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
-                <CheckCircle2 className="size-4" /> Profile is complete
-              </p>
-            )}
-            <Button asChild variant="outline" size="sm" className="w-full cursor-pointer">
-              <Link href="/schools/profile">Review profile</Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <section className="grid items-stretch gap-4 xl:grid-cols-12">
+        <div className="xl:col-span-6"><SchoolActivityPanel dashboard={dashboard} /></div>
+        <div className="xl:col-span-3">
+          <SchoolDistributionPanel
+            title="Content workflow"
+            description="Where school content is in review"
+            items={contentWorkflow}
+            href="/schools/content"
+            actionLabel="View all content"
+          />
+        </div>
+        <div className="xl:col-span-3">
+          <SchoolAttentionPanel items={dashboard.attention_items} profile={dashboard.profile_completeness} />
+        </div>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        {Object.entries(dashboard.distributions).map(([key, items]) => {
-          const total = items.reduce((sum, item) => sum + item.value, 0);
-          return (
-            <Card key={key}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base capitalize">{key.replaceAll("_", " ")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {items.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No records in this range.</p>
-                ) : (
-                  items.map((item) => (
-                    <div key={item.key} className="space-y-1.5">
-                      <div className="flex justify-between text-sm">
-                        <span>{item.label}</span>
-                        <span className="font-medium">{item.value}</span>
-                      </div>
-                      <Progress value={total ? (item.value / total) * 100 : 0} />
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+      <section className="grid items-stretch gap-4 xl:grid-cols-12">
+        <div className="xl:col-span-4"><SchoolRecentActivity items={dashboard.recent_activity} /></div>
+        <div className="xl:col-span-4"><SchoolQuickActions actions={dashboard.quick_actions} /></div>
+        <div className="xl:col-span-4">
+          <SchoolDistributionPanel
+            title="Inquiry status"
+            description="Requester conversations by state"
+            items={inquiryStatus}
+            href="/schools/inquiries"
+            actionLabel="View all inquiries"
+          />
+        </div>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Needs attention</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {dashboard.attention_items.length === 0 ? (
-              <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CheckCircle2 className="size-4" /> Nothing needs attention.
-              </p>
-            ) : (
-              dashboard.attention_items.map((item) => (
-                <Link
-                  key={item.key}
-                  href={item.href}
-                  className="flex cursor-pointer items-center justify-between rounded-md border p-3 transition-colors hover:bg-muted"
-                >
-                  <span className="text-sm">{item.label}</span>
-                  <Badge variant={item.severity === "critical" ? "destructive" : "secondary"}>
-                    {item.count}
-                  </Badge>
-                </Link>
-              ))
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Recent activity</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {dashboard.recent_activity.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No recent changes.</p>
-            ) : (
-              dashboard.recent_activity.slice(0, 6).map((item) => (
-                <div key={item.id} className="flex gap-3 border-b pb-3 last:border-0 last:pb-0">
-                  <Clock3 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{item.summary}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(item.occurred_at).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Quick links</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {dashboard.quick_links.map((item) => (
-              <Link
-                key={item.key}
-                href={item.href}
-                className="flex cursor-pointer items-center justify-between rounded-md px-2 py-2 text-sm transition-colors hover:bg-muted"
-              >
-                <span>{item.label}</span>
-                <span className="flex items-center gap-2 font-medium">
-                  {item.count} <ArrowRight className="size-4" />
-                </span>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      </section>
+      <footer className="flex flex-col gap-1 border-t pt-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        <span>Dashboard generated {new Date(dashboard.generated_at).toLocaleString()}</span>
+        <span>School Administration Portal · {school.name}</span>
+      </footer>
     </SchoolWorkspace>
   );
+}
+
+function combineDistribution(
+  items: SchoolPortalDashboardResponse["distributions"][string],
+  groups: Array<[key: string, label: string, sourceKeys: string[]]>,
+) {
+  const values = new Map(items.map((item) => [item.key, item.value]));
+  return groups.map(([key, label, sourceKeys]) => ({
+    key,
+    label,
+    value: sourceKeys.reduce((total, sourceKey) => total + (values.get(sourceKey) ?? 0), 0),
+  }));
 }

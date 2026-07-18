@@ -26,6 +26,16 @@ class DashboardSummaryCard(BaseSchema):
 class DashboardTrendPoint(BaseSchema):
     bucket: str
     value: int
+    visitors: int = 0
+
+
+class DashboardActivitySummary(BaseSchema):
+    page_views: int
+    previous_page_views: int
+    page_views_change_percent: float | None = None
+    visitors: int
+    previous_visitors: int
+    visitors_change_percent: float | None = None
 
 
 class DashboardDistributionItem(BaseSchema):
@@ -49,12 +59,20 @@ class DashboardActivityItem(BaseSchema):
     resource_id: uuid.UUID
     occurred_at: datetime
     summary: str
+    actor_name: str | None = None
 
 
 class DashboardQuickLink(BaseSchema):
     key: str
     label: str
     count: int
+    href: str
+
+
+class DashboardQuickAction(BaseSchema):
+    key: str
+    label: str
+    description: str
     href: str
 
 
@@ -70,21 +88,25 @@ class SchoolPortalDashboardResponse(BaseSchema):
     range: DashboardRange
     generated_at: datetime
     summary_cards: list[DashboardSummaryCard]
+    activity_summary: DashboardActivitySummary
     trends: list[DashboardTrendPoint]
     distributions: dict[str, list[DashboardDistributionItem]]
     attention_items: list[DashboardAttentionItem]
     recent_activity: list[DashboardActivityItem]
     quick_links: list[DashboardQuickLink]
+    quick_actions: list[DashboardQuickAction]
     profile_completeness: DashboardProfileCompleteness
     collection_notes: dict[str, str]
 
 
 __all__ = [
     "DashboardActivityItem",
+    "DashboardActivitySummary",
     "DashboardAttentionItem",
     "DashboardDistributionItem",
     "DashboardProfileCompleteness",
     "DashboardQuickLink",
+    "DashboardQuickAction",
     "DashboardRange",
     "DashboardSummaryCard",
     "DashboardTrendPoint",

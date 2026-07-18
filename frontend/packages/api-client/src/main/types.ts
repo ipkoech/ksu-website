@@ -98,7 +98,15 @@ export interface SchoolPortalDashboardResponse {
     href: string | null;
     collection_started_after_deployment: boolean;
   }>;
-  trends: Array<{ bucket: string; value: number }>;
+  activity_summary: {
+    page_views: number;
+    previous_page_views: number;
+    page_views_change_percent: number | null;
+    visitors: number;
+    previous_visitors: number;
+    visitors_change_percent: number | null;
+  };
+  trends: Array<{ bucket: string; value: number; visitors: number }>;
   distributions: Record<
     string,
     Array<{ key: string; label: string; value: number }>
@@ -117,11 +125,18 @@ export interface SchoolPortalDashboardResponse {
     resource_id: string;
     occurred_at: string;
     summary: string;
+    actor_name: string | null;
   }>;
   quick_links: Array<{
     key: string;
     label: string;
     count: number;
+    href: string;
+  }>;
+  quick_actions: Array<{
+    key: string;
+    label: string;
+    description: string;
     href: string;
   }>;
   profile_completeness: {

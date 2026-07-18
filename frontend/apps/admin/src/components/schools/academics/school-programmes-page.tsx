@@ -74,6 +74,7 @@ export function SchoolProgrammesPage() {
   const search = params.get("search") || "";
   const level = params.get("level") || "all";
   const focusedId = params.get("programme");
+  const createRequested = params.get("action") === "create";
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const programmesQuery = useQuery({
@@ -97,7 +98,7 @@ export function SchoolProgrammesPage() {
         icon={GraduationCap}
         actions={<>
           {can("school.programmes.bulk") ? <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-2 size-4" /> Import</Button> : null}
-          {can("school.programmes.create") ? <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 size-4" /> Add programme</Button> : null}
+          {can("school.programmes.manage") ? <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 size-4" /> Add programme</Button> : null}
         </>}
       />
       <SchoolMetricGrid items={[
@@ -134,8 +135,8 @@ export function SchoolProgrammesPage() {
       <div className="flex items-center justify-between"><p className="text-sm text-muted-foreground">Page {programmesQuery.data?.meta.page ?? page} of {programmesQuery.data?.meta.pages ?? 1}</p><div className="flex gap-2"><Button variant="outline" size="sm" disabled={page <= 1} onClick={() => updateUrl("page", String(page - 1))}>Previous</Button><Button variant="outline" size="sm" disabled={page >= (programmesQuery.data?.meta.pages ?? 1)} onClick={() => updateUrl("page", String(page + 1))}>Next</Button></div></div>
       <ProgrammeDialog
         programme={focused}
-        open={createOpen || Boolean(focusedId)}
-        onOpenChange={(open) => { if (!open) { setCreateOpen(false); updateUrl("programme"); } }}
+        open={createOpen || Boolean(focusedId) || createRequested}
+        onOpenChange={(open) => { if (!open) { setCreateOpen(false); updateUrl(createRequested ? "action" : "programme"); } }}
         onSaved={async () => { await queryClient.invalidateQueries({ queryKey: schoolPortalQueryKeys.programmes(school.id) }); }}
       />
       <SchoolImportDialog

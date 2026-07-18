@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   useEffect,
   useMemo,
@@ -501,6 +502,9 @@ function DeanSelector({
 export function SchoolProfileWorkspace() {
   const { school, can } = useSchoolPortal();
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<SchoolProfileDraft | null>(null);
   const [galleryIds, setGalleryIds] = useState<string[]>([]);
@@ -528,6 +532,20 @@ export function SchoolProfileWorkspace() {
     baselineDraft &&
     !sameDraft(draft, baselineDraft, galleryIds, baselineGalleryIds),
   );
+
+  useEffect(() => {
+    if (params.get("edit") !== "true" || !canEdit || !profile || editing) return;
+    setDraft(schoolProfileDraftFrom(profile));
+    setGalleryIds(profile.gallery.map((item) => item.id));
+    setDeanSearch(school.dean?.display_name ?? "");
+    setSelectedDeanName(school.dean?.display_name ?? "");
+    setFieldErrors({});
+    setEditing(true);
+    const next = new URLSearchParams(params);
+    next.delete("edit");
+    const query = next.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [canEdit, editing, params, pathname, profile, router, school.dean?.display_name]);
 
   useEffect(() => {
     if (!editing || !isDirty) return;

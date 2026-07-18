@@ -13,7 +13,7 @@ export function SchoolTrendChart({ points }: { points: TrendPoint[] }) {
 
   const width = 600;
   const height = 180;
-  const max = Math.max(...points.map((point) => point.value), 1);
+  const max = Math.max(...points.flatMap((point) => [point.value, point.visitors]), 1);
   const coordinates = points.map((point, index) => ({
     x: points.length === 1 ? width / 2 : (index / (points.length - 1)) * width,
     y: height - (point.value / max) * (height - 20) - 10,
@@ -21,7 +21,8 @@ export function SchoolTrendChart({ points }: { points: TrendPoint[] }) {
   const path = coordinates
     .map(({ x, y }, index) => `${index === 0 ? "M" : "L"} ${x} ${y}`)
     .join(" ");
-  const summary = `${points.length} periods. Highest activity ${max}. Latest activity ${points.at(-1)?.value ?? 0}.`;
+  const summary = `${points.length} periods. Highest page-view activity ${Math.max(...points.map((point) => point.value), 0)}. Latest unique visitors ${points.at(-1)?.visitors ?? 0}.`;
+  const barWidth = Math.max(4, Math.min(18, width / Math.max(points.length, 1) / 2));
 
   return (
     <figure className="space-y-3">
@@ -32,6 +33,21 @@ export function SchoolTrendChart({ points }: { points: TrendPoint[] }) {
         className="h-48 w-full overflow-visible"
         preserveAspectRatio="none"
       >
+        {points.map((point, index) => {
+          const x = points.length === 1 ? width / 2 : (index / (points.length - 1)) * width;
+          const barHeight = (point.visitors / max) * (height - 20);
+          return (
+            <rect
+              key={`${point.bucket}-visitors`}
+              x={x - barWidth / 2}
+              y={height - barHeight}
+              width={barWidth}
+              height={barHeight}
+              rx="2"
+              className="fill-amber-400/70"
+            />
+          );
+        })}
         <path
           d={`${path} L ${width} ${height} L 0 ${height} Z`}
           className="fill-primary/10"
@@ -57,9 +73,13 @@ export function SchoolTrendChart({ points }: { points: TrendPoint[] }) {
         ))}
       </svg>
       <figcaption className="sr-only">{summary}</figcaption>
-      <div className="flex justify-between text-xs text-muted-foreground">
-        <span>{points[0]?.bucket}</span>
-        <span>{points.at(-1)?.bucket}</span>
+      <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+        <span>{new Date(points[0]?.bucket).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+        <span className="flex flex-wrap items-center justify-center gap-3">
+          <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-primary" /> Page views</span>
+          <span className="flex items-center gap-1.5"><span className="size-2 rounded-sm bg-amber-400" /> Visitors</span>
+        </span>
+        <span>{new Date(points.at(-1)?.bucket ?? "").toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
       </div>
     </figure>
   );
