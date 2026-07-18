@@ -134,6 +134,10 @@ export const schoolPortalApi = {
         `${BASE_PATH}/profile/media`,
         { media_id: mediaId, role, display_order: displayOrder },
       ),
+    unlinkMedia: (linkId: string) =>
+      mainApi.delete<{ data: SchoolPortalProfile }>(
+        `${BASE_PATH}/profile/media/${linkId}`,
+      ),
   },
   team: {
     list: (params?: {

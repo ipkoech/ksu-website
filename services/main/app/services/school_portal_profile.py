@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
 from fastapi import HTTPException, status
@@ -114,7 +115,9 @@ async def set_school_dean(
     _require_manage(context)
     person = await Person.get_by_id(db, data.person_id)
     if person is None or not getattr(person, "is_active", True):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Person not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Person not found"
+        )
 
     assignments = await StaffService.get_assignments_for_person(db, data.person_id)
     conflicting = [
@@ -192,36 +195,58 @@ async def link_school_profile_media(
     _require_manage(context)
     media = await MediaService.get_by_id(db, data.media_id)
     if media is None or not MediaService.is_owned_by_school(media, context.school.id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Media not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Media not found"
+        )
     try:
         MediaService.validate_profile_media(media, data.role)
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
 
-    await MediaService.link_media(
-        db,
-        media_id=media.id,
-        entity_type="school",
-        entity_id=context.school.id,
-        role=data.role,
-        folder_id=media.folder_id,
-        display_order=data.display_order,
-        is_public=True,
-    )
-    changes: dict[str, Any]
     field = SINGLETON_MEDIA_FIELDS.get(data.role)
+    old_value = getattr(context.school, field) if field else None
+    replacing_singleton = bool(field and old_value and old_value != media.id)
+    if replacing_singleton:
+        old_link = await MediaService.get_link_for_media(
+            db,
+            media_id=old_value,
+            entity_type="school",
+            entity_id=context.school.id,
+            role=data.role,
+        )
+        if old_link is not None:
+            await MediaService.delete_link(db, old_link)
+        existing_link = None
+    else:
+        existing_link = await MediaService.get_link_for_media(
+            db,
+            media_id=media.id,
+            entity_type="school",
+            entity_id=context.school.id,
+            role=data.role,
+        )
+    if existing_link is None:
+        await MediaService.link_media(
+            db,
+            media_id=media.id,
+            entity_type="school",
+            entity_id=context.school.id,
+            role=data.role,
+            folder_id=media.folder_id,
+            display_order=data.display_order,
+            is_public=True,
+        )
+    else:
+        await MediaService.update_link(
+            db,
+            existing_link,
+            display_order=data.display_order,
+            is_public=True,
+        )
+    changes: dict[str, Any]
     if field:
-        old_value = getattr(context.school, field)
-        if old_value is not None and old_value != media.id:
-            old_link = await MediaService.get_link_for_media(
-                db,
-                media_id=old_value,
-                entity_type="school",
-                entity_id=context.school.id,
-                role=data.role,
-            )
-            if old_link is not None:
-                await MediaService.delete_link(db, old_link)
         setattr(context.school, field, media.id)
         changes = {field: {"old": old_value, "new": media.id}}
     else:
@@ -244,8 +269,48 @@ async def link_school_profile_media(
     return context.school
 
 
+async def unlink_school_profile_media(
+    db: AsyncSession,
+    context: SchoolPortalContext,
+    link_id: uuid.UUID,
+) -> School:
+    """Remove a media link owned by the current school profile."""
+    _require_manage(context)
+    link = await MediaService.get_link_by_id(db, link_id)
+    if (
+        link is None
+        or link.entity_type != "school"
+        or link.entity_id != context.school.id
+        or link.role not in {"logo", "cover", "brochure", "gallery"}
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Profile media link not found"
+        )
+
+    await MediaService.delete_link(db, link)
+    field = SINGLETON_MEDIA_FIELDS.get(link.role)
+    changes: dict[str, Any]
+    if field and getattr(context.school, field) == link.media_id:
+        setattr(context.school, field, None)
+        changes = {field: {"old": link.media_id, "new": None}}
+    else:
+        changes = {"gallery": {"removed": link.media_id}}
+
+    _enqueue_profile_event(db, context, changes)
+    await _audit_profile_change(
+        db,
+        context,
+        action="school.profile.media.unlinked",
+        changes=changes,
+        request_method="DELETE",
+        request_path=f"/api/v1/school-portal/profile/media/{link_id}",
+    )
+    return context.school
+
+
 __all__ = [
     "link_school_profile_media",
     "set_school_dean",
+    "unlink_school_profile_media",
     "update_school_profile",
 ]

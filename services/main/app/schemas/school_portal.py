@@ -31,6 +31,7 @@ class SchoolPortalPersonSummary(BaseSchema):
 
 class SchoolPortalMediaSummary(BaseSchema):
     id: uuid.UUID
+    link_id: uuid.UUID | None = None
     url: str
     alt_text: str | None = None
 

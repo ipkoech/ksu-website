@@ -35,13 +35,13 @@ export interface SchoolPortalEntitySummary {
   slug: string | null;
 }
 
-export interface SchoolPortalDepartmentSummary
-  extends SchoolPortalEntitySummary {
+export interface SchoolPortalDepartmentSummary extends SchoolPortalEntitySummary {
   display_order: number;
 }
 
 export interface SchoolPortalMediaSummary {
   id: string;
+  link_id?: string | null;
   url: string;
   alt_text: string | null;
 }
@@ -297,7 +297,14 @@ export type SchoolProgrammePayload = Pick<
   Partial<
     Omit<
       SchoolProgrammeRecord,
-      "id" | "department" | "name" | "code" | "slug" | "level" | "duration" | "department_id"
+      | "id"
+      | "department"
+      | "name"
+      | "code"
+      | "slug"
+      | "level"
+      | "duration"
+      | "department_id"
     >
   >;
 
@@ -366,14 +373,16 @@ export interface SchoolPublicationRecord {
   reviewed_at?: string | null;
 }
 
-export type SchoolPublicationPayload = Pick<
-  SchoolPublicationRecord,
-  "title"
-> &
+export type SchoolPublicationPayload = Pick<SchoolPublicationRecord, "title"> &
   Partial<
     Omit<
       SchoolPublicationRecord,
-      "id" | "title" | "status" | "reviewer_comments" | "submitted_at" | "reviewed_at"
+      | "id"
+      | "title"
+      | "status"
+      | "reviewer_comments"
+      | "submitted_at"
+      | "reviewed_at"
     >
   >;
 
@@ -560,15 +569,32 @@ export interface CorporateDashboardAttentionItem {
 
 export interface CorporateDashboardResponse {
   generated_at: string;
-  period: { date_from: string; date_to: string; bucket: "day" | "week" | "month" };
-  comparison_period?: { date_from: string; date_to: string; bucket: "day" | "week" | "month" } | null;
+  period: {
+    date_from: string;
+    date_to: string;
+    bucket: "day" | "week" | "month";
+  };
+  comparison_period?: {
+    date_from: string;
+    date_to: string;
+    bucket: "day" | "week" | "month";
+  } | null;
   filters: { content_type?: string | null; owner_portal?: string | null };
   snapshot: {
-    review_backlog: { total: number; submitted: number; in_review: number; overdue: number };
+    review_backlog: {
+      total: number;
+      submitted: number;
+      in_review: number;
+      overdue: number;
+    };
     scheduled: { next_7_days: number; next_30_days: number };
     drafts: { total: number; stale: number };
     status_distribution: Array<{ key: string; label: string; value: number }>;
-    content_type_distribution: Array<{ key: string; label: string; value: number }>;
+    content_type_distribution: Array<{
+      key: string;
+      label: string;
+      value: number;
+    }>;
   };
   activity: {
     metrics: CorporateDashboardMetric[];
@@ -585,15 +611,31 @@ export interface CorporateDashboardResponse {
     series: CorporateDashboardSeriesPoint[];
     previous_series: CorporateDashboardSeriesPoint[];
     calendar: {
-      upcoming: Array<{ id: string; title: string; content_type: string; scheduled_at: string; href: string }>;
+      upcoming: Array<{
+        id: string;
+        title: string;
+        content_type: string;
+        scheduled_at: string;
+        href: string;
+      }>;
       covered_days: number;
       longest_gap_days: number;
     };
   };
   readiness: {
-    checks: Array<{ key: string; label: string; value: number; href?: string | null }>;
+    checks: Array<{
+      key: string;
+      label: string;
+      value: number;
+      href?: string | null;
+    }>;
     issue_total: number;
-    media: { total: number; images_missing_alt: number; unprocessed: number; unlinked: number };
+    media: {
+      total: number;
+      images_missing_alt: number;
+      unprocessed: number;
+      unlinked: number;
+    };
   };
   insights: CorporateDashboardInsight[];
   attention_items: CorporateDashboardAttentionItem[];
@@ -1771,7 +1813,10 @@ export interface Intake {
   updated_at: string;
 }
 
-export type IntakeApplicationOverride = "automatic" | "force_open" | "force_hidden";
+export type IntakeApplicationOverride =
+  | "automatic"
+  | "force_open"
+  | "force_hidden";
 
 export interface IntakeHomepageActionConfig {
   enabled: boolean;
@@ -1814,7 +1859,13 @@ export interface IntakeHomepageAdmission {
 export type IntakeHomepageAdmissionUpdate = Partial<
   Omit<
     IntakeHomepageAdmission,
-    "intake_id" | "apply" | "check_requirements" | "explore_programmes" | "admission_letter" | "reporting_instructions" | "reporting"
+    | "intake_id"
+    | "apply"
+    | "check_requirements"
+    | "explore_programmes"
+    | "admission_letter"
+    | "reporting_instructions"
+    | "reporting"
   >
 > & {
   apply?: Partial<IntakeHomepageActionConfig>;

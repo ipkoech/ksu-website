@@ -18,23 +18,68 @@ const page = await readFile(
 );
 
 for (const section of [
-  "Overview",
+  "About the school",
+  "Dean’s message",
+  "Mission, vision & mandate",
+  "Contact & location",
   "Leadership",
-  "Message & About",
-  "Mission & Vision",
-  "Contacts",
-  "Media",
-  "Visibility",
-  "Preview",
+  "Brand & media",
+  "Publishing status",
+  "Profile completeness",
 ]) {
-  assert.match(workspace, new RegExp(section), `Profile workspace must include ${section}.`);
+  assert.match(
+    workspace,
+    new RegExp(section.replaceAll(" ", "\\s+")),
+    `Profile workspace must include ${section}.`,
+  );
 }
-assert.match(dialogs, /SchoolProfileDialog/, "Profile edits must use focused dialogs.");
-assert.match(dialogs, /SchoolMediaPicker/, "Profile media must use the reusable multi-media picker.");
-assert.match(dialogs, /fieldErrors/, "Save errors must be presented beside their fields.");
+assert.match(
+  workspace,
+  /school\.profile\.manage/,
+  "Profile editing must use the seeded manage permission.",
+);
+assert.match(
+  workspace,
+  /Edit profile/,
+  "Profile editing must begin from one clear page-level action.",
+);
+assert.match(
+  workspace,
+  /Unsaved changes/,
+  "Profile editing must expose a persistent unsaved state.",
+);
+assert.match(
+  workspace,
+  /Save profile/,
+  "Profile editing must use one coordinated save action.",
+);
+assert.match(
+  workspace,
+  /beforeunload/,
+  "Unsaved profile changes must be protected during navigation.",
+);
+assert.match(
+  workspace,
+  /DeanSelector/,
+  "Leadership editing must use a searchable person selector.",
+);
 assert.match(
   dialogs,
+  /SchoolMediaPicker/,
+  "Profile media must use the reusable multi-media picker.",
+);
+assert.match(
+  workspace,
+  /fieldErrors/,
+  "Save errors must be presented beside their fields.",
+);
+assert.match(
+  workspace,
   /invalidateQueries[\s\S]*schoolPortalQueryKeys\.(profile|root)/,
   "Successful saves must invalidate scoped school queries.",
 );
-assert.match(page, /<SchoolProfileWorkspace\s*\/>/, "The profile route must render the workspace.");
+assert.match(
+  page,
+  /<SchoolProfileWorkspace\s*\/>/,
+  "The profile route must render the workspace.",
+);

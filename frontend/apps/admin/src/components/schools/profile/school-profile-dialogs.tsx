@@ -39,14 +39,17 @@ export type ProfileDialogSection =
   | "media"
   | "visibility";
 
-type Draft = SchoolPortalProfileUpdate & {
+export type SchoolProfileDraft = SchoolPortalProfileUpdate & {
   dean_id?: string | null;
   logo_image_id?: string | null;
   cover_image_id?: string | null;
   brochure_id?: string | null;
 };
 
-const SECTION_COPY: Record<ProfileDialogSection, { title: string; description: string }> = {
+const SECTION_COPY: Record<
+  ProfileDialogSection,
+  { title: string; description: string }
+> = {
   overview: {
     title: "Edit overview",
     description: "Maintain the core facts shown across the school profile.",
@@ -57,7 +60,8 @@ const SECTION_COPY: Record<ProfileDialogSection, { title: string; description: s
   },
   story: {
     title: "Edit message and about",
-    description: "Tell visitors what the school does and share the dean's message.",
+    description:
+      "Tell visitors what the school does and share the dean's message.",
   },
   purpose: {
     title: "Edit purpose",
@@ -69,15 +73,21 @@ const SECTION_COPY: Record<ProfileDialogSection, { title: string; description: s
   },
   media: {
     title: "Manage profile media",
-    description: "Select branded images and documents from the shared media library.",
+    description:
+      "Select branded images and documents from the shared media library.",
   },
   visibility: {
     title: "Edit visibility",
-    description: "Control whether the school profile is visible on the public website.",
+    description:
+      "Control whether the school profile is visible on the public website.",
   },
 };
 
-function draftFrom(profile: SchoolPortalProfile): Draft {
+type Draft = SchoolProfileDraft;
+
+export function schoolProfileDraftFrom(
+  profile: SchoolPortalProfile,
+): SchoolProfileDraft {
   return {
     establishment_date: profile.establishment_date,
     about: profile.about,
@@ -111,13 +121,17 @@ export function SchoolProfileDialog({
 }) {
   const { school } = useSchoolPortal();
   const queryClient = useQueryClient();
-  const [draft, setDraft] = useState<Draft>(() => draftFrom(profile));
+  const [draft, setDraft] = useState<Draft>(() =>
+    schoolProfileDraftFrom(profile),
+  );
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
-  const [galleryIds, setGalleryIds] = useState(() => profile.gallery.map((item) => item.id));
+  const [galleryIds, setGalleryIds] = useState(() =>
+    profile.gallery.map((item) => item.id),
+  );
 
   useEffect(() => {
     if (!open) return;
-    setDraft(draftFrom(profile));
+    setDraft(schoolProfileDraftFrom(profile));
     setGalleryIds(profile.gallery.map((item) => item.id));
     setFieldErrors({});
   }, [open, profile]);
@@ -138,18 +152,29 @@ export function SchoolProfileDialog({
           draft.brochure_id
             ? { id: draft.brochure_id, role: "brochure" as const, order: 0 }
             : null,
-          ...galleryIds.map((id, order) => ({ id, role: "gallery" as const, order })),
+          ...galleryIds.map((id, order) => ({
+            id,
+            role: "gallery" as const,
+            order,
+          })),
         ].filter((item): item is NonNullable<typeof item> => item !== null);
         let result = profile;
         for (const item of links) {
           result = (
-            await schoolPortalApi.profile.linkMedia(item.id, item.role, item.order)
+            await schoolPortalApi.profile.linkMedia(
+              item.id,
+              item.role,
+              item.order,
+            )
           ).data;
         }
         return result;
       }
 
-      const fields: Record<Exclude<ProfileDialogSection, "leadership" | "media">, Array<keyof Draft>> = {
+      const fields: Record<
+        Exclude<ProfileDialogSection, "leadership" | "media">,
+        Array<keyof Draft>
+      > = {
         overview: ["establishment_date"],
         story: ["about", "head_message"],
         purpose: ["mission", "vision", "mandate", "core_values"],
@@ -179,7 +204,13 @@ export function SchoolProfileDialog({
       setFieldErrors(
         error instanceof ApiClientError && error.errors
           ? error.errors
-          : { form: [error instanceof Error ? error.message : "Unable to save changes"] },
+          : {
+              form: [
+                error instanceof Error
+                  ? error.message
+                  : "Unable to save changes",
+              ],
+            },
       );
     },
   });
@@ -204,7 +235,12 @@ export function SchoolProfileDialog({
               type="date"
               value={draft.establishment_date}
               error={fieldErrors.establishment_date}
-              onChange={(value) => setDraft((current) => ({ ...current, establishment_date: value }))}
+              onChange={(value) =>
+                setDraft((current) => ({
+                  ...current,
+                  establishment_date: value,
+                }))
+              }
             />
           ) : null}
           {section === "leadership" ? (
@@ -212,7 +248,9 @@ export function SchoolProfileDialog({
               label="Dean person ID"
               value={draft.dean_id}
               error={fieldErrors.person_id}
-              onChange={(value) => setDraft((current) => ({ ...current, dean_id: value }))}
+              onChange={(value) =>
+                setDraft((current) => ({ ...current, dean_id: value }))
+              }
               helper="Use the ID of an active university person record."
             />
           ) : null}
@@ -222,40 +260,60 @@ export function SchoolProfileDialog({
                 label="Dean's message"
                 value={draft.head_message}
                 error={fieldErrors.head_message}
-                onChange={(value) => setDraft((current) => ({ ...current, head_message: value }))}
+                onChange={(value) =>
+                  setDraft((current) => ({ ...current, head_message: value }))
+                }
               />
               <ProfileArea
                 label="About the school"
                 value={draft.about}
                 error={fieldErrors.about}
-                onChange={(value) => setDraft((current) => ({ ...current, about: value }))}
+                onChange={(value) =>
+                  setDraft((current) => ({ ...current, about: value }))
+                }
               />
             </>
           ) : null}
           {section === "purpose" ? (
             <>
-              {(["mission", "vision", "mandate", "core_values"] as const).map((field) => (
-                <ProfileArea
-                  key={field}
-                  label={field === "core_values" ? "Core values" : field[0].toUpperCase() + field.slice(1)}
-                  value={draft[field]}
-                  error={fieldErrors[field]}
-                  onChange={(value) => setDraft((current) => ({ ...current, [field]: value }))}
-                />
-              ))}
+              {(["mission", "vision", "mandate", "core_values"] as const).map(
+                (field) => (
+                  <ProfileArea
+                    key={field}
+                    label={
+                      field === "core_values"
+                        ? "Core values"
+                        : field[0].toUpperCase() + field.slice(1)
+                    }
+                    value={draft[field]}
+                    error={fieldErrors[field]}
+                    onChange={(value) =>
+                      setDraft((current) => ({ ...current, [field]: value }))
+                    }
+                  />
+                ),
+              )}
             </>
           ) : null}
           {section === "contacts" ? (
             <div className="grid gap-4 sm:grid-cols-2">
-              {(["email", "phone", "office_location", "website"] as const).map((field) => (
-                <ProfileField
-                  key={field}
-                  label={field === "office_location" ? "Office location" : field[0].toUpperCase() + field.slice(1)}
-                  value={draft[field]}
-                  error={fieldErrors[field]}
-                  onChange={(value) => setDraft((current) => ({ ...current, [field]: value }))}
-                />
-              ))}
+              {(["email", "phone", "office_location", "website"] as const).map(
+                (field) => (
+                  <ProfileField
+                    key={field}
+                    label={
+                      field === "office_location"
+                        ? "Office location"
+                        : field[0].toUpperCase() + field.slice(1)
+                    }
+                    value={draft[field]}
+                    error={fieldErrors[field]}
+                    onChange={(value) =>
+                      setDraft((current) => ({ ...current, [field]: value }))
+                    }
+                  />
+                ),
+              )}
             </div>
           ) : null}
           {section === "media" ? (
@@ -280,19 +338,27 @@ export function SchoolProfileDialog({
               <Switch
                 id="school-public"
                 checked={draft.is_public ?? false}
-                onCheckedChange={(checked) => setDraft((current) => ({ ...current, is_public: checked }))}
+                onCheckedChange={(checked) =>
+                  setDraft((current) => ({ ...current, is_public: checked }))
+                }
               />
             </div>
           ) : null}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button
             className="cursor-pointer"
-            disabled={mutation.isPending || (section === "leadership" && !draft.dean_id)}
+            disabled={
+              mutation.isPending || (section === "leadership" && !draft.dean_id)
+            }
             onClick={() => mutation.mutate()}
           >
-            {mutation.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+            {mutation.isPending ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : null}
             Save changes
           </Button>
         </DialogFooter>
@@ -328,8 +394,14 @@ function ProfileField({
         aria-describedby={error ? `${id}-error` : undefined}
         onChange={(event) => onChange(event.target.value)}
       />
-      {helper ? <p className="text-xs text-muted-foreground">{helper}</p> : null}
-      {error ? <p id={`${id}-error`} className="text-xs text-destructive">{error.join(" ")}</p> : null}
+      {helper ? (
+        <p className="text-xs text-muted-foreground">{helper}</p>
+      ) : null}
+      {error ? (
+        <p id={`${id}-error`} className="text-xs text-destructive">
+          {error.join(" ")}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -356,7 +428,9 @@ function ProfileArea({
         aria-invalid={Boolean(error)}
         onChange={(event) => onChange(event.target.value)}
       />
-      {error ? <p className="text-xs text-destructive">{error.join(" ")}</p> : null}
+      {error ? (
+        <p className="text-xs text-destructive">{error.join(" ")}</p>
+      ) : null}
     </div>
   );
 }
@@ -408,7 +482,10 @@ export function SchoolMediaPicker({
           <MediaPicker
             key={role}
             label={role[0].toUpperCase() + role.slice(1)}
-            value={draft[`${role}_image_id` as "logo_image_id" | "cover_image_id"] ?? (role === "brochure" ? draft.brochure_id : null)}
+            value={
+              draft[`${role}_image_id` as "logo_image_id" | "cover_image_id"] ??
+              (role === "brochure" ? draft.brochure_id : null)
+            }
             onChange={(id) =>
               onDraftChange({
                 ...draft,
@@ -438,24 +515,39 @@ export function SchoolMediaPicker({
           uploadRole="gallery"
         />
         {galleryIds.map((id, index) => (
-          <div key={id} className="flex items-center gap-3 rounded-lg border p-3">
+          <div
+            key={id}
+            className="flex items-center gap-3 rounded-lg border p-3"
+          >
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">
                 {mediaById.get(id)?.alt_text || `Gallery image ${index + 1}`}
               </p>
               <p className="truncate text-xs text-muted-foreground">{id}</p>
             </div>
-            <Button size="icon" variant="ghost" aria-label="Move image up" onClick={() => move(index, -1)}>
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label="Move image up"
+              onClick={() => move(index, -1)}
+            >
               <ArrowUp className="size-4" />
             </Button>
-            <Button size="icon" variant="ghost" aria-label="Move image down" onClick={() => move(index, 1)}>
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label="Move image down"
+              onClick={() => move(index, 1)}
+            >
               <ArrowDown className="size-4" />
             </Button>
             <Button
               size="icon"
               variant="ghost"
               aria-label="Remove image from pending gallery"
-              onClick={() => onGalleryChange(galleryIds.filter((item) => item !== id))}
+              onClick={() =>
+                onGalleryChange(galleryIds.filter((item) => item !== id))
+              }
             >
               <Trash2 className="size-4" />
             </Button>
@@ -469,8 +561,13 @@ export function SchoolMediaPicker({
         </div>
       ) : null}
       {failed ? (
-        <Button variant="outline" size="sm" onClick={() => onDraftChange({ ...draft })}>
-          <RotateCcw className="mr-2 size-4" /> Retry after correcting the selection
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onDraftChange({ ...draft })}
+        >
+          <RotateCcw className="mr-2 size-4" /> Retry after correcting the
+          selection
         </Button>
       ) : null}
     </div>
