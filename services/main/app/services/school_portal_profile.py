@@ -194,7 +194,21 @@ async def link_school_profile_media(
     """Link media owned by the current school's folder to its public profile."""
     _require_manage(context)
     media = await MediaService.get_by_id(db, data.media_id)
-    if media is None or not MediaService.is_owned_by_school(media, context.school.id):
+    existing_link = (
+        await MediaService.get_link_for_media(
+            db,
+            media_id=media.id,
+            entity_type="school",
+            entity_id=context.school.id,
+            role=data.role,
+        )
+        if media is not None
+        else None
+    )
+    if media is None or (
+        not MediaService.is_owned_by_school(media, context.school.id)
+        and existing_link is None
+    ):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Media not found"
         )
@@ -204,6 +218,14 @@ async def link_school_profile_media(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
         ) from exc
+
+    folder = (
+        media.folder
+        if MediaService.is_owned_by_school(media, context.school.id)
+        else await MediaService.ensure_school_media_folder(db, context.school.id)
+    )
+    media.folder_id = folder.id
+    media.folder = folder
 
     field = SINGLETON_MEDIA_FIELDS.get(data.role)
     old_value = getattr(context.school, field) if field else None
@@ -218,15 +240,6 @@ async def link_school_profile_media(
         )
         if old_link is not None:
             await MediaService.delete_link(db, old_link)
-        existing_link = None
-    else:
-        existing_link = await MediaService.get_link_for_media(
-            db,
-            media_id=media.id,
-            entity_type="school",
-            entity_id=context.school.id,
-            role=data.role,
-        )
     if existing_link is None:
         await MediaService.link_media(
             db,
@@ -242,6 +255,7 @@ async def link_school_profile_media(
         await MediaService.update_link(
             db,
             existing_link,
+            folder_id=folder.id,
             display_order=data.display_order,
             is_public=True,
         )

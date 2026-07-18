@@ -25,6 +25,7 @@ from ..models import (
     PageSection,
     PartnershipSpotlight,
     Person,
+    School,
     Slider,
     SliderGroup,
     User,
@@ -120,6 +121,62 @@ class MediaService:
     """Media upload and management."""
 
     @staticmethod
+    async def ensure_school_media_folder(
+        db: AsyncSession,
+        school_id: uuid.UUID,
+    ) -> MediaFolder:
+        """Return the deterministic private media folder for one school."""
+        slug = build_entity_upload_folder("school", school_id)
+        result = await db.execute(
+            MediaFolder.active_query().where(
+                MediaFolder.parent_id.is_(None),
+                MediaFolder.slug == slug,
+                MediaFolder.scope_type == "school",
+                MediaFolder.scope_id == school_id,
+            )
+        )
+        folder = result.scalar_one_or_none()
+        if folder is not None:
+            return folder
+
+        school_result = await db.execute(
+            select(School.name, School.code).where(
+                School.id == school_id,
+                School.deleted_at.is_(None),
+            ).with_for_update()
+        )
+        school = school_result.one_or_none()
+        if school is None:
+            raise ValueError("School not found")
+
+        # The school row lock prevents duplicate folders during simultaneous
+        # first uploads. Re-check after acquiring it in case another upload won.
+        result = await db.execute(
+            MediaFolder.active_query().where(
+                MediaFolder.parent_id.is_(None),
+                MediaFolder.slug == slug,
+                MediaFolder.scope_type == "school",
+                MediaFolder.scope_id == school_id,
+            )
+        )
+        folder = result.scalar_one_or_none()
+        if folder is not None:
+            return folder
+
+        label = school.code or school.name
+        folder = MediaFolder(
+            name=f"{label} Media",
+            slug=slug,
+            description="Media owned and managed by this school.",
+            is_public=False,
+            scope_type="school",
+            scope_id=school_id,
+        )
+        db.add(folder)
+        await db.flush()
+        return folder
+
+    @staticmethod
     def is_owned_by_school(media: Media, school_id: uuid.UUID) -> bool:
         """Return whether media belongs to the server-selected school's folder."""
         folder = getattr(media, "folder", None)
@@ -166,13 +223,30 @@ class MediaService:
         _validate_upload_mime_type(file.content_type)
 
         resolved_folder_path = folder_path or ""
+        folder: MediaFolder | None = None
+        attachment_scope: tuple[str, uuid.UUID | None] | None = None
         if entity_type or entity_id:
             if not entity_type or entity_id is None:
                 raise ValueError("Both entity_type and entity_id are required for entity uploads")
             resolved_folder_path = build_entity_upload_folder(entity_type, entity_id, role)
+            attachment_scope = await MediaService.get_attachment_scope(
+                db,
+                entity_type=entity_type,
+                entity_id=entity_id,
+            )
+            if (
+                folder_id is None
+                and attachment_scope[0] == "school"
+                and attachment_scope[1] is not None
+            ):
+                folder = await MediaService.ensure_school_media_folder(
+                    db,
+                    attachment_scope[1],
+                )
+                folder_id = folder.id
 
         if folder_id:
-            folder = await MediaFolder.get_by_id(db, folder_id)
+            folder = folder or await MediaFolder.get_by_id(db, folder_id)
             if folder is None:
                 raise ValueError("Media folder not found")
             if not resolved_folder_path:
@@ -191,14 +265,14 @@ class MediaService:
         db.add(media)
         await db.flush()
         if entity_type and entity_id is not None:
-            scope_type, scope_id = await MediaService.get_attachment_scope(
-                db,
-                entity_type=entity_type,
-                entity_id=entity_id,
+            scope_type, scope_id = attachment_scope or await MediaService.get_attachment_scope(
+                db, entity_type=entity_type, entity_id=entity_id
             )
             if scope_type == "club":
                 media.is_public = False
             link_metadata = {"is_public": is_public}
+            if folder_id is not None:
+                link_metadata["folder_id"] = folder_id
             if scope_type == "club":
                 link_metadata = {
                     "is_public": False,

@@ -82,7 +82,9 @@ def _context(*permissions):
 
 class SchoolPortalProfileTests(unittest.IsolatedAsyncioTestCase):
     def test_profile_update_exposes_every_editable_field_and_forbids_identity(self):
-        self.assertEqual(EDITABLE_PROFILE_FIELDS, set(SchoolPortalProfileUpdate.model_fields))
+        self.assertEqual(
+            EDITABLE_PROFILE_FIELDS, set(SchoolPortalProfileUpdate.model_fields)
+        )
 
         with self.assertRaises(ValidationError):
             SchoolPortalProfileUpdate(
@@ -116,7 +118,9 @@ class SchoolPortalProfileTests(unittest.IsolatedAsyncioTestCase):
             },
             changes,
         )
-        event = next(item for item in db.added if item.__class__.__name__ == "OutboxEvent")
+        event = next(
+            item for item in db.added if item.__class__.__name__ == "OutboxEvent"
+        )
         self.assertEqual("school.profile.updated", event.event_type)
         self.assertEqual(context.school.id, event.scope_id)
         audit.assert_awaited_once()
@@ -147,7 +151,9 @@ class SchoolPortalProfileTests(unittest.IsolatedAsyncioTestCase):
                 SchoolPortalProfileUpdate(establishment_date=date(2020, 1, 2)),
             )
 
-        event = next(item for item in db.added if item.__class__.__name__ == "OutboxEvent")
+        event = next(
+            item for item in db.added if item.__class__.__name__ == "OutboxEvent"
+        )
         json.dumps(event.payload)
         json.dumps(audit.await_args.args[1].changed_fields)
 
@@ -165,7 +171,10 @@ class SchoolPortalProfileTests(unittest.IsolatedAsyncioTestCase):
         )
 
         with (
-            patch("app.services.school_portal_profile.Person.get_by_id", AsyncMock(return_value=person)),
+            patch(
+                "app.services.school_portal_profile.Person.get_by_id",
+                AsyncMock(return_value=person),
+            ),
             patch(
                 "app.services.school_portal_profile.StaffService.get_assignments_for_person",
                 AsyncMock(return_value=[other_assignment]),
@@ -188,7 +197,10 @@ class SchoolPortalProfileTests(unittest.IsolatedAsyncioTestCase):
         old_dean = SimpleNamespace(id=uuid.uuid4(), person_id=uuid.uuid4())
 
         with (
-            patch("app.services.school_portal_profile.Person.get_by_id", AsyncMock(return_value=person)),
+            patch(
+                "app.services.school_portal_profile.Person.get_by_id",
+                AsyncMock(return_value=person),
+            ),
             patch(
                 "app.services.school_portal_profile.StaffService.get_assignments_for_person",
                 AsyncMock(return_value=[]),
@@ -219,7 +231,9 @@ class SchoolPortalProfileTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(person_id, school.dean_id)
         end_assignment.assert_awaited_once()
         assign.assert_awaited_once()
-        event = next(item for item in db.added if item.__class__.__name__ == "OutboxEvent")
+        event = next(
+            item for item in db.added if item.__class__.__name__ == "OutboxEvent"
+        )
         self.assertEqual("school.profile.updated", event.event_type)
 
     async def test_profile_media_must_belong_to_current_school_folder(self):
@@ -240,9 +254,15 @@ class SchoolPortalProfileTests(unittest.IsolatedAsyncioTestCase):
             scope_id=uuid.uuid4(),
         )
 
-        with patch(
-            "app.services.school_portal_profile.MediaService.get_by_id",
-            AsyncMock(return_value=media),
+        with (
+            patch(
+                "app.services.school_portal_profile.MediaService.get_by_id",
+                AsyncMock(return_value=media),
+            ),
+            patch(
+                "app.services.school_portal_profile.MediaService.get_link_for_media",
+                AsyncMock(return_value=None),
+            ),
         ):
             with self.assertRaises(HTTPException) as caught:
                 await link_school_profile_media(
@@ -252,6 +272,65 @@ class SchoolPortalProfileTests(unittest.IsolatedAsyncioTestCase):
                 )
 
         self.assertEqual(404, caught.exception.status_code)
+
+    async def test_profile_accepts_entity_upload_linked_to_current_school(self):
+        context = _context("school.profile.manage")
+        media = Media(
+            filename="brochure.pdf",
+            original_filename="brochure.pdf",
+            mime_type="application/pdf",
+            file_size=10,
+            storage_path="schools/brochure.pdf",
+            media_type="document",
+        )
+        media.id = uuid.uuid4()
+        media.folder = None
+        school_link = SimpleNamespace(
+            id=uuid.uuid4(),
+            media_id=media.id,
+            entity_type="school",
+            entity_id=context.school.id,
+            role="brochure",
+        )
+        folder = MediaFolder(
+            name="School media",
+            slug=f"schools/{context.school.id}",
+            scope_type="school",
+            scope_id=context.school.id,
+        )
+        folder.id = uuid.uuid4()
+
+        with (
+            patch(
+                "app.services.school_portal_profile.MediaService.get_by_id",
+                AsyncMock(return_value=media),
+            ),
+            patch(
+                "app.services.school_portal_profile.MediaService.get_link_for_media",
+                AsyncMock(return_value=school_link),
+            ),
+            patch(
+                "app.services.school_portal_profile.MediaService.ensure_school_media_folder",
+                AsyncMock(return_value=folder),
+            ),
+            patch(
+                "app.services.school_portal_profile.MediaService.update_link",
+                AsyncMock(),
+            ) as update_link,
+            patch(
+                "app.services.school_portal_profile.record_school_portal_audit",
+                AsyncMock(),
+            ),
+        ):
+            await link_school_profile_media(
+                _Db(),
+                context,
+                SchoolPortalMediaLinkCreate(media_id=media.id, role="brochure"),
+            )
+
+        update_link.assert_awaited_once()
+        self.assertEqual(folder.id, media.folder_id)
+        self.assertEqual(media.id, context.school.brochure_id)
 
     async def test_replacing_singleton_profile_media_removes_its_old_link(self):
         context = _context("school.profile.manage")
@@ -281,7 +360,7 @@ class SchoolPortalProfileTests(unittest.IsolatedAsyncioTestCase):
             ),
             patch(
                 "app.services.school_portal_profile.MediaService.get_link_for_media",
-                AsyncMock(return_value=old_link),
+                AsyncMock(side_effect=[None, old_link]),
             ) as get_old_link,
             patch(
                 "app.services.school_portal_profile.MediaService.delete_link",
@@ -302,7 +381,7 @@ class SchoolPortalProfileTests(unittest.IsolatedAsyncioTestCase):
                 SchoolPortalMediaLinkCreate(media_id=media.id, role="logo"),
             )
 
-        get_old_link.assert_awaited_once()
+        self.assertEqual(2, get_old_link.await_count)
         delete_old_link.assert_awaited_once_with(unittest.mock.ANY, old_link)
         self.assertEqual(media.id, context.school.logo_image_id)
 

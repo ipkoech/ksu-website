@@ -102,6 +102,50 @@ class MediaAttachmentContractTests(unittest.IsolatedAsyncioTestCase):
             is_public=False,
         )
 
+    async def test_school_entity_upload_is_assigned_to_the_school_media_folder(self):
+        db = _Db()
+        school_id = uuid.uuid4()
+        folder = SimpleNamespace(id=uuid.uuid4())
+        uploaded = _media()
+
+        with (
+            patch("app.services.media.upload_file", new_callable=AsyncMock, return_value={
+                "filename": uploaded.filename,
+                "original_filename": uploaded.original_filename,
+                "mime_type": uploaded.mime_type,
+                "file_size": uploaded.file_size,
+                "storage_path": f"schools/{school_id}/brochure/prospectus.pdf",
+            }),
+            patch.object(
+                MediaService,
+                "ensure_school_media_folder",
+                new_callable=AsyncMock,
+                return_value=folder,
+                create=True,
+            ) as ensure_folder,
+            patch.object(MediaService, "link_media", new_callable=AsyncMock) as link_media,
+        ):
+            result = await MediaService.upload(
+                db,
+                file=_Upload(),
+                uploaded_by_id=uuid.uuid4(),
+                entity_type="school",
+                entity_id=school_id,
+                role="brochure",
+            )
+
+        ensure_folder.assert_awaited_once_with(db, school_id)
+        self.assertEqual(folder.id, result.folder_id)
+        link_media.assert_awaited_once_with(
+            db,
+            media_id=result.id,
+            entity_type="school",
+            entity_id=school_id,
+            role="brochure",
+            folder_id=folder.id,
+            is_public=False,
+        )
+
     def test_attachment_summary_includes_display_fields(self):
         item = _media()
         link = SimpleNamespace(
