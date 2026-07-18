@@ -9,13 +9,16 @@ from fastapi import FastAPI, HTTPException
 from pydantic import ValidationError
 
 from app.api.v1 import register_routes
+from app.api.v1.school_portal import media as school_media_api
 from app.models import Media, MediaFolder, School
 from app.schemas.school_portal import (
     SchoolPortalDeanUpdate,
+    SchoolPortalMediaSummary,
     SchoolPortalMediaLinkCreate,
     SchoolPortalProfileUpdate,
 )
 from app.services.school_portal_context import SchoolPortalContext
+from app.services.media import MediaService
 from app.services.school_portal_profile import (
     link_school_profile_media,
     set_school_dean,
@@ -81,6 +84,70 @@ def _context(*permissions):
 
 
 class SchoolPortalProfileTests(unittest.IsolatedAsyncioTestCase):
+    async def test_school_media_metadata_update_is_scoped_to_current_school(self):
+        context = _context("school.media.manage")
+        media = Media(
+            filename="cover.jpg",
+            original_filename="cover.jpg",
+            mime_type="image/jpeg",
+            file_size=10,
+            storage_path="schools/cover.jpg",
+            media_type="image",
+        )
+        media.id = uuid.uuid4()
+        media.folder = MediaFolder(
+            name="School media",
+            slug=f"schools/{context.school.id}",
+            scope_type="school",
+            scope_id=context.school.id,
+        )
+        handler = getattr(
+            school_media_api,
+            "update_school_media_metadata",
+            None,
+        )
+        self.assertIsNotNone(handler)
+
+        payload = SimpleNamespace(
+            model_dump=lambda **_: {
+                "title": "Campus life",
+                "alt_text": "Students outside the school",
+                "description": "Students gathering before their lecture.",
+            }
+        )
+        with (
+            patch.object(MediaService, "get_by_id", AsyncMock(return_value=media)),
+            patch.object(
+                MediaService,
+                "update",
+                AsyncMock(return_value=media),
+            ) as update_media,
+        ):
+            await handler(media.id, payload, _Db(), context)
+
+        update_media.assert_awaited_once_with(
+            unittest.mock.ANY,
+            media,
+            title="Campus life",
+            alt_text="Students outside the school",
+            description="Students gathering before their lecture.",
+        )
+
+    def test_profile_media_summary_exposes_display_metadata(self):
+        summary = SchoolPortalMediaSummary(
+            id=uuid.uuid4(),
+            url="/media/school-cover.jpg",
+            title="School cover",
+            alt_text="Students outside the school building",
+            description="The school community at the main entrance.",
+        )
+
+        self.assertEqual("School cover", summary.title)
+        self.assertEqual(
+            "The school community at the main entrance.",
+            summary.description,
+        )
+
     def test_profile_update_exposes_every_editable_field_and_forbids_identity(self):
         self.assertEqual(
             EDITABLE_PROFILE_FIELDS, set(SchoolPortalProfileUpdate.model_fields)

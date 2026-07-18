@@ -4,6 +4,7 @@ import { getMainApiBaseUrl } from "../service-urls";
 import type {
   ImportCommitResult,
   ImportPreview,
+  Media,
   PaginatedResponse,
   SchoolDepartmentPayload,
   SchoolDepartmentRecord,
@@ -353,6 +354,19 @@ export const schoolPortalApi = {
       ),
   },
   media: {
+    update: (
+      mediaId: string,
+      data: {
+        title?: string | null;
+        alt_text?: string | null;
+        description?: string | null;
+        metadata?: Record<string, unknown> | null;
+      },
+    ) =>
+      mainApi.patch<{ data: Media }>(
+        `${BASE_PATH}/media/${mediaId}`,
+        data,
+      ),
     createBatch: (
       files: File[],
       options?: {

@@ -75,6 +75,36 @@ assert.match(
 );
 assert.match(
   workspace,
+  /RichTextEditor/,
+  "Long-form profile fields must use the established rich-text editor.",
+);
+assert.match(
+  workspace,
+  /RichTextRenderer/,
+  "Saved long-form profile fields must use the sanitized rich-text renderer.",
+);
+assert.match(
+  workspace,
+  /sanitizeOnChange=\{false\}/,
+  "Rich-text editing must avoid expensive sanitization on every keystroke.",
+);
+assert.match(
+  workspace,
+  /startTransition/,
+  "Rich-text draft synchronization must not block typing.",
+);
+assert.match(
+  dialogs,
+  /media_descriptions/,
+  "Profile media editing must retain plain-text descriptions in the shared draft.",
+);
+assert.match(
+  dialogs,
+  /Description/,
+  "Profile media controls must expose media descriptions.",
+);
+assert.match(
+  workspace,
   /invalidateQueries[\s\S]*schoolPortalQueryKeys\.(profile|root)/,
   "Successful saves must invalidate scoped school queries.",
 );

@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ApiClientError,
@@ -59,9 +65,11 @@ import {
   Input,
   Label,
   Progress,
+  RichTextEditor,
+  RichTextRenderer,
+  sanitizeRichText,
   Skeleton,
   Switch,
-  Textarea,
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
 import {
@@ -84,6 +92,15 @@ const PROFILE_FIELDS: Array<keyof SchoolPortalProfileUpdate> = [
   "website",
   "is_public",
 ];
+
+const RICH_TEXT_PROFILE_FIELDS = new Set<keyof SchoolPortalProfileUpdate>([
+  "about",
+  "head_message",
+  "mission",
+  "vision",
+  "mandate",
+  "core_values",
+]);
 
 type CompletenessItem = {
   key: string;
@@ -117,9 +134,15 @@ function profilePayload(draft: SchoolProfileDraft): SchoolPortalProfileUpdate {
   return Object.fromEntries(
     PROFILE_FIELDS.map((key) => {
       const value = draft[key];
+      const normalizedValue =
+        typeof value === "string" && RICH_TEXT_PROFILE_FIELDS.has(key)
+          ? sanitizeRichText(value)
+          : value;
       return [
         key,
-        typeof value === "string" && value.trim() === "" ? null : value,
+        typeof normalizedValue === "string" && normalizedValue.trim() === ""
+          ? null
+          : normalizedValue,
       ];
     }),
   ) as SchoolPortalProfileUpdate;
@@ -323,27 +346,29 @@ function ProfileArea({
   rows?: number;
   error?: string[];
 }) {
-  const length = value?.length ?? 0;
+  const [, startTransition] = useTransition();
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between gap-3">
-        <Label htmlFor={id}>{label}</Label>
-        {maxLength ? (
-          <span className="text-xs text-muted-foreground">
-            {length} / {maxLength}
-          </span>
-        ) : null}
-      </div>
-      <Textarea
-        id={id}
-        rows={rows}
+      <Label id={`${id}-label`} htmlFor={id}>
+        {label}
+      </Label>
+      <RichTextEditor
+        editorId={id}
+        ariaLabelledby={`${id}-label`}
         value={value ?? ""}
-        maxLength={maxLength}
+        toolbar="simple"
+        minHeight={`${Math.max(rows, 4) * 1.75}rem`}
+        maxHeight="32rem"
         placeholder={placeholder}
-        aria-invalid={Boolean(error)}
-        onChange={(event) => onChange(event.target.value)}
-        className="resize-y leading-6"
+        ariaInvalid={Boolean(error)}
+        sanitizeOnChange={false}
+        onChange={(html) => startTransition(() => onChange(html))}
       />
+      {maxLength ? (
+        <p className="text-xs text-muted-foreground">
+          Recommended maximum: {maxLength.toLocaleString()} characters.
+        </p>
+      ) : null}
       {error ? (
         <p className="text-xs text-destructive">{error.join(" ")}</p>
       ) : null}
@@ -359,9 +384,10 @@ function ReadText({
   fallback: string;
 }) {
   return value?.trim() ? (
-    <p className="whitespace-pre-line text-sm leading-7 text-foreground/90">
-      {value}
-    </p>
+    <RichTextRenderer
+      content={value}
+      className="prose-sm text-sm leading-7 text-foreground/90"
+    />
   ) : (
     <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-sm text-muted-foreground">
       {fallback}
@@ -396,6 +422,11 @@ function MediaThumb({
       <p className="text-xs text-muted-foreground">
         {media ? "Ready" : "Missing"}
       </p>
+      {media?.description ? (
+        <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+          {media.description}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -570,6 +601,29 @@ export function SchoolProfileWorkspace() {
           await schoolPortalApi.profile.linkMedia(mediaId, "gallery", index)
         ).data;
       }
+      const selectedMediaIds = new Set(
+        [
+          draft.logo_image_id,
+          draft.cover_image_id,
+          draft.brochure_id,
+          ...galleryIds,
+        ].filter((id): id is string => Boolean(id)),
+      );
+      const baselineDescriptions = baselineDraft?.media_descriptions ?? {};
+      const nextDescriptions = draft.media_descriptions ?? {};
+      await Promise.all(
+        [...selectedMediaIds]
+          .filter(
+            (mediaId) =>
+              (nextDescriptions[mediaId] ?? "") !==
+              (baselineDescriptions[mediaId] ?? ""),
+          )
+          .map((mediaId) =>
+            schoolPortalApi.media.update(mediaId, {
+              description: nextDescriptions[mediaId]?.trim() || null,
+            }),
+          ),
+      );
       return result;
     },
     onSuccess: async () => {
@@ -1181,6 +1235,38 @@ export function SchoolProfileWorkspace() {
                       Gallery images
                     </span>
                   </div>
+                  {profile.gallery.length ? (
+                    <div className="col-span-2 space-y-2 border-t pt-3">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Gallery
+                      </p>
+                      {profile.gallery.map((media, index) => (
+                        <div
+                          key={media.id}
+                          className="flex gap-3 rounded-lg border bg-muted/20 p-2"
+                        >
+                          <ImageRenderer
+                            src={resolveMainMediaUrl(media.url)}
+                            alt={
+                              media.alt_text || `Gallery image ${index + 1}`
+                            }
+                            className="h-16 w-20 shrink-0 rounded-md"
+                            imageClassName="h-full w-full object-cover"
+                          />
+                          <div className="min-w-0 py-1">
+                            <p className="truncate text-xs font-medium">
+                              {media.title ||
+                                media.alt_text ||
+                                `Gallery image ${index + 1}`}
+                            </p>
+                            <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                              {media.description || "No description provided."}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                   {canEdit ? (
                     <Button
                       variant="outline"

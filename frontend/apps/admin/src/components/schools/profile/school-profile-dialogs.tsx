@@ -4,8 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ApiClientError,
+  resolveMainMediaUrl,
   schoolPortalApi,
   schoolPortalQueryKeys,
+  type Media,
   type SchoolPortalMediaSummary,
   type SchoolPortalProfile,
   type SchoolPortalProfileUpdate,
@@ -22,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
+  ImageRenderer,
   Label,
   Progress,
   Switch,
@@ -44,6 +47,7 @@ export type SchoolProfileDraft = SchoolPortalProfileUpdate & {
   logo_image_id?: string | null;
   cover_image_id?: string | null;
   brochure_id?: string | null;
+  media_descriptions?: Record<string, string>;
 };
 
 const SECTION_COPY: Record<
@@ -88,6 +92,12 @@ type Draft = SchoolProfileDraft;
 export function schoolProfileDraftFrom(
   profile: SchoolPortalProfile,
 ): SchoolProfileDraft {
+  const media = [
+    profile.logo_image,
+    profile.cover_image,
+    profile.brochure,
+    ...profile.gallery,
+  ].filter((item): item is SchoolPortalMediaSummary => item !== null);
   return {
     establishment_date: profile.establishment_date,
     about: profile.about,
@@ -105,6 +115,9 @@ export function schoolProfileDraftFrom(
     logo_image_id: profile.logo_image_id,
     cover_image_id: profile.cover_image_id,
     brochure_id: profile.brochure_id,
+    media_descriptions: Object.fromEntries(
+      media.map((item) => [item.id, item.description ?? ""]),
+    ),
   };
 }
 
@@ -168,6 +181,14 @@ export function SchoolProfileDialog({
             )
           ).data;
         }
+        await Promise.all(
+          links.map((item) =>
+            schoolPortalApi.media.update(item.id, {
+              description:
+                draft.media_descriptions?.[item.id]?.trim() || null,
+            }),
+          ),
+        );
         return result;
       }
 
@@ -453,6 +474,7 @@ export function SchoolMediaPicker({
   failed: boolean;
 }) {
   const [pendingGalleryId, setPendingGalleryId] = useState("");
+  const [selectedMedia, setSelectedMedia] = useState<Record<string, Media>>({});
   const mediaById = useMemo(
     () =>
       new Map<string, SchoolPortalMediaSummary>(
@@ -467,6 +489,20 @@ export function SchoolMediaPicker({
       ),
     [profile],
   );
+  const rememberMedia = (id: string, media?: Media | null) => {
+    if (!id || !media) return;
+    setSelectedMedia((current) => ({ ...current, [id]: media }));
+  };
+  const mediaDescription = (id?: string | null) =>
+    id ? (draft.media_descriptions?.[id] ?? "") : "";
+  const setMediaDescription = (id: string, description: string) =>
+    onDraftChange({
+      ...draft,
+      media_descriptions: {
+        ...draft.media_descriptions,
+        [id]: description,
+      },
+    });
   const move = (index: number, offset: number) => {
     const target = index + offset;
     if (target < 0 || target >= galleryIds.length) return;
@@ -478,35 +514,76 @@ export function SchoolMediaPicker({
   return (
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
-        {(["logo", "cover", "brochure"] as const).map((role) => (
-          <MediaPicker
-            key={role}
-            label={role[0].toUpperCase() + role.slice(1)}
-            value={
-              draft[`${role}_image_id` as "logo_image_id" | "cover_image_id"] ??
-              (role === "brochure" ? draft.brochure_id : null)
-            }
-            onChange={(id) =>
-              onDraftChange({
-                ...draft,
-                [role === "brochure" ? "brochure_id" : `${role}_image_id`]: id,
-              })
-            }
-            mediaType={role === "brochure" ? "document" : "image"}
-            accept={role === "brochure" ? ".pdf" : "image/*"}
-            uploadEntityType="school"
-            uploadEntityId={profile.id}
-            uploadRole={role}
-          />
-        ))}
+        {(["logo", "cover", "brochure"] as const).map((role) => {
+          const id =
+            draft[
+              `${role}_image_id` as "logo_image_id" | "cover_image_id"
+            ] ?? (role === "brochure" ? draft.brochure_id : null);
+          return (
+            <div key={role} className="space-y-3 rounded-xl border p-3">
+              <MediaPicker
+                label={role[0].toUpperCase() + role.slice(1)}
+                value={id}
+                onChange={(nextId, media) => {
+                  rememberMedia(nextId, media);
+                  onDraftChange({
+                    ...draft,
+                    [role === "brochure"
+                      ? "brochure_id"
+                      : `${role}_image_id`]: nextId,
+                    media_descriptions: {
+                      ...draft.media_descriptions,
+                      ...(nextId && media
+                        ? { [nextId]: media.description ?? "" }
+                        : {}),
+                    },
+                  });
+                }}
+                mediaType={role === "brochure" ? "document" : "image"}
+                accept={role === "brochure" ? ".pdf" : "image/*"}
+                uploadEntityType="school"
+                uploadEntityId={profile.id}
+                uploadRole={role}
+              />
+              {id ? (
+                <div className="space-y-1.5">
+                  <Label htmlFor={`profile-${role}-description`}>
+                    Description
+                  </Label>
+                  <Textarea
+                    id={`profile-${role}-description`}
+                    rows={3}
+                    maxLength={600}
+                    value={mediaDescription(id)}
+                    placeholder={`Describe this ${role} for profile visitors.`}
+                    onChange={(event) =>
+                      setMediaDescription(id, event.target.value)
+                    }
+                  />
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
       </div>
       <div className="space-y-3">
         <MediaPicker
           label="Add gallery image"
           value={pendingGalleryId}
-          onChange={(id) => {
+          onChange={(id, media) => {
             setPendingGalleryId("");
-            if (!galleryIds.includes(id)) onGalleryChange([...galleryIds, id]);
+            rememberMedia(id, media);
+            if (id && media) {
+              onDraftChange({
+                ...draft,
+                media_descriptions: {
+                  ...draft.media_descriptions,
+                  [id]: media.description ?? "",
+                },
+              });
+            }
+            if (id && !galleryIds.includes(id))
+              onGalleryChange([...galleryIds, id]);
           }}
           mediaType="image"
           accept="image/*"
@@ -517,40 +594,71 @@ export function SchoolMediaPicker({
         {galleryIds.map((id, index) => (
           <div
             key={id}
-            className="flex items-center gap-3 rounded-lg border p-3"
+            className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[5rem_minmax(0,1fr)_auto]"
           >
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">
-                {mediaById.get(id)?.alt_text || `Gallery image ${index + 1}`}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">{id}</p>
-            </div>
-            <Button
-              size="icon"
-              variant="ghost"
-              aria-label="Move image up"
-              onClick={() => move(index, -1)}
-            >
-              <ArrowUp className="size-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              aria-label="Move image down"
-              onClick={() => move(index, 1)}
-            >
-              <ArrowDown className="size-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              aria-label="Remove image from pending gallery"
-              onClick={() =>
-                onGalleryChange(galleryIds.filter((item) => item !== id))
+            <ImageRenderer
+              src={resolveMainMediaUrl(
+                mediaById.get(id)?.url ?? selectedMedia[id]?.url,
+              )}
+              alt={
+                mediaById.get(id)?.alt_text ||
+                selectedMedia[id]?.alt_text ||
+                `Gallery image ${index + 1}`
               }
-            >
-              <Trash2 className="size-4" />
-            </Button>
+              className="h-20 rounded-lg"
+              imageClassName="h-full w-full object-cover"
+            />
+            <div className="min-w-0 space-y-2">
+              <p className="truncate text-sm font-medium">
+                {mediaById.get(id)?.title ||
+                  selectedMedia[id]?.title ||
+                  mediaById.get(id)?.alt_text ||
+                  `Gallery image ${index + 1}`}
+              </p>
+              <div className="space-y-1">
+                <Label htmlFor={`gallery-${id}-description`}>
+                  Description
+                </Label>
+                <Textarea
+                  id={`gallery-${id}-description`}
+                  rows={2}
+                  maxLength={600}
+                  value={mediaDescription(id)}
+                  placeholder="Describe what this image shows."
+                  onChange={(event) =>
+                    setMediaDescription(id, event.target.value)
+                  }
+                />
+              </div>
+            </div>
+            <div className="flex sm:flex-col">
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label="Move image up"
+                onClick={() => move(index, -1)}
+              >
+                <ArrowUp className="size-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label="Move image down"
+                onClick={() => move(index, 1)}
+              >
+                <ArrowDown className="size-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label="Remove image from pending gallery"
+                onClick={() =>
+                  onGalleryChange(galleryIds.filter((item) => item !== id))
+                }
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
           </div>
         ))}
       </div>

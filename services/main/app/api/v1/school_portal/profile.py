@@ -48,7 +48,9 @@ async def _profile_payload(db: DbSession, context: CurrentSchoolContext) -> dict
             "id": media.id,
             "link_id": link.id if link is not None else None,
             "url": media.url,
+            "title": media.title,
             "alt_text": media.alt_text,
+            "description": media.description,
         }
 
     payload = SchoolPortalProfileResponse.model_validate(

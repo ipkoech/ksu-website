@@ -23,3 +23,11 @@ test("school cover remains optional and has descriptive alternative text", () =>
   assert.match(overview, /if \(!imageUrl\) return null/);
   assert.match(overview, /alt=\{`\$\{schoolName\} academic panorama`\}/);
 });
+
+test("school long-form profile content uses the sanitized rich-text renderer", () => {
+  assert.match(overview, /import \{ RichTextRenderer \}/);
+  assert.match(overview, /<RichTextRenderer[\s\S]*content=\{deanMessage\}/);
+  assert.match(overview, /<RichTextRenderer[\s\S]*content=\{overview\}/);
+  assert.match(overview, /<RichTextRenderer[\s\S]*content=\{item\.body\}/);
+  assert.match(overview, /school\.core_values/);
+});

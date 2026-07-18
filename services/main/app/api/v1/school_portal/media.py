@@ -8,9 +8,11 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from ksu_common.schemas.responses import success
 
 from ....deps import DbSession
+from ....schemas.school_portal import SchoolPortalMediaMetadataUpdate
 from ....schemas.school_portal_content import SchoolContentCreate
 from ....schemas.upload_batch import SchoolContentMetadataImport
 from ....services.domain_events import enqueue_domain_event
+from ....services.media import MediaService
 from ....services.school_portal_content import create_school_content
 from ....services.school_portal_context import CurrentSchoolContext
 from ....services.upload_batch import UploadBatchService
@@ -21,6 +23,35 @@ router = APIRouter()
 def _require(context, permission: str) -> None:
     if permission not in context.permissions:
         raise HTTPException(status_code=403, detail=f"{permission} permission is required")
+
+
+@router.patch("/media/{media_id}")
+async def update_school_media_metadata(
+    media_id: uuid.UUID,
+    data: SchoolPortalMediaMetadataUpdate,
+    db: DbSession,
+    context: CurrentSchoolContext,
+):
+    if not {
+        "school.media.manage",
+        "school.profile.manage",
+    }.intersection(context.permissions):
+        raise HTTPException(
+            status_code=403,
+            detail="School media or profile management permission is required",
+        )
+    media = await MediaService.get_by_id(db, media_id)
+    if media is None or not MediaService.is_owned_by_school(
+        media,
+        context.school.id,
+    ):
+        raise HTTPException(status_code=404, detail="Media not found")
+    media = await MediaService.update(
+        db,
+        media,
+        **data.model_dump(exclude_unset=True),
+    )
+    return success(data=media, message="School media updated")
 
 
 @router.post("/media/batches", status_code=status.HTTP_201_CREATED)

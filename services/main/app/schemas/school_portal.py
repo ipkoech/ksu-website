@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import ConfigDict, EmailStr, Field
 
@@ -33,7 +33,9 @@ class SchoolPortalMediaSummary(BaseSchema):
     id: uuid.UUID
     link_id: uuid.UUID | None = None
     url: str
+    title: str | None = None
     alt_text: str | None = None
+    description: str | None = None
 
 
 class SchoolPortalDepartmentSummary(SchoolPortalEntitySummary):
@@ -110,6 +112,13 @@ class SchoolPortalMediaLinkCreate(BaseSchema):
     display_order: int = Field(default=100, ge=0)
 
 
+class SchoolPortalMediaMetadataUpdate(BaseSchema):
+    title: str | None = Field(default=None, max_length=255)
+    alt_text: str | None = Field(default=None, max_length=255)
+    description: str | None = Field(default=None, max_length=600)
+    metadata: dict[str, Any] | None = None
+
+
 class SchoolPortalProfileResponse(BaseSchema):
     id: uuid.UUID
     name: str
@@ -149,6 +158,7 @@ __all__ = [
     "SchoolPortalEntitySummary",
     "SchoolPortalMediaSummary",
     "SchoolPortalMediaLinkCreate",
+    "SchoolPortalMediaMetadataUpdate",
     "SchoolPortalPersonSummary",
     "SchoolPortalSchoolSummary",
     "SchoolPortalProfileResponse",

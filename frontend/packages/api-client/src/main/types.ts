@@ -43,7 +43,9 @@ export interface SchoolPortalMediaSummary {
   id: string;
   link_id?: string | null;
   url: string;
+  title: string | null;
   alt_text: string | null;
+  description: string | null;
 }
 
 export interface SchoolPortalSchoolSummary extends SchoolPortalEntitySummary {

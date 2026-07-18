@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import {
-  mediaApi,
   schoolPortalApi,
   type SchoolUploadBatch,
 } from "@ksu/api-client";
@@ -33,6 +32,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Textarea,
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
 
@@ -42,6 +42,7 @@ type PendingFile = {
   previewUrl: string;
   title: string;
   altText: string;
+  description: string;
   role: string;
   display_order: number;
   progress: number;
@@ -68,6 +69,7 @@ export function MediaBatchUploader() {
         previewUrl: URL.createObjectURL(file),
         title: file.name.replace(/\.[^.]+$/, ""),
         altText: "",
+        description: "",
         role: "gallery",
         display_order: current.length + index,
         progress: 0,
@@ -99,9 +101,10 @@ export function MediaBatchUploader() {
       patch(item.key, { batch, progress: 80 });
       const uploaded = batch.files[0];
       if (uploaded?.media_id) {
-        await mediaApi.update(uploaded.media_id, {
+        await schoolPortalApi.media.update(uploaded.media_id, {
           title: item.title,
           alt_text: item.altText || null,
+          description: item.description.trim() || null,
           metadata: { display_order: item.display_order, school_upload_role: item.role },
         });
       }
@@ -186,6 +189,7 @@ export function MediaBatchUploader() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1"><Label>Title</Label><Input value={item.title} onChange={(event) => patch(item.key, { title: event.target.value })} /></div>
                     <div className="space-y-1"><Label>Alt text</Label><Input value={item.altText} onChange={(event) => patch(item.key, { altText: event.target.value })} /></div>
+                    <div className="space-y-1 sm:col-span-2"><Label>Description</Label><Textarea rows={3} maxLength={600} value={item.description} placeholder="Briefly describe this media asset and its context." onChange={(event) => patch(item.key, { description: event.target.value })} /></div>
                     <div className="space-y-1"><Label>Role</Label><Select value={item.role} onValueChange={(role) => patch(item.key, { role })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="gallery">Gallery</SelectItem><SelectItem value="attachment">Attachment</SelectItem><SelectItem value="cover">Cover</SelectItem><SelectItem value="brochure">Brochure</SelectItem></SelectContent></Select></div>
                     <div className="space-y-1"><Label>Status</Label><div className="flex h-9 items-center text-sm capitalize">{item.status} · {item.file.name}</div></div>
                     <Progress className="sm:col-span-2" value={item.progress} aria-label={`${item.file.name} progress`} />
