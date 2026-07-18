@@ -9,7 +9,7 @@ import {
   type SchoolProgrammePayload,
   type SchoolProgrammeRecord,
 } from "@ksu/api-client";
-import { BookOpen, Loader2, Pencil, Plus, Search, Upload } from "lucide-react";
+import { Award, BookOpen, CircleCheck, GraduationCap, Layers3, Loader2, Pencil, Plus, Search, Upload } from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -40,6 +40,12 @@ import {
 import { MediaPicker } from "@/components/media/media-picker";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
 import { SchoolImportDialog } from "@/components/schools/imports/school-import-dialog";
+import {
+  SchoolFilterBar,
+  SchoolMetricGrid,
+  SchoolWorkspace,
+  SchoolWorkspaceHeader,
+} from "@/components/schools/shared/school-workspace";
 
 const EMPTY: SchoolProgrammePayload = {
   name: "",
@@ -82,18 +88,30 @@ export function SchoolProgrammesPage() {
   };
 
   return (
-    <main className="space-y-5 p-4 sm:p-6 lg:p-8">
-      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div><p className="text-sm font-medium text-primary">Academic offering</p><h1 className="text-2xl font-semibold tracking-tight">Programmes</h1><p className="mt-1 text-sm text-muted-foreground">Manage programme details, relationships, accreditation, media, and capacity.</p></div>
-        <div className="flex gap-2">
+    <SchoolWorkspace>
+      <SchoolWorkspaceHeader
+        eyebrow="Academic offering"
+        title="Programmes"
+        description="Maintain the programmes students discover—from curriculum and entry requirements to accreditation and capacity."
+        schoolName={school.name}
+        icon={GraduationCap}
+        actions={<>
           {can("school.programmes.bulk") ? <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-2 size-4" /> Import</Button> : null}
           {can("school.programmes.create") ? <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 size-4" /> Add programme</Button> : null}
-        </div>
-      </header>
+        </>}
+      />
+      <SchoolMetricGrid items={[
+        { label: "Programmes", value: programmesQuery.data?.meta.total ?? 0, detail: "In the school portfolio", icon: GraduationCap },
+        { label: "Active", value: programmesQuery.data?.data.filter((item) => item.is_active).length ?? 0, detail: "Currently offered", icon: CircleCheck, tone: "success" },
+        { label: "Study levels", value: new Set(programmesQuery.data?.data.map((item) => item.level) ?? []).size, detail: "Represented on this page", icon: Layers3, tone: "info" },
+        { label: "Accredited", value: programmesQuery.data?.data.filter((item) => Boolean(item.accreditation_status)).length ?? 0, detail: "With status recorded", icon: Award, tone: "warning" },
+      ]} />
+      <SchoolFilterBar>
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_14rem]">
         <label className="relative"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" /><Input className="pl-9" defaultValue={search} placeholder="Search programmes" onKeyDown={(event) => event.key === "Enter" && updateUrl("search", event.currentTarget.value.trim())} /></label>
         <Select value={level} onValueChange={(value) => updateUrl("level", value)}><SelectTrigger aria-label="Programme level"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All levels</SelectItem><SelectItem value="certificate">Certificate</SelectItem><SelectItem value="diploma">Diploma</SelectItem><SelectItem value="undergraduate">Undergraduate</SelectItem><SelectItem value="masters">Masters</SelectItem><SelectItem value="doctorate">Doctorate</SelectItem></SelectContent></Select>
       </div>
+      </SchoolFilterBar>
       {programmesQuery.error ? <Alert variant="destructive"><AlertDescription>{programmesQuery.error.message}</AlertDescription></Alert> : null}
       <div className="overflow-hidden rounded-lg border bg-background">
         <Table>
@@ -128,7 +146,7 @@ export function SchoolProgrammesPage() {
         onCommit={async (rows, mode, key) => (await schoolPortalApi.programmes.commitImport(rows, mode, key)).data}
         onComplete={async () => { await programmesQuery.refetch(); }}
       />
-    </main>
+    </SchoolWorkspace>
   );
 }
 

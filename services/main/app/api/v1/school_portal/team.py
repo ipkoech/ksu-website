@@ -30,6 +30,7 @@ from ....services.school_portal_team import (
     preview_school_team_import,
     resend_school_team_invite,
     revoke_school_portal_access,
+    serialize_school_team_assignments,
     team_import_template_csv,
     team_import_template_xlsx,
     transfer_school_team_assignment,
@@ -63,12 +64,18 @@ async def get_team(
         sort=sort,
         order=order,
     )
-    return success(data=result.items, meta=result.meta)
+    return success(
+        data=await serialize_school_team_assignments(db, context.school.id, result.items),
+        meta=result.meta,
+    )
 
 
 @router.post("/team", status_code=status.HTTP_201_CREATED)
 async def post_team_member(data: SchoolTeamMemberCreate, db: DbSession, context: CurrentSchoolContext):
-    return success(data=await create_school_team_member(db, context, data))
+    assignment = await create_school_team_member(db, context, data)
+    return success(
+        data=(await serialize_school_team_assignments(db, context.school.id, [assignment]))[0]
+    )
 
 
 @router.get("/team/imports/template")
@@ -123,7 +130,10 @@ def _require_bulk(context: CurrentSchoolContext) -> None:
 
 @router.get("/team/{assignment_id}")
 async def get_team_member(assignment_id: uuid.UUID, db: DbSession, context: CurrentSchoolContext):
-    return success(data=await get_school_team_assignment(db, context, assignment_id))
+    assignment = await get_school_team_assignment(db, context, assignment_id)
+    return success(
+        data=(await serialize_school_team_assignments(db, context.school.id, [assignment]))[0]
+    )
 
 
 @router.patch("/team/{assignment_id}")
@@ -133,12 +143,18 @@ async def patch_team_member(
     db: DbSession,
     context: CurrentSchoolContext,
 ):
-    return success(data=await update_school_team_member(db, context, assignment_id, data))
+    assignment = await update_school_team_member(db, context, assignment_id, data)
+    return success(
+        data=(await serialize_school_team_assignments(db, context.school.id, [assignment]))[0]
+    )
 
 
 @router.post("/team/{assignment_id}/activate")
 async def activate_team_member(assignment_id: uuid.UUID, db: DbSession, context: CurrentSchoolContext):
-    return success(data=await activate_school_team_assignment(db, context, assignment_id))
+    assignment = await activate_school_team_assignment(db, context, assignment_id)
+    return success(
+        data=(await serialize_school_team_assignments(db, context.school.id, [assignment]))[0]
+    )
 
 
 @router.post("/team/{assignment_id}/deactivate")
@@ -148,7 +164,10 @@ async def deactivate_team_member(
     db: DbSession,
     context: CurrentSchoolContext,
 ):
-    return success(data=await deactivate_school_team_assignment(db, context, assignment_id, data))
+    assignment = await deactivate_school_team_assignment(db, context, assignment_id, data)
+    return success(
+        data=(await serialize_school_team_assignments(db, context.school.id, [assignment]))[0]
+    )
 
 
 @router.post("/team/{assignment_id}/end")
@@ -158,7 +177,10 @@ async def end_team_member(
     db: DbSession,
     context: CurrentSchoolContext,
 ):
-    return success(data=await end_school_team_assignment(db, context, assignment_id, data))
+    assignment = await end_school_team_assignment(db, context, assignment_id, data)
+    return success(
+        data=(await serialize_school_team_assignments(db, context.school.id, [assignment]))[0]
+    )
 
 
 @router.post("/team/{assignment_id}/transfer")
@@ -168,15 +190,16 @@ async def transfer_team_member(
     db: DbSession,
     context: CurrentSchoolContext,
 ):
+    assignment = await transfer_school_team_assignment(
+        db,
+        context,
+        assignment_id,
+        department_id=data.department_id,
+        role=data.role,
+        title=data.title,
+    )
     return success(
-        data=await transfer_school_team_assignment(
-            db,
-            context,
-            assignment_id,
-            department_id=data.department_id,
-            role=data.role,
-            title=data.title,
-        )
+        data=(await serialize_school_team_assignments(db, context.school.id, [assignment]))[0]
     )
 
 

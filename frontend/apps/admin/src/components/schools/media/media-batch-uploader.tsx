@@ -11,9 +11,12 @@ import {
   ArrowUp,
   FileText,
   ImageIcon,
+  Images,
   RefreshCw,
+  TimerReset,
   Trash2,
   UploadCloud,
+  XCircle,
 } from "lucide-react";
 import {
   Alert,
@@ -35,6 +38,11 @@ import {
   Textarea,
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import {
+  SchoolMetricGrid,
+  SchoolWorkspace,
+  SchoolWorkspaceHeader,
+} from "@/components/schools/shared/school-workspace";
 
 type PendingFile = {
   key: string;
@@ -159,12 +167,20 @@ export function MediaBatchUploader() {
   };
 
   return (
-    <main className="space-y-5 p-4 sm:p-6 lg:p-8">
-      <header>
-        <p className="text-sm font-medium text-primary">School media</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Media Batch Uploader</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Upload images and documents concurrently with per-file metadata and retry.</p>
-      </header>
+    <SchoolWorkspace>
+      <SchoolWorkspaceHeader
+        eyebrow="School media"
+        title="Media library"
+        description="Prepare images and documents with meaningful titles, descriptions and roles before adding them to your school library."
+        schoolName={school.name}
+        icon={Images}
+      />
+      <SchoolMetricGrid items={[
+        { label: "Selected files", value: items.length, detail: items.length ? "Ready in this batch" : "Choose files to begin", icon: Images },
+        { label: "Ready to upload", value: items.filter((item) => item.status === "pending").length, detail: "Metadata can still be edited", icon: TimerReset, tone: "warning" },
+        { label: "Completed", value: items.filter((item) => item.status === "completed").length, detail: "Added to school media", icon: UploadCloud, tone: "success" },
+        { label: "Needs attention", value: items.filter((item) => item.status === "failed").length, detail: "Retry failed uploads", icon: XCircle, tone: "danger" },
+      ]} />
       <Card>
         <CardHeader><CardTitle className="text-base">Select files</CardTitle><CardDescription>Images, PDF, Office documents, audio, and video are validated by the server.</CardDescription></CardHeader>
         <CardContent>
@@ -172,7 +188,7 @@ export function MediaBatchUploader() {
             <UploadCloud className="mb-3 size-8 text-primary" />
             <span className="font-medium">Choose multiple files</span>
             <span className="text-sm text-muted-foreground">or drag files onto this area</span>
-            <Input className="sr-only" type="file" multiple onChange={(event) => addFiles(event.target.files)} />
+            <Input className="hidden" type="file" multiple onChange={(event) => addFiles(event.target.files)} />
           </label>
         </CardContent>
       </Card>
@@ -218,6 +234,6 @@ export function MediaBatchUploader() {
           <div className="flex justify-end"><Button disabled={uploading || !items.some((item) => item.status === "pending")} onClick={uploadAll}><UploadCloud className="mr-2 size-4" /> {uploading ? "Uploading…" : "Upload all"}</Button></div>
         </>
       ) : null}
-    </main>
+    </SchoolWorkspace>
   );
 }

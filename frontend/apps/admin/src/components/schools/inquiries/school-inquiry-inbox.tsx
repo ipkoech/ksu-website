@@ -7,7 +7,7 @@ import {
   schoolPortalQueryKeys,
   type SchoolInquiry,
 } from "@ksu/api-client";
-import { AlertTriangle, Clock3, Mail, Search } from "lucide-react";
+import { AlertTriangle, CircleCheck, Clock3, Inbox, Mail, MessageCircleMore, Search, Siren } from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -23,6 +23,12 @@ import {
   Skeleton,
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import {
+  SchoolFilterBar,
+  SchoolMetricGrid,
+  SchoolWorkspace,
+  SchoolWorkspaceHeader,
+} from "@/components/schools/shared/school-workspace";
 import { InquiryConversation } from "./inquiry-conversation";
 
 const STATUS_OPTIONS = ["all", "new", "open", "in_progress", "waiting_for_requester", "replied", "resolved", "closed", "spam"];
@@ -75,13 +81,22 @@ export function SchoolInquiryInbox() {
   };
 
   return (
-    <main className="space-y-5 p-4 sm:p-6 lg:p-8">
-      <header>
-        <p className="text-sm font-medium text-primary">School support</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Inquiry Inbox</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Manage requester conversations, ownership, delivery, and response SLA.</p>
-      </header>
-      <section aria-label="Inquiry filters" className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+    <SchoolWorkspace>
+      <SchoolWorkspaceHeader
+        eyebrow="School support"
+        title="Inquiry inbox"
+        description="Keep requester conversations moving, clarify ownership, and protect the school’s first-response service level."
+        schoolName={school.name}
+        icon={Inbox}
+      />
+      <SchoolMetricGrid items={[
+        { label: "Matching inquiries", value: inboxQuery.data?.meta.total ?? 0, detail: "Across current filters", icon: Inbox },
+        { label: "New", value: inboxQuery.data?.data.filter((item) => item.status === "new").length ?? 0, detail: "Waiting to be opened", icon: MessageCircleMore, tone: "info" },
+        { label: "Resolved", value: inboxQuery.data?.data.filter((item) => ["resolved", "closed"].includes(item.status)).length ?? 0, detail: "Completed on this page", icon: CircleCheck, tone: "success" },
+        { label: "Urgent", value: inboxQuery.data?.data.filter((item) => item.priority === "urgent").length ?? 0, detail: "Requires priority handling", icon: Siren, tone: "danger" },
+      ]} />
+      <SchoolFilterBar label="Filter conversations">
+      <section className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Select value={status} onValueChange={(value) => updateUrl("status", value)}><SelectTrigger aria-label="Inquiry status"><SelectValue /></SelectTrigger><SelectContent>{STATUS_OPTIONS.map((item) => <SelectItem key={item} value={item}>{item.replaceAll("_", " ")}</SelectItem>)}</SelectContent></Select>
         <label className="relative"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" /><Input className="pl-9" value={category} placeholder="Category" aria-label="Inquiry category" onChange={(event) => updateUrl("category", event.target.value)} /></label>
         <Select value={priority} onValueChange={(value) => updateUrl("priority", value)}><SelectTrigger aria-label="Inquiry priority"><SelectValue /></SelectTrigger><SelectContent>{PRIORITY_OPTIONS.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select>
@@ -89,6 +104,7 @@ export function SchoolInquiryInbox() {
         <div className="space-y-1"><Label htmlFor="inquiry-from" className="text-xs">Created from</Label><Input id="inquiry-from" type="date" value={created_from} onChange={(event) => updateUrl("created_from", event.target.value)} /></div>
         <div className="space-y-1"><Label htmlFor="inquiry-to" className="text-xs">Created to</Label><Input id="inquiry-to" type="date" value={created_to} onChange={(event) => updateUrl("created_to", event.target.value)} /></div>
       </section>
+      </SchoolFilterBar>
       {inboxQuery.error ? <Alert variant="destructive"><AlertDescription>{inboxQuery.error.message}</AlertDescription></Alert> : null}
       {inboxQuery.isPending ? (
         <div className="space-y-3">{Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-28" />)}</div>
@@ -132,6 +148,6 @@ export function SchoolInquiryInbox() {
         <Button variant="outline" size="sm" disabled={page >= (inboxQuery.data?.meta.pages ?? 1)} onClick={() => updateUrl("page", String(page + 1))}>Next</Button>
       </div>
       <InquiryConversation inquiryId={inquiryId} open={Boolean(inquiryId)} onOpenChange={(open) => !open && updateUrl("inquiry")} />
-    </main>
+    </SchoolWorkspace>
   );
 }

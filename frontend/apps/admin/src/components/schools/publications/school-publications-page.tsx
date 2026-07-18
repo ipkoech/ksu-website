@@ -9,7 +9,7 @@ import {
   type SchoolPublicationPayload,
   type SchoolPublicationRecord,
 } from "@ksu/api-client";
-import { BookOpen, Loader2, Pencil, Plus } from "lucide-react";
+import { BookOpen, BookOpenCheck, FilePenLine, Globe2, Loader2, Pencil, Plus, Send } from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -39,6 +39,12 @@ import {
   Textarea,
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import {
+  SchoolFilterBar,
+  SchoolMetricGrid,
+  SchoolWorkspace,
+  SchoolWorkspaceHeader,
+} from "@/components/schools/shared/school-workspace";
 
 const EMPTY: SchoolPublicationPayload = {
   title: "",
@@ -67,15 +73,27 @@ export function SchoolPublicationsPage() {
   };
 
   return (
-    <main className="space-y-5 p-4 sm:p-6 lg:p-8">
-      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div><p className="text-sm font-medium text-primary">Research outputs</p><h1 className="text-2xl font-semibold tracking-tight">Publications</h1><p className="mt-1 text-sm text-muted-foreground">Author school publications and submit them to Research for review.</p></div>
-        {can("school.publications.manage") ? <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 size-4" /> Add publication</Button> : null}
-      </header>
+    <SchoolWorkspace>
+      <SchoolWorkspaceHeader
+        eyebrow="Research outputs"
+        title="Publications"
+        description="Capture scholarly work, complete its metadata, and follow each publication through institutional review."
+        schoolName={school.name}
+        icon={BookOpenCheck}
+        actions={can("school.publications.manage") ? <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 size-4" /> Add publication</Button> : null}
+      />
+      <SchoolMetricGrid items={[
+        { label: "Publications", value: publicationsQuery.data?.meta.total ?? publicationsQuery.data?.data.length ?? 0, detail: "School research records", icon: BookOpenCheck },
+        { label: "Drafts", value: publicationsQuery.data?.data.filter((item) => item.status === "draft").length ?? 0, detail: "Still being prepared", icon: FilePenLine, tone: "warning" },
+        { label: "In review", value: publicationsQuery.data?.data.filter((item) => ["submitted", "under_review"].includes(item.status)).length ?? 0, detail: "With the research office", icon: Send, tone: "info" },
+        { label: "Published", value: publicationsQuery.data?.data.filter((item) => item.status === "published").length ?? 0, detail: "Completed outputs", icon: Globe2, tone: "success" },
+      ]} />
+      <SchoolFilterBar>
       <Select value={status} onValueChange={(value) => updateUrl("status", value)}>
         <SelectTrigger className="w-52" aria-label="Publication status"><SelectValue /></SelectTrigger>
         <SelectContent>{["all", "draft", "submitted", "under_review", "accepted", "published", "retracted"].map((item) => <SelectItem key={item} value={item}>{item.replaceAll("_", " ")}</SelectItem>)}</SelectContent>
       </Select>
+      </SchoolFilterBar>
       {publicationsQuery.error ? <Alert variant="destructive"><AlertDescription>{publicationsQuery.error.message}</AlertDescription></Alert> : null}
       <div className="overflow-hidden rounded-lg border bg-background">
         <Table>
@@ -100,7 +118,7 @@ export function SchoolPublicationsPage() {
         onOpenChange={(open) => { if (!open) { setCreateOpen(false); updateUrl("publication"); } }}
         onSaved={async () => { await publicationsQuery.refetch(); }}
       />
-    </main>
+    </SchoolWorkspace>
   );
 }
 

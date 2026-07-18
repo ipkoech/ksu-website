@@ -337,6 +337,84 @@ async def list_school_team(
     return await paginate_query(db, query, page=page, per_page=per_page)
 
 
+async def serialize_school_team_assignments(
+    db: AsyncSession,
+    school_id: uuid.UUID,
+    assignments: list[StaffAssignment],
+) -> list[dict[str, Any]]:
+    """Return the finite portal contract instead of traversing ORM relationships."""
+    if not assignments:
+        return []
+
+    person_ids = {assignment.person_id for assignment in assignments}
+    loaded_people = await db.execute(select(Person).where(Person.id.in_(person_ids)))
+    people = {person.id: person for person in loaded_people.scalars().all()}
+
+    department_ids = {
+        assignment.entity_id
+        for assignment in assignments
+        if assignment.entity_type == "department" and assignment.entity_id is not None
+    }
+    departments: dict[uuid.UUID, Department] = {}
+    if department_ids:
+        loaded_departments = await db.execute(
+            select(Department).where(Department.id.in_(department_ids))
+        )
+        departments = {
+            department.id: department for department in loaded_departments.scalars().all()
+        }
+
+    user_ids = {assignment.user_id for assignment in assignments if assignment.user_id}
+    portal_roles: dict[uuid.UUID, str] = {}
+    if user_ids:
+        loaded_roles = await db.execute(
+            select(UserRole.user_id, Role.name)
+            .join(Role, UserRole.role_id == Role.id)
+            .where(
+                UserRole.user_id.in_(user_ids),
+                UserRole.scope_type == "school",
+                UserRole.scope_id == school_id,
+                UserRole.is_active.is_(True),
+                UserRole.deleted_at.is_(None),
+                Role.name.in_(("school_admin", "school_editor")),
+            )
+        )
+        portal_roles = {user_id: role_name for user_id, role_name in loaded_roles.all()}
+
+    payloads: list[dict[str, Any]] = []
+    for assignment in assignments:
+        person = people.get(assignment.person_id)
+        department = departments.get(assignment.entity_id)
+        payloads.append(
+            {
+                "id": assignment.id,
+                "person_id": assignment.person_id,
+                "full_name": getattr(person, "full_name", None),
+                "title": assignment.title,
+                "role": assignment.role,
+                "department_id": department.id if department else None,
+                "department": (
+                    {"id": department.id, "name": department.name}
+                    if department
+                    else None
+                ),
+                "email": getattr(person, "email", None),
+                "phone": getattr(person, "phone", None),
+                "employee_number": getattr(person, "employee_number", None),
+                "is_primary": assignment.is_primary,
+                "is_public": assignment.is_public,
+                "is_active": assignment.status == "active",
+                "display_order": assignment.display_order,
+                "portal_role": portal_roles.get(assignment.user_id),
+                "user_id": assignment.user_id,
+                "start_date": assignment.start_date,
+                "end_date": assignment.end_date,
+                "created_at": assignment.created_at,
+            }
+        )
+    return payloads
+
+
 async def update_school_team_member(
     db: AsyncSession,
     context: SchoolPortalContext,
@@ -763,6 +841,7 @@ __all__ = [
     "get_role_by_name",
     "get_school_team_assignment",
     "list_school_team",
+    "serialize_school_team_assignments",
     "preview_school_team_import",
     "resend_school_team_invite",
     "revoke_school_portal_access",

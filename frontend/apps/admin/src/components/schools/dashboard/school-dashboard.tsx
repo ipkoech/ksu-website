@@ -13,6 +13,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock3,
+  LayoutDashboard,
   RefreshCw,
 } from "lucide-react";
 import {
@@ -30,6 +31,10 @@ import {
   Skeleton,
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import {
+  SchoolWorkspace,
+  SchoolWorkspaceHeader,
+} from "@/components/schools/shared/school-workspace";
 import { SchoolStatCard } from "./school-stat-card";
 import { SchoolTrendChart } from "./school-trend-chart";
 
@@ -83,16 +88,15 @@ export function SchoolDashboard() {
   if (!dashboard) return null;
 
   return (
-    <main className="space-y-5 p-4 sm:p-6 lg:p-8">
-      <header className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-        <div>
-          <p className="text-sm font-medium text-primary">School operations</p>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{school.name}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Updated {new Date(dashboard.generated_at).toLocaleString()}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-1 rounded-lg border bg-background p-1" aria-label="Dashboard range">
+    <SchoolWorkspace>
+      <SchoolWorkspaceHeader
+        eyebrow="School operations"
+        title="Administration dashboard"
+        description="A live view of your people, academic portfolio, publishing workflow, and requester activity."
+        schoolName={school.name}
+        icon={LayoutDashboard}
+        meta={<p className="text-xs text-muted-foreground">Updated {new Date(dashboard.generated_at).toLocaleString()}</p>}
+        actions={<div className="flex flex-wrap gap-1 rounded-lg border bg-background p-1" aria-label="Dashboard range">
           {RANGES.map((item) => (
             <Button
               key={item.value}
@@ -104,8 +108,8 @@ export function SchoolDashboard() {
               {item.label}
             </Button>
           ))}
-        </div>
-      </header>
+        </div>}
+      />
 
       <section aria-label="School summary" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {dashboard.summary_cards.map((card) => (
@@ -249,6 +253,6 @@ export function SchoolDashboard() {
           </CardContent>
         </Card>
       </section>
-    </main>
+    </SchoolWorkspace>
   );
 }

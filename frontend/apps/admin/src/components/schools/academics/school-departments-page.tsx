@@ -9,7 +9,7 @@ import {
   type SchoolDepartmentPayload,
   type SchoolDepartmentRecord,
 } from "@ksu/api-client";
-import { Building2, Loader2, Pencil, Plus, Search, Upload } from "lucide-react";
+import { Building2, CircleCheck, Eye, Layers3, Loader2, Pencil, Plus, Search, Upload } from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -40,6 +40,12 @@ import {
 import { MediaPicker } from "@/components/media/media-picker";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
 import { SchoolImportDialog } from "@/components/schools/imports/school-import-dialog";
+import {
+  SchoolFilterBar,
+  SchoolMetricGrid,
+  SchoolWorkspace,
+  SchoolWorkspaceHeader,
+} from "@/components/schools/shared/school-workspace";
 
 const EMPTY: SchoolDepartmentPayload = {
   name: "",
@@ -79,18 +85,30 @@ export function SchoolDepartmentsPage() {
   };
 
   return (
-    <main className="space-y-5 p-4 sm:p-6 lg:p-8">
-      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div><p className="text-sm font-medium text-primary">Academic structure</p><h1 className="text-2xl font-semibold tracking-tight">Departments</h1><p className="mt-1 text-sm text-muted-foreground">Manage school-owned departments and public profiles.</p></div>
-        <div className="flex gap-2">
+    <SchoolWorkspace>
+      <SchoolWorkspaceHeader
+        eyebrow="Academic structure"
+        title="Departments"
+        description="Shape your school structure, leadership, contact details and the department profiles seen by the public."
+        schoolName={school.name}
+        icon={Building2}
+        actions={<>
           {can("school.departments.bulk") ? <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-2 size-4" /> Import</Button> : null}
           {can("school.departments.create") ? <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 size-4" /> Add department</Button> : null}
-        </div>
-      </header>
+        </>}
+      />
+      <SchoolMetricGrid items={[
+        { label: "Departments", value: departmentsQuery.data?.meta.total ?? 0, detail: "Owned by this school", icon: Building2 },
+        { label: "Active", value: departmentsQuery.data?.data.filter((item) => item.is_active).length ?? 0, detail: "On this page", icon: CircleCheck, tone: "success" },
+        { label: "Public profiles", value: departmentsQuery.data?.data.filter((item) => item.is_public).length ?? 0, detail: "Visible online", icon: Eye, tone: "info" },
+        { label: "Department types", value: new Set(departmentsQuery.data?.data.map((item) => item.department_type) ?? []).size, detail: "Academic, service or research", icon: Layers3, tone: "warning" },
+      ]} />
+      <SchoolFilterBar>
       <label className="relative block max-w-xl">
         <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
         <Input className="pl-9" defaultValue={search} placeholder="Search departments" onKeyDown={(event) => event.key === "Enter" && updateUrl("search", event.currentTarget.value.trim())} />
       </label>
+      </SchoolFilterBar>
       {departmentsQuery.error ? <Alert variant="destructive"><AlertDescription>{departmentsQuery.error.message}</AlertDescription></Alert> : null}
       <div className="overflow-hidden rounded-lg border bg-background">
         <Table>
@@ -127,7 +145,7 @@ export function SchoolDepartmentsPage() {
         onCommit={async (rows, mode, key) => (await schoolPortalApi.departments.commitImport(rows, mode, key)).data}
         onComplete={async () => { await departmentsQuery.refetch(); }}
       />
-    </main>
+    </SchoolWorkspace>
   );
 }
 

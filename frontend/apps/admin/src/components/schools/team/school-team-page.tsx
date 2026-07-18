@@ -8,7 +8,7 @@ import {
   schoolPortalQueryKeys,
   type SchoolTeamRole,
 } from "@ksu/api-client";
-import { Download, Plus, Search, Upload, UserRound } from "lucide-react";
+import { Download, Plus, Search, ShieldCheck, Upload, UserCheck, UserRound, UsersRound } from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -27,6 +27,12 @@ import {
   Skeleton,
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import {
+  SchoolFilterBar,
+  SchoolMetricGrid,
+  SchoolWorkspace,
+  SchoolWorkspaceHeader,
+} from "@/components/schools/shared/school-workspace";
 import { TeamImportDialog } from "./team-import-dialog";
 import { TeamMemberSheet } from "./team-member-sheet";
 
@@ -80,14 +86,14 @@ export function SchoolTeamPage() {
   };
 
   return (
-    <main className="space-y-5 p-4 sm:p-6 lg:p-8">
-      <header className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-        <div>
-          <p className="text-sm font-medium text-primary">People & access</p>
-          <h1 className="text-2xl font-semibold tracking-tight">School Team</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{teamQuery.data?.meta.total ?? 0} assignments in {school.name}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+    <SchoolWorkspace>
+      <SchoolWorkspaceHeader
+        eyebrow="People & access"
+        title="School team"
+        description="Organise leadership, academic and support staff, and control who can work in this portal."
+        schoolName={school.name}
+        icon={UsersRound}
+        actions={<>
           {can("school.team.bulk") ? (
             <>
               <Button asChild variant="outline"><a href={schoolPortalApi.team.templateUrl()} download><Download className="mr-2 size-4" /> Template</a></Button>
@@ -95,8 +101,15 @@ export function SchoolTeamPage() {
             </>
           ) : null}
           {can("school.team.create") ? <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 size-4" /> Add member</Button> : null}
-        </div>
-      </header>
+        </>}
+      />
+      <SchoolMetricGrid items={[
+        { label: "Team assignments", value: teamQuery.data?.meta.total ?? members.length, detail: "Across all school roles", icon: UsersRound },
+        { label: "Leadership", value: members.filter((item) => ["dean", "deputy_dean", "cod", "hod"].includes(item.role)).length, detail: "Dean, deputies and heads", icon: ShieldCheck, tone: "info" },
+        { label: "Portal access", value: members.filter((item) => item.portal_role).length, detail: "Admins and editors", icon: UserCheck, tone: "success" },
+        { label: "Public profiles", value: members.filter((item) => item.is_public).length, detail: "Visible on the website", icon: UserRound, tone: "warning" },
+      ]} />
+      <SchoolFilterBar>
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem]">
         <label className="relative">
           <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
@@ -115,6 +128,7 @@ export function SchoolTeamPage() {
           <SelectContent><SelectItem value="active">Active</SelectItem><SelectItem value="inactive">Inactive</SelectItem><SelectItem value="ended">Ended</SelectItem><SelectItem value="all">All</SelectItem></SelectContent>
         </Select>
       </div>
+      </SchoolFilterBar>
 
       {teamQuery.error ? <Alert variant="destructive"><AlertDescription>{teamQuery.error.message}</AlertDescription></Alert> : null}
       {teamQuery.isPending ? (
@@ -156,6 +170,6 @@ export function SchoolTeamPage() {
         }}
       />
       <TeamImportDialog open={importOpen} onOpenChange={setImportOpen} onComplete={async () => { await teamQuery.refetch(); }} />
-    </main>
+    </SchoolWorkspace>
   );
 }

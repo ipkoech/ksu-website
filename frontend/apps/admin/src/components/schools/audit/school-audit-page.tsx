@@ -6,8 +6,15 @@ import {
   schoolPortalApi,
   schoolPortalQueryKeys,
 } from "@ksu/api-client";
+import { Activity, CircleCheck, ListFilter, ShieldCheck, UserRound } from "lucide-react";
 import { Alert, AlertDescription, Badge, Button, Input, Skeleton } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import {
+  SchoolFilterBar,
+  SchoolMetricGrid,
+  SchoolWorkspace,
+  SchoolWorkspaceHeader,
+} from "@/components/schools/shared/school-workspace";
 
 export function SchoolAuditPage() {
   const { school } = useSchoolPortal();
@@ -42,16 +49,22 @@ export function SchoolAuditPage() {
   };
 
   return (
-    <main className="space-y-5 p-4 sm:p-6 lg:p-8">
-      <header>
-        <p className="text-sm font-medium text-primary">Governance</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Audit Trail</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Review school-scoped administrative activity and outcomes.
-        </p>
-      </header>
-
-      <section aria-label="Audit filters" className="grid gap-3 sm:grid-cols-3">
+    <SchoolWorkspace>
+      <SchoolWorkspaceHeader
+        eyebrow="Governance"
+        title="Audit trail"
+        description="A school-scoped record of administrative actions, affected resources, actors and their outcomes."
+        schoolName={school.name}
+        icon={ShieldCheck}
+      />
+      <SchoolMetricGrid items={[
+        { label: "Recorded events", value: auditQuery.data?.meta.total ?? 0, detail: "Across current filters", icon: Activity },
+        { label: "Successful", value: auditQuery.data?.data.filter((item) => item.status === "success").length ?? 0, detail: "Completed on this page", icon: CircleCheck, tone: "success" },
+        { label: "Actors", value: new Set(auditQuery.data?.data.map((item) => item.user_id).filter(Boolean) ?? []).size, detail: "Distinct users on this page", icon: UserRound, tone: "info" },
+        { label: "Action types", value: new Set(auditQuery.data?.data.map((item) => item.action) ?? []).size, detail: "Distinct operations", icon: ListFilter, tone: "warning" },
+      ]} />
+      <SchoolFilterBar label="Filter audit events">
+      <section className="grid gap-3 sm:grid-cols-3">
         <Input
           aria-label="Filter by action"
           placeholder="Action"
@@ -71,6 +84,7 @@ export function SchoolAuditPage() {
           onChange={(event) => updateUrl("status", event.target.value)}
         />
       </section>
+      </SchoolFilterBar>
 
       {auditQuery.error ? (
         <Alert variant="destructive">
@@ -147,6 +161,6 @@ export function SchoolAuditPage() {
           Next
         </Button>
       </div>
-    </main>
+    </SchoolWorkspace>
   );
 }

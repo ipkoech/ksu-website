@@ -9,7 +9,7 @@ import {
   type SchoolContentRecord,
   type SchoolContentType,
 } from "@ksu/api-client";
-import { FileText, Plus, Search } from "lucide-react";
+import { CircleCheck, FilePenLine, FileText, Newspaper, Plus, Search, Send } from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -26,6 +26,12 @@ import {
   TabsTrigger,
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import {
+  SchoolFilterBar,
+  SchoolMetricGrid,
+  SchoolWorkspace,
+  SchoolWorkspaceHeader,
+} from "@/components/schools/shared/school-workspace";
 import { ContentEditorSheet } from "./content-editor-sheet";
 
 const CONTENT_TYPES: Array<{ value: SchoolContentType; label: string }> = [
@@ -72,11 +78,21 @@ export function SchoolContentStudio() {
   const focused = records.find((record) => record.id === focusedId) ?? null;
 
   return (
-    <main className="space-y-5 p-4 sm:p-6 lg:p-8">
-      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div><p className="text-sm font-medium text-primary">School editorial</p><h1 className="text-2xl font-semibold tracking-tight">Content Studio</h1><p className="mt-1 text-sm text-muted-foreground">Draft school content and hand it to CoCMS for central review.</p></div>
-        {can("school.content.manage") ? <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 size-4" /> New {CONTENT_TYPES.find((item) => item.value === contentType)?.label}</Button> : null}
-      </header>
+    <SchoolWorkspace>
+      <SchoolWorkspaceHeader
+        eyebrow="School editorial"
+        title="Content studio"
+        description="Create timely school stories, news and announcements, then follow them through the central publishing workflow."
+        schoolName={school.name}
+        icon={Newspaper}
+        actions={can("school.content.manage") ? <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 size-4" /> New {CONTENT_TYPES.find((item) => item.value === contentType)?.label}</Button> : null}
+      />
+      <SchoolMetricGrid items={[
+        { label: `${CONTENT_TYPES.find((item) => item.value === contentType)?.label ?? "Content"} records`, value: contentQuery.data?.length ?? 0, detail: "In this content collection", icon: Newspaper },
+        { label: "Drafts", value: records.filter((item) => String(item.workflow_status || item.status || "draft") === "draft").length, detail: "Work in progress", icon: FilePenLine, tone: "warning" },
+        { label: "In workflow", value: records.filter((item) => ["submitted", "in_review", "changes_requested", "approved"].includes(String(item.workflow_status || item.status))).length, detail: "Awaiting action", icon: Send, tone: "info" },
+        { label: "Published", value: records.filter((item) => String(item.workflow_status || item.status) === "published").length, detail: "Visible to audiences", icon: CircleCheck, tone: "success" },
+      ]} />
       <Tabs
         value={contentType}
         onValueChange={(value) => {
@@ -90,6 +106,7 @@ export function SchoolContentStudio() {
           {CONTENT_TYPES.map((item) => <TabsTrigger key={item.value} value={item.value}>{item.label}</TabsTrigger>)}
         </TabsList>
       </Tabs>
+      <SchoolFilterBar>
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_14rem]">
         <label className="relative"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" /><Input className="pl-9" defaultValue={search} placeholder="Search content" onKeyDown={(event) => event.key === "Enter" && updateUrl("search", event.currentTarget.value.trim())} /></label>
         <Select value={status} onValueChange={(value) => updateUrl("status", value)}>
@@ -97,6 +114,7 @@ export function SchoolContentStudio() {
           <SelectContent>{["all", "draft", "submitted", "in_review", "changes_requested", "approved", "published", "archived"].map((item) => <SelectItem key={item} value={item}>{item.replaceAll("_", " ")}</SelectItem>)}</SelectContent>
         </Select>
       </div>
+      </SchoolFilterBar>
       {contentQuery.error ? <Alert variant="destructive"><AlertDescription>{contentQuery.error.message}</AlertDescription></Alert> : null}
       <section className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
         {records.map((record) => <ContentCard key={record.id} record={record} onOpen={() => updateUrl("record", record.id)} />)}
@@ -109,7 +127,7 @@ export function SchoolContentStudio() {
         onOpenChange={(open) => { if (!open) { setCreateOpen(false); updateUrl("record"); } }}
         onSaved={async () => { await contentQuery.refetch(); }}
       />
-    </main>
+    </SchoolWorkspace>
   );
 }
 
