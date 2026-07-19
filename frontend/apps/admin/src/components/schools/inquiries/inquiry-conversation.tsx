@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   schoolPortalApi,
@@ -13,7 +13,6 @@ import {
   AlertDescription,
   Badge,
   Button,
-  Input,
   Label,
   Select,
   SelectContent,
@@ -32,6 +31,7 @@ import {
   Textarea,
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import { SchoolTeamSelect } from "@/components/schools/shared/school-reference-selectors";
 
 const STATUSES: SchoolInquiryStatus[] = [
   "new",
@@ -63,6 +63,9 @@ export function InquiryConversation({
     enabled: Boolean(inquiryId && open),
   });
   const inquiry = inquiryQuery.data;
+  useEffect(() => {
+    setAssignee(inquiry?.assigned_to_user_id ?? "");
+  }, [inquiry?.assigned_to_user_id]);
   const refresh = async () => { await inquiryQuery.refetch(); };
   const reply = useMutation({
     mutationFn: () => schoolPortalApi.inquiries.reply(inquiryId!, body, crypto.randomUUID()),
@@ -109,9 +112,18 @@ export function InquiryConversation({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="inquiry-assignee">Assign to user ID</Label>
+                <Label htmlFor="inquiry-assignee">Assigned team member</Label>
                 <div className="flex gap-2">
-                  <Input id="inquiry-assignee" defaultValue={inquiry.assigned_to_user_id ?? ""} onChange={(event) => setAssignee(event.target.value)} disabled={!can("school.inquiries.manage")} />
+                  <div className="min-w-0 flex-1">
+                    <SchoolTeamSelect
+                      triggerId="inquiry-assignee"
+                      valueMode="user"
+                      value={assignee}
+                      placeholder="Select assignee"
+                      disabled={!can("school.inquiries.manage")}
+                      onChange={(value) => setAssignee(value ?? "")}
+                    />
+                  </div>
                   <Button variant="outline" disabled={!can("school.inquiries.manage") || assignMutation.isPending} onClick={() => assignMutation.mutate()}>Assign</Button>
                 </div>
               </div>

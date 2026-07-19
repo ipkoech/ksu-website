@@ -40,6 +40,7 @@ import {
 import { MediaPicker } from "@/components/media/media-picker";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
 import { SchoolImportDialog } from "@/components/schools/imports/school-import-dialog";
+import { SchoolTeamSelect } from "@/components/schools/shared/school-reference-selectors";
 import {
   SchoolFilterBar,
   SchoolMetricGrid,
@@ -110,8 +111,8 @@ export function SchoolDepartmentsPage() {
       </label>
       </SchoolFilterBar>
       {departmentsQuery.error ? <Alert variant="destructive"><AlertDescription>{departmentsQuery.error.message}</AlertDescription></Alert> : null}
-      <div className="overflow-hidden rounded-lg border bg-background">
-        <Table>
+      <div className="overflow-x-auto rounded-xl border bg-background shadow-sm">
+        <Table className="min-w-[760px]">
           <TableHeader><TableRow><TableHead>Department</TableHead><TableHead>Type</TableHead><TableHead>Contact</TableHead><TableHead>Status</TableHead><TableHead className="w-16" /></TableRow></TableHeader>
           <TableBody>
             {departmentsQuery.data?.data.map((department) => (
@@ -187,8 +188,28 @@ function DepartmentDialog({
           <Field label="Code" value={values.code} onChange={(code) => setValues((current) => ({ ...current, code }))} />
           <Field label="Slug" value={values.slug} onChange={(slug) => setValues((current) => ({ ...current, slug }))} />
           <div className="space-y-2"><Label>Department type</Label><Select value={values.department_type ?? "academic"} onValueChange={(department_type) => setValues((current) => ({ ...current, department_type }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="academic">Academic</SelectItem><SelectItem value="service">Service</SelectItem><SelectItem value="research">Research</SelectItem></SelectContent></Select></div>
-          <Field label="Head person ID" value={values.head_id} onChange={(head_id) => setValues((current) => ({ ...current, head_id: head_id || null }))} />
-          <Field label="Postgraduate coordinator ID" value={values.postgraduate_coordinator_id} onChange={(postgraduate_coordinator_id) => setValues((current) => ({ ...current, postgraduate_coordinator_id: postgraduate_coordinator_id || null }))} />
+          <div className="space-y-2">
+            <Label htmlFor="department-head">Department head</Label>
+            <SchoolTeamSelect
+              triggerId="department-head"
+              valueMode="person"
+              value={values.head_id}
+              placeholder="Select department head"
+              roles={["dean", "deputy_dean", "cod", "hod", "lecturer"]}
+              onChange={(head_id) => setValues((current) => ({ ...current, head_id }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="department-postgraduate-coordinator">Postgraduate coordinator</Label>
+            <SchoolTeamSelect
+              triggerId="department-postgraduate-coordinator"
+              valueMode="person"
+              value={values.postgraduate_coordinator_id}
+              placeholder="Select postgraduate coordinator"
+              roles={["deputy_dean", "cod", "hod", "coordinator", "lecturer"]}
+              onChange={(postgraduate_coordinator_id) => setValues((current) => ({ ...current, postgraduate_coordinator_id }))}
+            />
+          </div>
           <Field label="Email" value={values.email} onChange={(email) => setValues((current) => ({ ...current, email }))} />
           <Field label="Phone" value={values.phone} onChange={(phone) => setValues((current) => ({ ...current, phone }))} />
           <Field label="Office location" value={values.office_location} onChange={(office_location) => setValues((current) => ({ ...current, office_location }))} />

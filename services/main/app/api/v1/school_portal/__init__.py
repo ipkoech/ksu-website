@@ -9,6 +9,7 @@ from .dashboard import router as dashboard_router
 from .departments import router as departments_router
 from .profile import router as profile_router
 from .media import router as media_router
+from .notifications import router as notifications_router
 from .inquiries import router as inquiries_router
 from .publications import router as publications_router
 from .programmes import router as programmes_router
@@ -22,6 +23,7 @@ router.include_router(dashboard_router)
 router.include_router(departments_router)
 router.include_router(profile_router)
 router.include_router(media_router)
+router.include_router(notifications_router)
 router.include_router(inquiries_router)
 router.include_router(publications_router)
 router.include_router(programmes_router)

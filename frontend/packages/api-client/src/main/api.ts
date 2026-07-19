@@ -1633,6 +1633,9 @@ export const mediaApi = {
       folder_id?: string;
       media_type?: string;
       uploaded_by_id?: string;
+      entity_type?: string;
+      entity_id?: string;
+      role?: string;
       search?: string;
     }>,
   ) => mainApi.get<PaginatedResponse<Media>>("/api/v1/media", params),

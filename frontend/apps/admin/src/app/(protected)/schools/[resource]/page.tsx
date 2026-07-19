@@ -7,7 +7,7 @@ import { MediaBatchUploader } from "@/components/schools/media/media-batch-uploa
 import { SchoolPublicationsPage } from "@/components/schools/publications/school-publications-page";
 import { SchoolInquiryInbox } from "@/components/schools/inquiries/school-inquiry-inbox";
 import { SchoolAuditPage } from "@/components/schools/audit/school-audit-page";
-import { redirect } from "next/navigation";
+import { SchoolNotificationsPage } from "@/components/schools/notifications/school-notifications-page";
 
 export function generateStaticParams() {
   return [
@@ -47,7 +47,7 @@ export default async function SchoolsResourcePage({
     case "audit":
       return <SchoolAuditPage />;
     case "notifications":
-      redirect("/system/notifications");
+      return <SchoolNotificationsPage />;
     default:
       break;
   }

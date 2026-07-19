@@ -39,6 +39,7 @@ import {
   Textarea,
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import { SchoolDepartmentSelect } from "@/components/schools/shared/school-reference-selectors";
 import {
   SchoolFilterBar,
   SchoolMetricGrid,
@@ -65,6 +66,14 @@ export function SchoolPublicationsPage() {
     queryKey: [...schoolPortalQueryKeys.publications(school.id), { page, status }],
     queryFn: () => schoolPortalApi.publications.list({ page, per_page: 20, status: status === "all" ? undefined : status }),
   });
+  const departmentsQuery = useQuery({
+    queryKey: [...schoolPortalQueryKeys.departments(school.id), { purpose: "publication-labels" }],
+    queryFn: () => schoolPortalApi.departments.list({ page: 1, per_page: 100 }),
+    staleTime: 5 * 60 * 1000,
+  });
+  const departmentNames = new Map(
+    (departmentsQuery.data?.data ?? []).map((department) => [department.id, department.name]),
+  );
   const focused = publicationsQuery.data?.data.find((item) => item.id === focusedId) ?? null;
   const updateUrl = (key: string, value?: string) => {
     const next = new URLSearchParams(params);
@@ -95,14 +104,14 @@ export function SchoolPublicationsPage() {
       </Select>
       </SchoolFilterBar>
       {publicationsQuery.error ? <Alert variant="destructive"><AlertDescription>{publicationsQuery.error.message}</AlertDescription></Alert> : null}
-      <div className="overflow-hidden rounded-lg border bg-background">
-        <Table>
+      <div className="overflow-x-auto rounded-xl border bg-background shadow-sm">
+        <Table className="min-w-[960px]">
           <TableHeader><TableRow><TableHead>Publication</TableHead><TableHead>Department</TableHead><TableHead>Journal / publisher</TableHead><TableHead>Year</TableHead><TableHead>Status</TableHead><TableHead className="w-16" /></TableRow></TableHeader>
           <TableBody>
             {publicationsQuery.data?.data.map((publication) => (
               <TableRow key={publication.id}>
                 <TableCell><div className="flex gap-3"><BookOpen className="mt-0.5 size-4 text-muted-foreground" /><div><p className="max-w-xl font-medium">{publication.title}</p><p className="text-xs text-muted-foreground">{publication.doi || publication.publication_type.replaceAll("_", " ")}</p></div></div></TableCell>
-                <TableCell>{publication.department_id || "School-wide"}</TableCell>
+                <TableCell>{publication.department_id ? departmentNames.get(publication.department_id) || "Department" : "School-wide"}</TableCell>
                 <TableCell>{publication.journal_name || publication.publisher || "—"}</TableCell>
                 <TableCell>{publication.year || publication.publication_date?.slice(0, 4) || "—"}</TableCell>
                 <TableCell><Badge variant={publication.status === "draft" ? "secondary" : "default"}>{publication.status.replaceAll("_", " ")}</Badge></TableCell>
@@ -181,7 +190,15 @@ function PublicationDialog({
           <Field label="Title" value={values.title} onChange={(title) => setValues((current) => ({ ...current, title }))} />
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Slug" value={values.slug} onChange={(slug) => setValues((current) => ({ ...current, slug }))} />
-            <Field label="Department ID" value={values.department_id} onChange={(department_id) => setValues((current) => ({ ...current, department_id: department_id || null }))} />
+            <div className="space-y-2">
+              <Label htmlFor="publication-department">Department</Label>
+              <SchoolDepartmentSelect
+                triggerId="publication-department"
+                value={values.department_id}
+                disabled={readOnly}
+                onChange={(department_id) => setValues((current) => ({ ...current, department_id }))}
+              />
+            </div>
             <div className="space-y-2"><Label>Publication type</Label><Select value={values.publication_type ?? "journal_article"} onValueChange={(publication_type) => setValues((current) => ({ ...current, publication_type }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{["journal_article", "conference_paper", "book", "book_chapter", "thesis", "report", "working_paper", "preprint"].map((item) => <SelectItem key={item} value={item}>{item.replaceAll("_", " ")}</SelectItem>)}</SelectContent></Select></div>
             <Field label="Journal name" value={values.journal_name} onChange={(journal_name) => setValues((current) => ({ ...current, journal_name }))} />
             <Field label="Publisher" value={values.publisher} onChange={(publisher) => setValues((current) => ({ ...current, publisher }))} />

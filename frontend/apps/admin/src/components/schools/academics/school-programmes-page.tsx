@@ -40,6 +40,7 @@ import {
 import { MediaPicker } from "@/components/media/media-picker";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
 import { SchoolImportDialog } from "@/components/schools/imports/school-import-dialog";
+import { SchoolDepartmentSelect } from "@/components/schools/shared/school-reference-selectors";
 import {
   SchoolFilterBar,
   SchoolMetricGrid,
@@ -114,8 +115,8 @@ export function SchoolProgrammesPage() {
       </div>
       </SchoolFilterBar>
       {programmesQuery.error ? <Alert variant="destructive"><AlertDescription>{programmesQuery.error.message}</AlertDescription></Alert> : null}
-      <div className="overflow-hidden rounded-lg border bg-background">
-        <Table>
+      <div className="overflow-x-auto rounded-xl border bg-background shadow-sm">
+        <Table className="min-w-[920px]">
           <TableHeader><TableRow><TableHead>Programme</TableHead><TableHead>Level & mode</TableHead><TableHead>Department</TableHead><TableHead>Accreditation</TableHead><TableHead>Status</TableHead><TableHead className="w-16" /></TableRow></TableHeader>
           <TableBody>
             {programmesQuery.data?.data.map((programme) => (
@@ -184,7 +185,15 @@ function ProgrammeDialog({
           <Field label="Name" className="sm:col-span-2" value={values.name} onChange={(name) => setValues((current) => ({ ...current, name }))} />
           <Field label="Code" value={values.code} onChange={(code) => setValues((current) => ({ ...current, code }))} />
           <Field label="Slug" value={values.slug} onChange={(slug) => setValues((current) => ({ ...current, slug }))} />
-          <Field label="Department ID" value={values.department_id} onChange={(department_id) => setValues((current) => ({ ...current, department_id }))} />
+          <div className="space-y-2">
+            <Label htmlFor="programme-department">Department</Label>
+            <SchoolDepartmentSelect
+              triggerId="programme-department"
+              allowSchoolWide={false}
+              value={values.department_id}
+              onChange={(department_id) => setValues((current) => ({ ...current, department_id: department_id ?? "" }))}
+            />
+          </div>
           <Field label="Duration" value={values.duration} onChange={(duration) => setValues((current) => ({ ...current, duration }))} />
           <div className="space-y-2"><Label>Level</Label><Select value={values.level} onValueChange={(level) => setValues((current) => ({ ...current, level }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{["certificate", "diploma", "undergraduate", "masters", "doctorate"].map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select></div>
           <div className="space-y-2"><Label>Mode of study</Label><Select value={values.mode_of_study ?? "full_time"} onValueChange={(mode_of_study) => setValues((current) => ({ ...current, mode_of_study }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="full_time">Full time</SelectItem><SelectItem value="part_time">Part time</SelectItem><SelectItem value="online">Online</SelectItem><SelectItem value="blended">Blended</SelectItem></SelectContent></Select></div>

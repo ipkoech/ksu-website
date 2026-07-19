@@ -7,7 +7,19 @@ import {
   schoolPortalQueryKeys,
 } from "@ksu/api-client";
 import { Activity, CircleCheck, ListFilter, ShieldCheck, UserRound } from "lucide-react";
-import { Alert, AlertDescription, Badge, Button, Input, Skeleton } from "@ksu/ui/components";
+import {
+  Alert,
+  AlertDescription,
+  Badge,
+  Button,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Skeleton,
+} from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
 import {
   SchoolFilterBar,
@@ -39,6 +51,16 @@ export function SchoolAuditPage() {
         status: status || undefined,
       }),
   });
+  const teamQuery = useQuery({
+    queryKey: [...schoolPortalQueryKeys.team(school.id), { purpose: "audit-actor-labels" }],
+    queryFn: () => schoolPortalApi.team.list({ page: 1, per_page: 100 }),
+    staleTime: 5 * 60 * 1000,
+  });
+  const actorNames = new Map(
+    (teamQuery.data?.data ?? [])
+      .filter((member) => member.user_id)
+      .map((member) => [member.user_id!, member.full_name || member.email || "School user"]),
+  );
 
   const updateUrl = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -68,21 +90,23 @@ export function SchoolAuditPage() {
         <Input
           aria-label="Filter by action"
           placeholder="Action"
-          value={action}
-          onChange={(event) => updateUrl("action", event.target.value)}
+          defaultValue={action}
+          onKeyDown={(event) => event.key === "Enter" && updateUrl("action", event.currentTarget.value.trim())}
         />
         <Input
           aria-label="Filter by resource type"
           placeholder="Resource type"
-          value={resourceType}
-          onChange={(event) => updateUrl("resource_type", event.target.value)}
+          defaultValue={resourceType}
+          onKeyDown={(event) => event.key === "Enter" && updateUrl("resource_type", event.currentTarget.value.trim())}
         />
-        <Input
-          aria-label="Filter by status"
-          placeholder="Status"
-          value={status}
-          onChange={(event) => updateUrl("status", event.target.value)}
-        />
+        <Select value={status || "all"} onValueChange={(value) => updateUrl("status", value === "all" ? "" : value)}>
+          <SelectTrigger aria-label="Filter by status"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All outcomes</SelectItem>
+            <SelectItem value="success">Successful</SelectItem>
+            <SelectItem value="failed">Failed</SelectItem>
+          </SelectContent>
+        </Select>
       </section>
       </SchoolFilterBar>
 
@@ -124,7 +148,7 @@ export function SchoolAuditPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {entry.user_id || "System"}
+                    {entry.user_id ? actorNames.get(entry.user_id) || "School user" : "System"}
                   </td>
                   <td className="px-4 py-3">
                     <Badge variant={entry.status === "success" ? "secondary" : "destructive"}>

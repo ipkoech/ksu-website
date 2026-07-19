@@ -21,6 +21,7 @@ import type {
   SchoolInquiry,
   SchoolInquiryMessage,
   SchoolInquiryStatus,
+  SchoolNotification,
   SchoolProgrammePayload,
   SchoolProgrammeRecord,
   SchoolPublicationPayload,
@@ -97,6 +98,8 @@ export const schoolPortalQueryKeys = {
     [...schoolPortalQueryKeys.root(schoolId), "inquiries"] as const,
   audit: (schoolId: string) =>
     [...schoolPortalQueryKeys.root(schoolId), "audit"] as const,
+  notifications: (schoolId: string) =>
+    [...schoolPortalQueryKeys.root(schoolId), "notifications"] as const,
 };
 
 export const schoolPortalApi = {
@@ -437,6 +440,29 @@ export const schoolPortalApi = {
     retryMessage: (id: string, messageId: string) =>
       mainApi.post<{ data: SchoolInquiryMessage }>(
         `${BASE_PATH}/inquiries/${id}/messages/${messageId}/retry`,
+      ),
+  },
+  notifications: {
+    list: (params?: {
+      page?: number;
+      per_page?: number;
+      unread_only?: boolean;
+    }) =>
+      mainApi.get<PaginatedResponse<SchoolNotification>>(
+        `${BASE_PATH}/notifications`,
+        params,
+      ),
+    markRead: (id: string) =>
+      mainApi.patch<{ data: SchoolNotification }>(
+        `${BASE_PATH}/notifications/${id}/read`,
+      ),
+    markAllRead: () =>
+      mainApi.post<{ data: { updated: number } }>(
+        `${BASE_PATH}/notifications/read-all`,
+      ),
+    archive: (id: string) =>
+      mainApi.post<{ data: SchoolNotification }>(
+        `${BASE_PATH}/notifications/${id}/archive`,
       ),
   },
   audit: {

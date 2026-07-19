@@ -49,30 +49,27 @@ export function SchoolWorkspaceHeader({
   meta?: ReactNode;
 }) {
   return (
-    <header className="relative overflow-hidden rounded-2xl border bg-background shadow-sm">
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-emerald-500 to-amber-400" />
-      <div className="flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex min-w-0 items-start gap-4">
-          <span className="mt-0.5 rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/15">
-            <Icon className="size-6" />
-          </span>
-          <div className="min-w-0">
-            <div className="mb-1 flex flex-wrap items-center gap-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{eyebrow}</p>
-              {schoolName ? (
-                <Badge variant="outline" className="max-w-full gap-1 font-normal">
-                  <CheckCircle2 className="size-3 text-emerald-600" />
-                  <span className="truncate">{schoolName}</span>
-                </Badge>
-              ) : null}
-            </div>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
-            <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{description}</p>
-            {meta ? <div className="mt-3">{meta}</div> : null}
+    <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex min-w-0 items-start gap-3">
+        <span className="mt-0.5 hidden rounded-xl bg-primary/10 p-2.5 text-primary sm:inline-flex">
+          <Icon className="size-5" />
+        </span>
+        <div className="min-w-0">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{eyebrow}</p>
+            {schoolName ? (
+              <Badge variant="outline" className="max-w-full gap-1 font-normal">
+                <CheckCircle2 className="size-3 text-emerald-600" />
+                <span className="truncate">{schoolName}</span>
+              </Badge>
+            ) : null}
           </div>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{description}</p>
+          {meta ? <div className="mt-3">{meta}</div> : null}
         </div>
-        {actions ? <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">{actions}</div> : null}
       </div>
+      {actions ? <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">{actions}</div> : null}
     </header>
   );
 }

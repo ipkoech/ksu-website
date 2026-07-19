@@ -164,6 +164,8 @@ class NotificationService:
         page: int = 1,
         per_page: int = 20,
         unread_only: bool = False,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
         load_options=(),
     ) -> PaginatedResult:
         query = (
@@ -176,6 +178,10 @@ class NotificationService:
             query = query.options(*load_options)
         if unread_only:
             query = query.where(Notification.is_read.is_(False))
+        if scope_type:
+            query = query.where(Notification.scope_type == scope_type)
+        if scope_id:
+            query = query.where(Notification.scope_id == scope_id)
         return await paginate_query(db, query, page=page, per_page=per_page)
 
     @staticmethod
@@ -197,15 +203,24 @@ class NotificationService:
         return int(result.scalar_one())
 
     @staticmethod
-    async def mark_all_as_read(db: AsyncSession, user_id: uuid.UUID) -> int:
-        result = await db.execute(
-            select(Notification).where(
+    async def mark_all_as_read(
+        db: AsyncSession,
+        user_id: uuid.UUID,
+        *,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+    ) -> int:
+        query = select(Notification).where(
                 Notification.user_id == user_id,
                 Notification.is_read.is_(False),
                 Notification.archived_at.is_(None),
                 Notification.deleted_at.is_(None),
             )
-        )
+        if scope_type:
+            query = query.where(Notification.scope_type == scope_type)
+        if scope_id:
+            query = query.where(Notification.scope_id == scope_id)
+        result = await db.execute(query)
         items = list(result.scalars().all())
         for item in items:
             item.mark_as_read()

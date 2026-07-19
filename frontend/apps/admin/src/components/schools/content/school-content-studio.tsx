@@ -135,8 +135,8 @@ export function SchoolContentStudio() {
 function ContentCard({ record, onOpen }: { record: SchoolContentRecord; onOpen: () => void }) {
   const status = String(record.workflow_status || record.status || "draft");
   return (
-    <button type="button" className="flex cursor-pointer gap-3 rounded-lg border bg-background p-4 text-left transition-colors hover:border-primary/40 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={onOpen}>
-      <FileText className="mt-1 size-5 shrink-0 text-primary" />
+    <button type="button" className="group flex cursor-pointer gap-3 rounded-xl border bg-background p-4 text-left shadow-sm transition-colors duration-200 hover:border-primary/40 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={onOpen}>
+      <span className="rounded-lg bg-primary/10 p-2 text-primary"><FileText className="size-5" /></span>
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium">{String(record.title || record.name || "Untitled")}</span>
         <span className="mt-1 line-clamp-2 text-sm text-muted-foreground">{String(record.summary || "No summary")}</span>

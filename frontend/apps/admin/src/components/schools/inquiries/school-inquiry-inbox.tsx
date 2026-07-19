@@ -23,6 +23,7 @@ import {
   Skeleton,
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import { SchoolTeamSelect } from "@/components/schools/shared/school-reference-selectors";
 import {
   SchoolFilterBar,
   SchoolMetricGrid,
@@ -100,7 +101,12 @@ export function SchoolInquiryInbox() {
         <Select value={status} onValueChange={(value) => updateUrl("status", value)}><SelectTrigger aria-label="Inquiry status"><SelectValue /></SelectTrigger><SelectContent>{STATUS_OPTIONS.map((item) => <SelectItem key={item} value={item}>{item.replaceAll("_", " ")}</SelectItem>)}</SelectContent></Select>
         <label className="relative"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" /><Input className="pl-9" value={category} placeholder="Category" aria-label="Inquiry category" onChange={(event) => updateUrl("category", event.target.value)} /></label>
         <Select value={priority} onValueChange={(value) => updateUrl("priority", value)}><SelectTrigger aria-label="Inquiry priority"><SelectValue /></SelectTrigger><SelectContent>{PRIORITY_OPTIONS.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select>
-        <Input value={assigned_to_user_id} aria-label="Assigned user ID" placeholder="Assigned user ID" onChange={(event) => updateUrl("assigned_to_user_id", event.target.value)} />
+        <SchoolTeamSelect
+          valueMode="user"
+          value={assigned_to_user_id}
+          placeholder="Filter by assignee"
+          onChange={(value) => updateUrl("assigned_to_user_id", value || undefined)}
+        />
         <div className="space-y-1"><Label htmlFor="inquiry-from" className="text-xs">Created from</Label><Input id="inquiry-from" type="date" value={created_from} onChange={(event) => updateUrl("created_from", event.target.value)} /></div>
         <div className="space-y-1"><Label htmlFor="inquiry-to" className="text-xs">Created to</Label><Input id="inquiry-to" type="date" value={created_to} onChange={(event) => updateUrl("created_to", event.target.value)} /></div>
       </section>
@@ -109,7 +115,7 @@ export function SchoolInquiryInbox() {
       {inboxQuery.isPending ? (
         <div className="space-y-3">{Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-28" />)}</div>
       ) : (
-        <section className="overflow-hidden rounded-lg border bg-background">
+        <section className="overflow-hidden rounded-xl border bg-background shadow-sm">
           {inboxQuery.data?.data.map((inquiry) => {
             const sla = slaState(inquiry);
             const unread = inquiry.status === "new" || inquiry.meta_data?.unread === true;

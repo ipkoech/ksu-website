@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import {
   schoolPortalApi,
   type SchoolUploadBatch,
+  useMedia,
 } from "@ksu/api-client";
 import {
   ArrowDown,
@@ -13,6 +14,7 @@ import {
   ImageIcon,
   Images,
   RefreshCw,
+  Search,
   TimerReset,
   Trash2,
   UploadCloud,
@@ -38,6 +40,7 @@ import {
   Textarea,
 } from "@ksu/ui/components";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
+import { getMediaLabel, getMediaUrl, isImageMedia } from "@/components/media/media-utils";
 import {
   SchoolMetricGrid,
   SchoolWorkspace,
@@ -63,6 +66,20 @@ export function MediaBatchUploader() {
   const { school } = useSchoolPortal();
   const [items, setItems] = useState<PendingFile[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [search, setSearch] = useState("");
+  const library = useMedia({
+    page: 1,
+    per_page: 80,
+    entity_type: "school",
+    entity_id: school.id,
+  });
+  const libraryItems = useMemo(
+    () => (library.data?.data ?? []).filter((item) => {
+      const text = `${item.title || ""} ${item.alt_text || ""} ${item.description || ""}`.toLowerCase();
+      return !search || text.includes(search.toLowerCase());
+    }),
+    [library.data?.data, search],
+  );
   const overall = useMemo(
     () => items.length ? items.reduce((sum, item) => sum + item.progress, 0) / items.length : 0,
     [items],
@@ -148,6 +165,7 @@ export function MediaBatchUploader() {
     setUploading(true);
     const pending = items.filter((item) => item.status === "pending");
     await Promise.allSettled(pending.map(uploadOne));
+    await library.refetch();
     setUploading(false);
   };
   const retry = async (item: PendingFile) => {
@@ -176,11 +194,54 @@ export function MediaBatchUploader() {
         icon={Images}
       />
       <SchoolMetricGrid items={[
-        { label: "Selected files", value: items.length, detail: items.length ? "Ready in this batch" : "Choose files to begin", icon: Images },
-        { label: "Ready to upload", value: items.filter((item) => item.status === "pending").length, detail: "Metadata can still be edited", icon: TimerReset, tone: "warning" },
+        { label: "Library assets", value: library.data?.meta.total ?? libraryItems.length, detail: "Owned by this school", icon: Images },
+        { label: "Selected files", value: items.length, detail: items.length ? "Ready in this batch" : "Choose files to begin", icon: TimerReset, tone: "warning" },
         { label: "Completed", value: items.filter((item) => item.status === "completed").length, detail: "Added to school media", icon: UploadCloud, tone: "success" },
         { label: "Needs attention", value: items.filter((item) => item.status === "failed").length, detail: "Retry failed uploads", icon: XCircle, tone: "danger" },
       ]} />
+      <Card>
+        <CardHeader className="gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <CardTitle className="text-base">School media</CardTitle>
+            <CardDescription>Browse assets already uploaded to this school’s private media scope.</CardDescription>
+          </div>
+          <label className="relative block sm:w-72">
+            <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+            <Input className="pl-9" value={search} aria-label="Search school media" placeholder="Search media" onChange={(event) => setSearch(event.target.value)} />
+          </label>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+            {libraryItems.map((media) => {
+              const url = getMediaUrl(media);
+              return (
+                <article key={media.id} className="overflow-hidden rounded-xl border bg-muted/20">
+                  <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-muted">
+                    {url && isImageMedia(media) ? (
+                      <Image src={url} alt={media.alt_text || getMediaLabel(media)} fill unoptimized className="object-cover" />
+                    ) : media.mime_type === "application/pdf" ? (
+                      <FileText className="size-8 text-muted-foreground" />
+                    ) : (
+                      <ImageIcon className="size-8 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <p className="truncate text-sm font-medium">{getMediaLabel(media)}</p>
+                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{media.description || media.mime_type || "School media asset"}</p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          {!library.isPending && !libraryItems.length ? (
+            <div className="rounded-xl border border-dashed px-6 py-10 text-center">
+              <Images className="mx-auto size-7 text-muted-foreground" />
+              <p className="mt-3 text-sm font-medium">No school media found</p>
+              <p className="mt-1 text-xs text-muted-foreground">Upload files below to start this school’s library.</p>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader><CardTitle className="text-base">Select files</CardTitle><CardDescription>Images, PDF, Office documents, audio, and video are validated by the server.</CardDescription></CardHeader>
         <CardContent>
