@@ -29,7 +29,13 @@ type InquiryResponse = {
   };
 };
 
-export function EntityInquiryLauncher({ target }: { target: PublicInquiryTarget }) {
+export function EntityInquiryLauncher({
+  target,
+  aboveMobileNavigation = false,
+}: {
+  target: PublicInquiryTarget;
+  aboveMobileNavigation?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -77,7 +83,11 @@ export function EntityInquiryLauncher({ target }: { target: PublicInquiryTarget 
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-40 inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-4 text-sm font-bold text-white shadow-[0_16px_40px_-14px_rgba(15,48,120,0.7)] transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 sm:bottom-6 sm:right-6"
+        className={`fixed right-4 z-40 inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-4 text-sm font-bold text-white shadow-[0_16px_40px_-14px_rgba(15,48,120,0.7)] transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 sm:bottom-6 sm:right-6 ${
+          aboveMobileNavigation
+            ? "bottom-[calc(4.75rem+env(safe-area-inset-bottom))]"
+            : "bottom-[calc(1rem+env(safe-area-inset-bottom))]"
+        }`}
         aria-label={`Send a message to ${target.name}`}
       >
         <MessageCircle aria-hidden className="h-5 w-5" />

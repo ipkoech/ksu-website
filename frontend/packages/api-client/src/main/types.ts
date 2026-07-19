@@ -461,7 +461,14 @@ export interface SchoolInquiryMessage {
 
 export interface SchoolInquiry {
   id: string;
-  school_id: string;
+  school_id?: string | null;
+  target_entity_type: "university" | "school" | "department" | "office" | "person";
+  target_entity_id: string;
+  target_entity_name?: string | null;
+  target_entity_slug?: string | null;
+  owner_scope_type: string;
+  owner_scope_id?: string | null;
+  source_page_url?: string | null;
   reference_number: string;
   sender_name: string;
   sender_email: string;
@@ -497,6 +504,21 @@ export interface SchoolAuditLog {
   details?: Record<string, unknown> | null;
   changes?: Record<string, unknown> | null;
   happened_at: string;
+  created_at: string;
+}
+
+export interface SchoolNotification {
+  id: string;
+  title: string;
+  subject?: string | null;
+  message: string;
+  notification_type: string;
+  priority: string;
+  action_url?: string | null;
+  scope_type?: string | null;
+  scope_id?: string | null;
+  is_read: boolean;
+  read_at?: string | null;
   created_at: string;
 }
 

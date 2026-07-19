@@ -33,6 +33,7 @@ import {
   ProgressiveImageCard,
   PublicImage,
 } from "@/components/public/public-image";
+import { EntityInquiryLauncher } from "@/components/public/entity-inquiry-launcher";
 import {
   getHomepageData,
   type HomeCard,
@@ -438,6 +439,14 @@ export default async function HomePage() {
         socialLinks={homepage.socialLinks}
         researchHref={researchFrontendUrl}
         libraryHref={libraryFrontendUrl}
+      />
+      <EntityInquiryLauncher
+        target={{
+          type: "university",
+          slug: "kisii-university",
+          name: "Kisii University",
+        }}
+        aboveMobileNavigation
       />
     </div>
   );

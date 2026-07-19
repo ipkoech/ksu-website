@@ -6537,6 +6537,12 @@ export const portalConfigs: Record<string, PortalConfig> = {
         icon: Users,
         scope: ["office.manage_content", "support.manage_contacts"],
       },
+      {
+        title: "Public Inquiries",
+        href: "/admin/inquiries",
+        icon: MessageSquare,
+        scope: "admin:*",
+      },
     ],
     dashboard: dashboard(
       "Admin Dashboard",
