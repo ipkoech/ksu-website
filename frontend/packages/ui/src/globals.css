@@ -846,6 +846,36 @@
     }
   }
 
+  @keyframes ksu-ambient-drift {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+    50% {
+      transform: translate3d(-18px, 14px, 0);
+    }
+  }
+
+  @keyframes ksu-ambient-float {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+    50% {
+      transform: translate3d(14px, -12px, 0) rotate(8deg);
+    }
+  }
+
+  @keyframes ksu-ambient-float-reverse {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+    50% {
+      transform: translate3d(-12px, 10px, 0) rotate(-7deg);
+    }
+  }
+
   .animate-fade-in {
     animation-name: fade-in;
   }
@@ -869,6 +899,74 @@
   }
   .animate-pulse-subtle {
     animation: pulse-subtle 2s ease-in-out infinite;
+  }
+
+  .animate-ksu-ambient-drift {
+    animation: ksu-ambient-drift 32s ease-in-out infinite;
+  }
+
+  .animate-ksu-ambient-float {
+    animation: ksu-ambient-float 38s ease-in-out infinite;
+  }
+
+  .animate-ksu-ambient-float-reverse {
+    animation: ksu-ambient-float-reverse 42s ease-in-out infinite;
+  }
+
+  .ksu-academic-grid {
+    background-image:
+      linear-gradient(
+        hsl(var(--primary) / 0.055) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        90deg,
+        hsl(var(--primary) / 0.055) 1px,
+        transparent 1px
+      );
+    background-position: center top;
+    background-size: 52px 52px;
+    mask-image: linear-gradient(
+      180deg,
+      transparent 0%,
+      black 16%,
+      black 78%,
+      transparent 100%
+    );
+  }
+
+  .ksu-academic-dots {
+    background-image: radial-gradient(
+      hsl(var(--primary) / 0.12) 1px,
+      transparent 1.5px
+    );
+    background-position: 18px 20px;
+    background-size: 34px 34px;
+    mask-image: radial-gradient(
+      ellipse at center,
+      black 0%,
+      black 48%,
+      transparent 82%
+    );
+  }
+
+  .ksu-academic-orbits {
+    border: 1px solid hsl(var(--primary) / 0.13);
+    border-radius: 9999px;
+  }
+
+  .ksu-academic-orbits::before,
+  .ksu-academic-orbits::after {
+    position: absolute;
+    content: "";
+    border: 1px solid hsl(var(--primary) / 0.11);
+    border-radius: 9999px;
+    inset: 14%;
+  }
+
+  .ksu-academic-orbits::after {
+    inset: 29%;
+    border-color: hsl(var(--secondary) / 0.12);
   }
 
   .hero-fade-slide {

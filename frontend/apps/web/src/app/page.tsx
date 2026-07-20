@@ -22,7 +22,11 @@ import {
   Youtube,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
+import {
+  AmbientPageBackground,
+  ScrollReveal,
+  ScrollRevealGroup,
+} from "@ksu/ui/components";
 import { MiniHeader, PublicFooter, PublicHeader } from "@ksu/ui/layout/public";
 import { CountdownStrip } from "@/components/home/countdown-strip";
 import { AnimatedStatRow } from "@/components/home/animated-stat-row";
@@ -171,7 +175,7 @@ export default async function HomePage() {
   );
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_38%,hsl(var(--surface-muted))_100%)] text-foreground">
+    <div className="min-h-screen text-foreground">
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
@@ -186,7 +190,14 @@ export default async function HomePage() {
         libraryHref={libraryFrontendUrl}
       />
 
-      <main id="main-content" className="overflow-x-clip" tabIndex={-1}>
+      <AmbientPageBackground
+        as="main"
+        id="main-content"
+        variant="academic"
+        intensity="soft"
+        className="overflow-x-clip"
+        tabIndex={-1}
+      >
         {composedHomepage.hasRenderableSections ? (
           <>
             {hasComposedHero ? null : (
@@ -408,7 +419,7 @@ export default async function HomePage() {
             </section>
           </>
         )}
-      </main>
+      </AmbientPageBackground>
 
       {/* Mobile Sticky CTA Bar */}
       <nav
