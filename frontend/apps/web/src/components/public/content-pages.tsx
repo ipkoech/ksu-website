@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { RichTextRenderer } from "@ksu/ui/rich-text-renderer";
 import {
+  AmbientPageBackground,
   ListPagination,
   ScrollReveal,
   ScrollRevealGroup,
@@ -40,7 +41,6 @@ import {
   type ContentDetailData,
   type ContentListingData,
   type ContentRecord,
-  type EventRecord,
 } from "@/lib/content-page-data";
 
 function kindLabel(
@@ -172,6 +172,69 @@ function RecordCard({
   );
 }
 
+const editorialMosaicPattern = [
+  "md:col-span-4 md:row-span-2",
+  "md:col-span-2 md:row-span-1",
+  "md:col-span-2 md:row-span-1",
+  "md:col-span-3 md:row-span-1",
+  "md:col-span-3 md:row-span-1",
+];
+
+function EditorialMosaic({
+  records,
+  keyPrefix,
+}: {
+  records: ContentRecord[];
+  keyPrefix: string;
+}) {
+  return (
+    <ScrollRevealGroup
+      className="grid gap-3 md:auto-rows-[14rem] md:grid-cols-6"
+      staggerDelay={55}
+    >
+      {records.map((record, index) => {
+        const date = recordDate(record);
+        const isLead = index % editorialMosaicPattern.length === 0;
+
+        return (
+          <Link
+            key={`${keyPrefix}-${record.contentKind}-${record.id}`}
+            href={recordHref(record)}
+            className={`group relative min-h-72 cursor-pointer overflow-hidden rounded-xl bg-surface-muted shadow-sm outline-none ring-primary/35 transition hover:shadow-[0_22px_55px_-34px_rgba(15,23,42,0.72)] focus-visible:ring-2 md:min-h-0 ${
+              editorialMosaicPattern[index % editorialMosaicPattern.length]
+            }`}
+          >
+            <div className="absolute inset-0 transition duration-300 group-hover:scale-[1.025]">
+              <ContentImage record={record} large={isLead} />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+              <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.08em] text-white/75">
+                <span className="rounded-full bg-white/15 px-2.5 py-1 text-white backdrop-blur-sm">
+                  {categoryLabel(record)}
+                </span>
+                {date ? <span>{date}</span> : null}
+              </div>
+              <h3
+                className={`mt-3 font-[family-name:var(--font-display)] font-semibold leading-tight text-white ${
+                  isLead ? "text-2xl sm:text-3xl" : "text-lg"
+                }`}
+              >
+                {recordTitle(record)}
+              </h3>
+              {isLead && summarize(record, "") ? (
+                <p className="mt-2 line-clamp-2 max-w-2xl text-sm leading-6 text-white/75">
+                  {summarize(record, "")}
+                </p>
+              ) : null}
+            </div>
+          </Link>
+        );
+      })}
+    </ScrollRevealGroup>
+  );
+}
+
 function ListingHero({ data }: { data: ContentListingData }) {
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm lg:p-6">
@@ -296,7 +359,7 @@ function MediaDeskNav({
       aria-label="Media Desk"
       className="rounded-lg border border-border bg-white p-2 shadow-sm"
     >
-      <div className="grid gap-1">
+      <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 xl:grid-cols-6">
         <Link
           href="/media"
           className={`flex min-h-11 items-center justify-between rounded-md px-3 text-sm font-bold transition ${
@@ -327,98 +390,36 @@ function MediaDeskNav({
   );
 }
 
-function CalendarPanel({ events = [] }: { events?: EventRecord[] }) {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const first = new Date(year, month, 1);
-  const last = new Date(year, month + 1, 0);
-  const leading = first.getDay();
-  const days = Array.from({ length: leading + last.getDate() }, (_, index) => {
-    const day = index - leading + 1;
-    return day > 0 ? day : null;
-  });
-  const eventDays = new Set(
-    events
-      .filter((event) => event.start_date)
-      .map((event) => new Date(event.start_date as string))
-      .filter((date) => !Number.isNaN(date.getTime()))
-      .map((date) => date.getDate()),
-  );
-
-  return (
-    <aside className="rounded-lg border border-border bg-white p-4 shadow-sm">
-      <div className="flex items-center gap-2">
-        <CalendarDays aria-hidden className="h-4 w-4 text-primary" />
-        <div>
-          <SectionKicker>Events Calendar</SectionKicker>
-          <h2 className="mt-1 text-base font-bold text-foreground">
-            {new Intl.DateTimeFormat("en-KE", {
-              month: "long",
-              year: "numeric",
-            }).format(today)}
-          </h2>
-        </div>
-      </div>
-      <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[11px] font-bold uppercase text-muted-foreground/70">
-        {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
-          <span key={`${day}-${index}`}>{day}</span>
-        ))}
-      </div>
-      <div className="mt-2 grid grid-cols-7 gap-1">
-        {days.map((day, index) => {
-          const hasEvent = day !== null && eventDays.has(day);
-          return (
-            <span
-              key={`${day ?? "blank"}-${index}`}
-              className={`grid h-9 place-items-center rounded-md text-xs font-bold ${
-                day === null
-                  ? "text-transparent"
-                  : hasEvent
-                    ? "bg-primary text-white"
-                    : "bg-surface-subtle text-muted-foreground"
-              }`}
-            >
-              {day}
-            </span>
-          );
-        })}
-      </div>
-      <div className="mt-4 grid gap-2">
-        {events.length ? (
-          events.slice(0, 5).map((event) => (
-            <Link
-              key={`${event.contentKind}-${event.id}`}
-              href={recordHref(event)}
-              className="group rounded-md border border-border p-3 transition hover:border-primary/30 hover:bg-primary/5"
-            >
-              <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
-                {recordDate(event)}
-              </p>
-              <p className="mt-1 line-clamp-2 text-sm font-bold leading-5 text-foreground group-hover:text-primary">
-                {recordTitle(event)}
-              </p>
-            </Link>
-          ))
-        ) : (
-          <p className="rounded-md border border-dashed border-border bg-surface-subtle p-3 text-sm leading-6 text-muted-foreground">
-            No events are published for this month yet.
-          </p>
-        )}
-      </div>
-    </aside>
-  );
-}
-
 function MediaDeskSections({ records }: { records: ContentRecord[] }) {
+  const overviewSections = mediaDeskSections.filter((section) =>
+    ["news", "events", "articles", "gallery"].includes(section.id),
+  );
+
   return (
     <div className="grid gap-5">
-      {mediaDeskSections
-        .filter((section) => section.id !== "gallery")
-        .map((section) => {
+      {overviewSections.map((section) => {
           const sectionRecords = records
             .filter((record) => section.kinds.includes(record.contentKind))
-            .slice(0, 3);
+            .slice(0, section.id === "gallery" ? 6 : 5);
+
+          if (section.id === "gallery") {
+            return (
+              <div key={section.id} id={section.id} className="scroll-mt-32">
+                <MediaGalleryBento
+                  items={galleryBentoItems(sectionRecords)}
+                  title="University gallery"
+                  description={section.body}
+                />
+                <Link
+                  href={section.href}
+                  className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-full border border-primary/20 bg-white px-4 text-sm font-bold text-primary transition hover:bg-primary hover:text-white"
+                >
+                  View all gallery
+                  <ArrowRight aria-hidden className="h-4 w-4" />
+                </Link>
+              </div>
+            );
+          }
 
           return (
             <div key={section.id} id={section.id} className="scroll-mt-32">
@@ -446,18 +447,12 @@ function MediaDeskSections({ records }: { records: ContentRecord[] }) {
                 </div>
 
                 {sectionRecords.length ? (
-                  <ScrollRevealGroup
-                    className="mt-5 grid gap-4 md:grid-cols-3"
-                    staggerDelay={60}
-                  >
-                    {sectionRecords.map((record) => (
-                      <RecordCard
-                        key={`${section.id}-${record.contentKind}-${record.id}`}
-                        record={record}
-                        compact
-                      />
-                    ))}
-                  </ScrollRevealGroup>
+                  <div className="mt-5">
+                    <EditorialMosaic
+                      records={sectionRecords}
+                      keyPrefix={section.id}
+                    />
+                  </div>
                 ) : (
                   <p className="mt-5 rounded-lg border border-dashed border-border bg-surface-subtle p-4 text-sm leading-6 text-muted-foreground">
                     No {section.title.toLowerCase()} records are currently
@@ -544,35 +539,12 @@ function MediaDeskStack({
       <ContentFilters data={data} visible={records.length} />
 
       {records.length ? (
-        <ScrollRevealGroup className="mt-5 grid gap-3" staggerDelay={55}>
-          {records.map((record) => (
-            <Link
-              key={`${record.contentKind}-${record.id}`}
-              href={recordHref(record)}
-              className="group grid gap-4 rounded-lg border border-border bg-white p-3 transition hover:border-primary/30 hover:bg-surface-subtle sm:grid-cols-[180px_minmax(0,1fr)]"
-            >
-              <div className="aspect-[16/10] overflow-hidden rounded-md bg-surface-muted">
-                <ContentImage record={record} />
-              </div>
-              <div className="min-w-0 py-1">
-                <div className="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-[0.08em] text-primary">
-                  <span>{categoryLabel(record)}</span>
-                  {recordDate(record) ? (
-                    <span className="text-muted-foreground/70">{recordDate(record)}</span>
-                  ) : null}
-                </div>
-                <h2 className="mt-2 line-clamp-2 text-lg font-bold leading-6 text-foreground group-hover:text-primary">
-                  {recordTitle(record)}
-                </h2>
-                {summarize(record, "") ? (
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
-                    {summarize(record, "")}
-                  </p>
-                ) : null}
-              </div>
-            </Link>
-          ))}
-        </ScrollRevealGroup>
+        <div className="mt-5">
+          <EditorialMosaic
+            records={records}
+            keyPrefix={data.mediaDeskSection ?? data.kind}
+          />
+        </div>
       ) : (
         <article className="mt-5 rounded-lg border border-dashed border-border bg-surface-subtle p-5 text-sm text-muted-foreground">
           No {emptyLabel} records are currently published.
@@ -724,15 +696,14 @@ function MediaDeskListingPage({ data }: { data: ContentListingData }) {
   return (
     <PageShell>
       <AboutPageLenis>
-        <section className="w-full bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_70%,hsl(var(--surface-muted))_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="grid w-full gap-5">
+        <AmbientPageBackground variant="academic" intensity="soft">
+          <section className="w-full px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+            <div className="grid w-full gap-5">
             <BreadcrumbTrail
               items={[{ label: "Home", href: "/" }, { label: "Media Desk" }]}
             />
-            <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)_320px] 2xl:grid-cols-[260px_minmax(0,1fr)_360px]">
-              <aside className="xl:sticky xl:top-28 xl:self-start">
-                <MediaDeskNav activeSection={data.mediaDeskSection} />
-              </aside>
+            <MediaDeskNav activeSection={data.mediaDeskSection} />
+            <div className="min-w-0">
               <main className="min-w-0">
                 {data.mediaDeskSection === "overview" ? (
                   <MediaDeskSections records={data.records} />
@@ -740,12 +711,10 @@ function MediaDeskListingPage({ data }: { data: ContentListingData }) {
                   <MediaDeskStack data={data} records={records} />
                 )}
               </main>
-              <aside className="xl:sticky xl:top-28 xl:self-start">
-                <CalendarPanel events={data.calendarEvents} />
-              </aside>
             </div>
-          </div>
-        </section>
+            </div>
+          </section>
+        </AmbientPageBackground>
       </AboutPageLenis>
     </PageShell>
   );

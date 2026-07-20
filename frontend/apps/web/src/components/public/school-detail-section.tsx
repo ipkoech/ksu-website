@@ -5,7 +5,6 @@ import {
   ArrowRight,
   Download,
   FileText,
-  Globe,
   GraduationCap,
   Mail,
   MapPin,
@@ -15,7 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { ScrollReveal } from "@ksu/ui/components";
+import { AmbientPageBackground, ScrollReveal } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { EntityTeamSection } from "@/components/public/entity-team-section";
 import { EntityInquiryLauncher } from "@/components/public/entity-inquiry-launcher";
@@ -179,7 +178,6 @@ function ContactPanel({ data }: { data: SchoolDetailOverviewData }) {
     { label: "Office", value: present(school.office_location), icon: MapPin },
     { label: "Phone", value: present(school.phone), icon: Phone },
     { label: "Email", value: present(school.email), icon: Mail },
-    { label: "Website", value: present(school.website), icon: Globe },
   ].filter((item) => item.value);
 
   if (!rows.length) return null;
@@ -521,7 +519,6 @@ function ContactSection({ data }: { data: SchoolDetailOverviewData }) {
     { label: "Office", value: present(school.office_location), icon: MapPin },
     { label: "Email", value: present(school.email), icon: Mail },
     { label: "Phone", value: present(school.phone), icon: Phone },
-    { label: "Website", value: present(school.website), icon: Globe },
   ].filter((item) => item.value);
 
   if (!rows.length) return null;
@@ -606,7 +603,8 @@ export function SchoolDetailSection({
   return (
     <PageShell header={header}>
       <AboutPageLenis>
-        <section className="w-full bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_68%,hsl(var(--surface-muted))_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <AmbientPageBackground variant="academic" intensity="soft">
+          <section className="w-full px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mb-4">
             <BreadcrumbTrail
               items={[
@@ -655,7 +653,8 @@ export function SchoolDetailSection({
               <SchoolInfoPanel data={data} />
             </aside>
           </div>
-        </section>
+          </section>
+        </AmbientPageBackground>
       </AboutPageLenis>
       <EntityInquiryLauncher
         target={{

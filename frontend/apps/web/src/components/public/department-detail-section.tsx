@@ -8,7 +8,6 @@ import {
   Download,
   Eye,
   FileText,
-  Globe,
   GraduationCap,
   Landmark,
   Mail,
@@ -22,7 +21,7 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { ScrollReveal } from "@ksu/ui/components";
+import { AmbientPageBackground, ScrollReveal } from "@ksu/ui/components";
 import { PageShell } from "@/components/site-shell";
 import {
   MobileQuickGrid,
@@ -142,11 +141,6 @@ function formatDate(value?: string | null) {
 
 function formatCount(count: number, singular: string, plural = `${singular}s`) {
   return count > 0 ? `${count} ${count === 1 ? singular : plural}` : null;
-}
-
-function linkHref(value: string | null) {
-  if (!value) return undefined;
-  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
 }
 
 function initialsFromName(name: string) {
@@ -435,9 +429,8 @@ function ContactPanel({ data }: { data: DepartmentDetailData }) {
   const email = present(department.email);
   const phone = present(department.phone);
   const office = present(department.office_location);
-  const website = present(department.website);
 
-  if (!email && !phone && !office && !website) return null;
+  if (!email && !phone && !office) return null;
 
   return (
     <section className="min-w-0 overflow-hidden rounded-[1.5rem] border border-border bg-white p-4 shadow-sm">
@@ -455,12 +448,6 @@ function ContactPanel({ data }: { data: DepartmentDetailData }) {
           label="Email"
           value={email}
           href={email ? `mailto:${email}` : undefined}
-        />
-        <ContactRow
-          icon={Globe}
-          label="Website"
-          value={website}
-          href={linkHref(website)}
         />
       </div>
     </section>
@@ -1330,7 +1317,6 @@ function ContactSection({ data }: { data: DepartmentDetailData }) {
     },
     { label: "Email", value: present(department.email), icon: Mail },
     { label: "Phone", value: present(department.phone), icon: Phone },
-    { label: "Website", value: present(department.website), icon: Globe },
   ].filter((item) => item.value);
 
   if (!rows.length) return null;
@@ -1471,7 +1457,8 @@ export function DepartmentDetailSection({
   return (
     <PageShell header={header}>
       <AboutPageLenis>
-        <section className="w-full bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_68%,hsl(var(--surface-muted))_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <AmbientPageBackground variant="academic" intensity="soft">
+          <section className="w-full px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="grid w-full gap-4 xl:grid-cols-[minmax(220px,0.2fr)_minmax(0,1fr)_minmax(260px,0.22fr)] 2xl:grid-cols-[minmax(240px,0.18fr)_minmax(0,1fr)_minmax(300px,0.22fr)] xl:items-start">
             <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
               <QuickLinksPanel
@@ -1508,7 +1495,8 @@ export function DepartmentDetailSection({
               {infoPanel}
             </aside>
           </div>
-        </section>
+          </section>
+        </AmbientPageBackground>
       </AboutPageLenis>
       <EntityInquiryLauncher
         target={{
