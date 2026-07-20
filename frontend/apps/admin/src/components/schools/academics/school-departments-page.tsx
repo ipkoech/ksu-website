@@ -9,12 +9,31 @@ import {
   type SchoolDepartmentPayload,
   type SchoolDepartmentRecord,
 } from "@ksu/api-client";
-import { Building2, CircleCheck, Eye, Layers3, Loader2, Pencil, Plus, Search, Upload } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  CircleCheck,
+  Eye,
+  GraduationCap,
+  Layers3,
+  Loader2,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  Plus,
+  Search,
+  Upload,
+} from "lucide-react";
 import {
   Alert,
   AlertDescription,
   Badge,
   Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -23,19 +42,13 @@ import {
   DialogTitle,
   Input,
   Label,
+  RichTextEditor,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
   Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  Textarea,
 } from "@ksu/ui/components";
 import { MediaPicker } from "@/components/media/media-picker";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
@@ -78,6 +91,15 @@ export function SchoolDepartmentsPage() {
     queryKey: [...schoolPortalQueryKeys.departments(school.id), { page, search }],
     queryFn: () => schoolPortalApi.departments.list({ page, per_page: 20, search: search || undefined }),
   });
+  const programmesQuery = useQuery({
+    queryKey: [...schoolPortalQueryKeys.programmes(school.id), { purpose: "department-counts" }],
+    queryFn: () => schoolPortalApi.programmes.list({ page: 1, per_page: 100 }),
+    staleTime: 5 * 60 * 1000,
+  });
+  const programmeCounts = new Map<string, number>();
+  for (const programme of programmesQuery.data?.data ?? []) {
+    programmeCounts.set(programme.department_id, (programmeCounts.get(programme.department_id) ?? 0) + 1);
+  }
   const focused = departmentsQuery.data?.data.find((item) => item.id === focusedId) ?? null;
   const updateUrl = (key: string, value?: string) => {
     const next = new URLSearchParams(params);
@@ -111,23 +133,74 @@ export function SchoolDepartmentsPage() {
       </label>
       </SchoolFilterBar>
       {departmentsQuery.error ? <Alert variant="destructive"><AlertDescription>{departmentsQuery.error.message}</AlertDescription></Alert> : null}
-      <div className="overflow-x-auto rounded-xl border bg-background shadow-sm">
-        <Table className="min-w-[760px]">
-          <TableHeader><TableRow><TableHead>Department</TableHead><TableHead>Type</TableHead><TableHead>Contact</TableHead><TableHead>Status</TableHead><TableHead className="w-16" /></TableRow></TableHeader>
-          <TableBody>
-            {departmentsQuery.data?.data.map((department) => (
-              <TableRow key={department.id}>
-                <TableCell><div className="flex items-center gap-3"><Building2 className="size-4 text-muted-foreground" /><div><p className="font-medium">{department.name}</p><p className="text-xs text-muted-foreground">{department.code}</p></div></div></TableCell>
-                <TableCell>{department.department_type}</TableCell>
-                <TableCell><p>{department.email || "—"}</p><p className="text-xs text-muted-foreground">{department.office_location}</p></TableCell>
-                <TableCell><div className="flex gap-1"><Badge variant={department.is_active ? "default" : "secondary"}>{department.is_active ? "Active" : "Inactive"}</Badge>{department.is_public ? <Badge variant="outline">Public</Badge> : null}</div></TableCell>
-                <TableCell><Button variant="ghost" size="icon" aria-label={`Edit ${department.name}`} onClick={() => updateUrl("department", department.id)}><Pencil className="size-4" /></Button></TableCell>
-              </TableRow>
-            ))}
-            {!departmentsQuery.isPending && departmentsQuery.data?.data.length === 0 ? <TableRow><TableCell colSpan={5} className="h-32 text-center text-muted-foreground">No departments match these filters.</TableCell></TableRow> : null}
-          </TableBody>
-        </Table>
-      </div>
+      <section className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+        {departmentsQuery.data?.data.map((department) => {
+          const completeness = [
+            department.about,
+            department.email,
+            department.phone,
+            department.office_location,
+            department.head_id,
+            department.cover_image_id,
+          ].filter(Boolean).length;
+          return (
+            <Card key={department.id} className="group overflow-hidden shadow-sm transition-colors duration-200 hover:border-primary/30">
+              <div className={`h-1 ${department.is_public ? "bg-emerald-500" : "bg-amber-400"}`} />
+              <CardHeader className="pb-3">
+                <div className="flex items-start gap-3">
+                  <span className="rounded-xl bg-primary/10 p-2.5 text-primary"><Building2 className="size-5" /></span>
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">{department.code}</Badge>
+                      <Badge variant="secondary" className="capitalize">{department.department_type}</Badge>
+                    </div>
+                    <CardTitle className="line-clamp-2 text-base leading-6">{department.name}</CardTitle>
+                  </div>
+                  <Button variant="ghost" size="icon" aria-label={`Edit ${department.name}`} onClick={() => updateUrl("department", department.id)}>
+                    <Pencil className="size-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="line-clamp-2 min-h-10 text-sm leading-5 text-muted-foreground">
+                  {department.about || "Add an overview to help students and visitors understand this department."}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-lg bg-muted/50 p-3">
+                    <p className="text-lg font-semibold">{programmeCounts.get(department.id) ?? 0}</p>
+                    <p className="flex items-center gap-1 text-xs text-muted-foreground"><GraduationCap className="size-3" /> Programmes</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/50 p-3">
+                    <p className="text-lg font-semibold">{Math.round((completeness / 6) * 100)}%</p>
+                    <p className="text-xs text-muted-foreground">Profile readiness</p>
+                  </div>
+                </div>
+                <div className="space-y-2 text-xs text-muted-foreground">
+                  <p className="flex items-center gap-2"><Mail className="size-3.5" /><span className="truncate">{department.email || "No email recorded"}</span></p>
+                  <p className="flex items-center gap-2"><Phone className="size-3.5" /><span>{department.phone || "No phone recorded"}</span></p>
+                  <p className="flex items-center gap-2"><MapPin className="size-3.5" /><span className="truncate">{department.office_location || "No office location"}</span></p>
+                </div>
+                <div className="flex items-center justify-between border-t pt-3">
+                  <div className="flex gap-1.5">
+                    <Badge variant={department.is_active ? "default" : "secondary"}>{department.is_active ? "Active" : "Inactive"}</Badge>
+                    <Badge variant="outline">{department.is_public ? "Public" : "Internal"}</Badge>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => updateUrl("department", department.id)}>
+                    Manage <ArrowRight className="ml-1 size-3.5" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+        {!departmentsQuery.isPending && (departmentsQuery.data?.data.length ?? 0) === 0 ? (
+          <div className="col-span-full rounded-xl border border-dashed bg-background px-6 py-16 text-center">
+            <Building2 className="mx-auto size-8 text-muted-foreground" />
+            <p className="mt-3 font-medium">No departments found</p>
+            <p className="mt-1 text-sm text-muted-foreground">Change the search or add the school’s first department.</p>
+          </div>
+        ) : null}
+      </section>
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">Page {departmentsQuery.data?.meta.page ?? page} of {departmentsQuery.data?.meta.pages ?? 1}</p>
         <div className="flex gap-2"><Button variant="outline" size="sm" disabled={page <= 1} onClick={() => updateUrl("page", String(page - 1))}>Previous</Button><Button variant="outline" size="sm" disabled={page >= (departmentsQuery.data?.meta.pages ?? 1)} onClick={() => updateUrl("page", String(page + 1))}>Next</Button></div>
@@ -183,44 +256,41 @@ function DepartmentDialog({
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader><DialogTitle>{department ? "Edit department" : "Add department"}</DialogTitle><DialogDescription>Maintain identity, leadership, contacts, content, media, and public state.</DialogDescription></DialogHeader>
         {error ? <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert> : null}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Name" value={values.name} onChange={(name) => setValues((current) => ({ ...current, name }))} />
-          <Field label="Code" value={values.code} onChange={(code) => setValues((current) => ({ ...current, code }))} />
-          <Field label="Slug" value={values.slug} onChange={(slug) => setValues((current) => ({ ...current, slug }))} />
-          <div className="space-y-2"><Label>Department type</Label><Select value={values.department_type ?? "academic"} onValueChange={(department_type) => setValues((current) => ({ ...current, department_type }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="academic">Academic</SelectItem><SelectItem value="service">Service</SelectItem><SelectItem value="research">Research</SelectItem></SelectContent></Select></div>
-          <div className="space-y-2">
-            <Label htmlFor="department-head">Department head</Label>
-            <SchoolTeamSelect
-              triggerId="department-head"
-              valueMode="person"
-              value={values.head_id}
-              placeholder="Select department head"
-              roles={["dean", "deputy_dean", "cod", "hod", "lecturer"]}
-              onChange={(head_id) => setValues((current) => ({ ...current, head_id }))}
-            />
+        <section className="space-y-4 rounded-xl border p-4">
+          <div><h3 className="text-sm font-semibold">Department identity</h3><p className="mt-1 text-xs text-muted-foreground">Set the official name, code, URL and organisational type.</p></div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Name" value={values.name} onChange={(name) => setValues((current) => ({ ...current, name }))} />
+            <Field label="Code" value={values.code} onChange={(code) => setValues((current) => ({ ...current, code }))} />
+            <Field label="Slug" value={values.slug} onChange={(slug) => setValues((current) => ({ ...current, slug }))} />
+            <div className="space-y-2"><Label>Department type</Label><Select value={values.department_type ?? "academic"} onValueChange={(department_type) => setValues((current) => ({ ...current, department_type }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="academic">Academic</SelectItem><SelectItem value="service">Service</SelectItem><SelectItem value="research">Research</SelectItem></SelectContent></Select></div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="department-postgraduate-coordinator">Postgraduate coordinator</Label>
-            <SchoolTeamSelect
-              triggerId="department-postgraduate-coordinator"
-              valueMode="person"
-              value={values.postgraduate_coordinator_id}
-              placeholder="Select postgraduate coordinator"
-              roles={["deputy_dean", "cod", "hod", "coordinator", "lecturer"]}
-              onChange={(postgraduate_coordinator_id) => setValues((current) => ({ ...current, postgraduate_coordinator_id }))}
-            />
+        </section>
+        <section className="space-y-4 rounded-xl border p-4">
+          <div><h3 className="text-sm font-semibold">Leadership & contact</h3><p className="mt-1 text-xs text-muted-foreground">Connect responsible staff and make the department easy to reach.</p></div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="department-head">Department head</Label>
+              <SchoolTeamSelect triggerId="department-head" valueMode="person" value={values.head_id} placeholder="Select department head" roles={["dean", "deputy_dean", "cod", "hod", "lecturer"]} onChange={(head_id) => setValues((current) => ({ ...current, head_id }))} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="department-postgraduate-coordinator">Postgraduate coordinator</Label>
+              <SchoolTeamSelect triggerId="department-postgraduate-coordinator" valueMode="person" value={values.postgraduate_coordinator_id} placeholder="Select postgraduate coordinator" roles={["deputy_dean", "cod", "hod", "coordinator", "lecturer"]} onChange={(postgraduate_coordinator_id) => setValues((current) => ({ ...current, postgraduate_coordinator_id }))} />
+            </div>
+            <Field label="Email" value={values.email} onChange={(email) => setValues((current) => ({ ...current, email }))} />
+            <Field label="Phone" value={values.phone} onChange={(phone) => setValues((current) => ({ ...current, phone }))} />
+            <Field label="Office location" value={values.office_location} onChange={(office_location) => setValues((current) => ({ ...current, office_location }))} />
+            <MediaPicker label="Cover image" value={values.cover_image_id} onChange={(cover_image_id) => setValues((current) => ({ ...current, cover_image_id }))} mediaType="image" accept="image/*" />
           </div>
-          <Field label="Email" value={values.email} onChange={(email) => setValues((current) => ({ ...current, email }))} />
-          <Field label="Phone" value={values.phone} onChange={(phone) => setValues((current) => ({ ...current, phone }))} />
-          <Field label="Office location" value={values.office_location} onChange={(office_location) => setValues((current) => ({ ...current, office_location }))} />
-          <MediaPicker label="Cover image" value={values.cover_image_id} onChange={(cover_image_id) => setValues((current) => ({ ...current, cover_image_id }))} mediaType="image" accept="image/*" />
-        </div>
-        <Area label="About" value={values.about} onChange={(about) => setValues((current) => ({ ...current, about }))} />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Area label="Mission" value={values.mission} onChange={(mission) => setValues((current) => ({ ...current, mission }))} />
-          <Area label="Vision" value={values.vision} onChange={(vision) => setValues((current) => ({ ...current, vision }))} />
-        </div>
-        <div className="flex items-center justify-between rounded-lg border p-3"><Label htmlFor="department-public">Public profile</Label><Switch id="department-public" checked={values.is_public ?? false} onCheckedChange={(is_public) => setValues((current) => ({ ...current, is_public }))} /></div>
+        </section>
+        <section className="space-y-4 rounded-xl border p-4">
+          <div><h3 className="text-sm font-semibold">Public department profile</h3><p className="mt-1 text-xs text-muted-foreground">Describe the department’s purpose and strategic direction.</p></div>
+          <Area label="About" value={values.about} onChange={(about) => setValues((current) => ({ ...current, about }))} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Area label="Mission" value={values.mission} onChange={(mission) => setValues((current) => ({ ...current, mission }))} />
+            <Area label="Vision" value={values.vision} onChange={(vision) => setValues((current) => ({ ...current, vision }))} />
+          </div>
+          <div className="flex items-center justify-between rounded-lg border p-3"><div><Label htmlFor="department-public">Public profile</Label><p className="mt-1 text-xs text-muted-foreground">Show this department on the public university website.</p></div><Switch id="department-public" checked={values.is_public ?? false} onCheckedChange={(is_public) => setValues((current) => ({ ...current, is_public }))} /></div>
+        </section>
         <DialogFooter className="gap-2">
           {department?.is_active ? <Button variant="destructive" onClick={() => deactivate.mutate()}>Deactivate</Button> : null}
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
@@ -237,5 +307,5 @@ function Field({ label, value, onChange }: { label: string; value?: string | nul
 }
 function Area({ label, value, onChange }: { label: string; value?: string | null; onChange: (value: string) => void }) {
   const id = `department-${label.toLowerCase()}`;
-  return <div className="space-y-2"><Label htmlFor={id}>{label}</Label><Textarea id={id} rows={4} value={value ?? ""} onChange={(event) => onChange(event.target.value)} /></div>;
+  return <div className="space-y-2"><Label htmlFor={id}>{label}</Label><RichTextEditor value={value ?? ""} onChange={onChange} toolbar="simple" minHeight="9rem" maxHeight="22rem" /></div>;
 }

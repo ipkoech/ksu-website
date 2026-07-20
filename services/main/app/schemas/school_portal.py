@@ -116,6 +116,10 @@ class SchoolPortalMediaMetadataUpdate(BaseSchema):
     title: str | None = Field(default=None, max_length=255)
     alt_text: str | None = Field(default=None, max_length=255)
     description: str | None = Field(default=None, max_length=600)
+    caption: str | None = Field(default=None, max_length=500)
+    credit: str | None = Field(default=None, max_length=255)
+    tags: list[str] | None = None
+    is_public: bool | None = None
     metadata: dict[str, Any] | None = None
 
 

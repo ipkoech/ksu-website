@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile, status
 from ksu_common.schemas.responses import success
 
 from ....deps import DbSession
@@ -52,6 +52,20 @@ async def update_school_media_metadata(
         **data.model_dump(exclude_unset=True),
     )
     return success(data=media, message="School media updated")
+
+
+@router.delete("/media/{media_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_school_media(
+    media_id: uuid.UUID,
+    db: DbSession,
+    context: CurrentSchoolContext,
+):
+    _require(context, "school.media.manage")
+    media = await MediaService.get_by_id(db, media_id)
+    if media is None or not MediaService.is_owned_by_school(media, context.school.id):
+        raise HTTPException(status_code=404, detail="Media not found")
+    await MediaService.delete(db, media)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/media/batches", status_code=status.HTTP_201_CREATED)

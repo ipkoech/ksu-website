@@ -7,7 +7,19 @@ import {
   schoolPortalQueryKeys,
   type SchoolInquiry,
 } from "@ksu/api-client";
-import { AlertTriangle, CircleCheck, Clock3, Inbox, Mail, MessageCircleMore, Search, Siren } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CircleCheck,
+  Clock3,
+  Inbox,
+  Mail,
+  MessageCircleMore,
+  Search,
+  Siren,
+  Tag,
+  UserRound,
+} from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -74,6 +86,16 @@ export function SchoolInquiryInbox() {
         created_to: created_to || undefined,
       }),
   });
+  const teamQuery = useQuery({
+    queryKey: [...schoolPortalQueryKeys.team(school.id), { purpose: "inquiry-assignee-labels" }],
+    queryFn: () => schoolPortalApi.team.list({ page: 1, per_page: 100, status: "active" }),
+    staleTime: 5 * 60 * 1000,
+  });
+  const assigneeNames = new Map(
+    (teamQuery.data?.data ?? [])
+      .filter((member) => member.user_id)
+      .map((member) => [member.user_id!, member.full_name || member.email || "School team member"]),
+  );
   const updateUrl = (key: string, value?: string) => {
     const next = new URLSearchParams(params);
     if (value) next.set(key, value); else next.delete(key);
@@ -96,10 +118,29 @@ export function SchoolInquiryInbox() {
         { label: "Resolved", value: inboxQuery.data?.data.filter((item) => ["resolved", "closed"].includes(item.status)).length ?? 0, detail: "Completed on this page", icon: CircleCheck, tone: "success" },
         { label: "Urgent", value: inboxQuery.data?.data.filter((item) => item.priority === "urgent").length ?? 0, detail: "Requires priority handling", icon: Siren, tone: "danger" },
       ]} />
+      <section aria-label="Inquiry queues" className="flex gap-2 overflow-x-auto pb-1">
+        {[
+          { value: "all", label: "All conversations" },
+          { value: "new", label: "New" },
+          { value: "open", label: "Open" },
+          { value: "in_progress", label: "In progress" },
+          { value: "waiting_for_requester", label: "Waiting" },
+          { value: "resolved", label: "Resolved" },
+        ].map((queue) => (
+          <button
+            key={queue.value}
+            type="button"
+            className={`shrink-0 cursor-pointer rounded-full border px-3 py-2 text-xs font-medium transition-colors duration-200 ${status === queue.value ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:border-primary/30 hover:bg-muted"}`}
+            onClick={() => updateUrl("status", queue.value)}
+          >
+            {queue.label}
+          </button>
+        ))}
+      </section>
       <SchoolFilterBar label="Filter conversations">
-      <section className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <Select value={status} onValueChange={(value) => updateUrl("status", value)}><SelectTrigger aria-label="Inquiry status"><SelectValue /></SelectTrigger><SelectContent>{STATUS_OPTIONS.map((item) => <SelectItem key={item} value={item}>{item.replaceAll("_", " ")}</SelectItem>)}</SelectContent></Select>
-        <label className="relative"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" /><Input className="pl-9" value={category} placeholder="Category" aria-label="Inquiry category" onChange={(event) => updateUrl("category", event.target.value)} /></label>
+        <label className="relative"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" /><Input className="pl-9" defaultValue={category} placeholder="Category — press Enter" aria-label="Inquiry category" onKeyDown={(event) => event.key === "Enter" && updateUrl("category", event.currentTarget.value.trim())} /></label>
         <Select value={priority} onValueChange={(value) => updateUrl("priority", value)}><SelectTrigger aria-label="Inquiry priority"><SelectValue /></SelectTrigger><SelectContent>{PRIORITY_OPTIONS.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select>
         <SchoolTeamSelect
           valueMode="user"
@@ -116,26 +157,41 @@ export function SchoolInquiryInbox() {
         <div className="space-y-3">{Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-28" />)}</div>
       ) : (
         <section className="overflow-hidden rounded-xl border bg-background shadow-sm">
+          <header className="flex items-center justify-between border-b bg-muted/20 px-4 py-3">
+            <div>
+              <h2 className="text-sm font-semibold">Conversation queue</h2>
+              <p className="text-xs text-muted-foreground">{inboxQuery.data?.meta.total ?? 0} matching inquiries</p>
+            </div>
+            <Badge variant="outline" className="capitalize">{status.replaceAll("_", " ")}</Badge>
+          </header>
           {inboxQuery.data?.data.map((inquiry) => {
             const sla = slaState(inquiry);
             const unread = inquiry.status === "new" || inquiry.meta_data?.unread === true;
+            const priorityTone = inquiry.priority === "urgent"
+              ? "border-l-destructive"
+              : inquiry.priority === "high"
+                ? "border-l-amber-500"
+                : "border-l-transparent";
             return (
               <button
                 key={inquiry.id}
                 type="button"
-                className="flex w-full cursor-pointer gap-3 border-b p-4 text-left transition-colors last:border-0 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                className={`group flex w-full cursor-pointer gap-3 border-b border-l-4 p-4 text-left transition-colors duration-200 last:border-b-0 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${priorityTone}`}
                 onClick={() => updateUrl("inquiry", inquiry.id)}
               >
-                <span className={`mt-1 rounded-full p-2 ${unread ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}><Mail className="size-4" /></span>
+                <span className={`mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${unread ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                  {inquiry.sender_name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || <Mail className="size-4" />}
+                </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
                     <strong className={unread ? "font-semibold" : "font-medium"}>{inquiry.subject}</strong>
                     {unread ? <Badge>Unread</Badge> : null}
-                    <Badge variant="outline">{inquiry.priority}</Badge>
+                    {inquiry.priority !== "normal" ? <Badge variant={inquiry.priority === "urgent" ? "destructive" : "outline"}>{inquiry.priority}</Badge> : null}
                   </span>
-                  <span className="mt-1 block text-sm text-muted-foreground">{inquiry.sender_name} · {inquiry.reference_number} · {inquiry.category}</span>
+                  <span className="mt-1 block text-sm text-muted-foreground">{inquiry.sender_name} · {inquiry.reference_number}</span>
                   <span className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                    <span className="capitalize">{inquiry.status.replaceAll("_", " ")}</span>
+                    <span className="flex items-center gap-1 capitalize"><Tag className="size-3" />{inquiry.category}</span>
+                    <span className="flex items-center gap-1"><UserRound className="size-3" />{inquiry.assigned_to_user_id ? assigneeNames.get(inquiry.assigned_to_user_id) || "Assigned" : "Unassigned"}</span>
                     <span className={`flex items-center gap-1 ${sla.overdue ? "font-medium text-destructive" : ""}`}>
                       {sla.overdue ? <AlertTriangle className="size-3" /> : <Clock3 className="size-3" />}
                       {sla.label}
@@ -143,6 +199,7 @@ export function SchoolInquiryInbox() {
                     <span>{new Date(inquiry.last_message_at || inquiry.created_at).toLocaleString()}</span>
                   </span>
                 </span>
+                <ArrowRight className="mt-3 size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
               </button>
             );
           })}

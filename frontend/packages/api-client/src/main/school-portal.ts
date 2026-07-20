@@ -363,6 +363,10 @@ export const schoolPortalApi = {
         title?: string | null;
         alt_text?: string | null;
         description?: string | null;
+        caption?: string | null;
+        credit?: string | null;
+        tags?: string[] | null;
+        is_public?: boolean | null;
         metadata?: Record<string, unknown> | null;
       },
     ) =>
@@ -370,6 +374,8 @@ export const schoolPortalApi = {
         `${BASE_PATH}/media/${mediaId}`,
         data,
       ),
+    remove: (mediaId: string) =>
+      mainApi.delete<void>(`${BASE_PATH}/media/${mediaId}`),
     createBatch: (
       files: File[],
       options?: {

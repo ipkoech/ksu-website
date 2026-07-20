@@ -7,7 +7,17 @@ import {
   schoolPortalQueryKeys,
   type SchoolInquiryStatus,
 } from "@ksu/api-client";
-import { AlertCircle, Loader2, RefreshCw, Send, StickyNote } from "lucide-react";
+import {
+  AlertCircle,
+  Clock3,
+  Loader2,
+  Mail,
+  Phone,
+  RefreshCw,
+  Send,
+  StickyNote,
+  UserRound,
+} from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -103,6 +113,20 @@ export function InquiryConversation({
         {error ? <Alert variant="destructive" className="mt-5"><AlertCircle className="size-4" /><AlertDescription>{error}</AlertDescription></Alert> : null}
         {inquiry ? (
           <div className="space-y-5 py-6">
+            <div className="rounded-xl border bg-gradient-to-br from-primary/10 via-background to-sky-500/10 p-4">
+              <div className="flex items-start gap-3">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"><UserRound className="size-5" /></span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold">{inquiry.sender_name}</p>
+                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Mail className="size-3" />{inquiry.sender_email}</span>
+                    {inquiry.sender_phone ? <span className="flex items-center gap-1"><Phone className="size-3" />{inquiry.sender_phone}</span> : null}
+                    <span className="flex items-center gap-1"><Clock3 className="size-3" />Opened {new Date(inquiry.created_at).toLocaleString()}</span>
+                  </div>
+                </div>
+                <Badge variant={inquiry.priority === "urgent" ? "destructive" : "outline"}>{inquiry.priority}</Badge>
+              </div>
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Status</Label>
@@ -128,11 +152,16 @@ export function InquiryConversation({
                 </div>
               </div>
             </div>
-            <div className="space-y-3">
+            <div>
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Conversation history</h3>
+                <Badge variant="secondary">{inquiry.messages.length} message{inquiry.messages.length === 1 ? "" : "s"}</Badge>
+              </div>
+              <div className="space-y-3">
               {inquiry.messages.map((message) => (
                 <article
                   key={message.id}
-                  className={`rounded-lg border p-4 ${message.is_internal_note ? "border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30" : message.sender_type === "requester" ? "mr-8 bg-muted/50" : "ml-8"}`}
+                  className={`rounded-xl border p-4 ${message.is_internal_note ? "border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30" : message.sender_type === "requester" ? "mr-6 bg-muted/50 sm:mr-12" : "ml-6 border-primary/20 bg-primary/[0.035] sm:ml-12"}`}
                 >
                   <header className="mb-2 flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -151,6 +180,7 @@ export function InquiryConversation({
                   ) : null}
                 </article>
               ))}
+              </div>
             </div>
             <Tabs defaultValue="reply">
               <TabsList><TabsTrigger value="reply">Reply</TabsTrigger><TabsTrigger value="note">Internal note</TabsTrigger></TabsList>

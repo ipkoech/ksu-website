@@ -14,12 +14,19 @@ import {
   CircleCheck,
   ExternalLink,
   Inbox,
+  Search,
 } from "lucide-react";
 import {
   Alert,
   AlertDescription,
   Badge,
   Button,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Skeleton,
   Switch,
 } from "@ksu/ui/components";
@@ -35,6 +42,8 @@ export function SchoolNotificationsPage() {
   const { school, can } = useSchoolPortal();
   const queryClient = useQueryClient();
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const [search, setSearch] = useState("");
+  const [priority, setPriority] = useState("all");
   const queryKey = [...schoolPortalQueryKeys.notifications(school.id), { unreadOnly }];
   const notifications = useQuery({
     queryKey,
@@ -56,10 +65,14 @@ export function SchoolNotificationsPage() {
     mutationFn: (id: string) => schoolPortalApi.notifications.archive(id),
     onSuccess: refresh,
   });
-  const items = notifications.data?.data ?? [];
-  const unread = items.filter((item) => !item.is_read).length;
-  const urgent = items.filter((item) => ["high", "urgent"].includes(item.priority)).length;
-  const actionable = items.filter((item) => Boolean(item.action_url)).length;
+  const allItems = notifications.data?.data ?? [];
+  const items = allItems.filter((item) => {
+    const text = `${item.title} ${item.message} ${item.notification_type}`.toLowerCase();
+    return (!search || text.includes(search.toLowerCase())) && (priority === "all" || item.priority === priority);
+  });
+  const unread = allItems.filter((item) => !item.is_read).length;
+  const urgent = allItems.filter((item) => ["high", "urgent"].includes(item.priority)).length;
+  const actionable = allItems.filter((item) => Boolean(item.action_url)).length;
 
   return (
     <SchoolWorkspace>
@@ -81,12 +94,27 @@ export function SchoolNotificationsPage() {
         { label: "Priority", value: urgent, detail: "High or urgent updates", icon: Bell, tone: "warning" },
         { label: "Actionable", value: actionable, detail: "Linked to portal work", icon: CircleCheck, tone: "success" },
       ]} />
-      <div className="flex items-center justify-between rounded-xl border bg-background px-4 py-3 shadow-sm">
-        <div>
-          <p className="text-sm font-medium">Unread only</p>
-          <p className="text-xs text-muted-foreground">Hide notifications you have already reviewed.</p>
+      <div className="grid gap-3 rounded-xl border bg-background p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_12rem_auto] md:items-center">
+        <label className="relative">
+          <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+          <Input className="pl-9" value={search} placeholder="Search notifications" aria-label="Search notifications" onChange={(event) => setSearch(event.target.value)} />
+        </label>
+        <Select value={priority} onValueChange={setPriority}>
+          <SelectTrigger aria-label="Notification priority"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All priorities</SelectItem>
+            <SelectItem value="normal">Normal</SelectItem>
+            <SelectItem value="high">High</SelectItem>
+            <SelectItem value="urgent">Urgent</SelectItem>
+          </SelectContent>
+        </Select>
+        <div className="flex items-center justify-between gap-3 md:justify-end">
+          <div>
+            <p className="text-sm font-medium">Unread only</p>
+            <p className="text-xs text-muted-foreground">Focus on new updates</p>
+          </div>
+          <Switch checked={unreadOnly} onCheckedChange={setUnreadOnly} aria-label="Show unread notifications only" />
         </div>
-        <Switch checked={unreadOnly} onCheckedChange={setUnreadOnly} aria-label="Show unread notifications only" />
       </div>
 
       {notifications.error ? <Alert variant="destructive"><AlertDescription>{notifications.error.message}</AlertDescription></Alert> : null}
@@ -97,7 +125,7 @@ export function SchoolNotificationsPage() {
           {items.map((notification) => (
             <article
               key={notification.id}
-              className={`flex gap-3 border-b p-4 last:border-0 ${notification.is_read ? "" : "bg-primary/[0.035]"}`}
+              className={`group flex gap-3 border-b p-4 transition-colors duration-200 last:border-0 hover:bg-muted/30 ${notification.is_read ? "" : "bg-primary/[0.035]"}`}
             >
               <span className={`mt-0.5 rounded-full p-2 ${notification.is_read ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"}`}>
                 {notification.is_read ? <Bell className="size-4" /> : <BellDot className="size-4" />}
@@ -106,6 +134,7 @@ export function SchoolNotificationsPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-sm font-semibold">{notification.title}</h2>
                   {!notification.is_read ? <Badge>New</Badge> : null}
+                  <Badge variant="outline" className="capitalize">{notification.notification_type.replaceAll("_", " ")}</Badge>
                   {notification.priority !== "normal" ? <Badge variant="outline">{notification.priority}</Badge> : null}
                 </div>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">{notification.message}</p>

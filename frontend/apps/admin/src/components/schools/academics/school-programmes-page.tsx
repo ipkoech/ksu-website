@@ -9,12 +9,31 @@ import {
   type SchoolProgrammePayload,
   type SchoolProgrammeRecord,
 } from "@ksu/api-client";
-import { Award, BookOpen, CircleCheck, GraduationCap, Layers3, Loader2, Pencil, Plus, Search, Upload } from "lucide-react";
+import {
+  ArrowRight,
+  Award,
+  BookOpen,
+  Building2,
+  CircleCheck,
+  Clock3,
+  GraduationCap,
+  Layers3,
+  Loader2,
+  Pencil,
+  Plus,
+  Search,
+  Upload,
+  Users,
+} from "lucide-react";
 import {
   Alert,
   AlertDescription,
   Badge,
   Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -23,19 +42,13 @@ import {
   DialogTitle,
   Input,
   Label,
+  RichTextEditor,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
   Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  Textarea,
 } from "@ksu/ui/components";
 import { MediaPicker } from "@/components/media/media-picker";
 import { useSchoolPortal } from "@/components/schools/school-portal-provider";
@@ -115,24 +128,79 @@ export function SchoolProgrammesPage() {
       </div>
       </SchoolFilterBar>
       {programmesQuery.error ? <Alert variant="destructive"><AlertDescription>{programmesQuery.error.message}</AlertDescription></Alert> : null}
-      <div className="overflow-x-auto rounded-xl border bg-background shadow-sm">
-        <Table className="min-w-[920px]">
-          <TableHeader><TableRow><TableHead>Programme</TableHead><TableHead>Level & mode</TableHead><TableHead>Department</TableHead><TableHead>Accreditation</TableHead><TableHead>Status</TableHead><TableHead className="w-16" /></TableRow></TableHeader>
-          <TableBody>
-            {programmesQuery.data?.data.map((programme) => (
-              <TableRow key={programme.id}>
-                <TableCell><div className="flex items-center gap-3"><BookOpen className="size-4 text-muted-foreground" /><div><p className="font-medium">{programme.name}</p><p className="text-xs text-muted-foreground">{programme.code} · {programme.duration}</p></div></div></TableCell>
-                <TableCell>{programme.level}<p className="text-xs text-muted-foreground">{programme.mode_of_study.replaceAll("_", " ")}</p></TableCell>
-                <TableCell>{programme.department?.name || programme.department_id}</TableCell>
-                <TableCell>{programme.accreditation_status || "Not recorded"}</TableCell>
-                <TableCell><Badge variant={programme.is_active ? "default" : "secondary"}>{programme.is_active ? "Active" : "Inactive"}</Badge></TableCell>
-                <TableCell><Button variant="ghost" size="icon" aria-label={`Edit ${programme.name}`} onClick={() => updateUrl("programme", programme.id)}><Pencil className="size-4" /></Button></TableCell>
-              </TableRow>
-            ))}
-            {!programmesQuery.isPending && programmesQuery.data?.data.length === 0 ? <TableRow><TableCell colSpan={6} className="h-32 text-center text-muted-foreground">No programmes match these filters.</TableCell></TableRow> : null}
-          </TableBody>
-        </Table>
-      </div>
+      <section className="space-y-5">
+        {Array.from(
+          new Set((programmesQuery.data?.data ?? []).map((programme) => programme.level)),
+        ).map((programmeLevel) => {
+          const programmes = programmesQuery.data?.data.filter((programme) => programme.level === programmeLevel) ?? [];
+          return (
+            <div key={programmeLevel}>
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-semibold capitalize">{programmeLevel.replaceAll("_", " ")}</h2>
+                  <p className="text-xs text-muted-foreground">{programmes.length} programme{programmes.length === 1 ? "" : "s"} in this study level</p>
+                </div>
+                <Badge variant="secondary">{programmes.length}</Badge>
+              </div>
+              <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+                {programmes.map((programme) => (
+                  <Card key={programme.id} className="group overflow-hidden shadow-sm transition-colors duration-200 hover:border-primary/30">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start gap-3">
+                        <span className="rounded-xl bg-primary/10 p-2.5 text-primary"><BookOpen className="size-5" /></span>
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-1 flex flex-wrap gap-1.5">
+                            <Badge variant="outline">{programme.code}</Badge>
+                            <Badge variant={programme.is_active ? "default" : "secondary"}>{programme.is_active ? "Active" : "Inactive"}</Badge>
+                          </div>
+                          <CardTitle className="line-clamp-2 text-base leading-6">{programme.name}</CardTitle>
+                        </div>
+                        <Button variant="ghost" size="icon" aria-label={`Edit ${programme.name}`} onClick={() => updateUrl("programme", programme.id)}>
+                          <Pencil className="size-4" />
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="line-clamp-2 min-h-10 text-sm leading-5 text-muted-foreground">
+                        {programme.about || "Add a programme overview to help prospective students understand this offering."}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="rounded-lg bg-muted/50 p-3">
+                          <Clock3 className="mb-1.5 size-4 text-primary" />
+                          <p className="font-medium">{programme.duration}</p>
+                          <p className="mt-0.5 text-muted-foreground">{programme.mode_of_study.replaceAll("_", " ")}</p>
+                        </div>
+                        <div className="rounded-lg bg-muted/50 p-3">
+                          <Users className="mb-1.5 size-4 text-primary" />
+                          <p className="font-medium">{programme.max_students ? `Up to ${programme.max_students}` : "Open capacity"}</p>
+                          <p className="mt-0.5 text-muted-foreground">Student capacity</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2 text-xs text-muted-foreground">
+                        <p className="flex items-center gap-2"><Building2 className="size-3.5" /><span className="truncate">{programme.department?.name || "Department not resolved"}</span></p>
+                        <p className="flex items-center gap-2"><Award className="size-3.5" /><span className="truncate">{programme.accreditation_status || "Accreditation not recorded"}</span></p>
+                      </div>
+                      <div className="flex items-center justify-between border-t pt-3">
+                        <Badge variant="outline" className="capitalize">{programme.level.replaceAll("_", " ")}</Badge>
+                        <Button variant="ghost" size="sm" onClick={() => updateUrl("programme", programme.id)}>
+                          Manage <ArrowRight className="ml-1 size-3.5" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+        {!programmesQuery.isPending && (programmesQuery.data?.data.length ?? 0) === 0 ? (
+          <div className="rounded-xl border border-dashed bg-background px-6 py-16 text-center">
+            <GraduationCap className="mx-auto size-8 text-muted-foreground" />
+            <p className="mt-3 font-medium">No programmes found</p>
+            <p className="mt-1 text-sm text-muted-foreground">Change the filters or add a programme to this school portfolio.</p>
+          </div>
+        ) : null}
+      </section>
       <div className="flex items-center justify-between"><p className="text-sm text-muted-foreground">Page {programmesQuery.data?.meta.page ?? page} of {programmesQuery.data?.meta.pages ?? 1}</p><div className="flex gap-2"><Button variant="outline" size="sm" disabled={page <= 1} onClick={() => updateUrl("page", String(page - 1))}>Previous</Button><Button variant="outline" size="sm" disabled={page >= (programmesQuery.data?.meta.pages ?? 1)} onClick={() => updateUrl("page", String(page + 1))}>Next</Button></div></div>
       <ProgrammeDialog
         programme={focused}
@@ -181,7 +249,9 @@ function ProgrammeDialog({
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-4xl">
         <DialogHeader><DialogTitle>{programme ? "Edit programme" : "Add programme"}</DialogTitle><DialogDescription>Maintain programme identity, curriculum, relationships, intake, capacity, accreditation, and media.</DialogDescription></DialogHeader>
         {error ? <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert> : null}
-        <div className="grid gap-4 sm:grid-cols-3">
+        <section className="space-y-4 rounded-xl border p-4">
+          <div><h3 className="text-sm font-semibold">Programme identity & delivery</h3><p className="mt-1 text-xs text-muted-foreground">Define where the programme sits and how students complete it.</p></div>
+          <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Name" className="sm:col-span-2" value={values.name} onChange={(name) => setValues((current) => ({ ...current, name }))} />
           <Field label="Code" value={values.code} onChange={(code) => setValues((current) => ({ ...current, code }))} />
           <Field label="Slug" value={values.slug} onChange={(slug) => setValues((current) => ({ ...current, slug }))} />
@@ -202,15 +272,22 @@ function ProgrammeDialog({
           <Field label="Maximum students" type="number" value={values.max_students?.toString()} onChange={(value) => setValues((current) => ({ ...current, max_students: value ? Number(value) : null }))} />
           <Field label="Accreditation status" value={values.accreditation_status} onChange={(accreditation_status) => setValues((current) => ({ ...current, accreditation_status }))} />
           <Field label="Accrediting body" value={values.accrediting_body} onChange={(accrediting_body) => setValues((current) => ({ ...current, accrediting_body }))} />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {(["about", "objectives", "entry_requirements", "career_prospects", "curriculum_overview"] as const).map((field) => <Area key={field} label={field.replaceAll("_", " ")} value={values[field]} onChange={(value) => setValues((current) => ({ ...current, [field]: value }))} />)}
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <MediaPicker label="Cover image" value={values.cover_image_id} onChange={(cover_image_id) => setValues((current) => ({ ...current, cover_image_id }))} mediaType="image" accept="image/*" />
-          <MediaPicker label="Programme brochure" value={values.brochure_id} onChange={(brochure_id) => setValues((current) => ({ ...current, brochure_id }))} mediaType="document" accept=".pdf" />
-        </div>
-        <div className="flex items-center justify-between rounded-lg border p-3"><Label htmlFor="programme-active">Active programme</Label><Switch id="programme-active" checked={values.is_active ?? true} onCheckedChange={(is_active) => setValues((current) => ({ ...current, is_active }))} /></div>
+          </div>
+        </section>
+        <section className="space-y-4 rounded-xl border p-4">
+          <div><h3 className="text-sm font-semibold">Student-facing programme information</h3><p className="mt-1 text-xs text-muted-foreground">Explain outcomes, requirements, curriculum and career pathways.</p></div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {(["about", "objectives", "entry_requirements", "career_prospects", "curriculum_overview"] as const).map((field) => <Area key={field} label={field.replaceAll("_", " ")} value={values[field]} onChange={(value) => setValues((current) => ({ ...current, [field]: value }))} />)}
+          </div>
+        </section>
+        <section className="space-y-4 rounded-xl border p-4">
+          <div><h3 className="text-sm font-semibold">Media & availability</h3><p className="mt-1 text-xs text-muted-foreground">Attach discovery assets and control whether the programme is currently offered.</p></div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <MediaPicker label="Cover image" value={values.cover_image_id} onChange={(cover_image_id) => setValues((current) => ({ ...current, cover_image_id }))} mediaType="image" accept="image/*" />
+            <MediaPicker label="Programme brochure" value={values.brochure_id} onChange={(brochure_id) => setValues((current) => ({ ...current, brochure_id }))} mediaType="document" accept=".pdf" />
+          </div>
+          <div className="flex items-center justify-between rounded-lg border p-3"><div><Label htmlFor="programme-active">Active programme</Label><p className="mt-1 text-xs text-muted-foreground">Available in the school’s current academic portfolio.</p></div><Switch id="programme-active" checked={values.is_active ?? true} onCheckedChange={(is_active) => setValues((current) => ({ ...current, is_active }))} /></div>
+        </section>
         <DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button disabled={!values.name || !values.code || !values.slug || !values.department_id || !values.duration || mutation.isPending} onClick={() => mutation.mutate()}>{mutation.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}Save programme</Button></DialogFooter>
       </DialogContent>
     </Dialog>
@@ -223,5 +300,5 @@ function Field({ label, value, onChange, type = "text", className = "" }: { labe
 }
 function Area({ label, value, onChange }: { label: string; value?: string | null; onChange: (value: string) => void }) {
   const id = `programme-${label.replaceAll(" ", "-")}`;
-  return <div className="space-y-2"><Label htmlFor={id} className="capitalize">{label}</Label><Textarea id={id} rows={4} value={value ?? ""} onChange={(event) => onChange(event.target.value)} /></div>;
+  return <div className="space-y-2"><Label htmlFor={id} className="capitalize">{label}</Label><RichTextEditor value={value ?? ""} onChange={onChange} toolbar="simple" minHeight="10rem" maxHeight="24rem" /></div>;
 }

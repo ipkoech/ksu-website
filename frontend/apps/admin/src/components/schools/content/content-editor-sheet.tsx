@@ -15,6 +15,8 @@ import {
   Button,
   Input,
   Label,
+  RichTextEditor,
+  RichTextRenderer,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -198,10 +200,22 @@ export function ContentEditorSheet({
             <TabsContent value="edit" className="space-y-4 pt-3">
               {contentType !== "gallery_link" ? (
                 <>
-                  <Field label="Title" value={draft.title} disabled={readOnly} onChange={(title) => setDraft((current) => ({ ...current, title }))} />
-                  <Field label="Slug" value={draft.slug} disabled={readOnly} onChange={(slug) => setDraft((current) => ({ ...current, slug }))} />
-                  <div className="space-y-2"><Label htmlFor="content-summary">Summary</Label><Textarea id="content-summary" rows={3} disabled={readOnly} value={String(draft.summary ?? "")} onChange={(event) => setDraft((current) => ({ ...current, summary: event.target.value }))} /></div>
-                  <div className="space-y-2"><Label htmlFor="content-rich-text">Rich text</Label><Textarea id="content-rich-text" rows={12} disabled={readOnly} value={String(draft.rich_text ?? "")} onChange={(event) => setDraft((current) => ({ ...current, rich_text: event.target.value }))} /><p className="text-xs text-muted-foreground">Use clean semantic HTML. Scripts, event handlers, and embedded frames are rejected.</p></div>
+                  <section className="space-y-4 rounded-xl border p-4">
+                    <div><h3 className="text-sm font-semibold">Content identity</h3><p className="mt-1 text-xs text-muted-foreground">Give editors and audiences a clear title, URL and concise introduction.</p></div>
+                    <Field label="Title" value={draft.title} disabled={readOnly} onChange={(title) => setDraft((current) => ({ ...current, title }))} />
+                    <Field label="Slug" value={draft.slug} disabled={readOnly} onChange={(slug) => setDraft((current) => ({ ...current, slug }))} />
+                    <div className="space-y-2"><Label htmlFor="content-summary">Summary</Label><Textarea id="content-summary" rows={3} disabled={readOnly} value={String(draft.summary ?? "")} onChange={(event) => setDraft((current) => ({ ...current, summary: event.target.value }))} /></div>
+                  </section>
+                  <section className="space-y-3 rounded-xl border p-4">
+                    <div><h3 className="text-sm font-semibold">Full content</h3><p className="mt-1 text-xs text-muted-foreground">Use headings, lists and links to create a readable public page.</p></div>
+                    <RichTextEditor
+                      value={String(draft.rich_text ?? "")}
+                      disabled={readOnly}
+                      minHeight="18rem"
+                      maxHeight="55vh"
+                      onChange={(rich_text) => setDraft((current) => ({ ...current, rich_text }))}
+                    />
+                  </section>
                 </>
               ) : null}
               {(contentType === "event" || contentType === "calendar_entry") ? (
@@ -211,6 +225,8 @@ export function ContentEditorSheet({
                   <Field label="Location" value={draft.location} disabled={readOnly} onChange={(location) => setDraft((current) => ({ ...current, location }))} />
                 </div>
               ) : null}
+              <section className="space-y-3 rounded-xl border p-4">
+                <div><h3 className="text-sm font-semibold">Media & attachments</h3><p className="mt-1 text-xs text-muted-foreground">Choose the asset audiences will see or download with this content.</p></div>
               {(contentType === "document" || contentType === "download") ? (
                 <MediaPicker label="Document file and preview" value={String(draft.file_id || "")} disabled={readOnly} onChange={(file_id) => setDraft((current) => ({ ...current, file_id }))} mediaType="document" accept=".pdf,.doc,.docx" />
               ) : contentType === "gallery_link" ? (
@@ -218,12 +234,13 @@ export function ContentEditorSheet({
               ) : (
                 <MediaPicker label="Featured media and preview" value={String(draft.featured_media_id || "")} disabled={readOnly} onChange={(featured_media_id) => setDraft((current) => ({ ...current, featured_media_id }))} mediaType="image" accept="image/*" />
               )}
+              </section>
             </TabsContent>
             <TabsContent value="preview" className="space-y-3 rounded-lg border p-5">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{contentType.replaceAll("_", " ")}</p>
               <h2 className="text-xl font-semibold">{String(draft.title || "Untitled content")}</h2>
               <p className="text-sm text-muted-foreground">{String(draft.summary || "No summary")}</p>
-              <pre className="whitespace-pre-wrap font-sans text-sm">{String(draft.rich_text || "")}</pre>
+              <RichTextRenderer content={String(draft.rich_text || "")} className="prose-sm" emptyFallback={<p className="text-sm text-muted-foreground">No full content yet.</p>} />
             </TabsContent>
           </Tabs>
           {currentRecord ? (

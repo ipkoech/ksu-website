@@ -9,7 +9,22 @@ import {
   type SchoolContentRecord,
   type SchoolContentType,
 } from "@ksu/api-client";
-import { CircleCheck, FilePenLine, FileText, Newspaper, Plus, Search, Send } from "lucide-react";
+import {
+  ArrowRight,
+  Calendar,
+  CalendarDays,
+  CircleCheck,
+  Download,
+  FilePenLine,
+  FileText,
+  Images,
+  Megaphone,
+  Newspaper,
+  Plus,
+  Search,
+  Send,
+  Sparkles,
+} from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -34,15 +49,15 @@ import {
 } from "@/components/schools/shared/school-workspace";
 import { ContentEditorSheet } from "./content-editor-sheet";
 
-const CONTENT_TYPES: Array<{ value: SchoolContentType; label: string }> = [
-  { value: "news", label: "News" },
-  { value: "event", label: "Events" },
-  { value: "story", label: "Stories" },
-  { value: "announcement", label: "Announcements" },
-  { value: "calendar_entry", label: "Calendar" },
-  { value: "gallery_link", label: "Gallery" },
-  { value: "document", label: "Documents" },
-  { value: "download", label: "Downloads" },
+const CONTENT_TYPES: Array<{ value: SchoolContentType; label: string; icon: typeof Newspaper; tone: string }> = [
+  { value: "news", label: "News", icon: Newspaper, tone: "bg-sky-500/10 text-sky-700 dark:text-sky-400" },
+  { value: "event", label: "Events", icon: CalendarDays, tone: "bg-violet-500/10 text-violet-700 dark:text-violet-400" },
+  { value: "story", label: "Stories", icon: Sparkles, tone: "bg-amber-500/10 text-amber-700 dark:text-amber-400" },
+  { value: "announcement", label: "Announcements", icon: Megaphone, tone: "bg-rose-500/10 text-rose-700 dark:text-rose-400" },
+  { value: "calendar_entry", label: "Calendar", icon: Calendar, tone: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" },
+  { value: "gallery_link", label: "Gallery", icon: Images, tone: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400" },
+  { value: "document", label: "Documents", icon: FileText, tone: "bg-slate-500/10 text-slate-700 dark:text-slate-400" },
+  { value: "download", label: "Downloads", icon: Download, tone: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400" },
 ];
 
 export function SchoolContentStudio() {
@@ -77,6 +92,7 @@ export function SchoolContentStudio() {
     [contentQuery.data, search, status],
   );
   const focused = records.find((record) => record.id === focusedId) ?? null;
+  const activeType = CONTENT_TYPES.find((item) => item.value === contentType) ?? CONTENT_TYPES[0];
 
   return (
     <SchoolWorkspace>
@@ -104,7 +120,10 @@ export function SchoolContentStudio() {
         }}
       >
         <TabsList className="h-auto w-full justify-start overflow-x-auto">
-          {CONTENT_TYPES.map((item) => <TabsTrigger key={item.value} value={item.value}>{item.label}</TabsTrigger>)}
+          {CONTENT_TYPES.map((item) => {
+            const Icon = item.icon;
+            return <TabsTrigger key={item.value} value={item.value}><Icon className="mr-1.5 size-3.5" />{item.label}</TabsTrigger>;
+          })}
         </TabsList>
       </Tabs>
       <SchoolFilterBar>
@@ -117,8 +136,29 @@ export function SchoolContentStudio() {
       </div>
       </SchoolFilterBar>
       {contentQuery.error ? <Alert variant="destructive"><AlertDescription>{contentQuery.error.message}</AlertDescription></Alert> : null}
-      <section className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
-        {records.map((record) => <ContentCard key={record.id} record={record} onOpen={() => updateUrl("record", record.id)} />)}
+      <section aria-label="Editorial pipeline" className="grid grid-cols-2 gap-2 md:grid-cols-4">
+        {[
+          { value: "draft", label: "Draft", color: "bg-amber-500" },
+          { value: "submitted", label: "Submitted", color: "bg-sky-500" },
+          { value: "changes_requested", label: "Changes requested", color: "bg-destructive" },
+          { value: "published", label: "Published", color: "bg-emerald-500" },
+        ].map((item) => (
+          <button
+            key={item.value}
+            type="button"
+            className="cursor-pointer rounded-xl border bg-background p-3 text-left shadow-sm transition-colors duration-200 hover:border-primary/30"
+            onClick={() => updateUrl("status", status === item.value ? "all" : item.value)}
+          >
+            <span className={`mb-2 block h-1 w-8 rounded-full ${item.color}`} />
+            <span className="block text-xl font-semibold">
+              {(contentQuery.data ?? []).filter(({ record }) => String(record.workflow_status || record.status || "draft") === item.value).length}
+            </span>
+            <span className="block truncate text-xs font-medium sm:text-sm">{item.label}</span>
+          </button>
+        ))}
+      </section>
+      <section className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+        {records.map((record) => <ContentCard key={record.id} record={record} contentType={activeType} onOpen={() => updateUrl("record", record.id)} />)}
         {!contentQuery.isPending && records.length === 0 ? <div className="col-span-full rounded-lg border border-dashed p-12 text-center text-sm text-muted-foreground">No content matches this type and workflow state.</div> : null}
       </section>
       <ContentEditorSheet
@@ -132,15 +172,36 @@ export function SchoolContentStudio() {
   );
 }
 
-function ContentCard({ record, onOpen }: { record: SchoolContentRecord; onOpen: () => void }) {
+function ContentCard({
+  record,
+  contentType,
+  onOpen,
+}: {
+  record: SchoolContentRecord;
+  contentType: (typeof CONTENT_TYPES)[number];
+  onOpen: () => void;
+}) {
   const status = String(record.workflow_status || record.status || "draft");
+  const Icon = contentType.icon;
+  const date = record.updated_at ? new Date(record.updated_at) : null;
   return (
-    <button type="button" className="group flex cursor-pointer gap-3 rounded-xl border bg-background p-4 text-left shadow-sm transition-colors duration-200 hover:border-primary/40 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={onOpen}>
-      <span className="rounded-lg bg-primary/10 p-2 text-primary"><FileText className="size-5" /></span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium">{String(record.title || record.name || "Untitled")}</span>
-        <span className="mt-1 line-clamp-2 text-sm text-muted-foreground">{String(record.summary || "No summary")}</span>
-        <span className="mt-3 flex items-center justify-between gap-2"><Badge variant={status === "changes_requested" ? "destructive" : "secondary"}>{status.replaceAll("_", " ")}</Badge><span className="text-xs text-muted-foreground">{record.updated_at ? new Date(record.updated_at).toLocaleDateString() : ""}</span></span>
+    <button type="button" className="group flex min-h-52 cursor-pointer flex-col rounded-xl border bg-background p-4 text-left shadow-sm transition-colors duration-200 hover:border-primary/40 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={onOpen}>
+      <span className="flex w-full items-start gap-3">
+        <span className={`rounded-xl p-2.5 ${contentType.tone}`}><Icon className="size-5" /></span>
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-center gap-1.5">
+            <Badge variant={status === "changes_requested" ? "destructive" : "secondary"}>{status.replaceAll("_", " ")}</Badge>
+            <Badge variant="outline">{contentType.label}</Badge>
+          </span>
+          <span className="mt-2 block line-clamp-2 font-semibold leading-6">{String(record.title || record.name || "Untitled")}</span>
+        </span>
+      </span>
+      <span className="mt-3 line-clamp-3 text-sm leading-5 text-muted-foreground">{String(record.summary || record.excerpt || "Add a summary so reviewers and audiences can understand this content quickly.")}</span>
+      <span className="mt-auto flex w-full items-center justify-between gap-3 border-t pt-3">
+        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <CalendarDays className="size-3.5" />{date ? date.toLocaleDateString() : "Not dated"}
+        </span>
+        <span className="flex items-center text-xs font-medium text-primary">Open editor <ArrowRight className="ml-1 size-3.5 transition-transform group-hover:translate-x-0.5" /></span>
       </span>
     </button>
   );
