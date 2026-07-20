@@ -33,6 +33,7 @@ import {
 import { PublicImage } from "@/components/public/public-image";
 import { EntityTeamSection } from "@/components/public/entity-team-section";
 import { EntityInquiryLauncher } from "@/components/public/entity-inquiry-launcher";
+import { EntityMediaMosaic } from "@/components/public/entity-media-mosaic";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import type { DepartmentDetailData } from "@/lib/department-detail-data";
 import {
@@ -1157,44 +1158,6 @@ function ServicesSection({ data }: { data: DepartmentDetailData }) {
   );
 }
 
-function mediaHref(item: DepartmentDetailData["updates"][number]) {
-  if (item.recordType === "blog") return `/media/articles/${item.slug}`;
-  if (item.recordType === "event") return `/media/events/${item.slug}`;
-  if (item.recordType === "announcement") return `/media/announcements/${item.slug}`;
-  if (item.recordType === "gallery") return `/media/gallery/${item.id}`;
-  return `/media/news/${item.slug}`;
-}
-
-function mediaDate(item: DepartmentDetailData["updates"][number]) {
-  if (item.recordType === "gallery") return formatDate(item.created_at);
-  if (item.recordType === "event") return formatDate(item.start_date);
-  return formatDate(item.published_at ?? item.created_at);
-}
-
-function mediaTitle(item: DepartmentDetailData["updates"][number]) {
-  if (item.recordType === "gallery") {
-    return present(item.title) ?? present(item.original_filename) ?? "Gallery image";
-  }
-  return item.title;
-}
-
-function mediaSummary(item: DepartmentDetailData["updates"][number]) {
-  if (item.recordType === "gallery") {
-    return (
-      present(item.description) ?? present(item.caption) ?? present(item.alt_text)
-    );
-  }
-  return present(item.summary);
-}
-
-function mediaLabel(item: DepartmentDetailData["updates"][number]) {
-  if (item.recordType === "gallery") return "Gallery";
-  if (item.recordType === "blog") return "Blog";
-  if (item.recordType === "event") return "Event";
-  if (item.recordType === "announcement") return "Announcement";
-  return "News";
-}
-
 function MediaSection({
   data,
   mediaType,
@@ -1222,32 +1185,7 @@ function MediaSection({
           are currently published for this department.
         </p>
       ) : null}
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {updates.map((item) => (
-          <Link
-            key={`${item.recordType}-${item.id}`}
-            href={mediaHref(item)}
-            className="group rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
-          >
-            <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
-              {mediaLabel(item)}
-            </p>
-            <h2 className="mt-2 text-base font-bold text-foreground group-hover:text-primary">
-              {mediaTitle(item)}
-            </h2>
-            {mediaSummary(item) ? (
-              <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
-                {mediaSummary(item)}
-              </p>
-            ) : null}
-            {mediaDate(item) ? (
-              <p className="mt-3 text-xs font-semibold text-muted-foreground">
-                {mediaDate(item)}
-              </p>
-            ) : null}
-          </Link>
-        ))}
-      </div>
+      <EntityMediaMosaic items={updates} />
     </section>
   );
 }
