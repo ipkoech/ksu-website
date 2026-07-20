@@ -32,7 +32,7 @@ export function AmbientPageBackground<T extends ElementType = "div">({
   return (
     <Component
       className={cn(
-        "relative isolate overflow-hidden bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_36%,hsl(var(--surface-muted))_100%)] text-foreground",
+        "relative isolate overflow-x-clip bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_36%,hsl(var(--surface-muted))_100%)] text-foreground",
         className,
       )}
       {...props}

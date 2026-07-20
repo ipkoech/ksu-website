@@ -40,9 +40,17 @@ export function CampusLifeHorizontalScroller({
         currentRail.scrollWidth - currentTrack.clientWidth,
         0,
       );
-      section.style.minHeight = `${Math.ceil(window.innerHeight + maxTranslate)}px`;
+      const stickyFrame = currentTrack.closest(
+        ".campus-life-sticky-frame",
+      ) as HTMLElement | null;
+      const stickyHeight = stickyFrame?.clientHeight ?? window.innerHeight;
+      const stickyTop = stickyFrame
+        ? parseFloat(window.getComputedStyle(stickyFrame).top) || 0
+        : 0;
+      section.style.minHeight = `${Math.ceil(stickyHeight + maxTranslate)}px`;
 
-      const sectionTop = section.getBoundingClientRect().top + window.scrollY;
+      const sectionTop =
+        section.getBoundingClientRect().top + window.scrollY - stickyTop;
       const scrollableDistance = Math.max(maxTranslate, 1);
       const progress = Math.min(
         Math.max((window.scrollY - sectionTop) / scrollableDistance, 0),
