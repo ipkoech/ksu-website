@@ -12,7 +12,6 @@ import {
   Landmark,
   Mail,
   MapPin,
-  Newspaper,
   Phone,
   Quote,
   ShieldCheck,
@@ -28,6 +27,12 @@ import {
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { PublicImage } from "@/components/public/public-image";
 import { EntityInquiryLauncher } from "@/components/public/entity-inquiry-launcher";
+import {
+  ExploreMorePanel,
+  MobileSchoolLinksGrid,
+  SchoolLinksPanel,
+  buildSchoolQuickLinks,
+} from "@/components/public/school-detail-navigation";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import { publicFileUrl } from "@/lib/public-media";
 import type { SchoolDetailOverviewData } from "@/lib/school-detail-data";
@@ -183,7 +188,7 @@ function ContactPanel({
   if (!email && !phone && !office && !website) return null;
 
   return (
-    <section className="min-w-0 p-5">
+    <section className="min-w-0 overflow-hidden rounded-[1.5rem] border border-border bg-white p-4 shadow-sm">
       <SectionKicker>Contact Information</SectionKicker>
       <div className="mt-3 grid min-w-0 gap-1.5">
         <ContactRow icon={MapPin} label="Office" value={office} />
@@ -237,7 +242,7 @@ function SchoolInfoPanel({
   if (!items.length) return null;
 
   return (
-    <section className="p-5">
+    <section className="rounded-[1.5rem] border border-border bg-white p-4 shadow-sm">
       <SectionKicker>School Information</SectionKicker>
       <dl className="mt-3 grid gap-2">
         {items.map((item) => {
@@ -291,31 +296,13 @@ function DeanMessageCard({
     : messageText;
 
   return (
-    <section className="overflow-hidden rounded-[1.5rem] bg-brand-overlay p-5 text-white shadow-[0_24px_70px_-48px_rgba(15,23,42,0.9)] sm:p-6 lg:p-7">
-      <div className="grid gap-5 sm:grid-cols-[8rem_minmax(0,1fr)] sm:items-start lg:grid-cols-[10rem_1px_minmax(0,1fr)] lg:gap-7">
-        <div>
-          <div className="w-24 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/20 sm:w-full">
-            <div className="aspect-square">
-              <DeanPortrait name={deanName} image={deanImage} />
-            </div>
-          </div>
-          <div className="mt-4 text-sm leading-6">
-            <p className="font-bold text-white">{deanName}</p>
-            <p className="text-white/70">{deanTitle}</p>
-            {deanEmail ? (
-              <a
-                href={`mailto:${deanEmail}`}
-                className="mt-1 block break-all text-xs font-semibold text-secondary transition-colors hover:text-white"
-              >
-                {deanEmail}
-              </a>
-            ) : null}
+    <section className="overflow-hidden rounded-[1.5rem] bg-brand-overlay p-5 text-white shadow-[0_24px_70px_-48px_rgba(15,23,42,0.9)] sm:p-6">
+      <div className="grid gap-5 sm:grid-cols-[7rem_minmax(0,1fr)] sm:items-center">
+        <div className="w-24 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/15 sm:w-auto">
+          <div className="aspect-square">
+            <DeanPortrait name={deanName} image={deanImage} />
           </div>
         </div>
-        <span
-          aria-hidden
-          className="hidden h-full min-h-48 bg-white/20 lg:block"
-        />
         <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-[0.08em] text-secondary">
             Dean's Message
@@ -342,9 +329,20 @@ function DeanMessageCard({
               </p>
             )
           ) : null}
-          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.08em] text-white/55">
-            {schoolName}
-          </p>
+          <div className="mt-4 text-sm leading-6">
+            <p className="font-bold text-white">{deanName}</p>
+            <p className="text-white/70">
+              {deanTitle}, {schoolName}
+            </p>
+            {deanEmail ? (
+              <p className="mt-1 text-xs font-semibold text-white/70">
+                Email:{" "}
+                <a href={`mailto:${deanEmail}`} className="text-secondary">
+                  {deanEmail}
+                </a>
+              </p>
+            ) : null}
+          </div>
         </div>
       </div>
     </section>
@@ -413,7 +411,7 @@ function FeaturedSchoolLinks({
   if (!items.length) return null;
 
   return (
-    <section className="p-5">
+    <section className="rounded-[1.5rem] border border-border bg-white p-4 shadow-sm">
       <SectionKicker>{title}</SectionKicker>
       <div className="mt-3 divide-y divide-slate-100">
         {items.map((item) => (
@@ -445,7 +443,7 @@ function StatementCards({ statements }: { statements: StatementCard[] }) {
   return (
     <section
       id="school-statements"
-      className="grid overflow-hidden rounded-[1.5rem] border border-border bg-white shadow-sm md:grid-cols-2 xl:grid-cols-4 xl:divide-x xl:divide-border"
+      className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"
       aria-label="School mission, vision, mandate and core values"
     >
       {statements.map((item) => {
@@ -454,7 +452,7 @@ function StatementCards({ statements }: { statements: StatementCard[] }) {
         return (
           <article
             key={item.title}
-            className="border-b border-border p-4 last:border-b-0 md:[&:nth-last-child(-n+2)]:border-b-0 xl:border-b-0"
+            className="rounded-[1.5rem] border border-border bg-white p-4 shadow-sm"
           >
             <div className="flex gap-3 md:block">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary/[0.12] text-secondary md:h-12 md:w-12">
@@ -477,102 +475,10 @@ function StatementCards({ statements }: { statements: StatementCard[] }) {
   );
 }
 
-function updateHref(item: SchoolDetailOverviewData["updates"][number]) {
-  if (item.recordType === "blog") return `/media/articles/${item.slug}`;
-  if (item.recordType === "event") return `/media/events/${item.slug}`;
-  if (item.recordType === "announcement") {
-    return `/media/announcements/${item.slug}`;
-  }
-  if (item.recordType === "gallery") return `/media/gallery/${item.id}`;
-  return `/media/news/${item.slug}`;
-}
-
-function updateLabel(item: SchoolDetailOverviewData["updates"][number]) {
-  if (item.recordType === "blog") return "Article";
-  if (item.recordType === "event") return "Event";
-  if (item.recordType === "announcement") return "Announcement";
-  if (item.recordType === "gallery") return "Gallery";
-  return "News";
-}
-
-function updateTitle(item: SchoolDetailOverviewData["updates"][number]) {
-  if (item.recordType === "gallery") {
-    return (
-      present(item.title) ??
-      present(item.original_filename) ??
-      "School gallery update"
-    );
-  }
-  return present(item.title) ?? "School update";
-}
-
-function updateDate(item: SchoolDetailOverviewData["updates"][number]) {
-  if (item.recordType === "gallery") return formatDate(item.created_at);
-  if (item.recordType === "event") return formatDate(item.start_date);
-  return formatDate(item.published_at ?? item.created_at);
-}
-
-function LatestSchoolUpdates({
-  updates,
-  allHref,
-}: {
-  updates: SchoolDetailOverviewData["updates"];
-  allHref: string;
-}) {
-  const schoolUpdates = updates
-    .filter((item) => item.recordScope !== "fallback")
-    .slice(0, 2);
-
-  if (!schoolUpdates.length) return null;
-
-  return (
-    <section className="rounded-[1.5rem] border border-border bg-white p-5 shadow-sm sm:p-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <SectionKicker>School Updates</SectionKicker>
-          <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
-            Latest from the school
-          </h2>
-        </div>
-        <Link
-          href={allHref}
-          className="inline-flex min-h-10 items-center gap-2 text-sm font-bold text-primary transition-colors hover:text-secondary"
-        >
-          View all updates
-          <ArrowRight aria-hidden className="h-4 w-4" />
-        </Link>
-      </div>
-      <div className="mt-5 grid gap-3 md:grid-cols-2">
-        {schoolUpdates.map((item) => (
-          <Link
-            key={`${item.recordType}-${item.id}`}
-            href={updateHref(item)}
-            className="group flex min-h-36 flex-col justify-between rounded-[1.1rem] border border-border bg-surface-subtle p-4 transition-colors hover:border-primary/30 hover:bg-primary/[0.03]"
-          >
-            <div>
-              <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.08em] text-primary">
-                <Newspaper aria-hidden className="h-4 w-4" />
-                {updateLabel(item)}
-              </span>
-              <h3 className="mt-3 text-base font-bold leading-6 text-foreground transition-colors group-hover:text-primary">
-                {updateTitle(item)}
-              </h3>
-            </div>
-            {updateDate(item) ? (
-              <time className="mt-4 text-xs font-semibold text-muted-foreground">
-                {updateDate(item)}
-              </time>
-            ) : null}
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 export function SchoolDetailOverview({
   data,
   header,
+  navItems,
 }: {
   data: SchoolDetailOverviewData;
   header?: ReactNode;
@@ -592,6 +498,7 @@ export function SchoolDetailOverview({
   const phone = present(school.phone);
   const office = present(school.office_location);
   const website = present(school.website);
+  const quickLinks = buildSchoolQuickLinks({ baseHref, navItems, counts });
   const established =
     formatDate(school.establishment_date) ?? school.founded_year ?? null;
 
@@ -665,13 +572,6 @@ export function SchoolDetailOverview({
       />
     </>
   );
-  const discoveryRail = (
-    <div className="overflow-hidden rounded-[1.5rem] border border-border bg-white shadow-sm [&>section+section]:border-t [&>section+section]:border-border">
-      {featuredPanels}
-      {contactPanel}
-      {schoolInfoPanel}
-    </div>
-  );
 
   return (
     <PageShell header={header}>
@@ -688,7 +588,12 @@ export function SchoolDetailOverview({
             />
             <h1 className="sr-only">{schoolName}</h1>
           </div>
-          <div className="mx-auto grid w-full max-w-[1680px] gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(290px,0.34fr)] xl:items-start 2xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="grid w-full gap-4 xl:grid-cols-[minmax(220px,0.2fr)_minmax(0,1fr)_minmax(260px,0.22fr)] 2xl:grid-cols-[minmax(240px,0.18fr)_minmax(0,1fr)_minmax(300px,0.22fr)] xl:items-start">
+            <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
+              <SchoolLinksPanel links={quickLinks} />
+              <ExploreMorePanel />
+            </aside>
+
             <ScrollReveal as="main" className="grid min-w-0 gap-4">
               {showDeanCard ? (
                 <DeanMessageCard
@@ -700,6 +605,7 @@ export function SchoolDetailOverview({
                   deanEmail={deanEmail}
                 />
               ) : null}
+              <MobileSchoolLinksGrid links={quickLinks} />
               {overview ? (
                 <AboutCard
                   overview={overview}
@@ -707,17 +613,23 @@ export function SchoolDetailOverview({
                   coverImageUrl={schoolCoverUrl}
                 />
               ) : null}
+              <div className="grid gap-4 md:grid-cols-2 xl:hidden">
+                {featuredPanels}
+              </div>
               {statements.length ? (
                 <StatementCards statements={statements} />
               ) : null}
-              <LatestSchoolUpdates
-                updates={data.updates}
-                allHref={`${baseHref}/media`}
-              />
             </ScrollReveal>
 
-            <aside className="min-w-0 xl:sticky xl:top-24">
-              {discoveryRail}
+            <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
+              {featuredPanels}
+              {contactPanel}
+              {schoolInfoPanel}
+            </aside>
+
+            <aside className="grid gap-4 xl:hidden">
+              {contactPanel}
+              {schoolInfoPanel}
             </aside>
           </div>
         </section>
