@@ -75,7 +75,7 @@ class PublicSchoolInquiryTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_public_create_stamps_school_and_persists_initial_message(self):
         school_id = uuid.uuid4()
-        school = SimpleNamespace(id=school_id)
+        school = SimpleNamespace(id=school_id, name="School of Business", slug="business")
         db = _Db()
         item = await ContactInquiryService.create_public(
             db,

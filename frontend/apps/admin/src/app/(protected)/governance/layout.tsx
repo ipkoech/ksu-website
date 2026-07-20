@@ -1,9 +1,5 @@
-import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
 
-export default function GovernanceLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  return children;
+export default function GovernanceLayout() {
+  redirect("/admin");
 }

@@ -95,6 +95,3 @@ async def seed_governance(db: AsyncSession, ctx: SeedContext) -> None:
     }
     if page_content is None:
         db.add(GovernancePageContent(id=uuid.uuid4(), **payload))
-    else:
-        for field_name, value in payload.items():
-            setattr(page_content, field_name, value)

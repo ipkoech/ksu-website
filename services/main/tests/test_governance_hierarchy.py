@@ -84,7 +84,7 @@ class GovernanceHierarchyTests(unittest.IsolatedAsyncioTestCase):
     def test_public_member_card_prefers_council_portrait_over_person_photo(self):
         assignment = SimpleNamespace(
             id=uuid.uuid4(),
-            person=SimpleNamespace(display_name="Dr. Council Member", photo=SimpleNamespace(url="/person.jpg")),
+            person=SimpleNamespace(id=uuid.uuid4(), display_name="Dr. Council Member", photo=SimpleNamespace(url="/person.jpg")),
             portrait_media=SimpleNamespace(url="/council.jpg", alt_text="Official Council portrait"),
             public_role_label="Council Member",
             governance_role=None,

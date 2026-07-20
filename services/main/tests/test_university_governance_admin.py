@@ -210,7 +210,7 @@ class UniversityGovernanceAdminServiceTests(unittest.IsolatedAsyncioTestCase):
         def member(name, role, order):
             return SimpleNamespace(
                 id=uuid.uuid4(),
-                person=SimpleNamespace(display_name=name, photo_url=None, photo=None),
+                person=SimpleNamespace(id=uuid.uuid4(), display_name=name, photo_url=None, photo=None),
                 governance_role=role,
                 public_role_label=role.public_label,
                 role=role.public_label.lower().replace(" ", "_"),

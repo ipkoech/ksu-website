@@ -105,6 +105,7 @@ class MediaAttachmentContractTests(unittest.IsolatedAsyncioTestCase):
     async def test_school_entity_upload_is_assigned_to_the_school_media_folder(self):
         db = _Db()
         school_id = uuid.uuid4()
+        uploaded_by_id = uuid.uuid4()
         folder = SimpleNamespace(id=uuid.uuid4())
         uploaded = _media()
 
@@ -128,7 +129,7 @@ class MediaAttachmentContractTests(unittest.IsolatedAsyncioTestCase):
             result = await MediaService.upload(
                 db,
                 file=_Upload(),
-                uploaded_by_id=uuid.uuid4(),
+                uploaded_by_id=uploaded_by_id,
                 entity_type="school",
                 entity_id=school_id,
                 role="brochure",
@@ -144,6 +145,12 @@ class MediaAttachmentContractTests(unittest.IsolatedAsyncioTestCase):
             role="brochure",
             folder_id=folder.id,
             is_public=False,
+            status="draft",
+            workflow_status="draft",
+            owner_portal="schools",
+            owner_scope_type="school",
+            owner_scope_id=school_id,
+            author_user_id=uploaded_by_id,
         )
 
     def test_attachment_summary_includes_display_fields(self):

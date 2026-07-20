@@ -77,11 +77,18 @@ class SchoolPortalDashboardContractTests(unittest.TestCase):
             range="7d",
             generated_at=datetime.now(timezone.utc),
             summary_cards=[],
+            activity_summary={
+                "page_views": 0,
+                "previous_page_views": 0,
+                "visitors": 0,
+                "previous_visitors": 0,
+            },
             trends=[],
             distributions={},
             attention_items=[],
             recent_activity=[],
             quick_links=[],
+            quick_actions=[],
             profile_completeness={
                 "percent": 0,
                 "completed_fields": 0,
