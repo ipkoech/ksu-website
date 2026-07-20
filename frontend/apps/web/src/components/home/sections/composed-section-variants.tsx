@@ -25,6 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AdmissionsCountdown } from "@/components/home/admissions-countdown";
+import { ImageCurtainReveal } from "@/components/about/image-curtain-reveal";
 import { CampusLifeHorizontalScroller } from "@/components/home/campus-life-horizontal-scroller";
 import { NewsletterSubscribeForm } from "@/components/home/newsletter-subscribe-form";
 import { ProgrammeFinderInteractive } from "@/components/home/programme-finder-interactive";
@@ -100,9 +101,12 @@ export function FeaturedStoriesSection({
           {lead ? (
             <LinkWrapper
               href={lead.href}
-              className="group mt-7 grid overflow-hidden rounded-[1.65rem] border border-primary/10 bg-white/80 shadow-[0_22px_70px_rgba(0,53,37,.10)] transition hover:-translate-y-1 hover:shadow-[0_28px_86px_rgba(0,53,37,.16)] md:grid-cols-[minmax(0,0.95fr)_minmax(0,1fr)] motion-reduce:transform-none"
+              className="group mt-7 grid overflow-hidden border-y border-primary/15 bg-white/70 transition hover:border-primary/30 md:grid-cols-[minmax(0,0.95fr)_minmax(0,1fr)]"
             >
-              <div className="relative min-h-[270px] overflow-hidden bg-primary/10">
+              <ImageCurtainReveal
+                className="min-h-[270px] bg-primary/10"
+                direction="right"
+              >
                 <PublicImage
                   src={lead.imageUrl}
                   alt={lead.title}
@@ -113,7 +117,7 @@ export function FeaturedStoriesSection({
                   imageClassName="object-cover transition duration-700 group-hover:scale-[1.035]"
                 />
                 <span className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-primary/40 to-transparent" />
-              </div>
+              </ImageCurtainReveal>
               <div className="flex min-h-[270px] flex-col justify-end p-6 sm:p-8">
                 <div className="flex flex-wrap items-center gap-3 text-xs font-bold uppercase tracking-[0.16em] text-primary/70">
                   {lead.eyebrow ? <span>{lead.eyebrow}</span> : null}
@@ -142,7 +146,10 @@ export function FeaturedStoriesSection({
                 href={story.href}
                 className="group grid gap-4 py-5 sm:grid-cols-[112px_minmax(0,1fr)]"
               >
-                <div className="relative h-24 overflow-hidden rounded-xl bg-primary/10">
+                <ImageCurtainReveal
+                  className="h-24 rounded-sm bg-primary/10"
+                  direction={index % 2 === 0 ? "right" : "left"}
+                >
                   <PublicImage
                     src={story.imageUrl}
                     alt={story.title}
@@ -152,7 +159,7 @@ export function FeaturedStoriesSection({
                     className="absolute inset-0 h-full w-full"
                     imageClassName="object-cover transition duration-500 group-hover:scale-105"
                   />
-                </div>
+                </ImageCurtainReveal>
                 <div>
                   <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.14em] text-primary/65">
                     <span>{String(index + 2).padStart(2, "0")}</span>
@@ -689,16 +696,21 @@ export function FeaturedPartnershipSection({
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
           <div className="relative">
-            <PublicImage
-              src={mediaUrl(image) ?? heriAfricaLaunchImage}
-              alt={mediaAlt(
-                image,
-                title ?? "Kisii University and Heri Africa partnership",
-              )}
-              ratio="news"
-              className="min-h-[280px] rounded-none lg:min-h-[360px]"
-              imageClassName="object-cover object-[50%_38%]"
-            />
+            <ImageCurtainReveal
+              className="min-h-[280px] lg:min-h-[360px]"
+              direction="left"
+            >
+              <PublicImage
+                src={mediaUrl(image) ?? heriAfricaLaunchImage}
+                alt={mediaAlt(
+                  image,
+                  title ?? "Kisii University and Heri Africa partnership",
+                )}
+                ratio="fill"
+                className="absolute inset-0 h-full w-full rounded-none"
+                imageClassName="object-cover object-[50%_38%]"
+              />
+            </ImageCurtainReveal>
             <div className="absolute bottom-0 left-0 right-0 bg-primary/88 p-4 text-white backdrop-blur-sm sm:left-auto sm:right-5 sm:w-[min(360px,calc(100%-2.5rem))]">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
                 Strategic partnership
@@ -996,7 +1008,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="campus-life-scroll-scene relative isolate border-b border-border bg-white/[0.82] py-12 backdrop-blur-[1px] lg:min-h-[320vh] lg:py-0"
+      className="campus-life-scroll-scene relative isolate border-b border-border bg-white/[0.82] py-12 backdrop-blur-[1px] lg:min-h-[285vh] lg:py-0"
     >
       <div className="absolute inset-y-0 right-0 -z-10 hidden w-1/2 bg-accent/70 lg:block" />
       <div className="campus-life-sticky-frame mx-auto max-w-[1680px] px-4 sm:px-6 lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px))] lg:max-w-none lg:items-center lg:px-0 xl:px-0 2xl:px-0">
@@ -1076,19 +1088,21 @@ function CampusMosaicFeature({
 }) {
   const body = (
     <article className="group relative min-h-[420px] overflow-hidden bg-primary text-white shadow-2xl shadow-primary/15 sm:min-h-[520px] lg:min-h-[640px] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-6">
-      <PublicImage
-        src={itemImageUrl(item) ?? mediaUrl(heroImage(section))}
-        alt={
-          itemContentText(item, "imageAlt") ??
-          item?.media_alt_text ??
-          item?.title ??
-          "Kisii University campus life"
-        }
-        ratio="fill"
-        className="absolute inset-0 h-full rounded-none"
-        imageClassName="h-full object-cover transition duration-700 group-hover:scale-[1.03]"
-        sizes="(min-width: 1024px) 58vw, 100vw"
-      />
+      <ImageCurtainReveal className="absolute inset-0 h-full" direction="right">
+        <PublicImage
+          src={itemImageUrl(item) ?? mediaUrl(heroImage(section))}
+          alt={
+            itemContentText(item, "imageAlt") ??
+            item?.media_alt_text ??
+            item?.title ??
+            "Kisii University campus life"
+          }
+          ratio="fill"
+          className="absolute inset-0 h-full rounded-none"
+          imageClassName="h-full object-cover transition duration-700 group-hover:scale-[1.03]"
+          sizes="(min-width: 1024px) 58vw, 100vw"
+        />
+      </ImageCurtainReveal>
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,23,57,.04),rgba(3,23,57,.22)_35%,rgba(3,23,57,.86))]" />
       <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7 lg:p-8">
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
@@ -1126,7 +1140,7 @@ function CampusLifeLane({
 }) {
   const body = (
     <article
-      className="group flex min-h-[250px] flex-col overflow-hidden border border-border bg-white transition duration-500 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg hover:shadow-primary/10 lg:min-h-[560px] lg:w-[min(420px,78vw)] lg:snap-start motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
+      className="group relative min-h-[250px] overflow-hidden bg-primary text-white transition duration-500 hover:-translate-y-0.5 lg:min-h-[560px] lg:w-[min(420px,78vw)] lg:snap-start motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
       style={{ animationDelay: `${Math.min(index, 5) * 80}ms` }}
     >
       <PublicImage
@@ -1138,21 +1152,22 @@ function CampusLifeLane({
           "Campus life"
         }
         ratio="fill"
-        className="min-h-36 rounded-none lg:min-h-64"
+        className="absolute inset-0 h-full rounded-none"
         imageClassName="object-cover transition duration-700 group-hover:scale-105"
-        sizes="(min-width: 1024px) 20vw, 50vw"
+        sizes="(min-width: 1024px) 20vw, 90vw"
       />
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,23,57,.02),rgba(3,23,57,.28)_42%,rgba(3,23,57,.88))]" />
+      <div className="relative flex min-h-[250px] flex-col justify-end p-4 sm:p-5 lg:min-h-[560px]">
         <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary">
           {lane.audience}
         </p>
-        <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-foreground">
+        <h3 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white">
           {lane.title}
         </h3>
-        <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
+        <p className="mt-2 line-clamp-3 text-sm leading-6 text-white/76">
           {lane.body}
         </p>
-        <span className="mt-auto inline-flex pt-4 text-sm font-semibold text-primary">
+        <span className="mt-5 inline-flex text-sm font-semibold text-secondary">
           {lane.ctaLabel}
         </span>
       </div>
@@ -1293,14 +1308,19 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
           <div className="relative min-h-[300px] overflow-hidden bg-primary lg:min-h-0">
             <div className="absolute -left-24 top-10 h-72 w-72 rounded-full border border-secondary/20" />
             <div className="absolute left-10 top-20 h-56 w-56 border border-secondary/15 [clip-path:polygon(50%_0,100%_28%,100%_100%,0_100%,0_28%)]" />
-            <PublicImage
-              src={leaderImage}
-              alt={`${leaderName}, ${leaderTitle}`}
-              ratio="fill"
-              className="absolute inset-x-0 bottom-0 h-[94%] rounded-none bg-transparent"
-              imageClassName="object-contain object-bottom"
-              sizes="(min-width: 1024px) 34vw, 100vw"
-            />
+            <ImageCurtainReveal
+              className="absolute inset-x-0 bottom-0 h-[94%] bg-transparent"
+              direction="right"
+            >
+              <PublicImage
+                src={leaderImage}
+                alt={`${leaderName}, ${leaderTitle}`}
+                ratio="fill"
+                className="absolute inset-0 h-full rounded-none bg-transparent"
+                imageClassName="object-contain object-bottom"
+                sizes="(min-width: 1024px) 34vw, 100vw"
+              />
+            </ImageCurtainReveal>
           </div>
           <div className="flex h-full min-h-0 flex-col px-5 py-6 sm:px-8 lg:overflow-hidden lg:px-8 lg:py-6 xl:px-10">
             <SectionEyebrow value={section.title ?? "Leadership in action"} />
@@ -1735,15 +1755,17 @@ function XSocialIcon({ className }: { className?: string }) {
 function FeaturedUpdateItem({ item }: { item: HomepageSectionItem }) {
   const content = (
     <article className="group relative min-h-[360px] overflow-hidden rounded-md bg-primary text-white sm:min-h-[420px] xl:h-full">
-      <PublicImage
-        src={updateImageUrl(item)}
-        alt={item.media_alt_text ?? item.title ?? "University story"}
-        ratio="fill"
-        fallbackContent={<Newspaper className="h-10 w-10" aria-hidden />}
-        sizes="(min-width: 1280px) 42vw, 100vw"
-        className="absolute inset-0 h-full w-full"
-        imageClassName="object-cover transition duration-700 group-hover:scale-105"
-      />
+      <ImageCurtainReveal className="absolute inset-0 h-full" direction="left">
+        <PublicImage
+          src={updateImageUrl(item)}
+          alt={item.media_alt_text ?? item.title ?? "University story"}
+          ratio="fill"
+          fallbackContent={<Newspaper className="h-10 w-10" aria-hidden />}
+          sizes="(min-width: 1280px) 42vw, 100vw"
+          className="absolute inset-0 h-full w-full"
+          imageClassName="object-cover transition duration-700 group-hover:scale-105"
+        />
+      </ImageCurtainReveal>
       <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05)_10%,rgba(0,53,37,0.88)_100%)]" />
       <div className="absolute inset-x-0 bottom-0 z-10 p-5 sm:p-7">
         <div className="flex flex-wrap items-center gap-3 text-sm font-semibold">
