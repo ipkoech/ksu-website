@@ -152,7 +152,7 @@ export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
             : "lg:grid-cols-1"
         }`}
       >
-        <div className="max-w-2xl [text-shadow:0_2px_14px_rgba(0,0,0,.55)]">
+        <div className="max-w-2xl self-end [text-shadow:0_2px_14px_rgba(0,0,0,.55)]">
           <h1 className="line-clamp-2 max-w-2xl text-balance font-[family-name:var(--font-display)] text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-6xl">
             {headline}
             {highlight ? (
