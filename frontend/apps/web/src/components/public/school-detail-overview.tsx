@@ -20,7 +20,10 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ScrollReveal } from "@ksu/ui/components";
-import { RichTextRenderer } from "@ksu/ui/rich-text-renderer";
+import {
+  RichTextRenderer,
+  richTextToPlainText,
+} from "@ksu/ui/rich-text-renderer";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { PublicImage } from "@/components/public/public-image";
 import { EntityInquiryLauncher } from "@/components/public/entity-inquiry-launcher";
@@ -127,33 +130,6 @@ function SectionKicker({ children }: { children: string }) {
     <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
       {children}
     </p>
-  );
-}
-
-function SchoolCoverBanner({
-  schoolName,
-  imageUrl,
-}: {
-  schoolName: string;
-  imageUrl: string | null;
-}) {
-  if (!imageUrl) return null;
-
-  return (
-    <section
-      aria-label={`${schoolName} academic panorama`}
-      className="overflow-hidden rounded-[1.5rem] border border-border bg-white shadow-sm"
-    >
-      <PublicImage
-        src={imageUrl}
-        alt={`${schoolName} academic panorama`}
-        ratio="fill"
-        priority
-        sizes="(min-width: 1536px) 56vw, (min-width: 1280px) 60vw, 100vw"
-        className="aspect-[16/7] min-h-[220px] sm:min-h-[280px]"
-        imageClassName="object-cover"
-      />
-    </section>
   );
 }
 
@@ -312,6 +288,13 @@ function DeanMessageCard({
   schoolName: string;
   deanEmail: string | null;
 }) {
+  const messageText = richTextToPlainText(deanMessage);
+  const messageWords = messageText.split(/\s+/).filter(Boolean);
+  const hasMoreMessage = messageWords.length > 200;
+  const messagePreview = hasMoreMessage
+    ? `${messageWords.slice(0, 200).join(" ")}…`
+    : messageText;
+
   return (
     <section className="overflow-hidden rounded-[1.5rem] bg-brand-overlay p-5 text-white shadow-[0_24px_70px_-48px_rgba(15,23,42,0.9)] sm:p-6">
       <div className="grid gap-5 sm:grid-cols-[7rem_minmax(0,1fr)] sm:items-center">
@@ -326,20 +309,25 @@ function DeanMessageCard({
           </p>
           <Quote aria-hidden className="mt-3 h-7 w-7 text-secondary" />
           {deanMessage ? (
-            <details className="group mt-2">
-              <p className="text-sm leading-7 text-white/85 sm:text-base group-open:hidden">
-                A welcome from {deanName} on teaching, research, and the
-                school&apos;s priorities.
+            hasMoreMessage ? (
+              <details className="group mt-2">
+                <p className="text-sm leading-7 text-white/85 sm:text-base group-open:hidden">
+                  {messagePreview}
+                </p>
+                <RichTextRenderer
+                  content={deanMessage}
+                  className="hidden prose-sm text-sm leading-7 sm:text-base [&_a]:text-secondary [&_p]:text-white/85 [&_strong]:text-white group-open:block"
+                />
+                <summary className="mt-3 w-fit cursor-pointer list-none rounded-md text-sm font-bold text-secondary transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary">
+                  <span className="group-open:hidden">View more</span>
+                  <span className="hidden group-open:inline">View less</span>
+                </summary>
+              </details>
+            ) : (
+              <p className="mt-2 text-sm leading-7 text-white/85 sm:text-base">
+                {messagePreview}
               </p>
-              <RichTextRenderer
-                content={deanMessage}
-                className="hidden prose-sm text-sm leading-7 sm:text-base [&_a]:text-secondary [&_p]:text-white/85 [&_strong]:text-white group-open:block"
-              />
-              <summary className="mt-3 cursor-pointer list-none text-sm font-bold text-secondary hover:text-white">
-                <span className="group-open:hidden">Read full message</span>
-                <span className="hidden group-open:inline">Show less</span>
-              </summary>
-            </details>
+            )
           ) : null}
           <div className="mt-4 text-sm leading-6">
             <p className="font-bold text-white">{deanName}</p>
@@ -361,11 +349,19 @@ function DeanMessageCard({
   );
 }
 
-function AboutCard({ overview }: { overview: string }) {
+function AboutCard({
+  overview,
+  schoolName,
+  coverImageUrl,
+}: {
+  overview: string;
+  schoolName: string;
+  coverImageUrl: string | null;
+}) {
   return (
     <section className="rounded-[1.5rem] border border-border bg-white p-5 shadow-sm sm:p-6">
-      <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_9rem] md:items-center">
-        <div>
+      <div className="grid grid-cols-[minmax(0,1fr)_5rem] items-start gap-4 sm:grid-cols-[minmax(0,1fr)_7rem] md:grid-cols-[minmax(0,1fr)_9rem] md:items-center md:gap-5">
+        <div className="min-w-0">
           <SectionKicker>About the School</SectionKicker>
           <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
             About this school
@@ -375,8 +371,24 @@ function AboutCard({ overview }: { overview: string }) {
             className="mt-3 prose-sm text-sm leading-7 text-muted-foreground"
           />
         </div>
-        <div className="hidden h-24 items-center justify-center rounded-[1.25rem] bg-primary/[0.08] text-primary md:flex">
-          <Landmark aria-hidden className="h-14 w-14 stroke-[1.25]" />
+        <div className="h-20 overflow-hidden rounded-[1.25rem] bg-primary/[0.08] text-primary sm:h-24">
+          {coverImageUrl ? (
+            <PublicImage
+              src={coverImageUrl}
+              alt={`${schoolName} cover`}
+              ratio="fill"
+              sizes="(min-width: 768px) 144px, (min-width: 640px) 112px, 80px"
+              className="h-full w-full"
+              imageClassName="object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <Landmark
+                aria-hidden
+                className="h-9 w-9 stroke-[1.25] sm:h-12 sm:w-12 md:h-14 md:w-14"
+              />
+            </div>
+          )}
         </div>
       </div>
     </section>
@@ -583,10 +595,6 @@ export function SchoolDetailOverview({
             </aside>
 
             <ScrollReveal as="main" className="grid min-w-0 gap-4">
-              <SchoolCoverBanner
-                schoolName={schoolName}
-                imageUrl={schoolCoverUrl}
-              />
               {showDeanCard ? (
                 <DeanMessageCard
                   deanName={deanName}
@@ -599,7 +607,11 @@ export function SchoolDetailOverview({
               ) : null}
               <MobileSchoolLinksGrid links={quickLinks} />
               {overview ? (
-                <AboutCard overview={overview} />
+                <AboutCard
+                  overview={overview}
+                  schoolName={schoolName}
+                  coverImageUrl={schoolCoverUrl}
+                />
               ) : null}
               <div className="grid gap-4 md:grid-cols-2 xl:hidden">
                 {featuredPanels}
