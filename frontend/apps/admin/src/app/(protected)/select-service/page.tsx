@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowRight, Landmark, Settings, UserCheck } from "lucide-react";
+import { ArrowRight, Landmark, PenLine, Settings, UserCheck } from "lucide-react";
 import { useAuth, getHighestRole, formatRoleName } from "@ksu/auth";
 import type { Service } from "@ksu/auth";
 import { usePortalAccess, type PortalAccess } from "@ksu/api-client";
@@ -66,6 +66,14 @@ const portalItems: PortalDirectoryItem[] = [
     ],
   },
   {
+    ...portalConfigs["story-contributor"],
+    key: "story-contributor",
+    title: "Story Contributor Portal",
+    baseHref: "/story-contributor",
+    requiredScopes: ["stories.submit", "stories.view_own", "stories.update_own", "content.submit"],
+    icon: PenLine,
+  },
+  {
     ...portalConfigs.schools,
     key: "schools",
     baseHref: "/schools",
@@ -109,6 +117,7 @@ const canonicalPortalKeys = new Set([
   "super-admin",
   "admin",
   "corporate-communication",
+  "story-contributor",
   "research",
   "schools",
   "departments",
@@ -120,6 +129,7 @@ const portalAliases = new Map<string, string>([
   ["cocms", "corporate-communication"],
   ["page-cms", "corporate-communication"],
   ["student-clubs", "corporate-communication"],
+  ["story-contributor", "story-contributor"],
   ["governance", "admin"],
   ["institutional-administration", "admin"],
   ["publications", "research"],

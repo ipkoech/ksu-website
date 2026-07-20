@@ -2066,6 +2066,10 @@ export interface Story {
   is_published: boolean;
   status?: string;
   workflow_status?: ContentWorkflowStatus;
+  submitted_at?: string | null;
+  scheduled_publish_at?: string | null;
+  revision_notes?: string | null;
+  rejection_reason?: string | null;
   display_order?: number;
   meta_title?: string | null;
   meta_description?: string | null;

@@ -22,6 +22,7 @@ import {
   MessageSquare,
   Newspaper,
   PanelsTopLeft,
+  PenLine,
   Rocket,
   ScrollText,
   Settings,
@@ -7191,6 +7192,73 @@ export const portalConfigs: Record<string, PortalConfig> = {
       ["content.publish", "media.manage", "marketing.manage_sliders"],
     ),
     resources: corporateCommunicationResources,
+  },
+  "story-contributor": {
+    key: "story-contributor",
+    title: "Story Contributor Portal",
+    shortTitle: "Stories",
+    description:
+      "Draft, submit, and track Kisii University stories for Corporate Communication review.",
+    service: "main",
+    baseHref: "/story-contributor",
+    icon: PenLine,
+    accentClassName: "text-cyan-700 bg-cyan-50 border-cyan-100",
+    nav: [
+      {
+        title: "Dashboard",
+        href: "/story-contributor",
+        icon: PanelsTopLeft,
+        scope: ["stories.view_own", "stories.submit", "content.submit"],
+      },
+      {
+        title: "My Stories",
+        href: "/story-contributor/stories",
+        icon: ScrollText,
+        scope: ["stories.view_own", "stories.submit", "content.submit"],
+      },
+      {
+        title: "Submit Story",
+        href: "/story-contributor/stories/new",
+        icon: PenLine,
+        scope: ["stories.submit", "content.submit"],
+      },
+    ],
+    dashboard: {
+      title: "Story Contributor Dashboard",
+      description:
+        "Track your story drafts, review status, publication decisions, and requested revisions.",
+      scopeBadges: ["stories.submit", "stories.view_own", "stories.update_own"],
+      stats: [
+        stat(
+          "My Stories",
+          "Submitted and draft stories",
+          "/story-contributor/stories",
+          ScrollText,
+          ["stories.view_own", "stories.submit", "content.submit"],
+          ["story-contributor", "stories", "mine"],
+          () => storiesApi.listMine({ ...countParams }),
+        ),
+      ],
+      panels: [
+        {
+          title: "Start a story",
+          description:
+            "Create a draft and submit it to Corporate Communication for review.",
+          href: "/story-contributor/stories/new",
+          icon: PenLine,
+          scopes: ["stories.submit", "content.submit"],
+        },
+        {
+          title: "Track review",
+          description:
+            "See whether a story is draft, submitted, in review, changes requested, approved, or published.",
+          href: "/story-contributor/stories",
+          icon: ClipboardCheck,
+          scopes: ["stories.view_own", "stories.submit"],
+        },
+      ],
+    },
+    resources: {},
   },
   research: {
     key: "research",

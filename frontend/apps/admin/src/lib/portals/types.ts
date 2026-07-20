@@ -14,6 +14,7 @@ export type PortalKey =
   | "schools"
   | "departments"
   | "corporate-communication"
+  | "story-contributor"
   | "research"
   | "library";
 

@@ -116,6 +116,7 @@ PORTAL_DEFINITIONS = {
             "about.manage",
             "content.view",
             "content.manage",
+            "content.manage_stories",
             "content.manage_pages",
             "content.manage_news",
             "content.manage_events",
@@ -150,6 +151,17 @@ PORTAL_DEFINITIONS = {
             "clubs.manage_own",
             "clubs.events_manage",
             "clubs.stories_manage",
+        },
+    },
+    "story-contributor": {
+        "label": "Story Contributor Portal",
+        "service": "main",
+        "href": "/story-contributor",
+        "permissions": {
+            "content.submit",
+            "stories.submit",
+            "stories.view_own",
+            "stories.update_own",
         },
     },
     "research": {
