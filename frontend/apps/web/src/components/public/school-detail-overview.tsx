@@ -6,7 +6,6 @@ import {
   ArrowRight,
   CalendarDays,
   Eye,
-  Globe,
   GraduationCap,
   Landmark,
   Mail,
@@ -18,7 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { ScrollReveal } from "@ksu/ui/components";
+import { AmbientPageBackground, ScrollReveal } from "@ksu/ui/components";
 import {
   RichTextRenderer,
   richTextToPlainText,
@@ -73,11 +72,6 @@ function present(value?: string | number | null) {
 function schoolSummary(data: SchoolDetailOverviewData) {
   const { school } = data;
   return present(school.about) ?? present(school.description);
-}
-
-function linkHref(value: string | null) {
-  if (!value) return undefined;
-  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
 }
 
 function formatDate(value?: string | null) {
@@ -173,14 +167,12 @@ function ContactPanel({
   email,
   phone,
   office,
-  website,
 }: {
   email: string | null;
   phone: string | null;
   office: string | null;
-  website: string | null;
 }) {
-  if (!email && !phone && !office && !website) return null;
+  if (!email && !phone && !office) return null;
 
   return (
     <section className="min-w-0 overflow-hidden rounded-[1.5rem] border border-border bg-white p-4 shadow-sm">
@@ -198,12 +190,6 @@ function ContactPanel({
           label="Email"
           value={email}
           href={email ? `mailto:${email}` : undefined}
-        />
-        <ContactRow
-          icon={Globe}
-          label="Website"
-          value={website}
-          href={linkHref(website)}
         />
       </div>
     </section>
@@ -494,7 +480,6 @@ export function SchoolDetailOverview({
   const email = present(school.email);
   const phone = present(school.phone);
   const office = present(school.office_location);
-  const website = present(school.website);
   const quickLinks = buildSchoolQuickLinks({ baseHref, navItems, counts });
   const established =
     formatDate(school.establishment_date) ?? school.founded_year ?? null;
@@ -504,7 +489,6 @@ export function SchoolDetailOverview({
       email={email}
       phone={phone}
       office={office}
-      website={website}
     />
   );
   const mission = present(school.mission);
@@ -564,25 +548,26 @@ export function SchoolDetailOverview({
   return (
     <PageShell header={header}>
       <AboutPageLenis>
-        <section className="w-full bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_68%,hsl(var(--surface-muted))_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="mb-4">
-            <BreadcrumbTrail
-              items={[
-                { label: "Home", href: "/" },
-                { label: "Academics", href: "/academics" },
-                { label: "Schools", href: "/academics/schools" },
-                { label: schoolName },
-              ]}
-            />
-            <h1 className="sr-only">{schoolName}</h1>
-          </div>
-          <div className="grid w-full gap-4 xl:grid-cols-[minmax(220px,0.2fr)_minmax(0,1fr)_minmax(260px,0.22fr)] 2xl:grid-cols-[minmax(240px,0.18fr)_minmax(0,1fr)_minmax(300px,0.22fr)] xl:items-start">
-            <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
-              <SchoolLinksPanel links={quickLinks} />
-              <ExploreMorePanel />
-            </aside>
+        <AmbientPageBackground variant="academic" intensity="soft">
+          <section className="w-full px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+            <div className="mb-4">
+              <BreadcrumbTrail
+                items={[
+                  { label: "Home", href: "/" },
+                  { label: "Academics", href: "/academics" },
+                  { label: "Schools", href: "/academics/schools" },
+                  { label: schoolName },
+                ]}
+              />
+              <h1 className="sr-only">{schoolName}</h1>
+            </div>
+            <div className="grid w-full gap-4 xl:grid-cols-[minmax(220px,0.2fr)_minmax(0,1fr)_minmax(260px,0.22fr)] 2xl:grid-cols-[minmax(240px,0.18fr)_minmax(0,1fr)_minmax(300px,0.22fr)] xl:items-start">
+              <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
+                <SchoolLinksPanel links={quickLinks} />
+                <ExploreMorePanel />
+              </aside>
 
-            <ScrollReveal as="main" className="grid min-w-0 gap-4">
+              <ScrollReveal as="main" className="grid min-w-0 gap-4">
               {showDeanCard ? (
                 <DeanMessageCard
                   deanName={deanName}
@@ -613,18 +598,17 @@ export function SchoolDetailOverview({
               {statements.length ? (
                 <StatementCards statements={statements} />
               ) : null}
-            </ScrollReveal>
+              </ScrollReveal>
 
-            <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
-              {contactPanel}
-              {featuredPanels}
-            </aside>
+              <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
+                {contactPanel}
+                {featuredPanels}
+              </aside>
 
-            <aside className="xl:hidden">
-              {contactPanel}
-            </aside>
-          </div>
-        </section>
+              <aside className="xl:hidden">{contactPanel}</aside>
+            </div>
+          </section>
+        </AmbientPageBackground>
       </AboutPageLenis>
       <EntityInquiryLauncher
         target={{ type: "school", slug: school.slug, name: schoolName }}
