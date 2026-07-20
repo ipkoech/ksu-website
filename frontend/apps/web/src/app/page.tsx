@@ -32,7 +32,10 @@ import { CountdownStrip } from "@/components/home/countdown-strip";
 import { AnimatedStatRow } from "@/components/home/animated-stat-row";
 import { HomepageSections } from "@/components/home/section-renderer";
 import { NewsletterSubscribeForm } from "@/components/home/newsletter-subscribe-form";
-import { HeroAdmissionsSection } from "@/components/home/sections/composed-section-variants";
+import {
+  FeaturedStoriesSection,
+  HeroAdmissionsSection,
+} from "@/components/home/sections/composed-section-variants";
 import {
   ProgressiveImageCard,
   PublicImage,
@@ -218,6 +221,7 @@ export default async function HomePage() {
                 programmes: homepage.featuredProgrammes,
                 intakes: homepage.activeIntakes,
               }}
+              featuredStories={homepage.featuredStories}
             />
           </>
         ) : (
@@ -398,6 +402,9 @@ export default async function HomePage() {
                   schools={homepage.schools}
                   activeIntakes={homepage.activeIntakes}
                 />
+                <LandingReveal>
+                  <FeaturedStoriesSection stories={homepage.featuredStories} />
+                </LandingReveal>
                 <LandingReveal variant="fade-left">
                   <LatestContentSection
                     newsItems={homepage.latestNews}

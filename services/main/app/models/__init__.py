@@ -91,7 +91,7 @@ from .upload_batch import UploadBatch, UploadBatchFile
 from .media import Media, MediaFolder, MediaLink
 
 # Content
-from .content import Announcement, Blog, Event, News, Slider, SliderGroup
+from .content import Announcement, Blog, Event, News, Slider, SliderGroup, Story, StoryContributorAccountRequest
 from .content_workflow import CONTENT_WORKFLOW_ACTIONS, CONTENT_WORKFLOW_STATUSES, ContentWorkflowLog
 from .page_cms import (
     PAGE_SCOPE_TYPES,
@@ -203,6 +203,8 @@ __all__ = [
     # Content
     "News",
     "Blog",
+    "Story",
+    "StoryContributorAccountRequest",
     "Announcement",
     "Event",
     "SliderGroup",

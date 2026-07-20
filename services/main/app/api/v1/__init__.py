@@ -60,6 +60,7 @@ from .sports import router as sports_router
 from .staff import router as staff_router
 from .stats import router as stats_router
 from .settings import router as settings_router
+from .stories import router as stories_router
 from .student_governance import router as student_governance_router
 from .support import router as support_router
 from .testimonials import router as testimonials_router
@@ -80,6 +81,7 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(blogs_router, prefix="/api/v1/blogs", tags=["Content"])
     app.include_router(announcements_router, prefix="/api/v1/announcements", tags=["Content"])
     app.include_router(events_router, prefix="/api/v1/events", tags=["Content"])
+    app.include_router(stories_router, prefix="/api/v1/stories", tags=["Content"])
     app.include_router(content_workflow_router, prefix="/api/v1/content-workflow", tags=["Content"])
     app.include_router(sliders_router, prefix="/api/v1/sliders", tags=["Content"])
     app.include_router(newsletters_router, prefix="/api/v1/newsletters", tags=["Marketing"])

@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import ConfigDict, Field, model_validator
+from pydantic import ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from .base import BaseReadSchema, BaseSchema, SlugStr
 
@@ -157,6 +157,118 @@ class BlogRead(RichContentRead):
     author: dict[str, Any] | None = None
     featured_media: dict[str, Any] | None = None
     is_featured: bool
+
+
+class StoryCreate(RichContentCreate):
+    story_type: str = Field(default="article", max_length=64)
+    category: str | None = Field(default=None, max_length=96)
+    source_type: str = Field(default="internal", max_length=64)
+    contributor_user_id: uuid.UUID | None = None
+    contributor_name_snapshot: str | None = Field(default=None, max_length=255)
+    contributor_email_snapshot: EmailStr | None = None
+    contributor_affiliation_snapshot: str | None = Field(default=None, max_length=255)
+    show_contributor_name: bool = True
+    consent_to_publish: bool = True
+    is_featured: bool = False
+    featured_until: datetime | None = None
+    homepage_priority: int = 100
+    reading_minutes: int | None = Field(default=None, ge=1, le=120)
+
+
+class StorySubmissionCreate(BaseSchema):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(min_length=1, max_length=255)
+    summary: str | None = None
+    plain_text: str | None = None
+    rich_text: str | None = None
+    structured_content: dict[str, Any] | None = None
+    related_links: list[dict[str, Any]] | None = None
+    featured_media_id: uuid.UUID | None = None
+    story_type: str = Field(default="article", max_length=64)
+    category: str | None = Field(default=None, max_length=96)
+    contributor_affiliation_snapshot: str | None = Field(default=None, max_length=255)
+    show_contributor_name: bool = True
+    consent_to_publish: bool
+
+    @model_validator(mode="after")
+    def validate_submission(self):
+        if not (self.plain_text or self.rich_text or self.structured_content):
+            raise ValueError("Story body is required")
+        if not self.consent_to_publish:
+            raise ValueError("Consent to publish is required")
+        return self
+
+
+class StoryUpdate(RichContentUpdate):
+    story_type: str | None = Field(default=None, max_length=64)
+    category: str | None = Field(default=None, max_length=96)
+    source_type: str | None = Field(default=None, max_length=64)
+    contributor_user_id: uuid.UUID | None = None
+    contributor_name_snapshot: str | None = Field(default=None, max_length=255)
+    contributor_email_snapshot: EmailStr | None = None
+    contributor_affiliation_snapshot: str | None = Field(default=None, max_length=255)
+    show_contributor_name: bool | None = None
+    consent_to_publish: bool | None = None
+    is_featured: bool | None = None
+    featured_until: datetime | None = None
+    homepage_priority: int | None = None
+    reading_minutes: int | None = Field(default=None, ge=1, le=120)
+
+
+class StoryRead(RichContentRead):
+    story_type: str
+    category: str | None = None
+    source_type: str
+    contributor_user_id: uuid.UUID | None = None
+    contributor: dict[str, Any] | None = None
+    contributor_name_snapshot: str | None = None
+    contributor_email_snapshot: str | None = None
+    contributor_affiliation_snapshot: str | None = None
+    show_contributor_name: bool
+    consent_to_publish: bool
+    is_featured: bool
+    featured_until: datetime | None = None
+    homepage_priority: int
+    reading_minutes: int | None = None
+    author: dict[str, Any] | None = None
+    featured_media: dict[str, Any] | None = None
+
+
+class StoryContributorAccountRequestCreate(BaseSchema):
+    full_name: str = Field(min_length=2, max_length=255)
+    email: EmailStr
+    phone: str | None = Field(default=None, max_length=32)
+    affiliation: str | None = Field(default=None, max_length=255)
+    contributor_type: str = Field(default="external", max_length=64)
+    reason_for_request: str | None = None
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return value.strip().lower()
+
+
+class StoryContributorAccountRequestReview(BaseSchema):
+    rejection_reason: str | None = None
+
+
+class StoryContributorAccountRequestRead(BaseReadSchema):
+    full_name: str
+    email: str
+    phone: str | None = None
+    affiliation: str | None = None
+    contributor_type: str
+    reason_for_request: str | None = None
+    status: str
+    reviewed_by_id: uuid.UUID | None = None
+    reviewed_at: datetime | None = None
+    approved_user_id: uuid.UUID | None = None
+    rejection_reason: str | None = None
+    verified_at: datetime | None = None
+    ip_address: str | None = None
+    user_agent: str | None = None
+    deleted_at: datetime | None = None
 
 
 class AnnouncementCreate(RichContentCreate):

@@ -31,6 +31,7 @@ import { ProgrammeFinderInteractive } from "@/components/home/programme-finder-i
 import { WhyKisiiSection } from "@/components/home/why-kisii-section";
 import { PublicImage } from "@/components/public/public-image";
 import type {
+  HomeCard,
   HomeIntake,
   HomeProgrammeCard,
   HomeSchoolCard,
@@ -59,6 +60,7 @@ type SectionVariantProps = {
   academicDatesSection?: HomepageSection | null;
   eventsSection?: HomepageSection | null;
   programmeFinderData?: ProgrammeFinderData;
+  featuredStories?: HomeCard[];
   socialLinks?: HomeSocialLinks;
 };
 
@@ -67,6 +69,117 @@ export type ProgrammeFinderData = {
   programmes: HomeProgrammeCard[];
   intakes: HomeIntake[];
 };
+
+export function FeaturedStoriesSection({
+  stories,
+}: {
+  stories?: HomeCard[];
+}) {
+  const items = (stories ?? []).slice(0, 4);
+  if (!items.length) return null;
+  const [lead, ...secondary] = items;
+
+  return (
+    <section className="relative isolate overflow-hidden border-y border-primary/10 py-12 lg:py-14">
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_12%,hsl(var(--primary)/.10),transparent_34%),linear-gradient(180deg,rgba(255,255,255,.78),hsl(var(--surface-subtle)/.72))]"
+        aria-hidden
+      />
+      <div className="mx-auto grid max-w-[1680px] gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(340px,0.55fr)] lg:px-8 xl:px-10 2xl:px-12">
+        <div>
+          <SectionEyebrow value="Featured stories" />
+          <div className="mt-3 grid gap-5 md:grid-cols-[0.78fr_1fr] md:items-end">
+            <h2 className="font-[family-name:var(--font-display)] text-4xl font-bold leading-[0.95] text-primary sm:text-5xl">
+              Voices and work shaping Kisii University.
+            </h2>
+            <p className="max-w-2xl text-base leading-7 text-muted-foreground">
+              Student, staff, alumni, partner, and community stories reviewed
+              by Corporate Communication before publication.
+            </p>
+          </div>
+          {lead ? (
+            <LinkWrapper
+              href={lead.href}
+              className="group mt-7 grid overflow-hidden rounded-[1.65rem] border border-primary/10 bg-white/80 shadow-[0_22px_70px_rgba(0,53,37,.10)] transition hover:-translate-y-1 hover:shadow-[0_28px_86px_rgba(0,53,37,.16)] md:grid-cols-[minmax(0,0.95fr)_minmax(0,1fr)] motion-reduce:transform-none"
+            >
+              <div className="relative min-h-[270px] overflow-hidden bg-primary/10">
+                <PublicImage
+                  src={lead.imageUrl}
+                  alt={lead.title}
+                  ratio="fill"
+                  fallbackContent={<Newspaper className="h-10 w-10" />}
+                  sizes="(min-width: 1024px) 48vw, 100vw"
+                  className="absolute inset-0 h-full w-full"
+                  imageClassName="object-cover transition duration-700 group-hover:scale-[1.035]"
+                />
+                <span className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-primary/40 to-transparent" />
+              </div>
+              <div className="flex min-h-[270px] flex-col justify-end p-6 sm:p-8">
+                <div className="flex flex-wrap items-center gap-3 text-xs font-bold uppercase tracking-[0.16em] text-primary/70">
+                  {lead.eyebrow ? <span>{lead.eyebrow}</span> : null}
+                  {lead.meta ? <span>{lead.meta}</span> : null}
+                </div>
+                <h3 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-primary">
+                  {lead.title}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                  {lead.body}
+                </p>
+                <span className="mt-6 inline-flex items-center gap-3 text-sm font-bold text-secondary">
+                  Read story
+                  <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                </span>
+              </div>
+            </LinkWrapper>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col justify-end">
+          <div className="divide-y divide-primary/10 border-y border-primary/15">
+            {secondary.map((story, index) => (
+              <LinkWrapper
+                key={story.id ?? story.href}
+                href={story.href}
+                className="group grid gap-4 py-5 sm:grid-cols-[112px_minmax(0,1fr)]"
+              >
+                <div className="relative h-24 overflow-hidden rounded-xl bg-primary/10">
+                  <PublicImage
+                    src={story.imageUrl}
+                    alt={story.title}
+                    ratio="fill"
+                    fallbackContent={<Newspaper className="h-5 w-5" />}
+                    sizes="112px"
+                    className="absolute inset-0 h-full w-full"
+                    imageClassName="object-cover transition duration-500 group-hover:scale-105"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.14em] text-primary/65">
+                    <span>{String(index + 2).padStart(2, "0")}</span>
+                    {story.eyebrow ? <span>{story.eyebrow}</span> : null}
+                  </div>
+                  <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl font-bold leading-tight text-primary">
+                    {story.title}
+                  </h3>
+                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
+                    {story.body}
+                  </p>
+                </div>
+              </LinkWrapper>
+            ))}
+          </div>
+          <LinkWrapper
+            href="/stories"
+            className="mt-6 inline-flex w-fit items-center gap-3 rounded-full bg-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-primary/90"
+          >
+            Explore all stories
+            <ArrowRight className="h-4 w-4" />
+          </LinkWrapper>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 const campusHeroImage = "/images/homepage/kisii-administration-campus.jpg";
 const heriAfricaLaunchImage = "/images/HERIAfricaLaunch.jpg";

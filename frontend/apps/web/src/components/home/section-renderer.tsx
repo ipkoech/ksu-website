@@ -1,9 +1,10 @@
-import type { ReactElement } from "react";
+import { Fragment, type ReactElement } from "react";
 import {
   AlumniStorySection,
   DateTimelineSection,
   EventsListSection,
   FactsStripSection,
+  FeaturedStoriesSection,
   FeaturedPartnershipSection,
   HeroAdmissionsSection,
   LeadershipActivitySection,
@@ -25,6 +26,7 @@ import {
   type HomepageSectionLayoutVariant,
 } from "@/lib/homepage-sections";
 import type { HomeSocialLinks } from "@/lib/homepage-data";
+import type { HomeCard } from "@/lib/homepage-data";
 
 type SectionComponent = (props: {
   section: HomepageSection;
@@ -34,8 +36,13 @@ type SectionComponent = (props: {
   academicDatesSection?: HomepageSection | null;
   eventsSection?: HomepageSection | null;
   programmeFinderData?: ProgrammeFinderData;
+  featuredStories?: HomeCard[];
   socialLinks?: HomeSocialLinks;
 }) => ReactElement | null;
+
+function FeaturedStoriesRenderer({ featuredStories }: Parameters<SectionComponent>[0]) {
+  return <FeaturedStoriesSection stories={featuredStories} />;
+}
 
 export const HOMEPAGE_SECTION_RENDERERS: Record<
   HomepageSectionLayoutVariant,
@@ -45,6 +52,7 @@ export const HOMEPAGE_SECTION_RENDERERS: Record<
   pulse_strip: PulseStripSection,
   featured_partnership: FeaturedPartnershipSection,
   programme_finder: ProgrammeFinderSection,
+  featured_stories: FeaturedStoriesRenderer,
   date_timeline: DateTimelineSection,
   pillar_grid: PillarGridSection,
   media_mosaic: MediaMosaicSection,
@@ -65,6 +73,7 @@ export function HomepageSectionRenderer({
   academicDatesSection,
   eventsSection,
   programmeFinderData,
+  featuredStories,
   socialLinks,
 }: {
   section: HomepageSection;
@@ -74,6 +83,7 @@ export function HomepageSectionRenderer({
   academicDatesSection?: HomepageSection | null;
   eventsSection?: HomepageSection | null;
   programmeFinderData?: ProgrammeFinderData;
+  featuredStories?: HomeCard[];
   socialLinks?: HomeSocialLinks;
 }) {
   if (!isKnownHomepageLayoutVariant(section.layout_variant)) {
@@ -93,6 +103,7 @@ export function HomepageSectionRenderer({
       academicDatesSection={academicDatesSection}
       eventsSection={eventsSection}
       programmeFinderData={programmeFinderData}
+      featuredStories={featuredStories}
       socialLinks={socialLinks}
     />
   );
@@ -103,12 +114,14 @@ export function HomepageSections({
   hero,
   partnershipSpotlights,
   programmeFinderData,
+  featuredStories,
   socialLinks,
 }: {
   sections: HomepageSection[];
   hero?: HomepageResolvedHero | null;
   partnershipSpotlights?: HomepagePartnershipSpotlight[];
   programmeFinderData?: ProgrammeFinderData;
+  featuredStories?: HomeCard[];
   socialLinks?: HomeSocialLinks;
 }) {
   const orderedSections = orderHomepageSections(sections);
@@ -136,6 +149,9 @@ export function HomepageSections({
   const hasMergedProgrammeDates = sections.some(
     (section) => section.layout_variant === "programme_finder",
   );
+  const hasExplicitFeaturedStories = sections.some(
+    (section) => section.layout_variant === "featured_stories",
+  );
 
   return (
     <>
@@ -157,17 +173,23 @@ export function HomepageSections({
         }
 
         return (
-          <HomepageSectionRenderer
-            key={section.id}
-            section={section}
-            hero={hero}
-            factsSection={factsSection}
-            partnershipSpotlights={partnershipSpotlights}
-            academicDatesSection={academicDatesSection}
-            eventsSection={eventsSection}
-            programmeFinderData={programmeFinderData}
-            socialLinks={socialLinks}
-          />
+          <Fragment key={section.id}>
+            <HomepageSectionRenderer
+              section={section}
+              hero={hero}
+              factsSection={factsSection}
+              partnershipSpotlights={partnershipSpotlights}
+              academicDatesSection={academicDatesSection}
+              eventsSection={eventsSection}
+              programmeFinderData={programmeFinderData}
+              featuredStories={featuredStories}
+              socialLinks={socialLinks}
+            />
+            {section.layout_variant === "programme_finder" &&
+            !hasExplicitFeaturedStories ? (
+              <FeaturedStoriesSection stories={featuredStories} />
+            ) : null}
+          </Fragment>
         );
       })}
     </>
@@ -183,6 +205,7 @@ function orderHomepageSections(sections: HomepageSection[]) {
     facts_strip: 41,
     programme_finder: 50,
     date_timeline: 51,
+    featured_stories: 55,
     leadership_activity: 60,
     research_cards: 70,
     logo_carousel: 80,

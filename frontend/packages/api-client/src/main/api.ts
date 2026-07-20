@@ -46,6 +46,10 @@ import type {
   AdmissionInfo,
   News,
   Blog,
+  Story,
+  StoryContributorAccountRequest,
+  StoryContributorAccountRequestPayload,
+  StorySubmissionPayload,
   Event,
   Announcement,
   ContentWorkflowAction,
@@ -1396,6 +1400,84 @@ export const blogsApi = {
     mainApi.post<{ data: Blog }>(`/api/v1/blogs/id/${id}/unpublish`),
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/blogs/id/${id}`),
+};
+
+// Stories
+export const storiesApi = {
+  list: (
+    params?: ListParams<{
+      story_type?: string;
+      category?: string;
+      is_featured?: boolean;
+      search?: string;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Story>>("/api/v1/stories", params),
+
+  listAdmin: (
+    params?: ListParams<{
+      is_published?: boolean;
+      status?: string;
+      workflow_status?: string;
+      story_type?: string;
+      category?: string;
+      contributor_user_id?: string;
+      scheduled_from?: string;
+      scheduled_to?: string;
+      search?: string;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Story>>("/api/v1/stories/admin", params),
+
+  listMine: (
+    params?: ListParams<{
+      workflow_status?: string;
+      search?: string;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Story>>("/api/v1/stories/mine", params),
+
+  get: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Story }>(`/api/v1/stories/id/${id}`, params),
+
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Story }>(`/api/v1/stories/${slug}`, params),
+
+  create: (data: Partial<Story>) =>
+    mainApi.post<{ data: Story }>("/api/v1/stories", data),
+
+  submitDraft: (data: StorySubmissionPayload) =>
+    mainApi.post<{ data: Story }>("/api/v1/stories/submissions", data),
+
+  update: (id: string, data: Partial<Story>) =>
+    mainApi.patch<{ data: Story }>(`/api/v1/stories/id/${id}`, data),
+
+  delete: (id: string) => mainApi.delete<void>(`/api/v1/stories/id/${id}`),
+
+  requestContributorAccount: (data: StoryContributorAccountRequestPayload) =>
+    mainApi.post<{ data: StoryContributorAccountRequest }>(
+      "/api/v1/stories/account-requests",
+      data,
+    ),
+
+  listContributorAccountRequests: (
+    params?: ListParams<{ status?: string; search?: string }>,
+  ) =>
+    mainApi.get<PaginatedResponse<StoryContributorAccountRequest>>(
+      "/api/v1/stories/account-requests/admin",
+      params,
+    ),
+
+  approveContributorAccountRequest: (id: string) =>
+    mainApi.post<{ data: StoryContributorAccountRequest }>(
+      `/api/v1/stories/account-requests/admin/${id}/approve`,
+    ),
+
+  rejectContributorAccountRequest: (
+    id: string,
+    data: { rejection_reason?: string | null },
+  ) =>
+    mainApi.post<{ data: StoryContributorAccountRequest }>(
+      `/api/v1/stories/account-requests/admin/${id}/reject`,
+      data,
+    ),
 };
 
 // Events

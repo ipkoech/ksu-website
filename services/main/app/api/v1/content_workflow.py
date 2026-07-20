@@ -25,6 +25,7 @@ from ...models import (
     PageSection,
     PartnershipSpotlight,
     Slider,
+    Story,
     User,
 )
 from ...schemas.content_workflow import ContentWorkflowActionRequest
@@ -36,6 +37,7 @@ router = APIRouter()
 CONTENT_MODELS = {
     "news": News,
     "blogs": Blog,
+    "stories": Story,
     "announcements": Announcement,
     "events": Event,
     "club-events": ClubActivity,
@@ -49,7 +51,7 @@ CONTENT_MODELS = {
 CUSTOM_WORKFLOW_CONTENT_TYPES = {"page-sections", "partnership-spotlights"}
 REVIEW_ACTIONS = {"start_review", "request_changes", "approve", "reject"}
 PUBLISH_ACTIONS = {"schedule", "publish", "unpublish"}
-QUEUE_ACCESS_PERMISSIONS = {"content.review", "content.publish", "content.manage", "homepage.manage"}
+QUEUE_ACCESS_PERMISSIONS = {"content.review", "content.publish", "content.manage", "content.manage_stories", "homepage.manage"}
 CLUB_EVENT_SUBMIT_PERMISSIONS = ("clubs.content_submit", "clubs.manage_own")
 COCMS_WORKFLOW_PERMISSIONS = {"content.review", "content.publish", "content.manage"}
 PORTAL_LABELS = {
@@ -65,6 +67,7 @@ PORTAL_LABELS = {
 CONTENT_TYPE_LABELS = {
     "news": "News",
     "blogs": "Blog",
+    "stories": "Story",
     "announcements": "Announcement",
     "events": "Event",
     "club-events": "Club Event",
@@ -78,12 +81,14 @@ CONTENT_TYPE_LABELS = {
 PREVIEW_PATH_PREFIXES = {
     "news": "/news",
     "blogs": "/blogs",
+    "stories": "/stories",
     "announcements": "/announcements",
     "events": "/events",
 }
 EDIT_PATHS = {
     "news": "/corporate-communication/newsroom/news",
     "blogs": "/corporate-communication/newsroom/press-releases",
+    "stories": "/corporate-communication/stories",
     "announcements": "/corporate-communication/newsroom/notices",
     "events": "/corporate-communication/newsroom/events",
     "club-events": "/student-clubs/events",
@@ -311,10 +316,10 @@ def authorize_content_workflow_action(user, content, action: str, permissions: s
     if action == "edit":
         workflow_status = getattr(content, "workflow_status", None) or content.status
         if workflow_status in {"submitted", "in_review", "approved", "scheduled"}:
-            if {"content.edit_submitted", "content.manage", "admin:*"}.intersection(permissions):
+            if {"content.edit_submitted", "content.manage", "content.manage_stories", "admin:*"}.intersection(permissions):
                 return
             raise HTTPException(status_code=403, detail="Submitted content requires review edit privileges")
-        if {"content.manage", "admin:*"}.intersection(permissions):
+        if {"content.manage", "content.manage_stories", "admin:*"}.intersection(permissions):
             return
         if owner_id == user.id and "content.edit" in permissions:
             return
@@ -326,7 +331,7 @@ def authorize_content_workflow_action(user, content, action: str, permissions: s
     if action == "submit" and owner_id == user.id:
         return
     required = "content.review" if action in REVIEW_ACTIONS else "content.submit" if action == "submit" else "content.archive"
-    if required not in permissions and "content.manage" not in permissions:
+    if required not in permissions and not {"content.manage", "content.manage_stories"}.intersection(permissions):
         raise HTTPException(status_code=403, detail="Insufficient privileges")
 
 

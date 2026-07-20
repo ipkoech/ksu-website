@@ -12,6 +12,7 @@ import {
   researchServiceApi,
   schoolsApi,
   statsApi,
+  storiesApi,
   universityInfoApi,
   type Blog,
   type ContactDirectory,
@@ -22,6 +23,7 @@ import {
   type Programme,
   type PublicStatsResponse,
   type School,
+  type Story,
   type UniversityInfo,
 } from "@ksu/api-client";
 import {
@@ -140,6 +142,7 @@ export type HomepageData = {
   activeIntakes: HomeIntake[];
   admissionsActions: HomeCard[];
   latestNews: HomeCard[];
+  featuredStories: HomeCard[];
   upcomingEvents: HomeCard[];
   latestBlog: HomeCard | null;
   serviceLinks: HomeLink[];
@@ -364,6 +367,17 @@ async function getLatestBlogs() {
     per_page: 1,
     fields:
       "id,title,slug,summary,excerpt,plain_text,category,published_at,author_name,cover_image_id,featured_media_id,created_at",
+  });
+  return response.data ?? [];
+}
+
+async function getFeaturedStories() {
+  const response = await storiesApi.list({
+    is_featured: true,
+    per_page: 4,
+    fields:
+      "id,title,slug,summary,plain_text,story_type,category,published_at,featured_media_id,featured_media,contributor_name_snapshot,created_at",
+    include: "featured_media(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
   });
   return response.data ?? [];
 }
@@ -634,6 +648,31 @@ function normalizeBlog(item?: Blog): HomeCard | null {
   };
 }
 
+function normalizeStories(stories: Story[]): HomeCard[] {
+  return stories.map((item) => ({
+    id: item.id,
+    title: item.title,
+    eyebrow: item.category || item.story_type || "Story",
+    body: truncate(
+      plainText(item.summary) ||
+        plainText(item.plain_text) ||
+        "Read a featured story from the Kisii University community.",
+      132,
+    ),
+    href: `/stories/${item.slug}`,
+    action: "Read story",
+    imageUrl:
+      publicMediaUrl(item.featured_media as Partial<Media> | null) ??
+      publicFileUrl(item.featured_media_id),
+    meta: [
+      formatDisplayDate(item.published_at ?? item.created_at),
+      present(item.contributor_name_snapshot),
+    ]
+      .filter(Boolean)
+      .join(" · "),
+  }));
+}
+
 function normalizeIntakes(intakes: Intake[]): HomeIntake[] {
   return intakes
     .filter((item) => item.is_active || item.is_open)
@@ -717,6 +756,7 @@ export async function getHomepageData(): Promise<HomepageData> {
     latestNews,
     upcomingEvents,
     latestBlogs,
+    featuredStories,
     activeIntakes,
     partners,
     homepageStats,
@@ -733,6 +773,7 @@ export async function getHomepageData(): Promise<HomepageData> {
     safe(getLatestNews(), [], "latest news"),
     safe(getUpcomingEvents(), [], "events"),
     safe(getLatestBlogs(), [], "blogs"),
+    safe(getFeaturedStories(), [], "featured stories"),
     safe(getActiveIntakes(), [], "intakes"),
     safe(getResearchPartners(), [], "research partners", false),
     safe(getHomepageStats(), null, "homepage stats", false),
@@ -822,6 +863,7 @@ export async function getHomepageData(): Promise<HomepageData> {
       },
     ],
     latestNews: normalizeNews(latestNews),
+    featuredStories: normalizeStories(featuredStories),
     upcomingEvents: normalizeEvents(upcomingEvents),
     latestBlog: normalizeBlog(latestBlogs[0]),
     serviceLinks,

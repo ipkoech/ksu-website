@@ -23,6 +23,7 @@ PAGE_SECTION_LAYOUT_VARIANTS = (
     "pulse_strip",
     "featured_partnership",
     "programme_finder",
+    "featured_stories",
     "date_timeline",
     "pillar_grid",
     "media_mosaic",
@@ -79,7 +80,7 @@ class PageSection(Base):
         sa.CheckConstraint(
             "layout_variant IN "
             "('hero_admissions', 'pulse_strip', 'featured_partnership', 'programme_finder', "
-            "'date_timeline', 'pillar_grid', 'media_mosaic', 'leadership_activity', "
+            "'featured_stories', 'date_timeline', 'pillar_grid', 'media_mosaic', 'leadership_activity', "
             "'research_cards', 'news_grid', 'events_list', 'logo_carousel', 'alumni_story', "
             "'facts_strip')",
             name="ck_page_sections_layout_variant",

@@ -2028,6 +2028,94 @@ export interface Blog {
   updated_at: string;
 }
 
+export interface Story {
+  id: string;
+  title: string;
+  slug: string;
+  summary?: string | null;
+  plain_text?: string | null;
+  rich_text?: string | null;
+  structured_content?: Record<string, unknown> | null;
+  related_links?: Array<Record<string, unknown>> | null;
+  featured_media_id?: string | null;
+  featured_media?: Record<string, unknown> | null;
+  author_user_id?: string | null;
+  author?: Record<string, unknown> | null;
+  story_type: string;
+  category?: string | null;
+  source_type: string;
+  contributor_user_id?: string | null;
+  contributor?: Record<string, unknown> | null;
+  contributor_name_snapshot?: string | null;
+  contributor_email_snapshot?: string | null;
+  contributor_affiliation_snapshot?: string | null;
+  show_contributor_name: boolean;
+  consent_to_publish: boolean;
+  is_featured: boolean;
+  featured_until?: string | null;
+  homepage_priority: number;
+  reading_minutes?: number | null;
+  scope_type?: string | null;
+  scope_id?: string | null;
+  published_at?: string | null;
+  valid_from?: string | null;
+  valid_to?: string | null;
+  archived_at?: string | null;
+  is_main?: boolean;
+  is_public?: boolean;
+  is_published: boolean;
+  status?: string;
+  workflow_status?: ContentWorkflowStatus;
+  display_order?: number;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  keywords?: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StoryContributorAccountRequest {
+  id: string;
+  full_name: string;
+  email: string;
+  phone?: string | null;
+  affiliation?: string | null;
+  contributor_type: string;
+  reason_for_request?: string | null;
+  status: "pending" | "approved" | "rejected" | string;
+  reviewed_by_id?: string | null;
+  reviewed_at?: string | null;
+  approved_user_id?: string | null;
+  rejection_reason?: string | null;
+  verified_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StoryContributorAccountRequestPayload {
+  full_name: string;
+  email: string;
+  phone?: string | null;
+  affiliation?: string | null;
+  contributor_type?: string;
+  reason_for_request?: string | null;
+}
+
+export interface StorySubmissionPayload {
+  title: string;
+  summary?: string | null;
+  plain_text?: string | null;
+  rich_text?: string | null;
+  structured_content?: Record<string, unknown> | null;
+  related_links?: Array<Record<string, unknown>> | null;
+  featured_media_id?: string | null;
+  story_type?: string;
+  category?: string | null;
+  contributor_affiliation_snapshot?: string | null;
+  show_contributor_name?: boolean;
+  consent_to_publish: boolean;
+}
+
 export interface ScopeSummary {
   type: string;
   id: string;
@@ -2156,6 +2244,7 @@ export interface ContentWorkflowQueueItem {
   content_type:
     | "news"
     | "blogs"
+    | "stories"
     | "announcements"
     | "events"
     | "club-events"

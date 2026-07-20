@@ -6,6 +6,7 @@ export const HOMEPAGE_SECTION_LAYOUT_VARIANTS = [
   "pulse_strip",
   "featured_partnership",
   "programme_finder",
+  "featured_stories",
   "date_timeline",
   "pillar_grid",
   "media_mosaic",

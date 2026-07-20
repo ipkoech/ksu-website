@@ -16,6 +16,8 @@ from .content import (
     BlogService,
     EventService,
     NewsService,
+    StoryContributorAccountRequestService,
+    StoryService,
     SliderGroupService,
     SliderService,
 )
@@ -120,6 +122,8 @@ __all__ = [
     "SearchService",
     "NewsService",
     "BlogService",
+    "StoryService",
+    "StoryContributorAccountRequestService",
     "AnnouncementService",
     "EventService",
     "SliderGroupService",

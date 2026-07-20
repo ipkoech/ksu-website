@@ -6,6 +6,7 @@ export function generateStaticParams() {
   return [
     { resource: "news" },
     { resource: "press-releases" },
+    { resource: "stories" },
     { resource: "notices" },
     { resource: "events" },
     { resource: "homepage-features" },
