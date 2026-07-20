@@ -20,27 +20,33 @@ export function CampusLifeHorizontalScroller({
     const currentTrack = track;
     const currentRail = rail;
     let animationFrame = 0;
+    const desktopQuery = window.matchMedia("(min-width: 1024px)");
+    const reduceMotionQuery = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    );
 
     function updateHorizontalPosition() {
       animationFrame = 0;
-      const section = currentTrack.closest(".campus-life-scroll-scene");
-      if (!section || !window.matchMedia("(min-width: 1024px)").matches) {
+      const section = currentTrack.closest(
+        ".campus-life-scroll-scene",
+      ) as HTMLElement | null;
+      if (!section || !desktopQuery.matches || reduceMotionQuery.matches) {
         currentRail.style.transform = "translate3d(0px, 0, 0)";
+        if (section) section.style.minHeight = "";
         return;
       }
 
-      const sectionTop = section.getBoundingClientRect().top + window.scrollY;
-      const scrollableDistance = Math.max(
-        section.clientHeight - window.innerHeight,
-        1,
-      );
-      const progress = Math.min(
-        Math.max((window.scrollY - sectionTop) / scrollableDistance, 0),
-        1,
-      );
       const maxTranslate = Math.max(
         currentRail.scrollWidth - currentTrack.clientWidth,
         0,
+      );
+      section.style.minHeight = `${Math.ceil(window.innerHeight + maxTranslate)}px`;
+
+      const sectionTop = section.getBoundingClientRect().top + window.scrollY;
+      const scrollableDistance = Math.max(maxTranslate, 1);
+      const progress = Math.min(
+        Math.max((window.scrollY - sectionTop) / scrollableDistance, 0),
+        1,
       );
       const translateX = -progress * maxTranslate;
 
@@ -55,11 +61,24 @@ export function CampusLifeHorizontalScroller({
     requestUpdate();
     window.addEventListener("scroll", requestUpdate, { passive: true });
     window.addEventListener("resize", requestUpdate);
+    desktopQuery.addEventListener("change", requestUpdate);
+    reduceMotionQuery.addEventListener("change", requestUpdate);
+
+    const resizeObserver = new ResizeObserver(requestUpdate);
+    resizeObserver.observe(currentTrack);
+    resizeObserver.observe(currentRail);
 
     return () => {
       if (animationFrame) window.cancelAnimationFrame(animationFrame);
       window.removeEventListener("scroll", requestUpdate);
       window.removeEventListener("resize", requestUpdate);
+      desktopQuery.removeEventListener("change", requestUpdate);
+      reduceMotionQuery.removeEventListener("change", requestUpdate);
+      resizeObserver.disconnect();
+      const section = currentTrack.closest(
+        ".campus-life-scroll-scene",
+      ) as HTMLElement | null;
+      if (section) section.style.minHeight = "";
     };
   }, []);
 

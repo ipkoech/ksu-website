@@ -1008,7 +1008,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="campus-life-scroll-scene relative isolate border-b border-border bg-[linear-gradient(180deg,rgba(255,255,255,.84),hsl(var(--surface-subtle)/.86))] py-12 backdrop-blur-[1px] lg:min-h-[238vh] lg:py-0"
+      className="campus-life-scroll-scene relative isolate border-b border-border bg-[linear-gradient(180deg,rgba(255,255,255,.84),hsl(var(--surface-subtle)/.86))] py-12 backdrop-blur-[1px] lg:min-h-[180vh] lg:py-0"
     >
       <div className="absolute inset-y-0 right-0 -z-10 hidden w-1/2 bg-[linear-gradient(90deg,transparent,hsl(var(--accent)/.82))] lg:block" />
       <div className="campus-life-sticky-frame mx-auto max-w-[1680px] px-4 sm:px-6 lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px))] lg:max-w-none lg:items-center lg:px-0 xl:px-0 2xl:px-0">
