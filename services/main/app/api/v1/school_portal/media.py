@@ -46,11 +46,29 @@ async def update_school_media_metadata(
         context.school.id,
     ):
         raise HTTPException(status_code=404, detail="Media not found")
+    changes = data.model_dump(exclude_unset=True)
     media = await MediaService.update(
         db,
         media,
-        **data.model_dump(exclude_unset=True),
+        **changes,
     )
+    if "is_public" in changes:
+        gallery_link = await MediaService.get_link_for_media(
+            db,
+            media_id=media.id,
+            entity_type="school",
+            entity_id=context.school.id,
+            role="gallery",
+        )
+        if gallery_link is not None:
+            gallery_link.is_public = bool(changes["is_public"])
+            gallery_link.owner_portal = "schools"
+            gallery_link.owner_scope_type = "school"
+            gallery_link.owner_scope_id = context.school.id
+            gallery_link.author_user_id = (
+                gallery_link.author_user_id or context.user.id
+            )
+            await db.flush()
     return success(data=media, message="School media updated")
 
 

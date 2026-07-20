@@ -273,6 +273,15 @@ class MediaService:
             link_metadata = {"is_public": is_public}
             if folder_id is not None:
                 link_metadata["folder_id"] = folder_id
+            if scope_type == "school":
+                link_metadata.update(
+                    status="draft",
+                    workflow_status="draft",
+                    owner_portal="schools",
+                    owner_scope_type="school",
+                    owner_scope_id=scope_id,
+                    author_user_id=uploaded_by_id,
+                )
             if scope_type == "club":
                 link_metadata = {
                     "is_public": False,

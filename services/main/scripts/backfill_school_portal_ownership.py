@@ -55,6 +55,33 @@ def build_backfill_steps(
     return (
         BackfillStep("school_content_ownership", content_statements),
         BackfillStep(
+            "school_gallery_ownership",
+            (
+                f"""
+                UPDATE "{main_schema}".media_links AS link
+                SET owner_portal = 'schools',
+                    owner_scope_type = 'school',
+                    owner_scope_id = link.entity_id,
+                    author_user_id = COALESCE(link.author_user_id, media.uploaded_by_id),
+                    is_public = media.is_public,
+                    updated_at = now()
+                FROM "{main_schema}".media AS media
+                WHERE link.media_id = media.id
+                  AND link.entity_type = 'school'
+                  AND link.role = 'gallery'
+                  AND link.deleted_at IS NULL
+                  AND media.deleted_at IS NULL
+                  AND (
+                      link.owner_portal IS DISTINCT FROM 'schools'
+                      OR link.owner_scope_type IS DISTINCT FROM 'school'
+                      OR link.owner_scope_id IS DISTINCT FROM link.entity_id
+                      OR link.author_user_id IS NULL
+                      OR link.is_public IS DISTINCT FROM media.is_public
+                  )
+                """,
+            ),
+        ),
+        BackfillStep(
             "school_document_workflow",
             (
                 f"""
