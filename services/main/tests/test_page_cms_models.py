@@ -59,6 +59,7 @@ def test_page_sections_limit_layout_variants_to_the_approved_catalog():
         "pulse_strip",
         "featured_partnership",
         "programme_finder",
+        "featured_stories",
         "date_timeline",
         "pillar_grid",
         "media_mosaic",

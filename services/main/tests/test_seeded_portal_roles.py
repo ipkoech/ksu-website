@@ -1,5 +1,6 @@
 import asyncio
 import uuid
+from unittest.mock import AsyncMock, patch
 
 from sqlalchemy import select
 
@@ -135,7 +136,12 @@ async def _assert_reseed_convergence():
             ))
             await db.flush()
 
-            await seed_portal_users.seed_portal_users(db, ctx)
+            with patch.object(
+                seed_portal_users,
+                "_seed_school_dean_portal_users",
+                AsyncMock(),
+            ):
+                await seed_portal_users.seed_portal_users(db, ctx)
 
             retired_roles = (
                 await db.execute(select(Role).where(Role.name.in_(legacy_role_names)))
