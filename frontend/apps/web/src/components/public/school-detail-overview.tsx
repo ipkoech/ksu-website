@@ -6,7 +6,6 @@ import {
   ArrowRight,
   CalendarDays,
   Eye,
-  FileText,
   Globe,
   GraduationCap,
   Landmark,
@@ -74,10 +73,6 @@ function present(value?: string | number | null) {
 function schoolSummary(data: SchoolDetailOverviewData) {
   const { school } = data;
   return present(school.about) ?? present(school.description);
-}
-
-function formatCount(count: number, singular: string, plural = `${singular}s`) {
-  return count > 0 ? `${count} ${count === 1 ? singular : plural}` : null;
 }
 
 function linkHref(value: string | null) {
@@ -215,56 +210,61 @@ function ContactPanel({
   );
 }
 
-function SchoolInfoPanel({
-  code,
+function SchoolHighlights({
   established,
   departments,
   programmes,
   staff,
-  lastUpdated,
 }: {
-  code: string | null;
   established: string | number | null;
-  departments: string | null;
-  programmes: string | null;
-  staff: string | null;
-  lastUpdated: string | null;
+  departments: number;
+  programmes: number;
+  staff: number;
 }) {
+  const numberFormatter = new Intl.NumberFormat("en-KE");
   const items = [
-    { label: "School Code", value: code, icon: FileText },
-    { label: "Established", value: established, icon: CalendarDays },
-    { label: "Departments", value: departments, icon: Building2 },
-    { label: "Programmes", value: programmes, icon: GraduationCap },
-    { label: "Staff", value: staff, icon: Users },
-    { label: "Last Updated", value: lastUpdated, icon: CalendarDays },
-  ].filter((item) => present(item.value));
-
-  if (!items.length) return null;
+    {
+      label: "Departments",
+      value: numberFormatter.format(departments),
+      icon: Building2,
+    },
+    {
+      label: "Programmes",
+      value: numberFormatter.format(programmes),
+      icon: GraduationCap,
+    },
+    {
+      label: "Staff",
+      value: numberFormatter.format(staff),
+      icon: Users,
+    },
+    established
+      ? { label: "Established", value: established, icon: CalendarDays }
+      : null,
+  ];
 
   return (
-    <section className="rounded-[1.5rem] border border-border bg-white p-4 shadow-sm">
-      <SectionKicker>School Information</SectionKicker>
-      <dl className="mt-3 grid gap-2">
+    <section
+      aria-label="School highlights"
+      className="overflow-hidden rounded-[1.5rem] border border-border bg-white shadow-sm"
+    >
+      <dl className="grid grid-cols-2 sm:grid-cols-4">
         {items.map((item) => {
+          if (!item) return null;
           const Icon = item.icon;
 
           return (
             <div
               key={item.label}
-              className="flex w-full min-w-0 gap-3 rounded-xl p-2"
+              className="border-b border-r border-border/60 p-4 even:border-r-0 sm:border-b-0 sm:even:border-r sm:last:border-r-0"
             >
-              <Icon
-                aria-hidden
-                className="mt-0.5 h-5 w-5 shrink-0 text-primary"
-              />
-              <div className="min-w-0 flex-1">
-                <dt className="text-xs font-bold text-foreground">
-                  {item.label}
-                </dt>
-                <dd className="mt-0.5 break-words text-sm font-medium leading-5 text-primary [overflow-wrap:anywhere]">
-                  {item.value}
-                </dd>
-              </div>
+              <Icon aria-hidden className="h-5 w-5 text-secondary" />
+              <dd className="mt-3 text-xl font-bold leading-none text-foreground">
+                {item.value}
+              </dd>
+              <dt className="mt-1.5 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                {item.label}
+              </dt>
             </div>
           );
         })}
@@ -363,12 +363,9 @@ function AboutCard({
       <div className="grid grid-cols-[minmax(0,1fr)_5rem] items-start gap-4 sm:grid-cols-[minmax(0,1fr)_7rem] md:grid-cols-[minmax(0,1fr)_9rem] md:items-center md:gap-5">
         <div className="min-w-0">
           <SectionKicker>About the School</SectionKicker>
-          <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
-            About this school
-          </h2>
           <RichTextRenderer
             content={overview}
-            className="mt-3 prose-sm text-sm leading-7 text-muted-foreground"
+            className="mt-2 prose-sm text-sm leading-7 text-muted-foreground"
           />
         </div>
         <div className="h-20 overflow-hidden rounded-[1.25rem] bg-primary/[0.08] text-primary sm:h-24">
@@ -510,17 +507,6 @@ export function SchoolDetailOverview({
       website={website}
     />
   );
-  const schoolInfoPanel = (
-    <SchoolInfoPanel
-      code={present(school.code)}
-      established={established}
-      departments={formatCount(counts.departments, "department")}
-      programmes={formatCount(counts.programmes, "programme")}
-      staff={formatCount(counts.staff, "record")}
-      lastUpdated={formatDate(school.updated_at)}
-    />
-  );
-
   const mission = present(school.mission);
   const vision = present(school.vision);
   const mandate = present(school.mandate);
@@ -543,14 +529,14 @@ export function SchoolDetailOverview({
         Number(first.display_order ?? 0) - Number(second.display_order ?? 0) ||
         first.name.localeCompare(second.name),
     )
-    .slice(0, 4)
+    .slice(0, 3)
     .map((programme) => ({
       id: programme.id,
       name: programme.name,
       href: `/academics/programmes/${programme.slug}`,
       meta: [programme.level, programme.duration].filter(Boolean).join(" · "),
     }));
-  const featuredDepartments = data.departments.slice(0, 4).map((department) => ({
+  const featuredDepartments = data.departments.slice(0, 3).map((department) => ({
     id: department.id,
     name: department.name,
     href: `${baseHref}/departments/${department.slug}`,
@@ -569,6 +555,8 @@ export function SchoolDetailOverview({
         title="Departments"
         items={featuredDepartments}
         icon={Building2}
+        allHref={`${baseHref}/departments`}
+        allLabel="View all departments"
       />
     </>
   );
@@ -606,6 +594,12 @@ export function SchoolDetailOverview({
                 />
               ) : null}
               <MobileSchoolLinksGrid links={quickLinks} />
+              <SchoolHighlights
+                established={established}
+                departments={counts.departments}
+                programmes={counts.programmes}
+                staff={counts.staff}
+              />
               {overview ? (
                 <AboutCard
                   overview={overview}
@@ -622,14 +616,12 @@ export function SchoolDetailOverview({
             </ScrollReveal>
 
             <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
-              {featuredPanels}
               {contactPanel}
-              {schoolInfoPanel}
+              {featuredPanels}
             </aside>
 
-            <aside className="grid gap-4 xl:hidden">
+            <aside className="xl:hidden">
               {contactPanel}
-              {schoolInfoPanel}
             </aside>
           </div>
         </section>
