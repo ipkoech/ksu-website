@@ -152,24 +152,20 @@ export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
             : "lg:grid-cols-1"
         }`}
       >
-        <div className="max-w-3xl [text-shadow:0_2px_14px_rgba(0,0,0,.55)]">
-          <SectionEyebrow
-            value={content?.eyebrow ?? section.subtitle ?? "Kisii University"}
-            light
-          />
-          <h1 className="mt-4 max-w-3xl text-balance font-[family-name:var(--font-display)] text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-6xl">
+        <div className="max-w-2xl [text-shadow:0_2px_14px_rgba(0,0,0,.55)]">
+          <h1 className="line-clamp-2 max-w-2xl text-balance font-[family-name:var(--font-display)] text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-6xl">
             {headline}
             {highlight ? (
-              <span className="mt-1 block text-secondary">{highlight}</span>
+              <span className="text-secondary"> {highlight}</span>
             ) : null}
           </h1>
           <SectionBody
             value={description}
             light
-            className="mt-5 max-w-2xl text-base leading-7 text-white/90 sm:text-lg sm:leading-8"
+            className="mt-4 line-clamp-2 max-w-xl text-base leading-7 text-white/90 sm:text-lg sm:leading-8"
           />
           {actions.length ? (
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-wrap gap-3">
               {actions.slice(0, 2).map((action, index) => (
                 <HeroActionLink
                   key={action.key ?? `${action.href}-${index}`}
