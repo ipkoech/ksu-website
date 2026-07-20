@@ -575,7 +575,7 @@ export function FeaturedPartnershipSection({
   return (
     <section
       id={section.section_key}
-      className="border-b border-border bg-white py-10 lg:py-12"
+      className="border-b border-border bg-white/[0.82] py-10 backdrop-blur-[1px] lg:py-12"
     >
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
@@ -654,11 +654,11 @@ export function ProgrammeFinderSection({
   return (
     <section
       id={section.section_key}
-      className="programme-discovery-mosaic relative isolate overflow-hidden border-b border-border bg-white py-8 sm:py-10 lg:py-12"
+      className="programme-discovery-mosaic relative isolate overflow-hidden border-b border-border bg-white/[0.82] py-8 backdrop-blur-[1px] sm:py-10 lg:py-12"
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[linear-gradient(180deg,hsl(var(--accent)/.55),transparent)]" />
       <div className="relative mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="programme-mosaic-grid grid overflow-hidden border border-primary/10 bg-white shadow-[0_24px_70px_-48px_hsl(var(--primary)/.45)] lg:grid-cols-12">
+        <div className="programme-mosaic-grid grid overflow-hidden border border-primary/10 bg-white/[0.95] shadow-[0_24px_70px_-48px_hsl(var(--primary)/.45)] lg:grid-cols-12">
           <header className="programme-mosaic-intro relative flex flex-col justify-between overflow-hidden bg-primary p-6 text-white sm:p-8 lg:col-span-4 lg:row-start-1">
             <div
               className="absolute -right-20 -top-24 h-52 w-52 rounded-full border border-white/10"
@@ -817,7 +817,7 @@ export function DateTimelineSection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="border-b border-border bg-white py-10 lg:py-12"
+      className="border-b border-border bg-white/[0.82] py-10 backdrop-blur-[1px] lg:py-12"
     >
       <div className="mx-auto grid max-w-[1680px] gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.36fr)_minmax(0,0.64fr)] lg:px-8 xl:px-10 2xl:px-12">
         <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
@@ -887,7 +887,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="campus-life-scroll-scene relative isolate border-b border-border bg-white py-12 lg:min-h-[320vh] lg:py-0"
+      className="campus-life-scroll-scene relative isolate border-b border-border bg-white/[0.82] py-12 backdrop-blur-[1px] lg:min-h-[320vh] lg:py-0"
     >
       <div className="absolute inset-y-0 right-0 -z-10 hidden w-1/2 bg-accent/70 lg:block" />
       <div className="campus-life-sticky-frame mx-auto max-w-[1680px] px-4 sm:px-6 lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px))] lg:max-w-none lg:items-center lg:px-0 xl:px-0 2xl:px-0">
@@ -1177,7 +1177,7 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="overflow-hidden border-b border-primary/10 bg-surface"
+      className="overflow-hidden border-b border-primary/10 bg-surface/[0.86] backdrop-blur-[1px]"
     >
       <div className="mx-auto grid max-w-[1680px] lg:h-[720px] lg:grid-cols-[minmax(300px,0.34fr)_minmax(0,0.66fr)] xl:h-[740px] 2xl:h-[760px]">
         <div className="relative border-b border-primary/10 lg:grid lg:h-full lg:min-h-0 lg:grid-rows-[52%_48%] lg:border-b-0 lg:border-r">
@@ -1408,7 +1408,7 @@ export function NewsGridSection({
   return (
     <section
       id={section.section_key}
-      className="border-b border-primary/10 bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_54%,hsl(var(--surface-muted))_100%)] py-12 lg:py-14"
+      className="border-b border-primary/10 bg-[linear-gradient(180deg,hsl(var(--surface-subtle)/.86)_0%,rgba(255,255,255,.80)_54%,hsl(var(--surface-muted)/.82)_100%)] py-12 backdrop-blur-[1px] lg:py-14"
     >
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mb-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
@@ -1818,7 +1818,7 @@ export function LogoCarouselSection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="relative isolate overflow-hidden border-b border-border bg-white py-12 lg:py-14"
+      className="relative isolate overflow-hidden border-b border-border bg-white/[0.84] py-12 backdrop-blur-[1px] lg:py-14"
     >
       <div className="pointer-events-none absolute right-0 top-0 -z-10 h-full w-1/2 bg-[radial-gradient(circle_at_70%_25%,rgba(3,71,52,.08),transparent_38%)]" />
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">

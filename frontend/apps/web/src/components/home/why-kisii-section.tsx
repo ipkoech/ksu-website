@@ -158,7 +158,7 @@ export function WhyKisiiSection({
   return (
     <section
       id={section.section_key}
-      className="overflow-hidden border-b border-border bg-white py-8 lg:py-10"
+      className="overflow-hidden border-b border-border bg-white/[0.82] py-8 backdrop-blur-[1px] lg:py-10"
     >
       <div
         ref={isVisible.ref}
