@@ -652,174 +652,157 @@ export function ProgrammeFinderSection({
   return (
     <section
       id={section.section_key}
-      className="relative isolate overflow-clip border-b border-border bg-primary"
+      className="programme-discovery-mosaic relative isolate overflow-hidden border-b border-border bg-white py-8 sm:py-10 lg:py-12"
     >
-      <div className="programme-scroll-scene relative">
-        <div
-          id="programme-search"
-          className="programme-panel programme-search-canvas relative z-10 scroll-mt-28 bg-primary text-white lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px))] lg:items-center"
-        >
-          <PublicImage
-            src="/images/Home/OurKSU-82.jpg"
-            alt="Kisii University students exploring their academic future"
-            ratio="fill"
-            className="absolute inset-0 h-full w-full rounded-none"
-            imageClassName="object-cover object-center opacity-45 lg:object-left"
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,29,78,.9),rgba(5,62,156,.88)_47%,rgba(4,42,106,.96))]" />
-          <div className="programme-orbit programme-orbit-one" aria-hidden />
-          <div className="programme-orbit programme-orbit-two" aria-hidden />
-          <div className="programme-orbit programme-orbit-three" aria-hidden />
-
-          <div className="relative mx-auto grid w-full max-w-[1680px] gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(250px,0.34fr)_minmax(0,0.66fr)] lg:items-center lg:px-8 lg:py-6 xl:px-10 2xl:px-12">
-            <div className="max-w-lg lg:pr-6">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[linear-gradient(180deg,hsl(var(--accent)/.55),transparent)]" />
+      <div className="relative mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="programme-mosaic-grid grid overflow-hidden border border-primary/10 bg-white shadow-[0_24px_70px_-48px_hsl(var(--primary)/.45)] lg:grid-cols-12">
+          <header className="programme-mosaic-intro relative flex flex-col justify-between overflow-hidden bg-primary p-6 text-white sm:p-8 lg:col-span-4 lg:row-start-1">
+            <div
+              className="absolute -right-20 -top-24 h-52 w-52 rounded-full border border-white/10"
+              aria-hidden
+            />
+            <div className="relative">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">
                 {section.subtitle ?? "Programmes and academic pathways"}
               </p>
-              <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.04] text-white sm:text-5xl lg:text-6xl">
+              <h2 className="mt-3 max-w-sm font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.04] text-white sm:text-5xl">
                 What will you become?
               </h2>
-              <p className="mt-5 max-w-md text-base leading-7 text-white/75">
+              <p className="mt-4 max-w-md text-sm leading-6 text-white/75 sm:text-base sm:leading-7">
                 {section.description ??
                   "Search programmes built around your interests, ambitions and future."}
               </p>
-              <div className="mt-8 hidden items-center gap-3 text-xs font-bold uppercase tracking-[0.16em] text-white/65 lg:flex">
-                <span className="h-px w-14 bg-secondary" />
-                Search. Discover. Apply.
-              </div>
             </div>
+            <div className="relative mt-8 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.16em] text-white/65">
+              <span className="h-px w-12 bg-secondary" />
+              Search. Discover. Apply.
+            </div>
+          </header>
 
-            <div className="programme-search-surface border-l border-white/20 lg:pl-8 xl:pl-10">
-              <p className="mb-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-white sm:text-3xl">
-                Find the programme that fits your ambition.
-              </p>
-              <ProgrammeFinderInteractive
-                programmes={programmes}
-                schools={schools}
+          <ProgrammeFinderInteractive
+            programmes={programmes}
+            schools={schools}
+          />
+
+          <figure className="programme-mosaic-image relative min-h-48 overflow-hidden bg-primary lg:col-start-1 lg:col-end-4 lg:row-start-2 lg:min-h-0">
+            <PublicImage
+              src="/images/Home/OurKSU-82.jpg"
+              alt="Kisii University students exploring their academic future"
+              ratio="fill"
+              className="absolute inset-0 h-full w-full rounded-none"
+              imageClassName="object-cover object-center transition duration-700 hover:scale-[1.03]"
+              sizes="(min-width: 1024px) 25vw, 100vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-primary/75 via-transparent to-transparent" />
+            <figcaption className="absolute inset-x-0 bottom-0 p-5 text-sm font-semibold text-white">
+              Learn in a community built for discovery.
+            </figcaption>
+          </figure>
+
+          {hasAdmissionDates ? (
+            <aside className="programme-mosaic-dates relative overflow-hidden bg-primary p-5 text-white sm:p-7 lg:col-start-10 lg:col-end-13 lg:row-start-2">
+              <div className="absolute inset-x-0 top-0 h-1 bg-secondary" />
+              <SectionEyebrow
+                value={
+                  academicDatesSection?.subtitle ?? "Admissions and reporting"
+                }
+                light
               />
-            </div>
-          </div>
-        </div>
+              <div className="mt-2 flex items-center justify-between gap-4">
+                <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white">
+                  Key dates
+                </h3>
+                <CalendarDays className="h-6 w-6 text-secondary" aria-hidden />
+              </div>
 
-        <div
-          id="programme-journey"
-          className="programme-panel programme-admissions-takeover relative z-20 scroll-mt-28 bg-accent lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px))] lg:items-center lg:px-8 xl:px-10 2xl:px-12"
-        >
-          <div
-            className={`programme-admissions-surface mx-auto grid w-full max-w-[1680px] overflow-hidden bg-white lg:min-h-[calc(100svh-var(--public-header-offset,96px))] ${
-              hasAdmissionDates
-                ? "lg:grid-cols-[minmax(0,1.65fr)_minmax(340px,0.85fr)]"
-                : ""
-            }`}
-          >
-            <div className="flex flex-col justify-center p-5 sm:p-7 lg:p-8 xl:p-10">
-              <SectionEyebrow value="Your journey to Kisii University" />
-              <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h3 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground lg:text-4xl">
-                    Five clear steps. One destination.
-                  </h3>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                    Move from choosing a programme to joining the KSU community.
+              {intakes.slice(0, 1).map((intake) => (
+                <LinkWrapper
+                  key={intake.id}
+                  href={intake.href}
+                  className="mt-4 block border-y border-white/20 py-3 transition hover:border-secondary/70"
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-secondary">
+                    {intake.isOpen ? "Open intake" : "Intake"}
                   </p>
-                </div>
-                <LinkWrapper
-                  href="/admissions/how-to-apply"
-                  className="inline-flex min-h-10 w-fit shrink-0 items-center justify-center gap-2 text-sm font-bold text-primary transition hover:text-secondary"
-                >
-                  Application guide
-                  <ArrowRight className="h-4 w-4" aria-hidden />
+                  <h4 className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold text-white">
+                    {intake.name}
+                  </h4>
+                  <p className="mt-1 text-xs leading-5 text-white/72">
+                    {formatDateRange(
+                      intake.applicationStart,
+                      intake.applicationEnd ?? intake.lateApplicationEnd,
+                    )}
+                  </p>
                 </LinkWrapper>
+              ))}
+
+              <div className="mt-1 divide-y divide-white/15">
+                {dateItems
+                  .slice(0, intakes.length ? 3 : 4)
+                  .map((item, index) => (
+                    <AdmissionDateLine
+                      key={item.id}
+                      item={item}
+                      index={index}
+                    />
+                  ))}
               </div>
 
-              <div className="relative mt-8 grid gap-1 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
-                <span
-                  className="absolute left-[10%] right-[10%] top-5 hidden h-px bg-border lg:block"
-                  aria-hidden
-                />
-                {journey.slice(0, 5).map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="group relative flex gap-4 border-b border-border py-4 last:border-b-0 sm:border-b-0 sm:px-2 lg:block lg:px-3 lg:py-0 lg:text-center"
-                  >
-                    <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-white ring-8 ring-white transition group-hover:bg-secondary lg:mx-auto">
-                      {itemContentNumber(item, "step") ?? index + 1}
-                    </span>
-                    <div className="min-w-0 lg:mt-4">
-                      <h4 className="text-sm font-bold text-foreground">
-                        {item.title}
-                      </h4>
-                      <p className="mt-1 line-clamp-3 text-xs leading-5 text-muted-foreground">
-                        {item.body_text}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+              <LinkWrapper
+                href="/admissions"
+                className="mt-4 inline-flex min-h-10 w-fit items-center justify-center gap-2 border-b border-secondary pb-1 text-sm font-bold text-white transition hover:text-secondary"
+              >
+                Explore admissions
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </LinkWrapper>
+            </aside>
+          ) : (
+            <div className="hidden bg-primary lg:col-start-10 lg:col-end-13 lg:row-start-2 lg:block" />
+          )}
+
+          <div className="programme-mosaic-journey border-t border-primary/10 bg-accent/35 p-5 sm:p-7 lg:col-span-12 lg:row-start-3 lg:px-8 lg:py-7">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <SectionEyebrow value="Your journey to Kisii University" />
+                <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-primary sm:text-3xl">
+                  Five clear steps. One destination.
+                </h3>
               </div>
+              <LinkWrapper
+                href="/admissions/how-to-apply"
+                className="inline-flex min-h-10 w-fit shrink-0 items-center justify-center gap-2 text-sm font-bold text-primary transition hover:text-secondary"
+              >
+                Application guide
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </LinkWrapper>
             </div>
 
-            {hasAdmissionDates ? (
-              <aside className="relative overflow-hidden bg-primary p-5 text-white sm:p-7 lg:flex lg:flex-col lg:justify-center lg:p-8">
-                <div className="absolute inset-x-0 top-0 h-1 bg-secondary" />
-                <SectionEyebrow
-                  value={
-                    academicDatesSection?.subtitle ?? "Admissions and reporting"
-                  }
-                  light
-                />
-                <div className="mt-2 flex items-center justify-between gap-4">
-                  <h3 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white">
-                    Key dates
-                  </h3>
-                  <CalendarDays
-                    className="h-7 w-7 text-secondary"
-                    aria-hidden
-                  />
-                </div>
-
-                {intakes.slice(0, 1).map((intake) => (
-                  <LinkWrapper
-                    key={intake.id}
-                    href={intake.href}
-                    className="mt-5 block border-y border-white/20 py-4 transition hover:border-secondary/70"
-                  >
-                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-secondary">
-                      {intake.isOpen ? "Open intake" : "Intake"}
-                    </p>
-                    <h4 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-white">
-                      {intake.name}
-                    </h4>
-                    <p className="mt-1 text-sm leading-6 text-white/72">
-                      {formatDateRange(
-                        intake.applicationStart,
-                        intake.applicationEnd ?? intake.lateApplicationEnd,
-                      )}
-                    </p>
-                  </LinkWrapper>
-                ))}
-
-                <div className="mt-2 divide-y divide-white/15">
-                  {dateItems
-                    .slice(0, intakes.length ? 3 : 4)
-                    .map((item, index) => (
-                      <AdmissionDateLine
-                        key={item.id}
-                        item={item}
-                        index={index}
-                      />
-                    ))}
-                </div>
-
-                <LinkWrapper
-                  href="/admissions"
-                  className="mt-5 inline-flex min-h-10 w-fit items-center justify-center gap-2 bg-secondary px-4 text-sm font-bold text-white transition hover:bg-secondary/90"
+            <div className="relative mt-7 grid gap-1 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
+              <span
+                className="programme-journey-line absolute left-[10%] right-[10%] top-5 hidden h-px origin-left bg-primary/20 lg:block"
+                aria-hidden
+              />
+              {journey.slice(0, 5).map((item, index) => (
+                <div
+                  key={item.id}
+                  className="programme-journey-step group relative flex gap-4 border-b border-primary/10 py-4 last:border-b-0 sm:border-b-0 sm:px-2 lg:block lg:px-3 lg:py-0 lg:text-center"
+                  style={{ animationDelay: `${index * 70}ms` }}
                 >
-                  Explore admissions
-                  <ArrowRight className="h-4 w-4" aria-hidden />
-                </LinkWrapper>
-              </aside>
-            ) : null}
+                  <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-white ring-8 ring-accent transition group-hover:bg-secondary lg:mx-auto">
+                    {itemContentNumber(item, "step") ?? index + 1}
+                  </span>
+                  <div className="min-w-0 lg:mt-4">
+                    <h4 className="text-sm font-bold text-foreground">
+                      {item.title}
+                    </h4>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                      {item.body_text}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
