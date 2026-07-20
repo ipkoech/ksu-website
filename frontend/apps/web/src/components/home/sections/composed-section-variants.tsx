@@ -990,38 +990,38 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
   const lanes = campusLifeLanes(items);
   const rhythm = [
     {
-      label: "Learn",
-      title: "Lectures, labs and study time",
-      body: "Move between class, library time and practical learning spaces.",
+      label: "Study",
+      title: "Academic days with room to grow",
+      body: "Move between lectures, practical spaces, library time and guided support.",
     },
     {
-      label: "Connect",
-      title: "Clubs, friends and leadership",
-      body: "Find communities that match your interests and ambitions.",
+      label: "Belong",
+      title: "People, clubs and student leadership",
+      body: "Find communities that help you build confidence, friendships and purpose.",
     },
     {
-      label: "Recharge",
-      title: "Sports, culture and campus moments",
-      body: "Make room for recreation, creativity, events and wellbeing.",
+      label: "Live",
+      title: "A complete student experience",
+      body: "Balance class with sport, culture, wellness, accommodation and campus events.",
     },
   ];
   return (
     <section
       id={section.section_key}
-      className="campus-life-scroll-scene relative isolate border-b border-border bg-white/[0.82] py-12 backdrop-blur-[1px] lg:min-h-[285vh] lg:py-0"
+      className="campus-life-scroll-scene relative isolate border-b border-border bg-[linear-gradient(180deg,rgba(255,255,255,.84),hsl(var(--surface-subtle)/.86))] py-12 backdrop-blur-[1px] lg:min-h-[238vh] lg:py-0"
     >
-      <div className="absolute inset-y-0 right-0 -z-10 hidden w-1/2 bg-accent/70 lg:block" />
+      <div className="absolute inset-y-0 right-0 -z-10 hidden w-1/2 bg-[linear-gradient(90deg,transparent,hsl(var(--accent)/.82))] lg:block" />
       <div className="campus-life-sticky-frame mx-auto max-w-[1680px] px-4 sm:px-6 lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px))] lg:max-w-none lg:items-center lg:px-0 xl:px-0 2xl:px-0">
         <CampusLifeHorizontalScroller>
-          <div className="lg:flex lg:w-max lg:items-stretch lg:gap-4 lg:pr-[12vw]">
+          <div className="lg:flex lg:w-max lg:items-stretch lg:gap-0 lg:pr-[16vw]">
             <div className="campus-life-editorial lg:w-screen lg:shrink-0 lg:snap-start lg:px-8 xl:px-10 2xl:px-12">
-              <div className="grid gap-8 lg:grid-cols-[minmax(0,0.58fr)_minmax(360px,0.42fr)] lg:items-stretch">
+              <div className="grid gap-8 lg:grid-cols-[minmax(0,0.62fr)_minmax(360px,0.38fr)] lg:items-stretch">
                 <CampusMosaicFeature item={feature} section={section} />
                 <div className="flex flex-col justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-6 motion-safe:delay-150">
                   <div className="max-w-xl">
                     <SectionEyebrow value={section.subtitle ?? "Campus life"} />
                     <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl lg:text-5xl">
-                      Campus life at KSU, clearly mapped.
+                      See the rhythm of student life at KSU.
                     </h2>
                     <SectionBody
                       value={
@@ -1039,15 +1039,20 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
                       className="mt-7"
                     />
                   </div>
-                  <div className="student-life-rhythm mt-8 border-y border-border">
+                  <div className="student-life-rhythm mt-8 divide-y divide-primary/10 border-y border-primary/15">
                     {rhythm.map((item, index) => (
                       <div
                         key={item.label}
-                        className="grid gap-3 py-4 sm:grid-cols-[96px_minmax(0,1fr)]"
+                        className="grid gap-3 py-4 sm:grid-cols-[86px_minmax(0,1fr)]"
                       >
-                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
-                          {item.label}
-                        </p>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-secondary">
+                            {item.label}
+                          </p>
+                          <p className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold leading-none text-primary/25">
+                            {String(index + 1).padStart(2, "0")}
+                          </p>
+                        </div>
                         <div>
                           <h3 className="font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-foreground">
                             {item.title}
@@ -1067,7 +1072,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
                 </div>
               </div>
             </div>
-            <div className="student-life-lanes mt-7 grid gap-3 sm:grid-cols-2 lg:mt-0 lg:flex lg:w-max lg:gap-4">
+            <div className="student-life-lanes mt-7 grid gap-4 sm:grid-cols-2 lg:mt-0 lg:flex lg:w-max lg:items-stretch lg:gap-0">
               {lanes.map((lane, index) => (
                 <CampusLifeLane key={lane.title} lane={lane} index={index} />
               ))}
@@ -1138,9 +1143,10 @@ function CampusLifeLane({
   lane: CampusLifeLaneData;
   index: number;
 }) {
+  const Icon = lane.icon;
   const body = (
     <article
-      className="group relative min-h-[250px] overflow-hidden bg-primary text-white transition duration-500 hover:-translate-y-0.5 lg:min-h-[560px] lg:w-[min(420px,78vw)] lg:snap-start motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
+      className="group relative min-h-[290px] overflow-hidden bg-primary text-white transition duration-300 hover:bg-primary/95 lg:min-h-[620px] lg:w-[min(540px,72vw)] lg:snap-start lg:border-l lg:border-white/15 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
       style={{ animationDelay: `${Math.min(index, 5) * 80}ms` }}
     >
       <PublicImage
@@ -1153,23 +1159,37 @@ function CampusLifeLane({
         }
         ratio="fill"
         className="absolute inset-0 h-full rounded-none"
-        imageClassName="object-cover transition duration-700 group-hover:scale-105"
-        sizes="(min-width: 1024px) 20vw, 90vw"
+        imageClassName={[
+          "object-cover transition duration-700 group-hover:scale-[1.03]",
+          index % 2 === 0 ? "object-center" : "object-[42%_50%]",
+        ].join(" ")}
+        sizes="(min-width: 1024px) 34vw, 90vw"
       />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,23,57,.02),rgba(3,23,57,.28)_42%,rgba(3,23,57,.88))]" />
-      <div className="relative flex min-h-[250px] flex-col justify-end p-4 sm:p-5 lg:min-h-[560px]">
-        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary">
-          {lane.audience}
-        </p>
-        <h3 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white">
-          {lane.title}
-        </h3>
-        <p className="mt-2 line-clamp-3 text-sm leading-6 text-white/76">
-          {lane.body}
-        </p>
-        <span className="mt-5 inline-flex text-sm font-semibold text-secondary">
-          {lane.ctaLabel}
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,23,57,.04),rgba(3,23,57,.18)_34%,rgba(3,23,57,.90))]" />
+      <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5 text-white/80">
+        <span className="font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-white/25">
+          {String(index + 1).padStart(2, "0")}
         </span>
+        <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur">
+          <Icon className="h-5 w-5 text-secondary" aria-hidden />
+        </span>
+      </div>
+      <div className="relative flex min-h-[290px] flex-col justify-end p-5 sm:p-6 lg:min-h-[620px] lg:p-8">
+        <div className="max-w-sm">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-secondary">
+            {lane.audience}
+          </p>
+          <h3 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white lg:text-4xl">
+            {lane.title}
+          </h3>
+          <p className="mt-3 text-sm leading-7 text-white/78">
+            {lane.body}
+          </p>
+          <span className="mt-6 inline-flex items-center gap-2 border-b border-secondary pb-1 text-sm font-semibold text-secondary transition group-hover:gap-3">
+            {lane.ctaLabel}
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </span>
+        </div>
       </div>
     </article>
   );
@@ -1183,6 +1203,7 @@ type CampusLifeLaneData = {
   body: string;
   ctaLabel: string;
   href: string;
+  icon: LucideIcon;
   imageUrl?: string;
   imageAlt?: string;
   source?: HomepageSectionItem;
@@ -1197,60 +1218,44 @@ function campusLifeLanes(items: HomepageSectionItem[]): CampusLifeLaneData[] {
   const sourceItems = items.slice(1);
   const laneDefaults = [
     {
-      title: "Where you belong",
-      audience: "Prospective students",
-      body: "Explore clubs, societies and peer communities where students build friendships and confidence.",
+      title: "Belong from day one",
+      audience: "For prospective students",
+      body: "Clubs, societies, peer networks and orientation moments help new students quickly find their place.",
       ctaLabel: "Find clubs and societies",
       href: "/campus-life/clubs",
+      icon: Users,
     },
     {
-      title: "Sports and recreation",
-      audience: "Current students",
-      body: "Join teams, train, compete or use recreation to balance academic life.",
+      title: "Compete, train and recharge",
+      audience: "For active students",
+      body: "Sports, recreation and wellness spaces give students a healthy rhythm beyond lecture rooms.",
       ctaLabel: "Explore sports",
       href: "/campus-life/sports",
+      icon: Trophy,
     },
     {
-      title: "Plan your stay",
-      audience: "Parents and guardians",
-      body: "Understand accommodation options and the practical steps around settling into campus.",
+      title: "Settle with confidence",
+      audience: "For parents and guardians",
+      body: "Accommodation, support offices and practical guidance make the transition to campus clearer.",
       ctaLabel: "View accommodation",
       href: "/campus-life/accommodation",
+      icon: Landmark,
     },
     {
-      title: "Health and support",
-      audience: "Current students",
-      body: "Access wellness, counselling, accessibility and student-support services when you need help.",
+      title: "Support when it matters",
+      audience: "For every student",
+      body: "Wellness, counselling, accessibility and student services keep academic progress human and supported.",
       ctaLabel: "Get support",
       href: "/campus-life/support",
+      icon: Handshake,
     },
     {
-      title: "Culture and arts",
-      audience: "Visitors and partners",
-      body: "Take part in performances, cultural activities and creative spaces that make campus memorable.",
-      ctaLabel: "See gallery",
-      href: "/campus-life/gallery",
-    },
-    {
-      title: "Student leadership",
-      audience: "Student leaders",
-      body: "Understand representation, student governance and opportunities to lead within the university.",
-      ctaLabel: "Student life",
-      href: "/campus-life/student-life",
-    },
-    {
-      title: "Innovation and talent",
-      audience: "Alumni and community",
-      body: "Build ideas, showcase talent and connect academic learning with practical opportunities.",
+      title: "Create, lead and build",
+      audience: "For leaders and innovators",
+      body: "Culture, student leadership, talent showcases and innovation spaces connect learning with initiative.",
       ctaLabel: "Explore opportunities",
       href: "/campus-life",
-    },
-    {
-      title: "Daily campus moments",
-      audience: "Life on campus",
-      body: "Preview the spaces, routines and activities that shape everyday student experience at KSU.",
-      ctaLabel: "View campus life",
-      href: "/campus-life",
+      icon: Lightbulb,
     },
   ];
 
