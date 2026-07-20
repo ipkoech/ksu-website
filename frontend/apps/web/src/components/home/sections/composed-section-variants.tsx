@@ -140,8 +140,10 @@ export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
           />
         </>
       )}
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--primary)/.78)_0%,hsl(var(--primary)/.58)_36%,rgba(2,6,23,.18)_64%,rgba(2,6,23,.04)_100%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,.24)_0%,rgba(2,6,23,0)_38%,rgba(2,6,23,.2)_100%)]" />
+      <div
+        className="pointer-events-none absolute inset-y-0 left-0 w-full bg-[linear-gradient(90deg,rgba(1,8,22,.48)_0%,rgba(1,8,22,.24)_34%,transparent_72%)] sm:w-[82%] lg:w-[68%]"
+        aria-hidden
+      />
 
       <div
         className={`relative z-10 mx-auto grid min-h-[clamp(390px,calc(100svh-13rem),580px)] max-w-[1680px] items-center gap-8 px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16 xl:px-10 2xl:px-12 ${
@@ -150,7 +152,7 @@ export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
             : "lg:grid-cols-1"
         }`}
       >
-        <div className="max-w-3xl">
+        <div className="max-w-3xl [text-shadow:0_2px_14px_rgba(0,0,0,.55)]">
           <SectionEyebrow
             value={content?.eyebrow ?? section.subtitle ?? "Kisii University"}
             light
