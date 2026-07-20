@@ -103,6 +103,18 @@ from .page_cms import (
     PartnershipSpotlight,
     SectionItem,
 )
+from .vice_chancellor import (
+    VC_SECTIONS,
+    VC_SPEECH_TYPES,
+    VC_SPEECH_VIDEO_ROLES,
+    VC_VIDEO_PROVIDERS,
+    VcGalleryAlbum,
+    VcHub,
+    VcHubPlacement,
+    VcSpeech,
+    VcSpeechVideo,
+    VcVideo,
+)
 from .public_page import PublicSitePage
 
 # Support and notifications
@@ -196,6 +208,16 @@ __all__ = [
     "OutboxEvent",
     "UploadBatch",
     "UploadBatchFile",
+    "VC_SECTIONS",
+    "VC_SPEECH_TYPES",
+    "VC_SPEECH_VIDEO_ROLES",
+    "VC_VIDEO_PROVIDERS",
+    "VcGalleryAlbum",
+    "VcHub",
+    "VcHubPlacement",
+    "VcSpeech",
+    "VcSpeechVideo",
+    "VcVideo",
     # Media
     "Media",
     "MediaFolder",

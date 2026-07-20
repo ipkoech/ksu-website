@@ -67,6 +67,7 @@ from .testimonials import router as testimonials_router
 from .university_info import router as university_info_router
 from .users import router as users_router
 from .wings import router as wings_router
+from .vice_chancellor import router as vice_chancellor_router
 
 
 def register_routes(app: FastAPI) -> None:
@@ -88,6 +89,7 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(testimonials_router, prefix="/api/v1/testimonials", tags=["Marketing"])
     app.include_router(social_posts_router, prefix="/api/v1/social-posts", tags=["Marketing"])
     app.include_router(page_cms_router, prefix="/api/v1", tags=["Content"])
+    app.include_router(vice_chancellor_router, prefix="/api/v1", tags=["Vice Chancellor"])
     app.include_router(partners_router, prefix="/api/v1/partners", tags=["Research"])
     app.include_router(users_router, prefix="/api/v1/users", tags=["Users"])
     app.include_router(search_router, prefix="/api/v1/search", tags=["Search"])

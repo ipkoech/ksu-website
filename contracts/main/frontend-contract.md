@@ -762,6 +762,69 @@ Get Audit Log
 - Parameters: `audit_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
+### `GET /api/v1/admin/inquiries`
+
+List Inquiries
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `status` (query, string | null), `category` (query, string | null), `priority` (query, string | null), `assigned_to_user_id` (query, string | null), `target_entity_type` (query, string | null), `owner_scope_type` (query, string | null), `owner_scope_id` (query, string | null), `include_school_owned` (query, boolean), `search` (query, string | null), `created_from` (query, string | null), `created_to` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/admin/inquiries/{inquiry_id}`
+
+Get Inquiry
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `inquiry_id` (path, string), `include_school_owned` (query, boolean), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/admin/inquiries/{inquiry_id}/assign`
+
+Assign Inquiry
+
+- Auth: HTTPBearer
+- Request body: InquiryAssign
+- Parameters: `inquiry_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/admin/inquiries/{inquiry_id}/messages/{message_id}/retry`
+
+Retry Inquiry Reply
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `inquiry_id` (path, string), `message_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/admin/inquiries/{inquiry_id}/notes`
+
+Add Inquiry Note
+
+- Auth: HTTPBearer
+- Request body: InquiryNoteCreate
+- Parameters: `inquiry_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/admin/inquiries/{inquiry_id}/replies`
+
+Reply To Inquiry
+
+- Auth: HTTPBearer
+- Request body: InquiryReplyCreate
+- Parameters: `inquiry_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/admin/inquiries/{inquiry_id}/status`
+
+Update Inquiry Status
+
+- Auth: HTTPBearer
+- Request body: InquiryStatusUpdate
+- Parameters: `inquiry_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ### `POST /api/v1/admin/notifications/broadcast`
 
 Broadcast Notification
@@ -2289,6 +2352,123 @@ Delete Slider
 - Request body: -
 - Parameters: `slider_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
+
+### `GET /api/v1/stories`
+
+List Stories
+
+- Auth: public
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `story_type` (query, string | null), `category` (query, string | null), `is_featured` (query, boolean | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/stories`
+
+Create Story
+
+- Auth: HTTPBearer
+- Request body: StoryCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `POST /api/v1/stories/account-requests`
+
+Request Story Contributor Account
+
+- Auth: public
+- Request body: StoryContributorAccountRequestCreate
+- Parameters: -
+- Success response: 201 -
+
+### `GET /api/v1/stories/account-requests/admin`
+
+List Story Contributor Account Requests
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `status` (query, string | null), `search` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/stories/account-requests/admin/{request_id}/approve`
+
+Approve Story Contributor Account Request
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `request_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/stories/account-requests/admin/{request_id}/reject`
+
+Reject Story Contributor Account Request
+
+- Auth: HTTPBearer
+- Request body: StoryContributorAccountRequestReview
+- Parameters: `request_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/stories/admin`
+
+List Admin Stories
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `is_published` (query, boolean | null), `status` (query, string | null), `workflow_status` (query, string | null), `story_type` (query, string | null), `category` (query, string | null), `contributor_user_id` (query, string | null), `scheduled_from` (query, string | null), `scheduled_to` (query, string | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/stories/id/{story_id}`
+
+Get Story By Id
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `story_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/stories/id/{story_id}`
+
+Update Story
+
+- Auth: HTTPBearer
+- Request body: StoryUpdate
+- Parameters: `story_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/stories/id/{story_id}`
+
+Delete Story
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `story_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/stories/mine`
+
+List My Stories
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `workflow_status` (query, string | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/stories/submissions`
+
+Submit Story
+
+- Auth: HTTPBearer
+- Request body: StorySubmissionCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/stories/{slug}`
+
+Get Story
+
+- Auth: public
+- Request body: -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
 
 ## Documents
 
@@ -3898,6 +4078,15 @@ Get Public Department Team
 - Parameters: `department_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
+### `POST /api/v1/public/entities/{entity_type}/{entity_slug}/inquiries`
+
+Create Public Entity Inquiry
+
+- Auth: public
+- Request body: PublicEntityInquiryCreate
+- Parameters: `entity_type` (path, string), `entity_slug` (path, string)
+- Success response: 201 -
+
 ### `GET /api/v1/public/leadership/`
 
 Get Leader
@@ -4051,7 +4240,7 @@ Get Public School Team
 Create Public School Inquiry
 
 - Auth: public
-- Request body: PublicSchoolInquiryCreate
+- Request body: PublicEntityInquiryCreate
 - Parameters: `school_slug` (path, string)
 - Success response: 201 -
 
@@ -4114,6 +4303,15 @@ Get Partner
 - Success response: 200 -
 
 ## School Portal
+
+### `GET /api/v1/school-portal/audit`
+
+List School Audit
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `action` (query, string | null), `resource_type` (query, string | null), `status` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/school-portal/capabilities`
 
@@ -4380,6 +4578,60 @@ Preview Content Metadata Import
 - Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
+### `PATCH /api/v1/school-portal/media/{media_id}`
+
+Update School Media Metadata
+
+- Auth: HTTPBearer
+- Request body: SchoolPortalMediaMetadataUpdate
+- Parameters: `media_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/school-portal/media/{media_id}`
+
+Delete School Media
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `media_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/school-portal/notifications`
+
+List School Notifications
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `unread_only` (query, boolean), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/notifications/read-all`
+
+Mark All School Notifications Read
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/school-portal/notifications/{notification_id}/archive`
+
+Archive School Notification
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `notification_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/school-portal/notifications/{notification_id}/read`
+
+Mark School Notification Read
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `notification_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ### `GET /api/v1/school-portal/profile`
 
 Get School Profile
@@ -4414,6 +4666,15 @@ Post School Profile Media
 - Auth: HTTPBearer
 - Request body: SchoolPortalMediaLinkCreate
 - Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/school-portal/profile/media/{link_id}`
+
+Delete School Profile Media
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `link_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/school-portal/programmes`
@@ -5657,9 +5918,308 @@ Delete User
 - Parameters: `user_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
+## Vice Chancellor
+
+### `GET /api/v1/public/vice-chancellor`
+
+Get Public Hub
+
+- Auth: public
+- Request body: -
+- Parameters: -
+- Success response: 200 -
+
+### `GET /api/v1/public/vice-chancellor/galleries/{slug}`
+
+Get Public Gallery
+
+- Auth: public
+- Request body: -
+- Parameters: `slug` (path, string)
+- Success response: 200 -
+
+### `GET /api/v1/public/vice-chancellor/speeches/{slug}`
+
+Get Public Speech
+
+- Auth: public
+- Request body: -
+- Parameters: `slug` (path, string)
+- Success response: 200 -
+
+### `GET /api/v1/vice-chancellor/galleries`
+
+List Galleries
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/vice-chancellor/galleries`
+
+Create Gallery
+
+- Auth: HTTPBearer
+- Request body: VcGalleryAlbumCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `POST /api/v1/vice-chancellor/galleries/{album_id}/media`
+
+Attach Gallery Media
+
+- Auth: HTTPBearer
+- Request body: VcGalleryMediaCreate
+- Parameters: `album_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `POST /api/v1/vice-chancellor/galleries/{album_id}/media/reorder`
+
+Reorder Gallery Media
+
+- Auth: HTTPBearer
+- Request body: VcReorderRequest
+- Parameters: `album_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/vice-chancellor/galleries/{album_id}/media/{link_id}`
+
+Detach Gallery Media
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `album_id` (path, string), `link_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `PATCH /api/v1/vice-chancellor/galleries/{record_id}`
+
+Update Gallery
+
+- Auth: HTTPBearer
+- Request body: VcGalleryAlbumUpdate
+- Parameters: `record_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/vice-chancellor/galleries/{record_id}`
+
+Delete Gallery
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `record_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/vice-chancellor/hub`
+
+Get Hub
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/vice-chancellor/hub`
+
+Update Hub
+
+- Auth: HTTPBearer
+- Request body: VcHubUpdate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/vice-chancellor/hub/{action}`
+
+Transition Hub
+
+- Auth: HTTPBearer
+- Request body: VcWorkflowAction
+- Parameters: `action` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/vice-chancellor/lookups/events`
+
+Lookup Events
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `q` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/vice-chancellor/lookups/news`
+
+Lookup News
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `q` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/vice-chancellor/placements`
+
+List Placements
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/vice-chancellor/placements`
+
+Create Placement
+
+- Auth: HTTPBearer
+- Request body: VcHubPlacementCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `POST /api/v1/vice-chancellor/placements/reorder`
+
+Reorder Placements
+
+- Auth: HTTPBearer
+- Request body: VcReorderRequest
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/vice-chancellor/placements/{record_id}`
+
+Update Placement
+
+- Auth: HTTPBearer
+- Request body: VcHubPlacementUpdate
+- Parameters: `record_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/vice-chancellor/placements/{record_id}`
+
+Delete Placement
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `record_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/vice-chancellor/speeches`
+
+List Speeches
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/vice-chancellor/speeches`
+
+Create Speech
+
+- Auth: HTTPBearer
+- Request body: VcSpeechCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `PATCH /api/v1/vice-chancellor/speeches/{record_id}`
+
+Update Speech
+
+- Auth: HTTPBearer
+- Request body: VcSpeechUpdate
+- Parameters: `record_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/vice-chancellor/speeches/{record_id}`
+
+Delete Speech
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `record_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `POST /api/v1/vice-chancellor/speeches/{speech_id}/videos`
+
+Attach Speech Video
+
+- Auth: HTTPBearer
+- Request body: VcSpeechVideoCreate
+- Parameters: `speech_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `DELETE /api/v1/vice-chancellor/speeches/{speech_id}/videos/{link_id}`
+
+Detach Speech Video
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `speech_id` (path, string), `link_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/vice-chancellor/videos`
+
+List Videos
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/vice-chancellor/videos`
+
+Create Video
+
+- Auth: HTTPBearer
+- Request body: VcVideoCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `POST /api/v1/vice-chancellor/videos/youtube/preview`
+
+Preview Youtube
+
+- Auth: HTTPBearer
+- Request body: YouTubePreviewRequest
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/vice-chancellor/videos/{record_id}`
+
+Update Video
+
+- Auth: HTTPBearer
+- Request body: VcVideoUpdate
+- Parameters: `record_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/vice-chancellor/videos/{record_id}`
+
+Delete Video
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `record_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `POST /api/v1/vice-chancellor/videos/{record_id}/refresh-metadata`
+
+Refresh Video
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `record_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/vice-chancellor/{resource}/{record_id}/{action}`
+
+Transition Content
+
+- Auth: HTTPBearer
+- Request body: VcWorkflowAction
+- Parameters: `resource` (path, string), `record_id` (path, string), `action` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ## Schemas
 
-Generated component schemas: `213`
+Generated component schemas: `236`
 
 ### `AboutPageContentCreate`
 
@@ -6456,12 +7016,22 @@ Generated component schemas: `213`
 
 ### `DashboardActivityItem`
 
+- `actor_name`: `string | null` (optional)
 - `event_type`: `string` (required)
 - `id`: `string` (required)
 - `occurred_at`: `string` (required)
 - `resource_id`: `string` (required)
 - `resource_type`: `string` (required)
 - `summary`: `string` (required)
+
+### `DashboardActivitySummary`
+
+- `page_views`: `integer` (required)
+- `page_views_change_percent`: `number | null` (optional)
+- `previous_page_views`: `integer` (required)
+- `previous_visitors`: `integer` (required)
+- `visitors`: `integer` (required)
+- `visitors_change_percent`: `number | null` (optional)
 
 ### `DashboardAttentionItem`
 
@@ -6484,6 +7054,13 @@ Generated component schemas: `213`
 - `percent`: `integer` (required)
 - `total_fields`: `integer` (required)
 
+### `DashboardQuickAction`
+
+- `description`: `string` (required)
+- `href`: `string` (required)
+- `key`: `string` (required)
+- `label`: `string` (required)
+
 ### `DashboardQuickLink`
 
 - `count`: `integer` (required)
@@ -6505,6 +7082,7 @@ Generated component schemas: `213`
 
 - `bucket`: `string` (required)
 - `value`: `integer` (required)
+- `visitors`: `integer` (optional)
 
 ### `DepartmentCreate`
 
@@ -7737,7 +8315,7 @@ Generated component schemas: `213`
 - `objectives`: `string | null` (optional)
 - `slug`: `string | null` (optional)
 
-### `PublicSchoolInquiryCreate`
+### `PublicEntityInquiryCreate`
 
 - `category`: `string` (optional)
 - `consent_to_contact`: `boolean` (required)
@@ -7745,6 +8323,7 @@ Generated component schemas: `213`
 - `sender_email`: `string` (required)
 - `sender_name`: `string` (required)
 - `sender_phone`: `string | null` (optional)
+- `source_page_url`: `string | null` (optional)
 - `subject`: `string` (required)
 - `website`: `string` (optional)
 
@@ -7955,11 +8534,13 @@ Generated component schemas: `213`
 
 ### `SchoolPortalDashboardResponse`
 
+- `activity_summary`: `DashboardActivitySummary` (required)
 - `attention_items`: `array<DashboardAttentionItem>` (required)
 - `collection_notes`: `object` (required)
 - `distributions`: `object` (required)
 - `generated_at`: `string` (required)
 - `profile_completeness`: `DashboardProfileCompleteness` (required)
+- `quick_actions`: `array<DashboardQuickAction>` (required)
 - `quick_links`: `array<DashboardQuickLink>` (required)
 - `range`: `string` (required)
 - `recent_activity`: `array<DashboardActivityItem>` (required)
@@ -7977,6 +8558,17 @@ Generated component schemas: `213`
 - `display_order`: `integer` (optional)
 - `media_id`: `string` (required)
 - `role`: `string` (required)
+
+### `SchoolPortalMediaMetadataUpdate`
+
+- `alt_text`: `string | null` (optional)
+- `caption`: `string | null` (optional)
+- `credit`: `string | null` (optional)
+- `description`: `string | null` (optional)
+- `is_public`: `boolean | null` (optional)
+- `metadata`: `object | null` (optional)
+- `tags`: `array<string> | null` (optional)
+- `title`: `string | null` (optional)
 
 ### `SchoolPortalProfileUpdate`
 
@@ -8461,6 +9053,100 @@ Generated component schemas: `213`
 - `title`: `string | null` (optional)
 - `user_id`: `string | null` (optional)
 
+### `StoryContributorAccountRequestCreate`
+
+- `affiliation`: `string | null` (optional)
+- `contributor_type`: `string` (optional)
+- `email`: `string` (required)
+- `full_name`: `string` (required)
+- `phone`: `string | null` (optional)
+- `reason_for_request`: `string | null` (optional)
+
+### `StoryContributorAccountRequestReview`
+
+- `rejection_reason`: `string | null` (optional)
+
+### `StoryCreate`
+
+- `category`: `string | null` (optional)
+- `consent_to_publish`: `boolean` (optional)
+- `contributor_affiliation_snapshot`: `string | null` (optional)
+- `contributor_email_snapshot`: `string | null` (optional)
+- `contributor_name_snapshot`: `string | null` (optional)
+- `contributor_user_id`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `featured_media_id`: `string | null` (optional)
+- `featured_until`: `string | null` (optional)
+- `homepage_priority`: `integer` (optional)
+- `is_featured`: `boolean` (optional)
+- `is_main`: `boolean` (optional)
+- `keywords`: `object | null` (optional)
+- `meta_description`: `string | null` (optional)
+- `meta_title`: `string | null` (optional)
+- `plain_text`: `string | null` (optional)
+- `reading_minutes`: `integer | null` (optional)
+- `related_links`: `array<object> | null` (optional)
+- `rich_text`: `string | null` (optional)
+- `scope_id`: `string | null` (optional)
+- `scope_type`: `string | null` (optional)
+- `show_contributor_name`: `boolean` (optional)
+- `slug`: `string` (required)
+- `source_type`: `string` (optional)
+- `story_type`: `string` (optional)
+- `structured_content`: `object | null` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string` (required)
+- `valid_from`: `string | null` (optional)
+- `valid_to`: `string | null` (optional)
+
+### `StorySubmissionCreate`
+
+- `category`: `string | null` (optional)
+- `consent_to_publish`: `boolean` (required)
+- `contributor_affiliation_snapshot`: `string | null` (optional)
+- `featured_media_id`: `string | null` (optional)
+- `plain_text`: `string | null` (optional)
+- `related_links`: `array<object> | null` (optional)
+- `rich_text`: `string | null` (optional)
+- `show_contributor_name`: `boolean` (optional)
+- `story_type`: `string` (optional)
+- `structured_content`: `object | null` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string` (required)
+
+### `StoryUpdate`
+
+- `category`: `string | null` (optional)
+- `consent_to_publish`: `boolean | null` (optional)
+- `contributor_affiliation_snapshot`: `string | null` (optional)
+- `contributor_email_snapshot`: `string | null` (optional)
+- `contributor_name_snapshot`: `string | null` (optional)
+- `contributor_user_id`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `featured_media_id`: `string | null` (optional)
+- `featured_until`: `string | null` (optional)
+- `homepage_priority`: `integer | null` (optional)
+- `is_featured`: `boolean | null` (optional)
+- `is_main`: `boolean | null` (optional)
+- `keywords`: `object | null` (optional)
+- `meta_description`: `string | null` (optional)
+- `meta_title`: `string | null` (optional)
+- `plain_text`: `string | null` (optional)
+- `reading_minutes`: `integer | null` (optional)
+- `related_links`: `array<object> | null` (optional)
+- `rich_text`: `string | null` (optional)
+- `scope_id`: `string | null` (optional)
+- `scope_type`: `string | null` (optional)
+- `show_contributor_name`: `boolean | null` (optional)
+- `slug`: `string | null` (optional)
+- `source_type`: `string | null` (optional)
+- `story_type`: `string | null` (optional)
+- `structured_content`: `object | null` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string | null` (optional)
+- `valid_from`: `string | null` (optional)
+- `valid_to`: `string | null` (optional)
+
 ### `StudentGovernanceCreate`
 
 - `about`: `string | null` (optional)
@@ -8732,6 +9418,181 @@ Generated component schemas: `213`
 - `msg`: `string` (required)
 - `type`: `string` (required)
 
+### `VcGalleryAlbumCreate`
+
+- `cover_media_id`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `event_date`: `string | null` (optional)
+- `is_featured`: `boolean` (optional)
+- `keywords`: `object | null` (optional)
+- `location`: `string | null` (optional)
+- `meta_description`: `string | null` (optional)
+- `meta_title`: `string | null` (optional)
+- `slug`: `string` (required)
+- `summary`: `string | null` (optional)
+- `title`: `string` (required)
+
+### `VcGalleryAlbumUpdate`
+
+- `cover_media_id`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `event_date`: `string | null` (optional)
+- `is_featured`: `boolean | null` (optional)
+- `keywords`: `object | null` (optional)
+- `location`: `string | null` (optional)
+- `meta_description`: `string | null` (optional)
+- `meta_title`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string | null` (optional)
+
+### `VcGalleryMediaCreate`
+
+- `alt_text`: `string | null` (optional)
+- `caption`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `media_id`: `string` (required)
+
+### `VcHubPlacementCreate`
+
+- `display_order`: `integer` (optional)
+- `editorial_label`: `string | null` (optional)
+- `event_id`: `string | null` (optional)
+- `gallery_album_id`: `string | null` (optional)
+- `is_enabled`: `boolean` (optional)
+- `is_featured`: `boolean` (optional)
+- `news_id`: `string | null` (optional)
+- `poster_media_id`: `string | null` (optional)
+- `section`: `string` (required)
+- `speech_id`: `string | null` (optional)
+- `summary_override`: `string | null` (optional)
+- `title_override`: `string | null` (optional)
+- `video_id`: `string | null` (optional)
+- `visible_from`: `string | null` (optional)
+- `visible_to`: `string | null` (optional)
+
+### `VcHubPlacementUpdate`
+
+- `display_order`: `integer | null` (optional)
+- `editorial_label`: `string | null` (optional)
+- `is_enabled`: `boolean | null` (optional)
+- `is_featured`: `boolean | null` (optional)
+- `poster_media_id`: `string | null` (optional)
+- `summary_override`: `string | null` (optional)
+- `title_override`: `string | null` (optional)
+- `visible_from`: `string | null` (optional)
+- `visible_to`: `string | null` (optional)
+
+### `VcHubUpdate`
+
+- `eyebrow`: `string | null` (optional)
+- `hero_media_id`: `string | null` (optional)
+- `introduction`: `string | null` (optional)
+- `professional_profile_url`: `string | null` (optional)
+- `section_order`: `array<string> | null` (optional)
+- `section_visibility`: `object | null` (optional)
+- `staff_assignment_id`: `string | null` (optional)
+- `title`: `string | null` (optional)
+- `welcome_message`: `string | null` (optional)
+- `welcome_title`: `string | null` (optional)
+- `welcome_video_id`: `string | null` (optional)
+
+### `VcReorderItem`
+
+- `display_order`: `integer` (required)
+- `id`: `string` (required)
+
+### `VcReorderRequest`
+
+- `items`: `array<VcReorderItem>` (required)
+
+### `VcSpeechCreate`
+
+- `audience`: `string | null` (optional)
+- `delivered_at`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `document_media_id`: `string | null` (optional)
+- `featured_media_id`: `string | null` (optional)
+- `is_featured`: `boolean` (optional)
+- `keywords`: `object | null` (optional)
+- `meta_description`: `string | null` (optional)
+- `meta_title`: `string | null` (optional)
+- `occasion`: `string | null` (optional)
+- `plain_text`: `string | null` (optional)
+- `related_links`: `array<object> | null` (optional)
+- `rich_text`: `string | null` (optional)
+- `slug`: `string` (required)
+- `speech_type`: `string` (optional)
+- `structured_content`: `object | null` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string` (required)
+- `venue`: `string | null` (optional)
+
+### `VcSpeechUpdate`
+
+- `audience`: `string | null` (optional)
+- `delivered_at`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `document_media_id`: `string | null` (optional)
+- `featured_media_id`: `string | null` (optional)
+- `is_featured`: `boolean | null` (optional)
+- `keywords`: `object | null` (optional)
+- `meta_description`: `string | null` (optional)
+- `meta_title`: `string | null` (optional)
+- `occasion`: `string | null` (optional)
+- `plain_text`: `string | null` (optional)
+- `related_links`: `array<object> | null` (optional)
+- `rich_text`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `speech_type`: `string | null` (optional)
+- `structured_content`: `object | null` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string | null` (optional)
+- `venue`: `string | null` (optional)
+
+### `VcSpeechVideoCreate`
+
+- `display_order`: `integer` (optional)
+- `role`: `string` (optional)
+- `video_id`: `string` (required)
+
+### `VcVideoCreate`
+
+- `category`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `duration_seconds`: `integer | null` (optional)
+- `is_featured`: `boolean` (optional)
+- `poster_media_id`: `string | null` (optional)
+- `provider`: `string` (required)
+- `recorded_at`: `string | null` (optional)
+- `slug`: `string` (required)
+- `source_url`: `string | null` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string` (required)
+- `transcript`: `string | null` (optional)
+- `uploaded_media_id`: `string | null` (optional)
+
+### `VcVideoUpdate`
+
+- `category`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `duration_seconds`: `integer | null` (optional)
+- `is_featured`: `boolean | null` (optional)
+- `poster_media_id`: `string | null` (optional)
+- `recorded_at`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `source_url`: `string | null` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string | null` (optional)
+- `transcript`: `string | null` (optional)
+- `uploaded_media_id`: `string | null` (optional)
+
+### `VcWorkflowAction`
+
+- `action`: `string | null` (optional)
+- `note`: `string | null` (optional)
+- `reason`: `string | null` (optional)
+
 ### `VerifyEmailRequest`
 
 - `token`: `string` (required)
@@ -8795,3 +9656,7 @@ Generated component schemas: `213`
 - `service_charter`: `string | null` (optional)
 - `slug`: `string | null` (optional)
 - `wing_type`: `string | null` (optional)
+
+### `YouTubePreviewRequest`
+
+- `url`: `string` (required)

@@ -65,6 +65,11 @@ from .system import ApiKeyService, SettingService, WebhookService
 from .university import UniversityInfoService
 from .about_content import AboutContentAdminService, AboutContentService, FactsService, InstitutionalPageService
 from .user import UserService
+from .vice_chancellor import (
+    ViceChancellorAdminService,
+    ViceChancellorPublicService,
+    ViceChancellorWorkflowService,
+)
 
 __all__ = [
     "AuthService",
@@ -128,6 +133,9 @@ __all__ = [
     "EventService",
     "SliderGroupService",
     "SliderService",
+    "ViceChancellorAdminService",
+    "ViceChancellorPublicService",
+    "ViceChancellorWorkflowService",
     "FAQService",
     "ContactService",
     "ContactReferenceError",

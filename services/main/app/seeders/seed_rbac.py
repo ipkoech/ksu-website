@@ -77,6 +77,21 @@ PERMISSION_SPECS = [
     ("clubs.stories_manage", "Manage assigned student club stories", "clubs", "stories_manage"),
 ]
 
+VC_HUB_PERMISSION_NAMES = [
+    "vc_hub.view",
+    "vc_hub.manage",
+    "vc_hub.review",
+    "vc_hub.publish",
+]
+for permission_name in VC_HUB_PERMISSION_NAMES:
+    _, action = permission_name.split(".", 1)
+    PERMISSION_SPECS.append((
+        permission_name,
+        f"{action.replace('_', ' ').title()} Meet the Vice Chancellor content",
+        "vc_hub",
+        action,
+    ))
+
 for permission_name in SCHOOL_PORTAL_PERMISSION_NAMES:
     section, action = permission_name.removeprefix("school.").split(".", 1)
     PERMISSION_SPECS.append(
@@ -149,6 +164,7 @@ COCMS_PERMISSION_NAMES = [
     "marketing.manage_newsletters",
     "support.manage_faqs",
     "support.manage_contacts",
+    *VC_HUB_PERMISSION_NAMES,
 ]
 
 PUBLICATIONS_ADMIN_PERMISSION_NAMES = [

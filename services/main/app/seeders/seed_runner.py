@@ -29,6 +29,7 @@ from .seed_system_settings import seed_system_settings
 from .seed_test_user import seed_test_user
 from .seed_university_info import seed_university_info
 from .seed_vc_activities import seed_vc_activities
+from .seed_vice_chancellor_hub import seed_vice_chancellor_hub
 
 
 async def run() -> None:
@@ -54,6 +55,7 @@ async def run() -> None:
             await seed_staff_profiles(db, ctx)
             await seed_cover_images(db, ctx)
             await seed_staff_assignments(db, ctx)
+            await seed_vice_chancellor_hub(db, ctx)
             await seed_system_settings(db)
             await seed_portal_users(db, ctx)
             await seed_test_user(db, ctx)
