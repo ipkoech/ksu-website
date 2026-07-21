@@ -52,6 +52,7 @@ import {
   type HomepageSection,
   type HomepageSectionItem,
 } from "@/lib/homepage-sections";
+import type { VcPublicHub } from "@ksu/api-client";
 
 type SectionVariantProps = {
   section: HomepageSection;
@@ -63,6 +64,7 @@ type SectionVariantProps = {
   programmeFinderData?: ProgrammeFinderData;
   featuredStories?: HomeCard[];
   socialLinks?: HomeSocialLinks;
+  vcHub?: VcPublicHub | null;
 };
 
 export type ProgrammeFinderData = {
@@ -71,11 +73,7 @@ export type ProgrammeFinderData = {
   intakes: HomeIntake[];
 };
 
-export function FeaturedStoriesSection({
-  stories,
-}: {
-  stories?: HomeCard[];
-}) {
+export function FeaturedStoriesSection({ stories }: { stories?: HomeCard[] }) {
   const items = (stories ?? []).slice(0, 4);
   if (!items.length) return null;
   const [lead, ...secondary] = items;
@@ -94,8 +92,8 @@ export function FeaturedStoriesSection({
               Voices and work shaping Kisii University.
             </h2>
             <p className="max-w-2xl text-base leading-7 text-muted-foreground">
-              Student, staff, alumni, partner, and community stories reviewed
-              by Corporate Communication before publication.
+              Student, staff, alumni, partner, and community stories reviewed by
+              Corporate Communication before publication.
             </p>
           </div>
           {lead ? (
@@ -775,12 +773,12 @@ export function ProgrammeFinderSection({
   return (
     <section
       id={section.section_key}
-      className="programme-discovery-mosaic relative isolate overflow-hidden border-b border-border bg-white/[0.82] py-8 backdrop-blur-[1px] sm:py-10 lg:py-12"
+      className="programme-discovery-mosaic relative isolate overflow-hidden border-b border-border bg-white/[0.82] py-7 backdrop-blur-[1px] sm:py-9 lg:py-10"
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[linear-gradient(180deg,hsl(var(--accent)/.55),transparent)]" />
       <div className="relative mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="programme-mosaic-grid grid overflow-hidden border border-primary/10 bg-white/[0.95] shadow-[0_24px_70px_-48px_hsl(var(--primary)/.45)] lg:grid-cols-12">
-          <header className="programme-mosaic-intro relative flex flex-col justify-between overflow-hidden bg-primary p-6 text-white sm:p-8 lg:col-span-4 lg:row-start-1">
+          <header className="programme-mosaic-intro relative flex flex-col justify-between overflow-hidden bg-primary p-5 text-white sm:p-7 lg:col-span-4 lg:row-start-1">
             <div
               className="absolute -right-20 -top-24 h-52 w-52 rounded-full border border-white/10"
               aria-hidden
@@ -789,15 +787,15 @@ export function ProgrammeFinderSection({
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">
                 {section.subtitle ?? "Programmes and academic pathways"}
               </p>
-              <h2 className="mt-3 max-w-sm font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.04] text-white sm:text-5xl">
+              <h2 className="mt-3 max-w-sm font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.04] text-white sm:text-4xl">
                 What will you become?
               </h2>
-              <p className="mt-4 max-w-md text-sm leading-6 text-white/75 sm:text-base sm:leading-7">
+              <p className="mt-3 max-w-md text-sm leading-6 text-white/75">
                 {section.description ??
                   "Search programmes built around your interests, ambitions and future."}
               </p>
             </div>
-            <div className="relative mt-8 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.16em] text-white/65">
+            <div className="relative mt-6 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.16em] text-white/65">
               <span className="h-px w-12 bg-secondary" />
               Search. Discover. Apply.
             </div>
@@ -808,7 +806,7 @@ export function ProgrammeFinderSection({
             schools={schools}
           />
 
-          <figure className="programme-mosaic-image relative min-h-48 overflow-hidden bg-primary lg:col-start-1 lg:col-end-4 lg:row-start-2 lg:min-h-0">
+          <figure className="programme-mosaic-image relative hidden min-h-48 overflow-hidden bg-primary sm:block lg:col-start-1 lg:col-end-4 lg:row-start-2 lg:min-h-0">
             <PublicImage
               src="/images/Home/OurKSU-82.jpg"
               alt="Kisii University students exploring their academic future"
@@ -824,7 +822,7 @@ export function ProgrammeFinderSection({
           </figure>
 
           {hasAdmissionDates ? (
-            <aside className="programme-mosaic-dates relative overflow-hidden bg-primary p-5 text-white sm:p-7 lg:col-start-10 lg:col-end-13 lg:row-start-2">
+            <aside className="programme-mosaic-dates relative overflow-hidden bg-primary p-5 text-white sm:p-6 lg:col-start-10 lg:col-end-13 lg:row-start-2">
               <div className="absolute inset-x-0 top-0 h-1 bg-secondary" />
               <SectionEyebrow
                 value={
@@ -862,7 +860,7 @@ export function ProgrammeFinderSection({
 
               <div className="mt-1 divide-y divide-white/15">
                 {dateItems
-                  .slice(0, intakes.length ? 3 : 4)
+                  .slice(0, intakes.length ? 2 : 3)
                   .map((item, index) => (
                     <AdmissionDateLine
                       key={item.id}
@@ -884,11 +882,11 @@ export function ProgrammeFinderSection({
             <div className="hidden bg-primary lg:col-start-10 lg:col-end-13 lg:row-start-2 lg:block" />
           )}
 
-          <div className="programme-mosaic-journey border-t border-primary/10 bg-accent/35 p-5 sm:p-7 lg:col-span-12 lg:row-start-3 lg:px-8 lg:py-7">
+          <div className="programme-mosaic-journey border-t border-primary/10 bg-accent/35 p-5 sm:p-6 lg:col-span-12 lg:row-start-3 lg:px-7 lg:py-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <SectionEyebrow value="Your journey to Kisii University" />
-                <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-primary sm:text-3xl">
+                <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-primary">
                   Five clear steps. One destination.
                 </h3>
               </div>
@@ -901,7 +899,7 @@ export function ProgrammeFinderSection({
               </LinkWrapper>
             </div>
 
-            <div className="relative mt-7 grid gap-1 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
+            <div className="relative mt-5 grid gap-1 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
               <span
                 className="programme-journey-line absolute left-[10%] right-[10%] top-5 hidden h-px origin-left bg-primary/20 lg:block"
                 aria-hidden
@@ -909,7 +907,7 @@ export function ProgrammeFinderSection({
               {journey.slice(0, 5).map((item, index) => (
                 <div
                   key={item.id}
-                  className="programme-journey-step group relative flex gap-4 border-b border-primary/10 py-4 last:border-b-0 sm:border-b-0 sm:px-2 lg:block lg:px-3 lg:py-0 lg:text-center"
+                  className="programme-journey-step group relative flex gap-4 border-b border-primary/10 py-3 last:border-b-0 sm:border-b-0 sm:px-2 lg:block lg:px-3 lg:py-0 lg:text-center"
                   style={{ animationDelay: `${index * 70}ms` }}
                 >
                   <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-white ring-8 ring-accent transition group-hover:bg-secondary lg:mx-auto">
@@ -919,7 +917,7 @@ export function ProgrammeFinderSection({
                     <h4 className="text-sm font-bold text-foreground">
                       {item.title}
                     </h4>
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                    <p className="mt-1 line-clamp-1 text-xs leading-5 text-muted-foreground lg:line-clamp-2">
                       {item.body_text}
                     </p>
                   </div>
@@ -1008,15 +1006,14 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="campus-life-scroll-scene relative isolate border-b border-border bg-[linear-gradient(180deg,rgba(255,255,255,.84),hsl(var(--surface-subtle)/.86))] py-12 backdrop-blur-[1px] lg:min-h-[180vh] lg:py-0"
+      className="campus-life-scroll-scene relative isolate border-b border-border bg-[linear-gradient(180deg,rgba(255,255,255,.84),hsl(var(--surface-subtle)/.86))] py-10 backdrop-blur-[1px] lg:min-h-[150vh] lg:py-0"
     >
       <div className="absolute inset-y-0 right-0 -z-10 hidden w-1/2 bg-[linear-gradient(90deg,transparent,hsl(var(--accent)/.82))] lg:block" />
       <div className="campus-life-sticky-frame mx-auto max-w-[1680px] px-4 sm:px-6 lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px))] lg:max-w-none lg:items-center lg:px-0 xl:px-0 2xl:px-0">
         <CampusLifeHorizontalScroller>
-          <div className="lg:flex lg:w-max lg:items-stretch lg:gap-0 lg:pr-[16vw]">
+          <div className="lg:flex lg:w-max lg:items-stretch lg:gap-0 lg:pr-[8vw]">
             <div className="campus-life-editorial lg:w-screen lg:shrink-0 lg:snap-start lg:px-8 xl:px-10 2xl:px-12">
-              <div className="grid gap-8 lg:grid-cols-[minmax(0,0.62fr)_minmax(360px,0.38fr)] lg:items-stretch">
-                <CampusMosaicFeature item={feature} section={section} />
+              <div className="grid gap-7 lg:grid-cols-[minmax(0,0.58fr)_minmax(360px,0.42fr)] lg:items-stretch">
                 <div className="flex flex-col justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-6 motion-safe:delay-150">
                   <div className="max-w-xl">
                     <SectionEyebrow value={section.subtitle ?? "Campus life"} />
@@ -1070,6 +1067,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
                     ))}
                   </div>
                 </div>
+                <CampusMosaicFeature item={feature} section={section} />
               </div>
             </div>
             <div className="student-life-lanes mt-7 grid gap-4 sm:grid-cols-2 lg:mt-0 lg:flex lg:w-max lg:items-stretch lg:gap-0">
@@ -1092,7 +1090,7 @@ function CampusMosaicFeature({
   section: HomepageSection;
 }) {
   const body = (
-    <article className="group relative min-h-[420px] overflow-hidden bg-primary text-white shadow-2xl shadow-primary/15 sm:min-h-[520px] lg:min-h-[640px] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-6">
+    <article className="group relative min-h-[340px] overflow-hidden bg-primary text-white shadow-2xl shadow-primary/15 sm:min-h-[430px] lg:min-h-[560px] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-6">
       <ImageCurtainReveal className="absolute inset-0 h-full" direction="down">
         <PublicImage
           src={itemImageUrl(item) ?? mediaUrl(heroImage(section))}
@@ -1113,10 +1111,10 @@ function CampusMosaicFeature({
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
           {item?.subtitle ?? "Campus life"}
         </p>
-        <h3 className="mt-2 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-4xl">
+        <h3 className="mt-2 max-w-2xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white sm:text-3xl">
           {item?.title ?? "A campus built for belonging"}
         </h3>
-        <p className="mt-3 max-w-xl text-sm leading-7 text-white/76">
+        <p className="mt-3 line-clamp-3 max-w-xl text-sm leading-7 text-white/76">
           {item?.body_text ??
             item?.cta_description ??
             "Student communities, sports, culture, accommodation and support services shape everyday life at Kisii University."}
@@ -1146,7 +1144,7 @@ function CampusLifeLane({
   const Icon = lane.icon;
   const body = (
     <article
-      className="group relative min-h-[290px] overflow-hidden bg-primary text-white transition duration-300 hover:bg-primary/95 lg:min-h-[620px] lg:w-[min(540px,72vw)] lg:snap-start lg:border-l lg:border-white/15 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
+      className="group relative min-h-[230px] overflow-hidden bg-primary text-white transition duration-300 hover:bg-primary/95 sm:min-h-[260px] lg:min-h-[560px] lg:w-[min(430px,58vw)] lg:snap-start lg:border-l lg:border-white/15 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
       style={{ animationDelay: `${Math.min(index, 5) * 80}ms` }}
     >
       <PublicImage
@@ -1163,10 +1161,10 @@ function CampusLifeLane({
           "object-cover transition duration-700 group-hover:scale-[1.03]",
           index % 2 === 0 ? "object-center" : "object-[42%_50%]",
         ].join(" ")}
-        sizes="(min-width: 1024px) 34vw, 90vw"
+        sizes="(min-width: 1024px) 28vw, 90vw"
       />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,23,57,.04),rgba(3,23,57,.18)_34%,rgba(3,23,57,.90))]" />
-      <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5 text-white/80">
+      <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4 text-white/80 sm:p-5">
         <span className="font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-white/25">
           {String(index + 1).padStart(2, "0")}
         </span>
@@ -1174,18 +1172,18 @@ function CampusLifeLane({
           <Icon className="h-5 w-5 text-secondary" aria-hidden />
         </span>
       </div>
-      <div className="relative flex min-h-[290px] flex-col justify-end p-5 sm:p-6 lg:min-h-[620px] lg:p-8">
+      <div className="relative flex min-h-[230px] flex-col justify-end p-5 sm:min-h-[260px] sm:p-6 lg:min-h-[560px] lg:p-7">
         <div className="max-w-sm">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-secondary">
             {lane.audience}
           </p>
-          <h3 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white lg:text-4xl">
+          <h3 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white lg:text-3xl">
             {lane.title}
           </h3>
-          <p className="mt-3 text-sm leading-7 text-white/78">
+          <p className="mt-3 line-clamp-3 text-sm leading-6 text-white/78">
             {lane.body}
           </p>
-          <span className="mt-6 inline-flex items-center gap-2 border-b border-secondary pb-1 text-sm font-semibold text-secondary transition group-hover:gap-3">
+          <span className="mt-5 inline-flex items-center gap-2 border-b border-secondary pb-1 text-sm font-semibold text-secondary transition group-hover:gap-3">
             {lane.ctaLabel}
             <ArrowRight className="h-4 w-4" aria-hidden />
           </span>
@@ -1259,7 +1257,7 @@ function campusLifeLanes(items: HomepageSectionItem[]): CampusLifeLaneData[] {
     },
   ];
 
-  return laneDefaults.map((lane, index) => {
+  return laneDefaults.slice(0, 4).map((lane, index) => {
     const source = sourceItems[index];
     return {
       ...lane,
@@ -1271,7 +1269,10 @@ function campusLifeLanes(items: HomepageSectionItem[]): CampusLifeLaneData[] {
   });
 }
 
-export function LeadershipActivitySection({ section }: SectionVariantProps) {
+export function LeadershipActivitySection({
+  section,
+  vcHub,
+}: SectionVariantProps) {
   const staff = section.settings_enriched?.staff_profile;
   const leaderName =
     staff?.display_name ??
@@ -1286,6 +1287,7 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
         settingText(section, "leaderTitle") ??
         "Vice Chancellor");
   const leaderImage =
+    vcHub?.hero_media?.url ??
     staff?.photo_url ??
     settingText(section, "leaderImage") ??
     mediaUrl(heroImage(section)) ??
@@ -1294,9 +1296,9 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
     staff?.leadership_message ??
     section.description ??
     "Guiding Kisii University with integrity, vision and a commitment to academic excellence and community impact.";
-  const leaderHref =
-    staff?.profile_href ??
-    (staff?.id ? `/staff/${staff.id}` : "/about/vice-chancellor");
+  const leaderHref = "/about/vice-chancellor";
+  const leaderImageAlt =
+    vcHub?.hero_media?.alt_text || `${leaderName}, ${leaderTitle}`;
   const activities = displayItems(section)
     .filter(
       (item) => item.content_enriched?.linked_content?.is_published === true,
@@ -1319,7 +1321,7 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
             >
               <PublicImage
                 src={leaderImage}
-                alt={`${leaderName}, ${leaderTitle}`}
+                alt={leaderImageAlt}
                 ratio="fill"
                 className="absolute inset-0 h-full rounded-none bg-transparent"
                 imageClassName="object-contain object-bottom"

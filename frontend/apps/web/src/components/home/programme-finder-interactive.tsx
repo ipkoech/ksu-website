@@ -64,17 +64,17 @@ export function ProgrammeFinderInteractive({
     mode !== allValue;
   const previewItems = (
     hasActiveFilters ? matchingProgrammes : programmes
-  ).slice(0, 5);
+  ).slice(0, 3);
 
   return (
     <>
-      <div className="programme-mosaic-search bg-accent/45 p-5 sm:p-6 lg:col-start-5 lg:col-end-13 lg:row-start-1 lg:p-7">
-        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div className="programme-mosaic-search bg-accent/45 p-5 sm:p-6 lg:col-start-5 lg:col-end-13 lg:row-start-1 lg:p-6">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-secondary">
               Search the academic catalogue
             </p>
-            <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold text-primary sm:text-3xl">
+            <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold text-primary">
               Find your programme.
             </h3>
           </div>
@@ -94,7 +94,7 @@ export function ProgrammeFinderInteractive({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search by programme, school, or keyword"
-              className="min-w-0 flex-1 bg-transparent text-base font-medium text-foreground outline-none placeholder:text-muted-foreground/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary sm:text-lg"
+              className="min-w-0 flex-1 bg-transparent text-base font-medium text-foreground outline-none placeholder:text-muted-foreground/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
               autoComplete="off"
             />
             <button
@@ -105,7 +105,7 @@ export function ProgrammeFinderInteractive({
             </button>
           </div>
 
-          <div className="grid gap-4 px-4 py-4 sm:px-5 md:grid-cols-3">
+          <div className="grid gap-3 px-4 py-3 sm:px-5 md:grid-cols-3">
             <FilterSelect
               label="School"
               name="school_id"
@@ -134,7 +134,7 @@ export function ProgrammeFinderInteractive({
         </form>
       </div>
 
-      <div className="programme-mosaic-results p-5 sm:p-6 lg:col-start-4 lg:col-end-10 lg:row-start-2 lg:p-7">
+      <div className="programme-mosaic-results p-5 sm:p-6 lg:col-start-4 lg:col-end-10 lg:row-start-2 lg:p-6">
         <div className="flex items-end justify-between gap-4 border-b border-primary/15 pb-3">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-secondary">
@@ -161,7 +161,7 @@ export function ProgrammeFinderInteractive({
               <Link
                 key={`${resultSetKey}-${programme.id ?? programme.href}`}
                 href={programme.href}
-                className="programme-result group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3.5 transition duration-300 hover:bg-accent/45 focus-visible:bg-accent/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:gap-4 sm:px-2"
+                className="programme-result group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3 transition duration-300 hover:bg-accent/45 focus-visible:bg-accent/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:gap-4 sm:px-2"
                 style={{ transitionDelay: `${index * 35}ms` }}
               >
                 <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-secondary">
@@ -190,7 +190,7 @@ export function ProgrammeFinderInteractive({
 
         <Link
           href={actionHref}
-          className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 border-b border-secondary pb-1 text-sm font-bold text-primary transition hover:text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+          className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 border-b border-secondary pb-1 text-sm font-bold text-primary transition hover:text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
         >
           View matching programmes
           <ArrowRight className="h-4 w-4" aria-hidden />
