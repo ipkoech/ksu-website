@@ -429,6 +429,10 @@ def _academic_organization_payload(
     registrar_assignments: list[StaffAssignment],
     dean_assignments: list[StaffAssignment],
     schools_by_id: dict[uuid.UUID, School],
+    elearning_assignments: list[StaffAssignment] | None = None,
+    elearning_department: Department | None = None,
+    student_affairs_assignments: list[StaffAssignment] | None = None,
+    student_affairs_wing: Wing | None = None,
     photos: dict[uuid.UUID, str | None] | None = None,
 ) -> dict[str, Any]:
     tier_specs = [
@@ -457,6 +461,24 @@ def _academic_organization_payload(
                 _organization_member_payload(assignment, "school", schools_by_id[assignment.entity_id], photos)
                 for assignment in dean_assignments
                 if assignment.person is not None and assignment.entity_id in schools_by_id
+            ],
+        ),
+        (
+            "elearning",
+            "E-Learning Director",
+            [
+                _organization_member_payload(assignment, "department", elearning_department, photos)
+                for assignment in (elearning_assignments or [])
+                if assignment.person is not None and elearning_department is not None
+            ],
+        ),
+        (
+            "student_affairs",
+            "Dean of Students",
+            [
+                _organization_member_payload(assignment, "wing", student_affairs_wing, photos)
+                for assignment in (student_affairs_assignments or [])
+                if assignment.person is not None and student_affairs_wing is not None
             ],
         ),
     ]
@@ -624,9 +646,59 @@ async def _academic_organization_data(db: DbSession) -> dict[str, Any]:
             assignment.display_order,
         ),
     )
+    special_departments_result = await db.execute(
+        select(Department).where(
+            Department.code.in_({"ELEARN", "STUAFFAIRS"}),
+            Department.deleted_at.is_(None),
+            Department.is_active.is_(True),
+            Department.is_public.is_(True),
+        )
+    )
+    special_departments = {department.code: department for department in special_departments_result.scalars().all()}
+    special_assignments = await _load_entity_assignments(
+        db,
+        [("department", department.id) for department in special_departments.values()],
+    )
+    elearning_department = special_departments.get("ELEARN")
+    student_affairs_department = special_departments.get("STUAFFAIRS")
+    elearning_assignments = [
+        assignment for assignment in special_assignments
+        if elearning_department is not None
+        and assignment.entity_id == elearning_department.id
+        and assignment.role in {"director", "director_elearning"}
+    ]
+    student_affairs_assignments = [
+        assignment for assignment in special_assignments
+        if student_affairs_department is not None
+        and assignment.entity_id == student_affairs_department.id
+        and assignment.role in {"dean", "director"}
+    ]
+    student_affairs_wing_result = await db.execute(
+        select(Wing).where(
+            Wing.division_id == division.id,
+            Wing.code == "STUAFFAIRS",
+            Wing.deleted_at.is_(None),
+            Wing.is_active.is_(True),
+            Wing.is_public.is_(True),
+        )
+    )
+    student_affairs_wing = student_affairs_wing_result.scalar_one_or_none()
+    if student_affairs_wing is not None:
+        student_affairs_assignments = await _load_academic_organization_assignments(
+            db,
+            entity_type="wing",
+            entity_id=student_affairs_wing.id,
+            roles={"dean", "director"},
+        )
     people = [
         assignment.person
-        for assignment in [*dvc_assignments, *registrar_assignments, *dean_assignments]
+        for assignment in [
+            *dvc_assignments,
+            *registrar_assignments,
+            *dean_assignments,
+            *elearning_assignments,
+            *student_affairs_assignments,
+        ]
         if assignment.person is not None
     ]
     photos = await _photo_urls(db, people)
@@ -637,6 +709,10 @@ async def _academic_organization_data(db: DbSession) -> dict[str, Any]:
         registrar_assignments=registrar_assignments,
         dean_assignments=dean_assignments,
         schools_by_id=schools_by_id,
+        elearning_assignments=elearning_assignments,
+        elearning_department=elearning_department,
+        student_affairs_assignments=student_affairs_assignments,
+        student_affairs_wing=student_affairs_wing,
         photos=photos,
     )
 

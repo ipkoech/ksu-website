@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CalendarDays, FileText, Search } from "lucide-react";
 import type {
@@ -13,32 +12,6 @@ type AcademicRecordsKind =
   | "programmes"
   | "calendar"
   | "examinations";
-
-const pageMedia: Record<
-  AcademicRecordsKind,
-  { src: string; alt: string; kicker: string }
-> = {
-  schools: {
-    src: "/images/Home/OurKSU-82.jpg",
-    alt: "Kisii University students learning together",
-    kicker: "Schools, departments and disciplines",
-  },
-  programmes: {
-    src: "/images/Home/KSUGreenLandscaping.jpg",
-    alt: "Kisii University campus grounds",
-    kicker: "Find a programme built for your future",
-  },
-  calendar: {
-    src: "/images/Home/um-hero.jpg",
-    alt: "Kisii University campus buildings",
-    kicker: "Plan your academic year",
-  },
-  examinations: {
-    src: "/images/Home/VCProfSUKUBA.jpg",
-    alt: "Kisii University academic leadership",
-    kicker: "Dates, timetables and notices",
-  },
-};
 
 function sectionFor(config: PublicPageConfig): PublicPageSection {
   return (
@@ -211,7 +184,6 @@ export function AcademicRecordsPage({
   page?: number;
 }) {
   const section = sectionFor(config);
-  const media = pageMedia[kind];
   const isProgrammeFinder = kind === "programmes";
   const hasNextPage = isProgrammeFinder && section.cards.length >= 12;
   const pageHref = (targetPage: number) => {
@@ -231,38 +203,6 @@ export function AcademicRecordsPage({
     <PageShell>
       <BreadcrumbTrail items={config.breadcrumb} />
       <main>
-        {!isProgrammeFinder ? (
-          <section className="border-b border-border bg-white px-4 pb-8 pt-5 sm:px-6 lg:px-8 lg:pb-12">
-            <div className="mx-auto grid w-full max-w-[1680px] gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.55fr)] lg:items-end lg:gap-16">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-secondary">
-                  {config.eyebrow}
-                </p>
-                <h1 className="mt-4 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-foreground sm:text-6xl">
-                  {config.title}
-                </h1>
-                <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-                  {config.body}
-                </p>
-                <p className="mt-8 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-primary">
-                  <span className="h-px w-8 bg-secondary" />
-                  {media.kicker}
-                </p>
-              </div>
-              <div className="relative aspect-[16/7] overflow-hidden rounded-[2rem] bg-slate-100">
-                <Image
-                  src={media.src}
-                  alt={media.alt}
-                  fill
-                  priority
-                  sizes="(min-width: 1024px) 40vw, 100vw"
-                  className="object-cover"
-                />
-              </div>
-            </div>
-          </section>
-        ) : null}
-
         <section
           className={
             isProgrammeFinder
@@ -270,18 +210,18 @@ export function AcademicRecordsPage({
               : "px-4 py-12 sm:px-6 lg:px-8 lg:py-16"
           }
         >
-          <div className="mx-auto grid w-full max-w-[1680px] gap-10 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-16">
-            <aside className="lg:sticky lg:top-28 lg:self-start">
+          <div className="mx-auto w-full max-w-[1680px]">
+            <div className="mb-8 max-w-3xl border-b border-border pb-6">
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-secondary">
-                {section.eyebrow}
+                {config.eyebrow}
               </p>
-              <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground">
-                {section.title}
-              </h2>
-              <p className="mt-4 text-base leading-7 text-muted-foreground">
-                {section.body}
+              <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+                {config.title}
+              </h1>
+              <p className="mt-3 text-base leading-7 text-muted-foreground">
+                {config.body}
               </p>
-            </aside>
+            </div>
             <div className="min-w-0">
               {section.filters ? (
                 <PublicListFilterForm

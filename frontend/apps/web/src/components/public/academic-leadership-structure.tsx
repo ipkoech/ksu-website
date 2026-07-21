@@ -93,6 +93,8 @@ function TierHeading({ tier }: { tier: AcademicOrganizationTier }) {
   const labelByKey: Record<string, string> = {
     dvc: "DVC · ARSA",
     registrar: "Registrar · Academics",
+    elearning: "E-Learning Director",
+    student_affairs: "Dean of Students",
     deans: "School Deans",
   };
 
@@ -122,7 +124,10 @@ export function AcademicLeadershipStructure({
   const dvc = tierByKey(data, "dvc");
   const registrar = tierByKey(data, "registrar");
   const deans = tierByKey(data, "deans");
-  if (!dvc && !registrar && !deans) return null;
+  const supportTiers = data.tiers.filter((tier) =>
+    ["elearning", "student_affairs"].includes(tier.key),
+  );
+  if (!dvc && !registrar && !deans && !supportTiers.length) return null;
 
   return (
     <ScrollReveal
@@ -177,6 +182,20 @@ export function AcademicLeadershipStructure({
               />
             </div>
           ) : null}
+
+          {supportTiers.map((tier, index) => (
+            <div
+              key={tier.key}
+              className={`relative border-b border-border ${index === 0 ? "py-8" : "py-6"}`}
+            >
+              <TierHeading tier={tier} />
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                {tier.members.map((member) => (
+                  <LeaderIdentity key={member.id} member={member} featured />
+                ))}
+              </div>
+            </div>
+          ))}
 
           {deans ? (
             <div className="pt-8">
