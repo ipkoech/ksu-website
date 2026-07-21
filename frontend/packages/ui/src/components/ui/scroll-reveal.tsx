@@ -128,7 +128,9 @@ export function ScrollReveal({
     return () => observer.disconnect();
   }, [threshold, rootMargin, once]);
 
-  const styles = variantStyles[variant];
+  // Keep the primitive resilient when a consuming app has a stale package
+  // bundle during dev/hot reload or passes an older variant name.
+  const styles = variantStyles[variant] ?? variantStyles["fade-up"];
   const Component = as;
   const visible = isVisible || prefersReducedMotion;
   const style: CSSProperties = prefersReducedMotion
@@ -222,7 +224,7 @@ export function ScrollRevealGroup({
     return () => observer.disconnect();
   }, [threshold, rootMargin, once]);
 
-  const styles = variantStyles[variant];
+  const styles = variantStyles[variant] ?? variantStyles["fade-up"];
   const items = Array.isArray(children) ? children : [children];
   const Component = as;
   const visible = isVisible || prefersReducedMotion;
