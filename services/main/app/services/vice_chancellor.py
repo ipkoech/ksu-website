@@ -20,6 +20,7 @@ from ..models import (
     VcGalleryAlbum,
     VcHub,
     VcHubPlacement,
+    VcPortrait,
     VcSpeech,
     VcSpeechVideo,
     VcVideo,
@@ -455,6 +456,7 @@ class ViceChancellorPublicService:
             select(VcHub)
             .options(
                 selectinload(VcHub.hero_media),
+                selectinload(VcHub.portraits).selectinload(VcPortrait.media),
                 selectinload(VcHub.welcome_video),
                 selectinload(VcHub.staff_assignment),
                 selectinload(VcHub.placements).selectinload(VcHubPlacement.news),
@@ -498,10 +500,21 @@ class ViceChancellorPublicService:
                 is_featured=placement.is_featured,
             )
             sections.setdefault(placement.section, []).append(item)
+        hero_media = serialize_public_media(hub.hero_media)
+        active_portrait = next(
+            (
+                portrait
+                for portrait in hub.portraits
+                if portrait.deleted_at is None and portrait.media_id == hub.hero_media_id
+            ),
+            None,
+        )
+        if hero_media is not None and active_portrait and active_portrait.alt_text:
+            hero_media["alt_text"] = active_portrait.alt_text
         return {
             "id": str(hub.id), "eyebrow": hub.eyebrow, "title": hub.title,
             "introduction": hub.introduction, "welcome_title": hub.welcome_title,
-            "welcome_message": hub.welcome_message, "hero_media": serialize_public_media(hub.hero_media),
+            "welcome_message": hub.welcome_message, "hero_media": hero_media,
             "welcome_video": _serialize_video(hub.welcome_video) if hub.welcome_video and _is_public_now(hub.welcome_video, now) else None,
             "professional_profile_url": hub.professional_profile_url,
             "section_order": hub.section_order, "section_visibility": hub.section_visibility,

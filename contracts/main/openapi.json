@@ -29608,6 +29608,68 @@
         "title": "VcHubUpdate",
         "type": "object"
       },
+      "VcPortraitCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "alt_text": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alt Text"
+          },
+          "display_order": {
+            "default": 100,
+            "title": "Display Order",
+            "type": "integer"
+          },
+          "media_id": {
+            "format": "uuid",
+            "title": "Media Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "media_id"
+        ],
+        "title": "VcPortraitCreate",
+        "type": "object"
+      },
+      "VcPortraitUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "alt_text": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alt Text"
+          },
+          "display_order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Order"
+          }
+        },
+        "title": "VcPortraitUpdate",
+        "type": "object"
+      },
       "VcReorderItem": {
         "additionalProperties": false,
         "properties": {
@@ -82265,6 +82327,369 @@
           }
         ],
         "summary": "Update Hub",
+        "tags": [
+          "Vice Chancellor"
+        ]
+      }
+    },
+    "/api/v1/vice-chancellor/hub/portraits": {
+      "get": {
+        "operationId": "list_portraits_api_v1_vice_chancellor_hub_portraits_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Portraits",
+        "tags": [
+          "Vice Chancellor"
+        ]
+      },
+      "post": {
+        "operationId": "attach_portrait_api_v1_vice_chancellor_hub_portraits_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VcPortraitCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Attach Portrait",
+        "tags": [
+          "Vice Chancellor"
+        ]
+      }
+    },
+    "/api/v1/vice-chancellor/hub/portraits/reorder": {
+      "post": {
+        "operationId": "reorder_portraits_api_v1_vice_chancellor_hub_portraits_reorder_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VcReorderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Reorder Portraits",
+        "tags": [
+          "Vice Chancellor"
+        ]
+      }
+    },
+    "/api/v1/vice-chancellor/hub/portraits/{portrait_id}": {
+      "delete": {
+        "operationId": "detach_portrait_api_v1_vice_chancellor_hub_portraits__portrait_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "portrait_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Portrait Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Detach Portrait",
+        "tags": [
+          "Vice Chancellor"
+        ]
+      },
+      "patch": {
+        "operationId": "update_portrait_api_v1_vice_chancellor_hub_portraits__portrait_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "portrait_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Portrait Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VcPortraitUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Portrait",
+        "tags": [
+          "Vice Chancellor"
+        ]
+      }
+    },
+    "/api/v1/vice-chancellor/hub/portraits/{portrait_id}/select": {
+      "post": {
+        "operationId": "select_portrait_api_v1_vice_chancellor_hub_portraits__portrait_id__select_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "portrait_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Portrait Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Select Portrait",
         "tags": [
           "Vice Chancellor"
         ]

@@ -65,6 +65,24 @@ class VcHubRead(ScopedContentRead):
     section_visibility: dict[str, bool]
 
 
+class VcPortraitCreate(_StrictSchema):
+    media_id: uuid.UUID
+    alt_text: str | None = Field(default=None, max_length=255)
+    display_order: int = 100
+
+
+class VcPortraitUpdate(_StrictSchema):
+    alt_text: str | None = Field(default=None, max_length=255)
+    display_order: int | None = None
+
+
+class VcPortraitRead(BaseReadSchema):
+    hub_id: uuid.UUID
+    media_id: uuid.UUID
+    alt_text: str | None = None
+    display_order: int
+
+
 class VcVideoCreate(_StrictSchema):
     title: str = Field(min_length=1, max_length=255)
     slug: SlugStr

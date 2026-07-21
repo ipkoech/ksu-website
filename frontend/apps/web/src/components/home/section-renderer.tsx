@@ -27,6 +27,7 @@ import {
 } from "@/lib/homepage-sections";
 import type { HomeSocialLinks } from "@/lib/homepage-data";
 import type { HomeCard } from "@/lib/homepage-data";
+import type { VcPublicHub } from "@ksu/api-client";
 
 type SectionComponent = (props: {
   section: HomepageSection;
@@ -38,9 +39,12 @@ type SectionComponent = (props: {
   programmeFinderData?: ProgrammeFinderData;
   featuredStories?: HomeCard[];
   socialLinks?: HomeSocialLinks;
+  vcHub?: VcPublicHub | null;
 }) => ReactElement | null;
 
-function FeaturedStoriesRenderer({ featuredStories }: Parameters<SectionComponent>[0]) {
+function FeaturedStoriesRenderer({
+  featuredStories,
+}: Parameters<SectionComponent>[0]) {
   return <FeaturedStoriesSection stories={featuredStories} />;
 }
 
@@ -75,6 +79,7 @@ export function HomepageSectionRenderer({
   programmeFinderData,
   featuredStories,
   socialLinks,
+  vcHub,
 }: {
   section: HomepageSection;
   hero?: HomepageResolvedHero | null;
@@ -85,6 +90,7 @@ export function HomepageSectionRenderer({
   programmeFinderData?: ProgrammeFinderData;
   featuredStories?: HomeCard[];
   socialLinks?: HomeSocialLinks;
+  vcHub?: VcPublicHub | null;
 }) {
   if (!isKnownHomepageLayoutVariant(section.layout_variant)) {
     console.warn(
@@ -105,6 +111,7 @@ export function HomepageSectionRenderer({
       programmeFinderData={programmeFinderData}
       featuredStories={featuredStories}
       socialLinks={socialLinks}
+      vcHub={vcHub}
     />
   );
 }
@@ -116,6 +123,7 @@ export function HomepageSections({
   programmeFinderData,
   featuredStories,
   socialLinks,
+  vcHub,
 }: {
   sections: HomepageSection[];
   hero?: HomepageResolvedHero | null;
@@ -123,6 +131,7 @@ export function HomepageSections({
   programmeFinderData?: ProgrammeFinderData;
   featuredStories?: HomeCard[];
   socialLinks?: HomeSocialLinks;
+  vcHub?: VcPublicHub | null;
 }) {
   const orderedSections = orderHomepageSections(sections);
   const factsSection = sections.find(
@@ -184,6 +193,7 @@ export function HomepageSections({
               programmeFinderData={programmeFinderData}
               featuredStories={featuredStories}
               socialLinks={socialLinks}
+              vcHub={vcHub}
             />
             {section.layout_variant === "programme_finder" &&
             !hasExplicitFeaturedStories ? (

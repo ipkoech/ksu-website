@@ -11,7 +11,7 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ...deps import CurrentUser, DbSession, user_has_scope
-from ...models import Event, Media, MediaLink, News, VcGalleryAlbum, VcHubPlacement, VcSpeech, VcSpeechVideo, VcVideo
+from ...models import Event, Media, MediaLink, News, VcGalleryAlbum, VcHubPlacement, VcPortrait, VcSpeech, VcSpeechVideo, VcVideo
 from ...schemas.vice_chancellor import (
     VcGalleryAlbumCreate,
     VcGalleryAlbumUpdate,
@@ -19,6 +19,8 @@ from ...schemas.vice_chancellor import (
     VcHubPlacementCreate,
     VcHubPlacementUpdate,
     VcHubUpdate,
+    VcPortraitCreate,
+    VcPortraitUpdate,
     VcReorderRequest,
     VcSpeechCreate,
     VcSpeechUpdate,
@@ -80,6 +82,115 @@ async def update_hub(data: VcHubUpdate, db: DbSession, user: CurrentUser):
         return success(data=await ViceChancellorAdminService.update_hub(db, hub, data, user.id))
     except ValueError as exc:
         raise _validation_error(exc) from exc
+
+
+def _serialize_portrait(portrait: VcPortrait, *, active_media_id: uuid.UUID | None) -> dict:
+    return {
+        "id": portrait.id,
+        "hub_id": portrait.hub_id,
+        "media_id": portrait.media_id,
+        "alt_text": portrait.alt_text,
+        "display_order": portrait.display_order,
+        "created_at": portrait.created_at,
+        "updated_at": portrait.updated_at,
+        "is_active": portrait.media_id == active_media_id,
+        "media": serialize_public_media(portrait.media),
+    }
+
+
+@router.get("/vice-chancellor/hub/portraits")
+async def list_portraits(db: DbSession, user: CurrentUser):
+    _require_vc_action(user, "view")
+    hub = await ViceChancellorAdminService.get_or_create_hub(db)
+    portraits = (await db.execute(
+        VcPortrait.active_query().where(VcPortrait.hub_id == hub.id).order_by(
+            VcPortrait.display_order, VcPortrait.created_at
+        )
+    )).scalars().all()
+    for portrait in portraits:
+        await db.refresh(portrait, attribute_names=["media"])
+    return success(data=[_serialize_portrait(item, active_media_id=hub.hero_media_id) for item in portraits])
+
+
+@router.post("/vice-chancellor/hub/portraits", status_code=201)
+async def attach_portrait(data: VcPortraitCreate, db: DbSession, user: CurrentUser):
+    _require_vc_action(user, "manage")
+    hub = await ViceChancellorAdminService.get_or_create_hub(db)
+    media = await db.get(Media, data.media_id)
+    if media is None or media.deleted_at is not None:
+        raise HTTPException(status_code=422, detail="Media asset was not found")
+    if media.media_type != "image":
+        raise HTTPException(status_code=422, detail="VC portraits must be image assets")
+    if not media.is_public:
+        raise HTTPException(status_code=422, detail="VC portraits must be public media assets")
+    existing = (await db.execute(VcPortrait.active_query().where(
+        VcPortrait.hub_id == hub.id, VcPortrait.media_id == data.media_id
+    ))).scalar_one_or_none()
+    if existing is not None:
+        raise HTTPException(status_code=409, detail="This portrait is already in the VC library")
+    portrait = VcPortrait(hub_id=hub.id, **data.model_dump())
+    db.add(portrait)
+    await db.flush()
+    portrait.media = media
+    return success(data=_serialize_portrait(portrait, active_media_id=hub.hero_media_id))
+
+
+@router.post("/vice-chancellor/hub/portraits/reorder")
+async def reorder_portraits(data: VcReorderRequest, db: DbSession, user: CurrentUser):
+    _require_vc_action(user, "manage")
+    hub = await ViceChancellorAdminService.get_or_create_hub(db)
+    records = (await db.execute(VcPortrait.active_query().where(
+        VcPortrait.hub_id == hub.id,
+        VcPortrait.id.in_([item.id for item in data.items]),
+    ))).scalars().all()
+    by_id = {record.id: record for record in records}
+    if len(by_id) != len(data.items):
+        raise HTTPException(status_code=422, detail="Portrait reorder contains an unknown item")
+    for item in data.items:
+        by_id[item.id].display_order = item.display_order
+    await db.flush()
+    return success(data=True)
+
+
+@router.patch("/vice-chancellor/hub/portraits/{portrait_id}")
+async def update_portrait(portrait_id: uuid.UUID, data: VcPortraitUpdate, db: DbSession, user: CurrentUser):
+    _require_vc_action(user, "manage")
+    hub = await ViceChancellorAdminService.get_or_create_hub(db)
+    portrait = await _record_or_404(db, VcPortrait, portrait_id)
+    if portrait.hub_id != hub.id:
+        raise HTTPException(status_code=404, detail="VC portrait not found")
+    apply_updates(portrait, **data.model_dump(exclude_unset=True))
+    await db.flush()
+    await db.refresh(portrait, attribute_names=["media"])
+    return success(data=_serialize_portrait(portrait, active_media_id=hub.hero_media_id))
+
+
+@router.post("/vice-chancellor/hub/portraits/{portrait_id}/select")
+async def select_portrait(portrait_id: uuid.UUID, db: DbSession, user: CurrentUser):
+    _require_vc_action(user, "manage")
+    hub = await ViceChancellorAdminService.get_or_create_hub(db)
+    portrait = await _record_or_404(db, VcPortrait, portrait_id)
+    if portrait.hub_id != hub.id:
+        raise HTTPException(status_code=404, detail="VC portrait not found")
+    await ViceChancellorAdminService.update_hub(
+        db, hub, VcHubUpdate(hero_media_id=portrait.media_id), user.id
+    )
+    await db.refresh(portrait, attribute_names=["media"])
+    return success(data=_serialize_portrait(portrait, active_media_id=hub.hero_media_id))
+
+
+@router.delete("/vice-chancellor/hub/portraits/{portrait_id}", status_code=204)
+async def detach_portrait(portrait_id: uuid.UUID, db: DbSession, user: CurrentUser):
+    _require_vc_action(user, "manage")
+    hub = await ViceChancellorAdminService.get_or_create_hub(db)
+    portrait = await _record_or_404(db, VcPortrait, portrait_id)
+    if portrait.hub_id != hub.id:
+        raise HTTPException(status_code=404, detail="VC portrait not found")
+    if hub.hero_media_id == portrait.media_id:
+        raise HTTPException(status_code=409, detail="Select another portrait before removing the active one")
+    portrait.deleted_at = datetime.now(timezone.utc)
+    await db.flush()
+    return Response(status_code=204)
 
 
 @router.post("/vice-chancellor/hub/{action}")

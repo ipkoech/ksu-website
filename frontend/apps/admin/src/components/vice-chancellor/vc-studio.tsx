@@ -96,6 +96,7 @@ import {
 } from "@ksu/api-client";
 import { MediaPicker } from "@/components/media";
 import { usePermissions } from "@/hooks/use-permissions";
+import { VcPortraitLibrary } from "./vc-portrait-library";
 
 const TABS = [
   ["overview", "Overview", LayoutDashboard],
@@ -324,7 +325,6 @@ function OverviewTab({ hub, canManage }: { hub: VcHub; canManage: boolean }) {
         introduction: clean(form.introduction),
         welcome_title: clean(form.welcome_title),
         welcome_message: clean(form.welcome_message),
-        hero_media_id: clean(form.hero_media_id),
         welcome_video_id: clean(form.welcome_video_id),
         professional_profile_url: form.professional_profile_url,
         section_order: form.section_order,
@@ -337,6 +337,9 @@ function OverviewTab({ hub, canManage }: { hub: VcHub; canManage: boolean }) {
   };
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.75fr)]">
+      <div className="xl:col-span-2">
+        <VcPortraitLibrary canManage={canManage} />
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>Landing page story</CardTitle>
@@ -367,15 +370,6 @@ function OverviewTab({ hub, canManage }: { hub: VcHub; canManage: boolean }) {
               onChange={(e) => update("introduction", e.target.value)}
             />
           </Field>
-          <MediaPicker
-            label="Hero image"
-            value={form.hero_media_id}
-            onChange={(value) => update("hero_media_id", value)}
-            mediaType="image"
-            accept="image/*"
-            isPublic
-            disabled={!canManage}
-          />
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Welcome heading">
               <Input

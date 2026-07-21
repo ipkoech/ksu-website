@@ -117,6 +117,8 @@ import type {
   VcHubUpdatePayload,
   VcListResponse,
   VcPlacementPayload,
+  VcPortrait,
+  VcPortraitPayload,
   VcPublicGallery,
   VcPublicHub,
   VcPublicSpeech,
@@ -2268,6 +2270,18 @@ export const viceChancellorApi = {
     mainApi.patch<{ data: VcHub }>(`${VC_BASE}/hub`, data),
   transitionHub: (action: VcWorkflowAction, reason?: string) =>
     mainApi.post<{ data: VcHub }>(`${VC_BASE}/hub/${action}`, { reason }),
+  listPortraits: () =>
+    mainApi.get<{ data: VcPortrait[] }>(`${VC_BASE}/hub/portraits`),
+  attachPortrait: (data: VcPortraitPayload) =>
+    mainApi.post<{ data: VcPortrait }>(`${VC_BASE}/hub/portraits`, data),
+  updatePortrait: (id: string, data: { alt_text?: string | null; display_order?: number }) =>
+    mainApi.patch<{ data: VcPortrait }>(`${VC_BASE}/hub/portraits/${id}`, data),
+  deletePortrait: (id: string) =>
+    mainApi.delete<void>(`${VC_BASE}/hub/portraits/${id}`),
+  reorderPortraits: (items: Array<{ id: string; display_order: number }>) =>
+    mainApi.post(`${VC_BASE}/hub/portraits/reorder`, { items }),
+  selectPortrait: (id: string) =>
+    mainApi.post<{ data: VcPortrait }>(`${VC_BASE}/hub/portraits/${id}/select`),
   listVideos: (params?: QueryParams) =>
     mainApi.get<VcListResponse<VcVideo>>(`${VC_BASE}/videos`, params),
   createVideo: (data: VcVideoPayload) =>

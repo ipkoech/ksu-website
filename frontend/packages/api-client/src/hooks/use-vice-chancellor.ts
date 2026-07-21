@@ -4,6 +4,7 @@ import type {
   VcGalleryPayload,
   VcHubUpdatePayload,
   VcPlacementPayload,
+  VcPortraitPayload,
   VcSpeechPayload,
   VcVideoPayload,
   VcWorkflowAction,
@@ -22,6 +23,9 @@ export function useVcHub() {
 }
 export function useVcVideos() {
   return useQuery({ queryKey: keys.videos, queryFn: () => viceChancellorApi.listVideos({ per_page: 100 }) });
+}
+export function useVcPortraits() {
+  return useQuery({ queryKey: keys.portraits, queryFn: viceChancellorApi.listPortraits });
 }
 export function useVcSpeeches() {
   return useQuery({ queryKey: keys.speeches, queryFn: () => viceChancellorApi.listSpeeches({ per_page: 100 }) });
@@ -46,6 +50,26 @@ export function useUpdateVcHub() {
 export function useVcHubWorkflow() {
   const invalidate = useVcInvalidation();
   return useMutation({ mutationFn: ({ action, reason }: { action: VcWorkflowAction; reason?: string }) => viceChancellorApi.transitionHub(action, reason), onSuccess: invalidate });
+}
+export function useAttachVcPortrait() {
+  const invalidate = useVcInvalidation();
+  return useMutation({ mutationFn: (data: VcPortraitPayload) => viceChancellorApi.attachPortrait(data), onSuccess: invalidate });
+}
+export function useUpdateVcPortrait() {
+  const invalidate = useVcInvalidation();
+  return useMutation({ mutationFn: ({ id, data }: { id: string; data: { alt_text?: string | null; display_order?: number } }) => viceChancellorApi.updatePortrait(id, data), onSuccess: invalidate });
+}
+export function useDeleteVcPortrait() {
+  const invalidate = useVcInvalidation();
+  return useMutation({ mutationFn: viceChancellorApi.deletePortrait, onSuccess: invalidate });
+}
+export function useSelectVcPortrait() {
+  const invalidate = useVcInvalidation();
+  return useMutation({ mutationFn: viceChancellorApi.selectPortrait, onSuccess: invalidate });
+}
+export function useReorderVcPortraits() {
+  const invalidate = useVcInvalidation();
+  return useMutation({ mutationFn: viceChancellorApi.reorderPortraits, onSuccess: invalidate });
 }
 export function useCreateVcVideo() {
   const invalidate = useVcInvalidation();

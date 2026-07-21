@@ -4,6 +4,7 @@ export const queryKeys = {
   viceChancellor: {
     all: ["vice-chancellor"] as const,
     hub: ["vice-chancellor", "hub"] as const,
+    portraits: ["vice-chancellor", "portraits"] as const,
     videos: ["vice-chancellor", "videos"] as const,
     speeches: ["vice-chancellor", "speeches"] as const,
     galleries: ["vice-chancellor", "galleries"] as const,

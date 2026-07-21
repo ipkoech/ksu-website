@@ -55,6 +55,7 @@ import {
   type HomepageSection,
 } from "@/lib/homepage-sections";
 import { getNavData } from "@/lib/nav-data";
+import { getPublicVcHub } from "@/lib/vice-chancellor-data";
 import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
 
 export const revalidate = 300;
@@ -161,10 +162,11 @@ function LandingReveal({
 }
 
 export default async function HomePage() {
-  const [homepage, megaMenuData, composedHomepage] = await Promise.all([
+  const [homepage, megaMenuData, composedHomepage, vcHub] = await Promise.all([
     getHomepageData(),
     getNavData(),
     getComposedHomepage(),
+    getPublicVcHub(),
   ]);
   const degradedSections = [
     homepage.schools.length === 0,
@@ -222,6 +224,7 @@ export default async function HomePage() {
                 intakes: homepage.activeIntakes,
               }}
               featuredStories={homepage.featuredStories}
+              vcHub={vcHub}
             />
           </>
         ) : (
@@ -1170,7 +1173,9 @@ function FeaturedStory({ item }: { item: HomeCard }) {
           <span className="rounded-full bg-secondary px-3 py-1 text-white">
             {item.eyebrow ?? "Story"}
           </span>
-          {item.meta ? <span className="text-white/85">{item.meta}</span> : null}
+          {item.meta ? (
+            <span className="text-white/85">{item.meta}</span>
+          ) : null}
         </span>
         <span className="mt-4 block font-[family-name:var(--font-display)] text-2xl font-bold leading-tight sm:text-3xl">
           {item.title}
@@ -1299,7 +1304,10 @@ function eventDateParts(meta?: string | null) {
       month: "Event",
       day: "",
       weekday: "",
-      detail: { time: dateText || "Time to be confirmed", location: locationText },
+      detail: {
+        time: dateText || "Time to be confirmed",
+        location: locationText,
+      },
     };
   }
 

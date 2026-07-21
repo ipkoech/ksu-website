@@ -6037,6 +6037,60 @@ Update Hub
 - Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
+### `GET /api/v1/vice-chancellor/hub/portraits`
+
+List Portraits
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/vice-chancellor/hub/portraits`
+
+Attach Portrait
+
+- Auth: HTTPBearer
+- Request body: VcPortraitCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `POST /api/v1/vice-chancellor/hub/portraits/reorder`
+
+Reorder Portraits
+
+- Auth: HTTPBearer
+- Request body: VcReorderRequest
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/vice-chancellor/hub/portraits/{portrait_id}`
+
+Update Portrait
+
+- Auth: HTTPBearer
+- Request body: VcPortraitUpdate
+- Parameters: `portrait_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/vice-chancellor/hub/portraits/{portrait_id}`
+
+Detach Portrait
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `portrait_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `POST /api/v1/vice-chancellor/hub/portraits/{portrait_id}/select`
+
+Select Portrait
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `portrait_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ### `POST /api/v1/vice-chancellor/hub/{action}`
 
 Transition Hub
@@ -6237,7 +6291,7 @@ Transition Content
 
 ## Schemas
 
-Generated component schemas: `236`
+Generated component schemas: `238`
 
 ### `AboutPageContentCreate`
 
@@ -9514,6 +9568,17 @@ Generated component schemas: `236`
 - `welcome_message`: `string | null` (optional)
 - `welcome_title`: `string | null` (optional)
 - `welcome_video_id`: `string | null` (optional)
+
+### `VcPortraitCreate`
+
+- `alt_text`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `media_id`: `string` (required)
+
+### `VcPortraitUpdate`
+
+- `alt_text`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
 
 ### `VcReorderItem`
 

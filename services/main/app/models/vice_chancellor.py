@@ -134,6 +134,42 @@ class VcHub(Base, ScopedContentMixin):
         cascade="all, delete-orphan",
         order_by="VcHubPlacement.display_order",
     )
+    portraits: Mapped[list["VcPortrait"]] = relationship(
+        "VcPortrait",
+        back_populates="hub",
+        cascade="all, delete-orphan",
+        order_by="VcPortrait.display_order",
+    )
+
+
+class VcPortrait(Base):
+    """A reusable portrait candidate attached to the VC hub."""
+
+    __tablename__ = "vc_portraits"
+    __table_args__ = (
+        sa.Index("ix_vc_portraits_hub_order", "hub_id", "display_order"),
+        sa.Index(
+            "uq_vc_portraits_hub_media_active",
+            "hub_id",
+            "media_id",
+            unique=True,
+            postgresql_where=sa.text("deleted_at IS NULL"),
+        ),
+    )
+
+    hub_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("vc_hubs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    media_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("media.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    alt_text: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    display_order: Mapped[int] = mapped_column(
+        sa.Integer, nullable=False, default=100, server_default=sa.text("100")
+    )
+
+    hub: Mapped["VcHub"] = relationship("VcHub", back_populates="portraits")
+    media: Mapped["Media"] = relationship("Media", foreign_keys=[media_id])
 
 
 class VcVideo(Base, ScopedContentMixin):
@@ -462,6 +498,7 @@ __all__ = [
     "VcGalleryAlbum",
     "VcHub",
     "VcHubPlacement",
+    "VcPortrait",
     "VcSpeech",
     "VcSpeechVideo",
     "VcVideo",

@@ -3070,6 +3070,24 @@ export interface VcHubUpdatePayload {
   section_visibility?: Partial<Record<VcSection, boolean>>;
 }
 
+export interface VcPortrait {
+  id: string;
+  hub_id: string;
+  media_id: string;
+  alt_text?: string | null;
+  display_order: number;
+  is_active: boolean;
+  media?: VcPublicMedia | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VcPortraitPayload {
+  media_id: string;
+  alt_text?: string | null;
+  display_order?: number;
+}
+
 export interface VcVideoPayload {
   title: string;
   slug: string;
