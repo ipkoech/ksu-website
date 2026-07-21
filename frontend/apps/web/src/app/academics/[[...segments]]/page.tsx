@@ -6,6 +6,7 @@ import {
 } from "@/components/public/department-detail-section";
 import { ProgrammeDetailPage } from "@/components/public/programme-detail-page";
 import { PublicSectionPage } from "@/components/public/section-page";
+import { AcademicRecordsPage } from "@/components/public/academic-records-page";
 import { SchoolDetailOverview } from "@/components/public/school-detail-overview";
 import {
   SchoolDetailSection,
@@ -233,6 +234,18 @@ export default async function AcademicsRoutePage({
     getAcademicsPageConfig(segments, filters),
     segments.length === 0 ? getAcademicOrganization() : Promise.resolve(null),
   ]);
+
+  const academicRecordKind =
+    area === "schools" ||
+    area === "programmes" ||
+    area === "calendar" ||
+    area === "examinations"
+      ? area
+      : null;
+
+  if (academicRecordKind) {
+    return <AcademicRecordsPage config={config} kind={academicRecordKind} />;
+  }
 
   return (
     <PublicSectionPage
