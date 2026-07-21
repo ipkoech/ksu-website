@@ -318,7 +318,7 @@ DEPUTY_ROLES = {"deputy_director", "deputy_hod", "deputy_registrar", "deputy_dea
 PUBLIC_ROLE_LABELS = {
     "dean": "Dean",
     "deputy_dean": "Deputy Dean",
-    "cod": "Chairperson of Department",
+    "cod": "Chair of Department",
     "hod": "Head of Department",
     "head": "Head of Department",
     "coordinator": "Coordinator",
@@ -870,7 +870,7 @@ async def _department_team_payload(db: DbSession, department_id: uuid.UUID) -> d
         ]
         assistants = [item for item in winners if item not in head and item not in academic and item.role in ADMIN_ASSISTANT_ROLES]
         tier_specs = [
-            ("head", "Chairperson of Department", head),
+            ("head", "Department Leadership", head),
             ("academic", "Academic Staff", academic),
             ("administrative_assistants", "Administrative Assistants", assistants),
         ]

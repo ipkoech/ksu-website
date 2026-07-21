@@ -104,7 +104,7 @@ const METRIC_TONES = {
 const ROLE_LABELS: Record<SchoolTeamRole, string> = {
   dean: "Dean",
   deputy_dean: "Deputy Dean",
-  cod: "Chairperson of Department",
+  cod: "Chair of Department",
   hod: "Head of Department",
   coordinator: "Coordinator",
   school_administrator: "School Administrator",
