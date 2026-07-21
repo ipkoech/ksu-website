@@ -6,6 +6,9 @@ import type {
   News,
   Person,
   Programme,
+  AdmissionDocument,
+  AdmissionRequirement,
+  ProgrammeFeeStructure,
   PublicStatsResponse,
   StaffAssignment,
 } from "@ksu/api-client";
@@ -107,6 +110,9 @@ export type ProgrammeIntakeRecord = {
 export type ProgrammeWithRelations = Programme & {
   tutors?: ProgrammeTutorRecord[];
   intakes?: ProgrammeIntakeRecord[];
+  admission_requirements?: AdmissionRequirement[];
+  admission_documents?: AdmissionDocument[];
+  fee_structures?: ProgrammeFeeStructure[];
 };
 
 type DepartmentRelatedRecords = Pick<
@@ -313,7 +319,9 @@ async function getDepartmentBySlug(
   }
 }
 
-async function getDepartmentStats(slug: string): Promise<PublicStatsResponse | null> {
+async function getDepartmentStats(
+  slug: string,
+): Promise<PublicStatsResponse | null> {
   try {
     const response = await statsApi.get({ scope: "department", slug });
     return response.data ?? null;
@@ -334,7 +342,9 @@ async function getList<T>(
 }
 
 function listCount<T>(response: ListResponse<T>) {
-  return response.meta?.total ?? response.meta?.count ?? response.data?.length ?? 0;
+  return (
+    response.meta?.total ?? response.meta?.count ?? response.data?.length ?? 0
+  );
 }
 
 function titleFromSlug(slug: string) {
@@ -390,10 +400,13 @@ function personImage(person: Person) {
   return resolvePublicMediaUrl(photoUrl);
 }
 
-function leaderFromAssignment(assignment?: StaffAssignment | null): Leader | null {
+function leaderFromAssignment(
+  assignment?: StaffAssignment | null,
+): Leader | null {
   if (!assignment?.person) return null;
   const person = assignment.person;
-  const fallbackTitle = assignment.role?.replace(/_/g, " ") || "Department lead";
+  const fallbackTitle =
+    assignment.role?.replace(/_/g, " ") || "Department lead";
 
   return {
     id: person.id,
@@ -408,14 +421,15 @@ function leaderFromAssignment(assignment?: StaffAssignment | null): Leader | nul
   };
 }
 
-function sortByDisplayOrder<T extends { display_order?: number; name?: string }>(
-  items: T[],
-) {
+function sortByDisplayOrder<
+  T extends { display_order?: number; name?: string },
+>(items: T[]) {
   return items
     .slice()
     .sort(
       (first, second) =>
-        Number(first.display_order ?? 100) - Number(second.display_order ?? 100) ||
+        Number(first.display_order ?? 100) -
+          Number(second.display_order ?? 100) ||
         (first.name ?? "").localeCompare(second.name ?? ""),
     );
 }
@@ -458,12 +472,17 @@ async function getDepartmentRelatedRecords(
     updates,
   ] = await Promise.all([
     isAcademic
-      ? getList<ProgrammeWithRelations>(`/api/v1/departments/${department.slug}/programmes`, {
-          fields: programmeFields,
-          include: programmeRelationInclude,
-          per_page: 80,
-        })
-      : Promise.resolve({ data: [] } satisfies ListResponse<ProgrammeWithRelations>),
+      ? getList<ProgrammeWithRelations>(
+          `/api/v1/departments/${department.slug}/programmes`,
+          {
+            fields: programmeFields,
+            include: programmeRelationInclude,
+            per_page: 80,
+          },
+        )
+      : Promise.resolve({
+          data: [],
+        } satisfies ListResponse<ProgrammeWithRelations>),
     getList<Person>(`/api/v1/departments/${department.slug}/staff`, {
       fields: staffFields,
       per_page: 80,
@@ -556,7 +575,8 @@ export async function getDepartmentDetailData(
   programmeSearchQuery?: string | null,
 ): Promise<DepartmentDetailData> {
   const department = await getDepartmentBySlug(slug);
-  const resolvedDepartment = department ?? fallbackDepartment(slug, fallbackType);
+  const resolvedDepartment =
+    department ?? fallbackDepartment(slug, fallbackType);
   const departmentType = department?.department_type ?? fallbackType;
   const isAcademic = departmentType === "academic";
   const emptyRelated: DepartmentRelatedRecords = {
@@ -591,7 +611,9 @@ export async function getDepartmentDetailData(
     programmes: filterProgrammes(related.programmes, programmeSearchQuery),
     programmeSearchQuery: present(programmeSearchQuery),
     stats,
-    counts: stats ? mergeDepartmentCounts(related.counts, stats) : related.counts,
+    counts: stats
+      ? mergeDepartmentCounts(related.counts, stats)
+      : related.counts,
     isAcademic,
     sourceBacked: Boolean(department),
   };

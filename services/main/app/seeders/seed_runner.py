@@ -10,6 +10,7 @@ from ._shared import SeedContext
 from .seed_admin_departments import seed_admin_departments
 from .seed_about_content import seed_about_content
 from .seed_admission_info import seed_admission_info
+from .seed_admissions_catalog import seed_admissions_catalog
 from .seed_content import seed_content
 from .seed_cover_images import seed_cover_images
 from .seed_divisions import seed_divisions
@@ -45,6 +46,7 @@ async def run() -> None:
             await seed_university_info(db, ctx)
             await seed_programmes(db, ctx)
             await seed_admission_info(db, ctx)
+            await seed_admissions_catalog(db, ctx)
             await seed_content(db, ctx)
             await seed_public_records(db, ctx)
             await seed_about_content(db, ctx)
