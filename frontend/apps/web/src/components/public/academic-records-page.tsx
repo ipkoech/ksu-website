@@ -6,6 +6,7 @@ import {
   Clock3,
   Download,
   FileText,
+  GraduationCap,
   Search,
 } from "lucide-react";
 import type {
@@ -338,7 +339,13 @@ function ProgrammeFinder({
             </p>
           </div>
         </div>
-        <div className="bg-[#faf8f2] p-6 sm:p-8 lg:p-12">
+        <div className="relative bg-[#faf8f2] p-6 sm:p-8 lg:p-12 lg:pr-28">
+          <div className="absolute right-0 top-10 hidden w-20 bg-secondary px-3 py-5 text-center text-white lg:block">
+            <GraduationCap className="mx-auto h-5 w-5" aria-hidden />
+            <span className="mt-2 block text-[10px] font-bold uppercase tracking-[0.12em]">Admissions</span>
+            <span className="mt-2 block text-[10px] leading-4 text-white/80">Explore your next intake</span>
+            <ArrowRight className="mx-auto mt-4 h-4 w-4 rotate-90" aria-hidden />
+          </div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Programme finder</p>
           <h2 className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.95] text-foreground sm:text-5xl">
             Find your direction
@@ -395,27 +402,41 @@ function CalendarEditorial({ section }: { section: PublicPageSection }) {
       <div className="mx-auto grid w-full max-w-[1680px] gap-8 lg:grid-cols-[0.8fr_1.2fr]">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Academic calendar</p>
-          <h2 className="mt-3 max-w-md font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground sm:text-5xl">Plan ahead. Stay on track.</h2>
-          <p className="mt-4 max-w-md text-sm leading-7 text-muted-foreground">Key dates are drawn from published intake and calendar records.</p>
-          <div className="mt-8 border-l-2 border-secondary pl-5">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">Upcoming dates</p>
-            <p className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-primary">{section.cards[0]?.title ?? "No dates published"}</p>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{section.cards[0]?.body ?? "Check back for the next academic update."}</p>
+          <h2 className="mt-3 max-w-md font-[family-name:var(--font-display)] text-5xl font-semibold leading-[0.95] text-primary sm:text-6xl">Plan ahead.<br /><span className="text-secondary">Stay on track.</span></h2>
+          <p className="mt-5 max-w-md text-sm leading-7 text-muted-foreground">A year of discovery, growth, and achievement. Your academic journey starts here.</p>
+          <div className="mt-8 overflow-hidden bg-primary text-white">
+            <div className="relative min-h-[220px]">
+              <PublicImage
+                src="/images/backgrounds/KSUGreenLandscapingMay2026-3810.jpg"
+                alt="Kisii University academic calendar"
+                ratio="fill"
+                sizes="(min-width: 1024px) 28vw, 100vw"
+                className="absolute inset-0 h-full w-full"
+                imageClassName="object-cover opacity-55"
+              />
+              <div className="absolute inset-0 bg-primary/55" />
+              <div className="relative z-10 flex h-full flex-col justify-end p-5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-secondary">Upcoming</p>
+                <p className="mt-1 font-[family-name:var(--font-display)] text-4xl font-semibold">{section.cards[0]?.title ?? "Key academic date"}</p>
+                <p className="mt-1 text-sm text-white/75">{section.cards[0]?.body ?? "Check back for the next published update."}</p>
+                {section.cards[0]?.href ? <Link href={section.cards[0].href} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-secondary">View details <ArrowRight className="h-4 w-4" aria-hidden /></Link> : null}
+              </div>
+            </div>
           </div>
         </div>
-        <div className="relative border-l border-primary/25 pl-6 sm:pl-10">
-          <div className="absolute bottom-0 left-[-5px] top-0 w-2 rounded-full bg-secondary/25" />
-          <div className="space-y-0">
+        <div className="relative overflow-hidden border border-primary/10 bg-white p-5 sm:p-8">
+          <div className="absolute left-1/2 top-1/2 hidden h-56 w-[88%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border border-primary/15 sm:block" />
+          <div className="relative grid gap-3 sm:grid-cols-2">
             {section.cards.map((card, index) => (
-              <Link key={card.title} href={card.href ?? "#"} className="group relative block border-b border-border py-5 first:pt-0 last:border-b-0">
-                <span className="absolute -left-[2.15rem] top-6 h-3 w-3 rounded-full border-2 border-[#faf8f2] bg-primary group-hover:bg-secondary sm:-left-[2.65rem]" />
-                <span className="grid gap-2 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-6">
-                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">{String(index + 1).padStart(2, "0")}</span>
-                  <span><span className="block font-[family-name:var(--font-display)] text-xl font-semibold text-foreground group-hover:text-primary">{card.title}</span><span className="mt-1 block text-sm leading-6 text-muted-foreground">{card.body}</span></span>
-                  <ArrowRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-1" aria-hidden />
-                </span>
+              <Link key={card.title} href={card.href ?? "#"} className="group relative flex min-h-28 items-center gap-4 border-b border-border py-4 sm:min-h-36 sm:border-b-0 sm:p-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-primary/20 bg-white font-[family-name:var(--font-display)] text-sm font-semibold text-primary group-hover:border-secondary">{String(index + 1).padStart(2, "0")}</span>
+                <span><span className="block text-xs font-bold uppercase tracking-[0.12em] text-secondary">{index % 2 === 0 ? "Semester milestone" : "Academic date"}</span><span className="mt-1 block font-[family-name:var(--font-display)] text-lg font-semibold text-foreground group-hover:text-primary">{card.title}</span><span className="mt-1 block text-xs leading-5 text-muted-foreground">{card.body}</span></span>
+                <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-primary transition-transform group-hover:translate-x-1" aria-hidden />
               </Link>
             ))}
+          </div>
+          <div className="relative mt-6 border-t border-border pt-5 text-right">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Dates may change — check official updates</span>
           </div>
         </div>
       </div>
