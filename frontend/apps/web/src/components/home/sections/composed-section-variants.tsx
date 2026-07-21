@@ -105,7 +105,7 @@ export function FeaturedStoriesSection({
             >
               <ImageCurtainReveal
                 className="min-h-[270px] bg-primary/10"
-                direction="right"
+                direction="down"
               >
                 <PublicImage
                   src={lead.imageUrl}
@@ -148,7 +148,7 @@ export function FeaturedStoriesSection({
               >
                 <ImageCurtainReveal
                   className="h-24 rounded-sm bg-primary/10"
-                  direction={index % 2 === 0 ? "right" : "left"}
+                  direction="down"
                 >
                   <PublicImage
                     src={story.imageUrl}
@@ -698,7 +698,7 @@ export function FeaturedPartnershipSection({
           <div className="relative">
             <ImageCurtainReveal
               className="min-h-[280px] lg:min-h-[360px]"
-              direction="left"
+              direction="down"
             >
               <PublicImage
                 src={mediaUrl(image) ?? heriAfricaLaunchImage}
@@ -1093,7 +1093,7 @@ function CampusMosaicFeature({
 }) {
   const body = (
     <article className="group relative min-h-[420px] overflow-hidden bg-primary text-white shadow-2xl shadow-primary/15 sm:min-h-[520px] lg:min-h-[640px] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-6">
-      <ImageCurtainReveal className="absolute inset-0 h-full" direction="right">
+      <ImageCurtainReveal className="absolute inset-0 h-full" direction="down">
         <PublicImage
           src={itemImageUrl(item) ?? mediaUrl(heroImage(section))}
           alt={
@@ -1315,7 +1315,7 @@ export function LeadershipActivitySection({ section }: SectionVariantProps) {
             <div className="absolute left-10 top-20 h-56 w-56 border border-secondary/15 [clip-path:polygon(50%_0,100%_28%,100%_100%,0_100%,0_28%)]" />
             <ImageCurtainReveal
               className="absolute inset-x-0 bottom-0 h-[94%] bg-transparent"
-              direction="right"
+              direction="down"
             >
               <PublicImage
                 src={leaderImage}
@@ -1760,7 +1760,7 @@ function XSocialIcon({ className }: { className?: string }) {
 function FeaturedUpdateItem({ item }: { item: HomepageSectionItem }) {
   const content = (
     <article className="group relative min-h-[360px] overflow-hidden rounded-md bg-primary text-white sm:min-h-[420px] xl:h-full">
-      <ImageCurtainReveal className="absolute inset-0 h-full" direction="left">
+      <ImageCurtainReveal className="absolute inset-0 h-full" direction="down">
         <PublicImage
           src={updateImageUrl(item)}
           alt={item.media_alt_text ?? item.title ?? "University story"}
