@@ -54,9 +54,9 @@ type SectionMeta = {
 
 const sectionMeta: Record<SchoolDetailSectionKey, SectionMeta> = {
   team: {
-    eyebrow: "School Team",
-    title: "Leadership and staff",
-    body: "Meet the school leadership and published staff records.",
+    eyebrow: "Our People",
+    title: "School Leadership & Staff",
+    body: "Meet the school leaders, department heads, academic staff, and professional team.",
     icon: Users,
   },
   programmes: {
@@ -247,7 +247,6 @@ function TeamSection({ data }: { data: SchoolDetailOverviewData }) {
   return (
     <EntityTeamSection
       team={data.team}
-      title="School Team"
       emptyTitle="No public school team records are available yet."
     />
   );
@@ -583,12 +582,12 @@ export function SchoolDetailSection({
 
             <aside className="hidden min-w-0 space-y-4 xl:block xl:sticky xl:top-28">
               <ContactPanel data={data} />
-              <SchoolInfoPanel data={data} />
+              {section === "team" ? null : <SchoolInfoPanel data={data} />}
             </aside>
 
             <aside className="grid gap-4 xl:hidden">
               <ContactPanel data={data} />
-              <SchoolInfoPanel data={data} />
+              {section === "team" ? null : <SchoolInfoPanel data={data} />}
             </aside>
           </div>
           </section>

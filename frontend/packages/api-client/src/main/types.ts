@@ -249,6 +249,14 @@ export interface SchoolTeamMemberCreate {
   temporary_password?: string | null;
 }
 
+export interface SchoolTeamPersonOption {
+  id: string;
+  full_name?: string | null;
+  email: string;
+  employee_number?: string | null;
+  department?: { id: string; name: string } | null;
+}
+
 export interface SchoolDepartmentRecord {
   id: string;
   name: string;
@@ -1021,6 +1029,7 @@ export interface PublicEntityTeamMember {
   title?: string | null;
   position: string;
   photo_url?: string | null;
+  department?: { id: string; name: string; slug?: string | null } | null;
   hierarchy_level: number;
   display_order: number;
 }

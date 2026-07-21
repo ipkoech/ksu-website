@@ -315,6 +315,22 @@ DEPARTMENT_HEAD_ROLES = {"cod", "hod", "head"}
 ADMIN_ASSISTANT_ROLES = {"admin_assistant", "assistant", "admin"}
 DEPUTY_ROLES = {"deputy_director", "deputy_hod", "deputy_registrar", "deputy_dean"}
 
+PUBLIC_ROLE_LABELS = {
+    "dean": "Dean",
+    "deputy_dean": "Deputy Dean",
+    "cod": "Chairperson of Department",
+    "hod": "Head of Department",
+    "head": "Head of Department",
+    "coordinator": "Coordinator",
+    "postgraduate_coordinator": "Postgraduate Coordinator",
+    "school_administrator": "School Administrator",
+    "administrative_staff": "Administrative Staff",
+    "admin_assistant": "Administrative Assistant",
+    "lecturer": "Lecturer",
+    "technician": "Technician",
+    "support_staff": "Support Staff",
+}
+
 
 def _display_name(person: Person) -> str:
     full_name = (person.full_name or "").strip()
@@ -330,14 +346,26 @@ def _member_payload(
     photo_url: str | None,
     *,
     position: str | None = None,
+    department: Department | None = None,
 ) -> dict[str, Any]:
+    custom_title = (assignment.title or "").strip()
+    public_position = PUBLIC_ROLE_LABELS.get(assignment.role) or (
+        custom_title if len(custom_title) >= 4 else _role_label(assignment.role)
+    )
+    if assignment.is_acting:
+        public_position = f"{public_position} (Acting)"
     return {
         "id": str(assignment.id),
         "person_id": str(person.id),
         "profile_slug": getattr(person, "slug", None) or str(person.id),
         "name": _display_name(person),
         "title": person.title,
-        "position": position or assignment.role_display,
+        "position": position or public_position,
+        "department": (
+            {"id": str(department.id), "name": department.name, "slug": department.slug}
+            if department is not None
+            else None
+        ),
         "photo_url": photo_url,
         "hierarchy_level": assignment.hierarchy_level,
         "display_order": assignment.display_order,
@@ -613,12 +641,23 @@ async def _academic_organization_data(db: DbSession) -> dict[str, Any]:
     )
 
 
-def _tier(key: str, label: str, assignments: list[StaffAssignment], photos: dict[uuid.UUID, str | None]):
+def _tier(
+    key: str,
+    label: str,
+    assignments: list[StaffAssignment],
+    photos: dict[uuid.UUID, str | None],
+    departments: dict[uuid.UUID, Department] | None = None,
+):
     return {
         "key": key,
         "label": label,
         "members": [
-            _member_payload(item, item.person, photos.get(item.person_id))
+            _member_payload(
+                item,
+                item.person,
+                photos.get(item.person_id),
+                department=(departments or {}).get(item.entity_id),
+            )
             for item in assignments
             if item.person is not None
         ],
@@ -647,17 +686,12 @@ async def _school_team_payload(db: DbSession, school_id: uuid.UUID) -> dict[str,
         )
     )
     departments = list(department_result.scalars().all())
+    departments_by_id = {item.id: item for item in departments}
     assignments = await _load_entity_assignments(
         db,
         [("school", school.id), *(("department", item.id) for item in departments)],
     )
-    eligible = [
-        item
-        for item in assignments
-        if item.role == "dean"
-        or item.role in DEPARTMENT_HEAD_ROLES
-        or item.role == "postgraduate_coordinator"
-    ]
+    eligible = assignments
 
     canonical_people = {item.person_id for item in eligible}
     legacy_department_by_person = {
@@ -696,15 +730,36 @@ async def _school_team_payload(db: DbSession, school_id: uuid.UUID) -> dict[str,
     people = [item.person for item in winners if item.person is not None]
     photos = await _photo_urls(db, people)
     tier_specs = [
-        ("dean", "Dean", [item for item in winners if item.role == "dean"]),
-        ("cod", "Chairpersons of Department", [item for item in winners if item.role in DEPARTMENT_HEAD_ROLES]),
+        ("leadership", "School Leadership", [item for item in winners if item.role in {"dean", "deputy_dean"}]),
+        ("department_leadership", "Department Leadership", [item for item in winners if item.role in DEPARTMENT_HEAD_ROLES]),
         (
-            "postgraduate_coordinator",
-            "Postgraduate Coordinators",
-            [item for item in winners if item.role == "postgraduate_coordinator"],
+            "coordinators",
+            "Programme Coordinators",
+            [item for item in winners if item.role in {"coordinator", "postgraduate_coordinator"}],
         ),
+        (
+            "academic",
+            "Academic Staff",
+            [
+                item
+                for item in winners
+                if item.role in ACADEMIC_TEAM_ROLES
+                and item.role not in DEPARTMENT_HEAD_ROLES
+            ],
+        ),
+        (
+            "administrative",
+            "Administrative Staff",
+            [item for item in winners if item.role in {"school_administrator", "administrative_staff", *ADMIN_ASSISTANT_ROLES}],
+        ),
+        ("technical", "Technical Staff", [item for item in winners if item.role == "technician"]),
+        ("support", "Support Staff", [item for item in winners if item.role == "support_staff"]),
     ]
-    tiers = [_tier(key, label, members, photos) for key, label, members in tier_specs if members]
+    tiers = [
+        _tier(key, label, members, photos, departments_by_id)
+        for key, label, members in tier_specs
+        if members
+    ]
     return {
         "entity": {"id": str(school.id), "type": "school", "name": school.name, "slug": school.slug},
         "tiers": tiers,

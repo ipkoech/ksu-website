@@ -27,10 +27,12 @@ from ....services.school_portal_team import (
     end_school_team_assignment,
     get_school_team_assignment,
     list_school_team,
+    list_school_team_person_options,
     preview_school_team_import,
     resend_school_team_invite,
     revoke_school_portal_access,
     serialize_school_team_assignments,
+    serialize_school_team_person_options,
     team_import_template_csv,
     team_import_template_xlsx,
     transfer_school_team_assignment,
@@ -39,6 +41,27 @@ from ....services.school_portal_team import (
 from ....tasks.celery_app import celery_app
 
 router = APIRouter()
+
+
+@router.get("/team/person-options")
+async def get_team_person_options(
+    db: DbSession,
+    context: CurrentSchoolContext,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    search: str | None = None,
+):
+    result = await list_school_team_person_options(
+        db,
+        context,
+        page=page,
+        per_page=per_page,
+        search=search,
+    )
+    return success(
+        data=serialize_school_team_person_options(result.items),
+        meta=result.meta,
+    )
 
 
 @router.get("/team")

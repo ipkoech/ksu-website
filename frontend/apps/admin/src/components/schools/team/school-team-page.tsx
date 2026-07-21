@@ -65,7 +65,7 @@ const GROUPS: Array<{
     tone: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
   },
   {
-    label: "CODs & Coordinators",
+    label: "Department Leadership",
     description: "Department and programme leadership",
     roles: ["cod", "hod", "coordinator"],
     icon: UserCog,
@@ -100,6 +100,23 @@ const METRIC_TONES = {
   success: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   warning: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
 };
+
+const ROLE_LABELS: Record<SchoolTeamRole, string> = {
+  dean: "Dean",
+  deputy_dean: "Deputy Dean",
+  cod: "Chairperson of Department",
+  hod: "Head of Department",
+  coordinator: "Coordinator",
+  school_administrator: "School Administrator",
+  administrative_staff: "Administrative Staff",
+  lecturer: "Lecturer",
+  technician: "Technician",
+  support_staff: "Support Staff",
+};
+
+function publicRoleLabel(member: { role: SchoolTeamRole; title?: string | null }) {
+  return ROLE_LABELS[member.role];
+}
 
 export function SchoolTeamPage() {
   const { school, can } = useSchoolPortal();
@@ -151,7 +168,7 @@ export function SchoolTeamPage() {
               <span className="truncate">{school.name}</span>
             </Badge>
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">School team</h1>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">School Leadership &amp; Staff</h1>
           <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">
             Keep school leadership, staff assignments, public profiles and portal access organised in one place.
           </p>
@@ -276,7 +293,7 @@ export function SchoolTeamPage() {
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-medium">{member.full_name || member.email}</span>
                         <span className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
-                          <span className="truncate">{member.title || member.role.replaceAll("_", " ")}</span>
+                          <span className="truncate">{publicRoleLabel(member)}</span>
                           {member.department?.name ? (
                             <>
                               <span aria-hidden>·</span>

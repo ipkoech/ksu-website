@@ -28,6 +28,7 @@ import type {
   SchoolPublicationRecord,
   SchoolTeamMember,
   SchoolTeamMemberCreate,
+  SchoolTeamPersonOption,
   SchoolUploadBatch,
   SchoolUploadBatchFile,
 } from "./types";
@@ -144,6 +145,11 @@ export const schoolPortalApi = {
       ),
   },
   team: {
+    personOptions: (params?: { page?: number; per_page?: number; search?: string }) =>
+      mainApi.get<PaginatedResponse<SchoolTeamPersonOption>>(
+        `${BASE_PATH}/team/person-options`,
+        params,
+      ),
     list: (params?: {
       page?: number;
       per_page?: number;

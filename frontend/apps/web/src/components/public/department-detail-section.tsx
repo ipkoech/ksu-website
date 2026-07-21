@@ -75,9 +75,9 @@ const sectionMeta: Record<DepartmentDetailSectionKey, SectionMeta> = {
     icon: Landmark,
   },
   team: {
-    eyebrow: "Department Team",
-    title: "Leadership and staff",
-    body: "Team structure and published staff records for this department.",
+    eyebrow: "Our People",
+    title: "Department Leadership & Staff",
+    body: "Meet the department leadership, academic staff, and professional team.",
     icon: Users,
   },
   programmes: {
@@ -868,13 +868,6 @@ function TeamSection({ data }: { data: DepartmentDetailData }) {
   return (
     <EntityTeamSection
       team={data.team}
-      title={
-        registrarOffice
-          ? "Registrar's Office Team"
-          : data.isAcademic
-            ? "Department Team"
-            : "Unit Team"
-      }
       emptyTitle={
         registrarOffice
           ? "No public registrar office team records are available yet."

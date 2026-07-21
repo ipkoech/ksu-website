@@ -126,12 +126,43 @@ def _temporary_password() -> str:
 
 async def _person_for_create(
     db: AsyncSession,
+    context: SchoolPortalContext,
     data: SchoolTeamMemberCreate,
 ) -> Person:
     if data.person_id is not None:
-        person = await PersonService.get_by_id(db, data.person_id)
+        department_ids = select(Department.id).where(
+            Department.school_id == context.school.id,
+            Department.deleted_at.is_(None),
+        )
+        scoped_assignment = (
+            select(StaffAssignment.id)
+            .where(
+                StaffAssignment.person_id == Person.id,
+                StaffAssignment.deleted_at.is_(None),
+                or_(
+                    (
+                        (StaffAssignment.entity_type == "school")
+                        & (StaffAssignment.entity_id == context.school.id)
+                    ),
+                    (
+                        (StaffAssignment.entity_type == "department")
+                        & StaffAssignment.entity_id.in_(department_ids)
+                    ),
+                ),
+            )
+            .exists()
+        )
+        result = await db.execute(
+            select(Person).where(
+                Person.id == data.person_id,
+                Person.deleted_at.is_(None),
+                Person.is_active.is_(True),
+                or_(Person.department_id.in_(department_ids), scoped_assignment),
+            )
+        )
+        person = result.scalar_one_or_none()
         if person is None:
-            raise HTTPException(status_code=404, detail="Person not found")
+            raise HTTPException(status_code=404, detail="Active school staff profile not found")
         return person
 
     assert data.email is not None
@@ -201,7 +232,7 @@ async def create_school_team_member(
 ) -> StaffAssignment:
     _require(context, "school.team.manage")
     department = await _department_or_404(db, context, data.department_id)
-    person = await _person_for_create(db, data)
+    person = await _person_for_create(db, context, data)
     user = None
     if data.invite_user:
         _require(context, "school.team.roles")
@@ -335,6 +366,77 @@ async def list_school_team(
         StaffAssignment.id.asc(),
     )
     return await paginate_query(db, query, page=page, per_page=per_page)
+
+
+async def list_school_team_person_options(
+    db: AsyncSession,
+    context: SchoolPortalContext,
+    *,
+    page: int = 1,
+    per_page: int = 20,
+    search: str | None = None,
+):
+    """List active people already belonging to the current school scope."""
+    _require(context, "school.team.manage")
+    department_ids = select(Department.id).where(
+        Department.school_id == context.school.id,
+        Department.deleted_at.is_(None),
+    )
+    scoped_assignment = (
+        select(StaffAssignment.id)
+        .where(
+            StaffAssignment.person_id == Person.id,
+            StaffAssignment.deleted_at.is_(None),
+            or_(
+                (
+                    (StaffAssignment.entity_type == "school")
+                    & (StaffAssignment.entity_id == context.school.id)
+                ),
+                (
+                    (StaffAssignment.entity_type == "department")
+                    & StaffAssignment.entity_id.in_(department_ids)
+                ),
+            ),
+        )
+        .exists()
+    )
+    query = (
+        select(Person)
+        .options(selectinload(Person.department))
+        .where(
+            Person.deleted_at.is_(None),
+            Person.is_active.is_(True),
+            or_(Person.department_id.in_(department_ids), scoped_assignment),
+        )
+    )
+    if search:
+        term = f"%{search.strip()}%"
+        query = query.where(
+            or_(
+                Person.full_name.ilike(term),
+                Person.email.ilike(term),
+                Person.employee_number.ilike(term),
+            )
+        )
+    query = query.order_by(Person.full_name.asc(), Person.id.asc())
+    return await paginate_query(db, query, page=page, per_page=per_page)
+
+
+def serialize_school_team_person_options(people: list[Person]) -> list[dict[str, Any]]:
+    return [
+        {
+            "id": person.id,
+            "full_name": person.full_name,
+            "email": person.email,
+            "employee_number": person.employee_number,
+            "department": (
+                {"id": person.department.id, "name": person.department.name}
+                if person.department is not None
+                else None
+            ),
+        }
+        for person in people
+    ]
 
 
 async def serialize_school_team_assignments(
@@ -841,7 +943,9 @@ __all__ = [
     "get_role_by_name",
     "get_school_team_assignment",
     "list_school_team",
+    "list_school_team_person_options",
     "serialize_school_team_assignments",
+    "serialize_school_team_person_options",
     "preview_school_team_import",
     "resend_school_team_invite",
     "revoke_school_portal_access",
