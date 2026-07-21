@@ -70,13 +70,19 @@ type TableRow = {
 const officialLinks = {
   overview: "https://kisiiuniversity.ac.ke/admission",
   howToApply: "https://kisiiuniversity.ac.ke/admission/how-to-apply",
-  onlineApplication: "https://digital.kisiiuniversity.ac.ke/new_student_landing_page",
-  admissionCenter: "https://digital.kisiiuniversity.ac.ke/students/admissions/center",
-  undergraduate: "https://kisiiuniversity.ac.ke/admission/undergraduate-application",
-  postgraduate: "https://kisiiuniversity.ac.ke/admission/postgraduate-education",
-  international: "https://kisiiuniversity.ac.ke/admission/international-students",
+  onlineApplication:
+    "https://digital.kisiiuniversity.ac.ke/new_student_landing_page",
+  admissionCenter:
+    "https://digital.kisiiuniversity.ac.ke/students/admissions/center",
+  undergraduate:
+    "https://kisiiuniversity.ac.ke/admission/undergraduate-application",
+  postgraduate:
+    "https://kisiiuniversity.ac.ke/admission/postgraduate-education",
+  international:
+    "https://kisiiuniversity.ac.ke/admission/international-students",
   diploma: "https://kisiiuniversity.ac.ke/admission/diploma-application",
-  certificate: "https://kisiiuniversity.ac.ke/admission/certificatebridging-application",
+  certificate:
+    "https://kisiiuniversity.ac.ke/admission/certificatebridging-application",
   brochurePdf:
     "https://kisiiuniversity.ac.ke/storage/public/downloads//KISII%20UNIVERSITY%20COURSE%20BROCHURE.pdf",
   undergraduateForm:
@@ -175,67 +181,67 @@ const navItems: RouteLink[] = [
 
 const heroImages: Record<AdmissionsArea, HeroImageConfig> = {
   landing: {
-    src: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80",
+    src: "/images/Home/OurKSU-82.jpg",
     alt: "University students walking across campus",
   },
   undergraduate: {
-    src: "https://images.unsplash.com/photo-1519452575417-564c1401ecc0?auto=format&fit=crop&w=1200&q=80",
+    src: "/images/Home/KSUGreenLandscaping.jpg",
     alt: "Undergraduate students studying together",
   },
   diploma: {
-    src: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1200&q=80",
+    src: "/images/Home/OurKSU-82.jpg",
     alt: "Students in a classroom discussion",
   },
   "certificate-bridging": {
-    src: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
+    src: "/images/Home/KSUGreenLandscaping.jpg",
     alt: "Students collaborating on coursework",
   },
   postgraduate: {
-    src: "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1200&q=80",
+    src: "/images/Home/um-hero.jpg",
     alt: "Graduate students working in a library",
   },
   international: {
-    src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
+    src: "/images/Home/OurKSU-82.jpg",
     alt: "Campus path with international student planning context",
   },
   requirements: {
-    src: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1200&q=80",
+    src: "/images/Home/VCProfSUKUBA.jpg",
     alt: "Application documents and checklist",
   },
   fees: {
-    src: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1200&q=80",
+    src: "/images/Home/um-hero.jpg",
     alt: "Financial planning documents",
   },
   scholarships: {
-    src: "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1200&q=80",
+    src: "/images/Home/OurKSU-82.jpg",
     alt: "Students on campus after class",
   },
   "how-to-apply": {
-    src: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+    src: "/images/Home/KSUGreenLandscaping.jpg",
     alt: "Applicant using a laptop for an online application",
   },
   brochures: {
-    src: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1200&q=80",
+    src: "/images/Home/um-hero.jpg",
     alt: "Printed academic brochures and books",
   },
   booklets: {
-    src: "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=1200&q=80",
+    src: "/images/Home/OurKSU-82.jpg",
     alt: "Booklets arranged on a study desk",
   },
   "graduation-booklets": {
-    src: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80",
+    src: "/images/Home/VCProfSUKUBA.jpg",
     alt: "Graduation ceremony audience",
   },
   intakes: {
-    src: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1200&q=80",
+    src: "/images/Home/KSUGreenLandscaping.jpg",
     alt: "Academic calendar planning on a desk",
   },
   "intake-detail": {
-    src: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=1200&q=80",
+    src: "/images/Home/um-hero.jpg",
     alt: "Calendar and application deadline planning",
   },
   record: {
-    src: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&w=1200&q=80",
+    src: "/images/Home/OurKSU-82.jpg",
     alt: "Admissions record checklist on a desk",
   },
 };
@@ -480,14 +486,16 @@ function intakeStatusClass(intake: AdmissionsIntakeSummary) {
   const status = intakeStatus(intake);
   const remainingDays = daysUntil(intakeDeadline(intake));
 
-  if (status === "Deadline passed") return "bg-surface-muted text-muted-foreground";
+  if (status === "Deadline passed")
+    return "bg-surface-muted text-muted-foreground";
   if (remainingDays !== null && remainingDays <= 14) {
     return "bg-red-50 text-red-700 ring-1 ring-red-100";
   }
   if (remainingDays !== null && remainingDays <= 30) {
     return "bg-amber-50 text-amber-800 ring-1 ring-amber-100";
   }
-  if (status === "Open") return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100";
+  if (status === "Open")
+    return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100";
   return "bg-accent text-primary ring-1 ring-border";
 }
 
@@ -503,7 +511,10 @@ function intakeDeadlineLabel(intake?: AdmissionsIntakeSummary) {
 
 function contentExcerpt(text?: string | null) {
   if (!text) return "";
-  return text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  return text
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function ActionLink({
@@ -577,14 +588,21 @@ function PageHero({
   title,
   body,
   currentHref,
+  data,
 }: {
   area: AdmissionsArea;
   eyebrow: string;
   title: string;
   body: string;
   currentHref: string;
+  data: AdmissionsPageData;
 }) {
   const image = heroImages[area] ?? heroImages.landing;
+  const featuredIntake =
+    data.intakes.find((intake) => intake.isOpen) ?? data.intakes[0];
+  const intakeDeadline =
+    featuredIntake?.lateApplicationEnd || featuredIntake?.applicationEnd;
+  const intakeClosed = intakeDeadline ? isPastDate(intakeDeadline) : false;
 
   return (
     <section className="border-b border-border bg-white px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
@@ -612,10 +630,14 @@ function PageHero({
                 Apply online
               </ActionLink>
               {currentHref !== "/admissions/how-to-apply" ? (
-                <ActionLink href="/admissions/how-to-apply">How to apply</ActionLink>
+                <ActionLink href="/admissions/how-to-apply">
+                  How to apply
+                </ActionLink>
               ) : null}
               {currentHref !== "/admissions/intakes" ? (
-                <ActionLink href="/admissions/intakes">Current intakes</ActionLink>
+                <ActionLink href="/admissions/intakes">
+                  Current intakes
+                </ActionLink>
               ) : null}
             </div>
           </div>
@@ -632,13 +654,29 @@ function PageHero({
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,0.72),rgba(15,23,42,0.16))]" />
             <div className="relative flex h-full min-h-[13rem] flex-col justify-end p-4 text-white">
               <p className="text-xs font-bold uppercase tracking-[0.08em] text-secondary">
-                Official systems
+                {featuredIntake ? "Current intake" : "Official systems"}
               </p>
+              {featuredIntake ? (
+                <div className="mt-2 border-b border-white/20 pb-3">
+                  <p className="text-lg font-semibold">{featuredIntake.name}</p>
+                  <p className="mt-1 text-xs leading-5 text-white/75">
+                    {intakeClosed
+                      ? "The recorded deadline has passed. Check the portal for the next intake."
+                      : `${featuredIntake.isOpen ? "Applications open" : "Scheduled intake"} · closes ${formatAdmissionDate(intakeDeadline)}`}
+                  </p>
+                </div>
+              ) : null}
               <div className="mt-3 grid gap-2">
-                <HeroActionLink href={officialLinks.admissionCenter} icon={ShieldCheck}>
+                <HeroActionLink
+                  href={officialLinks.admissionCenter}
+                  icon={ShieldCheck}
+                >
                   Admission centre
                 </HeroActionLink>
-                <HeroActionLink href={officialLinks.brochurePdf} icon={BookOpenCheck}>
+                <HeroActionLink
+                  href={officialLinks.brochurePdf}
+                  icon={BookOpenCheck}
+                >
                   Course booklet
                 </HeroActionLink>
               </div>
@@ -745,11 +783,17 @@ function StatStrip({ intakes }: { intakes: AdmissionsIntakeSummary[] }) {
   return (
     <div className="grid border border-border bg-white md:grid-cols-3">
       {[
-        ["Applicant routes", "KUCCPS, self-sponsored, postgraduate, international"],
+        [
+          "Applicant routes",
+          "KUCCPS, self-sponsored, postgraduate, international",
+        ],
         ["Published intakes", String(intakes.length || "Portal verified")],
         ["Open records", String(openIntakes || "Check portal")],
       ].map(([label, value]) => (
-        <div key={label} className="border-b border-border p-5 md:border-b-0 md:border-r last:md:border-r-0">
+        <div
+          key={label}
+          className="border-b border-border p-5 md:border-b-0 md:border-r last:md:border-r-0"
+        >
           <p className="text-xs font-semibold uppercase text-muted-foreground">
             {label}
           </p>
@@ -787,7 +831,10 @@ function ComparisonTable({
                 {row.label}
               </th>
               {row.cells.map((cell, index) => (
-                <td key={`${row.label}-${index}`} className="px-5 py-4 text-sm leading-7 text-muted-foreground">
+                <td
+                  key={`${row.label}-${index}`}
+                  className="px-5 py-4 text-sm leading-7 text-muted-foreground"
+                >
                   {cell}
                 </td>
               ))}
@@ -803,7 +850,10 @@ function ProcessTimeline() {
   return (
     <ol className="grid gap-4">
       {applicationSteps.map((step, index) => (
-        <li key={step.title} className="grid gap-4 border border-border bg-white p-5 sm:grid-cols-[72px_minmax(0,1fr)]">
+        <li
+          key={step.title}
+          className="grid gap-4 border border-border bg-white p-5 sm:grid-cols-[72px_minmax(0,1fr)]"
+        >
           <span className="flex h-12 w-12 items-center justify-center bg-primary text-lg font-semibold text-white">
             {index + 1}
           </span>
@@ -811,7 +861,9 @@ function ProcessTimeline() {
             <h3 className="text-lg font-semibold text-foreground">
               {step.title}
             </h3>
-            <p className="mt-2 text-sm leading-7 text-muted-foreground">{step.body}</p>
+            <p className="mt-2 text-sm leading-7 text-muted-foreground">
+              {step.body}
+            </p>
           </div>
         </li>
       ))}
@@ -844,7 +896,9 @@ function AdmissionsJourneyMap({
       body: openIntake
         ? `${openIntake.name}: ${intakeDeadlineLabel(openIntake)}.`
         : "Use the portal to confirm open application windows.",
-      href: openIntake ? `/admissions/intakes/${openIntake.slug}` : "/admissions/intakes",
+      href: openIntake
+        ? `/admissions/intakes/${openIntake.slug}`
+        : "/admissions/intakes",
       action: "View intake",
       icon: CalendarDays,
       meta: openIntake ? intakeStatus(openIntake) : "Portal check",
@@ -898,7 +952,9 @@ function AdmissionsJourneyMap({
               <span className="flex h-11 w-11 shrink-0 items-center justify-center bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
                 <Icon aria-hidden className="h-5 w-5" />
               </span>
-              <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusClass}`}>
+              <span
+                className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusClass}`}
+              >
                 {stage.meta}
               </span>
             </div>
@@ -1007,13 +1063,15 @@ function AdmissionsResourcePanel({ data }: { data: AdmissionsPageData }) {
               {
                 title: "Course booklet",
                 href: officialLinks.brochurePdf,
-                description: "Use the official booklet for programme requirements, duration, mode, and planning references.",
+                description:
+                  "Use the official booklet for programme requirements, duration, mode, and planning references.",
                 icon: BookOpenCheck,
               },
               {
                 title: "How to apply",
                 href: officialLinks.howToApply,
-                description: "Open official application guidance before submitting any form or payment.",
+                description:
+                  "Open official application guidance before submitting any form or payment.",
                 icon: ClipboardCheck,
               },
             ].map((item) => {
@@ -1064,10 +1122,18 @@ function AdmissionsResourcePanel({ data }: { data: AdmissionsPageData }) {
 }
 
 function formatAdmissionResourceType(value: string) {
-  return value.replace(/[_-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function CheckList({ items, dark = false }: { items: string[]; dark?: boolean }) {
+function CheckList({
+  items,
+  dark = false,
+}: {
+  items: string[];
+  dark?: boolean;
+}) {
   return (
     <ul className="grid gap-3 md:grid-cols-2">
       {items.map((item) => (
@@ -1081,7 +1147,11 @@ function CheckList({ items, dark = false }: { items: string[]; dark?: boolean })
         >
           <CheckCircle2
             aria-hidden
-            className={dark ? "mt-1 h-4 w-4 shrink-0 text-secondary" : "mt-1 h-4 w-4 shrink-0 text-primary"}
+            className={
+              dark
+                ? "mt-1 h-4 w-4 shrink-0 text-secondary"
+                : "mt-1 h-4 w-4 shrink-0 text-primary"
+            }
           />
           {item}
         </li>
@@ -1163,9 +1233,9 @@ function IntakesTable({ intakes }: { intakes: AdmissionsIntakeSummary[] }) {
           Live intakes are verified in the online application portal
         </h3>
         <p className="mt-3 text-sm leading-7 text-muted-foreground">
-          No intake records were returned to this frontend. Applicants should use
-          the official portal to confirm open intakes, reporting dates, programme
-          availability, and deadlines.
+          No intake records were returned to this frontend. Applicants should
+          use the official portal to confirm open intakes, reporting dates,
+          programme availability, and deadlines.
         </p>
         <div className="mt-5">
           <ActionLink href={officialLinks.onlineApplication} primary>
@@ -1194,7 +1264,8 @@ function IntakesTable({ intakes }: { intakes: AdmissionsIntakeSummary[] }) {
                 <p className="font-semibold text-foreground">{intake.name}</p>
                 {intake.lateApplicationEnd ? (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Late applications to {formatAdmissionDate(intake.lateApplicationEnd)}
+                    Late applications to{" "}
+                    {formatAdmissionDate(intake.lateApplicationEnd)}
                   </p>
                 ) : null}
               </td>
@@ -1313,7 +1384,8 @@ function LandingSections({ data }: { data: AdmissionsPageData }) {
                   Find a programme first
                 </h3>
                 <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                  Compare level, duration, mode, department, and requirements before starting the application.
+                  Compare level, duration, mode, department, and requirements
+                  before starting the application.
                 </p>
               </div>
             </div>
@@ -1329,7 +1401,11 @@ function LandingSections({ data }: { data: AdmissionsPageData }) {
         title="Move from interest to the correct academic level"
         body="The admissions section is organized around the decisions applicants actually make: level of study, requirements, fees, funding, and application timing."
       >
-        <LinkPanel links={navItems.filter((item) => item.href !== "/admissions").slice(0, 6)} />
+        <LinkPanel
+          links={navItems
+            .filter((item) => item.href !== "/admissions")
+            .slice(0, 6)}
+        />
       </Section>
 
       <Section
@@ -1375,47 +1451,236 @@ function TaskCard({
 }
 
 type ProgramLevelConfig = {
-  sectionTitle: string; sectionBody: string;
-  tableHeaders: string[]; tableRows: TableRow[];
-  prepTitle: string; prepBody: string; checklistItems: string[];
-  resourceLinks: { title: string; href: string; description: string; icon: LucideIcon }[];
+  sectionTitle: string;
+  sectionBody: string;
+  tableHeaders: string[];
+  tableRows: TableRow[];
+  prepTitle: string;
+  prepBody: string;
+  checklistItems: string[];
+  resourceLinks: {
+    title: string;
+    href: string;
+    description: string;
+    icon: LucideIcon;
+  }[];
 };
 
 const programLevelConfigs: Record<string, ProgramLevelConfig> = {
   undergraduate: {
-    sectionTitle: "Undergraduate admission routes", sectionBody: "Undergraduate applicants may enter through certificate, diploma, bachelor's degree, KUCCPS placement, or self-sponsored direct application pathways.",
-    tableHeaders: ["Minimum route", "Who it serves", "Before applying"], tableRows: requirementRows.slice(0, 3),
-    prepTitle: "What undergraduate applicants should have ready", prepBody: "Prepare a complete file before opening the portal so the application is not delayed by missing academic or identity records.",
-    checklistItems: ["KCSE certificate or equivalent qualification records.", "Certificate, diploma, HND, or A-Level evidence for progression routes.", "National ID, passport, or applicant identity details requested by the portal.", "Programme choice checked against the course booklet and programme pages.", "Payment evidence only after confirming official payment instructions.", "KUCCPS placement details where the applicant is government-sponsored."],
-    resourceLinks: [{ title: "Undergraduate admission page", href: officialLinks.undergraduate, description: "General criteria for certificates, diplomas, and bachelor's degrees.", icon: GraduationCap }, { title: "Course booklet", href: officialLinks.brochurePdf, description: "Programme requirements, study modes, duration, and tuition references.", icon: BookOpenCheck }, { title: "Undergraduate form", href: officialLinks.undergraduateForm, description: "Use only when the current route asks for a downloadable form.", icon: FileText }],
+    sectionTitle: "Undergraduate admission routes",
+    sectionBody:
+      "Undergraduate applicants may enter through certificate, diploma, bachelor's degree, KUCCPS placement, or self-sponsored direct application pathways.",
+    tableHeaders: ["Minimum route", "Who it serves", "Before applying"],
+    tableRows: requirementRows.slice(0, 3),
+    prepTitle: "What undergraduate applicants should have ready",
+    prepBody:
+      "Prepare a complete file before opening the portal so the application is not delayed by missing academic or identity records.",
+    checklistItems: [
+      "KCSE certificate or equivalent qualification records.",
+      "Certificate, diploma, HND, or A-Level evidence for progression routes.",
+      "National ID, passport, or applicant identity details requested by the portal.",
+      "Programme choice checked against the course booklet and programme pages.",
+      "Payment evidence only after confirming official payment instructions.",
+      "KUCCPS placement details where the applicant is government-sponsored.",
+    ],
+    resourceLinks: [
+      {
+        title: "Undergraduate admission page",
+        href: officialLinks.undergraduate,
+        description:
+          "General criteria for certificates, diplomas, and bachelor's degrees.",
+        icon: GraduationCap,
+      },
+      {
+        title: "Course booklet",
+        href: officialLinks.brochurePdf,
+        description:
+          "Programme requirements, study modes, duration, and tuition references.",
+        icon: BookOpenCheck,
+      },
+      {
+        title: "Undergraduate form",
+        href: officialLinks.undergraduateForm,
+        description:
+          "Use only when the current route asks for a downloadable form.",
+        icon: FileText,
+      },
+    ],
   },
   diploma: {
-    sectionTitle: "Diploma entry routes and application checks", sectionBody: "Diploma applicants should confirm the exact programme, school, minimum grade, progression route, and intake before submitting an application.",
-    tableHeaders: ["Minimum route", "Progression option", "Before applying"], tableRows: [{ label: "Diploma", cells: ["KCSE C or equivalent", "KCSE C- with a relevant certificate may be considered", "Check course-specific subject requirements and professional rules"] }, { label: "Professional diploma", cells: ["May require higher grades or regulator-specific conditions", "Prior certificate or experiential-learning routes may apply only where published", "Verify against the current course booklet and programme page"] }],
-    prepTitle: "Prepare a complete application file", prepBody: "Diploma applications should be submitted only after the applicant has matched the programme to the current requirements and official intake.",
-    checklistItems: ["KCSE certificate or equivalent academic record.", "Relevant certificate evidence for certificate-to-diploma progression routes.", "Programme requirements checked in the course booklet.", "Identity details requested by the official application portal.", "Payment instructions confirmed from official university records.", "Open intake verified before submission."],
-    resourceLinks: [{ title: "Apply online", href: officialLinks.onlineApplication, description: "Submit or continue a diploma application through the official system.", icon: ClipboardCheck }, { title: "Diploma application page", href: officialLinks.diploma, description: "Open the current official diploma application resource.", icon: FileText }, { title: "Course booklet", href: officialLinks.brochurePdf, description: "Check diploma programme details, duration, study mode, and fees.", icon: BookOpenCheck }],
+    sectionTitle: "Diploma entry routes and application checks",
+    sectionBody:
+      "Diploma applicants should confirm the exact programme, school, minimum grade, progression route, and intake before submitting an application.",
+    tableHeaders: ["Minimum route", "Progression option", "Before applying"],
+    tableRows: [
+      {
+        label: "Diploma",
+        cells: [
+          "KCSE C or equivalent",
+          "KCSE C- with a relevant certificate may be considered",
+          "Check course-specific subject requirements and professional rules",
+        ],
+      },
+      {
+        label: "Professional diploma",
+        cells: [
+          "May require higher grades or regulator-specific conditions",
+          "Prior certificate or experiential-learning routes may apply only where published",
+          "Verify against the current course booklet and programme page",
+        ],
+      },
+    ],
+    prepTitle: "Prepare a complete application file",
+    prepBody:
+      "Diploma applications should be submitted only after the applicant has matched the programme to the current requirements and official intake.",
+    checklistItems: [
+      "KCSE certificate or equivalent academic record.",
+      "Relevant certificate evidence for certificate-to-diploma progression routes.",
+      "Programme requirements checked in the course booklet.",
+      "Identity details requested by the official application portal.",
+      "Payment instructions confirmed from official university records.",
+      "Open intake verified before submission.",
+    ],
+    resourceLinks: [
+      {
+        title: "Apply online",
+        href: officialLinks.onlineApplication,
+        description:
+          "Submit or continue a diploma application through the official system.",
+        icon: ClipboardCheck,
+      },
+      {
+        title: "Diploma application page",
+        href: officialLinks.diploma,
+        description: "Open the current official diploma application resource.",
+        icon: FileText,
+      },
+      {
+        title: "Course booklet",
+        href: officialLinks.brochurePdf,
+        description:
+          "Check diploma programme details, duration, study mode, and fees.",
+        icon: BookOpenCheck,
+      },
+    ],
   },
   "certificate-bridging": {
-    sectionTitle: "Certificate courses and bridging pathways", sectionBody: "Certificate and bridging applicants should confirm the approved pathway, minimum academic record, and target progression before applying.",
-    tableHeaders: ["Typical route", "Purpose", "Before applying"], tableRows: [{ label: "Certificate", cells: ["KCSE C- or equivalent for many certificate routes", "Entry into foundational or professional training", "Check the specific certificate course requirements"] }, { label: "Bridging", cells: ["Prior qualification plus a published bridging need", "Qualification upgrade or subject preparation", "Confirm that the bridging pathway is currently advertised"] }],
-    prepTitle: "What certificate and bridging applicants should prepare", prepBody: "These routes are often programme-specific, so the published course record and intake notice matter more than a general summary.",
-    checklistItems: ["KCSE, O-Level, A-Level, or equivalent academic record.", "Prior certificate or diploma evidence where bridging depends on progression.", "Target programme checked against the course booklet.", "Approved bridging pathway confirmed before payment.", "Official intake and deadline verified through the application portal.", "Any school-specific instructions or attachments prepared."],
-    resourceLinks: [{ title: "Apply online", href: officialLinks.onlineApplication, description: "Submit or continue an application through the official system.", icon: ClipboardCheck }, { title: "Certificate/bridging page", href: officialLinks.certificate, description: "Open the legacy official certificate and bridging admission resource.", icon: FileText }, { title: "Course booklet", href: officialLinks.brochurePdf, description: "Check certificate programmes, bridging context, requirements, and duration.", icon: BookOpenCheck }],
+    sectionTitle: "Certificate courses and bridging pathways",
+    sectionBody:
+      "Certificate and bridging applicants should confirm the approved pathway, minimum academic record, and target progression before applying.",
+    tableHeaders: ["Typical route", "Purpose", "Before applying"],
+    tableRows: [
+      {
+        label: "Certificate",
+        cells: [
+          "KCSE C- or equivalent for many certificate routes",
+          "Entry into foundational or professional training",
+          "Check the specific certificate course requirements",
+        ],
+      },
+      {
+        label: "Bridging",
+        cells: [
+          "Prior qualification plus a published bridging need",
+          "Qualification upgrade or subject preparation",
+          "Confirm that the bridging pathway is currently advertised",
+        ],
+      },
+    ],
+    prepTitle: "What certificate and bridging applicants should prepare",
+    prepBody:
+      "These routes are often programme-specific, so the published course record and intake notice matter more than a general summary.",
+    checklistItems: [
+      "KCSE, O-Level, A-Level, or equivalent academic record.",
+      "Prior certificate or diploma evidence where bridging depends on progression.",
+      "Target programme checked against the course booklet.",
+      "Approved bridging pathway confirmed before payment.",
+      "Official intake and deadline verified through the application portal.",
+      "Any school-specific instructions or attachments prepared.",
+    ],
+    resourceLinks: [
+      {
+        title: "Apply online",
+        href: officialLinks.onlineApplication,
+        description:
+          "Submit or continue an application through the official system.",
+        icon: ClipboardCheck,
+      },
+      {
+        title: "Certificate/bridging page",
+        href: officialLinks.certificate,
+        description:
+          "Open the legacy official certificate and bridging admission resource.",
+        icon: FileText,
+      },
+      {
+        title: "Course booklet",
+        href: officialLinks.brochurePdf,
+        description:
+          "Check certificate programmes, bridging context, requirements, and duration.",
+        icon: BookOpenCheck,
+      },
+    ],
   },
   postgraduate: {
-    sectionTitle: "Postgraduate study routes and records", sectionBody: "Graduate applicants should match the programme level with academic records, transcripts, research interests, and any programme-specific requirements.",
-    tableHeaders: ["Typical minimum", "Required preparation", "Official check"], tableRows: requirementRows.slice(3),
-    prepTitle: "Prepare certified academic records before applying", prepBody: "Postgraduate applications are more document-heavy than undergraduate routes, especially where transcripts, referee forms, proposals, or foreign qualification checks are required.",
-    checklistItems: ["Certified degree certificates and transcripts.", "KCSE, O-Level, or A-Level certificates where the route asks for them.", "Research proposal for PhD or research-intensive programmes where required.", "Referee forms or professional evidence when requested by the school.", "Accreditation evidence for foreign university qualifications where required.", "English translations and language evidence for non-English records."],
+    sectionTitle: "Postgraduate study routes and records",
+    sectionBody:
+      "Graduate applicants should match the programme level with academic records, transcripts, research interests, and any programme-specific requirements.",
+    tableHeaders: ["Typical minimum", "Required preparation", "Official check"],
+    tableRows: requirementRows.slice(3),
+    prepTitle: "Prepare certified academic records before applying",
+    prepBody:
+      "Postgraduate applications are more document-heavy than undergraduate routes, especially where transcripts, referee forms, proposals, or foreign qualification checks are required.",
+    checklistItems: [
+      "Certified degree certificates and transcripts.",
+      "KCSE, O-Level, or A-Level certificates where the route asks for them.",
+      "Research proposal for PhD or research-intensive programmes where required.",
+      "Referee forms or professional evidence when requested by the school.",
+      "Accreditation evidence for foreign university qualifications where required.",
+      "English translations and language evidence for non-English records.",
+    ],
     resourceLinks: [],
   },
   international: {
-    sectionTitle: "Prepare qualifications, identity, and arrival records", sectionBody: "International applicants use the same official application controls but should prepare additional qualification and immigration documentation before submitting.",
-    tableHeaders: [], tableRows: [],
-    prepTitle: "Plan academics and student life together", prepBody: "Before arrival, review the academic school, student support, official portal, and campus-life information so registration and reporting are predictable.",
-    checklistItems: ["Certified academic certificates and transcripts for the intended level of study.", "Evidence that foreign university qualifications come from accredited institutions where required.", "English translations for academic records issued in another language.", "Proof of English proficiency where requested for non-English-speaking education systems.", "Passport details and any immigration documentation requested during admission.", "Programme, fee, reporting, and accommodation planning before travel."],
-    resourceLinks: [{ title: "Academic schools", href: officialLinks.schoolsDepartments, description: "Review the schools and departments that host programmes.", icon: Landmark }, { title: "Campus life", href: "/campus-life", description: "Student support, accommodation context, activities, and services.", icon: Users }, { title: "International admission page", href: officialLinks.international, description: "Open the current official page for international applicants.", icon: Compass }],
+    sectionTitle: "Prepare qualifications, identity, and arrival records",
+    sectionBody:
+      "International applicants use the same official application controls but should prepare additional qualification and immigration documentation before submitting.",
+    tableHeaders: [],
+    tableRows: [],
+    prepTitle: "Plan academics and student life together",
+    prepBody:
+      "Before arrival, review the academic school, student support, official portal, and campus-life information so registration and reporting are predictable.",
+    checklistItems: [
+      "Certified academic certificates and transcripts for the intended level of study.",
+      "Evidence that foreign university qualifications come from accredited institutions where required.",
+      "English translations for academic records issued in another language.",
+      "Proof of English proficiency where requested for non-English-speaking education systems.",
+      "Passport details and any immigration documentation requested during admission.",
+      "Programme, fee, reporting, and accommodation planning before travel.",
+    ],
+    resourceLinks: [
+      {
+        title: "Academic schools",
+        href: officialLinks.schoolsDepartments,
+        description: "Review the schools and departments that host programmes.",
+        icon: Landmark,
+      },
+      {
+        title: "Campus life",
+        href: "/campus-life",
+        description:
+          "Student support, accommodation context, activities, and services.",
+        icon: Users,
+      },
+      {
+        title: "International admission page",
+        href: officialLinks.international,
+        description:
+          "Open the current official page for international applicants.",
+        icon: Compass,
+      },
+    ],
   },
 };
 
@@ -1427,45 +1692,82 @@ function ProgramLevelSection({ area }: { area: string }) {
   const hasTable = config.tableRows.length > 0;
   const hasResources = config.resourceLinks.length > 0;
 
-  const resourceEyebrow = area === "undergraduate" ? "Official Undergraduate Resources"
-    : area === "international" ? "Arrival Context"
-    : area === "certificate-bridging" ? "Resources"
-    : `${area.charAt(0).toUpperCase() + area.slice(1)} Resources`;
+  const resourceEyebrow =
+    area === "undergraduate"
+      ? "Official Undergraduate Resources"
+      : area === "international"
+        ? "Arrival Context"
+        : area === "certificate-bridging"
+          ? "Resources"
+          : `${area.charAt(0).toUpperCase() + area.slice(1)} Resources`;
 
-  const resourceTitle = area === "undergraduate" ? "Forms, booklet, and programme pages"
-    : area === "certificate-bridging" ? "Official certificate and bridging references"
-    : area === "international" ? "Plan academics and student life together"
-    : `Official ${area} references`;
+  const resourceTitle =
+    area === "undergraduate"
+      ? "Forms, booklet, and programme pages"
+      : area === "certificate-bridging"
+        ? "Official certificate and bridging references"
+        : area === "international"
+          ? "Plan academics and student life together"
+          : `Official ${area} references`;
 
-  const resourceBody = area === "certificate-bridging" ? "Use the university application system for live submission and current availability."
-    : "Use the local records and official resources together so applicants do not rely on outdated shared links.";
+  const resourceBody =
+    area === "certificate-bridging"
+      ? "Use the university application system for live submission and current availability."
+      : "Use the local records and official resources together so applicants do not rely on outdated shared links.";
 
   return (
     <>
       {hasTable ? (
-        <Section eyebrow="Entry Pathways" title={config.sectionTitle} body={config.sectionBody}>
-          <ComparisonTable headers={config.tableHeaders} rows={config.tableRows} />
+        <Section
+          eyebrow="Entry Pathways"
+          title={config.sectionTitle}
+          body={config.sectionBody}
+        >
+          <ComparisonTable
+            headers={config.tableHeaders}
+            rows={config.tableRows}
+          />
         </Section>
       ) : (
-        <Section eyebrow={isInternational ? "International Preparation" : "Entry Pathways"} title={config.sectionTitle} body={config.sectionBody}>
+        <Section
+          eyebrow={
+            isInternational ? "International Preparation" : "Entry Pathways"
+          }
+          title={config.sectionTitle}
+          body={config.sectionBody}
+        >
           <CheckList items={config.checklistItems} />
         </Section>
       )}
 
       {hasTable ? (
-        <Section eyebrow={area === "postgraduate" ? "Documents" : "Preparation"} title={config.prepTitle} body={config.prepBody} dark>
+        <Section
+          eyebrow={area === "postgraduate" ? "Documents" : "Preparation"}
+          title={config.prepTitle}
+          body={config.prepBody}
+          dark
+        >
           <CheckList dark items={config.checklistItems} />
         </Section>
       ) : null}
 
       {hasResources && !isInternational ? (
-        <Section eyebrow={resourceEyebrow} title={resourceTitle} body={resourceBody}>
+        <Section
+          eyebrow={resourceEyebrow}
+          title={resourceTitle}
+          body={resourceBody}
+        >
           <LinkPanel links={config.resourceLinks.map((l) => ({ ...l }))} />
         </Section>
       ) : null}
 
       {isInternational ? (
-        <Section eyebrow={resourceEyebrow} title={resourceTitle} body={resourceBody} dark>
+        <Section
+          eyebrow={resourceEyebrow}
+          title={resourceTitle}
+          body={resourceBody}
+          dark
+        >
           <LinkPanel dark links={config.resourceLinks.map((l) => ({ ...l }))} />
         </Section>
       ) : null}
@@ -1606,19 +1908,22 @@ function HowToApplySections({ data }: { data: AdmissionsPageData }) {
             {
               title: "Apply online",
               href: officialLinks.onlineApplication,
-              description: "Create, submit, continue, or track a self-sponsored application.",
+              description:
+                "Create, submit, continue, or track a self-sponsored application.",
               icon: ClipboardCheck,
             },
             {
               title: "Admission centre",
               href: officialLinks.admissionCenter,
-              description: "Access admission letters, admission documents, and registration actions.",
+              description:
+                "Access admission letters, admission documents, and registration actions.",
               icon: ShieldCheck,
             },
             {
               title: "How-to-apply page",
               href: officialLinks.howToApply,
-              description: "Open the university's current official application instructions.",
+              description:
+                "Open the university's current official application instructions.",
               icon: FileText,
             },
           ]}
@@ -1684,7 +1989,10 @@ function ResourceRecords({
         {records.length ? (
           <div className="grid gap-4 md:grid-cols-2">
             {records.map((record) => {
-              const href = record.externalUrl || record.attachmentUrl || `/admissions/${record.slug}`;
+              const href =
+                record.externalUrl ||
+                record.attachmentUrl ||
+                `/admissions/${record.slug}`;
               const external = href.startsWith("http");
               const body =
                 record.summary ||
@@ -1735,41 +2043,111 @@ function ResourceRecords({
   );
 }
 
-const resourceSectionConfigs: Record<string, { contentTypes: string[]; darkBody: string; fallbackLinks: RouteLink[] }> = {
+const resourceSectionConfigs: Record<
+  string,
+  { contentTypes: string[]; darkBody: string; fallbackLinks: RouteLink[] }
+> = {
   brochures: {
     contentTypes: ["brochure"],
-    darkBody: "Brochures are planning references. Applicants should still verify live intakes, requirements, fees, and application status in the official admissions portal.",
+    darkBody:
+      "Brochures are planning references. Applicants should still verify live intakes, requirements, fees, and application status in the official admissions portal.",
     fallbackLinks: [
-      { title: "Course booklet PDF", href: officialLinks.brochurePdf, description: "Open the official course brochure PDF for programme-level guidance.", icon: BookOpenCheck },
-      { title: "Programmes", href: "/academics/programmes", description: "Browse programme records in the current implementation.", icon: Search },
-      { title: "Downloads", href: "/downloads", description: "Check the public downloads index for forms and documents.", icon: FileText },
+      {
+        title: "Course booklet PDF",
+        href: officialLinks.brochurePdf,
+        description:
+          "Open the official course brochure PDF for programme-level guidance.",
+        icon: BookOpenCheck,
+      },
+      {
+        title: "Programmes",
+        href: "/academics/programmes",
+        description: "Browse programme records in the current implementation.",
+        icon: Search,
+      },
+      {
+        title: "Downloads",
+        href: "/downloads",
+        description:
+          "Check the public downloads index for forms and documents.",
+        icon: FileText,
+      },
     ],
   },
   booklets: {
     contentTypes: ["booklet", "brochure"],
-    darkBody: "Booklets can summarize many admissions details. Always confirm live deadlines, fee instructions, and programme availability before submitting or paying.",
+    darkBody:
+      "Booklets can summarize many admissions details. Always confirm live deadlines, fee instructions, and programme availability before submitting or paying.",
     fallbackLinks: [
-      { title: "Course booklet PDF", href: officialLinks.brochurePdf, description: "Open the official course booklet and admissions reference.", icon: Library },
-      { title: "Admissions", href: "/admissions", description: "Return to the admissions overview and application routes.", icon: GraduationCap },
-      { title: "Downloads", href: "/downloads", description: "Check public downloads for additional booklets and forms.", icon: FileText },
+      {
+        title: "Course booklet PDF",
+        href: officialLinks.brochurePdf,
+        description:
+          "Open the official course booklet and admissions reference.",
+        icon: Library,
+      },
+      {
+        title: "Admissions",
+        href: "/admissions",
+        description:
+          "Return to the admissions overview and application routes.",
+        icon: GraduationCap,
+      },
+      {
+        title: "Downloads",
+        href: "/downloads",
+        description:
+          "Check public downloads for additional booklets and forms.",
+        icon: FileText,
+      },
     ],
   },
   "graduation-booklets": {
     contentTypes: ["graduation"],
-    darkBody: "Graduation booklet links and ceremony instructions are time-sensitive. Graduands should verify clearance, names, awards, and ceremony instructions against the latest official notice.",
+    darkBody:
+      "Graduation booklet links and ceremony instructions are time-sensitive. Graduands should verify clearance, names, awards, and ceremony instructions against the latest official notice.",
     fallbackLinks: [
-      { title: "15th Graduation Booklet 2026", href: "https://kisiiuniversity.ac.ke/admission/kisii-university-15th-graduation-booklet-2026", description: "Open the current live-site booklet reference while local records are populated.", icon: GraduationCap },
-      { title: "Announcements", href: "/media/announcements", description: "Check official notices for graduation updates and deadlines.", icon: FileText },
-      { title: "Events", href: "/media/events", description: "Browse ceremony and university event records.", icon: CalendarDays },
+      {
+        title: "15th Graduation Booklet 2026",
+        href: "https://kisiiuniversity.ac.ke/admission/kisii-university-15th-graduation-booklet-2026",
+        description:
+          "Open the current live-site booklet reference while local records are populated.",
+        icon: GraduationCap,
+      },
+      {
+        title: "Announcements",
+        href: "/media/announcements",
+        description:
+          "Check official notices for graduation updates and deadlines.",
+        icon: FileText,
+      },
+      {
+        title: "Events",
+        href: "/media/events",
+        description: "Browse ceremony and university event records.",
+        icon: CalendarDays,
+      },
     ],
   },
 };
 
-function ResourceRecordsSection({ area, data }: { area: string; data: AdmissionsPageData }) {
+function ResourceRecordsSection({
+  area,
+  data,
+}: {
+  area: string;
+  data: AdmissionsPageData;
+}) {
   const config = resourceSectionConfigs[area];
   if (!config) return null;
   const records = recordsForContentTypes(data, config.contentTypes);
-  return <ResourceRecords records={records} darkBody={config.darkBody} fallbackLinks={config.fallbackLinks} />;
+  return (
+    <ResourceRecords
+      records={records}
+      darkBody={config.darkBody}
+      fallbackLinks={config.fallbackLinks}
+    />
+  );
 }
 
 function IntakeDetailSections({
@@ -2022,19 +2400,34 @@ function ContentByArea({
   intake?: AdmissionsIntakeSummary;
   record?: AdmissionsInfoSummary;
 }) {
-  if (area === "undergraduate" || area === "diploma" || area === "certificate-bridging" || area === "postgraduate" || area === "international") return <ProgramLevelSection area={area} />;
+  if (
+    area === "undergraduate" ||
+    area === "diploma" ||
+    area === "certificate-bridging" ||
+    area === "postgraduate" ||
+    area === "international"
+  )
+    return <ProgramLevelSection area={area} />;
   if (area === "requirements") return <RequirementsSections />;
   if (area === "fees") return <FeesSections />;
   if (area === "scholarships") return <ScholarshipsSections />;
   if (area === "how-to-apply") return <HowToApplySections data={data} />;
-  if (area === "brochures" || area === "booklets" || area === "graduation-booklets") return <ResourceRecordsSection area={area} data={data} />;
+  if (
+    area === "brochures" ||
+    area === "booklets" ||
+    area === "graduation-booklets"
+  )
+    return <ResourceRecordsSection area={area} data={data} />;
   if (area === "intakes") return <IntakesSections data={data} />;
   if (area === "intake-detail") return <IntakeDetailSections intake={intake} />;
   if (area === "record") return <RecordSections record={record} />;
   return <LandingSections data={data} />;
 }
 
-function recordsForContentTypes(data: AdmissionsPageData, contentTypes: string[]) {
+function recordsForContentTypes(
+  data: AdmissionsPageData,
+  contentTypes: string[],
+) {
   const normalizedTypes = contentTypes.map((type) => type.toLowerCase());
 
   return data.admissionInfo.filter((record) =>
@@ -2057,6 +2450,7 @@ export function AdmissionsContent({ segments, data }: AdmissionsContentProps) {
           title={copy.title}
           body={copy.body}
           currentHref={currentHref}
+          data={data}
         />
 
         <div className="grid w-full gap-8 bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-8">
