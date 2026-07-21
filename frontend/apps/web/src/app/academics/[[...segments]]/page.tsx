@@ -59,10 +59,14 @@ export default async function AcademicsRoutePage({
     q?: string;
     school_id?: string;
     sort?: string;
+    page?: string;
   }>;
 }) {
   const { segments = [] } = await params;
   const filters = await searchParams;
+  const academicPage = filters.page
+    ? Math.max(1, Number(filters.page) || 1)
+    : 1;
   const [area, schoolSlug, child, childSlug, departmentChild, mediaChild] =
     segments;
 
@@ -231,7 +235,7 @@ export default async function AcademicsRoutePage({
 
   const headerConfig = await getAcademicsEntityHeader(segments);
   const [config, academicLeadership] = await Promise.all([
-    getAcademicsPageConfig(segments, filters),
+    getAcademicsPageConfig(segments, { ...filters, page: academicPage }),
     segments.length === 0 ? getAcademicOrganization() : Promise.resolve(null),
   ]);
 
@@ -244,7 +248,13 @@ export default async function AcademicsRoutePage({
       : null;
 
   if (academicRecordKind) {
-    return <AcademicRecordsPage config={config} kind={academicRecordKind} />;
+    return (
+      <AcademicRecordsPage
+        config={config}
+        kind={academicRecordKind}
+        page={academicPage}
+      />
+    );
   }
 
   return (

@@ -178,7 +178,9 @@ function Records({
       className={
         kind === "schools"
           ? "grid gap-x-8 md:grid-cols-2"
-          : "divide-y divide-border border-y border-border"
+          : kind === "programmes"
+            ? "grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+            : "divide-y divide-border border-y border-border"
       }
     >
       {section.cards.map((card, index) => (
@@ -202,48 +204,72 @@ function Records({
 export function AcademicRecordsPage({
   config,
   kind,
+  page = 1,
 }: {
   config: PublicPageConfig;
   kind: AcademicRecordsKind;
+  page?: number;
 }) {
   const section = sectionFor(config);
   const media = pageMedia[kind];
+  const isProgrammeFinder = kind === "programmes";
+  const hasNextPage = isProgrammeFinder && section.cards.length >= 12;
+  const pageHref = (targetPage: number) => {
+    const params = new URLSearchParams();
+    const filters = section.filters;
+    if (filters?.query) params.set("q", filters.query);
+    if (filters?.level) params.set("level", filters.level);
+    if (filters?.schoolId) params.set("school_id", filters.schoolId);
+    if (filters?.mode) params.set("mode_of_study", filters.mode);
+    if (filters?.sort) params.set("sort", filters.sort);
+    if (targetPage > 1) params.set("page", String(targetPage));
+    const query = params.toString();
+    return `${config.currentHref}${query ? `?${query}` : ""}`;
+  };
 
   return (
     <PageShell>
       <BreadcrumbTrail items={config.breadcrumb} />
       <main>
-        <section className="border-b border-border bg-white px-4 pb-12 pt-5 sm:px-6 lg:px-8 lg:pb-20">
-          <div className="mx-auto grid w-full max-w-[1680px] gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.55fr)] lg:items-end lg:gap-16">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-secondary">
-                {config.eyebrow}
-              </p>
-              <h1 className="mt-4 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-foreground sm:text-6xl">
-                {config.title}
-              </h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-                {config.body}
-              </p>
-              <p className="mt-8 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-primary">
-                <span className="h-px w-8 bg-secondary" />
-                {media.kicker}
-              </p>
+        {!isProgrammeFinder ? (
+          <section className="border-b border-border bg-white px-4 pb-8 pt-5 sm:px-6 lg:px-8 lg:pb-12">
+            <div className="mx-auto grid w-full max-w-[1680px] gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.55fr)] lg:items-end lg:gap-16">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-secondary">
+                  {config.eyebrow}
+                </p>
+                <h1 className="mt-4 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-foreground sm:text-6xl">
+                  {config.title}
+                </h1>
+                <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
+                  {config.body}
+                </p>
+                <p className="mt-8 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                  <span className="h-px w-8 bg-secondary" />
+                  {media.kicker}
+                </p>
+              </div>
+              <div className="relative aspect-[16/7] overflow-hidden rounded-[2rem] bg-slate-100">
+                <Image
+                  src={media.src}
+                  alt={media.alt}
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 40vw, 100vw"
+                  className="object-cover"
+                />
+              </div>
             </div>
-            <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-slate-100">
-              <Image
-                src={media.src}
-                alt={media.alt}
-                fill
-                priority
-                sizes="(min-width: 1024px) 40vw, 100vw"
-                className="object-cover"
-              />
-            </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
 
-        <section className="px-4 py-12 sm:px-6 lg:px-8 lg:py-20">
+        <section
+          className={
+            isProgrammeFinder
+              ? "px-4 py-8 sm:px-6 lg:px-8 lg:py-12"
+              : "px-4 py-12 sm:px-6 lg:px-8 lg:py-16"
+          }
+        >
           <div className="mx-auto grid w-full max-w-[1680px] gap-10 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-16">
             <aside className="lg:sticky lg:top-28 lg:self-start">
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-secondary">
@@ -275,6 +301,55 @@ export function AcademicRecordsPage({
                 />
               ) : null}
               <Records kind={kind} section={section} />
+              {isProgrammeFinder && config.relatedItems?.length ? (
+                <div className="mt-8 flex flex-col gap-4 border border-primary/20 bg-primary p-5 text-white sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
+                      Admissions next step
+                    </p>
+                    <p className="mt-2 text-lg font-semibold">
+                      Check the active intake before applying.
+                    </p>
+                  </div>
+                  <Link
+                    href={config.relatedItems[0].href ?? "/admissions/intakes"}
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-secondary hover:text-white"
+                  >
+                    View intake <ArrowRight className="h-4 w-4" aria-hidden />
+                  </Link>
+                </div>
+              ) : null}
+              {isProgrammeFinder ? (
+                <nav
+                  className="mt-8 flex items-center justify-between border-t border-border pt-5"
+                  aria-label="Programme pages"
+                >
+                  {page > 1 ? (
+                    <Link
+                      href={pageHref(page - 1)}
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-primary"
+                    >
+                      <ArrowRight className="h-4 w-4 rotate-180" aria-hidden />{" "}
+                      Previous
+                    </Link>
+                  ) : (
+                    <span />
+                  )}
+                  <span className="text-sm text-muted-foreground">
+                    Page {page}
+                  </span>
+                  {hasNextPage ? (
+                    <Link
+                      href={pageHref(page + 1)}
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-primary"
+                    >
+                      Next <ArrowRight className="h-4 w-4" aria-hidden />
+                    </Link>
+                  ) : (
+                    <span />
+                  )}
+                </nav>
+              ) : null}
               {!section.cards.length ? (
                 <div className="flex items-center gap-3 border-y border-border py-10 text-muted-foreground">
                   <Search className="h-5 w-5" aria-hidden /> No published
