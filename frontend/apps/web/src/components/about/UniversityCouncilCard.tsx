@@ -53,11 +53,6 @@ export function UniversityCouncilCard({
           ) : null}
         </div>
       </div>
-      {href ? (
-        <span className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-full bg-primary/95 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-[0.14em] text-white transition-transform duration-300 group-hover:translate-y-0 group-focus-within:translate-y-0">
-          View staff profile
-        </span>
-      ) : null}
     </article>
   );
 
