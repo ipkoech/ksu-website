@@ -473,6 +473,8 @@ function DivisionHeadProfile({ data }: { data: AdministrationOfficeDetailData })
   const profileHref = `/staff/${person.id}`;
   const message = headMessageText(data);
   const contactLinks = buildHeadContactLinks(person, data.headProfile, profileHref);
+  const isAcademicDivision =
+    data.entity.entityKind === "division" && data.entity.code === "ARSA";
 
   return (
     <section id="profile" className="scroll-mt-28">
@@ -495,7 +497,11 @@ function DivisionHeadProfile({ data }: { data: AdministrationOfficeDetailData })
               )}
             </div>
             <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
-              {data.kind === "division" ? "Division Head" : "Directorate Head"}
+              {isAcademicDivision
+                ? "Academic leadership"
+                : data.kind === "division"
+                ? "Division Head"
+                : "Directorate Head"}
             </p>
           </div>
           <div className="grid min-w-0 content-start divide-y divide-slate-100">
@@ -612,6 +618,7 @@ function AboutSection({ data }: { data: AdministrationOfficeDetailData }) {
   const values = isDivision ? entity.core_values : null;
   const mandate = isDivision ? null : entity.mandate;
   const serviceCharter = isDivision ? null : entity.service_charter;
+  const isAcademicDivision = isDivision && entity.code === "ARSA";
 
   if (
     !description &&
@@ -628,8 +635,20 @@ function AboutSection({ data }: { data: AdministrationOfficeDetailData }) {
     <section className="grid gap-4">
       <SectionHeading
         id="about"
-        eyebrow={isDivision ? "Division Profile" : "Directorate Profile"}
-        title={isDivision ? "About the division" : "About the directorate"}
+        eyebrow={
+          isAcademicDivision
+            ? "Academic, Research & Student Affairs"
+            : isDivision
+            ? "Division Profile"
+            : "Directorate Profile"
+        }
+        title={
+          isAcademicDivision
+            ? "Academic leadership and support"
+            : isDivision
+            ? "About the division"
+            : "About the directorate"
+        }
       />
       {description ? (
         <article className="rounded-[1.25rem] border border-border bg-white p-5 shadow-sm">
@@ -703,14 +722,20 @@ function DirectoratesSection({
   data: AdministrationOfficeDetailData;
 }) {
   if (!data.childWings.length) return null;
+  const isAcademicDivision =
+    data.entity.entityKind === "division" && data.entity.code === "ARSA";
 
   return (
     <section className="grid gap-4">
       <SectionHeading
         id="directorates"
-        eyebrow="Administrative Units"
-        title="Units under this division"
-        body="These units coordinate broad portfolios and provide leadership for related administrative and academic-support functions."
+        eyebrow={isAcademicDivision ? "Academic support portfolios" : "Administrative Units"}
+        title={isAcademicDivision ? "Connect with the right office" : "Units under this division"}
+        body={
+          isAcademicDivision
+            ? "Find the office responsible for your academic journey, research support and student services."
+            : "These units coordinate broad portfolios and provide leadership for related administrative and academic-support functions."
+        }
       />
       <div className="grid gap-3 md:grid-cols-2">
         {data.childWings.map((wing) => (
