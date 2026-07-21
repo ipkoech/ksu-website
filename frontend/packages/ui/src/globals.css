@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Scroll reveals must never hide content when a user asks for reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  [data-scroll-reveal] {
+    clip-path: inset(0 0 0 0) !important;
+    filter: none !important;
+  }
+}
+
 /* ============================================
    KSU Design System - Global Styles
    ============================================ */

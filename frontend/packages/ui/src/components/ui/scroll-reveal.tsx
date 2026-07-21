@@ -17,7 +17,10 @@ type AnimationVariant =
   | "fade-left"
   | "fade-right"
   | "zoom-in"
-  | "zoom-out";
+  | "zoom-out"
+  | "mask-up"
+  | "blur-up"
+  | "clip-left";
 
 interface ScrollRevealProps {
   children: ReactNode;
@@ -55,6 +58,18 @@ const variantStyles: Record<AnimationVariant, { initial: string; animate: string
   "zoom-out": {
     initial: "opacity-0 scale-105",
     animate: "opacity-100 scale-100",
+  },
+  "mask-up": {
+    initial: "opacity-0 translate-y-5 [clip-path:inset(0_0_100%_0)] blur-[3px]",
+    animate: "opacity-100 translate-y-0 [clip-path:inset(0_0_0%_0)] blur-0",
+  },
+  "blur-up": {
+    initial: "opacity-0 translate-y-4 blur-[6px]",
+    animate: "opacity-100 translate-y-0 blur-0",
+  },
+  "clip-left": {
+    initial: "opacity-0 translate-x-6 [clip-path:inset(0_100%_0_0)]",
+    animate: "opacity-100 translate-x-0 [clip-path:inset(0_0%_0_0)]",
   },
 };
 

@@ -18,6 +18,7 @@ import type {
   HomepageSectionItem,
 } from "@/lib/homepage-sections";
 import { PublicImage } from "@/components/public/public-image";
+import { RevealHeading } from "@/components/home/landing-motion";
 
 type WhyKisiiSectionProps = {
   section: HomepageSection;
@@ -170,9 +171,9 @@ export function WhyKisiiSection({
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
               {section.subtitle ?? "Why choose KSU"}
             </p>
-            <h2 className="mt-2 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl lg:text-[2.75rem]">
+            <RevealHeading className="mt-2 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl lg:text-[2.75rem]">
               {section.title ?? "Why Kisii University?"}
-            </h2>
+            </RevealHeading>
           </div>
           <div className="lg:col-span-5 lg:col-start-8">
             {section.description ? (

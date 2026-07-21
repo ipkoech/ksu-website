@@ -31,6 +31,7 @@ import { NewsletterSubscribeForm } from "@/components/home/newsletter-subscribe-
 import { ProgrammeFinderInteractive } from "@/components/home/programme-finder-interactive";
 import { WhyKisiiSection } from "@/components/home/why-kisii-section";
 import { PublicImage } from "@/components/public/public-image";
+import { RevealCopy, RevealHeading } from "@/components/home/landing-motion";
 import type {
   HomeCard,
   HomeIntake,
@@ -88,13 +89,13 @@ export function FeaturedStoriesSection({ stories }: { stories?: HomeCard[] }) {
         <div>
           <SectionEyebrow value="Featured stories" />
           <div className="mt-3 grid gap-5 md:grid-cols-[0.78fr_1fr] md:items-end">
-            <h2 className="font-[family-name:var(--font-display)] text-4xl font-bold leading-[0.95] text-primary sm:text-5xl">
+            <RevealHeading className="font-[family-name:var(--font-display)] text-4xl font-bold leading-[0.95] text-primary sm:text-5xl">
               Voices and work shaping Kisii University.
-            </h2>
-            <p className="max-w-2xl text-base leading-7 text-muted-foreground">
+            </RevealHeading>
+            <RevealCopy className="max-w-2xl text-base leading-7 text-muted-foreground">
               Student, staff, alumni, partner, and community stories reviewed by
               Corporate Communication before publication.
-            </p>
+            </RevealCopy>
           </div>
           {lead ? (
             <LinkWrapper
@@ -724,13 +725,15 @@ export function FeaturedPartnershipSection({
             <SectionEyebrow
               value={section.subtitle ?? "Featured partnership"}
             />
-            <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl lg:text-5xl">
+            <RevealHeading className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl lg:text-5xl">
               {title ?? "Partnership spotlight"}
-            </h2>
-            <SectionBody
-              value={summary}
-              className="mt-4 max-w-2xl text-base leading-7"
-            />
+            </RevealHeading>
+            <RevealCopy>
+              <SectionBody
+                value={summary}
+                className="mt-4 max-w-2xl text-base leading-7"
+              />
+            </RevealCopy>
             <div className="mt-7 divide-y divide-blue-100 border-y border-border">
               {pillars.slice(0, 4).map((pillar, index) => (
                 <div
@@ -1147,22 +1150,24 @@ function CampusLifeLane({
       className="group relative min-h-[230px] overflow-hidden bg-primary text-white transition duration-300 hover:bg-primary/95 sm:min-h-[260px] lg:min-h-[560px] lg:w-[min(430px,58vw)] lg:snap-start lg:border-l lg:border-white/15 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
       style={{ animationDelay: `${Math.min(index, 5) * 80}ms` }}
     >
-      <PublicImage
-        src={lane.imageUrl}
-        alt={
-          lane.imageAlt ??
-          lane.source?.media_alt_text ??
-          lane.source?.title ??
-          "Campus life"
-        }
-        ratio="fill"
-        className="absolute inset-0 h-full rounded-none"
-        imageClassName={[
-          "object-cover transition duration-700 group-hover:scale-[1.03]",
-          index % 2 === 0 ? "object-center" : "object-[42%_50%]",
-        ].join(" ")}
-        sizes="(min-width: 1024px) 28vw, 90vw"
-      />
+      <ImageCurtainReveal className="absolute inset-0 h-full" direction={index % 2 === 0 ? "down" : "up"}>
+        <PublicImage
+          src={lane.imageUrl}
+          alt={
+            lane.imageAlt ??
+            lane.source?.media_alt_text ??
+            lane.source?.title ??
+            "Campus life"
+          }
+          ratio="fill"
+          className="absolute inset-0 h-full rounded-none"
+          imageClassName={[
+            "object-cover transition duration-700 group-hover:scale-[1.03]",
+            index % 2 === 0 ? "object-center" : "object-[42%_50%]",
+          ].join(" ")}
+          sizes="(min-width: 1024px) 28vw, 90vw"
+        />
+      </ImageCurtainReveal>
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,23,57,.04),rgba(3,23,57,.18)_34%,rgba(3,23,57,.90))]" />
       <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4 text-white/80 sm:p-5">
         <span className="font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-white/25">
@@ -1414,9 +1419,9 @@ export function ResearchCardsSection({ section }: SectionVariantProps) {
             value={section.subtitle ?? "Research and innovation"}
             light
           />
-          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
-            {section.title ?? "Transforming Communities Through Research"}
-          </h2>
+            <RevealHeading className="mt-3 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
+              {section.title ?? "Transforming Communities Through Research"}
+            </RevealHeading>
           <SectionBody
             value={
               section.description ??
@@ -1552,16 +1557,18 @@ export function NewsGridSection({
             <SectionEyebrow
               value={section.subtitle ?? "Kisii University Updates"}
             />
-            <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-bold leading-[0.95] text-primary sm:text-5xl lg:text-6xl">
+          <RevealHeading className="mt-3 font-[family-name:var(--font-display)] text-4xl font-bold leading-[0.95] text-primary sm:text-5xl lg:text-6xl">
               {section.title ?? "Stories, News & Events"}
-            </h2>
-            <SectionBody
-              value={
-                section.description ??
-                "Discover what is happening across campus—partnerships that create impact, achievements that inspire, and events that bring us together."
-              }
-              className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground"
-            />
+          </RevealHeading>
+            <RevealCopy>
+              <SectionBody
+                value={
+                  section.description ??
+                  "Discover what is happening across campus—partnerships that create impact, achievements that inspire, and events that bring us together."
+                }
+                className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground"
+              />
+            </RevealCopy>
           </div>
           <nav
             className="flex flex-wrap items-center gap-4 text-sm font-bold text-primary sm:gap-7"
@@ -2257,9 +2264,9 @@ function SectionHeading({
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <SectionEyebrow value={section.subtitle} />
-        <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground sm:text-4xl">
+        <RevealHeading className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground sm:text-4xl">
           {section.title ?? fallback}
-        </h2>
+        </RevealHeading>
         <SectionBody value={section.description} className="mt-3 max-w-3xl" />
       </div>
       {Icon ? (

@@ -1,4 +1,5 @@
 import { Fragment, type ReactElement } from "react";
+import { ScrollReveal } from "@ksu/ui/components";
 import {
   AlumniStorySection,
   DateTimelineSection,
@@ -100,20 +101,45 @@ export function HomepageSectionRenderer({
   }
 
   const Renderer = HOMEPAGE_SECTION_RENDERERS[section.layout_variant];
+  const motionVariant = sectionMotionVariant(section.layout_variant);
   return (
-    <Renderer
-      section={section}
-      hero={hero}
-      factsSection={factsSection}
-      partnershipSpotlights={partnershipSpotlights}
-      academicDatesSection={academicDatesSection}
-      eventsSection={eventsSection}
-      programmeFinderData={programmeFinderData}
-      featuredStories={featuredStories}
-      socialLinks={socialLinks}
-      vcHub={vcHub}
-    />
+    <ScrollReveal
+      variant={motionVariant}
+      duration={720}
+      rootMargin="0px 0px 18% 0px"
+      className="will-change-transform"
+    >
+      <Renderer
+        section={section}
+        hero={hero}
+        factsSection={factsSection}
+        partnershipSpotlights={partnershipSpotlights}
+        academicDatesSection={academicDatesSection}
+        eventsSection={eventsSection}
+        programmeFinderData={programmeFinderData}
+        featuredStories={featuredStories}
+        socialLinks={socialLinks}
+        vcHub={vcHub}
+      />
+    </ScrollReveal>
   );
+}
+
+function sectionMotionVariant(
+  variant: HomepageSectionLayoutVariant,
+): "fade-up" | "fade-left" | "fade-right" | "blur-up" | "clip-left" {
+  switch (variant) {
+    case "featured_partnership":
+    case "leadership_activity":
+      return "fade-left";
+    case "research_cards":
+    case "logo_carousel":
+      return "clip-left";
+    case "pulse_strip":
+      return "blur-up";
+    default:
+      return "fade-up";
+  }
 }
 
 export function HomepageSections({
