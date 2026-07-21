@@ -81761,6 +81761,66 @@
       }
     },
     "/api/v1/vice-chancellor/galleries/{album_id}/media": {
+      "get": {
+        "operationId": "list_gallery_media_api_v1_vice_chancellor_galleries__album_id__media_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Gallery Media",
+        "tags": [
+          "Vice Chancellor"
+        ]
+      },
       "post": {
         "operationId": "attach_gallery_media_api_v1_vice_chancellor_galleries__album_id__media_post",
         "parameters": [
@@ -82981,6 +83041,66 @@
       }
     },
     "/api/v1/vice-chancellor/speeches/{speech_id}/videos": {
+      "get": {
+        "operationId": "list_speech_videos_api_v1_vice_chancellor_speeches__speech_id__videos_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "speech_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Speech Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Speech Videos",
+        "tags": [
+          "Vice Chancellor"
+        ]
+      },
       "post": {
         "operationId": "attach_speech_video_api_v1_vice_chancellor_speeches__speech_id__videos_post",
         "parameters": [

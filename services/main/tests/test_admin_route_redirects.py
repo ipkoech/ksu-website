@@ -10,7 +10,6 @@ class AdminRouteRedirectTests(unittest.TestCase):
         redirects = {
             "governance": "/admin",
             "institutional-administration": "/admin",
-            "corporate-communication": "/cocms",
         }
 
         for route, destination in redirects.items():
@@ -19,3 +18,10 @@ class AdminRouteRedirectTests(unittest.TestCase):
             self.assertIn(f'redirect("{destination}");', source)
             self.assertNotIn("PortalShell", source)
 
+    def test_corporate_communication_is_the_canonical_portal(self):
+        source = (ADMIN_APP / "corporate-communication" / "layout.tsx").read_text()
+        legacy = (ADMIN_APP / "cocms" / "page.tsx").read_text()
+
+        self.assertIn('portalKey="corporate-communication"', source)
+        self.assertNotIn("redirect(", source)
+        self.assertIn('redirect("/corporate-communication")', legacy)

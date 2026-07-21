@@ -511,8 +511,20 @@ class ViceChancellorPublicService:
     @staticmethod
     async def get_speech(db: AsyncSession, slug: str, *, now: datetime | None = None) -> dict[str, Any] | None:
         now = now or datetime.now(timezone.utc)
-        speech = (await db.execute(select(VcSpeech).where(VcSpeech.slug == slug, *_visibility(VcSpeech, now)))).scalar_one_or_none()
-        return _serialize_speech(speech) if speech else None
+        speech = (await db.execute(
+            select(VcSpeech)
+            .options(selectinload(VcSpeech.video_links).selectinload(VcSpeechVideo.video))
+            .where(VcSpeech.slug == slug, *_visibility(VcSpeech, now))
+        )).scalar_one_or_none()
+        if speech is None:
+            return None
+        payload = _serialize_speech(speech)
+        payload["videos"] = [
+            {**_serialize_video(link.video), "role": link.role, "display_order": link.display_order}
+            for link in speech.video_links
+            if _is_public_now(link.video, now)
+        ]
+        return payload
 
     @staticmethod
     async def get_gallery(db: AsyncSession, slug: str, *, now: datetime | None = None) -> dict[str, Any] | None:

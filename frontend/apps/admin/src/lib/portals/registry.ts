@@ -6940,8 +6940,19 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "homepage.view",
           "homepage.manage",
           "partnership_spotlights.manage",
+          "vc_hub.view",
+          "vc_hub.manage",
+          "vc_hub.review",
+          "vc_hub.publish",
+          "admin:*",
         ],
         children: [
+          {
+            title: "Meet the VC",
+            href: "/corporate-communication/meet-the-vc",
+            icon: Landmark,
+            scope: ["vc_hub.view", "vc_hub.manage", "vc_hub.review", "vc_hub.publish", "admin:*"],
+          },
           {
             title: "Page CMS",
             href: "/corporate-communication/page-cms",

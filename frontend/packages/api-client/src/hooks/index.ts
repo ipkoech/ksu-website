@@ -24,3 +24,4 @@ export * from "./use-staff";
 export * from "./use-governance";
 export * from "./use-reports";
 export * from "./use-imports";
+export * from "./use-vice-chancellor";

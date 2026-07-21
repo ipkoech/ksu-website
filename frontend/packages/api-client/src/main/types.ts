@@ -2940,3 +2940,274 @@ export interface PaginatedResponse<T> {
     total_pages?: number;
   };
 }
+
+export type VcSection =
+  | "story"
+  | "activities"
+  | "speeches"
+  | "videos"
+  | "events"
+  | "gallery";
+export type VcPlacementSection = Exclude<VcSection, "story">;
+export type VcWorkflowStatus =
+  | "draft"
+  | "in_review"
+  | "changes_requested"
+  | "approved"
+  | "published"
+  | "archived";
+export type VcWorkflowAction =
+  | "submit"
+  | "approve"
+  | "request_changes"
+  | "publish"
+  | "unpublish"
+  | "archive";
+
+export interface VcPublicMedia {
+  id: string;
+  filename?: string | null;
+  original_filename?: string | null;
+  mime_type?: string | null;
+  media_type?: string | null;
+  url?: string | null;
+  thumbnail_url?: string | null;
+  alt_text?: string | null;
+  title?: string | null;
+  caption?: string | null;
+  width?: number | null;
+  height?: number | null;
+  duration?: number | null;
+}
+
+export interface VcWorkflowRecord {
+  id: string;
+  status: VcWorkflowStatus;
+  workflow_status: VcWorkflowStatus;
+  is_public: boolean;
+  is_published: boolean;
+  published_at?: string | null;
+  valid_from?: string | null;
+  valid_to?: string | null;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VcVideo extends VcWorkflowRecord {
+  title: string;
+  slug: string;
+  summary?: string | null;
+  transcript?: string | null;
+  provider: "youtube" | "uploaded";
+  source_url?: string | null;
+  provider_video_id?: string | null;
+  embed_url?: string | null;
+  thumbnail_url?: string | null;
+  poster_media_id?: string | null;
+  uploaded_media_id?: string | null;
+  duration_seconds?: number | null;
+  recorded_at?: string | null;
+  category?: string | null;
+  is_featured: boolean;
+}
+
+export interface VcSpeech extends VcWorkflowRecord {
+  title: string;
+  slug: string;
+  summary?: string | null;
+  plain_text?: string | null;
+  rich_text?: string | null;
+  structured_content?: Record<string, unknown> | null;
+  related_links?: Array<Record<string, unknown>> | null;
+  featured_media_id?: string | null;
+  document_media_id?: string | null;
+  speech_type: "speech" | "address" | "statement" | "reflection" | "interview";
+  delivered_at?: string | null;
+  venue?: string | null;
+  occasion?: string | null;
+  audience?: string | null;
+  is_featured: boolean;
+}
+
+export interface VcGalleryAlbum extends VcWorkflowRecord {
+  title: string;
+  slug: string;
+  summary?: string | null;
+  event_date?: string | null;
+  location?: string | null;
+  cover_media_id?: string | null;
+  cover?: VcPublicMedia | null;
+  media?: VcPublicMedia[];
+  is_featured: boolean;
+}
+
+export interface VcHub extends VcWorkflowRecord {
+  staff_assignment_id?: string | null;
+  eyebrow: string;
+  title: string;
+  introduction?: string | null;
+  welcome_title?: string | null;
+  welcome_message?: string | null;
+  hero_media_id?: string | null;
+  welcome_video_id?: string | null;
+  professional_profile_url: string;
+  section_order: VcSection[];
+  section_visibility: Partial<Record<VcSection, boolean>>;
+}
+
+export interface VcHubUpdatePayload {
+  staff_assignment_id?: string | null;
+  eyebrow?: string;
+  title?: string;
+  introduction?: string | null;
+  welcome_title?: string | null;
+  welcome_message?: string | null;
+  hero_media_id?: string | null;
+  welcome_video_id?: string | null;
+  professional_profile_url?: string;
+  section_order?: VcSection[];
+  section_visibility?: Partial<Record<VcSection, boolean>>;
+}
+
+export interface VcVideoPayload {
+  title: string;
+  slug: string;
+  summary?: string | null;
+  transcript?: string | null;
+  provider: "youtube" | "uploaded";
+  source_url?: string | null;
+  uploaded_media_id?: string | null;
+  poster_media_id?: string | null;
+  duration_seconds?: number | null;
+  recorded_at?: string | null;
+  category?: string | null;
+  is_featured?: boolean;
+  display_order?: number;
+}
+
+export interface VcSpeechPayload {
+  title: string;
+  slug: string;
+  summary?: string | null;
+  plain_text?: string | null;
+  rich_text?: string | null;
+  featured_media_id?: string | null;
+  document_media_id?: string | null;
+  speech_type?: VcSpeech["speech_type"];
+  delivered_at?: string | null;
+  venue?: string | null;
+  occasion?: string | null;
+  audience?: string | null;
+  is_featured?: boolean;
+  display_order?: number;
+}
+
+export interface VcGalleryPayload {
+  title: string;
+  slug: string;
+  summary?: string | null;
+  event_date?: string | null;
+  location?: string | null;
+  cover_media_id?: string | null;
+  is_featured?: boolean;
+  display_order?: number;
+}
+
+export interface VcHubPlacement {
+  id: string;
+  hub_id: string;
+  section: VcPlacementSection;
+  news_id?: string | null;
+  event_id?: string | null;
+  speech_id?: string | null;
+  video_id?: string | null;
+  gallery_album_id?: string | null;
+  editorial_label?: string | null;
+  title_override?: string | null;
+  summary_override?: string | null;
+  poster_media_id?: string | null;
+  is_featured: boolean;
+  display_order: number;
+  visible_from?: string | null;
+  visible_to?: string | null;
+  is_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type VcPlacementPayload = Omit<
+  VcHubPlacement,
+  "id" | "hub_id" | "created_at" | "updated_at" | "is_featured" | "display_order" | "is_enabled"
+> & {
+  is_featured?: boolean;
+  display_order?: number;
+  is_enabled?: boolean;
+};
+
+export interface VcPublicItem {
+  id: string;
+  title: string;
+  slug?: string | null;
+  summary?: string | null;
+  editorial_label?: string | null;
+  is_featured?: boolean;
+  start_date?: string | null;
+  delivered_at?: string | null;
+  event_date?: string | null;
+  location?: string | null;
+  venue?: string | null;
+  occasion?: string | null;
+  speech_type?: string | null;
+  provider?: "youtube" | "uploaded";
+  source_url?: string | null;
+  embed_url?: string | null;
+  thumbnail_url?: string | null;
+  cover?: VcPublicMedia | null;
+}
+
+export interface VcPublicHub {
+  id: string;
+  eyebrow: string;
+  title: string;
+  introduction?: string | null;
+  welcome_title?: string | null;
+  welcome_message?: string | null;
+  hero_media?: VcPublicMedia | null;
+  welcome_video?: VcPublicItem | null;
+  professional_profile_url: string;
+  section_order: VcSection[];
+  section_visibility: Partial<Record<VcSection, boolean>>;
+  sections: Record<VcSection, VcPublicItem[]>;
+}
+
+export type VcPublicSpeech = VcPublicItem & {
+  plain_text?: string | null;
+  rich_text?: string | null;
+  audience?: string | null;
+  videos?: Array<VcPublicItem & { role: string; display_order: number }>;
+};
+export type VcPublicGallery = VcPublicItem & {
+  cover?: VcPublicMedia | null;
+  media: VcPublicMedia[];
+};
+
+export interface VcListResponse<T> {
+  data: { items: T[]; meta: PaginatedResponse<T>["meta"] };
+}
+
+export interface VcSpeechVideoLink {
+  id: string;
+  speech_id: string;
+  video_id: string;
+  role: "primary" | "full_recording" | "excerpt" | "related";
+  display_order: number;
+  video?: VcVideo | null;
+}
+
+export interface VcGalleryMediaLink {
+  id: string;
+  media_id: string;
+  display_order: number;
+  media?: VcPublicMedia | null;
+}

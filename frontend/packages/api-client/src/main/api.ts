@@ -110,6 +110,23 @@ import type {
   PublicEntityContentType,
   PublicEntityTeam,
   PublicEntityType,
+  VcGalleryAlbum,
+  VcGalleryPayload,
+  VcHub,
+  VcHubPlacement,
+  VcHubUpdatePayload,
+  VcListResponse,
+  VcPlacementPayload,
+  VcPublicGallery,
+  VcPublicHub,
+  VcPublicSpeech,
+  VcSpeech,
+  VcSpeechPayload,
+  VcSpeechVideoLink,
+  VcVideo,
+  VcVideoPayload,
+  VcWorkflowAction,
+  VcGalleryMediaLink,
 } from "./types";
 import type { FieldSelectionParams, QueryParams } from "../client";
 
@@ -2235,4 +2252,76 @@ export const leadershipApi = {
       "/api/v1/public/leadership/list",
       params,
     ),
+};
+
+const VC_BASE = "/api/v1/vice-chancellor";
+const VC_PUBLIC_BASE = "/api/v1/public/vice-chancellor";
+
+export const viceChancellorApi = {
+  publicHub: () => mainApi.get<{ data: VcPublicHub }>(VC_PUBLIC_BASE),
+  publicSpeech: (slug: string) =>
+    mainApi.get<{ data: VcPublicSpeech }>(`${VC_PUBLIC_BASE}/speeches/${slug}`),
+  publicGallery: (slug: string) =>
+    mainApi.get<{ data: VcPublicGallery }>(`${VC_PUBLIC_BASE}/galleries/${slug}`),
+  hub: () => mainApi.get<{ data: VcHub }>(`${VC_BASE}/hub`),
+  updateHub: (data: VcHubUpdatePayload) =>
+    mainApi.patch<{ data: VcHub }>(`${VC_BASE}/hub`, data),
+  transitionHub: (action: VcWorkflowAction, reason?: string) =>
+    mainApi.post<{ data: VcHub }>(`${VC_BASE}/hub/${action}`, { reason }),
+  listVideos: (params?: QueryParams) =>
+    mainApi.get<VcListResponse<VcVideo>>(`${VC_BASE}/videos`, params),
+  createVideo: (data: VcVideoPayload) =>
+    mainApi.post<{ data: VcVideo; meta?: { created?: boolean; metadata_warning?: string | null } }>(`${VC_BASE}/videos`, data),
+  updateVideo: (id: string, data: Partial<VcVideoPayload>) =>
+    mainApi.patch<{ data: VcVideo }>(`${VC_BASE}/videos/${id}`, data),
+  deleteVideo: (id: string) => mainApi.delete<void>(`${VC_BASE}/videos/${id}`),
+  previewYoutube: (url: string) =>
+    mainApi.post<{ data: { video_id: string; canonical_url: string; embed_url: string; thumbnail_url: string; title?: string; author_name?: string } }>(
+      `${VC_BASE}/videos/youtube/preview`, { url },
+    ),
+  refreshVideo: (id: string) =>
+    mainApi.post<{ data: VcVideo }>(`${VC_BASE}/videos/${id}/refresh-metadata`),
+  listSpeeches: (params?: QueryParams) =>
+    mainApi.get<VcListResponse<VcSpeech>>(`${VC_BASE}/speeches`, params),
+  createSpeech: (data: VcSpeechPayload) =>
+    mainApi.post<{ data: VcSpeech }>(`${VC_BASE}/speeches`, data),
+  updateSpeech: (id: string, data: Partial<VcSpeechPayload>) =>
+    mainApi.patch<{ data: VcSpeech }>(`${VC_BASE}/speeches/${id}`, data),
+  deleteSpeech: (id: string) => mainApi.delete<void>(`${VC_BASE}/speeches/${id}`),
+  attachSpeechVideo: (speechId: string, data: { video_id: string; role: "primary" | "full_recording" | "excerpt" | "related"; display_order?: number }) =>
+    mainApi.post(`${VC_BASE}/speeches/${speechId}/videos`, data),
+  listSpeechVideos: (speechId: string) =>
+    mainApi.get<{ data: VcSpeechVideoLink[] }>(`${VC_BASE}/speeches/${speechId}/videos`),
+  detachSpeechVideo: (speechId: string, linkId: string) =>
+    mainApi.delete<void>(`${VC_BASE}/speeches/${speechId}/videos/${linkId}`),
+  listGalleries: (params?: QueryParams) =>
+    mainApi.get<VcListResponse<VcGalleryAlbum>>(`${VC_BASE}/galleries`, params),
+  createGallery: (data: VcGalleryPayload) =>
+    mainApi.post<{ data: VcGalleryAlbum }>(`${VC_BASE}/galleries`, data),
+  updateGallery: (id: string, data: Partial<VcGalleryPayload>) =>
+    mainApi.patch<{ data: VcGalleryAlbum }>(`${VC_BASE}/galleries/${id}`, data),
+  deleteGallery: (id: string) => mainApi.delete<void>(`${VC_BASE}/galleries/${id}`),
+  attachGalleryMedia: (albumId: string, data: { media_id: string; display_order?: number; caption?: string | null; alt_text?: string | null }) =>
+    mainApi.post(`${VC_BASE}/galleries/${albumId}/media`, data),
+  listGalleryMedia: (albumId: string) =>
+    mainApi.get<{ data: VcGalleryMediaLink[] }>(`${VC_BASE}/galleries/${albumId}/media`),
+  detachGalleryMedia: (albumId: string, linkId: string) =>
+    mainApi.delete<void>(`${VC_BASE}/galleries/${albumId}/media/${linkId}`),
+  reorderGalleryMedia: (albumId: string, items: Array<{ id: string; display_order: number }>) =>
+    mainApi.post(`${VC_BASE}/galleries/${albumId}/media/reorder`, { items }),
+  listPlacements: () =>
+    mainApi.get<{ data: VcHubPlacement[] }>(`${VC_BASE}/placements`),
+  createPlacement: (data: VcPlacementPayload) =>
+    mainApi.post<{ data: VcHubPlacement }>(`${VC_BASE}/placements`, data),
+  updatePlacement: (id: string, data: Partial<VcPlacementPayload>) =>
+    mainApi.patch<{ data: VcHubPlacement }>(`${VC_BASE}/placements/${id}`, data),
+  deletePlacement: (id: string) => mainApi.delete<void>(`${VC_BASE}/placements/${id}`),
+  reorderPlacements: (items: Array<{ id: string; display_order: number }>) =>
+    mainApi.post(`${VC_BASE}/placements/reorder`, { items }),
+  lookupNews: (q?: string) =>
+    mainApi.get<{ data: News[] }>(`${VC_BASE}/lookups/news`, q ? { q } : undefined),
+  lookupEvents: (q?: string) =>
+    mainApi.get<{ data: Event[] }>(`${VC_BASE}/lookups/events`, q ? { q } : undefined),
+  transition: <T extends VcVideo | VcSpeech | VcGalleryAlbum>(resource: "videos" | "speeches" | "galleries", id: string, action: VcWorkflowAction, reason?: string) =>
+    mainApi.post<{ data: T }>(`${VC_BASE}/${resource}/${id}/${action}`, { reason }),
 };

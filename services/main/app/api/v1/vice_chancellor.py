@@ -11,7 +11,7 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ...deps import CurrentUser, DbSession, user_has_scope
-from ...models import Event, MediaLink, News, VcGalleryAlbum, VcHubPlacement, VcSpeech, VcSpeechVideo, VcVideo
+from ...models import Event, Media, MediaLink, News, VcGalleryAlbum, VcHubPlacement, VcSpeech, VcSpeechVideo, VcVideo
 from ...schemas.vice_chancellor import (
     VcGalleryAlbumCreate,
     VcGalleryAlbumUpdate,
@@ -39,6 +39,7 @@ from ...services.vice_chancellor_youtube import (
     fetch_youtube_oembed,
     normalize_youtube_url,
 )
+from ...services.vice_chancellor import serialize_public_media
 
 router = APIRouter()
 
@@ -192,6 +193,26 @@ async def attach_speech_video(speech_id: uuid.UUID, data: VcSpeechVideoCreate, d
         raise _validation_error(exc) from exc
 
 
+@router.get("/vice-chancellor/speeches/{speech_id}/videos")
+async def list_speech_videos(speech_id: uuid.UUID, db: DbSession, user: CurrentUser):
+    _require_vc_action(user, "view")
+    await _record_or_404(db, VcSpeech, speech_id)
+    links = (await db.execute(
+        VcSpeechVideo.active_query().where(
+            VcSpeechVideo.speech_id == speech_id,
+        ).order_by(VcSpeechVideo.display_order)
+    )).scalars().all()
+    videos = {link.video_id: await db.get(VcVideo, link.video_id) for link in links}
+    return success(data=[{
+        "id": link.id,
+        "speech_id": link.speech_id,
+        "video_id": link.video_id,
+        "role": link.role,
+        "display_order": link.display_order,
+        "video": videos.get(link.video_id),
+    } for link in links])
+
+
 @router.delete("/vice-chancellor/speeches/{speech_id}/videos/{link_id}", status_code=204)
 async def detach_speech_video(speech_id: uuid.UUID, link_id: uuid.UUID, db: DbSession, user: CurrentUser):
     _require_vc_action(user, "manage")
@@ -243,6 +264,25 @@ async def attach_gallery_media(album_id: uuid.UUID, data: VcGalleryMediaCreate, 
         return success(data=await ViceChancellorAdminService.attach_gallery_media(db, await _record_or_404(db, VcGalleryAlbum, album_id), data))
     except ValueError as exc:
         raise _validation_error(exc) from exc
+
+
+@router.get("/vice-chancellor/galleries/{album_id}/media")
+async def list_gallery_media(album_id: uuid.UUID, db: DbSession, user: CurrentUser):
+    _require_vc_action(user, "view")
+    await _record_or_404(db, VcGalleryAlbum, album_id)
+    links = (await db.execute(
+        MediaLink.active_query().where(
+            MediaLink.entity_type == "vc_gallery_album",
+            MediaLink.entity_id == album_id,
+        ).order_by(MediaLink.display_order)
+    )).scalars().all()
+    media = {link.media_id: await db.get(Media, link.media_id) for link in links}
+    return success(data=[{
+        "id": link.id,
+        "media_id": link.media_id,
+        "display_order": link.display_order,
+        "media": serialize_public_media(media.get(link.media_id)),
+    } for link in links])
 
 
 @router.post("/vice-chancellor/galleries/{album_id}/media/reorder")

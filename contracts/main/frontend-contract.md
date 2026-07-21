@@ -5974,6 +5974,15 @@ Attach Gallery Media
 - Parameters: `album_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
+### `GET /api/v1/vice-chancellor/galleries/{album_id}/media`
+
+List Gallery Media
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `album_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ### `POST /api/v1/vice-chancellor/galleries/{album_id}/media/reorder`
 
 Reorder Gallery Media
@@ -6144,6 +6153,15 @@ Attach Speech Video
 - Request body: VcSpeechVideoCreate
 - Parameters: `speech_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/vice-chancellor/speeches/{speech_id}/videos`
+
+List Speech Videos
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `speech_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `DELETE /api/v1/vice-chancellor/speeches/{speech_id}/videos/{link_id}`
 
