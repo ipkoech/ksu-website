@@ -209,24 +209,13 @@ export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
     desktopMedia,
     "Kisii University central administration campus",
   );
-  const sourceHeadline =
-    content?.headline ?? section.title ?? "Kisii University";
-  const headline = isGenericHeroHeadline(sourceHeadline)
-    ? "Education that opens doors"
-    : sourceHeadline;
-  const highlight =
-    content?.highlight ??
-    (isGenericHeroHeadline(sourceHeadline)
-      ? "Research that serves communities."
-      : undefined);
+  const headline = content?.headline ?? section.title ?? "Kisii University";
+  const highlight = content?.highlight;
   const description =
-    content?.description && !isGenericHeroDescription(content.description)
-      ? content.description
-      : section.subtitle && !isGenericHeroDescription(section.subtitle)
-        ? section.subtitle
-        : section.description && !isGenericHeroDescription(section.description)
-          ? section.description
-          : "Explore programmes, research, partnerships and student life at Kisii University.";
+    content?.description ??
+    section.subtitle ??
+    section.description ??
+    "Advancing inclusive education, research, innovation and community impact.";
   const actions = heroActions(content?.actions, section.items, admissions);
 
   return (
@@ -513,19 +502,6 @@ function normalizeHeroHref(href: string) {
     return "/academics/programmes";
   }
   return href;
-}
-
-function isGenericHeroHeadline(value?: string | null) {
-  return /^kisii university$/i.test(value?.trim() ?? "");
-}
-
-function isGenericHeroDescription(value?: string | null) {
-  const normalized = value?.trim().toLowerCase() ?? "";
-  return (
-    !normalized ||
-    normalized ===
-      "advancing inclusive education, research, innovation and community impact."
-  );
 }
 
 function formatPublicDate(value?: string | null) {
@@ -2195,59 +2171,33 @@ export function AlumniStorySection({ section }: SectionVariantProps) {
 }
 
 export function FactsStripSection({ section }: SectionVariantProps) {
-  const facts = displayItems(section).slice(0, 7);
-  if (!facts.length) return null;
-
   return (
-    <section className="border-b border-border bg-white/90 backdrop-blur-[1px]">
-      <div className="mx-auto grid max-w-[1680px] gap-4 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(180px,0.72fr)_minmax(0,3fr)] lg:items-center lg:px-8 xl:px-10 2xl:px-12">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
-            Proof at a glance
-          </p>
-          <h2 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-primary sm:text-2xl">
-            {section.title ?? "Kisii University at a glance"}
-          </h2>
-        </div>
-        <div className="grid grid-cols-2 gap-x-5 gap-y-4 sm:grid-cols-4 lg:grid-cols-7">
-          {facts.map((item, index) => {
-            const Icon = statIconForIndex(index);
-            return (
+    <section className="bg-primary py-10 text-white">
+      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <SectionEyebrow
+          value={section.title ?? "Kisii University at a glance"}
+          light
+        />
+        <div className="mt-5 grid grid-cols-2 gap-y-6 sm:grid-cols-4 lg:grid-cols-7">
+          {displayItems(section)
+            .slice(0, 7)
+            .map((item) => (
               <div
                 key={item.id}
-                className="group min-w-0 border-l border-border pl-4 first:border-l-0 first:pl-0 sm:[&:nth-child(5)]:border-l-0 sm:[&:nth-child(5)]:pl-0 lg:[&:nth-child(5)]:border-l lg:[&:nth-child(5)]:pl-4"
+                className="border-l border-white/20 px-4 first:border-l-0 first:pl-0"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-primary ring-1 ring-border transition-colors group-hover:bg-primary group-hover:text-white">
-                    <Icon className="h-4 w-4" aria-hidden />
-                  </span>
-                  <p className="font-[family-name:var(--font-display)] text-2xl font-semibold leading-none text-primary lg:text-3xl">
-                    {item.title}
-                  </p>
-                </div>
-                <p className="mt-2 line-clamp-2 text-xs font-semibold uppercase leading-5 tracking-[0.08em] text-muted-foreground">
+                <p className="font-[family-name:var(--font-display)] text-3xl font-semibold">
+                  {item.title}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-white/75">
                   {item.body_text ?? item.subtitle}
                 </p>
               </div>
-            );
-          })}
+            ))}
         </div>
       </div>
     </section>
   );
-}
-
-function statIconForIndex(index: number): LucideIcon {
-  const icons = [
-    GraduationCap,
-    BookOpenCheck,
-    Users,
-    Landmark,
-    Lightbulb,
-    MapPin,
-    Award,
-  ];
-  return icons[index % icons.length];
 }
 
 export function VideoFeatureSection({ section }: SectionVariantProps) {
