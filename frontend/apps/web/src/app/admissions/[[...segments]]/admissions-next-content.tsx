@@ -7,12 +7,17 @@ import {
   ClipboardCheck,
   Download,
   ExternalLink,
+  Files,
   FileText,
   GraduationCap,
   HelpCircle,
   Landmark,
+  PlayCircle,
+  Radio,
+  Route,
   Search,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type {
@@ -25,7 +30,9 @@ import type {
   ProgrammeFeeStructure,
 } from "@ksu/api-client";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
+import { PublicImage } from "@/components/public/public-image";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { publicFileUrl } from "@/lib/public-media";
 import type {
   AdmissionsIntakeSummary,
   AdmissionsPageData,
@@ -253,7 +260,8 @@ export function AdmissionsNextContent({
   return (
     <PageShell>
       <AboutPageLenis>
-        <AdmissionsHero intakes={data.intakes} />
+        <AdmissionsVisualStyles />
+        <AdmissionsHero data={data} />
         <PathwaySelector
           pathways={pathways}
           activeSlug={selectedPathway?.slug}
@@ -281,12 +289,24 @@ export function AdmissionsNextContent({
   );
 }
 
-function AdmissionsHero({ intakes }: { intakes: AdmissionsIntakeSummary[] }) {
-  const current = currentIntake(intakes);
+function AdmissionsHero({ data }: { data: AdmissionsPageData }) {
+  const current = currentIntake(data.intakes);
+  const heroSection = data.pageSections.find(
+    (section) =>
+      section.page_key === "admissions" && section.section_key === "hero",
+  );
+  const heroImageUrl =
+    publicFileUrl(heroSection?.media_id) ??
+    data.admissionInfo.find((item) => item.coverImageUrl)?.coverImageUrl;
+  const heroVideoUrl = settingString(heroSection?.settings, [
+    "videoUrl",
+    "video_url",
+    "video",
+  ]);
   return (
-    <section className="border-b border-border bg-[linear-gradient(135deg,#ffffff_0%,hsl(var(--surface-subtle))_48%,rgba(14,165,233,0.14)_100%)] px-4 py-8 sm:px-6 lg:px-8 lg:py-12 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,430px)] lg:items-center">
-        <div>
+    <section className="overflow-hidden border-b border-border bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,0.18),transparent_34%),linear-gradient(135deg,#ffffff_0%,hsl(var(--surface-subtle))_52%,rgba(14,165,233,0.12)_100%)] px-4 py-8 sm:px-6 lg:px-8 lg:py-12 xl:px-10 2xl:px-12">
+      <div className="mx-auto grid max-w-[1680px] gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.72fr)] lg:items-center">
+        <div className="motion-safe:animate-[admissions-rise_.7s_ease-out_both]">
           <BreadcrumbTrail
             items={[
               { label: "Home", href: "/" },
@@ -317,7 +337,16 @@ function AdmissionsHero({ intakes }: { intakes: AdmissionsIntakeSummary[] }) {
             paying.
           </p>
         </div>
-        <CurrentIntakePanel intake={current} />
+        <div className="grid gap-4 motion-safe:animate-[admissions-rise_.8s_ease-out_.08s_both]">
+          <AdmissionsMediaFrame
+            title="Admissions guide"
+            caption="A visual walkthrough for choosing a pathway, applying and tracking your admission."
+            imageUrl={heroImageUrl}
+            videoUrl={heroVideoUrl}
+            variant="hero"
+          />
+          <CurrentIntakePanel intake={current} />
+        </div>
       </div>
     </section>
   );
@@ -338,9 +367,9 @@ function CurrentIntakePanel({ intake }: { intake?: AdmissionsIntakeSummary }) {
       ];
 
   return (
-    <aside className="rounded-[1.6rem] border border-border bg-white p-5 shadow-xl shadow-primary/10 sm:p-6">
+    <aside className="rounded-[1.25rem] border border-white/70 bg-white/[0.92] p-5 shadow-xl shadow-primary/10 backdrop-blur sm:p-6">
       <div className="flex items-start gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-white">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/20">
           <CalendarDays className="h-5 w-5" aria-hidden />
         </span>
         <div>
@@ -356,7 +385,7 @@ function CurrentIntakePanel({ intake }: { intake?: AdmissionsIntakeSummary }) {
         {rows.map(([label, value]) => (
           <div
             key={label}
-            className="flex items-center justify-between gap-4 py-3"
+            className="flex items-center justify-between gap-4 py-2.5"
           >
             <dt className="text-sm text-muted-foreground">{label}</dt>
             <dd className="text-right text-sm font-semibold text-foreground">
@@ -397,14 +426,29 @@ function PathwaySelector({
               <Link
                 key={pathway.id}
                 href={`/admissions/${pathway.slug}`}
-                className={`group flex min-h-24 flex-col items-center justify-center gap-2 px-3 text-center text-sm font-semibold transition ${
+                className={`group relative flex min-h-24 flex-col items-center justify-center gap-2 overflow-hidden px-3 text-center text-sm font-semibold transition ${
                   active
                     ? "bg-white text-primary"
                     : "bg-primary text-white hover:bg-white/10"
                 }`}
               >
-                <Icon className="h-6 w-6" aria-hidden />
-                {pathway.title}
+                <span
+                  className={`absolute inset-x-0 top-0 h-1 transition ${
+                    active
+                      ? "bg-secondary"
+                      : "bg-white/0 group-hover:bg-secondary"
+                  }`}
+                />
+                <span
+                  className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
+                    active
+                      ? "bg-primary/10"
+                      : "bg-white/10 group-hover:bg-white/15"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" aria-hidden />
+                </span>
+                <span>{pathway.title}</span>
               </Link>
             );
           })}
@@ -446,40 +490,53 @@ function AdmissionsLanding({
 function PathwayFeature({ pathway }: { pathway: AdmissionPathway }) {
   const steps = arrayItems(pathway.application_steps);
   const docs = arrayItems(pathway.required_documents);
+  const imageUrl = publicFileUrl(pathway.cover_image_id);
+  const Icon = pathwayIcons[pathway.applicant_type] ?? GraduationCap;
   return (
-    <section className="border-b border-border pb-8">
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
-        Applicant route
-      </p>
-      <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
-        {pathway.title}
-      </h2>
-      <p className="mt-4 max-w-3xl text-base leading-8 text-muted-foreground">
-        {pathway.summary}
-      </p>
-      {pathway.eligibility_notes ? (
-        <p className="mt-4 border-l-4 border-secondary bg-accent px-4 py-3 text-sm leading-7 text-primary">
-          {pathway.eligibility_notes}
-        </p>
-      ) : null}
-      <div className="mt-6 grid gap-6 md:grid-cols-2">
-        <MiniList
-          title="Application steps"
-          icon={ClipboardCheck}
-          items={steps}
+    <section className="border-b border-border pb-8 motion-safe:animate-[admissions-rise_.65s_ease-out_both]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(300px,0.48fr)] xl:items-stretch">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
+            Applicant route
+          </p>
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
+            {pathway.title}
+          </h2>
+          <p className="mt-4 max-w-3xl text-base leading-8 text-muted-foreground">
+            {pathway.summary}
+          </p>
+          {pathway.eligibility_notes ? (
+            <p className="mt-4 border-l-4 border-secondary bg-accent px-4 py-3 text-sm leading-7 text-primary">
+              {pathway.eligibility_notes}
+            </p>
+          ) : null}
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
+            <MiniList
+              title="Application steps"
+              icon={ClipboardCheck}
+              items={steps}
+            />
+            <MiniList title="Required documents" icon={FileText} items={docs} />
+          </div>
+          {pathway.cta_url ? (
+            <ButtonLink
+              href={pathway.cta_url}
+              external={pathway.cta_url.startsWith("http")}
+              className="mt-6"
+              primary
+            >
+              {pathway.cta_label ?? "Continue"}
+            </ButtonLink>
+          ) : null}
+        </div>
+        <AdmissionsMediaFrame
+          title={`${pathway.title} route`}
+          caption="Confirm eligibility, prepare documents and continue through official university systems."
+          imageUrl={imageUrl}
+          icon={Icon}
+          variant="pathway"
         />
-        <MiniList title="Required documents" icon={FileText} items={docs} />
       </div>
-      {pathway.cta_url ? (
-        <ButtonLink
-          href={pathway.cta_url}
-          external={pathway.cta_url.startsWith("http")}
-          className="mt-6"
-          primary
-        >
-          {pathway.cta_label ?? "Continue"}
-        </ButtonLink>
-      ) : null}
     </section>
   );
 }
@@ -488,11 +545,22 @@ function RequirementsPage({ data }: { data: AdmissionsPageData }) {
   return (
     <main className="bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
-        <SectionHeader
-          eyebrow="Admission requirements"
-          title="Entry requirements at a glance"
-          body="Use this matrix as the first filter, then open the programme detail page for programme-specific requirements and fees."
-        />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.4fr)] lg:items-end">
+          <SectionHeader
+            eyebrow="Admission requirements"
+            title="Entry requirements at a glance"
+            body="Use this matrix as the first filter, then open the programme detail page for programme-specific requirements and fees."
+          />
+          <InsightVisual
+            icon={Search}
+            title="Filter first. Confirm officially."
+            points={[
+              `${data.requirements.length || data.programmes.length} requirement records available`,
+              "Programme-specific rules stay linked to programme pages",
+              "Applicant route and level remain visible while comparing",
+            ]}
+          />
+        </div>
         <RequirementsTable
           programmes={data.programmes}
           requirements={data.requirements}
@@ -507,11 +575,22 @@ function FeesPage({ data }: { data: AdmissionsPageData }) {
   return (
     <main className="bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
-        <SectionHeader
-          eyebrow="Programme fees"
-          title="Fees are managed under programme detail"
-          body="The admissions section points applicants to programme-specific fee records. Amounts should be confirmed from the approved fee structure and the official application portal."
-        />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.4fr)] lg:items-end">
+          <SectionHeader
+            eyebrow="Programme fees"
+            title="Fees are managed under programme detail"
+            body="The admissions section points applicants to programme-specific fee records. Amounts should be confirmed from the approved fee structure and the official application portal."
+          />
+          <InsightVisual
+            icon={FileText}
+            title="Fees follow programme, intake and category."
+            points={[
+              `${data.feeStructures.length} structured fee records`,
+              "Applicants open programme pages for the approved detail",
+              "Downloadable attachments can be linked as media",
+            ]}
+          />
+        </div>
         <FeesGrid fees={data.feeStructures} programmes={data.programmes} />
       </div>
     </main>
@@ -522,11 +601,22 @@ function DocumentsPage({ documents }: { documents: AdmissionDocument[] }) {
   return (
     <main className="bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
-        <SectionHeader
-          eyebrow="Admissions documents"
-          title="Forms, booklets and joining documents"
-          body="Download official admissions resources and follow the admission centre for admission-letter access."
-        />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.4fr)] lg:items-end">
+          <SectionHeader
+            eyebrow="Admissions documents"
+            title="Forms, booklets and joining documents"
+            body="Download official admissions resources and follow the admission centre for admission-letter access."
+          />
+          <InsightVisual
+            icon={Files}
+            title="Official documents stay discoverable."
+            points={[
+              `${documents.length} published admissions resources`,
+              "External portals are clearly marked",
+              "Future PDFs can use the existing media attachment field",
+            ]}
+          />
+        </div>
         <DocumentGrid documents={documents} />
       </div>
     </main>
@@ -580,11 +670,19 @@ function HowToApplyPage({
   return (
     <main className="bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
-        <SectionHeader
-          eyebrow="How to apply"
-          title="Prepare, apply and track through official systems"
-          body="The safest admissions journey is programme first, pathway second, intake third, official submission fourth."
-        />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.4fr)] lg:items-end">
+          <SectionHeader
+            eyebrow="How to apply"
+            title="Prepare, apply and track through official systems"
+            body="The safest admissions journey is programme first, pathway second, intake third, official submission fourth."
+          />
+          <AdmissionsMediaFrame
+            title="Application journey"
+            caption="A motion-safe visual map of the admissions journey from programme discovery to reporting."
+            icon={Route}
+            variant="compact"
+          />
+        </div>
         <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.38fr)]">
           <JourneyList large />
           <DocumentsPanel documents={documents} />
@@ -594,8 +692,15 @@ function HowToApplyPage({
             <Link
               key={pathway.id}
               href={`/admissions/${pathway.slug}`}
-              className="group border border-border bg-white p-5 transition hover:border-primary/30 hover:bg-primary/[0.03]"
+              className="group relative overflow-hidden border border-border bg-white p-5 transition hover:-translate-y-1 hover:border-primary/30 hover:bg-primary/[0.03] hover:shadow-lg hover:shadow-primary/10"
             >
+              <span className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-primary/[0.08] text-primary">
+                {(() => {
+                  const Icon =
+                    pathwayIcons[pathway.applicant_type] ?? GraduationCap;
+                  return <Icon className="h-5 w-5" aria-hidden />;
+                })()}
+              </span>
               <p className="text-xs font-bold uppercase tracking-[0.12em] text-secondary">
                 {formatApplicantType(pathway.applicant_type)}
               </p>
@@ -648,14 +753,14 @@ function RequirementsTable({
   return (
     <section className="mt-8">
       <div className="mb-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px]">
-        <div className="flex min-h-11 items-center gap-2 border border-border bg-white px-3 text-sm text-muted-foreground">
+        <div className="flex min-h-11 items-center gap-2 border border-border bg-white px-3 text-sm text-muted-foreground shadow-sm">
           <Search className="h-4 w-4" aria-hidden />
           Search programmes from the programme catalogue
         </div>
-        <div className="border border-border bg-white px-3 py-3 text-sm text-muted-foreground">
+        <div className="border border-border bg-white px-3 py-3 text-sm text-muted-foreground shadow-sm">
           Level
         </div>
-        <div className="border border-border bg-white px-3 py-3 text-sm text-muted-foreground">
+        <div className="border border-border bg-white px-3 py-3 text-sm text-muted-foreground shadow-sm">
           Applicant type
         </div>
       </div>
@@ -745,8 +850,11 @@ function FeesGrid({
         return (
           <article
             key={fee.id}
-            className="border border-border bg-white p-5 shadow-sm"
+            className="group relative overflow-hidden border border-border bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10"
           >
+            <span className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-primary/[0.08] text-primary">
+              <FileText className="h-5 w-5" aria-hidden />
+            </span>
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-secondary">
               {formatApplicantType(fee.applicant_type)}
             </p>
@@ -841,15 +949,29 @@ function DocumentCard({
 }) {
   const href =
     document.external_url ?? `/admissions/documents/${document.slug}`;
+  const mediaUrl = publicFileUrl(document.media_id);
   return (
     <Link
       href={href}
       target={href.startsWith("http") ? "_blank" : undefined}
       rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
-      className={`group block border border-border bg-white transition hover:border-primary/30 hover:bg-primary/[0.03] ${
+      className={`group block overflow-hidden border border-border bg-white transition hover:-translate-y-1 hover:border-primary/30 hover:bg-primary/[0.03] hover:shadow-lg hover:shadow-primary/10 ${
         compact ? "p-3" : "p-5 shadow-sm"
       }`}
     >
+      {!compact ? (
+        <div className="mb-4">
+          <AdmissionsMediaFrame
+            title={document.title}
+            caption={
+              formatText(document.document_type) ?? "Admissions document"
+            }
+            imageUrl={mediaUrl}
+            icon={FileText}
+            variant="document"
+          />
+        </div>
+      ) : null}
       <p className="text-xs font-bold uppercase tracking-[0.12em] text-secondary">
         {formatText(document.document_type)}
       </p>
@@ -955,9 +1077,11 @@ function JourneyList({ large = false }: { large?: boolean }) {
         {steps.map(([title, body, href], index) => (
           <li
             key={title}
-            className="relative border border-border bg-white p-4"
+            className="relative overflow-hidden border border-border bg-white p-4 transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10"
+            style={{ animationDelay: `${index * 80}ms` }}
           >
-            <span className="flex h-8 w-8 items-center justify-center bg-primary text-sm font-bold text-white">
+            <span className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,hsl(var(--primary)),hsl(var(--secondary)))]" />
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
               {index + 1}
             </span>
             <h3 className="mt-4 text-base font-semibold text-foreground">
@@ -1009,6 +1133,166 @@ function AdmissionsSupport() {
   );
 }
 
+function AdmissionsMediaFrame({
+  title,
+  caption,
+  imageUrl,
+  videoUrl,
+  icon: Icon = Sparkles,
+  variant = "compact",
+}: {
+  title: string;
+  caption: string;
+  imageUrl?: string | null;
+  videoUrl?: string | null;
+  icon?: LucideIcon;
+  variant?: "hero" | "pathway" | "compact" | "document";
+}) {
+  const tall = variant === "hero";
+  const compact = variant === "compact" || variant === "document";
+
+  return (
+    <figure
+      className={`group relative overflow-hidden rounded-[1.4rem] border border-primary/15 bg-[radial-gradient(circle_at_20%_15%,rgba(56,189,248,0.2),transparent_28%),linear-gradient(135deg,#f8fdff,#eef9ff_52%,#ffffff)] shadow-xl shadow-primary/10 ${
+        tall ? "min-h-[360px] sm:min-h-[430px]" : "min-h-[210px]"
+      } ${variant === "document" ? "rounded-2xl shadow-sm" : ""}`}
+    >
+      {videoUrl ? (
+        <video
+          className="absolute inset-0 h-full w-full object-cover"
+          controls
+          playsInline
+          preload="none"
+          poster={imageUrl ?? undefined}
+        >
+          <source src={videoUrl} />
+        </video>
+      ) : imageUrl ? (
+        <PublicImage
+          src={imageUrl}
+          alt={title}
+          ratio="fill"
+          className="absolute inset-0 h-full w-full"
+          imageClassName="object-cover transition duration-700 group-hover:scale-[1.03]"
+          sizes={
+            tall
+              ? "(min-width: 1024px) 42vw, 100vw"
+              : "(min-width: 1024px) 28vw, 100vw"
+          }
+          fallbackContent={<AcademicVisual icon={Icon} compact={compact} />}
+        />
+      ) : (
+        <AcademicVisual icon={Icon} compact={compact} />
+      )}
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(2,57,78,0.74))]" />
+      <figcaption className="absolute inset-x-0 bottom-0 z-10 p-5 text-white sm:p-6">
+        <div className="flex items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.16] text-white ring-1 ring-white/20 backdrop-blur">
+            {videoUrl ? (
+              <PlayCircle className="h-5 w-5" aria-hidden />
+            ) : (
+              <Icon className="h-5 w-5" aria-hidden />
+            )}
+          </span>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/75">
+              {videoUrl ? "Video guide" : "Visual guide"}
+            </p>
+            <h3 className="mt-1 text-lg font-semibold">{title}</h3>
+          </div>
+        </div>
+        <p className="mt-3 max-w-xl text-sm leading-6 text-white/[0.82]">
+          {caption}
+        </p>
+      </figcaption>
+    </figure>
+  );
+}
+
+function AcademicVisual({
+  icon: Icon,
+  compact = false,
+}: {
+  icon: LucideIcon;
+  compact?: boolean;
+}) {
+  const nodes = compact
+    ? ["Apply", "Verify", "Track"]
+    : ["Programme", "Pathway", "Requirements", "Application"];
+
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-[linear-gradient(135deg,#e0f7ff_0%,#ffffff_48%,#dff4ff_100%)]">
+      <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full border border-primary/20 bg-primary/10 motion-safe:animate-[admissions-drift_8s_ease-in-out_infinite]" />
+      <div className="absolute -bottom-20 -left-14 h-56 w-56 rounded-full border border-secondary/20 bg-secondary/10 motion-safe:animate-[admissions-drift_10s_ease-in-out_infinite_reverse]" />
+      <div className="absolute inset-8 grid place-items-center">
+        <div className="relative w-full max-w-xl">
+          <div className="absolute left-8 right-8 top-1/2 h-px -translate-y-1/2 bg-primary/25" />
+          <div
+            className={`relative grid gap-3 ${
+              compact ? "grid-cols-3" : "grid-cols-2 sm:grid-cols-4"
+            }`}
+          >
+            {nodes.map((node, index) => (
+              <div
+                key={node}
+                className="motion-safe:animate-[admissions-rise_.65s_ease-out_both]"
+                style={{ animationDelay: `${index * 90}ms` }}
+              >
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-white/80 bg-white text-primary shadow-lg shadow-primary/10">
+                  {index === 0 ? (
+                    <Icon className="h-6 w-6" aria-hidden />
+                  ) : (
+                    <span className="text-sm font-black">{index + 1}</span>
+                  )}
+                </div>
+                <p className="mt-3 text-center text-xs font-bold uppercase tracking-[0.1em] text-primary/80">
+                  {node}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <Radio
+        className="absolute right-8 top-8 h-7 w-7 text-primary/25 motion-safe:animate-pulse"
+        aria-hidden
+      />
+    </div>
+  );
+}
+
+function InsightVisual({
+  icon: Icon,
+  title,
+  points,
+}: {
+  icon: LucideIcon;
+  title: string;
+  points: string[];
+}) {
+  return (
+    <aside className="relative overflow-hidden rounded-[1.25rem] border border-primary/15 bg-[linear-gradient(135deg,hsl(var(--primary)),#057ca8)] p-5 text-white shadow-xl shadow-primary/15 motion-safe:animate-[admissions-rise_.75s_ease-out_both]">
+      <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-white/10" />
+      <div className="relative">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/20">
+          <Icon className="h-6 w-6" aria-hidden />
+        </span>
+        <h2 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight">
+          {title}
+        </h2>
+        <ul className="mt-4 grid gap-3 text-sm leading-6 text-white/[0.84]">
+          {points.map((point) => (
+            <li key={point} className="flex gap-2">
+              <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-secondary" />
+              <span>{point}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </aside>
+  );
+}
+
 function SectionHeader({
   eyebrow,
   title,
@@ -1028,6 +1312,31 @@ function SectionHeader({
       </h1>
       <p className="mt-4 text-base leading-8 text-muted-foreground">{body}</p>
     </header>
+  );
+}
+
+function AdmissionsVisualStyles() {
+  return (
+    <style
+      dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes admissions-rise {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes admissions-drift {
+            0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+            50% { transform: translate3d(-12px, 10px, 0) scale(1.04); }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            [class*="admissions-rise"],
+            [class*="admissions-drift"] {
+              animation: none !important;
+            }
+          }
+        `,
+      }}
+    />
   );
 }
 
@@ -1145,6 +1454,18 @@ function DateRow({ label, value }: { label: string; value?: string | null }) {
       <dd className="font-semibold text-foreground">{formatDate(value)}</dd>
     </div>
   );
+}
+
+function settingString(value: unknown, keys: string[]) {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  for (const key of keys) {
+    const candidate = record[key];
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+  return null;
 }
 
 function arrayItems(value: unknown): Record<string, unknown>[] {
