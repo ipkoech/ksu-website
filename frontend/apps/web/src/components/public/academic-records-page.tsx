@@ -224,25 +224,25 @@ function SchoolsEditorial({
 }) {
   return (
     <>
-      <section className="bg-brand-overlay px-4 py-8 text-white sm:px-6 lg:px-8 lg:py-12">
-        <div className="mx-auto grid w-full max-w-[1680px] gap-0 overflow-hidden lg:grid-cols-[0.8fr_1.2fr]">
-          <div className="flex flex-col justify-between bg-primary p-6 sm:p-8 lg:p-12">
+      <section className="border-y border-border bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <div className="mx-auto grid w-full max-w-[1680px] gap-0 overflow-hidden border border-border lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="flex flex-col justify-between bg-white p-6 sm:p-8 lg:p-12">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">
                 Academic schools
               </p>
-              <h2 className="mt-4 max-w-xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.95] sm:text-5xl lg:text-6xl">
+              <h2 className="mt-4 max-w-xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.95] text-primary sm:text-5xl lg:text-6xl">
                 Schools that shape possibility
               </h2>
-              <p className="mt-5 max-w-md text-sm leading-7 text-white/75">
+              <p className="mt-5 max-w-md text-sm leading-7 text-muted-foreground">
                 Explore the schools where teaching, research, and community
                 impact come together.
               </p>
             </div>
-            <div className="mt-10 grid grid-cols-3 gap-3 border-t border-white/20 pt-5 text-xs text-white/70">
-              <div><strong className="block text-2xl text-white">{section.cards.length}</strong>schools</div>
-              <div><strong className="block text-2xl text-white">{section.cards.filter((card) => card.href).length}</strong>pathways</div>
-              <div><strong className="block text-2xl text-white">KSU</strong>community</div>
+            <div className="mt-10 grid grid-cols-3 gap-3 border-t border-border pt-5 text-xs text-muted-foreground">
+              <div><strong className="block text-2xl text-primary">{section.cards.length}</strong>schools</div>
+              <div><strong className="block text-2xl text-primary">{section.cards.filter((card) => card.href).length}</strong>pathways</div>
+              <div><strong className="block text-2xl text-primary">KSU</strong>community</div>
             </div>
           </div>
           <div className="relative min-h-[260px] overflow-hidden bg-slate-900 lg:min-h-[360px]">
@@ -254,7 +254,7 @@ function SchoolsEditorial({
               className="h-full w-full"
               imageClassName="object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-20 bg-primary/80 [clip-path:polygon(0_50%,100%_0,100%_100%,0_100%)]" />
             <p className="absolute bottom-5 left-5 text-xs font-bold uppercase tracking-[0.16em] text-white/90">
               Learning in context
             </p>
@@ -322,7 +322,7 @@ function ProgrammeFinder({
   return (
     <section className="px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <div className="mx-auto grid w-full max-w-[1680px] overflow-hidden border border-border lg:grid-cols-[0.7fr_1.3fr]">
-        <div className="relative min-h-[300px] overflow-hidden bg-primary lg:min-h-[560px]">
+        <div className="relative min-h-[300px] overflow-hidden bg-primary [clip-path:polygon(0_0,100%_0,72%_100%,0_100%)] lg:min-h-[560px]">
           <PublicImage
             src="/images/backgrounds/VCKSUMedicalSchoolInspectionApril1,2026-5704.jpg"
             alt="Kisii University students learning"
@@ -331,7 +331,7 @@ function ProgrammeFinder({
             className="h-full w-full"
             imageClassName="object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/20 to-transparent" />
+          <div className="absolute inset-0 bg-primary/60" />
           <div className="absolute bottom-7 left-6 right-6 text-white sm:left-8 sm:right-8">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">100+ programmes</p>
             <p className="mt-2 max-w-sm font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight sm:text-4xl">
@@ -398,13 +398,13 @@ function ProgrammeFinder({
 
 function CalendarEditorial({ section }: { section: PublicPageSection }) {
   return (
-    <section className="bg-[#faf8f2] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <section className="border-y border-border bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <div className="mx-auto grid w-full max-w-[1680px] gap-8 lg:grid-cols-[0.8fr_1.2fr]">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Academic calendar</p>
           <h2 className="mt-3 max-w-md font-[family-name:var(--font-display)] text-5xl font-semibold leading-[0.95] text-primary sm:text-6xl">Plan ahead.<br /><span className="text-secondary">Stay on track.</span></h2>
           <p className="mt-5 max-w-md text-sm leading-7 text-muted-foreground">A year of discovery, growth, and achievement. Your academic journey starts here.</p>
-          <div className="mt-8 overflow-hidden bg-primary text-white">
+          <div className="mt-8 overflow-hidden border border-primary/15 bg-primary text-white">
             <div className="relative min-h-[220px]">
               <PublicImage
                 src="/images/backgrounds/KSUGreenLandscapingMay2026-3810.jpg"
@@ -425,7 +425,7 @@ function CalendarEditorial({ section }: { section: PublicPageSection }) {
           </div>
         </div>
         <div className="relative overflow-hidden border border-primary/10 bg-white p-5 sm:p-8">
-          <div className="absolute left-1/2 top-1/2 hidden h-56 w-[88%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border border-primary/15 sm:block" />
+          <div className="absolute left-1/2 top-1/2 hidden h-56 w-[88%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-2 border-primary/10 sm:block" />
           <div className="relative grid gap-3 sm:grid-cols-2">
             {section.cards.map((card, index) => (
               <Link key={card.title} href={card.href ?? "#"} className="group relative flex min-h-28 items-center gap-4 border-b border-border py-4 sm:min-h-36 sm:border-b-0 sm:p-4">
@@ -446,10 +446,10 @@ function CalendarEditorial({ section }: { section: PublicPageSection }) {
 
 function ExaminationsEditorial({ section }: { section: PublicPageSection }) {
   return (
-    <section className="bg-brand-overlay px-4 py-8 text-white sm:px-6 lg:px-8 lg:py-12">
+    <section className="border-y border-border bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <div className="mx-auto w-full max-w-[1680px]">
         <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-end">
-          <div className="relative min-h-[280px] overflow-hidden bg-slate-900 p-6 sm:p-8">
+          <div className="relative min-h-[280px] overflow-hidden bg-primary p-6 text-white sm:p-8">
             <PublicImage
               src="/images/backgrounds/KSUGreenLandscapingMay2026-7456.jpg"
               alt="Kisii University student preparing for examinations"
@@ -458,11 +458,11 @@ function ExaminationsEditorial({ section }: { section: PublicPageSection }) {
               className="absolute inset-0 h-full w-full"
               imageClassName="object-cover"
             />
-            <div className="absolute inset-0 bg-brand-overlay/80" />
+            <div className="absolute inset-0 bg-primary/70" />
             <div className="relative z-10 flex h-full flex-col justify-end">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Examinations</p>
             <h2 className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight sm:text-5xl">Prepare with confidence.</h2>
-            <p className="mt-4 max-w-md text-sm leading-7 text-white/70">Timetables, policies, and official examination documents in one place.</p>
+            <p className="mt-4 max-w-md text-sm leading-7 text-white/75">Timetables, policies, and official examination documents in one place.</p>
             </div>
           </div>
           <div className="border border-white/15 bg-white/10 p-5 sm:p-6">
