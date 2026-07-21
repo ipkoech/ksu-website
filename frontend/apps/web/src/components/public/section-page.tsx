@@ -12,7 +12,12 @@ import {
   type PublicCard,
   type PublicIconName,
 } from "@/components/public/public-primitives";
-import { PublicListFilterForm, type ListFilterOption } from "@/components/public/list-filter-form";
+import {
+  PublicListFilterForm,
+  type ListFilterOption,
+} from "@/components/public/list-filter-form";
+import { AcademicLeadershipStructure } from "@/components/public/academic-leadership-structure";
+import type { AcademicOrganization } from "@/lib/public-team-data";
 
 export type { PublicAction, PublicCard, PublicIconName };
 
@@ -64,6 +69,7 @@ export type PublicPageConfig = {
   continueBody?: string;
   continueItems?: PublicCard[];
   hideContinue?: boolean;
+  academicLeadership?: AcademicOrganization | null;
 };
 
 function gridClass(columns: PublicPageSection["columns"] = 3) {
@@ -267,12 +273,14 @@ export function PublicSectionPage({
   heroContent,
   showHero = true,
   heroSize = "default",
+  academicLeadership,
 }: {
   config: PublicPageConfig;
   header?: ReactNode;
   heroContent?: ReactNode;
   showHero?: boolean;
   heroSize?: "default" | "compact";
+  academicLeadership?: AcademicOrganization | null;
 }) {
   const continueItems = config.continueItems ?? config.navItems;
   const compactHero = heroSize === "compact";
@@ -328,7 +336,11 @@ export function PublicSectionPage({
                   </ul>
                 </nav>
 
-                <div className={compactHero ? "min-w-0 p-1" : "min-w-0 p-1 sm:p-2 lg:p-3"}>
+                <div
+                  className={
+                    compactHero ? "min-w-0 p-1" : "min-w-0 p-1 sm:p-2 lg:p-3"
+                  }
+                >
                   <p className="text-sm font-semibold uppercase text-secondary">
                     {config.eyebrow}
                   </p>
@@ -359,7 +371,10 @@ export function PublicSectionPage({
                       }
                     >
                       {config.primaryAction ? (
-                        <PublicActionLink action={config.primaryAction} primary />
+                        <PublicActionLink
+                          action={config.primaryAction}
+                          primary
+                        />
                       ) : null}
                       {config.secondaryActions?.map((action) => (
                         <PublicActionLink key={action.label} action={action} />
@@ -369,7 +384,13 @@ export function PublicSectionPage({
                   {heroContent}
 
                   {config.scopeCards?.length ? (
-                    <div className={compactHero ? "mt-5 border-t border-border pt-4" : "mt-7 border-t border-border pt-5"}>
+                    <div
+                      className={
+                        compactHero
+                          ? "mt-5 border-t border-border pt-4"
+                          : "mt-7 border-t border-border pt-5"
+                      }
+                    >
                       <p className="text-xs font-semibold uppercase text-muted-foreground">
                         {config.scopeTitle ?? "Page highlights"}
                       </p>
@@ -380,7 +401,10 @@ export function PublicSectionPage({
                             className="rounded-lg border border-border bg-white p-4 shadow-sm"
                           >
                             <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary ring-1 ring-primary/15">
-                              <PublicIconGlyph icon={item.icon} className="h-4 w-4" />
+                              <PublicIconGlyph
+                                icon={item.icon}
+                                className="h-4 w-4"
+                              />
                             </span>
                             <p className="mt-3 text-xs font-semibold uppercase text-muted-foreground">
                               {item.eyebrow ?? item.title}
@@ -447,6 +471,10 @@ export function PublicSectionPage({
               </div>
             </div>
           </section>
+        ) : null}
+
+        {academicLeadership ? (
+          <AcademicLeadershipStructure data={academicLeadership} />
         ) : null}
 
         {config.sections.map((section) => (
