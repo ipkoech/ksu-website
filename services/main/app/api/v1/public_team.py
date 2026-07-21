@@ -291,6 +291,7 @@ async def get_public_team(
 
 
 @router.get("/academic-organization")
+@router.get("/team/academic-organization")
 @cached_public(timeout=300, vary_on=("fields", "include"))
 async def get_public_academic_organization(
     request: Request,
