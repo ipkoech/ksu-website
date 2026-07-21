@@ -1,11 +1,20 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, FileText, Search } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  CalendarDays,
+  Clock3,
+  Download,
+  FileText,
+  Search,
+} from "lucide-react";
 import type {
   PublicPageConfig,
   PublicPageSection,
 } from "@/components/public/section-page";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { PublicListFilterForm } from "@/components/public/list-filter-form";
+import { PublicImage } from "@/components/public/public-image";
 
 type AcademicRecordsKind =
   | "schools"
@@ -73,7 +82,7 @@ function RecordLink({
   );
 }
 
-function Records({
+function _Records({
   kind,
   section,
 }: {
@@ -174,6 +183,275 @@ function Records({
   );
 }
 
+function AcademicPageIntro({
+  config,
+  kind,
+}: {
+  config: PublicPageConfig;
+  kind: AcademicRecordsKind;
+}) {
+  const titles: Record<AcademicRecordsKind, string> = {
+    schools: "Schools that shape possibility",
+    programmes: "Find your direction",
+    calendar: "Plan your academic year",
+    examinations: "Prepare with confidence",
+  };
+
+  return (
+    <div className="border-b border-border px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      <div className="mx-auto flex w-full max-w-[1680px] items-end justify-between gap-8">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+            {config.eyebrow}
+          </p>
+          <h1 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.98] text-foreground sm:text-5xl lg:text-6xl">
+            {titles[kind]}
+          </h1>
+        </div>
+        <p className="hidden max-w-sm border-l-2 border-secondary pl-4 text-sm leading-6 text-muted-foreground lg:block">
+          {config.body}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SchoolsEditorial({
+  section,
+}: {
+  section: PublicPageSection;
+}) {
+  return (
+    <>
+      <section className="bg-brand-overlay px-4 py-8 text-white sm:px-6 lg:px-8 lg:py-12">
+        <div className="mx-auto grid w-full max-w-[1680px] gap-0 overflow-hidden lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="flex flex-col justify-between bg-primary p-6 sm:p-8 lg:p-12">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">
+                Academic schools
+              </p>
+              <h2 className="mt-4 max-w-xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.95] sm:text-5xl lg:text-6xl">
+                Schools that shape possibility
+              </h2>
+              <p className="mt-5 max-w-md text-sm leading-7 text-white/75">
+                Explore the schools where teaching, research, and community
+                impact come together.
+              </p>
+            </div>
+            <div className="mt-10 grid grid-cols-3 gap-3 border-t border-white/20 pt-5 text-xs text-white/70">
+              <div><strong className="block text-2xl text-white">{section.cards.length}</strong>schools</div>
+              <div><strong className="block text-2xl text-white">{section.cards.filter((card) => card.href).length}</strong>pathways</div>
+              <div><strong className="block text-2xl text-white">KSU</strong>community</div>
+            </div>
+          </div>
+          <div className="relative min-h-[260px] overflow-hidden bg-slate-900 lg:min-h-[360px]">
+            <PublicImage
+              src="/images/backgrounds/KSUGreenLandscapingMay2026-9664.jpg"
+              alt="Kisii University campus"
+              ratio="fill"
+              sizes="(min-width: 1024px) 60vw, 100vw"
+              className="h-full w-full"
+              imageClassName="object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
+            <p className="absolute bottom-5 left-5 text-xs font-bold uppercase tracking-[0.16em] text-white/90">
+              Learning in context
+            </p>
+          </div>
+        </div>
+      </section>
+      <section className="px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <div className="mx-auto w-full max-w-[1680px]">
+          {section.filters ? (
+            <PublicListFilterForm
+              className="mb-7 max-w-2xl border-b border-border pb-5"
+              searchName={section.filters.queryName ?? "q"}
+              searchValue={section.filters.query}
+              searchPlaceholder="Search schools"
+              searchLabel="Search schools"
+              selects={[]}
+              clearHref={section.filters.clearHref}
+              total={section.cards.length}
+              visible={section.cards.length}
+            />
+          ) : null}
+          <div className="divide-y divide-border border-y border-border">
+            {section.cards.map((card, index) => (
+              <Link
+                key={card.title}
+                href={card.href ?? "#"}
+                className="group grid gap-4 py-5 sm:grid-cols-[5rem_1.25fr_1fr_auto] sm:items-center"
+              >
+                <span className="font-[family-name:var(--font-display)] text-3xl text-secondary/80">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span className="flex items-center gap-3">
+                  <Building2 className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+                  <span className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground group-hover:text-primary">
+                    {card.title}
+                  </span>
+                </span>
+                <span className="text-sm leading-6 text-muted-foreground">
+                  {card.body}
+                </span>
+                <ArrowRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" aria-hidden />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function ProgrammeFinder({
+  config,
+  section,
+  page,
+  pageHref,
+  hasNextPage,
+}: {
+  config: PublicPageConfig;
+  section: PublicPageSection;
+  page: number;
+  pageHref: (page: number) => string;
+  hasNextPage: boolean;
+}) {
+  const filters = section.filters;
+  return (
+    <section className="px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      <div className="mx-auto grid w-full max-w-[1680px] overflow-hidden border border-border lg:grid-cols-[0.7fr_1.3fr]">
+        <div className="relative min-h-[300px] overflow-hidden bg-primary lg:min-h-[560px]">
+          <PublicImage
+            src="/images/backgrounds/VCKSUMedicalSchoolInspectionApril1,2026-5704.jpg"
+            alt="Kisii University students learning"
+            ratio="fill"
+            sizes="(min-width: 1024px) 35vw, 100vw"
+            className="h-full w-full"
+            imageClassName="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/20 to-transparent" />
+          <div className="absolute bottom-7 left-6 right-6 text-white sm:left-8 sm:right-8">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">100+ programmes</p>
+            <p className="mt-2 max-w-sm font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight sm:text-4xl">
+              Build the future you want to lead.
+            </p>
+          </div>
+        </div>
+        <div className="bg-[#faf8f2] p-6 sm:p-8 lg:p-12">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Programme finder</p>
+          <h2 className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.95] text-foreground sm:text-5xl">
+            Find your direction
+          </h2>
+          <p className="mt-4 max-w-xl text-sm leading-7 text-muted-foreground">Search live programme records by name, level, school, or mode of study.</p>
+          {filters ? (
+            <PublicListFilterForm
+              className="mt-8 border-y border-border py-5"
+              searchName={filters.queryName ?? "q"}
+              searchValue={filters.query}
+              searchPlaceholder="Search programmes by name or keyword"
+              searchLabel="Search programmes"
+              selects={[
+                ...(filters.levelOptions ? [{ name: "level", label: "Level", value: filters.level, allLabel: "All levels", options: filters.levelOptions }] : []),
+                ...(filters.schoolOptions ? [{ name: "school_id", label: "School", value: filters.schoolId, allLabel: "All schools", options: filters.schoolOptions }] : []),
+                ...(filters.modeOptions ? [{ name: "mode_of_study", label: "Mode", value: filters.mode, allLabel: "All modes", options: filters.modeOptions }] : []),
+              ]}
+              clearHref={filters.clearHref}
+              total={section.cards.length}
+              visible={section.cards.length}
+            />
+          ) : null}
+          <div className="divide-y divide-border border-b border-border">
+            {section.cards.map((card) => (
+              <Link key={card.title} href={card.href ?? "#"} className="group grid gap-2 py-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                <span>
+                  <span className="block font-semibold text-foreground group-hover:text-primary">{card.title}</span>
+                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">{card.body}</span>
+                </span>
+                <ArrowRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-1" aria-hidden />
+              </Link>
+            ))}
+          </div>
+          {config.relatedItems?.[0] ? (
+            <Link href={config.relatedItems[0].href ?? "/admissions/intakes"} className="mt-6 flex items-center justify-between gap-4 bg-secondary p-4 text-sm font-semibold text-white transition hover:bg-primary">
+              <span><span className="block text-[10px] uppercase tracking-[0.16em] text-white/75">Admissions</span>{config.relatedItems[0].title}</span>
+              <ArrowRight className="h-5 w-5" aria-hidden />
+            </Link>
+          ) : null}
+          <nav className="mt-5 flex items-center justify-between text-sm" aria-label="Programme pages">
+            {page > 1 ? <Link href={pageHref(page - 1)} className="font-semibold text-primary">← Previous</Link> : <span />}
+            <span className="text-muted-foreground">Page {page}</span>
+            {hasNextPage ? <Link href={pageHref(page + 1)} className="font-semibold text-primary">Next →</Link> : <span />}
+          </nav>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CalendarEditorial({ section }: { section: PublicPageSection }) {
+  return (
+    <section className="bg-[#faf8f2] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      <div className="mx-auto grid w-full max-w-[1680px] gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Academic calendar</p>
+          <h2 className="mt-3 max-w-md font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground sm:text-5xl">Plan ahead. Stay on track.</h2>
+          <p className="mt-4 max-w-md text-sm leading-7 text-muted-foreground">Key dates are drawn from published intake and calendar records.</p>
+          <div className="mt-8 border-l-2 border-secondary pl-5">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">Upcoming dates</p>
+            <p className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-primary">{section.cards[0]?.title ?? "No dates published"}</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{section.cards[0]?.body ?? "Check back for the next academic update."}</p>
+          </div>
+        </div>
+        <div className="relative border-l border-primary/25 pl-6 sm:pl-10">
+          <div className="absolute bottom-0 left-[-5px] top-0 w-2 rounded-full bg-secondary/25" />
+          <div className="space-y-0">
+            {section.cards.map((card, index) => (
+              <Link key={card.title} href={card.href ?? "#"} className="group relative block border-b border-border py-5 first:pt-0 last:border-b-0">
+                <span className="absolute -left-[2.15rem] top-6 h-3 w-3 rounded-full border-2 border-[#faf8f2] bg-primary group-hover:bg-secondary sm:-left-[2.65rem]" />
+                <span className="grid gap-2 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-6">
+                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">{String(index + 1).padStart(2, "0")}</span>
+                  <span><span className="block font-[family-name:var(--font-display)] text-xl font-semibold text-foreground group-hover:text-primary">{card.title}</span><span className="mt-1 block text-sm leading-6 text-muted-foreground">{card.body}</span></span>
+                  <ArrowRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-1" aria-hidden />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ExaminationsEditorial({ section }: { section: PublicPageSection }) {
+  return (
+    <section className="bg-brand-overlay px-4 py-8 text-white sm:px-6 lg:px-8 lg:py-12">
+      <div className="mx-auto w-full max-w-[1680px]">
+        <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-end">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Examinations</p>
+            <h2 className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight sm:text-5xl">Prepare with confidence.</h2>
+            <p className="mt-4 max-w-md text-sm leading-7 text-white/70">Timetables, policies, and official examination documents in one place.</p>
+          </div>
+          <div className="border border-white/15 bg-white/10 p-5 sm:p-6">
+            <div className="flex items-center gap-3 text-secondary"><Clock3 className="h-5 w-5" aria-hidden /><span className="text-xs font-bold uppercase tracking-[0.16em]">Upcoming examination period</span></div>
+            <p className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold">{section.cards[0]?.title ?? "No examination period published"}</p>
+            <p className="mt-1 text-sm text-white/70">{section.cards[0]?.body ?? "Published examination dates will appear here."}</p>
+          </div>
+        </div>
+        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {section.cards.map((card) => (
+            <Link key={card.title} href={card.href ?? "#"} className="group flex min-h-32 flex-col justify-between border border-white/15 bg-white p-5 text-brand-overlay transition hover:-translate-y-1 hover:border-secondary">
+              <div className="flex items-start justify-between gap-3"><FileText className="h-5 w-5 text-secondary" aria-hidden /><Download className="h-4 w-4 text-primary transition-transform group-hover:translate-y-0.5" aria-hidden /></div>
+              <span><span className="mt-6 block font-semibold text-primary">{card.title}</span><span className="mt-1 block text-xs leading-5 text-slate-600">{card.body}</span></span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function AcademicRecordsPage({
   config,
   kind,
@@ -203,102 +481,18 @@ export function AcademicRecordsPage({
     <PageShell>
       <BreadcrumbTrail items={config.breadcrumb} />
       <main>
-        <section
-          className={
-            isProgrammeFinder
-              ? "px-4 py-8 sm:px-6 lg:px-8 lg:py-12"
-              : "px-4 py-12 sm:px-6 lg:px-8 lg:py-16"
-          }
-        >
-          <div className="mx-auto w-full max-w-[1680px]">
-            <div className="mb-8 max-w-3xl border-b border-border pb-6">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-secondary">
-                {config.eyebrow}
-              </p>
-              <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-                {config.title}
-              </h1>
-              <p className="mt-3 text-base leading-7 text-muted-foreground">
-                {config.body}
-              </p>
-            </div>
-            <div className="min-w-0">
-              {section.filters ? (
-                <PublicListFilterForm
-                  className="mb-8 border-b border-border pb-5"
-                  searchName={section.filters.queryName ?? "q"}
-                  searchValue={section.filters.query}
-                  searchPlaceholder={
-                    section.filters.queryPlaceholder ?? "Search records"
-                  }
-                  searchLabel={
-                    section.filters.queryPlaceholder ?? "Search records"
-                  }
-                  selects={[]}
-                  clearHref={section.filters.clearHref}
-                  total={section.cards.length}
-                  visible={section.cards.length}
-                />
-              ) : null}
-              <Records kind={kind} section={section} />
-              {isProgrammeFinder && config.relatedItems?.length ? (
-                <div className="mt-8 flex flex-col gap-4 border border-primary/20 bg-primary p-5 text-white sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
-                      Admissions next step
-                    </p>
-                    <p className="mt-2 text-lg font-semibold">
-                      Check the active intake before applying.
-                    </p>
-                  </div>
-                  <Link
-                    href={config.relatedItems[0].href ?? "/admissions/intakes"}
-                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-secondary hover:text-white"
-                  >
-                    View intake <ArrowRight className="h-4 w-4" aria-hidden />
-                  </Link>
-                </div>
-              ) : null}
-              {isProgrammeFinder ? (
-                <nav
-                  className="mt-8 flex items-center justify-between border-t border-border pt-5"
-                  aria-label="Programme pages"
-                >
-                  {page > 1 ? (
-                    <Link
-                      href={pageHref(page - 1)}
-                      className="inline-flex items-center gap-2 text-sm font-semibold text-primary"
-                    >
-                      <ArrowRight className="h-4 w-4 rotate-180" aria-hidden />{" "}
-                      Previous
-                    </Link>
-                  ) : (
-                    <span />
-                  )}
-                  <span className="text-sm text-muted-foreground">
-                    Page {page}
-                  </span>
-                  {hasNextPage ? (
-                    <Link
-                      href={pageHref(page + 1)}
-                      className="inline-flex items-center gap-2 text-sm font-semibold text-primary"
-                    >
-                      Next <ArrowRight className="h-4 w-4" aria-hidden />
-                    </Link>
-                  ) : (
-                    <span />
-                  )}
-                </nav>
-              ) : null}
-              {!section.cards.length ? (
-                <div className="flex items-center gap-3 border-y border-border py-10 text-muted-foreground">
-                  <Search className="h-5 w-5" aria-hidden /> No published
-                  records are available yet.
-                </div>
-              ) : null}
-            </div>
+        <AcademicPageIntro config={config} kind={kind} />
+        {kind === "schools" ? <SchoolsEditorial section={section} /> : null}
+        {kind === "programmes" ? (
+          <ProgrammeFinder config={config} section={section} page={page} pageHref={pageHref} hasNextPage={hasNextPage} />
+        ) : null}
+        {kind === "calendar" ? <CalendarEditorial section={section} /> : null}
+        {kind === "examinations" ? <ExaminationsEditorial section={section} /> : null}
+        {!section.cards.length ? (
+          <div className="mx-auto flex max-w-[1680px] items-center gap-3 border-y border-border px-4 py-10 text-muted-foreground sm:px-6 lg:px-8">
+            <Search className="h-5 w-5" aria-hidden /> No published records are available yet.
           </div>
-        </section>
+        ) : null}
       </main>
     </PageShell>
   );
