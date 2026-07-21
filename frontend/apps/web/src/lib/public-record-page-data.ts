@@ -1878,7 +1878,7 @@ export async function getAcademicsPageConfig(
       safeList(schoolsApi.list({ per_page: 100, fields: "id,name" })),
       safeList(
         programmesApi.list({
-          per_page: area === "programmes" ? 12 : 100,
+          per_page: area === "programmes" ? 8 : 100,
           page: area === "programmes" ? page : undefined,
           level,
           q: query,

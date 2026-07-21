@@ -428,10 +428,21 @@ function ExaminationsEditorial({ section }: { section: PublicPageSection }) {
     <section className="bg-brand-overlay px-4 py-8 text-white sm:px-6 lg:px-8 lg:py-12">
       <div className="mx-auto w-full max-w-[1680px]">
         <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-end">
-          <div>
+          <div className="relative min-h-[280px] overflow-hidden bg-slate-900 p-6 sm:p-8">
+            <PublicImage
+              src="/images/backgrounds/KSUGreenLandscapingMay2026-7456.jpg"
+              alt="Kisii University student preparing for examinations"
+              ratio="fill"
+              sizes="(min-width: 1024px) 38vw, 100vw"
+              className="absolute inset-0 h-full w-full"
+              imageClassName="object-cover"
+            />
+            <div className="absolute inset-0 bg-brand-overlay/80" />
+            <div className="relative z-10 flex h-full flex-col justify-end">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Examinations</p>
             <h2 className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight sm:text-5xl">Prepare with confidence.</h2>
             <p className="mt-4 max-w-md text-sm leading-7 text-white/70">Timetables, policies, and official examination documents in one place.</p>
+            </div>
           </div>
           <div className="border border-white/15 bg-white/10 p-5 sm:p-6">
             <div className="flex items-center gap-3 text-secondary"><Clock3 className="h-5 w-5" aria-hidden /><span className="text-xs font-bold uppercase tracking-[0.16em]">Upcoming examination period</span></div>
@@ -463,7 +474,7 @@ export function AcademicRecordsPage({
 }) {
   const section = sectionFor(config);
   const isProgrammeFinder = kind === "programmes";
-  const hasNextPage = isProgrammeFinder && section.cards.length >= 12;
+  const hasNextPage = isProgrammeFinder && section.cards.length >= 8;
   const pageHref = (targetPage: number) => {
     const params = new URLSearchParams();
     const filters = section.filters;
