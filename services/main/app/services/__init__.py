@@ -1,6 +1,16 @@
 """Main service layer exports."""
 
-from .admissions import AdmissionInfoService, IntakeService, ProgrammeService
+from .admissions import (
+    AdmissionDocumentService,
+    AdmissionFaqService,
+    AdmissionInfoService,
+    AdmissionPageSectionService,
+    AdmissionPathwayService,
+    AdmissionRequirementService,
+    IntakeService,
+    ProgrammeFeeStructureService,
+    ProgrammeService,
+)
 from .academic import (
     CampusService,
     DepartmentService,
@@ -99,6 +109,12 @@ __all__ = [
     "ProgrammeService",
     "IntakeService",
     "AdmissionInfoService",
+    "AdmissionPathwayService",
+    "AdmissionRequirementService",
+    "ProgrammeFeeStructureService",
+    "AdmissionDocumentService",
+    "AdmissionFaqService",
+    "AdmissionPageSectionService",
     "ClubService",
     "AccommodationService",
     "SportsFacilityService",

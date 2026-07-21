@@ -470,7 +470,12 @@ export interface SchoolInquiryMessage {
 export interface SchoolInquiry {
   id: string;
   school_id?: string | null;
-  target_entity_type: "university" | "school" | "department" | "office" | "person";
+  target_entity_type:
+    | "university"
+    | "school"
+    | "department"
+    | "office"
+    | "person";
   target_entity_id: string;
   target_entity_name?: string | null;
   target_entity_slug?: string | null;
@@ -1426,6 +1431,9 @@ export interface School {
   cover_image?: Media | null;
   brochure_id?: string | null;
   brochure?: Media | null;
+  admission_requirements?: AdmissionRequirement[];
+  fee_structures?: ProgrammeFeeStructure[];
+  admission_documents?: AdmissionDocument[];
   is_active: boolean;
   is_public?: boolean;
   display_order: number;
@@ -1958,6 +1966,150 @@ export interface AdmissionInfo {
   cover_image_id?: string | null;
   attachment_media_id?: string | null;
   is_published: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type AdmissionApplicantType =
+  | "kuccps"
+  | "self_sponsored"
+  | "international"
+  | "transfer"
+  | "postgraduate"
+  | "diploma_certificate";
+
+export type AdmissionDocumentType =
+  | "joining_instructions"
+  | "medical_form"
+  | "fee_structure"
+  | "reporting_checklist"
+  | "brochure"
+  | "application_form"
+  | "other";
+
+export interface AdmissionPathway {
+  id: string;
+  title: string;
+  slug: string;
+  applicant_type: AdmissionApplicantType;
+  summary?: string | null;
+  eligibility_notes?: string | null;
+  application_steps?: Array<Record<string, unknown>> | null;
+  required_documents?: Array<Record<string, unknown>> | null;
+  cta_label?: string | null;
+  cta_url?: string | null;
+  cover_image_id?: string | null;
+  cover_image?: Record<string, unknown> | null;
+  is_published: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdmissionRequirement {
+  id: string;
+  title: string;
+  applicant_type: AdmissionApplicantType;
+  level?: string | null;
+  minimum_grade?: string | null;
+  subject_requirements?: Array<Record<string, unknown>> | null;
+  alternative_qualifications?: Array<Record<string, unknown>> | null;
+  documents_required?: Array<Record<string, unknown>> | null;
+  notes?: string | null;
+  effective_from?: string | null;
+  effective_to?: string | null;
+  programme_id?: string | null;
+  school_id?: string | null;
+  intake_id?: string | null;
+  pathway_id?: string | null;
+  programme?: Record<string, unknown> | null;
+  school?: Record<string, unknown> | null;
+  intake?: Record<string, unknown> | null;
+  pathway?: Record<string, unknown> | null;
+  is_active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProgrammeFeeStructure {
+  id: string;
+  title: string;
+  applicant_type: AdmissionApplicantType;
+  fee_category: string;
+  currency: string;
+  tuition_amount?: number | null;
+  statutory_amount?: number | null;
+  other_amount?: number | null;
+  total_amount?: number | null;
+  payment_schedule?: Array<Record<string, unknown>> | null;
+  notes?: string | null;
+  effective_from?: string | null;
+  effective_to?: string | null;
+  programme_id: string;
+  intake_id?: string | null;
+  attachment_media_id?: string | null;
+  programme?: Record<string, unknown> | null;
+  intake?: Record<string, unknown> | null;
+  attachment_media?: Record<string, unknown> | null;
+  is_active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdmissionDocument {
+  id: string;
+  title: string;
+  slug: string;
+  document_type: AdmissionDocumentType;
+  applicant_type?: AdmissionApplicantType | null;
+  summary?: string | null;
+  external_url?: string | null;
+  media_id?: string | null;
+  pathway_id?: string | null;
+  programme_id?: string | null;
+  intake_id?: string | null;
+  media?: Record<string, unknown> | null;
+  pathway?: Record<string, unknown> | null;
+  programme?: Record<string, unknown> | null;
+  intake?: Record<string, unknown> | null;
+  is_published: boolean;
+  published_at?: string | null;
+  expires_at?: string | null;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdmissionFaq {
+  id: string;
+  question: string;
+  answer: string;
+  category?: string | null;
+  applicant_type?: AdmissionApplicantType | null;
+  pathway_id?: string | null;
+  pathway?: Record<string, unknown> | null;
+  is_published: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdmissionPageSection {
+  id: string;
+  page_key: string;
+  section_key: string;
+  title: string;
+  subtitle?: string | null;
+  body?: string | null;
+  layout_variant: string;
+  settings?: Record<string, unknown> | null;
+  items?: Array<Record<string, unknown>> | null;
+  media_id?: string | null;
+  media?: Record<string, unknown> | null;
+  is_enabled: boolean;
   display_order: number;
   created_at: string;
   updated_at: string;
@@ -3165,7 +3317,13 @@ export interface VcHubPlacement {
 
 export type VcPlacementPayload = Omit<
   VcHubPlacement,
-  "id" | "hub_id" | "created_at" | "updated_at" | "is_featured" | "display_order" | "is_enabled"
+  | "id"
+  | "hub_id"
+  | "created_at"
+  | "updated_at"
+  | "is_featured"
+  | "display_order"
+  | "is_enabled"
 > & {
   is_featured?: boolean;
   display_order?: number;

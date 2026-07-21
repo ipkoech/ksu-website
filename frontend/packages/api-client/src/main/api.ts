@@ -43,7 +43,12 @@ import type {
   IntakeHomepageAdmission,
   IntakeHomepageAdmissionUpdate,
   AcademicCalendar,
+  AdmissionDocument,
+  AdmissionFaq,
   AdmissionInfo,
+  AdmissionPageSection,
+  AdmissionPathway,
+  AdmissionRequirement,
   News,
   Blog,
   Story,
@@ -73,6 +78,7 @@ import type {
   Testimonial,
   Newsletter,
   NewsletterSubscriber,
+  ProgrammeFeeStructure,
   Role,
   Permission,
   UniversityInfo,
@@ -133,9 +139,8 @@ import type {
 import type { FieldSelectionParams, QueryParams } from "../client";
 
 type ListParams<
-  T extends Partial<
-    Record<keyof T, string | number | boolean | undefined>
-  > = Record<string, string | number | boolean | undefined>,
+  T extends Partial<Record<keyof T, string | number | boolean | undefined>> =
+    Record<string, string | number | boolean | undefined>,
 > = QueryParams & T;
 type EventFieldSelectionParams = FieldSelectionParams & {
   include_scope?: boolean;
@@ -412,10 +417,10 @@ export const publicEntityApi = {
       search?: string;
     },
   ) =>
-    mainApi.get<{ data: PublicEntityContent; meta?: PublicEntityContent["meta"] }>(
-      `/api/v1/public/content/${entityType}/${entityId}`,
-      params,
-    ),
+    mainApi.get<{
+      data: PublicEntityContent;
+      meta?: PublicEntityContent["meta"];
+    }>(`/api/v1/public/content/${entityType}/${entityId}`, params),
 };
 
 export const publicResearchContextApi = {
@@ -972,13 +977,22 @@ export const clubsApi = {
       data,
     ),
 
-  updateMedia: (clubId: string, linkId: string, data: Record<string, unknown>) =>
+  updateMedia: (
+    clubId: string,
+    linkId: string,
+    data: Record<string, unknown>,
+  ) =>
     mainApi.patch<{ data: Record<string, unknown> }>(
       `/api/v1/clubs/id/${clubId}/media/${linkId}`,
       data,
     ),
 
-  transitionMedia: (clubId: string, linkId: string, action: string, data: Record<string, unknown> = {}) =>
+  transitionMedia: (
+    clubId: string,
+    linkId: string,
+    action: string,
+    data: Record<string, unknown> = {},
+  ) =>
     mainApi.post<{ data: Record<string, unknown> }>(
       `/api/v1/clubs/id/${clubId}/media/${linkId}/workflow/${action}`,
       data,
@@ -1331,6 +1345,171 @@ export const admissionsApi = {
     mainApi.patch<{ data: AdmissionInfo }>(`/api/v1/admissions/${id}`, data),
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/admissions/${id}`),
+
+  listPathways: (params?: ListParams<{ applicant_type?: string }>) =>
+    mainApi.get<PaginatedResponse<AdmissionPathway>>(
+      "/api/v1/admissions/pathways",
+      params,
+    ),
+
+  getPathwayBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: AdmissionPathway }>(
+      `/api/v1/admissions/pathways/${slug}`,
+      params,
+    ),
+
+  createPathway: (data: Partial<AdmissionPathway>) =>
+    mainApi.post<{ data: AdmissionPathway }>(
+      "/api/v1/admissions/pathways",
+      data,
+    ),
+
+  updatePathway: (id: string, data: Partial<AdmissionPathway>) =>
+    mainApi.patch<{ data: AdmissionPathway }>(
+      `/api/v1/admissions/pathways/${id}`,
+      data,
+    ),
+
+  deletePathway: (id: string) =>
+    mainApi.delete<void>(`/api/v1/admissions/pathways/${id}`),
+
+  listRequirements: (
+    params?: ListParams<{
+      programme_id?: string;
+      school_id?: string;
+      intake_id?: string;
+      pathway_id?: string;
+      applicant_type?: string;
+      level?: string;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<AdmissionRequirement>>(
+      "/api/v1/admissions/requirements",
+      params,
+    ),
+
+  createRequirement: (data: Partial<AdmissionRequirement>) =>
+    mainApi.post<{ data: AdmissionRequirement }>(
+      "/api/v1/admissions/requirements",
+      data,
+    ),
+
+  updateRequirement: (id: string, data: Partial<AdmissionRequirement>) =>
+    mainApi.patch<{ data: AdmissionRequirement }>(
+      `/api/v1/admissions/requirements/${id}`,
+      data,
+    ),
+
+  deleteRequirement: (id: string) =>
+    mainApi.delete<void>(`/api/v1/admissions/requirements/${id}`),
+
+  listFeeStructures: (
+    params?: ListParams<{
+      programme_id?: string;
+      intake_id?: string;
+      applicant_type?: string;
+      fee_category?: string;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<ProgrammeFeeStructure>>(
+      "/api/v1/admissions/fee-structures",
+      params,
+    ),
+
+  createFeeStructure: (data: Partial<ProgrammeFeeStructure>) =>
+    mainApi.post<{ data: ProgrammeFeeStructure }>(
+      "/api/v1/admissions/fee-structures",
+      data,
+    ),
+
+  updateFeeStructure: (id: string, data: Partial<ProgrammeFeeStructure>) =>
+    mainApi.patch<{ data: ProgrammeFeeStructure }>(
+      `/api/v1/admissions/fee-structures/${id}`,
+      data,
+    ),
+
+  deleteFeeStructure: (id: string) =>
+    mainApi.delete<void>(`/api/v1/admissions/fee-structures/${id}`),
+
+  listDocuments: (
+    params?: ListParams<{
+      document_type?: string;
+      applicant_type?: string;
+      pathway_id?: string;
+      programme_id?: string;
+      intake_id?: string;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<AdmissionDocument>>(
+      "/api/v1/admissions/documents",
+      params,
+    ),
+
+  getDocumentBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: AdmissionDocument }>(
+      `/api/v1/admissions/documents/${slug}`,
+      params,
+    ),
+
+  createDocument: (data: Partial<AdmissionDocument>) =>
+    mainApi.post<{ data: AdmissionDocument }>(
+      "/api/v1/admissions/documents",
+      data,
+    ),
+
+  updateDocument: (id: string, data: Partial<AdmissionDocument>) =>
+    mainApi.patch<{ data: AdmissionDocument }>(
+      `/api/v1/admissions/documents/${id}`,
+      data,
+    ),
+
+  deleteDocument: (id: string) =>
+    mainApi.delete<void>(`/api/v1/admissions/documents/${id}`),
+
+  listFaqs: (
+    params?: ListParams<{
+      category?: string;
+      applicant_type?: string;
+      pathway_id?: string;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<AdmissionFaq>>(
+      "/api/v1/admissions/faqs",
+      params,
+    ),
+
+  createFaq: (data: Partial<AdmissionFaq>) =>
+    mainApi.post<{ data: AdmissionFaq }>("/api/v1/admissions/faqs", data),
+
+  updateFaq: (id: string, data: Partial<AdmissionFaq>) =>
+    mainApi.patch<{ data: AdmissionFaq }>(
+      `/api/v1/admissions/faqs/${id}`,
+      data,
+    ),
+
+  deleteFaq: (id: string) =>
+    mainApi.delete<void>(`/api/v1/admissions/faqs/${id}`),
+
+  listPageSections: (params?: ListParams<{ page_key?: string }>) =>
+    mainApi.get<PaginatedResponse<AdmissionPageSection>>(
+      "/api/v1/admissions/page-sections",
+      params,
+    ),
+
+  createPageSection: (data: Partial<AdmissionPageSection>) =>
+    mainApi.post<{ data: AdmissionPageSection }>(
+      "/api/v1/admissions/page-sections",
+      data,
+    ),
+
+  updatePageSection: (id: string, data: Partial<AdmissionPageSection>) =>
+    mainApi.patch<{ data: AdmissionPageSection }>(
+      `/api/v1/admissions/page-sections/${id}`,
+      data,
+    ),
+
+  deletePageSection: (id: string) =>
+    mainApi.delete<void>(`/api/v1/admissions/page-sections/${id}`),
 };
 
 // News
@@ -1951,7 +2130,8 @@ export const newslettersApi = {
     params?: ListParams<{
       q?: string;
     }>,
-  ) => mainApi.get<PaginatedResponse<Newsletter>>("/api/v1/newsletters", params),
+  ) =>
+    mainApi.get<PaginatedResponse<Newsletter>>("/api/v1/newsletters", params),
 
   listAdmin: (
     params?: ListParams<{
@@ -2264,7 +2444,9 @@ export const viceChancellorApi = {
   publicSpeech: (slug: string) =>
     mainApi.get<{ data: VcPublicSpeech }>(`${VC_PUBLIC_BASE}/speeches/${slug}`),
   publicGallery: (slug: string) =>
-    mainApi.get<{ data: VcPublicGallery }>(`${VC_PUBLIC_BASE}/galleries/${slug}`),
+    mainApi.get<{ data: VcPublicGallery }>(
+      `${VC_PUBLIC_BASE}/galleries/${slug}`,
+    ),
   hub: () => mainApi.get<{ data: VcHub }>(`${VC_BASE}/hub`),
   updateHub: (data: VcHubUpdatePayload) =>
     mainApi.patch<{ data: VcHub }>(`${VC_BASE}/hub`, data),
@@ -2274,7 +2456,10 @@ export const viceChancellorApi = {
     mainApi.get<{ data: VcPortrait[] }>(`${VC_BASE}/hub/portraits`),
   attachPortrait: (data: VcPortraitPayload) =>
     mainApi.post<{ data: VcPortrait }>(`${VC_BASE}/hub/portraits`, data),
-  updatePortrait: (id: string, data: { alt_text?: string | null; display_order?: number }) =>
+  updatePortrait: (
+    id: string,
+    data: { alt_text?: string | null; display_order?: number },
+  ) =>
     mainApi.patch<{ data: VcPortrait }>(`${VC_BASE}/hub/portraits/${id}`, data),
   deletePortrait: (id: string) =>
     mainApi.delete<void>(`${VC_BASE}/hub/portraits/${id}`),
@@ -2285,14 +2470,24 @@ export const viceChancellorApi = {
   listVideos: (params?: QueryParams) =>
     mainApi.get<VcListResponse<VcVideo>>(`${VC_BASE}/videos`, params),
   createVideo: (data: VcVideoPayload) =>
-    mainApi.post<{ data: VcVideo; meta?: { created?: boolean; metadata_warning?: string | null } }>(`${VC_BASE}/videos`, data),
+    mainApi.post<{
+      data: VcVideo;
+      meta?: { created?: boolean; metadata_warning?: string | null };
+    }>(`${VC_BASE}/videos`, data),
   updateVideo: (id: string, data: Partial<VcVideoPayload>) =>
     mainApi.patch<{ data: VcVideo }>(`${VC_BASE}/videos/${id}`, data),
   deleteVideo: (id: string) => mainApi.delete<void>(`${VC_BASE}/videos/${id}`),
   previewYoutube: (url: string) =>
-    mainApi.post<{ data: { video_id: string; canonical_url: string; embed_url: string; thumbnail_url: string; title?: string; author_name?: string } }>(
-      `${VC_BASE}/videos/youtube/preview`, { url },
-    ),
+    mainApi.post<{
+      data: {
+        video_id: string;
+        canonical_url: string;
+        embed_url: string;
+        thumbnail_url: string;
+        title?: string;
+        author_name?: string;
+      };
+    }>(`${VC_BASE}/videos/youtube/preview`, { url }),
   refreshVideo: (id: string) =>
     mainApi.post<{ data: VcVideo }>(`${VC_BASE}/videos/${id}/refresh-metadata`),
   listSpeeches: (params?: QueryParams) =>
@@ -2301,11 +2496,20 @@ export const viceChancellorApi = {
     mainApi.post<{ data: VcSpeech }>(`${VC_BASE}/speeches`, data),
   updateSpeech: (id: string, data: Partial<VcSpeechPayload>) =>
     mainApi.patch<{ data: VcSpeech }>(`${VC_BASE}/speeches/${id}`, data),
-  deleteSpeech: (id: string) => mainApi.delete<void>(`${VC_BASE}/speeches/${id}`),
-  attachSpeechVideo: (speechId: string, data: { video_id: string; role: "primary" | "full_recording" | "excerpt" | "related"; display_order?: number }) =>
-    mainApi.post(`${VC_BASE}/speeches/${speechId}/videos`, data),
+  deleteSpeech: (id: string) =>
+    mainApi.delete<void>(`${VC_BASE}/speeches/${id}`),
+  attachSpeechVideo: (
+    speechId: string,
+    data: {
+      video_id: string;
+      role: "primary" | "full_recording" | "excerpt" | "related";
+      display_order?: number;
+    },
+  ) => mainApi.post(`${VC_BASE}/speeches/${speechId}/videos`, data),
   listSpeechVideos: (speechId: string) =>
-    mainApi.get<{ data: VcSpeechVideoLink[] }>(`${VC_BASE}/speeches/${speechId}/videos`),
+    mainApi.get<{ data: VcSpeechVideoLink[] }>(
+      `${VC_BASE}/speeches/${speechId}/videos`,
+    ),
   detachSpeechVideo: (speechId: string, linkId: string) =>
     mainApi.delete<void>(`${VC_BASE}/speeches/${speechId}/videos/${linkId}`),
   listGalleries: (params?: QueryParams) =>
@@ -2314,28 +2518,57 @@ export const viceChancellorApi = {
     mainApi.post<{ data: VcGalleryAlbum }>(`${VC_BASE}/galleries`, data),
   updateGallery: (id: string, data: Partial<VcGalleryPayload>) =>
     mainApi.patch<{ data: VcGalleryAlbum }>(`${VC_BASE}/galleries/${id}`, data),
-  deleteGallery: (id: string) => mainApi.delete<void>(`${VC_BASE}/galleries/${id}`),
-  attachGalleryMedia: (albumId: string, data: { media_id: string; display_order?: number; caption?: string | null; alt_text?: string | null }) =>
-    mainApi.post(`${VC_BASE}/galleries/${albumId}/media`, data),
+  deleteGallery: (id: string) =>
+    mainApi.delete<void>(`${VC_BASE}/galleries/${id}`),
+  attachGalleryMedia: (
+    albumId: string,
+    data: {
+      media_id: string;
+      display_order?: number;
+      caption?: string | null;
+      alt_text?: string | null;
+    },
+  ) => mainApi.post(`${VC_BASE}/galleries/${albumId}/media`, data),
   listGalleryMedia: (albumId: string) =>
-    mainApi.get<{ data: VcGalleryMediaLink[] }>(`${VC_BASE}/galleries/${albumId}/media`),
+    mainApi.get<{ data: VcGalleryMediaLink[] }>(
+      `${VC_BASE}/galleries/${albumId}/media`,
+    ),
   detachGalleryMedia: (albumId: string, linkId: string) =>
     mainApi.delete<void>(`${VC_BASE}/galleries/${albumId}/media/${linkId}`),
-  reorderGalleryMedia: (albumId: string, items: Array<{ id: string; display_order: number }>) =>
-    mainApi.post(`${VC_BASE}/galleries/${albumId}/media/reorder`, { items }),
+  reorderGalleryMedia: (
+    albumId: string,
+    items: Array<{ id: string; display_order: number }>,
+  ) => mainApi.post(`${VC_BASE}/galleries/${albumId}/media/reorder`, { items }),
   listPlacements: () =>
     mainApi.get<{ data: VcHubPlacement[] }>(`${VC_BASE}/placements`),
   createPlacement: (data: VcPlacementPayload) =>
     mainApi.post<{ data: VcHubPlacement }>(`${VC_BASE}/placements`, data),
   updatePlacement: (id: string, data: Partial<VcPlacementPayload>) =>
-    mainApi.patch<{ data: VcHubPlacement }>(`${VC_BASE}/placements/${id}`, data),
-  deletePlacement: (id: string) => mainApi.delete<void>(`${VC_BASE}/placements/${id}`),
+    mainApi.patch<{ data: VcHubPlacement }>(
+      `${VC_BASE}/placements/${id}`,
+      data,
+    ),
+  deletePlacement: (id: string) =>
+    mainApi.delete<void>(`${VC_BASE}/placements/${id}`),
   reorderPlacements: (items: Array<{ id: string; display_order: number }>) =>
     mainApi.post(`${VC_BASE}/placements/reorder`, { items }),
   lookupNews: (q?: string) =>
-    mainApi.get<{ data: News[] }>(`${VC_BASE}/lookups/news`, q ? { q } : undefined),
+    mainApi.get<{ data: News[] }>(
+      `${VC_BASE}/lookups/news`,
+      q ? { q } : undefined,
+    ),
   lookupEvents: (q?: string) =>
-    mainApi.get<{ data: Event[] }>(`${VC_BASE}/lookups/events`, q ? { q } : undefined),
-  transition: <T extends VcVideo | VcSpeech | VcGalleryAlbum>(resource: "videos" | "speeches" | "galleries", id: string, action: VcWorkflowAction, reason?: string) =>
-    mainApi.post<{ data: T }>(`${VC_BASE}/${resource}/${id}/${action}`, { reason }),
+    mainApi.get<{ data: Event[] }>(
+      `${VC_BASE}/lookups/events`,
+      q ? { q } : undefined,
+    ),
+  transition: <T extends VcVideo | VcSpeech | VcGalleryAlbum>(
+    resource: "videos" | "speeches" | "galleries",
+    id: string,
+    action: VcWorkflowAction,
+    reason?: string,
+  ) =>
+    mainApi.post<{ data: T }>(`${VC_BASE}/${resource}/${id}/${action}`, {
+      reason,
+    }),
 };

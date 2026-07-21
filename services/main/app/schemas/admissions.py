@@ -11,6 +11,9 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from pydantic import Field, field_validator, model_validator
 
 from app.models.admissions import (
+    ADMISSION_APPLICANT_TYPES,
+    ADMISSION_DOCUMENT_TYPES,
+    ADMISSION_PAGE_KEYS,
     INTAKE_APPLICATION_OVERRIDES,
     INTAKE_MILESTONE_TYPES,
     INTAKE_PUBLIC_ACTION_TYPES,
@@ -200,6 +203,9 @@ class ProgrammeRead(BaseReadSchema):
     cover_image: dict[str, Any] | None = None
     department: dict[str, Any] | None = None
     intakes: list[ProgrammeIntakeRead] = Field(default_factory=list)
+    admission_requirements: list[dict[str, Any]] = Field(default_factory=list)
+    fee_structures: list[dict[str, Any]] = Field(default_factory=list)
+    admission_documents: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class IntakeCreate(BaseSchema):
@@ -896,6 +902,399 @@ class AdmissionInfoRead(BaseReadSchema):
     display_order: int
 
 
+class AdmissionPathwayCreate(BaseSchema):
+    title: str = Field(min_length=1, max_length=255)
+    slug: SlugStr | None = None
+    applicant_type: str = Field(max_length=64)
+    summary: str | None = None
+    eligibility_notes: str | None = None
+    application_steps: list[dict[str, Any]] | None = None
+    required_documents: list[dict[str, Any]] | None = None
+    cta_label: str | None = Field(default=None, max_length=255)
+    cta_url: str | None = Field(default=None, max_length=1024)
+    cover_image_id: uuid.UUID | None = None
+    is_published: bool = True
+    display_order: int = 100
+
+    @field_validator("applicant_type")
+    @classmethod
+    def validate_applicant_type(cls, value: str) -> str:
+        return _validate_choice(value, ADMISSION_APPLICANT_TYPES, "applicant_type") or value
+
+    @field_validator("cta_url")
+    @classmethod
+    def validate_cta_url(cls, value: str | None) -> str | None:
+        return _validate_safe_target(value, "cta_url")
+
+
+class AdmissionPathwayUpdate(BaseSchema):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    slug: SlugStr | None = None
+    applicant_type: str | None = Field(default=None, max_length=64)
+    summary: str | None = None
+    eligibility_notes: str | None = None
+    application_steps: list[dict[str, Any]] | None = None
+    required_documents: list[dict[str, Any]] | None = None
+    cta_label: str | None = Field(default=None, max_length=255)
+    cta_url: str | None = Field(default=None, max_length=1024)
+    cover_image_id: uuid.UUID | None = None
+    is_published: bool | None = None
+    display_order: int | None = None
+
+    @field_validator("applicant_type")
+    @classmethod
+    def validate_applicant_type(cls, value: str | None) -> str | None:
+        return _validate_choice(value, ADMISSION_APPLICANT_TYPES, "applicant_type")
+
+    @field_validator("cta_url")
+    @classmethod
+    def validate_cta_url(cls, value: str | None) -> str | None:
+        return _validate_safe_target(value, "cta_url")
+
+
+class AdmissionPathwayRead(BaseReadSchema):
+    title: str
+    slug: str
+    applicant_type: str
+    summary: str | None = None
+    eligibility_notes: str | None = None
+    application_steps: list[dict[str, Any]] | None = None
+    required_documents: list[dict[str, Any]] | None = None
+    cta_label: str | None = None
+    cta_url: str | None = None
+    cover_image_id: uuid.UUID | None = None
+    cover_image: dict[str, Any] | None = None
+    is_published: bool
+    display_order: int
+
+
+class AdmissionRequirementCreate(BaseSchema):
+    title: str = Field(min_length=1, max_length=255)
+    applicant_type: str = Field(max_length=64)
+    level: str | None = Field(default=None, max_length=64)
+    minimum_grade: str | None = Field(default=None, max_length=128)
+    subject_requirements: list[dict[str, Any]] | None = None
+    alternative_qualifications: list[dict[str, Any]] | None = None
+    documents_required: list[dict[str, Any]] | None = None
+    notes: str | None = None
+    effective_from: date | None = None
+    effective_to: date | None = None
+    programme_id: uuid.UUID | None = None
+    school_id: uuid.UUID | None = None
+    intake_id: uuid.UUID | None = None
+    pathway_id: uuid.UUID | None = None
+    is_active: bool = True
+    display_order: int = 100
+
+    @field_validator("applicant_type")
+    @classmethod
+    def validate_applicant_type(cls, value: str) -> str:
+        return _validate_choice(value, ADMISSION_APPLICANT_TYPES, "applicant_type") or value
+
+    @model_validator(mode="after")
+    def validate_effective_window(self) -> "AdmissionRequirementCreate":
+        if self.effective_from and self.effective_to and self.effective_to < self.effective_from:
+            raise ValueError("effective_to cannot be before effective_from")
+        return self
+
+
+class AdmissionRequirementUpdate(BaseSchema):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    applicant_type: str | None = Field(default=None, max_length=64)
+    level: str | None = Field(default=None, max_length=64)
+    minimum_grade: str | None = Field(default=None, max_length=128)
+    subject_requirements: list[dict[str, Any]] | None = None
+    alternative_qualifications: list[dict[str, Any]] | None = None
+    documents_required: list[dict[str, Any]] | None = None
+    notes: str | None = None
+    effective_from: date | None = None
+    effective_to: date | None = None
+    programme_id: uuid.UUID | None = None
+    school_id: uuid.UUID | None = None
+    intake_id: uuid.UUID | None = None
+    pathway_id: uuid.UUID | None = None
+    is_active: bool | None = None
+    display_order: int | None = None
+
+    @field_validator("applicant_type")
+    @classmethod
+    def validate_applicant_type(cls, value: str | None) -> str | None:
+        return _validate_choice(value, ADMISSION_APPLICANT_TYPES, "applicant_type")
+
+    @model_validator(mode="after")
+    def validate_effective_window(self) -> "AdmissionRequirementUpdate":
+        if self.effective_from and self.effective_to and self.effective_to < self.effective_from:
+            raise ValueError("effective_to cannot be before effective_from")
+        return self
+
+
+class AdmissionRequirementRead(BaseReadSchema):
+    title: str
+    applicant_type: str
+    level: str | None = None
+    minimum_grade: str | None = None
+    subject_requirements: list[dict[str, Any]] | None = None
+    alternative_qualifications: list[dict[str, Any]] | None = None
+    documents_required: list[dict[str, Any]] | None = None
+    notes: str | None = None
+    effective_from: date | None = None
+    effective_to: date | None = None
+    programme_id: uuid.UUID | None = None
+    school_id: uuid.UUID | None = None
+    intake_id: uuid.UUID | None = None
+    pathway_id: uuid.UUID | None = None
+    programme: dict[str, Any] | None = None
+    school: dict[str, Any] | None = None
+    intake: dict[str, Any] | None = None
+    pathway: dict[str, Any] | None = None
+    is_active: bool
+    display_order: int
+
+
+class ProgrammeFeeStructureCreate(BaseSchema):
+    title: str = Field(min_length=1, max_length=255)
+    applicant_type: str = Field(max_length=64)
+    fee_category: str = Field(default="tuition", max_length=64)
+    currency: str = Field(default="KES", min_length=3, max_length=8)
+    tuition_amount: int | None = Field(default=None, ge=0)
+    statutory_amount: int | None = Field(default=None, ge=0)
+    other_amount: int | None = Field(default=None, ge=0)
+    total_amount: int | None = Field(default=None, ge=0)
+    payment_schedule: list[dict[str, Any]] | None = None
+    notes: str | None = None
+    effective_from: date | None = None
+    effective_to: date | None = None
+    programme_id: uuid.UUID
+    intake_id: uuid.UUID | None = None
+    attachment_media_id: uuid.UUID | None = None
+    is_active: bool = True
+    display_order: int = 100
+
+    @field_validator("applicant_type")
+    @classmethod
+    def validate_applicant_type(cls, value: str) -> str:
+        return _validate_choice(value, ADMISSION_APPLICANT_TYPES, "applicant_type") or value
+
+    @model_validator(mode="after")
+    def validate_effective_window(self) -> "ProgrammeFeeStructureCreate":
+        if self.effective_from and self.effective_to and self.effective_to < self.effective_from:
+            raise ValueError("effective_to cannot be before effective_from")
+        return self
+
+
+class ProgrammeFeeStructureUpdate(BaseSchema):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    applicant_type: str | None = Field(default=None, max_length=64)
+    fee_category: str | None = Field(default=None, max_length=64)
+    currency: str | None = Field(default=None, min_length=3, max_length=8)
+    tuition_amount: int | None = Field(default=None, ge=0)
+    statutory_amount: int | None = Field(default=None, ge=0)
+    other_amount: int | None = Field(default=None, ge=0)
+    total_amount: int | None = Field(default=None, ge=0)
+    payment_schedule: list[dict[str, Any]] | None = None
+    notes: str | None = None
+    effective_from: date | None = None
+    effective_to: date | None = None
+    programme_id: uuid.UUID | None = None
+    intake_id: uuid.UUID | None = None
+    attachment_media_id: uuid.UUID | None = None
+    is_active: bool | None = None
+    display_order: int | None = None
+
+    @field_validator("applicant_type")
+    @classmethod
+    def validate_applicant_type(cls, value: str | None) -> str | None:
+        return _validate_choice(value, ADMISSION_APPLICANT_TYPES, "applicant_type")
+
+    @model_validator(mode="after")
+    def validate_effective_window(self) -> "ProgrammeFeeStructureUpdate":
+        if self.effective_from and self.effective_to and self.effective_to < self.effective_from:
+            raise ValueError("effective_to cannot be before effective_from")
+        return self
+
+
+class ProgrammeFeeStructureRead(BaseReadSchema):
+    title: str
+    applicant_type: str
+    fee_category: str
+    currency: str
+    tuition_amount: int | None = None
+    statutory_amount: int | None = None
+    other_amount: int | None = None
+    total_amount: int | None = None
+    payment_schedule: list[dict[str, Any]] | None = None
+    notes: str | None = None
+    effective_from: date | None = None
+    effective_to: date | None = None
+    programme_id: uuid.UUID
+    intake_id: uuid.UUID | None = None
+    attachment_media_id: uuid.UUID | None = None
+    programme: dict[str, Any] | None = None
+    intake: dict[str, Any] | None = None
+    attachment_media: dict[str, Any] | None = None
+    is_active: bool
+    display_order: int
+
+
+class AdmissionDocumentCreate(BaseSchema):
+    title: str = Field(min_length=1, max_length=255)
+    slug: SlugStr | None = None
+    document_type: str = Field(max_length=64)
+    applicant_type: str | None = Field(default=None, max_length=64)
+    summary: str | None = None
+    external_url: str | None = Field(default=None, max_length=1024)
+    media_id: uuid.UUID | None = None
+    pathway_id: uuid.UUID | None = None
+    programme_id: uuid.UUID | None = None
+    intake_id: uuid.UUID | None = None
+    is_published: bool = True
+    published_at: datetime | None = None
+    expires_at: datetime | None = None
+    display_order: int = 100
+
+    @field_validator("document_type")
+    @classmethod
+    def validate_document_type(cls, value: str) -> str:
+        return _validate_choice(value, ADMISSION_DOCUMENT_TYPES, "document_type") or value
+
+    @field_validator("applicant_type")
+    @classmethod
+    def validate_applicant_type(cls, value: str | None) -> str | None:
+        return _validate_choice(value, ADMISSION_APPLICANT_TYPES, "applicant_type")
+
+    @field_validator("external_url")
+    @classmethod
+    def validate_external_url(cls, value: str | None) -> str | None:
+        return _validate_safe_target(value, "external_url")
+
+
+class AdmissionDocumentUpdate(AdmissionDocumentCreate):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    document_type: str | None = Field(default=None, max_length=64)
+    is_published: bool | None = None
+    display_order: int | None = None
+
+    @field_validator("document_type")
+    @classmethod
+    def validate_document_type(cls, value: str | None) -> str | None:
+        return _validate_choice(value, ADMISSION_DOCUMENT_TYPES, "document_type")
+
+
+class AdmissionDocumentRead(BaseReadSchema):
+    title: str
+    slug: str
+    document_type: str
+    applicant_type: str | None = None
+    summary: str | None = None
+    external_url: str | None = None
+    media_id: uuid.UUID | None = None
+    pathway_id: uuid.UUID | None = None
+    programme_id: uuid.UUID | None = None
+    intake_id: uuid.UUID | None = None
+    media: dict[str, Any] | None = None
+    pathway: dict[str, Any] | None = None
+    programme: dict[str, Any] | None = None
+    intake: dict[str, Any] | None = None
+    is_published: bool
+    published_at: datetime | None = None
+    expires_at: datetime | None = None
+    display_order: int
+
+
+class AdmissionFaqCreate(BaseSchema):
+    question: str = Field(min_length=1, max_length=500)
+    answer: str = Field(min_length=1)
+    category: str | None = Field(default=None, max_length=96)
+    applicant_type: str | None = Field(default=None, max_length=64)
+    pathway_id: uuid.UUID | None = None
+    is_published: bool = True
+    display_order: int = 100
+
+    @field_validator("applicant_type")
+    @classmethod
+    def validate_applicant_type(cls, value: str | None) -> str | None:
+        return _validate_choice(value, ADMISSION_APPLICANT_TYPES, "applicant_type")
+
+
+class AdmissionFaqUpdate(BaseSchema):
+    question: str | None = Field(default=None, min_length=1, max_length=500)
+    answer: str | None = Field(default=None, min_length=1)
+    category: str | None = Field(default=None, max_length=96)
+    applicant_type: str | None = Field(default=None, max_length=64)
+    pathway_id: uuid.UUID | None = None
+    is_published: bool | None = None
+    display_order: int | None = None
+
+    @field_validator("applicant_type")
+    @classmethod
+    def validate_applicant_type(cls, value: str | None) -> str | None:
+        return _validate_choice(value, ADMISSION_APPLICANT_TYPES, "applicant_type")
+
+
+class AdmissionFaqRead(BaseReadSchema):
+    question: str
+    answer: str
+    category: str | None = None
+    applicant_type: str | None = None
+    pathway_id: uuid.UUID | None = None
+    pathway: dict[str, Any] | None = None
+    is_published: bool
+    display_order: int
+
+
+class AdmissionPageSectionCreate(BaseSchema):
+    page_key: str = Field(max_length=64)
+    section_key: str = Field(min_length=1, max_length=128)
+    title: str = Field(min_length=1, max_length=255)
+    subtitle: str | None = Field(default=None, max_length=255)
+    body: str | None = None
+    layout_variant: str = Field(default="editorial", max_length=64)
+    settings: dict[str, Any] | None = None
+    items: list[dict[str, Any]] | None = None
+    media_id: uuid.UUID | None = None
+    is_enabled: bool = True
+    display_order: int = 100
+
+    @field_validator("page_key")
+    @classmethod
+    def validate_page_key(cls, value: str) -> str:
+        return _validate_choice(value, ADMISSION_PAGE_KEYS, "page_key") or value
+
+
+class AdmissionPageSectionUpdate(BaseSchema):
+    page_key: str | None = Field(default=None, max_length=64)
+    section_key: str | None = Field(default=None, min_length=1, max_length=128)
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    subtitle: str | None = Field(default=None, max_length=255)
+    body: str | None = None
+    layout_variant: str | None = Field(default=None, max_length=64)
+    settings: dict[str, Any] | None = None
+    items: list[dict[str, Any]] | None = None
+    media_id: uuid.UUID | None = None
+    is_enabled: bool | None = None
+    display_order: int | None = None
+
+    @field_validator("page_key")
+    @classmethod
+    def validate_page_key(cls, value: str | None) -> str | None:
+        return _validate_choice(value, ADMISSION_PAGE_KEYS, "page_key")
+
+
+class AdmissionPageSectionRead(BaseReadSchema):
+    page_key: str
+    section_key: str
+    title: str
+    subtitle: str | None = None
+    body: str | None = None
+    layout_variant: str
+    settings: dict[str, Any] | None = None
+    items: list[dict[str, Any]] | None = None
+    media_id: uuid.UUID | None = None
+    media: dict[str, Any] | None = None
+    is_enabled: bool
+    display_order: int
+
+
 __all__ = [
     "ProgrammeCreate",
     "ProgrammeUpdate",
@@ -922,4 +1321,22 @@ __all__ = [
     "AdmissionInfoCreate",
     "AdmissionInfoUpdate",
     "AdmissionInfoRead",
+    "AdmissionPathwayCreate",
+    "AdmissionPathwayUpdate",
+    "AdmissionPathwayRead",
+    "AdmissionRequirementCreate",
+    "AdmissionRequirementUpdate",
+    "AdmissionRequirementRead",
+    "ProgrammeFeeStructureCreate",
+    "ProgrammeFeeStructureUpdate",
+    "ProgrammeFeeStructureRead",
+    "AdmissionDocumentCreate",
+    "AdmissionDocumentUpdate",
+    "AdmissionDocumentRead",
+    "AdmissionFaqCreate",
+    "AdmissionFaqUpdate",
+    "AdmissionFaqRead",
+    "AdmissionPageSectionCreate",
+    "AdmissionPageSectionUpdate",
+    "AdmissionPageSectionRead",
 ]

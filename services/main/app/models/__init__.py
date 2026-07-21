@@ -30,15 +30,24 @@ from .academic import (
 
 # Admissions
 from .admissions import (
+    ADMISSION_APPLICANT_TYPES,
+    ADMISSION_DOCUMENT_TYPES,
+    ADMISSION_PAGE_KEYS,
     INTAKE_APPLICATION_OVERRIDES,
     INTAKE_MILESTONE_TYPES,
     INTAKE_PUBLIC_ACTION_TYPES,
     INTAKE_WORKFLOW_STATUSES,
+    AdmissionDocument,
+    AdmissionFaq,
     AdmissionInfo,
+    AdmissionPageSection,
+    AdmissionPathway,
+    AdmissionRequirement,
     Intake,
     IntakeMilestone,
     IntakePublicAction,
     Programme,
+    ProgrammeFeeStructure,
     ProgrammeIntake,
     ProgrammeTutor,
 )
