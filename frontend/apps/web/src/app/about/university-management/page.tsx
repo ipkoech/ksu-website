@@ -12,6 +12,18 @@ function present(value?: string | null) {
   return text && text.length ? text : null;
 }
 
+function normalizedIdentity(member: BoardMember) {
+  return member.name.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function isViceChancellor(member: BoardMember) {
+  return /vice chancellor/i.test(member.role) && !/deputy|\bdvc\b/i.test(member.role);
+}
+
+function isDeputyViceChancellor(member: BoardMember) {
+  return /deputy vice chancellor|\bdvc\b/i.test(member.role);
+}
+
 function LeadershipCard({ member, featured = false, compact = false }: { member: BoardMember; featured?: boolean; compact?: boolean }) {
   const content = (
     <article className={`group overflow-hidden rounded-lg border border-border bg-white text-center shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg ${featured ? "w-[280px]" : compact ? "w-full max-w-[205px]" : "w-full max-w-[235px]"}`}>
@@ -48,11 +60,20 @@ function ManagementBranch({ deputy, reports }: { deputy: BoardMember; reports: B
 export default async function UniversityManagementPage() {
   const data = await getManagementData();
   const managementBoard = data.managementBoard;
-  const members = managementBoard?.members ?? [];
+  const members = (managementBoard?.members ?? []).filter(
+    (member, index, all) =>
+      all.findIndex(
+        (candidate) => normalizedIdentity(candidate) === normalizedIdentity(member),
+      ) === index,
+  );
   const boardDescription = present(managementBoard?.mandate) ?? present(managementBoard?.description) ?? "The University Management Board provides executive leadership for the University, translating Council policy into academic, administrative and financial action while safeguarding quality, accountability and effective service delivery.";
-  const viceChancellor = members[0];
-  const deputies = members.slice(1, 3);
-  const officers = members.slice(3);
+  const viceChancellor = members.find(isViceChancellor) ?? members[0];
+  const deputies = members.filter(
+    (member) => member !== viceChancellor && isDeputyViceChancellor(member),
+  );
+  const officers = members.filter(
+    (member) => member !== viceChancellor && !deputies.includes(member),
+  );
   const academicDeputy = deputies.find((member) => /academic|research|student/i.test(member.role)) ?? deputies[0];
   const administrationDeputy = deputies.find((member) => /administration|planning|finance/i.test(member.role)) ?? deputies.find((member) => member !== academicDeputy);
   const academicReports = officers.filter((member) => /academic|\(aa\)|research|innovation|resource mobilisation|reirm/i.test(member.role));
