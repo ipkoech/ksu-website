@@ -161,6 +161,7 @@ export function HomepageSections({
   const hasExplicitFeaturedStories = sections.some(
     (section) => section.layout_variant === "featured_stories",
   );
+  const shouldInjectHeroProof = Boolean(factsSection && hasMergedWhySection);
 
   return (
     <>
@@ -168,7 +169,7 @@ export function HomepageSections({
         if (section.layout_variant === "alumni_story") {
           return null;
         }
-        if (hasMergedWhySection && section.layout_variant === "facts_strip") {
+        if (shouldInjectHeroProof && section.layout_variant === "facts_strip") {
           return null;
         }
         if (
@@ -186,7 +187,12 @@ export function HomepageSections({
             <HomepageSectionRenderer
               section={section}
               hero={hero}
-              factsSection={factsSection}
+              factsSection={
+                shouldInjectHeroProof &&
+                section.layout_variant === "pillar_grid"
+                  ? null
+                  : factsSection
+              }
               partnershipSpotlights={partnershipSpotlights}
               academicDatesSection={academicDatesSection}
               eventsSection={eventsSection}
@@ -195,6 +201,11 @@ export function HomepageSections({
               socialLinks={socialLinks}
               vcHub={vcHub}
             />
+            {section.layout_variant === "hero_admissions" &&
+            shouldInjectHeroProof &&
+            factsSection ? (
+              <FactsStripSection section={factsSection} />
+            ) : null}
             {section.layout_variant === "programme_finder" &&
             !hasExplicitFeaturedStories ? (
               <FeaturedStoriesSection stories={featuredStories} />
@@ -210,15 +221,15 @@ function orderHomepageSections(sections: HomepageSection[]) {
   const priority: Record<HomepageSectionLayoutVariant, number> = {
     hero_admissions: 10,
     pulse_strip: 20,
-    featured_partnership: 30,
-    pillar_grid: 40,
-    facts_strip: 41,
-    programme_finder: 50,
-    date_timeline: 51,
-    featured_stories: 55,
-    media_mosaic: 58,
-    leadership_activity: 60,
+    facts_strip: 21,
+    programme_finder: 30,
+    date_timeline: 31,
+    featured_stories: 35,
+    featured_partnership: 40,
+    pillar_grid: 50,
+    media_mosaic: 60,
     research_cards: 70,
+    leadership_activity: 75,
     logo_carousel: 80,
     news_grid: 100,
     events_list: 101,
