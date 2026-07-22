@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import (
     Event,
+    Media,
     MediaLink,
     News,
     StaffAssignment,
@@ -24,6 +25,7 @@ from app.models import (
 )
 
 from ._shared import SeedContext
+from .seed_leadership_media import LEADERSHIP_PORTRAITS
 from .seed_vc_activities import VC_ACTIVITY_SLUGS
 
 
@@ -128,6 +130,30 @@ def _is_seed_owned(structured_content: dict | None) -> bool:
 
 def _has_seed_note(record: object) -> bool:
     return getattr(record, "revision_notes", None) == VC_SEED_NOTE
+
+
+async def _vc_portrait_media_id(
+    db: AsyncSession,
+    assignment: StaffAssignment,
+) -> uuid.UUID | None:
+    if assignment.portrait_media_id is not None:
+        return assignment.portrait_media_id
+    source_path = LEADERSHIP_PORTRAITS["vice_chancellor"]
+    public_url = (
+        source_path
+        if source_path.startswith(("http://", "https://"))
+        else f"https://kisiiuniversity.ac.ke{source_path}"
+    )
+    return (
+        await db.execute(
+            select(Media.id).where(
+                Media.public_url == public_url,
+                Media.media_type == "image",
+                Media.is_public.is_(True),
+                Media.deleted_at.is_(None),
+            )
+        )
+    ).scalar_one_or_none()
 
 
 def _publish(record: object, now: datetime) -> None:
@@ -455,20 +481,21 @@ async def seed_vice_chancellor_hub(db: AsyncSession, ctx: SeedContext) -> None:
 
     if assignment is not None:
         hub.staff_assignment_id = assignment.id
-        if assignment.portrait_media_id is not None and can_seed_hub:
-            hub.hero_media_id = assignment.portrait_media_id
+        portrait_media_id = await _vc_portrait_media_id(db, assignment)
+        if portrait_media_id is not None and can_seed_hub:
+            hub.hero_media_id = portrait_media_id
             portrait = (
                 await db.execute(
                     select(VcPortrait).where(
                         VcPortrait.hub_id == hub.id,
-                        VcPortrait.media_id == assignment.portrait_media_id,
+                        VcPortrait.media_id == portrait_media_id,
                     )
                 )
             ).scalar_one_or_none()
             if portrait is None:
                 portrait = VcPortrait(
                     hub_id=hub.id,
-                    media_id=assignment.portrait_media_id,
+                    media_id=portrait_media_id,
                 )
                 db.add(portrait)
             portrait.deleted_at = None

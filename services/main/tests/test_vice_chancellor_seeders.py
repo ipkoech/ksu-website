@@ -60,6 +60,8 @@ def test_vc_hub_seeder_publishes_and_links_the_complete_pack():
         "VcPortrait",
         "VcSpeechVideo",
         "MediaLink",
+        "LEADERSHIP_PORTRAITS",
+        "portrait_media_id",
         "workflow_status",
         "published_at",
         "VC_VIDEO_SPECS",
