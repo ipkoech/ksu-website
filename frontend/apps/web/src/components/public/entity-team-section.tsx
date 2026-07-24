@@ -30,11 +30,9 @@ function initials(name: string) {
 
 function TeamCard({
   member,
-  featured = false,
   position,
 }: {
   member: PublicEntityTeamMember;
-  featured?: boolean;
   position?: string;
 }) {
   const photoUrl = resolvePublicMediaUrl(member.photo_url);
@@ -45,37 +43,40 @@ function TeamCard({
     <Link
       href={`/staff/${encodeURIComponent(profileId)}`}
       aria-label={`View ${member.name}, ${displayPosition}`}
-      className={`group relative flex h-full min-w-0 items-center border border-border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${featured ? "gap-4 rounded-[1.25rem] p-4 pr-12" : "gap-2.5 rounded-lg p-2.5 pr-8"}`}
+      className="group relative flex min-h-24 min-w-0 items-center gap-2.5 rounded-xl border border-border bg-white p-2.5 pr-8 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
     >
-      <span className={`block shrink-0 overflow-hidden bg-surface-muted ${featured ? "h-24 w-20 rounded-xl sm:h-28 sm:w-24" : "h-11 w-11 rounded-md"}`}>
+      <span className="block h-14 w-12 shrink-0 overflow-hidden rounded-lg bg-surface-muted sm:h-16 sm:w-14">
         {photoUrl ? (
           <PublicImage
             src={photoUrl}
             alt={member.name}
             ratio="profile"
-            sizes={featured ? "96px" : "44px"}
+            sizes="56px"
             className="h-full w-full transition duration-300 group-hover:scale-105"
           />
         ) : (
-          <span className={`flex h-full w-full items-center justify-center bg-primary/[0.08] font-[family-name:var(--font-display)] font-semibold text-primary ${featured ? "text-lg" : "text-sm"}`}>
+          <span className="flex h-full w-full items-center justify-center bg-primary/[0.08] font-[family-name:var(--font-display)] text-sm font-semibold text-primary">
             {initials(member.name)}
           </span>
         )}
       </span>
       <span className="min-w-0 flex-1">
-        <span className={`block font-bold leading-tight text-foreground group-hover:text-primary ${featured ? "font-[family-name:var(--font-display)] text-xl" : "text-[13px]"}`}>
+        <span className="block text-[13px] font-bold leading-tight text-foreground group-hover:text-primary">
           {member.name}
         </span>
-        <span className={`mt-1 block font-semibold text-primary ${featured ? "text-sm leading-5" : "text-[11px] leading-4"}`}>
+        <span className="mt-1 block text-[11px] font-semibold leading-4 text-primary">
           {displayPosition}
         </span>
         {member.department?.name ? (
-          <span className={`block text-muted-foreground ${featured ? "mt-2 text-xs leading-5" : "mt-1 line-clamp-2 pr-1 text-[11px] leading-4"}`}>
+          <span className="mt-1 line-clamp-2 block pr-1 text-[11px] leading-4 text-muted-foreground">
             {member.department.name}
           </span>
         ) : null}
       </span>
-      <ArrowRight aria-hidden className={`absolute right-2.5 shrink-0 text-muted-foreground/70 transition group-hover:translate-x-0.5 group-hover:text-primary ${featured ? "top-1/2 h-5 w-5 -translate-y-1/2" : "bottom-2.5 h-3.5 w-3.5"}`} />
+      <ArrowRight
+        aria-hidden
+        className="absolute bottom-2.5 right-2.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/70 transition group-hover:translate-x-0.5 group-hover:text-primary"
+      />
     </Link>
   );
 }
@@ -97,10 +98,6 @@ function tierCategory(key: string): Exclude<TeamFilter, "all"> {
   if (key === "academic") return "academic";
   if (["administrative", "administrative_assistants"].includes(key)) return "administrative";
   return "support";
-}
-
-function tierLabel(key: string, label: string) {
-  return key === "cod" ? "Department Leadership" : label;
 }
 
 export function EntityTeamSection({
@@ -140,6 +137,19 @@ export function EntityTeamSection({
   const visibleTiers = team.tiers.filter(
     (tier) => activeFilter === "all" || tierCategory(tier.key) === activeFilter,
   );
+  const visibleMembers = visibleTiers.flatMap((tier) =>
+    tier.members.map((member) => ({
+      member,
+      position:
+        tier.key === "dean"
+          ? "Dean"
+          : ["cod", "department_leadership"].includes(tier.key)
+            ? "Chair of Department"
+            : tier.key === "postgraduate_coordinator"
+              ? "Postgraduate Coordinator"
+              : undefined,
+    })),
+  );
   const filterGridClass =
     filters.length >= 5
       ? "sm:grid-cols-5"
@@ -165,37 +175,32 @@ export function EntityTeamSection({
         </div>
       ) : null}
 
-      {visibleTiers.map((tier) => (
-        <section key={tier.key} aria-labelledby={`team-tier-${tier.key}`} className="rounded-[1.25rem] border border-border/80 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5">
-          <div className="mb-4 flex items-center gap-3">
-            <h3
-              id={`team-tier-${tier.key}`}
-              className="text-xs font-bold uppercase tracking-[0.08em] text-primary"
-            >
-              {tierLabel(tier.key, tier.label)}
-            </h3>
-            <span className="h-px flex-1 bg-surface-muted" />
-          </div>
-          <div className={`grid gap-2.5 ${["leadership", "head", "dean"].includes(tier.key) ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-2 xl:grid-cols-4"}`}>
-            {tier.members.map((member) => (
-              <TeamCard
-                key={member.id}
-                member={member}
-                featured={["leadership", "head", "dean"].includes(tier.key)}
-                position={
-                  tier.key === "dean"
-                    ? "Dean"
-                    : tier.key === "cod"
-                      ? "Chair of Department"
-                      : tier.key === "postgraduate_coordinator"
-                        ? "Postgraduate Coordinator"
-                        : undefined
-                }
-              />
-            ))}
-          </div>
-        </section>
-      ))}
+      <section
+        aria-labelledby="team-directory-heading"
+        className="rounded-[1.25rem] border border-border/80 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5"
+      >
+        <div className="mb-3 flex items-center gap-3">
+          <h3
+            id="team-directory-heading"
+            className="text-xs font-bold uppercase tracking-[0.08em] text-primary"
+          >
+            Team Directory
+          </h3>
+          <span className="h-px flex-1 bg-surface-muted" />
+          <span className="text-xs font-semibold tabular-nums text-muted-foreground">
+            {visibleMembers.length}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+          {visibleMembers.map(({ member, position }) => (
+            <TeamCard
+              key={member.id}
+              member={member}
+              position={position}
+            />
+          ))}
+        </div>
+      </section>
     </section>
   );
 }
