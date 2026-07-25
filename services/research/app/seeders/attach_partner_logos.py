@@ -26,7 +26,6 @@ PARTNER_LOGOS: dict[str, dict[str, str]] = {
     "university-of-minnesota": {
         "name": "University of Minnesota",
         "filename": "university-of-minnesota.svg",
-        "source_url": "https://brand.umn.edu/",
     },
     "mozilla-foundation": {
         "name": "Mozilla Foundation",
@@ -117,9 +116,13 @@ async def attach_partner_logos() -> list[str]:
                     {
                         "logo_url": logo_url,
                         "logo_asset_path": logo_url,
-                        "logo_source_url": spec["source_url"],
                     }
                 )
+                source_url = spec.get("source_url")
+                if source_url:
+                    social_links["logo_source_url"] = source_url
+                else:
+                    social_links.pop("logo_source_url", None)
                 partner.logo_id = media.id
                 partner.social_links = social_links
                 attached.append(slug)

@@ -29,6 +29,7 @@ import {
   getResearchOverviewData,
   type ResearchHeadProfile,
 } from "../lib/research-public-data";
+import { getPartnerLogo } from "../lib/partner-logo";
 import { getResearchSiteContext, type ResearchSiteContext } from "../lib/research-site-context";
 import { Badge, FilledBadge, StatusMessage } from "../components/research-ui";
 import { ResearchRichText } from "../components/research-rich-text";
@@ -1114,23 +1115,6 @@ function getRecordImage(record?: ResearchGenericRecord, mediaField?: string) {
       ),
     );
     if (url) return url;
-  }
-
-  return "";
-}
-
-function getPartnerLogo(partner: ResearchGenericRecord) {
-  const direct = compactText(
-    partner.logo_url ??
-      partner.logo ??
-      partner.image_url ??
-      partner.cover_image_url,
-  );
-  if (direct) return direct;
-
-  const socialLinks = partner.social_links;
-  if (socialLinks && typeof socialLinks === "object" && !Array.isArray(socialLinks)) {
-    return compactText(stringish((socialLinks as Record<string, unknown>).logo_source_url));
   }
 
   return "";
