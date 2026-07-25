@@ -77,6 +77,8 @@ tmp/
 .design-scratch/
 .superpowers/
 .playwright/
+.playwright-cli/
+**/superpowers/plans/
 *.test.mjs
 .worktrees/
 
