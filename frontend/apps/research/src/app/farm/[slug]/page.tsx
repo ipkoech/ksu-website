@@ -1,27 +1,28 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client";
 import {
   ResearchDetailHero,
-  ResearchFact,
+  ResearchDetailSidebar,
   ResearchRecordPanel,
-  ResearchTextPanel,
 } from "../../../components/research-detail";
-import {
-  Badge,
-  ResearchSection,
-  StatusMessage,
-} from "../../../components/research-ui";
+import { ResearchSection, StatusMessage } from "../../../components/research-ui";
+import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import {
   compactText,
-  formatLabel,
+  generateSlugParams,
   getFarmActivities,
   getFarmBySlug,
   getFarmPartners,
   getFarmProjects,
 } from "../../../lib/research-public-data";
+import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return generateSlugParams(researchServiceApi.farms.list);
+}
 
 export default async function FarmDetailPage({
   params,
@@ -34,6 +35,13 @@ export default async function FarmDetailPage({
 
   const farm = data as ResearchGenericRecord;
   const center = farm.center as ResearchGenericRecord | undefined;
+  const title = getRecordTitle(farm, "University farm");
+  const storySections = getNarrativeSections(farm, [
+    { title: "What The Farm Supports", fields: ["about", "summary", "description", "activities"] },
+    { title: "Research And Demonstrations", fields: ["facilities", "capacity_info", "equipment", "research_areas"] },
+    { title: "Production And Extension", fields: ["products", "services", "community_impact", "extension"] },
+    { title: "Operational Base", fields: ["location", "county", "manager_name", "contact_person"] },
+  ]);
   const [projects, partners, activities] = await Promise.all([
     getFarmProjects(),
     getFarmPartners(),
@@ -44,12 +52,12 @@ export default async function FarmDetailPage({
     <main id="research-main" className="min-h-screen bg-white">
       <ResearchDetailHero
         eyebrow="University Farm"
-        title={farm.name ?? farm.title ?? "University farm"}
-        body={compactText(farm.about) || compactText(farm.activities)}
+        title={title}
+        body={getRecordSummary(farm) || compactText(farm.activities)}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "University Farm", href: "/farm" },
-          { label: farm.name ?? farm.title ?? "Farm" },
+          { label: title },
         ]}
         labels={[farm.farm_type ?? "farm", farm.status]}
         facts={[
@@ -63,14 +71,14 @@ export default async function FarmDetailPage({
           ...(center?.slug ? [{ label: "View center", href: `/centers/${center.slug}` }] : []),
           ...(compactText(farm.email) ? [{ label: "Contact farm", href: `mailto:${compactText(farm.email)}`, variant: "secondary" as const }] : []),
         ]}
-        imageSrc="/images/research/research-demo-imagegen.png"
+        imageSrc="/images/research/research-farm-hero.svg"
         imageAlt="University farm research, demonstration, and extension work"
       />
 
       {[error, projects.error, partners.error, activities.error]
         .filter(Boolean)
-        .map((message) => (
-          <section key={message} className="px-4 pt-4 sm:px-6 lg:px-8">
+        .map((message, i) => (
+          <section key={i} className="px-4 pt-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-[1680px]">
               <StatusMessage tone="error">{message}</StatusMessage>
             </div>
@@ -80,46 +88,30 @@ export default async function FarmDetailPage({
       <ResearchSection
         eyebrow="Farm Profile"
         title="Applied research, demonstration, and extension"
-        body="Farm records describe the facilities, activities, products, capacity, contact points, and center relationship."
+        body="Farm records describe the facilities, activities, products, capacity, contact points, and center connection."
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
-            <ResearchTextPanel
-              title="About the farm"
-              fields={[
-                ["About", farm.about],
-                ["Activities", farm.activities],
-                ["Products", farm.products],
-                ["Facilities", farm.facilities],
-                ["Capacity", farm.capacity_info],
-              ]}
-            />
+          <div className="flex min-w-0 flex-col gap-5">
+            <FarmStory sections={storySections} />
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{formatLabel(farm.farm_type ?? "farm")}</Badge>
-              {farm.status ? <Badge>{formatLabel(farm.status)}</Badge> : null}
-            </div>
-            <dl className="mt-5 grid gap-3 text-sm">
-              <ResearchFact label="Size" value={farm.size_hectares ? `${compactText(farm.size_hectares)} hectares` : ""} />
-              <ResearchFact label="Location" value={compactText(farm.location) || compactText(farm.county)} />
-              <ResearchFact label="Manager" value={compactText(farm.manager_name)} />
-              <ResearchFact label="Email" value={compactText(farm.email)} />
-              <ResearchFact label="Phone" value={compactText(farm.phone)} />
-            </dl>
-            {center ? (
-              <div className="mt-5 rounded-md bg-slate-50 p-3">
-                <p className="text-xs font-semibold uppercase text-slate-500">Connected center</p>
-                <Link
-                  href={center.slug ? `/centers/${center.slug}` : "/centers"}
-                  className="mt-1 block font-semibold text-primary"
-                >
-                  {center.name ?? center.title}
-                </Link>
-              </div>
-            ) : null}
-          </aside>
+          <ResearchDetailSidebar
+            labels={[farm.farm_type ?? "farm", farm.status]}
+            facts={[
+              { label: "Size", value: farm.size_hectares ? `${compactText(farm.size_hectares)} hectares` : "" },
+              { label: "Location", value: compactText(farm.location) || compactText(farm.county) },
+              { label: "Manager", value: compactText(farm.manager_name) },
+              { label: "Email", value: compactText(farm.email) },
+              { label: "Phone", value: compactText(farm.phone) },
+              { label: "Connected center", value: center ? compactText(center.name ?? center.title) : "" },
+            ]}
+            actions={[
+              ...(center?.slug ? [{ label: "View connected center", href: `/centers/${center.slug}` }] : []),
+              ...(compactText(farm.email)
+                ? [{ label: "Contact farm", href: `mailto:${compactText(farm.email)}`, variant: "secondary" as const }]
+                : []),
+            ]}
+          />
         </div>
       </ResearchSection>
 
@@ -135,5 +127,14 @@ export default async function FarmDetailPage({
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+function FarmStory({ sections }: { sections: Array<{ title: string; body: string }> }) {
+  return (
+    <ResearchStoryAccordion
+      sections={sections}
+      empty="The farm story appears when profile, facilities, activities, production, or contact fields are published."
+    />
   );
 }

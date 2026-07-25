@@ -4,6 +4,7 @@ import {
   LibrarySection,
   PrimaryLink,
   SecondaryLink,
+  SidePanel,
   StatusMessage,
 } from "../../components/library-ui";
 import {
@@ -44,18 +45,7 @@ export default async function AskLibrarianPage() {
             <SecondaryLink href="/services">View services</SecondaryLink>
           </>
         }
-      >
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-            Support channel
-          </p>
-          <p className="mt-3 text-4xl font-bold sm:text-5xl">Ask</p>
-          <p className="mt-2 text-sm leading-6 text-white/75">
-            Questions are routed to library staff through the Library inquiries
-            endpoint.
-          </p>
-        </div>
-      </LibraryHero>
+      />
 
       {branches.error ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8">
@@ -77,28 +67,22 @@ export default async function AskLibrarianPage() {
         >
           <AskLibrarianForm branches={branches.data} />
 
-          <aside className="space-y-5">
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-                Good questions include
-              </p>
-              <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+          <aside className="flex flex-col gap-5">
+            <SidePanel title="Good questions include">
+              <ul className="flex flex-col gap-3 text-sm leading-6 text-muted-foreground">
                 <li>Resource title, database name, ISBN, or call number.</li>
                 <li>The branch or service desk you already contacted.</li>
                 <li>Any deadline, access error, or course context.</li>
               </ul>
-            </section>
+            </SidePanel>
 
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-                Response route
-              </p>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+            <SidePanel title="Response route">
+              <p className="text-sm leading-7 text-muted-foreground">
                 The library team replies using the email address you submit.
                 Urgent branch-specific requests should also use the published
                 branch contacts below.
               </p>
-            </section>
+            </SidePanel>
           </aside>
         </div>
       </LibrarySection>
@@ -151,15 +135,15 @@ export default async function AskLibrarianPage() {
             {contactBranches.map((branch) => (
               <article
                 key={branch.id}
-                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                className="rounded-lg border border-border bg-white p-5 shadow-sm"
               >
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
                   {formatLabel(branch.library_type ?? "library")}
                 </p>
-                <h2 className="mt-3 text-xl font-semibold text-slate-950">
+                <h2 className="mt-3 text-xl font-semibold text-foreground">
                   {branch.name}
                 </h2>
-                <dl className="mt-5 grid gap-3 text-sm text-slate-600">
+                <dl className="mt-5 grid gap-3 text-sm text-muted-foreground">
                   <Meta label="Phone" value={branch.phone} />
                   <Meta label="Email" value={branch.email} />
                   <Meta label="Location" value={branch.address} />
@@ -183,7 +167,7 @@ function Meta({
   if (!compactText(value)) return null;
   return (
     <div>
-      <dt className="font-semibold text-slate-950">{label}</dt>
+      <dt className="font-semibold text-foreground">{label}</dt>
       <dd className="mt-1">{value}</dd>
     </div>
   );

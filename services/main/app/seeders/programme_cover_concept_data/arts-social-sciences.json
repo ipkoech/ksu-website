@@ -1,0 +1,498 @@
+[
+  {
+    "programme_name": "PhD in Political Science",
+    "department_code": "PSPS",
+    "visual_family": "political systems research",
+    "subject": "a layered civic assembly chamber connected to a governance network, with a research lens comparing institutions, public mandates, and flows of political power",
+    "alt_text": "Illustration of an assembly chamber, connected civic institutions, and a research lens examining political systems",
+    "distinctiveness": "Doctoral political science represented by comparative analysis of institutions, representation, and power across an interconnected civic system"
+  },
+  {
+    "programme_name": "PhD in Sociology",
+    "department_code": "SGDS",
+    "visual_family": "social systems research",
+    "subject": "interlocking community circles surrounding households, workplaces, and public institutions, with a research prism tracing relationships between social structures",
+    "alt_text": "Illustration of interconnected households, workplaces, and institutions examined through a research prism",
+    "distinctiveness": "Doctoral sociology represented by rigorous investigation of relationships among communities, institutions, and social structures"
+  },
+  {
+    "programme_name": "PhD in Development Studies",
+    "department_code": "SGDS",
+    "visual_family": "development systems research",
+    "subject": "a regional development landscape linking a water system, productive fields, enterprise hub, clinic, and learning centre through analytical pathways and impact rings",
+    "alt_text": "Illustration of water, agriculture, enterprise, health, and education connected in a regional development system",
+    "distinctiveness": "Doctoral development studies represented by integrated research into livelihoods, services, institutions, and long-term social impact"
+  },
+  {
+    "programme_name": "PhD in Leadership and Governance",
+    "department_code": "PSPS",
+    "visual_family": "leadership governance research",
+    "subject": "a transparent institutional tower built from accountable decision layers, encircled by stakeholder nodes, an ethical compass, and a research lens testing governance pathways",
+    "alt_text": "Illustration of a transparent institutional tower, stakeholder network, ethical compass, and governance research lens",
+    "distinctiveness": "Doctoral leadership and governance represented by ethical direction, accountability, institutional design, and stakeholder participation"
+  },
+  {
+    "programme_name": "PhD in Disaster Management",
+    "department_code": "PSPS",
+    "visual_family": "disaster resilience research",
+    "subject": "a hazard landscape of floodwater, unstable ground, and storm arcs mapped through an early-warning network toward resilient shelters and coordinated response routes",
+    "alt_text": "Illustration of multiple hazards mapped through early-warning nodes toward shelters and response routes",
+    "distinctiveness": "Doctoral disaster management represented by multi-hazard modelling, early warning, coordinated response, and community resilience"
+  },
+  {
+    "programme_name": "PhD in Counseling Psychology",
+    "department_code": "PSY",
+    "visual_family": "counseling psychology research",
+    "subject": "two abstract dialogue forms around a calm inner labyrinth, with emotion-spectrum arcs and a research lens mapping evidence-based pathways toward wellbeing",
+    "alt_text": "Illustration of dialogue forms, an emotional spectrum, inner labyrinth, and research lens for counseling psychology",
+    "distinctiveness": "Doctoral counseling psychology represented by original research into therapeutic dialogue, emotion, cognition, and psychological change"
+  },
+  {
+    "programme_name": "PhD in Peace and Conflict Studies",
+    "department_code": "PSPS",
+    "visual_family": "peacebuilding research",
+    "subject": "two fractured civic landscapes joined by a carefully engineered bridge, with mediation circles, restored community links, and a research lens studying causes of conflict",
+    "alt_text": "Illustration of fractured communities reconnected by a mediation bridge and peacebuilding research network",
+    "distinctiveness": "Doctoral peace and conflict studies represented by conflict analysis, negotiated connection, reconciliation, and durable peace systems"
+  },
+  {
+    "programme_name": "PhD in Project Planning and Management",
+    "department_code": "PSPS",
+    "visual_family": "project systems research",
+    "subject": "a complex project landscape connecting a blueprint, resource network, risk pathways, milestone forms, and evaluation lens around a completed public facility",
+    "alt_text": "Illustration of a project blueprint, resources, risks, milestones, and evaluation surrounding a completed facility",
+    "distinctiveness": "Doctoral project planning represented by research into complex delivery systems, uncertainty, resource decisions, and measurable outcomes"
+  },
+  {
+    "programme_name": "PhD in Religion",
+    "department_code": "PRS",
+    "visual_family": "religion scholarship",
+    "subject": "an open archival volume beneath a many-branched sacred-space canopy, with ritual vessels, interwoven tradition paths, and a research lens comparing belief systems",
+    "alt_text": "Illustration of an archival volume, sacred-space canopy, ritual objects, and comparative research paths",
+    "distinctiveness": "Doctoral religion represented by deep comparative inquiry into beliefs, sacred practices, traditions, and social meaning without privileging one faith"
+  },
+  {
+    "programme_name": "PhD in Literature",
+    "department_code": "LLL",
+    "visual_family": "literary research",
+    "subject": "an open book unfolding into layered narrative landscapes, symbolic motifs, and intersecting interpretive paths examined through a scholarly lens",
+    "alt_text": "Illustration of an open book unfolding into layered narratives, symbols, and interpretive research paths",
+    "distinctiveness": "Doctoral literature represented by advanced interpretation of narrative form, symbolism, context, and multiple critical perspectives"
+  },
+  {
+    "programme_name": "PhD in Linguistics",
+    "department_code": "LLL",
+    "visual_family": "language science research",
+    "subject": "a branching speech-wave network passing through articulation forms, syntax trees without glyphs, meaning nodes, and a research lens comparing language structures",
+    "alt_text": "Illustration of speech waves, articulation forms, branching syntax, and connected meaning nodes",
+    "distinctiveness": "Doctoral linguistics represented by systematic research across sound, structure, meaning, and language variation"
+  },
+  {
+    "programme_name": "PhD in Kiswahili",
+    "department_code": "LLL",
+    "visual_family": "Kiswahili scholarship",
+    "subject": "an East African coastal-to-inland cultural map connected by flowing speech ribbons, oral-story forms, manuscripts without writing, and a research lens tracing language change",
+    "alt_text": "Illustration of East African cultural regions connected by speech ribbons, oral traditions, and manuscript research",
+    "distinctiveness": "Doctoral Kiswahili represented by original research into the language's structure, literature, cultural settings, and historical movement"
+  },
+  {
+    "programme_name": "PhD in History",
+    "department_code": "HH",
+    "visual_family": "historical research",
+    "subject": "a deep chronological landscape linking an archaeological vessel, oral-history sound rings, archival folios without writing, and modern civic memory through a research lens",
+    "alt_text": "Illustration of archaeological, oral, archival, and civic evidence arranged along a historical timeline",
+    "distinctiveness": "Doctoral history represented by critical synthesis of material, oral, archival, and public-memory evidence across long time spans"
+  },
+  {
+    "programme_name": "PhD in Geography",
+    "department_code": "GEOG",
+    "visual_family": "geographic systems research",
+    "subject": "a layered terrain model combining watershed, settlement, vegetation, and climate patterns, overlaid with spatial-analysis grids and a research lens",
+    "alt_text": "Illustration of layered terrain, watershed, settlement, vegetation, climate, and spatial analysis",
+    "distinctiveness": "Doctoral geography represented by advanced spatial research connecting physical landscapes, human settlement, and environmental change"
+  },
+  {
+    "programme_name": "PhD in Gender and Development Studies",
+    "department_code": "SGDS",
+    "visual_family": "gender development research",
+    "subject": "an equitable development network balancing access to land, enterprise, learning, care, and civic decision spaces, with a research lens revealing unequal pathways",
+    "alt_text": "Illustration of development resources and civic spaces connected through balanced and unequal access pathways",
+    "distinctiveness": "Doctoral gender and development represented by intersectional research into power, access, care, livelihoods, and inclusive institutional change"
+  },
+  {
+    "programme_name": "MA in History",
+    "department_code": "HH",
+    "visual_family": "applied historical inquiry",
+    "subject": "an archive table holding an old map without labels, a pottery fragment, oral-history sound rings, and a magnifying lens assembling evidence into a chronological ribbon",
+    "alt_text": "Illustration of a map, pottery fragment, oral-history waves, and archive lens forming a timeline",
+    "distinctiveness": "Master's history represented by practical source analysis and reconstruction of a focused historical narrative"
+  },
+  {
+    "programme_name": "MA in Geography",
+    "department_code": "GEOG",
+    "visual_family": "applied geographic analysis",
+    "subject": "a field-mapping station overlooking a watershed, settlement cluster, and land-cover mosaic, with layered spatial grids and surveying tools",
+    "alt_text": "Illustration of a field-mapping station analyzing a watershed, settlements, and land-cover patterns",
+    "distinctiveness": "Master's geography represented by applied field observation, mapping, and spatial analysis of linked human-environment systems"
+  },
+  {
+    "programme_name": "MA in Religious Studies",
+    "department_code": "PRS",
+    "visual_family": "comparative religious studies",
+    "subject": "several distinct sacred-space silhouettes gathered around an open scholarly volume, with ritual objects and dialogue pathways arranged in balanced comparison",
+    "alt_text": "Illustration of varied sacred spaces, ritual objects, and an open volume connected by comparative dialogue",
+    "distinctiveness": "Master's religious studies represented by balanced comparative study of beliefs, practices, texts, and communities"
+  },
+  {
+    "programme_name": "MA in Literature",
+    "department_code": "LLL",
+    "visual_family": "literary interpretation",
+    "subject": "a reading desk where an open volume releases a narrative river, dramatic arch, poetic rhythm forms, and a critical lens joining multiple interpretations",
+    "alt_text": "Illustration of an open volume unfolding into narrative, drama, poetry, and critical interpretation",
+    "distinctiveness": "Master's literature represented by advanced close reading and applied critical interpretation across major literary forms"
+  },
+  {
+    "programme_name": "MA in Linguistics",
+    "department_code": "LLL",
+    "visual_family": "applied language analysis",
+    "subject": "a language-analysis workbench with speech-wave arcs, articulation diagrams without labels, branching sentence forms, and linked meaning tiles",
+    "alt_text": "Illustration of speech waves, articulation forms, branching sentence structures, and meaning tiles",
+    "distinctiveness": "Master's linguistics represented by focused analytical tools for studying sound, grammar, meaning, and language use"
+  },
+  {
+    "programme_name": "MA in Kiswahili",
+    "department_code": "LLL",
+    "visual_family": "advanced Kiswahili studies",
+    "subject": "a coastal dhow sail shape and inland storytelling circle linked by flowing speech ribbons to an open literature volume and a language-analysis prism",
+    "alt_text": "Illustration of coastal and inland cultural forms connected to Kiswahili speech, literature, and language analysis",
+    "distinctiveness": "Master's Kiswahili represented by advanced integration of language analysis, literature, oral tradition, and East African cultural contexts"
+  },
+  {
+    "programme_name": "MA in International Relations",
+    "department_code": "PSPS",
+    "visual_family": "international relations",
+    "subject": "a globe-like network of regions connected by diplomatic bridges, treaty folios without writing, trade routes, and balanced negotiation platforms",
+    "alt_text": "Illustration of global regions linked by diplomatic bridges, treaty folios, trade routes, and negotiation platforms",
+    "distinctiveness": "International relations represented by diplomacy, cooperation, negotiation, political exchange, and connections across regions"
+  },
+  {
+    "programme_name": "MA in Public Administration and Public Policy",
+    "department_code": "PSPS",
+    "visual_family": "public policy administration",
+    "subject": "a policy design desk connecting a blank public-service brief, evidence lens, implementation gears, budget scales, and service-delivery pathways to a civic building",
+    "alt_text": "Illustration of evidence, policy design, public resources, implementation, and civic service delivery",
+    "distinctiveness": "Public administration and policy represented by the full evidence-to-design-to-implementation cycle for public services"
+  },
+  {
+    "programme_name": "MA in Public Administration and Political Science",
+    "department_code": "PSPS",
+    "visual_family": "administration political institutions",
+    "subject": "a comparative institutional model balancing an elected mandate platform against interlocking administrative mechanisms, with accountability loops and an analytical prism",
+    "alt_text": "Illustration of an elected mandate platform balanced with administrative mechanisms and accountability loops",
+    "distinctiveness": "Combined administration and political science represented by the relationship between political authority, institutions, and operational government"
+  },
+  {
+    "programme_name": "MA in Criminology",
+    "department_code": "PSPS",
+    "visual_family": "criminology research",
+    "subject": "an evidence-analysis table with a fingerprint whorl, broken pathway, community risk map, justice scales, and a research lens tracing causes and prevention",
+    "alt_text": "Illustration of forensic evidence, a community risk map, justice scales, and criminology research lens",
+    "distinctiveness": "Master's criminology represented by research into causes of offending, evidence, justice responses, and prevention at community scale"
+  },
+  {
+    "programme_name": "MA in Project Planning and Management",
+    "department_code": "PSPS",
+    "visual_family": "applied project management",
+    "subject": "a project control desk with a blueprint, resource blocks, risk compass, milestone path without markings, and an evaluation lens focused on a completed community facility",
+    "alt_text": "Illustration of a blueprint, resources, risks, milestones, and evaluation leading to a community facility",
+    "distinctiveness": "Master's project management represented by applied planning, coordination, risk control, delivery, and evaluation"
+  },
+  {
+    "programme_name": "MA in Development Studies",
+    "department_code": "SGDS",
+    "visual_family": "applied development practice",
+    "subject": "a community development planning table linking water access, farming, enterprise, health, and learning resources through an impact pathway",
+    "alt_text": "Illustration of water, farming, enterprise, health, and learning connected through a development impact pathway",
+    "distinctiveness": "Master's development studies represented by integrated analysis and planning across essential services, livelihoods, and community outcomes"
+  },
+  {
+    "programme_name": "MA in Sociology",
+    "department_code": "SGDS",
+    "visual_family": "applied social analysis",
+    "subject": "a social-network map connecting family, neighbourhood, workplace, and public institution clusters, with an observation lens highlighting patterns of inclusion and change",
+    "alt_text": "Illustration of family, neighbourhood, workplace, and institutional networks examined through a social lens",
+    "distinctiveness": "Master's sociology represented by applied analysis of group relationships, institutions, inclusion, and social transformation"
+  },
+  {
+    "programme_name": "MA in Counseling Psychology",
+    "department_code": "PSY",
+    "visual_family": "advanced counseling practice",
+    "subject": "a structured therapeutic process unfolding from an assessment lens through layered emotion forms, a cognitive maze, and branching intervention routes toward a wellbeing garden",
+    "alt_text": "Illustration of assessment, emotion, cognition, and therapeutic routes progressing toward wellbeing",
+    "distinctiveness": "Master's counseling psychology represented by advanced assessment, therapeutic dialogue, and evidence-informed pathways to wellbeing"
+  },
+  {
+    "programme_name": "MA in Gender and Development Studies",
+    "department_code": "SGDS",
+    "visual_family": "applied gender development",
+    "subject": "a development planning platform balancing access to enterprise, land, education, care resources, and civic participation through inclusive pathways",
+    "alt_text": "Illustration of balanced access to enterprise, land, learning, care, and civic participation",
+    "distinctiveness": "Master's gender and development represented by applied analysis and design of equitable development programmes and institutions"
+  },
+  {
+    "programme_name": "Bachelor of Arts",
+    "department_code": "LLL",
+    "visual_family": "interdisciplinary humanities",
+    "subject": "an open humanities portfolio surrounded by a cultural artifact, narrative scroll without writing, globe form, civic arch, and branching ideas arranged as one learning constellation",
+    "alt_text": "Illustration of a humanities portfolio connecting culture, narrative, society, place, and ideas",
+    "distinctiveness": "Broad Bachelor of Arts study represented by an interdisciplinary constellation rather than one specialist discipline"
+  },
+  {
+    "programme_name": "Bachelor of Arts (Kiswahili)",
+    "department_code": "LLL",
+    "visual_family": "Kiswahili language and culture",
+    "subject": "a vibrant language-learning pavilion containing a conversation ribbon, storytelling drum, open literature volume, woven cultural pattern, and regional landscape forms",
+    "alt_text": "Illustration of a language pavilion with conversation, storytelling, literature, cultural patterns, and regional landscapes",
+    "distinctiveness": "Undergraduate Kiswahili represented by integrated language proficiency, literature, oral traditions, and regional culture"
+  },
+  {
+    "programme_name": "Bachelor of Arts (Literature)",
+    "department_code": "LLL",
+    "visual_family": "literature studies",
+    "subject": "an open book unfolding into a story path, theatre curtain forms, poetic rhythm waves, and symbolic landscape elements beneath a reading lamp",
+    "alt_text": "Illustration of an open book unfolding into fiction, drama, poetry, and symbolic landscapes",
+    "distinctiveness": "Undergraduate literature represented by exploration of narrative, drama, poetry, symbolism, and interpretation"
+  },
+  {
+    "programme_name": "Bachelor of Arts (Linguistics)",
+    "department_code": "LLL",
+    "visual_family": "language structure",
+    "subject": "a language-building station where distinct sound pebbles combine into patterned phrase blocks, branching grammar pathways, and a network of shared meaning",
+    "alt_text": "Illustration of speech sounds combining into phrase blocks, grammar pathways, and a meaning network",
+    "distinctiveness": "Undergraduate linguistics represented by foundational study of speech sounds, grammar, meaning, and language patterns"
+  },
+  {
+    "programme_name": "Bachelor of Arts (Social Work and Sociology)",
+    "department_code": "SGDS",
+    "visual_family": "social work and sociology",
+    "subject": "a community support bridge connecting a household cluster to care resources and public services, surrounded by social-network rings and an assessment compass",
+    "alt_text": "Illustration of households connected by a support bridge to care services and wider social networks",
+    "distinctiveness": "Combined social work and sociology represented by direct support practice grounded in understanding communities and social systems"
+  },
+  {
+    "programme_name": "Bachelor of Arts (Criminology and Security Studies)",
+    "department_code": "PSPS",
+    "visual_family": "crime and security systems",
+    "subject": "a secure community grid combining an evidence marker without writing, observation lens, protective perimeter, justice scales, and coordinated prevention routes",
+    "alt_text": "Illustration of evidence analysis, justice scales, a protected community grid, and prevention routes",
+    "distinctiveness": "Degree-level criminology and security represented by integrated evidence, justice, threat analysis, prevention, and community protection"
+  },
+  {
+    "programme_name": "Bachelor of Arts (Geography)",
+    "department_code": "GEOG",
+    "visual_family": "human and physical geography",
+    "subject": "a terrain cross-section moving from highland watershed through farms to an urban settlement, with a field compass and layered map grid",
+    "alt_text": "Illustration of a watershed, farms, settlement, field compass, and layered geographic map",
+    "distinctiveness": "Undergraduate geography represented by connected physical landscapes, human land use, settlements, and field mapping"
+  },
+  {
+    "programme_name": "Bachelor of Arts (History)",
+    "department_code": "HH",
+    "visual_family": "historical studies",
+    "subject": "a heritage field trail passing an excavated foundation, traditional homestead, old trade route, restored landmark, and museum display case",
+    "alt_text": "Illustration of a heritage trail connecting archaeology, settlement, trade, a landmark, and a museum display",
+    "distinctiveness": "Undergraduate history represented by learning to connect diverse evidence across eras and interpret continuity and change"
+  },
+  {
+    "programme_name": "Bachelor of Arts (Public Administration and Political Science)",
+    "department_code": "PSPS",
+    "visual_family": "government and administration",
+    "subject": "a civic assembly and public-service building connected by decision pathways to a community service desk, resource balance, and institutional network",
+    "alt_text": "Illustration of political institutions and public administration connected to community services",
+    "distinctiveness": "Undergraduate public administration and political science represented by the link from political decisions to institutions and public service"
+  },
+  {
+    "programme_name": "Bachelor of Arts (Peace and Conflict Studies)",
+    "department_code": "PSPS",
+    "visual_family": "peace and conflict practice",
+    "subject": "diverging conflict paths converging at a mediation table, then crossing a reconciliation bridge toward reconnected community circles",
+    "alt_text": "Illustration of conflict pathways meeting at mediation and continuing across a reconciliation bridge",
+    "distinctiveness": "Undergraduate peace studies represented by conflict understanding, mediation, reconciliation, and restoration of community relationships"
+  },
+  {
+    "programme_name": "Bachelor of Arts (Community Development)",
+    "department_code": "SGDS",
+    "visual_family": "community development",
+    "subject": "a community-led planning circle connected to a water point, cooperative garden, learning centre, small enterprise, and rising shared-outcome forms",
+    "alt_text": "Illustration of community planning connected to water, agriculture, learning, enterprise, and shared outcomes",
+    "distinctiveness": "Community development represented by participatory planning and locally connected initiatives that strengthen livelihoods and services"
+  },
+  {
+    "programme_name": "Bachelor of Arts (Psychology)",
+    "department_code": "PSY",
+    "visual_family": "psychological science",
+    "subject": "a faceted mind model connecting perception waves, memory tiles, emotion arcs, developmental steps, and an observation lens",
+    "alt_text": "Illustration of a mind model connecting perception, memory, emotion, development, and observation",
+    "distinctiveness": "General psychology represented by broad scientific study of cognition, emotion, behaviour, development, and observation"
+  },
+  {
+    "programme_name": "Bachelor of Arts (Counseling Psychology)",
+    "department_code": "PSY",
+    "visual_family": "counseling foundations",
+    "subject": "two balanced dialogue forms beside an emotion spectrum, a supportive pathway, wellbeing compass, and a calm shelter-like frame",
+    "alt_text": "Illustration of supportive dialogue, emotional awareness, a wellbeing compass, and a guided pathway",
+    "distinctiveness": "Counseling psychology represented by foundational helping skills, emotional understanding, assessment, and guided personal change"
+  },
+  {
+    "programme_name": "Bachelor of Arts (Gender and Development Studies)",
+    "department_code": "SGDS",
+    "visual_family": "gender inclusive development",
+    "subject": "an inclusive community landscape with balanced routes to education, enterprise, land resources, care infrastructure, and public decision spaces",
+    "alt_text": "Illustration of inclusive pathways to education, enterprise, land, care, and civic decision-making",
+    "distinctiveness": "Undergraduate gender and development represented by understanding how access, roles, power, and institutions shape development outcomes"
+  },
+  {
+    "programme_name": "Bachelor of Arts (Religious Studies)",
+    "department_code": "PRS",
+    "visual_family": "religion and society",
+    "subject": "a balanced circle of varied sacred-space silhouettes, ritual vessels, oral-tradition waves, and an open study volume connected to community life",
+    "alt_text": "Illustration of varied sacred spaces, ritual objects, oral traditions, and a study volume within community life",
+    "distinctiveness": "Undergraduate religious studies represented by comparative exploration of belief, practice, sacred expression, and society"
+  },
+  {
+    "programme_name": "Bachelor of Arts in Music",
+    "department_code": "LLL",
+    "visual_family": "music scholarship and performance",
+    "subject": "a balanced ensemble of string, keyboard, wind, and percussion forms flowing into layered rhythm waves, a conductor arc, and a composition folio without notation",
+    "alt_text": "Illustration of varied instruments, rhythm waves, a conducting arc, and a blank composition folio",
+    "distinctiveness": "Degree-level music represented by broad performance, ensemble, theory, composition, and scholarly study across instrument families"
+  },
+  {
+    "programme_name": "Bachelor of Arts (Economics and Sociology)",
+    "department_code": "SGDS",
+    "visual_family": "economy and society",
+    "subject": "a marketplace and household network linked by resource flows, employment pathways, community institutions, and balanced distribution scales",
+    "alt_text": "Illustration of markets, households, work, institutions, and resource distribution connected in a social economy",
+    "distinctiveness": "Combined economics and sociology represented by the relationship between resources, work, markets, households, institutions, and inequality"
+  },
+  {
+    "programme_name": "Diploma in Criminology and Security Studies",
+    "department_code": "PSPS",
+    "visual_family": "practical crime and security",
+    "subject": "a compact security operations case containing an observation lens, evidence pouch without markings, route map, protective shield, and incident-response tools",
+    "alt_text": "Illustration of a practical security case with observation, evidence, mapping, protection, and response tools",
+    "distinctiveness": "Diploma criminology and security represented by job-ready observation, evidence handling, risk mapping, prevention, and response"
+  },
+  {
+    "programme_name": "Diploma in Public Administration",
+    "department_code": "PSPS",
+    "visual_family": "public administration practice",
+    "subject": "an organized public-service desk with blank service forms, an in-tray, scheduling dial, resource tokens, and pathways connecting residents to a civic office",
+    "alt_text": "Illustration of a public-service desk organizing forms, schedules, resources, and resident service pathways",
+    "distinctiveness": "Diploma public administration represented by practical office coordination, records, resource handling, and accessible service delivery"
+  },
+  {
+    "programme_name": "Diploma in County Governance and Management",
+    "department_code": "PSPS",
+    "visual_family": "county governance practice",
+    "subject": "a county landscape divided into connected service zones around a local assembly, with resource routes leading to water, roads, health, and market facilities",
+    "alt_text": "Illustration of county service zones connected to local governance, water, roads, health, and markets",
+    "distinctiveness": "Diploma county governance represented by practical coordination of devolved institutions, local resources, and essential public services"
+  },
+  {
+    "programme_name": "Diploma in Social Work and Community Development",
+    "department_code": "SGDS",
+    "visual_family": "community support practice",
+    "subject": "a portable outreach toolkit connecting a household, support bridge, care-resource case, community meeting circle, and small livelihood garden",
+    "alt_text": "Illustration of an outreach toolkit supporting households, community dialogue, care services, and livelihoods",
+    "distinctiveness": "Diploma social work and development represented by practical household support, outreach, community participation, and livelihood action"
+  },
+  {
+    "programme_name": "Diploma in Music",
+    "department_code": "LLL",
+    "visual_family": "practical music training",
+    "subject": "a rehearsal station with a keyboard, drum, string instrument, wind instrument, tuning fork, and flowing ensemble rhythm arcs",
+    "alt_text": "Illustration of a rehearsal station with keyboard, percussion, string, wind, and tuning tools",
+    "distinctiveness": "Diploma music represented by concentrated practical rehearsal, ensemble skills, instrument technique, and aural training"
+  },
+  {
+    "programme_name": "Diploma in International Relations, Peace and Conflict Resolutions",
+    "department_code": "PSPS",
+    "visual_family": "diplomacy and conflict resolution",
+    "subject": "two regional platforms linked by a diplomatic bridge and mediation table, with a globe network, peace pathway, and restored community connection",
+    "alt_text": "Illustration of regions connected through diplomacy, mediation, conflict resolution, and restored community links",
+    "distinctiveness": "Diploma international relations and peace represented by practical diplomacy, mediation, negotiation, and cross-border cooperation"
+  },
+  {
+    "programme_name": "Diploma in Gender and Development Studies",
+    "department_code": "SGDS",
+    "visual_family": "inclusive development practice",
+    "subject": "a community assessment board without writing mapping different routes to training, enterprise, land resources, care support, and local participation",
+    "alt_text": "Illustration of a community assessment mapping access to training, enterprise, resources, care, and participation",
+    "distinctiveness": "Diploma gender and development represented by practical assessment of access barriers and design of inclusive community interventions"
+  },
+  {
+    "programme_name": "Diploma in Counseling Psychology",
+    "department_code": "PSY",
+    "visual_family": "practical counseling skills",
+    "subject": "a compact counseling toolkit with paired dialogue forms, emotion cards without symbols, a listening shell, assessment lens, and guided wellbeing path",
+    "alt_text": "Illustration of a counseling toolkit for dialogue, emotional awareness, listening, assessment, and guidance",
+    "distinctiveness": "Diploma counseling psychology represented by practical foundational tools for listening, assessment, supportive dialogue, and referral"
+  },
+  {
+    "programme_name": "Certificate in Music",
+    "department_code": "LLL",
+    "visual_family": "music foundations",
+    "subject": "a foundational sound board where a tuning fork sends one clear wave across beat blocks, pitch steps, and a small rhythm pad",
+    "alt_text": "Illustration of a tuning fork, sound wave, beat blocks, pitch steps, and rhythm pad",
+    "distinctiveness": "Certificate music represented by an uncluttered starter set for rhythm, pitch, listening, and basic instrumental practice"
+  },
+  {
+    "programme_name": "Certificate in Social Work",
+    "department_code": "SGDS",
+    "visual_family": "social work foundations",
+    "subject": "a simple support bridge between a household and a care-resource centre, with a listening form, referral path, and protective community circle",
+    "alt_text": "Illustration of a household connected to listening, referral, care resources, and community support",
+    "distinctiveness": "Certificate social work represented by essential helping, listening, referral, safeguarding, and community-support foundations"
+  },
+  {
+    "programme_name": "Certificate in Disaster Management",
+    "department_code": "PSPS",
+    "visual_family": "disaster response foundations",
+    "subject": "an emergency readiness kit beside a hazard map without labels, warning beacon, evacuation path, shelter, and basic response supplies",
+    "alt_text": "Illustration of an emergency kit, hazard map, warning beacon, evacuation route, and shelter",
+    "distinctiveness": "Certificate disaster management represented by essential preparedness, warning, evacuation, shelter, and first-response actions"
+  },
+  {
+    "programme_name": "Certificate in Public Administration",
+    "department_code": "PSPS",
+    "visual_family": "public service foundations",
+    "subject": "a straightforward civic service counter with a blank form tray, filing box, scheduling clock, and clear pathway connecting a resident to an office",
+    "alt_text": "Illustration of a civic service counter with forms, records, scheduling, and an accessible resident pathway",
+    "distinctiveness": "Certificate public administration represented by essential records, office organization, scheduling, and courteous frontline service"
+  },
+  {
+    "programme_name": "Certificate in Criminology and Security Studies",
+    "department_code": "PSPS",
+    "visual_family": "security foundations",
+    "subject": "a basic community safety kit with an observation lens, route map without labels, evidence container, protective barrier, and alert beacon",
+    "alt_text": "Illustration of foundational community safety tools for observation, mapping, evidence, protection, and alerting",
+    "distinctiveness": "Certificate criminology and security represented by essential awareness, observation, incident preservation, and community-safety procedures"
+  },
+  {
+    "programme_name": "Certificate in County Governance and Management",
+    "department_code": "PSPS",
+    "visual_family": "local governance foundations",
+    "subject": "a simple county service map linking a local office to a water point, road, clinic, and market through organized resource paths",
+    "alt_text": "Illustration of a local office connected to water, roads, health, and market services",
+    "distinctiveness": "Certificate county governance represented by foundational understanding of devolved offices, local resources, and everyday public services"
+  },
+  {
+    "programme_name": "Certificate in Counseling Psychology",
+    "department_code": "PSY",
+    "visual_family": "helping skills foundations",
+    "subject": "a listening shell beside graduated emotion stones, an empathy bridge, a safe support circle, and a clear referral signpost without symbols",
+    "alt_text": "Illustration of listening, emotional awareness, empathy, safe support, and referral foundations",
+    "distinctiveness": "Certificate counseling psychology represented by essential listening, empathy, emotional awareness, supportive communication, and referral skills"
+  }
+]

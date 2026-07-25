@@ -12,7 +12,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ksu_common.models.base import Base
 
+from .content import WorkflowMetadataMixin
+
 if TYPE_CHECKING:
+    from .auth import User
     from .academic import Campus, Department, School
     from .media import Media
     from .person import Person
@@ -71,7 +74,7 @@ class Club(Base):
     )
 
 
-class ClubActivity(Base):
+class ClubActivity(Base, WorkflowMetadataMixin):
     __tablename__ = "club_activities"
 
     club_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey("clubs.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -85,11 +88,16 @@ class ClubActivity(Base):
     is_virtual: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
     meeting_link: Mapped[Optional[str]] = mapped_column(sa.String(512), nullable=True)
     cover_image_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True, index=True)
-    status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="upcoming", index=True)
+    author_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="draft", index=True)
     is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"), index=True)
+    is_published: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"), index=True)
+    published_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True, index=True)
+    archived_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True, index=True)
 
     club: Mapped["Club"] = relationship("Club", back_populates="activities")
     cover_image: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[cover_image_id])
+    author: Mapped[Optional["User"]] = relationship("User", foreign_keys=[author_user_id])
 
     __table_args__ = (
         sa.UniqueConstraint("club_id", "slug", name="uq_club_activity_slug"),

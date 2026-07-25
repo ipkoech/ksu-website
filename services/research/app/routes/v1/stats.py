@@ -30,7 +30,7 @@ async def get_public_stats(
 async def get_admin_stats(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    user: TokenPayload = Depends(require_scope("research:read")),
+    user: TokenPayload = Depends(require_scope("research.view")),
 ):
     result = await admin_research_stats(db)
     return success(data=result.model_dump())

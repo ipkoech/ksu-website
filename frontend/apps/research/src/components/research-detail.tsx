@@ -2,10 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { ResearchGenericRecord } from "@ksu/api-client";
-import { ArrowRight, ChevronRight } from "lucide-react";
-import { ScrollReveal } from "@ksu/ui/components";
+import { ArrowRight } from "lucide-react";
 import { Badge, ResearchSection, StatusMessage } from "./research-ui";
 import { compactText, formatDate, formatLabel } from "../lib/research-public-data";
+import { getResearchRecordDownloadHref } from "../lib/research-downloads";
 
 type DetailSection = {
   title: string;
@@ -18,13 +18,13 @@ type FactField = {
   format?: "date" | "label";
 };
 
-type DetailAction = {
+export type DetailAction = {
   label: string;
   href: string;
   variant?: "primary" | "secondary";
 };
 
-type DetailFact = {
+export type DetailFact = {
   label: string;
   value?: string | number | null;
 };
@@ -37,7 +37,7 @@ export function ResearchDetailHero({
   labels = [],
   facts = [],
   actions = [],
-  imageSrc = "/images/research/research-hero-imagegen.png",
+  imageSrc = "/images/research/research-home-hero.svg",
   imageAlt = "",
 }: {
   eyebrow: string;
@@ -56,49 +56,40 @@ export function ResearchDetailHero({
   const cleanFacts = facts
     .map((fact) => ({ label: fact.label, value: compactText(fact.value) }))
     .filter((fact) => fact.value);
-
   return (
-    <section className="relative overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_46%,#eef4ff_100%)] px-4 py-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.16),transparent_66%)]" />
-      <div className="relative mx-auto w-full max-w-[1680px]">
-        <BreadcrumbTrail items={breadcrumbs} />
-
-        <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-stretch">
-          <ScrollReveal className="rounded-[1.5rem] border border-slate-800 bg-slate-950 p-5 text-white shadow-[0_24px_70px_-44px_rgba(15,23,42,0.7)] sm:p-6 lg:p-7">
-            <p className="text-sm font-semibold uppercase text-secondary">
+    <>
+      <section className="border-b border-border bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mx-auto grid w-full max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-stretch">
+          <div className="min-w-0">
+            <DetailBreadcrumbs items={breadcrumbs} />
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
               {eyebrow}
             </p>
-            <h1 className="mt-3 max-w-5xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
+            <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
               {title}
             </h1>
             {body ? (
-              <p className="mt-4 max-w-3xl text-sm leading-7 text-white/72 sm:text-base">
+              <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">
                 {body}
               </p>
             ) : null}
-
-            {cleanLabels.length > 0 ? (
-              <div className="mt-5 flex flex-wrap gap-2">
-                {cleanLabels.map((label) => (
-                  <span
-                    key={label}
-                    className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white"
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-
-            {actions.length > 0 ? (
-              <div className="mt-5 flex flex-wrap gap-2">
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              {cleanLabels.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {cleanLabels.map((label) => (
+                    <Badge key={label}>{label}</Badge>
+                  ))}
+                </div>
+              ) : null}
+              {actions.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
                 {actions.map((action) => (
                   <a
                     key={`${action.label}-${action.href}`}
                     href={action.href}
                     className={
                       action.variant === "secondary"
-                        ? "inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+                        ? "inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
                         : "inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
                     }
                   >
@@ -106,43 +97,40 @@ export function ResearchDetailHero({
                     <ArrowRight aria-hidden className="h-4 w-4" />
                   </a>
                 ))}
-              </div>
-            ) : null}
-
-            {cleanFacts.length > 0 ? (
-              <div className="mt-6 grid overflow-hidden rounded-lg border border-white/10 bg-white/5 sm:grid-cols-2 xl:grid-cols-4">
-                {cleanFacts.map((fact) => (
-                  <div
-                    key={fact.label}
-                    className="border-white/10 p-4 sm:border-l first:sm:border-l-0"
-                  >
-                    <p className="text-xs font-semibold uppercase text-white/50">
-                      {fact.label}
-                    </p>
-                    <p className="mt-1 break-words text-sm font-semibold leading-6 text-white">
-                      {fact.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </ScrollReveal>
-
-          <ScrollReveal className="overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white shadow-sm">
-            <div className="relative aspect-[4/3] min-h-[220px] sm:min-h-[300px]">
-              <Image
-                src={imageSrc}
-                alt={imageAlt || title}
-                fill
-                priority
-                sizes="(min-width: 1024px) 420px, 100vw"
-                className="object-cover"
-              />
+                </div>
+              ) : null}
             </div>
-          </ScrollReveal>
+          </div>
+
+          <div className="relative hidden min-h-[220px] overflow-hidden rounded-lg border border-border bg-surface-muted shadow-sm lg:block">
+            <Image
+              src={imageSrc}
+              alt={imageAlt || title}
+              fill
+              sizes="320px"
+              className="object-cover"
+            />
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {cleanFacts.length > 0 ? (
+        <section className="border-b border-border bg-surface-subtle px-4 py-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+          <dl className="mx-auto grid w-full max-w-[1680px] gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {cleanFacts.slice(0, 6).map((fact) => (
+              <div key={fact.label} className="min-w-0 rounded-md border border-border bg-white px-3 py-2">
+                <dt className="text-[11px] font-semibold uppercase text-muted-foreground">
+                  {fact.label}
+                </dt>
+                <dd className="mt-1 break-words text-sm font-semibold leading-6 text-foreground [overflow-wrap:anywhere]">
+                  {fact.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
+    </>
   );
 }
 
@@ -210,76 +198,22 @@ export function ResearchRecordDetail({
       ) : null}
 
       <ResearchSection
-        eyebrow="Record"
+        eyebrow="Research Journey"
         title={title}
         body={compactText(record.code) ? `Code: ${compactText(record.code)}` : undefined}
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
+          <div className="flex min-w-0 flex-col gap-5">
             {sections.map((section) => (
               <DetailTextSection key={section.title} record={record} section={section} />
             ))}
             {children}
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">Details</h2>
-            <dl className="mt-4 grid gap-3 text-sm">
-              {facts.map((fact) => (
-                <div key={fact.label} className="rounded-md bg-slate-50 p-3">
-                  <dt className="text-xs font-semibold uppercase text-slate-500">{fact.label}</dt>
-                  <dd className="mt-1 font-semibold text-slate-950">{fact.value}</dd>
-                </div>
-              ))}
-            </dl>
-            {labels.length > 0 ? (
-              <div className="mt-5 flex flex-wrap gap-2">
-                {Array.from(new Set(labels)).map((label) => (
-                  <Badge key={label}>{label}</Badge>
-                ))}
-              </div>
-            ) : null}
-          </aside>
+          <ResearchDetailSidebar facts={facts} labels={labels} />
         </div>
       </ResearchSection>
     </main>
-  );
-}
-
-function BreadcrumbTrail({
-  items,
-}: {
-  items: { label: string; href?: string }[];
-}) {
-  return (
-    <nav
-      aria-label="Breadcrumb"
-      className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500"
-    >
-      {items.map((item, index) => {
-        const isLast = index === items.length - 1;
-
-        return (
-          <span
-            key={`${item.label}-${index}`}
-            className="inline-flex items-center gap-2"
-          >
-            {item.href && !isLast ? (
-              <Link href={item.href} className="transition hover:text-primary">
-                {item.label}
-              </Link>
-            ) : (
-              <span className={isLast ? "text-slate-900" : undefined}>
-                {item.label}
-              </span>
-            )}
-            {!isLast ? (
-              <ChevronRight aria-hidden className="h-3.5 w-3.5 text-slate-300" />
-            ) : null}
-          </span>
-        );
-      })}
-    </nav>
   );
 }
 
@@ -297,19 +231,50 @@ function DetailTextSection({
   if (entries.length === 0) return null;
 
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">{section.title}</h2>
-      <div className="mt-4 space-y-4">
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{section.title}</h2>
+      <div className="mt-4 flex flex-col gap-4">
         {entries.map((entry) => (
           <div key={entry.label}>
-            <p className="text-xs font-semibold uppercase text-slate-500">{entry.label}</p>
-            <p className="mt-1 break-words whitespace-pre-line text-sm leading-7 text-slate-600">
+            <p className="text-xs font-semibold uppercase text-muted-foreground">{entry.label}</p>
+            <p className="mt-1 break-words whitespace-pre-line text-sm leading-7 text-muted-foreground">
               {entry.value}
             </p>
           </div>
         ))}
       </div>
     </section>
+  );
+}
+
+function DetailBreadcrumbs({
+  items,
+}: {
+  items: { label: string; href?: string }[];
+}) {
+  if (items.length === 0) return null;
+
+  return (
+    <nav
+      aria-label="Breadcrumb"
+      className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground"
+    >
+      {items.map((item, index) => {
+        const isLast = index === items.length - 1;
+        return (
+          <span key={`${item.label}-${index}`} className="inline-flex items-center gap-2">
+            {item.href && !isLast ? (
+              <Link href={item.href} className="transition hover:text-primary">
+                {item.label}
+              </Link>
+            ) : (
+              <span className={isLast ? "text-foreground" : undefined}>{item.label}</span>
+            )}
+            {!isLast ? <span className="text-muted-foreground/60">/</span> : null}
+          </span>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -327,23 +292,23 @@ export function ResearchTextPanel({
     .filter(([, value]) => value);
 
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">
         {title}
       </h2>
       {entries.length > 0 ? (
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 flex flex-col gap-4">
           {entries.map(([label, value]) => (
             <div key={label}>
-              <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
-              <p className="mt-1 break-words whitespace-pre-line text-sm leading-7 text-slate-600">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">{label}</p>
+              <p className="mt-1 break-words whitespace-pre-line text-sm leading-7 text-muted-foreground">
                 {value}
               </p>
             </div>
           ))}
         </div>
       ) : (
-        <p className="mt-3 text-sm leading-7 text-slate-600">{empty}</p>
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">{empty}</p>
       )}
     </section>
   );
@@ -351,12 +316,99 @@ export function ResearchTextPanel({
 
 export function ResearchFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-md bg-slate-50 p-3">
-      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 break-words font-semibold text-slate-950 [overflow-wrap:anywhere]">
+    <div className="min-w-0 rounded-md bg-surface-subtle p-3">
+      <dt className="text-xs font-semibold uppercase text-muted-foreground">{label}</dt>
+      <dd className="mt-1 break-words font-semibold text-foreground [overflow-wrap:anywhere]">
         {value || "Not published"}
       </dd>
     </div>
+  );
+}
+
+export function ResearchActionLink({ action }: { action: DetailAction }) {
+  return (
+    <a
+      href={action.href}
+      className={
+        action.variant === "secondary"
+          ? "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-4 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          : "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+      }
+    >
+      {action.label}
+      <ArrowRight aria-hidden className="h-4 w-4" />
+    </a>
+  );
+}
+
+export function ResearchDetailSidebar({
+  labels = [],
+  facts = [],
+  actions = [],
+}: {
+  labels?: Array<string | null | undefined>;
+  facts?: DetailFact[];
+  actions?: DetailAction[];
+}) {
+  const cleanLabels = Array.from(
+    new Set(labels.map((label) => formatLabel(compactText(label))).filter(Boolean)),
+  );
+  const cleanFacts = facts
+    .map((fact) => ({ label: fact.label, value: compactText(fact.value) }))
+    .filter((fact) => fact.value);
+
+  if (cleanLabels.length === 0 && cleanFacts.length === 0 && actions.length === 0) {
+    return null;
+  }
+
+  return (
+    <aside className="h-fit min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      {cleanLabels.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {cleanLabels.map((label) => (
+            <Badge key={label}>{label}</Badge>
+          ))}
+        </div>
+      ) : null}
+      {cleanFacts.length > 0 ? (
+        <dl className="mt-5 grid gap-3 text-sm">
+          {cleanFacts.map((fact) => (
+            <ResearchFact key={fact.label} label={fact.label} value={fact.value} />
+          ))}
+        </dl>
+      ) : null}
+      {actions.length > 0 ? (
+        <div className="mt-5 flex flex-col gap-3">
+          {actions.map((action) => (
+            <ResearchActionLink key={`${action.label}-${action.href}`} action={action} />
+          ))}
+        </div>
+      ) : null}
+    </aside>
+  );
+}
+
+export function ResearchSidePanel({
+  eyebrow,
+  title,
+  children,
+}: {
+  eyebrow?: string;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <aside className="h-fit min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      {eyebrow ? (
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+          {eyebrow}
+        </p>
+      ) : null}
+      <h2 className={eyebrow ? "mt-3 text-xl font-semibold text-foreground" : "text-xl font-semibold text-foreground"}>
+        {title}
+      </h2>
+      <div className="mt-4">{children}</div>
+    </aside>
   );
 }
 
@@ -372,8 +424,8 @@ export function ResearchRecordPanel({
   empty?: string;
 }) {
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
       <div className="mt-4 divide-y divide-slate-200">
         {records.slice(0, 8).map((record, index) => (
           <SimpleRecordItem
@@ -384,7 +436,7 @@ export function ResearchRecordPanel({
           />
         ))}
         {records.length === 0 ? (
-          <p className="py-4 text-sm text-slate-600">{empty}</p>
+          <p className="py-4 text-sm text-muted-foreground">{empty}</p>
         ) : null}
       </div>
     </section>
@@ -401,18 +453,18 @@ export function ResearchRecordGrid({
   return (
     <div className="grid gap-5 lg:grid-cols-3">
       {records.map((record, index) => (
-        <article key={record.id ?? index} className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-base font-semibold text-slate-950">
+        <article key={record.id ?? index} className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+          <h2 className="text-base font-semibold text-foreground">
             {record.name ?? record.title ?? record.file_name ?? record.document_name ?? `File ${index + 1}`}
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
             {compactText(record.description) ||
               compactText(record.summary) ||
               compactText(record.caption) ||
               "Supporting resource"}
           </p>
-          {record.url || record.file_url || record.document_url ? (
-            <a href={record.url ?? record.file_url ?? record.document_url} className="mt-3 inline-flex text-sm font-semibold text-primary">
+          {getResearchRecordDownloadHref(record) ? (
+            <a href={getResearchRecordDownloadHref(record)} className="mt-3 inline-flex text-sm font-semibold text-primary">
               Open file
             </a>
           ) : null}
@@ -435,11 +487,11 @@ export function ResearchRelationshipCard({
   empty: string;
 }) {
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
       {record ? (
         <>
-          <h3 className="mt-4 text-base font-semibold text-slate-950">
+          <h3 className="mt-4 text-base font-semibold text-foreground">
             {record.slug ? (
               <Link href={`${hrefBase}/${record.slug}`} className="transition hover:text-primary">
                 {record.name ?? record.title}
@@ -448,7 +500,7 @@ export function ResearchRelationshipCard({
               record.name ?? record.title
             )}
           </h3>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-sm leading-7 text-muted-foreground">
             {compactText(record.summary) ||
               compactText(record.about) ||
               compactText(record.description) ||
@@ -456,7 +508,7 @@ export function ResearchRelationshipCard({
           </p>
         </>
       ) : (
-        <p className="mt-3 text-sm leading-7 text-slate-600">{empty}</p>
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">{empty}</p>
       )}
     </section>
   );
@@ -484,7 +536,7 @@ function SimpleRecordItem({
 
   return (
     <article className="py-4 first:pt-0 last:pb-0">
-      <h3 className="text-base font-semibold text-slate-950">
+      <h3 className="text-base font-semibold text-foreground">
         {hrefBase && record.slug ? (
           <Link href={`${hrefBase}/${record.slug}`} className="transition hover:text-primary">
             {title}
@@ -493,7 +545,7 @@ function SimpleRecordItem({
           title
         )}
       </h3>
-      <p className="mt-2 text-sm leading-6 text-slate-600">
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">
         {compactText(record.motivation) ||
           compactText(record.goals) ||
           compactText(record.role) ||
@@ -507,8 +559,8 @@ function SimpleRecordItem({
           compactText(record.caption) ||
           "Additional details are not published yet."}
       </p>
-      {record.url || record.file_url || record.document_url ? (
-        <a href={record.url ?? record.file_url ?? record.document_url} className="mt-2 inline-flex text-sm font-semibold text-primary">
+      {getResearchRecordDownloadHref(record) ? (
+        <a href={getResearchRecordDownloadHref(record)} className="mt-2 inline-flex text-sm font-semibold text-primary">
           Open resource
         </a>
       ) : null}

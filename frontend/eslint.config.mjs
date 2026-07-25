@@ -13,8 +13,12 @@ export default [
   {
     ignores: [
       "**/.next/**",
+      "**/.next.root-owned-*/**",
       "**/.next.docker-owned-*/**",
+      "**/.next-root-owned-backup-*/**",
       "**/.next-codex/**",
+      "**/.next-codex-*/**",
+      "**/tmp/ksu-*-next/**",
       "**/out/**",
       "**/node_modules/**",
       "**/dist/**",

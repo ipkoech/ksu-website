@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { LibraryResource } from "@ksu/api-client";
 import {
   CompactRecord,
+  LibraryActionLink,
   LibraryHero,
   MetricStrip,
   LibraryContentBand,
@@ -11,6 +12,8 @@ import {
   SidePanel,
   StatusMessage,
 } from "../../components/library-ui";
+import { LibraryFilterToolbar } from "../../components/library-filter-toolbar";
+import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
 import {
   compactText,
   formatLabel,
@@ -57,12 +60,14 @@ const statusOptions = [
 
 export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
   const { branches, resources, selectedLibraryId, query, resourceType, status } =
     await getCatalogSearchData({
       libraryId: params.branch,
       query: params.q,
       resourceType: params.type,
       status: params.status,
+      page,
     });
   const selectedBranch = branches.data.find(
     (branch) => branch.id === selectedLibraryId,
@@ -76,7 +81,11 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   const loanableCount = resources.data.filter(
     (resource) => resource.is_loanable,
   ).length;
-  const hasFilters = Boolean(query || resourceType || status);
+
+  const totalPages = resources.meta
+    ? Math.ceil(resources.meta.total / resources.meta.per_page)
+    : 1;
+  const catalogBaseHref = buildBaseHref("/catalog", params);
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
@@ -95,127 +104,39 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
             <SecondaryLink href="/services">Need help?</SecondaryLink>
           </>
         }
-      >
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-            Current scope
-          </p>
-          <h2 className="mt-3 text-2xl font-semibold text-white">
-            {selectedBranch?.name ?? "No branch selected"}
-          </h2>
-          <p className="mt-3 text-sm leading-6 text-white/75">
-            {selectedBranch?.description ??
-              "Choose a branch below to search branch-held catalog resources."}
-          </p>
-        </div>
-      </LibraryHero>
+      />
 
       <LibraryContentBand>
-        <form
-          action="/catalog"
-          className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)] xl:grid-cols-[240px_minmax(240px,1fr)_190px_190px_auto] xl:items-end"
-        >
-          <div className="space-y-2">
-            <label
-              className="text-sm font-semibold text-slate-900"
-              htmlFor="catalog-branch"
-            >
-              Library branch
-            </label>
-            <select
-              id="catalog-branch"
-              name="branch"
-              defaultValue={selectedLibraryId}
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              {branches.data.length === 0 ? (
-                <option value="">No branches available</option>
-              ) : null}
-              {branches.data.map((branch) => (
-                <option key={branch.id} value={branch.id}>
-                  {branch.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label
-              className="text-sm font-semibold text-slate-900"
-              htmlFor="catalog-query"
-            >
-              Search terms
-            </label>
-            <input
-              id="catalog-query"
-              name="q"
-              type="search"
-              defaultValue={query}
-              placeholder="Title, author, ISBN, call number, or subject"
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label
-              className="text-sm font-semibold text-slate-900"
-              htmlFor="catalog-type"
-            >
-              Resource type
-            </label>
-            <select
-              id="catalog-type"
-              name="type"
-              defaultValue={resourceType}
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              {resourceTypeOptions.map((option) => (
-                <option key={option.value || "all-types"} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label
-              className="text-sm font-semibold text-slate-900"
-              htmlFor="catalog-status"
-            >
-              Availability
-            </label>
-            <select
-              id="catalog-status"
-              name="status"
-              defaultValue={status}
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              {statusOptions.map((option) => (
-                <option key={option.value || "all-statuses"} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-          >
-            Search catalog
-          </button>
-        </form>
-
-        {hasFilters ? (
-          <div className="mt-4">
-            <Link
-              href="/catalog"
-              className="inline-flex min-h-11 items-center rounded-full px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10"
-            >
-              Clear search and filters
-            </Link>
-          </div>
-        ) : null}
+        <LibraryFilterToolbar
+          actionUrl="/catalog"
+          resetHref="/catalog"
+          searchValue={query}
+          searchPlaceholder="Title, author, ISBN, call number, or subject"
+          searchLabel="Search Terms"
+          selects={[
+            {
+              name: "branch",
+              label: "Library Branch",
+              value: selectedLibraryId,
+              options: branches.data.map((branch) => ({ value: branch.id, label: branch.name })),
+              allLabel: branches.data.length === 0 ? "No branches available" : "All branches",
+            },
+            {
+              name: "type",
+              label: "Resource Type",
+              value: resourceType,
+              options: resourceTypeOptions,
+              allLabel: "All types",
+            },
+            {
+              name: "status",
+              label: "Availability",
+              value: status,
+              options: statusOptions,
+              allLabel: "All statuses",
+            },
+          ]}
+        />
 
         {resources.error ? (
           <div className="mt-5">
@@ -245,43 +166,52 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
             <SearchTips />
           </div>
         ) : (
-          <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
-            <SidePanel title="Refine results" eyebrow="Filters">
-              <div className="space-y-3 text-sm leading-6 text-slate-600">
-                <p>Branch: {selectedBranch?.name ?? "All branches"}</p>
-                <p>Type: {resourceType ? formatLabel(resourceType) : "All types"}</p>
-                <p>Status: {status ? formatLabel(status) : "All statuses"}</p>
-                <Link href="/ask" className="inline-flex text-sm font-semibold text-primary">
-                  Ask for catalog help
-                </Link>
+          <>
+            <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
+              <SidePanel title="Refine results" eyebrow="Filters">
+                <div className="flex flex-col gap-3 text-sm leading-6 text-muted-foreground">
+                  <p>Branch: {selectedBranch?.name ?? "All branches"}</p>
+                  <p>Type: {resourceType ? formatLabel(resourceType) : "All types"}</p>
+                  <p>Status: {status ? formatLabel(status) : "All statuses"}</p>
+                  <Link href="/ask" className="inline-flex text-sm font-semibold text-primary">
+                    Ask for catalog help
+                  </Link>
+                </div>
+              </SidePanel>
+              <div className="grid gap-4">
+                {resources.data.map((resource) => (
+                  <CatalogCard key={resource.id} resource={resource} />
+                ))}
               </div>
-            </SidePanel>
-            <div className="grid gap-4">
-              {resources.data.map((resource) => (
-                <CatalogCard key={resource.id} resource={resource} />
-              ))}
-            </div>
 
-            <aside className="space-y-5">
-              <MetricStrip
-                items={[
-                  { label: "Available now", value: availableCount },
-                  { label: "Loanable", value: loanableCount },
-                  { label: "Reference only", value: referenceCount },
-                ]}
-              />
-              <SearchTips />
-              {selectedBranch ? (
-                <SidePanel title={selectedBranch.name} eyebrow="Selected branch">
-                  <dl className="mt-4 grid gap-3 text-sm text-slate-600">
-                    <Meta label="Location" value={selectedBranch.address} />
-                    <Meta label="Phone" value={selectedBranch.phone} />
-                    <Meta label="Email" value={selectedBranch.email} />
-                  </dl>
-                </SidePanel>
-              ) : null}
-            </aside>
-          </div>
+              <aside className="flex flex-col gap-5">
+                <MetricStrip
+                  items={[
+                    { label: "Available now", value: availableCount },
+                    { label: "Loanable", value: loanableCount },
+                    { label: "Reference only", value: referenceCount },
+                  ]}
+                />
+                <SearchTips />
+                {selectedBranch ? (
+                  <SidePanel title={selectedBranch.name} eyebrow="Selected branch">
+                    <dl className="mt-4 grid gap-3 text-sm text-muted-foreground">
+                      <Meta label="Location" value={selectedBranch.address} />
+                      <Meta label="Phone" value={selectedBranch.phone} />
+                      <Meta label="Email" value={selectedBranch.email} />
+                    </dl>
+                  </SidePanel>
+                ) : null}
+              </aside>
+            </div>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              total={resources.meta?.total ?? resources.data.length}
+              perPage={resources.meta?.per_page ?? 100}
+              baseHref={catalogBaseHref}
+            />
+          </>
         )}
       </LibraryContentBand>
     </main>
@@ -312,20 +242,17 @@ function CatalogCard({ resource }: { resource: LibraryResource }) {
 
 function SearchTips() {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-950">Search tips</h2>
-      <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-lg font-semibold text-foreground">Search tips</h2>
+      <ul className="mt-4 flex flex-col gap-3 text-sm leading-6 text-muted-foreground">
         <li>Use shorter phrases when an exact title does not return results.</li>
         <li>Search by author, ISBN, ISSN, call number, publisher, or subject.</li>
         <li>Change the branch selector if the item may be held elsewhere.</li>
       </ul>
       <div className="mt-5">
-        <Link
-          href="/services#services-heading"
-          className="inline-flex min-h-11 items-center rounded-full px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10"
-        >
+        <LibraryActionLink href="/services#services-heading">
           Ask for catalog help
-        </Link>
+        </LibraryActionLink>
       </div>
     </section>
   );
@@ -364,8 +291,21 @@ function Meta({
 
   return (
     <div>
-      <dt className="font-semibold text-slate-950">{label}</dt>
+      <dt className="font-semibold text-foreground">{label}</dt>
       <dd className="mt-1">{value}</dd>
     </div>
   );
+}
+
+function buildBaseHref(
+  path: string,
+  params: Record<string, string | string[] | undefined>,
+) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (key === "page") continue;
+    if (typeof value === "string" && value) search.set(key, value);
+  }
+  const qs = search.toString();
+  return qs ? `${path}?${qs}` : path;
 }

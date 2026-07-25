@@ -1,32 +1,40 @@
 "use client";
 
-import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { slidersApi } from "@ksu/api-client";
+import { ResearchContentResourcePage } from "../../_components/research-content-resource-page";
+import { ResearchSettingsWorkspaceHeader } from "../_components/settings-workspace";
 
 export default function ResearchSlidersPage() {
   return (
-    <ResearchResourcePage
-      title="Research Sliders"
-      description="Manage research service slider records used by research pages."
+    <ResearchContentResourcePage
+      title="Research Media"
+      description="Manage research-scoped public visuals, page sliders, and media-backed calls to action."
       queryKey={["research", "sliders"]}
-      resource={researchServiceApi.sliders}
-      manageScopes={["content.manage", "research:write"]}
+      resource={{
+        list: slidersApi.listAdminSliders,
+        create: (payload) => slidersApi.createSlider(payload.slider_group_id, payload),
+        update: slidersApi.updateSlider,
+        delete: slidersApi.deleteSlider,
+      }}
+      manageScopes={["marketing.manage_sliders", "admin:*"]}
+      summarySlot={<ResearchSettingsWorkspaceHeader />}
       fields={[
         { name: "title", label: "Title", required: true },
-        { name: "slug", label: "Slug" },
-        { name: "slider_type", label: "Slider Type", placeholder: "hero" },
-        { name: "placement", label: "Placement", placeholder: "research_home" },
         { name: "subtitle", label: "Subtitle" },
-        { name: "description", label: "Description", type: "textarea" },
-        { name: "image_url", label: "Image URL", type: "url" },
-        { name: "link_url", label: "Link URL", type: "url" },
-        { name: "link_text", label: "Link Text" },
-        { name: "starts_at", label: "Starts At", type: "datetime-local" },
-        { name: "ends_at", label: "Ends At", type: "datetime-local" },
+        { name: "rich_text", label: "Body", type: "richtext" },
+        { name: "desktop_media_id", label: "Desktop Image", type: "media", media: { mediaType: "image", uploadEntityType: "research", uploadRole: "slider_desktop" } },
+        { name: "mobile_media_id", label: "Mobile Image", type: "media", media: { mediaType: "image", uploadEntityType: "research", uploadRole: "slider_mobile" } },
+        { name: "external_url", label: "CTA Link", type: "url" },
+        { name: "link_text", label: "CTA Label" },
+        { name: "display_order", label: "Sort Order", type: "number" },
+        { name: "is_main", label: "Main", type: "boolean" },
+        { name: "is_public", label: "Public", type: "boolean" },
         { name: "is_active", label: "Active", type: "boolean" },
       ]}
-      defaults={{ slider_type: "hero", placement: "research_home" }}
-      emptyMessage="No research sliders were returned by the research service."
-      metaFields={["slider_type", "placement", "is_active"]}
+      defaults={{ is_active: true, is_public: true, display_order: 100 }}
+      emptyMessage="No research slider records were returned by the main content service."
+      metaFields={["link_text", "is_main", "is_active"]}
+      getRecordDetailHref={(record) => `/research/settings/sliders/${record.id}`}
     />
   );
 }

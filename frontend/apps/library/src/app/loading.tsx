@@ -5,8 +5,8 @@ export default function Loading() {
         aria-label="Loading library content"
         className="px-4 py-8 sm:px-6 lg:px-8"
       >
-        <div className="mx-auto max-w-6xl space-y-6">
-          <div className="max-w-3xl space-y-3">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6">
+          <div className="flex max-w-3xl flex-col gap-3">
             <div className="h-9 w-48 animate-pulse rounded-md bg-muted" />
             <div className="h-5 w-full max-w-2xl animate-pulse rounded-md bg-muted" />
           </div>

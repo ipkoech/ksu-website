@@ -1,6 +1,7 @@
 "use client";
 
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { CapacityWorkspaceHeader, scholarshipColumns, statusFilter } from "../_components/capacity-workspace";
 
 export default function ScholarshipsPage() {
   return (
@@ -10,6 +11,15 @@ export default function ScholarshipsPage() {
       queryKey={["research", "scholarships"]}
       resource={researchServiceApi.scholarships}
       manageScopes={["scholarship.manage", "research:write"]}
+      summarySlot={<CapacityWorkspaceHeader />}
+      listFilters={[{ name: "search", label: "Search", type: "text", placeholder: "Search scholarships" }, { name: "scholarship_type", label: "Type", type: "select", options: [
+        { label: "Research", value: "research" },
+        { label: "Postgraduate", value: "postgraduate" },
+        { label: "Travel", value: "travel" },
+        { label: "Equipment", value: "equipment" },
+      ] }, statusFilter]}
+      recordColumns={scholarshipColumns}
+      editorMode="sheet"
       fields={[
         { name: "name", label: "Name", required: true },
         { name: "slug", label: "Slug" },
@@ -50,6 +60,8 @@ export default function ScholarshipsPage() {
       ]}
       defaults={{ scholarship_type: "research", currency: "KES", status: "open" }}
       emptyMessage="No scholarships were returned by the research service."
+      importResource="research-scholarships"
+      detailHref={(record) => `/research/capacity/scholarships/${record.id}`}
     />
   );
 }

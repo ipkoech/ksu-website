@@ -178,7 +178,7 @@ export default function AboutUsSection({
     <section
       id="about-section"
       ref={sectionRef}
-      className="relative w-full overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-100 px-4 py-20 text-slate-900 sm:px-6 lg:px-8"
+      className="relative w-full overflow-hidden bg-gradient-to-b from-surface-subtle via-white to-surface-muted px-4 py-20 text-foreground sm:px-6 lg:px-8"
     >
       <motion.div
         className="absolute left-10 top-16 h-64 w-64 rounded-full bg-primary/8 blur-3xl"
@@ -204,7 +204,7 @@ export default function AboutUsSection({
             <Sparkles className="h-4 w-4" />
             Discover Our Story
           </span>
-          <h2 className="text-center font-[family-name:var(--font-display)] text-4xl leading-tight text-slate-950 md:text-5xl">
+          <h2 className="text-center font-[family-name:var(--font-display)] text-4xl leading-tight text-foreground md:text-5xl">
             About Kisii University
           </h2>
           <motion.div
@@ -216,7 +216,7 @@ export default function AboutUsSection({
         </motion.div>
 
         <motion.p
-          className="mx-auto mb-14 max-w-4xl text-center text-base leading-8 text-slate-600 md:text-lg"
+          className="mx-auto mb-14 max-w-4xl text-center text-base leading-8 text-muted-foreground md:text-lg"
           variants={itemVariants}
         >
           {overview}
@@ -246,7 +246,7 @@ export default function AboutUsSection({
               variants={itemVariants}
             >
               <motion.div
-                className="overflow-hidden rounded-[2rem] shadow-2xl shadow-slate-300/40"
+                className="overflow-hidden rounded-[2rem] shadow-2xl shadow-primary/40"
                 initial={{ scale: 0.94, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.75, delay: 0.22 }}
@@ -258,7 +258,7 @@ export default function AboutUsSection({
                   sizes="(min-width: 768px) 384px, 100vw"
                   className="h-[520px] w-full"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-brand-overlay/85 via-brand-overlay/20 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-6 text-white">
                   <p className="text-sm font-semibold uppercase tracking-[0.22em] text-secondary">
                     Institutional Vision
@@ -269,7 +269,7 @@ export default function AboutUsSection({
                   <div className="mt-6 flex flex-wrap gap-3">
                     <Link
                       href="/about/university-management"
-                      className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
+                      className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface-muted"
                     >
                       University Management
                       <ArrowRight className="h-4 w-4" />
@@ -278,7 +278,7 @@ export default function AboutUsSection({
                 </div>
               </motion.div>
               <motion.div
-                className="absolute inset-0 -m-3 rounded-[2.2rem] border-2 border-slate-300/80"
+                className="absolute inset-0 -m-3 rounded-[2.2rem] border-2 border-border/80"
                 initial={{ opacity: 0, scale: 1.04 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
@@ -305,7 +305,7 @@ export default function AboutUsSection({
         </div>
 
         <motion.div
-          className="mt-20 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/40"
+          className="mt-20 rounded-[2rem] border border-border bg-white p-6 shadow-xl shadow-primary/40"
           variants={itemVariants}
         >
           <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -313,11 +313,11 @@ export default function AboutUsSection({
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-secondary">
                 Key Milestones
               </p>
-              <h3 className="mt-3 font-[family-name:var(--font-display)] text-3xl text-slate-950">
+              <h3 className="mt-3 font-[family-name:var(--font-display)] text-3xl text-foreground">
                 The institutional timeline in one compact strip.
               </h3>
             </div>
-            <p className="max-w-2xl text-sm leading-7 text-slate-500">
+            <p className="max-w-2xl text-sm leading-7 text-muted-foreground">
               These markers summarize the university's progression from teacher
               training college to chartered public university without requiring
               a separate long history page.
@@ -329,8 +329,8 @@ export default function AboutUsSection({
                 key={`${item.year}-${item.title}`}
                 className={`rounded-[1.5rem] p-5 ${
                   index === 0
-                    ? "bg-slate-950 text-white"
-                    : "border border-slate-200 bg-slate-50"
+                    ? "bg-brand-overlay text-white"
+                    : "border border-border bg-surface-subtle"
                 }`}
               >
                 <p
@@ -342,14 +342,14 @@ export default function AboutUsSection({
                 </p>
                 <h4
                   className={`mt-3 text-xl font-semibold ${
-                    index === 0 ? "text-white" : "text-slate-950"
+                    index === 0 ? "text-white" : "text-foreground"
                   }`}
                 >
                   {item.title}
                 </h4>
                 <p
                   className={`mt-3 text-sm leading-7 ${
-                    index === 0 ? "text-slate-200" : "text-slate-600"
+                    index === 0 ? "text-muted-foreground/50" : "text-muted-foreground"
                   }`}
                 >
                   {item.detail}
@@ -424,12 +424,12 @@ function ServiceItem({
           {icon}
           {secondaryIcon}
         </motion.div>
-        <h3 className="text-xl font-semibold text-slate-950 transition-colors duration-300 group-hover:text-primary">
+        <h3 className="text-xl font-semibold text-foreground transition-colors duration-300 group-hover:text-primary">
           {title}
         </h3>
       </motion.div>
       <motion.p
-        className="pl-12 text-sm leading-7 text-slate-600"
+        className="pl-12 text-sm leading-7 text-muted-foreground"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.55, delay: delay + 0.24 }}
@@ -479,7 +479,7 @@ function StatCounter({ icon, value, label, suffix, delay }: StatCounterProps) {
 
   return (
     <motion.div
-      className="group rounded-[1.5rem] border border-slate-200 bg-white p-6 text-center shadow-lg shadow-slate-200/30 transition-colors duration-300 hover:bg-slate-50"
+      className="group rounded-[1.5rem] border border-border bg-white p-6 text-center shadow-lg shadow-primary/30 transition-colors duration-300 hover:bg-surface-subtle"
       variants={{
         hidden: { opacity: 0, y: 20 },
         visible: {
@@ -498,12 +498,12 @@ function StatCounter({ icon, value, label, suffix, delay }: StatCounterProps) {
       </motion.div>
       <motion.div
         ref={countRef}
-        className="flex items-center justify-center text-3xl font-bold text-slate-950"
+        className="flex items-center justify-center text-3xl font-bold text-foreground"
       >
         <motion.span>{displayValue}</motion.span>
         <span>{suffix}</span>
       </motion.div>
-      <p className="mt-1 text-sm text-slate-600">{label}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{label}</p>
       <motion.div className="mx-auto mt-3 h-0.5 w-10 bg-secondary transition-all duration-300 group-hover:w-16" />
     </motion.div>
   );

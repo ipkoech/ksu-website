@@ -1,5 +1,14 @@
 import {
+  announcementsApi,
+  blogsApi,
+  eventsApi,
+  faqsApi,
+  newsApi,
+  personsApi,
   researchServiceApi,
+  slidersApi,
+  type Person,
+  type FAQ,
   type ResearchGenericRecord,
   type ResearchGrant,
   type ResearchProject,
@@ -9,6 +18,8 @@ import type { PublicStatsResponse } from "@ksu/api-client";
 
 export type PublicResearchData<T> = {
   data: T[];
+  total: number;
+  perPage: number;
   error: string | null;
 };
 
@@ -17,13 +28,36 @@ export type PublicResearchRecord<T> = {
   error: string | null;
 };
 
+export type ResearchHeadProfile = {
+  name: string;
+  title: string;
+  message: string;
+  photoUrl: string | null;
+  href: string;
+} | null;
+
 export type ResearchOverviewData = {
   projects: PublicResearchData<ResearchProject>;
   publications: PublicResearchData<ResearchPublication>;
   grants: PublicResearchData<ResearchGrant>;
   innovations: PublicResearchData<ResearchGenericRecord>;
   partners: PublicResearchData<ResearchGenericRecord>;
-  updates: PublicResearchData<ResearchGenericRecord>;
+  news: PublicResearchData<ResearchGenericRecord>;
+  blogs: PublicResearchData<ResearchGenericRecord>;
+  announcements: PublicResearchData<ResearchGenericRecord>;
+  events: PublicResearchData<ResearchGenericRecord>;
+  heroSliders: PublicResearchData<ResearchGenericRecord>;
+  faqs: PublicResearchData<FAQ>;
+  centers: PublicResearchData<ResearchGenericRecord>;
+  facilities: PublicResearchData<ResearchGenericRecord>;
+  expertiseTags: PublicResearchData<ResearchGenericRecord>;
+  impactMetrics: PublicResearchData<ResearchGenericRecord>;
+  stories: PublicResearchData<ResearchGenericRecord>;
+  training: PublicResearchData<ResearchGenericRecord>;
+  resources: PublicResearchData<ResearchGenericRecord>;
+  services: PublicResearchData<ResearchGenericRecord>;
+  guidelines: PublicResearchData<ResearchGenericRecord>;
+  headProfile: ResearchHeadProfile;
   stats: PublicStatsResponse | null;
   errors: string[];
 };
@@ -33,20 +67,27 @@ export type ProjectListFilters = {
   projectType?: string;
   status?: string;
   centerId?: string;
+  programId?: string;
   projectId?: string;
+  innovationId?: string;
   partnerId?: string;
+  isActive?: boolean;
+  isFeatured?: boolean;
   year?: string;
   sort?: string;
   order?: "asc" | "desc";
+  perPage?: number;
 };
 
 export type GenericListFilters = {
   search?: string;
   status?: string;
   category?: string;
+  metricType?: string;
   grantType?: string;
   centerType?: string;
   farmType?: string;
+  sustainabilityType?: string;
   publicationType?: string;
   outputType?: string;
   accessType?: string;
@@ -54,6 +95,15 @@ export type GenericListFilters = {
   developmentStage?: string;
   ipStatus?: string;
   commercializationStatus?: string;
+  ventureStage?: string;
+  registrationStatus?: string;
+  startupId?: string;
+  incubationType?: string;
+  incubationStage?: string;
+  entryType?: string;
+  entryStatus?: string;
+  caseType?: string;
+  transferStatus?: string;
   partnerType?: string;
   partnershipLevel?: string;
   consultancyType?: string;
@@ -69,16 +119,23 @@ export type GenericListFilters = {
   serviceType?: string;
   guidelineType?: string;
   centerId?: string;
+  programId?: string;
   projectId?: string;
+  innovationId?: string;
   partnerId?: string;
+  isActive?: boolean;
+  isFeatured?: boolean;
   year?: string;
   sort?: string;
   order?: "asc" | "desc";
+  page?: number;
+  perPage?: number;
 };
 
 export type RelationshipFilters = {
   projectId?: string;
   centerId?: string;
+  programId?: string;
 };
 
 const PUBLIC_RESEARCH_TIMEOUT_MS = 3000;
@@ -87,22 +144,70 @@ const unavailableMessage =
   "Research records are temporarily unavailable. Try again later or contact the research office.";
 
 const researchPublicListFields =
-  "id,title,name,slug,code,summary,abstract,description,category,status,is_active,is_public,is_featured,project_type,publication_type,grant_type,center_type,farm_type,program_type,output_type,innovation_type,partner_type,consultancy_type,fund_type,event_type,article_type,news_type,resource_type,service_type,guideline_type,scholarship_type,delivery_mode,access_type,development_stage,ip_status,commercialization_status,partnership_level,client_type,center_id,program_id,project_id,partner_id,year,start_date,end_date,deadline,event_date,published_at,publication_date,cover_image_url,logo_url,url,pdf_url,website";
+  "id,title,name,slug,code,summary,abstract,description,about,mission,vision,mandate,objectives,functions,services_summary,leadership_message,strategic_priorities,category,status,is_active,is_public,is_featured,project_type,publication_type,grant_type,center_type,farm_type,program_type,output_type,innovation_type,partner_type,consultancy_type,fund_type,event_type,article_type,news_type,resource_type,service_type,guideline_type,scholarship_type,delivery_mode,access_type,development_stage,ip_status,commercialization_status,partnership_level,client_type,center_id,program_id,project_id,partner_id,funder_id,funder_name,donor_name,year,start_date,end_date,deadline,event_date,published_at,publication_date,announcement_date,open_date,review_start_date,award_date,project_start_date,project_end_date,application_open,application_deadline,established_date,total_budget,min_award,max_award,value,current_value,target_value,principal_amount,annual_distribution,currency,number_of_awards,number_available,duration_months,covers_tuition,covers_stipend,covers_travel,covers_research,is_accepting_contributions,progress_percentage,cover_image_id,logo_id,cover_image_url,logo_url,url,pdf_url,website,external_url,application_url,contribution_url,contact_name,contact_email,contact_phone,key,value_json,social_links";
+const researchPublicationListFields =
+  `${researchPublicListFields},journal_name,publisher,volume,issue,pages,conference_name,book_title,isbn,issn,doi,is_open_access,authors:id,name,full_name,title,project:id,title,slug,code,summary,center:id,title,name,slug,code,summary`;
+const researchInnovationListFields =
+  `${researchPublicListFields},problem_addressed,solution,benefits,trl_level,outputs_count,partners_count,project:id,title,slug,code,summary,center:id,title,name,slug,code,summary`;
+const researchStartupListFields =
+  "id,name,slug,code,summary,problem,solution,business_model,market,traction,venture_stage,registration_status,registration_number,incorporation_date,sector,funding_raised,currency,website,pitch_deck_url,status,is_active,is_public,is_featured,display_order,innovation_id,partner_id,center_id,lead_founder_id,cover_image_id,gallery_media_ids,attachment_media_ids,document_media_ids,created_at,updated_at";
+const researchIncubationListFields =
+  "id,title,slug,code,summary,program_name,cohort,incubation_type,start_date,end_date,stage,milestones,support_received,outcomes,next_steps,mentor_ids,status,is_active,is_public,is_featured,display_order,innovation_id,startup_id,partner_id,center_id,gallery_media_ids,attachment_media_ids,document_media_ids,created_at,updated_at";
+const researchCompetitionListFields =
+  "id,title,slug,code,summary,entry_type,competition_name,organizer_name,venue,country,event_date,application_deadline,entry_status,award,position,prize_value,currency,pitch_summary,judges_feedback,public_url,pitch_deck_url,status,is_active,is_public,is_featured,display_order,innovation_id,startup_id,partner_id,event_id,center_id,gallery_media_ids,attachment_media_ids,document_media_ids,created_at,updated_at";
+const researchTechnologyTransferListFields =
+  "id,title,slug,code,summary,case_type,transfer_status,disclosure_date,agreement_date,ip_reference,agreement_reference,license_type,territory,exclusivity,revenue_generated,currency,public_benefit,next_steps,status,is_active,is_public,is_featured,display_order,innovation_id,partner_id,center_id,gallery_media_ids,attachment_media_ids,document_media_ids,created_at,updated_at";
+const researchProjectListFields =
+  "id,title,slug,code,summary,status,is_active,is_featured,project_type,cover_image:id,url,public_url,thumbnail_url,alt_text";
+const researchProjectFilterFields = "id,start_date,end_date,published_at,created_at,updated_at";
 
-const researchPublicDetailFields = `${researchPublicListFields},background,objectives,methodology,expected_outcomes,impact,deliverables,budget,currency,funder_name,journal_name,publisher,volume,issue,pages,article_number,conference_name,conference_location,conference_date,book_title,editors,edition,isbn,issn,doi,pmid,arxiv_id,is_open_access,impact_factor,quartile,h_index,funding_acknowledgment,contact_email,contact_phone,email,phone,address,location,venue,registration_url,application_url,download_url,file_url,eligibility,requirements,benefits,scope,content,body,rich_text,plain_text,mission,vision,mandate,head_message,office_location,social_links`;
+const researchPublicDetailFields = `${researchPublicListFields},background,methodology,expected_outcomes,impact,deliverables,budget,journal_name,publisher,volume,issue,pages,article_number,conference_name,conference_location,conference_date,book_title,editors,edition,isbn,issn,doi,pmid,arxiv_id,is_open_access,impact_factor,quartile,h_index,funding_acknowledgment,email,phone,address,location,venue,registration_url,download_url,file_url,document_url,eligibility,requirements,benefits,scope,content,body,rich_text,plain_text,focus_areas,selection_criteria,obligations,application_instructions,application_process,purpose,beneficiaries,target_beneficiaries,use_guidelines,distribution_policy,annual_distribution_notes,donor_message,donor_background,recognition_notes,mission,vision,mandate,head_message,office_location,social_links,documents,guidelines,applications,reports`;
+const researchResourceListFields =
+  "id,name,slug,code,description,summary,resource_type,category,access_type,status,is_active,is_public,is_featured,center_id,department_id,location,room,availability,operating_hours,is_free,fee_structure,contact_name,contact_email,contact_phone,booking_url,access_url,url,file_url,download_url,document_url,cover_image_url,attachment_media_ids,document_media_ids,created_at,updated_at";
+const researchResourceDetailFields =
+  `${researchResourceListFields},specifications,capabilities,usage_guidelines,training_required,attachments,requirements,how_to_access`;
+const researchGuidelineListFields =
+  "id,title,slug,code,summary,content,scope,applicability,guideline_type,category,document_name,document_url,file_url,download_url,url,document_id,version,approved_by,approval_date,effective_date,review_date,status,is_active,is_public,is_featured,is_mandatory,contact_email,created_at,updated_at";
+const researchGuidelineDetailFields =
+  `${researchGuidelineListFields},procedure,instructions,requirements,version_notes,change_summary,review_notes,related_guideline_ids,supersedes_id`;
+const researchServiceListFields =
+  "id,name,slug,code,summary,description,scope,service_type,category,status,is_active,is_public,is_featured,center_id,department_id,turnaround_time,how_to_access,request_url,url,file_url,download_url,document_url,is_free,fee_structure,contact_name,contact_email,contact_phone,attachments,created_at,updated_at";
+const researchServiceDetailFields =
+  `${researchServiceListFields},process,eligibility,deliverables,requirements,outputs,request_process`;
+const researchOutputListFields =
+  "id,title,name,slug,code,summary,description,about,output_type,category,access_type,status,is_active,is_public,is_featured,center_id,project_id,innovation_id,release_date,version,doi,license,citation,format,download_url,file_url,repository_url,access_url,url,cover_image_url,created_at,updated_at,project:id,title,slug,code,summary,center:id,title,name,slug,code,summary";
+const researchOutputDetailFields =
+  `${researchOutputListFields},methodology,methods,source,usage_notes,applications,reuse_notes`;
+const researchMainContentFields =
+  "id,title,slug,summary,excerpt,plain_text,rich_text,content,body,category,status,scope_type,scope_id,is_featured,is_main,is_public,is_published,published_at,valid_from,valid_to,start_date,end_date,location,venue,event_type,priority,display_order,featured_media,cover_image,cover_image_url,created_at,updated_at";
+const researchHeroSliderFields =
+  "id,title,subtitle,plain_text,rich_text,structured_content,desktop_media,mobile_media,external_url,link_text,open_in_new_tab,scope_type,scope_id,is_main,is_public,is_active,display_order,start_datetime,end_datetime,created_at,updated_at";
+const researchImpactMetricListFields =
+  "id,name,title,slug,code,summary,description,metric_type,category,value,unit,target_value,baseline_value,methodology,data_source,period_start,period_end,reporting_year,project_id,center_id,program_id,icon,color,is_active,is_featured,display_order,created_at,updated_at";
 
 async function safeList<T>(
-  load: () => Promise<{ data?: T[] }>,
+  load: () => Promise<{
+    data?: T[];
+    meta?: { total?: number; per_page?: number };
+  }>,
 ): Promise<PublicResearchData<T>> {
+  const defaults = {
+    data: [] as T[],
+    total: 0,
+    perPage: 100,
+    error: unavailableMessage,
+  };
   const request = load()
-    .then((response) => ({ data: response.data ?? [], error: null }))
-    .catch(() => ({ data: [], error: unavailableMessage }));
+    .then((response) => ({
+      data: response.data ?? [],
+      total: response.meta?.total ?? response.data?.length ?? 0,
+      perPage: response.meta?.per_page ?? 100,
+      error: null,
+    }))
+    .catch(() => ({ ...defaults }));
 
   const timeout = new Promise<PublicResearchData<T>>((resolve) => {
-    setTimeout(
-      () => resolve({ data: [], error: unavailableMessage }),
-      PUBLIC_RESEARCH_TIMEOUT_MS,
-    );
+    setTimeout(() => resolve({ ...defaults }), PUBLIC_RESEARCH_TIMEOUT_MS);
   });
 
   return Promise.race([request, timeout]);
@@ -134,28 +239,68 @@ async function safeStats() {
   }
 }
 
+async function safeResearchHeadProfile(): Promise<ResearchHeadProfile> {
+  try {
+    const response = await personsApi.list({
+      fields: "id,slug,full_name,title,academic_rank,institutional_role,leadership_message,photo_url,is_researcher,is_public,is_active,is_featured",
+      is_researcher: true,
+      status: "active",
+      per_page: 12,
+    });
+    const people = (response.data ?? []) as Person[];
+    const person =
+      people.find((item) =>
+        compactText(item.institutional_role)
+          .toLowerCase()
+          .includes("research"),
+      ) ??
+      people.find((item) => item.is_featured) ??
+      people[0];
+
+    if (!person) return null;
+
+    return {
+      name: compactText(person.full_name) || "Head of Research",
+      title:
+        compactText(person.institutional_role) ||
+        compactText(person.academic_rank) ||
+        "Head of Research, REIRM",
+      message: compactText(person.leadership_message),
+      photoUrl: person.photo_url || null,
+      href: person.slug ? `/team#${person.slug}` : "/team",
+    };
+  } catch {
+    return null;
+  }
+}
+
 function uniqueErrors(...items: Array<string | null | undefined>) {
   return Array.from(new Set(items.filter(Boolean) as string[]));
 }
 
-export function getProjects(filters: string | ProjectListFilters = {}) {
+export function getProjects(
+  filters: string | ProjectListFilters = {},
+  page = 1,
+) {
   const params = typeof filters === "string" ? { search: filters } : filters;
 
   return safeList<ResearchProject>(() =>
     researchServiceApi.projects.list({
-      fields: researchPublicListFields,
+      fields: researchProjectListFields,
       search: params.search?.trim() || undefined,
       project_type: params.projectType || undefined,
       status: params.status || undefined,
       center_id: params.centerId || undefined,
+      program_id: params.programId || undefined,
       project_id: params.projectId || undefined,
       year: parseYear(params.year),
       sort: params.sort || undefined,
       order: params.order,
-      is_active: true,
+      is_active: params.isActive ?? true,
+      is_featured: params.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page,
+      per_page: params.perPage ?? 100,
     }),
   );
 }
@@ -168,10 +313,22 @@ export function getProjectBySlug(slug: string) {
   );
 }
 
+export function getProjectFilterRecords() {
+  return safeList<Partial<ResearchProject>>(() =>
+    researchServiceApi.projects.list({
+      fields: researchProjectFilterFields,
+      is_active: true,
+      is_public: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
 export function getPublications(search?: string) {
   return safeList<ResearchPublication>(() =>
     researchServiceApi.publications.list({
-      fields: researchPublicListFields,
+      fields: researchPublicationListFields,
       search: search?.trim() || undefined,
       status: "published",
       is_active: true,
@@ -182,22 +339,27 @@ export function getPublications(search?: string) {
   );
 }
 
-export function getPublicationsFiltered(filters: GenericListFilters = {}) {
+export function getPublicationsFiltered(
+  filters: GenericListFilters = {},
+  page = 1,
+) {
   return safeList<ResearchPublication>(() =>
     researchServiceApi.publications.list({
-      fields: researchPublicListFields,
+      fields: researchPublicationListFields,
       search: filters.search?.trim() || undefined,
       status: filters.status || "published",
       publication_type: filters.publicationType || undefined,
       access_type: filters.accessType || undefined,
       center_id: filters.centerId || undefined,
+      program_id: filters.programId || undefined,
       project_id: filters.projectId || undefined,
       year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
+      page,
       per_page: 100,
     }),
   );
@@ -206,7 +368,7 @@ export function getPublicationsFiltered(filters: GenericListFilters = {}) {
 export function getProjectPublications(projectId: string) {
   return safeList<ResearchPublication>(() =>
     researchServiceApi.publications.list({
-      fields: researchPublicListFields,
+      fields: researchPublicationListFields,
       project_id: projectId,
       status: "published",
       is_active: true,
@@ -220,7 +382,7 @@ export function getProjectPublications(projectId: string) {
 export function getCenterPublications(centerId: string) {
   return safeList<ResearchPublication>(() =>
     researchServiceApi.publications.list({
-      fields: researchPublicListFields,
+      fields: researchPublicationListFields,
       center_id: centerId,
       status: "published",
       is_active: true,
@@ -263,12 +425,120 @@ export function getGrantsFiltered(filters: GenericListFilters = {}) {
       year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
-      is_public: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       page: 1,
       per_page: 100,
     }),
   );
+}
+
+function partnerRelationList(
+  partnerId: string,
+  relation: keyof typeof researchServiceApi.partnerRelations,
+) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.partnerRelations[relation].list(partnerId),
+  );
+}
+
+export function getPartnerProjects(partnerId: string) {
+  return partnerRelationList(partnerId, "projects");
+}
+
+export function getPartnerFarms(partnerId: string) {
+  return partnerRelationList(partnerId, "farms");
+}
+
+export function getPartnerActivities(partnerId: string) {
+  return partnerRelationList(partnerId, "activities");
+}
+
+export function getPartnerImpactStories(partnerId: string) {
+  return partnerRelationList(partnerId, "impactStories");
+}
+
+export function getPartnerImpactMetrics(partnerId: string) {
+  return partnerRelationList(partnerId, "impactMetrics");
+}
+
+export function getPartnerConsultancies(partnerId: string) {
+  return partnerRelationList(partnerId, "consultancies");
+}
+
+export function getPartnerStartups(partnerId: string) {
+  return partnerRelationList(partnerId, "startups");
+}
+
+export function getPartnerIncubationRecords(partnerId: string) {
+  return partnerRelationList(partnerId, "incubationRecords");
+}
+
+export function getPartnerCompetitionEntries(partnerId: string) {
+  return partnerRelationList(partnerId, "competitionEntries");
+}
+
+export function getPartnerTechnologyTransferCases(partnerId: string) {
+  return partnerRelationList(partnerId, "technologyTransferCases");
+}
+
+export function getPartnerSustainability(partnerId: string) {
+  return partnerRelationList(partnerId, "sustainability");
+}
+
+export async function getPartnerRelationshipBundle(partnerId: string) {
+  const [
+    projects,
+    farms,
+    activities,
+    impactStories,
+    impactMetrics,
+    consultancies,
+    startups,
+    incubationRecords,
+    competitionEntries,
+    technologyTransferCases,
+    sustainability,
+  ] = await Promise.all([
+    getPartnerProjects(partnerId),
+    getPartnerFarms(partnerId),
+    getPartnerActivities(partnerId),
+    getPartnerImpactStories(partnerId),
+    getPartnerImpactMetrics(partnerId),
+    getPartnerConsultancies(partnerId),
+    getPartnerStartups(partnerId),
+    getPartnerIncubationRecords(partnerId),
+    getPartnerCompetitionEntries(partnerId),
+    getPartnerTechnologyTransferCases(partnerId),
+    getPartnerSustainability(partnerId),
+  ]);
+
+  return {
+    projects,
+    farms,
+    activities,
+    impactStories,
+    impactMetrics,
+    consultancies,
+    startups,
+    incubationRecords,
+    competitionEntries,
+    technologyTransferCases,
+    sustainability,
+    errors: uniqueErrors(
+      projects.error,
+      farms.error,
+      activities.error,
+      impactStories.error,
+      impactMetrics.error,
+      consultancies.error,
+      startups.error,
+      incubationRecords.error,
+      competitionEntries.error,
+      technologyTransferCases.error,
+      sustainability.error,
+    ),
+  };
 }
 
 export function getGrantBySlug(slug: string) {
@@ -282,7 +552,7 @@ export function getGrantBySlug(slug: string) {
 export function getInnovations(search?: string) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.innovations.list({
-      fields: researchPublicListFields,
+      fields: researchInnovationListFields,
       search: search?.trim() || undefined,
       is_active: true,
       is_public: true,
@@ -295,7 +565,7 @@ export function getInnovations(search?: string) {
 export function getInnovationsFiltered(filters: GenericListFilters = {}) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.innovations.list({
-      fields: researchPublicListFields,
+      fields: researchInnovationListFields,
       search: filters.search?.trim() || undefined,
       innovation_type: filters.innovationType || undefined,
       development_stage: filters.developmentStage || undefined,
@@ -305,12 +575,14 @@ export function getInnovationsFiltered(filters: GenericListFilters = {}) {
       center_id: filters.centerId || undefined,
       project_id: filters.projectId || undefined,
       status: filters.status || undefined,
+      year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
     }),
   );
 }
@@ -319,6 +591,97 @@ export function getInnovationBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.innovations.getBySlug(slug, {
       fields: researchPublicDetailFields,
+    }),
+  );
+}
+
+export function getStartupsFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.startups.list({
+      fields: researchStartupListFields,
+      search: filters.search?.trim() || undefined,
+      venture_stage: filters.ventureStage || undefined,
+      registration_status: filters.registrationStatus || undefined,
+      sector: filters.category || undefined,
+      innovation_id: filters.innovationId || undefined,
+      partner_id: filters.partnerId || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
+      is_public: true,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
+    }),
+  );
+}
+
+export function getIncubationRecordsFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.incubationRecords.list({
+      fields: researchIncubationListFields,
+      search: filters.search?.trim() || undefined,
+      incubation_type: filters.incubationType || undefined,
+      stage: filters.incubationStage || undefined,
+      startup_id: filters.startupId || undefined,
+      innovation_id: filters.innovationId || undefined,
+      partner_id: filters.partnerId || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
+      is_public: true,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
+    }),
+  );
+}
+
+export function getCompetitionEntriesFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.competitionEntries.list({
+      fields: researchCompetitionListFields,
+      search: filters.search?.trim() || undefined,
+      entry_type: filters.entryType || undefined,
+      entry_status: filters.entryStatus || undefined,
+      startup_id: filters.startupId || undefined,
+      innovation_id: filters.innovationId || undefined,
+      partner_id: filters.partnerId || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
+      is_public: true,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
+    }),
+  );
+}
+
+export function getTechnologyTransferCasesFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.technologyTransferCases.list({
+      fields: researchTechnologyTransferListFields,
+      search: filters.search?.trim() || undefined,
+      case_type: filters.caseType || undefined,
+      transfer_status: filters.transferStatus || undefined,
+      innovation_id: filters.innovationId || undefined,
+      partner_id: filters.partnerId || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
+      is_public: true,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
     }),
   );
 }
@@ -342,12 +705,14 @@ export function getPartnersFiltered(filters: GenericListFilters = {}) {
     researchServiceApi.partners.list({
       fields: researchPublicListFields,
       search: filters.search?.trim() || undefined,
+      partner_type: filters.partnerType || undefined,
       partner_id: filters.partnerId || undefined,
       partnership_level: filters.partnershipLevel || undefined,
-      status: filters.status || "active",
+      status: filters.status || undefined,
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
       page: 1,
       per_page: 100,
@@ -384,10 +749,11 @@ export function getCentersFiltered(filters: GenericListFilters = {}) {
       status: filters.status || undefined,
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
     }),
   );
 }
@@ -432,12 +798,15 @@ export function getFacilitiesFiltered(filters: GenericListFilters = {}) {
       search: filters.search?.trim() || undefined,
       farm_type: filters.farmType || undefined,
       center_id: filters.centerId || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
     }),
   );
 }
@@ -513,10 +882,11 @@ export function getProgramsFiltered(filters: GenericListFilters = {}) {
       year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
     }),
   );
 }
@@ -525,6 +895,8 @@ export function getProgramBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.programs.getBySlug(slug, {
       fields: researchPublicDetailFields,
+      include:
+        "center:id,name,slug,code,acronym,center_type;cover_image:id,title,alt_text,public_url,url,thumbnail_url;projects:id,title,slug,code,status,start_date,end_date,progress_percentage,is_active,is_public,display_order",
     }),
   );
 }
@@ -593,7 +965,7 @@ export function getJournals() {
 export function getOutputs() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.outputs.list({
-      fields: researchPublicListFields,
+      fields: researchOutputListFields,
       is_active: true,
       is_public: true,
       page: 1,
@@ -605,7 +977,7 @@ export function getOutputs() {
 export function getOutputsFiltered(filters: GenericListFilters = {}) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.outputs.list({
-      fields: researchPublicListFields,
+      fields: researchOutputListFields,
       search: filters.search?.trim() || undefined,
       status: filters.status || undefined,
       output_type: filters.outputType || undefined,
@@ -615,10 +987,11 @@ export function getOutputsFiltered(filters: GenericListFilters = {}) {
       year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
     }),
   );
 }
@@ -626,9 +999,10 @@ export function getOutputsFiltered(filters: GenericListFilters = {}) {
 export function getRelatedOutputs(filters: RelationshipFilters) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.outputs.list({
-      fields: researchPublicListFields,
+      fields: researchOutputListFields,
       project_id: filters.projectId || undefined,
       center_id: filters.centerId || undefined,
+      program_id: filters.programId || undefined,
       is_active: true,
       is_public: true,
       page: 1,
@@ -637,10 +1011,79 @@ export function getRelatedOutputs(filters: RelationshipFilters) {
   );
 }
 
+export async function getProgramSuccessStories(projectIds: string[]) {
+  const uniqueProjectIds = Array.from(new Set(projectIds.filter(Boolean)));
+  if (!uniqueProjectIds.length) {
+    return { data: [], total: 0, perPage: 100, error: null } satisfies PublicResearchData<ResearchGenericRecord>;
+  }
+
+  const results = await Promise.all(
+    uniqueProjectIds.map((projectId) =>
+      safeList<ResearchGenericRecord>(() =>
+        researchServiceApi.stories.list({
+          fields:
+            "id,title,slug,summary,challenge,solution,approach,outcomes,impact,future_directions,beneficiaries,location,county,story_type,story_date,published_at,status,is_active,is_featured,project_id,cover_image_url",
+          project_id: projectId,
+          status: "published",
+          is_active: true,
+          page: 1,
+          per_page: 20,
+        }),
+      ),
+    ),
+  );
+
+  return mergePublicData(results, sortByStoryDate);
+}
+
+export async function getProgramScopedNews(programId: string, projectIds: string[] = []) {
+  const scopes = getProgramContentScopes(programId, projectIds);
+  const results = await Promise.all(
+    scopes.map(({ scopeType, scopeId }) =>
+      safeList<ResearchGenericRecord>(() =>
+        newsApi.list({
+          fields: researchMainContentFields,
+          include: "featured_media",
+          scope_type: scopeType,
+          scope_id: scopeId,
+          is_published: true,
+          is_main: false,
+          page: 1,
+          per_page: 20,
+        }),
+      ),
+    ),
+  );
+
+  return mergePublicData(results, sortByPublishedDate);
+}
+
+export async function getProgramScopedEvents(programId: string, projectIds: string[] = []) {
+  const scopes = getProgramContentScopes(programId, projectIds);
+  const results = await Promise.all(
+    scopes.map(({ scopeType, scopeId }) =>
+      safeList<ResearchGenericRecord>(() =>
+        eventsApi.list({
+          fields: researchMainContentFields,
+          include: "featured_media",
+          scope_type: scopeType,
+          scope_id: scopeId,
+          is_published: true,
+          is_main: false,
+          page: 1,
+          per_page: 20,
+        }),
+      ),
+    ),
+  );
+
+  return mergePublicData(results, sortByEventDate);
+}
+
 export function getOutputBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.outputs.getBySlug(slug, {
-      fields: researchPublicDetailFields,
+      fields: researchOutputDetailFields,
     }),
   );
 }
@@ -670,7 +1113,8 @@ export function getConsultanciesFiltered(filters: GenericListFilters = {}) {
       year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
       page: 1,
       per_page: 100,
@@ -720,7 +1164,8 @@ export function getEndowmentsFiltered(filters: GenericListFilters = {}) {
       year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
       page: 1,
       per_page: 100,
@@ -739,7 +1184,7 @@ export function getEndowmentBySlug(slug: string) {
 export function getGrantGuidelines() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.grantGuidelines.list({
-      fields: researchPublicListFields,
+      fields: researchGuidelineListFields,
       is_active: true,
       is_public: true,
       page: 1,
@@ -751,7 +1196,7 @@ export function getGrantGuidelines() {
 export function getGrantGuidelineBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.grantGuidelines.getBySlug(slug, {
-      fields: researchPublicDetailFields,
+      fields: researchGuidelineDetailFields,
     }),
   );
 }
@@ -759,11 +1204,33 @@ export function getGrantGuidelineBySlug(slug: string) {
 export function getImpactMetrics() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.impactMetrics.list({
-      fields: researchPublicListFields,
+      fields: researchImpactMetricListFields,
       is_active: true,
       is_public: true,
       page: 1,
       per_page: 100,
+    }),
+  );
+}
+
+export function getImpactMetricsFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.impactMetrics.list({
+      fields: researchImpactMetricListFields,
+      search: filters.search?.trim() || undefined,
+      metric_type: filters.metricType || undefined,
+      category: filters.category || undefined,
+      center_id: filters.centerId || undefined,
+      project_id: filters.projectId || undefined,
+      program_id: filters.programId || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
+      is_public: true,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
     }),
   );
 }
@@ -793,6 +1260,25 @@ export function getSustainability() {
     researchServiceApi.sustainability.list({
       fields: researchPublicListFields,
       is_active: true,
+      is_public: true,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getSustainabilityFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.sustainability.list({
+      fields: researchPublicListFields,
+      search: filters.search?.trim() || undefined,
+      initiative_type: filters.sustainabilityType || undefined,
+      status: filters.status || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
       page: 1,
       per_page: 100,
@@ -858,7 +1344,8 @@ export function getTrainingFiltered(filters: GenericListFilters = {}) {
       year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
       page: 1,
       per_page: 100,
@@ -897,7 +1384,8 @@ export function getMentorshipFiltered(filters: GenericListFilters = {}) {
       year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
       page: 1,
       per_page: 100,
@@ -935,7 +1423,8 @@ export function getScholarshipsFiltered(filters: GenericListFilters = {}) {
       year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
       page: 1,
       per_page: 100,
@@ -953,10 +1442,12 @@ export function getScholarshipBySlug(slug: string) {
 
 export function getEvents() {
   return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.events.list({
-      fields: researchPublicListFields,
-      is_active: true,
-      is_public: true,
+    eventsApi.list({
+      fields: researchMainContentFields,
+      include: "featured_media",
+      scope_type: "research",
+      is_published: true,
+      is_main: false,
       page: 1,
       per_page: 100,
     }),
@@ -965,18 +1456,14 @@ export function getEvents() {
 
 export function getEventsFiltered(filters: GenericListFilters = {}) {
   return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.events.list({
-      fields: researchPublicListFields,
+    eventsApi.list({
+      fields: researchMainContentFields,
+      include: "featured_media",
+      scope_type: "research",
       search: filters.search?.trim() || undefined,
       event_type: filters.eventType || undefined,
-      category: filters.category || undefined,
-      center_id: filters.centerId || undefined,
-      status: filters.status || undefined,
-      year: parseYear(filters.year),
-      sort: filters.sort || undefined,
-      order: filters.order,
-      is_active: true,
-      is_public: true,
+      is_published: true,
+      is_main: false,
       page: 1,
       per_page: 100,
     }),
@@ -985,7 +1472,7 @@ export function getEventsFiltered(filters: GenericListFilters = {}) {
 
 export function getEventBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
-    researchServiceApi.events.getBySlug(slug, {
+    eventsApi.getBySlug(slug, {
       fields: researchPublicDetailFields,
     }),
   );
@@ -993,33 +1480,31 @@ export function getEventBySlug(slug: string) {
 
 export function getArticles() {
   return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.articles.list({
-      fields: researchPublicListFields,
-      status: "published",
-      is_active: true,
-      is_public: true,
+    newsApi.list({
+      fields: researchMainContentFields,
+      include: "featured_media",
+      scope_type: "research",
+      is_published: true,
+      is_main: false,
       page: 1,
       per_page: 100,
     }),
   );
 }
 
-export function getArticlesFiltered(filters: GenericListFilters = {}) {
+export function getArticlesFiltered(
+  filters: GenericListFilters = {},
+  page = 1,
+) {
   return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.articles.list({
-      fields: researchPublicListFields,
+    newsApi.list({
+      fields: researchMainContentFields,
+      include: "featured_media",
+      scope_type: "research",
       search: filters.search?.trim() || undefined,
-      article_type: filters.articleType || undefined,
-      category: filters.category || undefined,
-      center_id: filters.centerId || undefined,
-      project_id: filters.projectId || undefined,
-      status: filters.status || "published",
-      year: parseYear(filters.year),
-      sort: filters.sort || undefined,
-      order: filters.order,
-      is_active: true,
-      is_public: true,
-      page: 1,
+      is_published: true,
+      is_main: false,
+      page,
       per_page: 100,
     }),
   );
@@ -1027,8 +1512,59 @@ export function getArticlesFiltered(filters: GenericListFilters = {}) {
 
 export function getArticleBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
-    researchServiceApi.articles.getBySlug(slug, {
+    newsApi.getBySlug(slug, {
       fields: researchPublicDetailFields,
+    }),
+  );
+}
+
+export function getBlogs() {
+  return safeList<ResearchGenericRecord>(() =>
+    blogsApi.list({
+      fields: researchMainContentFields,
+      include: "featured_media",
+      scope_type: "research",
+      is_published: true,
+      is_main: false,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getAnnouncements() {
+  return safeList<ResearchGenericRecord>(() =>
+    announcementsApi.list({
+      fields: researchMainContentFields,
+      include: "featured_media",
+      scope_type: "research",
+      is_published: true,
+      is_main: false,
+      page: 1,
+      per_page: 100,
+    }),
+  );
+}
+
+export function getHeroSliders() {
+  return safeList<ResearchGenericRecord>(() =>
+    slidersApi.listSliders({
+      fields: researchHeroSliderFields,
+      include: "desktop_media,mobile_media",
+      scope_type: "research",
+      is_main: false,
+    }),
+  );
+}
+
+export function getResearchFAQs() {
+  return safeList<FAQ>(() =>
+    faqsApi.list({
+      fields: "id,question,answer,answer_plain_text,answer_rich_text,category,status,is_public,display_order,created_at,updated_at",
+      scope_type: "research",
+      is_main: false,
+      page: 1,
+      per_page: 8,
     }),
   );
 }
@@ -1036,7 +1572,7 @@ export function getArticleBySlug(slug: string) {
 export function getResources() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.resources.list({
-      fields: researchPublicListFields,
+      fields: researchResourceListFields,
       is_active: true,
       is_public: true,
       page: 1,
@@ -1048,16 +1584,18 @@ export function getResources() {
 export function getResourcesFiltered(filters: GenericListFilters = {}) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.resources.list({
-      fields: researchPublicListFields,
+      fields: researchResourceListFields,
       search: filters.search?.trim() || undefined,
       resource_type: filters.resourceType || undefined,
       category: filters.category || undefined,
       center_id: filters.centerId || undefined,
       access_type: filters.accessType || undefined,
       status: filters.status || undefined,
+      year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
       page: 1,
       per_page: 100,
@@ -1068,7 +1606,7 @@ export function getResourcesFiltered(filters: GenericListFilters = {}) {
 export function getResourceBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.resources.getBySlug(slug, {
-      fields: researchPublicDetailFields,
+      fields: researchResourceDetailFields,
     }),
   );
 }
@@ -1076,7 +1614,7 @@ export function getResourceBySlug(slug: string) {
 export function getServices() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.services.list({
-      fields: researchPublicListFields,
+      fields: researchServiceListFields,
       is_active: true,
       is_public: true,
       page: 1,
@@ -1088,15 +1626,17 @@ export function getServices() {
 export function getServicesFiltered(filters: GenericListFilters = {}) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.services.list({
-      fields: researchPublicListFields,
+      fields: researchServiceListFields,
       search: filters.search?.trim() || undefined,
       service_type: filters.serviceType || undefined,
       category: filters.category || undefined,
       center_id: filters.centerId || undefined,
       status: filters.status || undefined,
+      year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
       page: 1,
       per_page: 100,
@@ -1107,7 +1647,7 @@ export function getServicesFiltered(filters: GenericListFilters = {}) {
 export function getServiceBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.services.getBySlug(slug, {
-      fields: researchPublicDetailFields,
+      fields: researchServiceDetailFields,
     }),
   );
 }
@@ -1115,7 +1655,7 @@ export function getServiceBySlug(slug: string) {
 export function getGuidelines() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.guidelines.list({
-      fields: researchPublicListFields,
+      fields: researchGuidelineListFields,
       is_active: true,
       is_public: true,
       page: 1,
@@ -1127,7 +1667,7 @@ export function getGuidelines() {
 export function getGuidelinesFiltered(filters: GenericListFilters = {}) {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.guidelines.list({
-      fields: researchPublicListFields,
+      fields: researchGuidelineListFields,
       search: filters.search?.trim() || undefined,
       guideline_type: filters.guidelineType || undefined,
       category: filters.category || undefined,
@@ -1135,7 +1675,8 @@ export function getGuidelinesFiltered(filters: GenericListFilters = {}) {
       year: parseYear(filters.year),
       sort: filters.sort || undefined,
       order: filters.order,
-      is_active: true,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
       is_public: true,
       page: 1,
       per_page: 100,
@@ -1146,55 +1687,7 @@ export function getGuidelinesFiltered(filters: GenericListFilters = {}) {
 export function getGuidelineBySlug(slug: string) {
   return safeRecord<ResearchGenericRecord>(() =>
     researchServiceApi.guidelines.getBySlug(slug, {
-      fields: researchPublicDetailFields,
-    }),
-  );
-}
-
-export function getBoards() {
-  return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.boards.list({
-      fields: researchPublicListFields,
-      is_active: true,
-      is_public: true,
-      page: 1,
-      per_page: 100,
-    }),
-  );
-}
-
-export function getBoardMembers() {
-  return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.boardMembers.list({
-      fields: researchPublicListFields,
-      is_active: true,
-      is_public: true,
-      page: 1,
-      per_page: 100,
-    }),
-  );
-}
-
-export function getOffices() {
-  return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.offices.list({
-      fields: researchPublicListFields,
-      is_active: true,
-      is_public: true,
-      page: 1,
-      per_page: 100,
-    }),
-  );
-}
-
-export function getOfficeStaff() {
-  return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.officeStaff.list({
-      fields: researchPublicListFields,
-      is_active: true,
-      is_public: true,
-      page: 1,
-      per_page: 100,
+      fields: researchGuidelineDetailFields,
     }),
   );
 }
@@ -1235,48 +1728,6 @@ export function getDonationSettings() {
   );
 }
 
-export function getUpdates() {
-  return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.news.list({
-      fields: researchPublicListFields,
-      status: "published",
-      is_active: true,
-      is_public: true,
-      page: 1,
-      per_page: 6,
-    }),
-  );
-}
-
-export function getUpdatesFiltered(filters: GenericListFilters = {}) {
-  return safeList<ResearchGenericRecord>(() =>
-    researchServiceApi.news.list({
-      fields: researchPublicListFields,
-      search: filters.search?.trim() || undefined,
-      news_type: filters.newsType || undefined,
-      category: filters.category || undefined,
-      center_id: filters.centerId || undefined,
-      project_id: filters.projectId || undefined,
-      status: filters.status || "published",
-      year: parseYear(filters.year),
-      sort: filters.sort || undefined,
-      order: filters.order,
-      is_active: true,
-      is_public: true,
-      page: 1,
-      per_page: 100,
-    }),
-  );
-}
-
-export function getNewsBySlug(slug: string) {
-  return safeRecord<ResearchGenericRecord>(() =>
-    researchServiceApi.news.getBySlug(slug, {
-      fields: researchPublicDetailFields,
-    }),
-  );
-}
-
 export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
   const [
     projects,
@@ -1284,7 +1735,22 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
     grants,
     innovations,
     partners,
-    updates,
+    news,
+    blogs,
+    announcements,
+    events,
+    heroSliders,
+    faqs,
+    centers,
+    facilities,
+    expertiseTags,
+    impactMetrics,
+    stories,
+    training,
+    resources,
+    services,
+    guidelines,
+    headProfile,
     stats,
   ] = await Promise.all([
     getProjects(),
@@ -1292,7 +1758,22 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
     getGrants(),
     getInnovations(),
     getPartners(),
-    getUpdates(),
+    getArticles(),
+    getBlogs(),
+    getAnnouncements(),
+    getEvents(),
+    getHeroSliders(),
+    getResearchFAQs(),
+    getCenters(),
+    getFacilities(),
+    getExpertiseTags(),
+    getImpactMetrics(),
+    getStories(),
+    getTraining(),
+    getResources(),
+    getServices(),
+    getGuidelines(),
+    safeResearchHeadProfile(),
     safeStats(),
   ]);
 
@@ -1302,7 +1783,22 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
     grants,
     innovations,
     partners,
-    updates,
+    news,
+    blogs,
+    announcements,
+    events,
+    heroSliders,
+    faqs,
+    centers,
+    facilities,
+    expertiseTags,
+    impactMetrics,
+    stories,
+    training,
+    resources,
+    services,
+    guidelines,
+    headProfile,
     stats,
     errors: uniqueErrors(
       projects.error,
@@ -1310,7 +1806,21 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
       grants.error,
       innovations.error,
       partners.error,
-      updates.error,
+      news.error,
+      blogs.error,
+      announcements.error,
+      events.error,
+      heroSliders.error,
+      faqs.error,
+      centers.error,
+      facilities.error,
+      expertiseTags.error,
+      impactMetrics.error,
+      stories.error,
+      training.error,
+      resources.error,
+      services.error,
+      guidelines.error,
     ),
   };
 }
@@ -1332,6 +1842,17 @@ export function formatLabel(value?: string | null) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+type ListFn = (params?: Record<string, string | number | boolean | undefined>) => Promise<{ data?: Array<{ slug?: string }> }>;
+
+export async function generateSlugParams(listFn: ListFn, filterExtra: Record<string, string | number | boolean | undefined> = {}): Promise<{ slug: string }[]> {
+  try {
+    const response = await listFn({ per_page: 50, fields: "slug", is_public: true, is_active: true, ...filterExtra });
+    return (response.data ?? []).filter((item) => item.slug).map((item) => ({ slug: item.slug! }));
+  } catch {
+    return [];
+  }
+}
+
 export function formatDate(value?: string | null) {
   if (!value) return "";
   const date = new Date(value);
@@ -1341,4 +1862,59 @@ export function formatDate(value?: string | null) {
     month: "short",
     year: "numeric",
   }).format(date);
+}
+
+function getProgramContentScopes(programId: string, projectIds: string[]) {
+  const scopes = [
+    { scopeType: "research_program", scopeId: programId },
+    { scopeType: "research", scopeId: programId },
+    ...Array.from(new Set(projectIds.filter(Boolean))).map((projectId) => ({
+      scopeType: "research_project",
+      scopeId: projectId,
+    })),
+  ];
+
+  return scopes.filter((scope) => scope.scopeId);
+}
+
+function mergePublicData<T extends ResearchGenericRecord>(
+  results: Array<PublicResearchData<T>>,
+  sortRecords: (left: T, right: T) => number,
+): PublicResearchData<T> {
+  const byId = new Map<string, T>();
+  for (const result of results) {
+    for (const record of result.data) {
+      const key = compactText(record.id) || compactText(record.slug) || JSON.stringify(record);
+      if (!byId.has(key)) byId.set(key, record);
+    }
+  }
+
+  const data = Array.from(byId.values()).sort(sortRecords);
+  return {
+    data,
+    total: data.length,
+    perPage: 100,
+    error: uniqueErrors(...results.map((result) => result.error))[0] ?? null,
+  };
+}
+
+function sortByStoryDate(left: ResearchGenericRecord, right: ResearchGenericRecord) {
+  return recordTime(right.story_date ?? right.published_at ?? right.created_at) -
+    recordTime(left.story_date ?? left.published_at ?? left.created_at);
+}
+
+function sortByPublishedDate(left: ResearchGenericRecord, right: ResearchGenericRecord) {
+  return recordTime(right.published_at ?? right.created_at) -
+    recordTime(left.published_at ?? left.created_at);
+}
+
+function sortByEventDate(left: ResearchGenericRecord, right: ResearchGenericRecord) {
+  return recordTime(right.start_date ?? right.event_date ?? right.created_at) -
+    recordTime(left.start_date ?? left.event_date ?? left.created_at);
+}
+
+function recordTime(value: unknown) {
+  if (typeof value !== "string" && typeof value !== "number") return 0;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
 }

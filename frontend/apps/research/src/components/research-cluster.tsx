@@ -1,9 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { ScrollReveal } from "@ksu/ui/components";
 
 export type ClusterLink = {
   label: string;
@@ -22,8 +20,6 @@ export function ResearchClusterHero({
   title,
   body,
   breadcrumbs,
-  imageSrc,
-  imageAlt,
   links,
   stats,
   primaryAction,
@@ -39,103 +35,130 @@ export function ResearchClusterHero({
   primaryAction?: { label: string; href: string };
 }) {
   return (
-    <section className="relative overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_48%,#eef4ff_100%)] px-4 py-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.16),transparent_66%)]" />
-      <div className="relative mx-auto w-full max-w-[1680px]">
-        <BreadcrumbTrail items={breadcrumbs} />
-
-        <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_440px] lg:items-stretch">
-          <ScrollReveal className="rounded-[1.5rem] border border-slate-800 bg-slate-950 p-5 text-white shadow-[0_24px_70px_-44px_rgba(15,23,42,0.7)] sm:p-6 lg:p-7">
-            <p className="text-sm font-semibold uppercase text-secondary">
+    <>
+      <section className="border-b border-border bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mx-auto grid w-full max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
+          <div className="min-w-0">
+            <ClusterBreadcrumbs items={breadcrumbs} />
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
               {eyebrow}
             </p>
-            <h1 className="mt-3 max-w-5xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
+            <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
               {title}
             </h1>
-            <p className="mt-4 max-w-3xl text-sm leading-7 text-white/72 sm:text-base">
+            <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">
               {body}
             </p>
             {primaryAction ? (
               <Link
                 href={primaryAction.href}
-                className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
+                className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
               >
                 {primaryAction.label}
                 <ArrowRight aria-hidden className="h-4 w-4" />
               </Link>
             ) : null}
-
-            {stats.length > 0 ? (
-              <div className="mt-6 grid overflow-hidden rounded-lg border border-white/10 bg-white/5 sm:grid-cols-2 xl:grid-cols-4">
-                {stats.map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="border-white/10 p-4 sm:border-l first:sm:border-l-0"
-                  >
-                    <p className="font-[family-name:var(--font-display)] text-3xl font-semibold text-white">
-                      {stat.value}
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-white/70">
-                      {stat.label}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </ScrollReveal>
-
-          <ScrollReveal className="overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white shadow-sm">
-            <div className="relative aspect-[4/3] min-h-[220px] sm:min-h-[300px]">
-              <Image
-                src={imageSrc}
-                alt={imageAlt}
-                fill
-                priority
-                sizes="(min-width: 1024px) 440px, 100vw"
-                className="object-cover"
-              />
-            </div>
-          </ScrollReveal>
+          </div>
+          {stats.length > 0 ? (
+            <dl className="grid gap-2 sm:grid-cols-2">
+              {stats.slice(0, 4).map((stat) => (
+                <div key={stat.label} className="rounded-md border border-border bg-surface-subtle px-3 py-2">
+                  <dt className="text-[11px] font-semibold uppercase text-muted-foreground">
+                    {stat.label}
+                  </dt>
+                  <dd className="mt-1 text-lg font-semibold text-foreground">
+                    {stat.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
         </div>
+      </section>
+      <ResearchPathwayNav eyebrow={eyebrow} links={links} />
+    </>
+  );
+}
 
-        {links.length > 0 ? (
-          <nav
-            aria-label={`${eyebrow} pages`}
-            className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5"
-          >
-            {links.map((item) => {
-              const Icon = item.icon;
+export function ResearchPathwayNav({
+  eyebrow,
+  links,
+}: {
+  eyebrow: string;
+  links: ClusterLink[];
+}) {
+  if (links.length === 0) return null;
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="group flex min-h-[104px] items-start gap-3 rounded-lg border border-slate-200 bg-white/85 p-4 shadow-sm backdrop-blur transition hover:border-primary/25 hover:bg-white hover:shadow-[0_20px_50px_-42px_rgba(15,23,42,0.45)]"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
-                    <Icon aria-hidden className="h-5 w-5" />
+  return (
+    <section className="border-b border-border bg-white px-4 py-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div className="mx-auto w-full max-w-[1680px]">
+        <nav
+          aria-label={`${eyebrow} pages`}
+          className="flex gap-2 overflow-x-auto pb-1"
+        >
+          {links.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="group flex min-w-[220px] items-center gap-3 rounded-lg border border-border bg-white p-3 shadow-sm transition hover:border-primary/25 hover:shadow-[0_16px_45px_-38px_rgba(15,23,42,0.5)]"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
+                  <Icon aria-hidden className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center justify-between gap-2 text-sm font-semibold text-foreground">
+                    {item.label}
+                    <ChevronRight
+                      aria-hidden
+                      className="h-4 w-4 shrink-0 text-muted-foreground/70 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                    />
                   </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center justify-between gap-2 text-sm font-semibold text-slate-950">
-                      {item.label}
-                      <ChevronRight
-                        aria-hidden
-                        className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary"
-                      />
+                  {item.description ? (
+                    <span className="mt-0.5 block line-clamp-1 text-xs leading-5 text-muted-foreground">
+                      {item.description}
                     </span>
-                    {item.description ? (
-                      <span className="mt-1 block text-xs leading-5 text-slate-600">
-                        {item.description}
-                      </span>
-                    ) : null}
-                  </span>
-                </Link>
-              );
-            })}
-          </nav>
-        ) : null}
+                  ) : null}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </section>
+  );
+}
+
+function ClusterBreadcrumbs({
+  items,
+}: {
+  items: { label: string; href?: string }[];
+}) {
+  if (items.length === 0) return null;
+
+  return (
+    <nav
+      aria-label="Breadcrumb"
+      className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground"
+    >
+      {items.map((item, index) => {
+        const isLast = index === items.length - 1;
+        return (
+          <span key={`${item.label}-${index}`} className="inline-flex items-center gap-2">
+            {item.href && !isLast ? (
+              <Link href={item.href} className="transition hover:text-primary">
+                {item.label}
+              </Link>
+            ) : (
+              <span className={isLast ? "text-foreground" : undefined}>{item.label}</span>
+            )}
+            {!isLast ? <span className="text-muted-foreground/60">/</span> : null}
+          </span>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -149,49 +172,12 @@ export function ClusterFeaturePanel({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
         {title}
       </h2>
-      {body ? <p className="mt-2 text-sm leading-7 text-slate-600">{body}</p> : null}
+      {body ? <p className="mt-2 text-sm leading-7 text-muted-foreground">{body}</p> : null}
       <div className="mt-5">{children}</div>
     </section>
-  );
-}
-
-function BreadcrumbTrail({
-  items,
-}: {
-  items: { label: string; href?: string }[];
-}) {
-  return (
-    <nav
-      aria-label="Breadcrumb"
-      className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500"
-    >
-      {items.map((item, index) => {
-        const isLast = index === items.length - 1;
-
-        return (
-          <span
-            key={`${item.label}-${index}`}
-            className="inline-flex items-center gap-2"
-          >
-            {item.href && !isLast ? (
-              <Link href={item.href} className="transition hover:text-primary">
-                {item.label}
-              </Link>
-            ) : (
-              <span className={isLast ? "text-slate-900" : undefined}>
-                {item.label}
-              </span>
-            )}
-            {!isLast ? (
-              <ChevronRight aria-hidden className="h-3.5 w-3.5 text-slate-300" />
-            ) : null}
-          </span>
-        );
-      })}
-    </nav>
   );
 }

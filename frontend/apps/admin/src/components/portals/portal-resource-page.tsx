@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { EditableServiceResourcePage } from "@/components/dashboard/editable-service-resource-page";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  EditableServiceResourcePage,
+  type EditableRecordColumn,
+} from "@/components/dashboard/editable-service-resource-page";
 import { getPortalResource } from "@/lib/portals/registry";
 import type { PortalPayload, PortalResourceConfig } from "@/lib/portals/types";
-import { usePortalAccess, type PortalAccess } from "@ksu/api-client";
+import { usePortalAccess, useUploadMedia, type PortalAccess } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 import {
   Badge,
+  Button,
   Card,
   CardContent,
   CardDescription,
@@ -19,7 +24,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  ImageRenderer,
 } from "@ksu/ui/components";
+import { toast } from "@ksu/ui";
+import { CalendarDays, FileText, Globe2, Image as ImageIcon, Loader2, UploadCloud } from "lucide-react";
 import { PageHeader } from "@/components/layout";
 
 interface PortalResourcePageProps {
@@ -175,6 +183,7 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
   const canDelete =
     hasAnyScope(scopedResource.deleteScopes ?? scopedResource.manageScopes) &&
     scopedResource.canDelete !== false;
+  const displayOptions = corporateResourceDisplayOptions(portalKey, scopedResource);
 
   if (!canView) {
     return (
@@ -220,6 +229,7 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
       getRecordMeta={scopedResource.getRecordMeta}
       getRecordDetailHref={scopedResource.getRecordDetailHref}
       getRecordWorkflowActions={scopedResource.getRecordWorkflowActions}
+      hasAnyWorkflowScope={hasAnyScope}
       emptyMessage={scopedResource.emptyMessage}
       buildPayload={scopedResource.buildPayload}
       validate={scopedResource.validate}
@@ -227,20 +237,286 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
       canEdit={canEdit}
       canDelete={canDelete}
       readOnlyMessage={scopedResource.readOnlyMessage}
+      viewInEditor={scopedResource.viewInEditor}
+      primaryActionLabel={primaryActionLabel(scopedResource)}
+      hideHeader={portalKey === "corporate-communication"}
+      recordColumns={displayOptions.recordColumns}
+      tableLayout={displayOptions.tableLayout}
+      actionsInMenuOnly={displayOptions.actionsInMenuOnly}
+      editorMode={displayOptions.editorMode}
       toolbarSlot={
-        resource.portalScope && lockedAccessOptions.length > 1 ? (
-          <ScopeSelector
-            accessOptions={lockedAccessOptions}
-            value={accessKey(selectedLockedAccess)}
-            onChange={setSelectedScopeKey}
-          />
-        ) : selectedLockedAccess ? (
-          <Badge variant="secondary">{selectedLockedAccess.scope_label}</Badge>
-        ) : resource.portalScope && hasGlobalPortalAccess ? (
-          <Badge variant="secondary">All scopes</Badge>
-        ) : null
+        <>
+          {scopedResource.key === "media-assets" && canManage ? (
+            <MediaAssetsUploadButton queryKey={scopedResource.queryKey} />
+          ) : null}
+          {resource.portalScope && lockedAccessOptions.length > 1 ? (
+            <ScopeSelector
+              accessOptions={lockedAccessOptions}
+              value={accessKey(selectedLockedAccess)}
+              onChange={setSelectedScopeKey}
+            />
+          ) : selectedLockedAccess ? (
+            <Badge variant="secondary">{selectedLockedAccess.scope_label}</Badge>
+          ) : resource.portalScope && hasGlobalPortalAccess ? (
+            <Badge variant="secondary">All scopes</Badge>
+          ) : null}
+        </>
       }
     />
+  );
+}
+
+function corporateResourceDisplayOptions(
+  portalKey: string,
+  resource: PortalResourceConfig<any, any>,
+): {
+  recordColumns?: Array<EditableRecordColumn<any>>;
+  tableLayout?: "default" | "compact";
+  actionsInMenuOnly?: boolean;
+  editorMode?: "dialog" | "sheet" | "auto";
+} {
+  if (portalKey !== "corporate-communication") return {};
+
+  const visualResources = new Set([
+    "news",
+    "press-releases",
+    "events",
+    "homepage-features",
+    "sliders",
+    "media-assets",
+    "testimonials",
+  ]);
+
+  return {
+    tableLayout: "compact",
+    actionsInMenuOnly: true,
+    editorMode: "sheet",
+    recordColumns: visualResources.has(resource.key)
+      ? visualCorporateColumns(resource)
+      : textCorporateColumns(resource),
+  };
+}
+
+function visualCorporateColumns(resource: PortalResourceConfig<any, any>): Array<EditableRecordColumn<any>> {
+  if (resource.key === "media-assets") {
+    return [
+      {
+        key: "asset",
+        label: "Asset",
+        className: "min-w-[360px]",
+        render: (record) => <MediaRecordCell record={record} title={resource.getRecordTitle(record)} />,
+      },
+      {
+        key: "classification",
+        label: "Classification",
+        render: (record) => (
+          <div className="space-y-1">
+            <Badge variant="secondary" className="capitalize">{String(record.media_type ?? "file")}</Badge>
+            <p className="text-xs text-muted-foreground">{record.mime_type ?? "Unknown MIME"}</p>
+          </div>
+        ),
+      },
+      {
+        key: "visibility",
+        label: "Visibility",
+        render: (record) => <VisibilityBadges record={record} />,
+      },
+      {
+        key: "updated",
+        label: "Uploaded",
+        render: (record) => <DateCell value={record.created_at ?? record.updated_at} />,
+      },
+    ];
+  }
+
+  return [
+    {
+      key: "story",
+      label: resource.key === "sliders" ? "Slide" : "Content",
+      className: "min-w-[380px]",
+      render: (record) => <MediaRecordCell record={record} title={resource.getRecordTitle(record)} meta={resource.getRecordMeta?.(record)} />,
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (record) => <VisibilityBadges record={record} />,
+    },
+    {
+      key: "placement",
+      label: resource.key === "homepage-features" ? "Placement" : "Channel",
+      render: (record) => (
+        <div className="space-y-1 text-sm">
+          <p className="font-medium capitalize">{String(record.location ?? record.category ?? record.page_key ?? record.testimonial_type ?? "Main site").replace(/_/g, " ")}</p>
+          <p className="text-xs text-muted-foreground">
+            {record.slug ? `/${record.slug}` : record.display_order !== undefined ? `Order ${record.display_order}` : "Corporate communication"}
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: "updated",
+      label: "Activity",
+      render: (record) => <DateCell value={record.published_at ?? record.updated_at ?? record.created_at} />,
+    },
+  ];
+}
+
+function textCorporateColumns(resource: PortalResourceConfig<any, any>): Array<EditableRecordColumn<any>> {
+  return [
+    {
+      key: "record",
+      label: "Record",
+      className: "min-w-[360px]",
+      render: (record) => (
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border bg-primary/10 text-primary shadow-sm">
+            <FileText className="size-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="truncate font-semibold tracking-tight">{resource.getRecordTitle(record)}</p>
+            <p className="mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">
+              {resource.getRecordMeta?.(record) ?? record.description ?? record.summary ?? record.answer ?? "Corporate communication record"}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "type",
+      label: "Type",
+      render: (record) => (
+        <div className="space-y-1">
+          <Badge variant="secondary" className="capitalize">
+            {String(record.contact_type ?? record.category ?? record.status ?? resource.key).replace(/_/g, " ")}
+          </Badge>
+          {record.scope_type ? <p className="text-xs text-muted-foreground capitalize">{String(record.scope_type).replace(/_/g, " ")}</p> : null}
+        </div>
+      ),
+    },
+    {
+      key: "visibility",
+      label: "Visibility",
+      render: (record) => <VisibilityBadges record={record} />,
+    },
+    {
+      key: "updated",
+      label: "Activity",
+      render: (record) => <DateCell value={record.updated_at ?? record.created_at} />,
+    },
+  ];
+}
+
+function MediaRecordCell({ record, title, meta }: { record: Record<string, any>; title: string; meta?: string }) {
+  const media = record.media ?? record.featured_media ?? record.featured_image ?? record.cover_image ?? record.image ?? record.logo ?? record.photo ?? record.thumbnail ?? record;
+  const url = mediaUrl(media);
+  const isImage = String(media?.media_type ?? record.media_type ?? media?.mime_type ?? record.mime_type ?? "").includes("image");
+
+  return (
+    <div className="flex min-w-0 items-start gap-3">
+      <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border bg-muted shadow-sm">
+        {url && isImage ? (
+          <ImageRenderer src={url} alt={title} className="h-full border-0" imageClassName="h-full w-full object-cover" />
+        ) : (
+          <div className="flex flex-col items-center gap-1 text-muted-foreground">
+            <ImageIcon className="size-5" />
+            <span className="text-[10px] font-medium uppercase">{String(record.media_type ?? "content")}</span>
+          </div>
+        )}
+      </div>
+      <div className="min-w-0">
+        <p className="truncate font-semibold tracking-tight">{title}</p>
+        <p className="mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">
+          {meta ?? record.summary ?? record.description ?? record.caption ?? record.original_filename ?? "Corporate communication item"}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function VisibilityBadges({ record }: { record: Record<string, any> }) {
+  const status = record.workflow_status ?? record.status;
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {status ? <Badge variant={String(status) === "published" ? "default" : "secondary"} className="capitalize">{String(status).replace(/_/g, " ")}</Badge> : null}
+      {typeof record.is_published === "boolean" ? <Badge variant={record.is_published ? "default" : "outline"}>{record.is_published ? "Published" : "Unpublished"}</Badge> : null}
+      {typeof record.is_active === "boolean" ? <Badge variant={record.is_active ? "default" : "secondary"}>{record.is_active ? "Active" : "Inactive"}</Badge> : null}
+      {typeof record.is_public === "boolean" ? <Badge variant="outline"><Globe2 className="mr-1 size-3" />{record.is_public ? "Public" : "Private"}</Badge> : null}
+      {typeof record.is_main === "boolean" && record.is_main ? <Badge variant="outline">Main site</Badge> : null}
+    </div>
+  );
+}
+
+function DateCell({ value }: { value?: string | null }) {
+  if (!value) return <span className="text-sm text-muted-foreground">Not set</span>;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return <span className="text-sm text-muted-foreground">{value}</span>;
+  return (
+    <div className="flex items-start gap-2 text-sm">
+      <CalendarDays className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+      <div>
+        <p className="font-medium">{date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</p>
+        <p className="text-xs text-muted-foreground">{date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</p>
+      </div>
+    </div>
+  );
+}
+
+function mediaUrl(media?: Record<string, any> | null) {
+  if (!media) return "";
+  return media.thumbnail_url ?? media.public_url ?? media.cdn_url ?? media.url ?? "";
+}
+
+function primaryActionLabel(resource: PortalResourceConfig<any, any>) {
+  if (resource.key === "submissions") return "Submit Publication";
+  if (/(review|validation)/.test(resource.key)) return "Review Records";
+  if (resource.key === "media-assets") return "Upload Media";
+  if (resource.key.includes("media")) return "Attach Media";
+  return `Create ${resource.title}`;
+}
+
+function MediaAssetsUploadButton({ queryKey }: { queryKey: readonly unknown[] }) {
+  const inputId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const uploadMedia = useUploadMedia();
+  const queryClient = useQueryClient();
+
+  const uploadFile = async (file?: File | null) => {
+    if (!file) return;
+    try {
+      await uploadMedia.mutateAsync({
+        file,
+        isPublic: false,
+      });
+      await queryClient.invalidateQueries({ queryKey });
+      toast.success("Media uploaded");
+    } catch {
+      toast.error("Failed to upload media");
+    } finally {
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        id={inputId}
+        type="file"
+        className="hidden"
+        disabled={uploadMedia.isPending}
+        onChange={(event) => void uploadFile(event.target.files?.[0])}
+      />
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        disabled={uploadMedia.isPending}
+        onClick={() => inputRef.current?.click()}
+      >
+        {uploadMedia.isPending ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <UploadCloud data-icon="inline-start" />}
+        Upload Media
+      </Button>
+    </>
   );
 }
 

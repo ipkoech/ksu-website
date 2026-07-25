@@ -1,4 +1,4 @@
-import { AdmissionsContent } from "./admissions-content";
+import { AdmissionsNextContent } from "./admissions-next-content";
 import { getAdmissionsPageData } from "@/lib/get-admissions";
 
 export default async function AdmissionsRoutePage({
@@ -9,5 +9,5 @@ export default async function AdmissionsRoutePage({
   const { segments = [] } = await params;
   const admissionsData = await getAdmissionsPageData();
 
-  return <AdmissionsContent segments={segments} data={admissionsData} />;
+  return <AdmissionsNextContent segments={segments} data={admissionsData} />;
 }

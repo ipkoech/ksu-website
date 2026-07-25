@@ -9,11 +9,12 @@ from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, foreign, mapped_column, relationship
 
 from ksu_common.models.base import AttachmentRefsMixin, CoverImageRefMixin, LogoRefMixin, SEOMixin
 
 from .base import Base
+from .media import PublicMedia
 
 if TYPE_CHECKING:
     from .classification import ResearchTheme, FocusArea
@@ -168,6 +169,11 @@ class ResearchFarm(Base, SEOMixin, CoverImageRefMixin, AttachmentRefsMixin):
         "ResearchCenter",
         back_populates="farms",
     )
+    projects: Mapped[list["ResearchProject"]] = relationship(
+        "ResearchProject",
+        back_populates="farm",
+        lazy="selectin",
+    )
 
     def __repr__(self) -> str:
         return f"<ResearchFarm {self.slug}: {self.name}>"
@@ -193,7 +199,6 @@ class ResearchProgram(Base, SEOMixin, CoverImageRefMixin):
         nullable=True,
         index=True,
     )
-
     # Leadership
     lead_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
 
@@ -233,6 +238,12 @@ class ResearchProgram(Base, SEOMixin, CoverImageRefMixin):
         back_populates="program",
         lazy="selectin",
     )
+    cover_image: Mapped[Optional[PublicMedia]] = relationship(
+        PublicMedia,
+        primaryjoin=lambda: foreign(ResearchProgram.cover_image_id) == PublicMedia.id,
+        viewonly=True,
+        lazy="selectin",
+    )
 
     def __repr__(self) -> str:
         return f"<ResearchProgram {self.slug}: {self.name}>"
@@ -259,6 +270,11 @@ class ResearchProject(Base, SEOMixin, CoverImageRefMixin, AttachmentRefsMixin):
     )
     center_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         sa.ForeignKey("research_centers.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    farm_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("research_farms.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
@@ -312,6 +328,10 @@ class ResearchProject(Base, SEOMixin, CoverImageRefMixin, AttachmentRefsMixin):
     )
     center: Mapped[Optional["ResearchCenter"]] = relationship(
         "ResearchCenter",
+        back_populates="projects",
+    )
+    farm: Mapped[Optional["ResearchFarm"]] = relationship(
+        "ResearchFarm",
         back_populates="projects",
     )
     team_members: Mapped[list["ProjectTeamMember"]] = relationship(

@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from ksu_common.schemas.responses import success
 
 from ._person_media import with_person_photo_urls
 from ...deps import CurrentUser, DbSession, require_scope
-from ...models import Person
+from ...models import Person, UserPreference
 from ...schemas.access import PortalAccessResponse
-from ...schemas import MyProfileUpdate, PersonRead
+from ...schemas import MyProfileUpdate, PersonRead, UserPreferencesUpdate
 from ...services.portal_access import get_portal_access
 from ...services import MediaService, PersonService
 
@@ -38,7 +39,6 @@ def _profile_data(person: Person) -> dict:
     nested_fields = {
         "user",
         "photo",
-        "cv_file",
         "department",
         "assignments",
         "programme_tutorships",
@@ -49,10 +49,46 @@ def _profile_data(person: Person) -> dict:
         for field_name in PersonRead.model_fields
         if field_name not in nested_fields
     }
+    cv_file = getattr(person, "cv_file", None)
+    if cv_file is not None:
+        payload["cv_file"] = {
+            "id": getattr(cv_file, "id", None),
+            "original_filename": getattr(cv_file, "original_filename", None),
+            "mime_type": getattr(cv_file, "mime_type", None),
+            "file_size": getattr(cv_file, "file_size", None),
+            "public_url": getattr(cv_file, "public_url", None),
+        }
     return with_person_photo_urls(
         PersonRead.model_validate(payload).model_dump(exclude=nested_fields),
         person,
     )
+
+
+def _preference_data(preference: UserPreference) -> dict:
+    return {
+        "id": getattr(preference, "id", None),
+        "created_at": getattr(preference, "created_at", None),
+        "updated_at": getattr(preference, "updated_at", None),
+        "user_id": preference.user_id,
+        "namespace": preference.namespace,
+        "key": preference.key,
+        "value": preference.value,
+    }
+
+
+async def _load_user_preferences(db: DbSession, user: CurrentUser) -> list[UserPreference]:
+    result = await db.execute(
+        select(UserPreference)
+        .where(UserPreference.user_id == user.id)
+        .where(UserPreference.deleted_at.is_(None))
+        .order_by(UserPreference.namespace, UserPreference.key)
+    )
+    records = result.scalars().all()
+    return [
+        record
+        for record in records
+        if record.user_id == user.id and getattr(record, "deleted_at", None) is None
+    ]
 
 
 async def _validate_profile_media(
@@ -82,8 +118,10 @@ async def _validate_profile_media(
                     status_code=400,
                     detail="Choose a CV file uploaded by your account.",
                 )
-            if cv_file.media_type != "document":
-                raise HTTPException(status_code=400, detail="CV file must be a document.")
+            try:
+                MediaService.validate_cv_media(cv_file)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.get("/profile", dependencies=[Depends(require_scope("profile.self_edit"))])
@@ -101,6 +139,46 @@ async def update_my_profile(data: MyProfileUpdate, db: DbSession, user: CurrentU
     await _validate_profile_media(db, user, person, payload)
     await PersonService.update(db, person, **payload)
     return success(data=_profile_data(person), message="Profile updated")
+
+
+@router.get("/preferences")
+async def get_my_preferences(db: DbSession, user: CurrentUser):
+    """Return generic preferences owned by the authenticated user."""
+    preferences = await _load_user_preferences(db, user)
+    return success(data={"preferences": [_preference_data(record) for record in preferences]})
+
+
+@router.patch("/preferences")
+async def update_my_preferences(data: UserPreferencesUpdate, db: DbSession, user: CurrentUser):
+    """Upsert generic preferences owned by the authenticated user."""
+    preferences = await _load_user_preferences(db, user)
+    by_key = {(record.namespace, record.key): record for record in preferences}
+
+    for item in data.preferences:
+        lookup = (item.namespace, item.key)
+        record = by_key.get(lookup)
+        if record is None:
+            record = UserPreference(
+                user_id=user.id,
+                namespace=item.namespace,
+                key=item.key,
+                value=item.value,
+            )
+            db.add(record)
+            preferences.append(record)
+            by_key[lookup] = record
+        else:
+            record.value = item.value
+
+    await db.flush()
+    for record in preferences:
+        await db.refresh(record)
+
+    preferences.sort(key=lambda record: (record.namespace, record.key))
+    return success(
+        data={"preferences": [_preference_data(record) for record in preferences]},
+        message="Preferences updated",
+    )
 
 
 @router.get("/portal-access")

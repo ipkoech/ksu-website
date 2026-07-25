@@ -17,7 +17,12 @@ from app.core.config import get_settings
 from app.models import Department, Media, MediaLink, School
 from app.schemas.base import slugify
 
-from ._shared import ADMIN_DEPARTMENTS, ICT_SECTION_DEPARTMENTS, SCHOOL_SPECS, SeedContext
+from ._shared import (
+    ADMIN_DEPARTMENTS,
+    ICT_SECTION_DEPARTMENTS,
+    SCHOOL_SPECS,
+    SeedContext,
+)
 
 
 COVER_WIDTH = 960
@@ -27,39 +32,159 @@ COVER_ROOT = "seed/covers"
 
 def _theme_for_name(name: str) -> str:
     lower = name.lower()
-    if any(token in lower for token in ("health", "medical", "medicine", "nursing", "pharmacy", "clinical", "anatomy", "pathology", "pediatrics", "surgery", "hiv")):
+    if any(
+        token in lower
+        for token in (
+            "health",
+            "medical",
+            "medicine",
+            "nursing",
+            "pharmacy",
+            "clinical",
+            "anatomy",
+            "pathology",
+            "pediatrics",
+            "surgery",
+            "hiv",
+        )
+    ):
         return "health"
-    if any(token in lower for token in ("ict", "comput", "software", "network", "website", "information science", "e-learning", "communication media")):
+    if any(
+        token in lower
+        for token in (
+            "ict",
+            "comput",
+            "software",
+            "network",
+            "website",
+            "information science",
+            "e-learning",
+            "communication media",
+        )
+    ):
         return "ict"
-    if any(token in lower for token in ("agric", "natural", "aquatic", "fisheries", "environment", "resources")):
+    if any(
+        token in lower
+        for token in (
+            "agric",
+            "natural",
+            "aquatic",
+            "fisheries",
+            "environment",
+            "resources",
+        )
+    ):
         return "agriculture"
-    if any(token in lower for token in ("business", "finance", "accounting", "economics", "management", "tourism", "hospitality", "procurement", "salaries")):
+    if any(
+        token in lower
+        for token in (
+            "business",
+            "finance",
+            "accounting",
+            "economics",
+            "management",
+            "tourism",
+            "hospitality",
+            "procurement",
+            "salaries",
+        )
+    ):
         return "business"
-    if any(token in lower for token in ("education", "curriculum", "childhood", "psychology", "student", "library", "post graduate")):
+    if any(
+        token in lower
+        for token in (
+            "education",
+            "curriculum",
+            "childhood",
+            "psychology",
+            "student",
+            "library",
+            "post graduate",
+        )
+    ):
         return "education"
     if any(token in lower for token in ("law", "legal", "audit", "security")):
         return "law"
-    if any(token in lower for token in ("science", "physics", "chemistry", "biology", "mathematics", "laboratory")):
+    if any(
+        token in lower
+        for token in (
+            "science",
+            "physics",
+            "chemistry",
+            "biology",
+            "mathematics",
+            "laboratory",
+        )
+    ):
         return "science"
-    if any(token in lower for token in ("arts", "language", "history", "heritage", "geography", "sociology", "philosophy", "religious", "political", "peace", "corporate")):
+    if any(
+        token in lower
+        for token in (
+            "arts",
+            "language",
+            "history",
+            "heritage",
+            "geography",
+            "sociology",
+            "philosophy",
+            "religious",
+            "political",
+            "peace",
+            "corporate",
+        )
+    ):
         return "humanities"
     return "administration"
 
 
 THEMES: dict[str, dict[str, Any]] = {
-    "health": {"palette": ((16, 109, 122), (54, 179, 162), (238, 249, 246)), "motif": "pulse"},
-    "ict": {"palette": ((24, 50, 92), (27, 126, 166), (190, 232, 240)), "motif": "circuit"},
-    "agriculture": {"palette": ((34, 92, 55), (112, 154, 72), (229, 238, 197)), "motif": "terraces"},
-    "business": {"palette": ((74, 55, 108), (207, 139, 60), (246, 228, 184)), "motif": "chart"},
-    "education": {"palette": ((112, 47, 68), (219, 120, 87), (248, 230, 198)), "motif": "book"},
-    "law": {"palette": ((49, 54, 63), (159, 134, 89), (235, 225, 205)), "motif": "columns"},
-    "science": {"palette": ((31, 83, 112), (85, 176, 134), (226, 239, 219)), "motif": "orbit"},
-    "humanities": {"palette": ((95, 55, 88), (196, 95, 105), (245, 217, 192)), "motif": "waves"},
-    "administration": {"palette": ((45, 72, 94), (131, 151, 103), (232, 226, 202)), "motif": "grid"},
+    "health": {
+        "palette": ((16, 109, 122), (54, 179, 162), (238, 249, 246)),
+        "motif": "pulse",
+    },
+    "ict": {
+        "palette": ((24, 50, 92), (27, 126, 166), (190, 232, 240)),
+        "motif": "circuit",
+    },
+    "agriculture": {
+        "palette": ((34, 92, 55), (112, 154, 72), (229, 238, 197)),
+        "motif": "terraces",
+    },
+    "business": {
+        "palette": ((74, 55, 108), (207, 139, 60), (246, 228, 184)),
+        "motif": "chart",
+    },
+    "education": {
+        "palette": ((112, 47, 68), (219, 120, 87), (248, 230, 198)),
+        "motif": "book",
+    },
+    "law": {
+        "palette": ((49, 54, 63), (159, 134, 89), (235, 225, 205)),
+        "motif": "columns",
+    },
+    "science": {
+        "palette": ((31, 83, 112), (85, 176, 134), (226, 239, 219)),
+        "motif": "orbit",
+    },
+    "humanities": {
+        "palette": ((95, 55, 88), (196, 95, 105), (245, 217, 192)),
+        "motif": "waves",
+    },
+    "administration": {
+        "palette": ((45, 72, 94), (131, 151, 103), (232, 226, 202)),
+        "motif": "grid",
+    },
 }
 
 
-def _blend(base: bytearray, width: int, x: int, y: int, color: tuple[int, int, int], alpha: float) -> None:
+def _blend(
+    base: bytearray,
+    width: int,
+    x: int,
+    y: int,
+    color: tuple[int, int, int],
+    alpha: float,
+) -> None:
     if x < 0 or y < 0 or x >= width or y >= COVER_HEIGHT:
         return
     idx = (y * width + x) * 3
@@ -69,7 +194,15 @@ def _blend(base: bytearray, width: int, x: int, y: int, color: tuple[int, int, i
     base[idx + 2] = int(base[idx + 2] * inv + color[2] * alpha)
 
 
-def _line(base: bytearray, width: int, p1: tuple[int, int], p2: tuple[int, int], color: tuple[int, int, int], alpha: float, thickness: int = 1) -> None:
+def _line(
+    base: bytearray,
+    width: int,
+    p1: tuple[int, int],
+    p2: tuple[int, int],
+    color: tuple[int, int, int],
+    alpha: float,
+    thickness: int = 1,
+) -> None:
     x1, y1 = p1
     x2, y2 = p2
     dx = abs(x2 - x1)
@@ -93,7 +226,18 @@ def _line(base: bytearray, width: int, p1: tuple[int, int], p2: tuple[int, int],
             y1 += sy
 
 
-def _circle(base: bytearray, width: int, cx: int, cy: int, radius: int, color: tuple[int, int, int], alpha: float, *, fill: bool = False, thickness: int = 2) -> None:
+def _circle(
+    base: bytearray,
+    width: int,
+    cx: int,
+    cy: int,
+    radius: int,
+    color: tuple[int, int, int],
+    alpha: float,
+    *,
+    fill: bool = False,
+    thickness: int = 2,
+) -> None:
     r2 = radius * radius
     inner = max(0, radius - thickness)
     inner2 = inner * inner
@@ -104,7 +248,16 @@ def _circle(base: bytearray, width: int, cx: int, cy: int, radius: int, color: t
                 _blend(base, width, x, y, color, alpha)
 
 
-def _rect(base: bytearray, width: int, x: int, y: int, w: int, h: int, color: tuple[int, int, int], alpha: float) -> None:
+def _rect(
+    base: bytearray,
+    width: int,
+    x: int,
+    y: int,
+    w: int,
+    h: int,
+    color: tuple[int, int, int],
+    alpha: float,
+) -> None:
     for yy in range(max(0, y), min(COVER_HEIGHT, y + h)):
         for xx in range(max(0, x), min(width, x + w)):
             _blend(base, width, xx, yy, color, alpha)
@@ -124,9 +277,13 @@ def _base_canvas(name: str, theme: str) -> bytearray:
         yy = y / max(1, COVER_HEIGHT - 1)
         for x in range(COVER_WIDTH):
             xx = x / max(1, COVER_WIDTH - 1)
-            wave = 0.5 + 0.5 * math.sin((xx * (3.4 + drift * 1.8) + yy * (1.8 + phase) + phase * 7.0) * math.pi)
+            wave = 0.5 + 0.5 * math.sin(
+                (xx * (3.4 + drift * 1.8) + yy * (1.8 + phase) + phase * 7.0) * math.pi
+            )
             sweep = 0.5 + 0.5 * math.cos((xx * 1.7 - yy * 1.3 + drift * 4.0) * math.pi)
-            t = min(1.0, max(0.0, 0.16 + xx * 0.42 + yy * 0.34 + wave * 0.07 + sweep * 0.05))
+            t = min(
+                1.0, max(0.0, 0.16 + xx * 0.42 + yy * 0.34 + wave * 0.07 + sweep * 0.05)
+            )
             idx = (y * COVER_WIDTH + x) * 3
             if t < 0.58:
                 local = t / 0.58
@@ -153,9 +310,19 @@ def _draw_motif(data: bytearray, name: str, theme: str) -> None:
             x = 90 + ((seed >> (i % 16)) + i * 73) % 780
             y = 70 + ((seed >> ((i + 5) % 16)) + i * 41) % 400
             _circle(data, COVER_WIDTH, x, y, 7 + i % 4, ink, 0.42, fill=True)
-            _line(data, COVER_WIDTH, (x, y), (min(COVER_WIDTH - 80, x + 80 + i * 8), y + ((i % 3) - 1) * 48), ink, 0.22, 2)
+            _line(
+                data,
+                COVER_WIDTH,
+                (x, y),
+                (min(COVER_WIDTH - 80, x + 80 + i * 8), y + ((i % 3) - 1) * 48),
+                ink,
+                0.22,
+                2,
+            )
         for x in range(120, COVER_WIDTH, 120):
-            _line(data, COVER_WIDTH, (x, 80), (x + 80, COVER_HEIGHT - 80), accent, 0.10, 1)
+            _line(
+                data, COVER_WIDTH, (x, 80), (x + 80, COVER_HEIGHT - 80), accent, 0.10, 1
+            )
     elif motif == "pulse":
         offset = (seed % 70) - 35
         lift = ((seed >> 8) % 50) - 25
@@ -172,12 +339,29 @@ def _draw_motif(data: bytearray, name: str, theme: str) -> None:
         for p1, p2 in zip(points, points[1:]):
             _line(data, COVER_WIDTH, p1, p2, ink, 0.34, 5)
         for x in range(190, 830, 150):
-            _circle(data, COVER_WIDTH, x + ((seed >> (x % 13)) % 34) - 17, 250 + (x % 90) + lift, 38 + ((seed >> (x % 11)) % 18), accent, 0.16, thickness=5)
+            _circle(
+                data,
+                COVER_WIDTH,
+                x + ((seed >> (x % 13)) % 34) - 17,
+                250 + (x % 90) + lift,
+                38 + ((seed >> (x % 11)) % 18),
+                accent,
+                0.16,
+                thickness=5,
+            )
     elif motif == "terraces":
         slope = ((seed >> 4) % 37) - 18
         for i in range(9):
             y = 170 + i * 35
-            _line(data, COVER_WIDTH, (40, y + slope), (920, y + int(math.sin(i + seed % 5) * 28) - slope), ink, 0.20, 3)
+            _line(
+                data,
+                COVER_WIDTH,
+                (40, y + slope),
+                (920, y + int(math.sin(i + seed % 5) * 28) - slope),
+                ink,
+                0.20,
+                3,
+            )
         for i in range(8):
             x = 190 + i * 75 + ((seed >> i) % 24) - 12
             _line(data, COVER_WIDTH, (x, 420), (x + 48, 210), accent, 0.12, 2)
@@ -202,8 +386,24 @@ def _draw_motif(data: bytearray, name: str, theme: str) -> None:
         _line(data, COVER_WIDTH, (210, 165 + spread), (210, 395), ink, 0.20, 4)
         _line(data, COVER_WIDTH, (750, 165 - spread), (750, 395), ink, 0.20, 4)
         for i in range(7):
-            _line(data, COVER_WIDTH, (250, 225 + i * 25), (445, 270 + i * 13), accent, 0.13, 2)
-            _line(data, COVER_WIDTH, (710, 225 + i * 25), (515, 270 + i * 13), accent, 0.13, 2)
+            _line(
+                data,
+                COVER_WIDTH,
+                (250, 225 + i * 25),
+                (445, 270 + i * 13),
+                accent,
+                0.13,
+                2,
+            )
+            _line(
+                data,
+                COVER_WIDTH,
+                (710, 225 + i * 25),
+                (515, 270 + i * 13),
+                accent,
+                0.13,
+                2,
+            )
     elif motif == "columns":
         shift = ((seed >> 12) % 50) - 25
         _rect(data, COVER_WIDTH, 190 + shift, 150, 570, 24, ink, 0.20)
@@ -222,14 +422,31 @@ def _draw_motif(data: bytearray, name: str, theme: str) -> None:
                 y = int(cy + math.sin(rad + (seed % 19) / 10) * r * 0.42)
                 _blend(data, COVER_WIDTH, x, y, ink, 0.18)
         for deg in (30, 145, 270):
-            _circle(data, COVER_WIDTH, int(cx + math.cos(math.radians(deg)) * 170), int(cy + math.sin(math.radians(deg)) * 72), 12, accent, 0.35, fill=True)
+            _circle(
+                data,
+                COVER_WIDTH,
+                int(cx + math.cos(math.radians(deg)) * 170),
+                int(cy + math.sin(math.radians(deg)) * 72),
+                12,
+                accent,
+                0.35,
+                fill=True,
+            )
     elif motif == "waves":
         for i in range(8):
             last = None
             for x in range(40, 930, 12):
                 y = int(180 + i * 34 + math.sin(x / 56 + i * 0.7) * 25)
                 if last:
-                    _line(data, COVER_WIDTH, last, (x, y), ink if i % 2 else accent, 0.16, 2)
+                    _line(
+                        data,
+                        COVER_WIDTH,
+                        last,
+                        (x, y),
+                        ink if i % 2 else accent,
+                        0.16,
+                        2,
+                    )
                 last = (x, y)
     else:
         for x in range(80, 900, 90):
@@ -237,14 +454,28 @@ def _draw_motif(data: bytearray, name: str, theme: str) -> None:
         for y in range(90, 460, 70):
             _line(data, COVER_WIDTH, (80, y), (900, y), ink, 0.10, 1)
         for i in range(10):
-            _circle(data, COVER_WIDTH, 140 + i * 78, 160 + ((seed >> i) % 240), 24, accent, 0.12, thickness=4)
+            _circle(
+                data,
+                COVER_WIDTH,
+                140 + i * 78,
+                160 + ((seed >> i) % 240),
+                24,
+                accent,
+                0.12,
+                thickness=4,
+            )
 
     _circle(data, COVER_WIDTH, 820, 105, 92, light, 0.13, fill=True)
     _circle(data, COVER_WIDTH, 120, 455, 74, dark, 0.12, fill=True)
 
 
 def _png_chunk(kind: bytes, payload: bytes) -> bytes:
-    return struct.pack(">I", len(payload)) + kind + payload + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+    return (
+        struct.pack(">I", len(payload))
+        + kind
+        + payload
+        + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+    )
 
 
 def _write_png(path: Path, data: bytearray) -> None:
@@ -256,7 +487,12 @@ def _write_png(path: Path, data: bytearray) -> None:
     encoded = zlib.compress(raw, level=6)
     payload = struct.pack(">IIBBBBB", COVER_WIDTH, COVER_HEIGHT, 8, 2, 0, 0, 0)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(b"\x89PNG\r\n\x1a\n" + _png_chunk(b"IHDR", payload) + _png_chunk(b"IDAT", encoded) + _png_chunk(b"IEND", b""))
+    path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + _png_chunk(b"IHDR", payload)
+        + _png_chunk(b"IDAT", encoded)
+        + _png_chunk(b"IEND", b"")
+    )
 
 
 def _render_cover(path: Path, *, name: str, theme: str) -> None:
@@ -268,13 +504,41 @@ def _render_cover(path: Path, *, name: str, theme: str) -> None:
 def cover_targets_from_specs() -> list[dict[str, str]]:
     targets: list[dict[str, str]] = []
     for school in SCHOOL_SPECS:
-        targets.append({"entity_type": "school", "code": str(school["code"]), "name": str(school["name"]), "theme": _theme_for_name(str(school["name"]))})
+        targets.append(
+            {
+                "entity_type": "school",
+                "code": str(school["code"]),
+                "name": str(school["name"]),
+                "theme": _theme_for_name(str(school["name"])),
+            }
+        )
         for department in school["departments"]:
-            targets.append({"entity_type": "department", "code": str(department["code"]), "name": str(department["name"]), "theme": _theme_for_name(str(department["name"]))})
+            targets.append(
+                {
+                    "entity_type": "department",
+                    "code": str(department["code"]),
+                    "name": str(department["name"]),
+                    "theme": _theme_for_name(str(department["name"])),
+                }
+            )
     for department in ADMIN_DEPARTMENTS:
-        targets.append({"entity_type": "department", "code": str(department["code"]), "name": str(department["name"]), "theme": _theme_for_name(str(department["name"]))})
+        targets.append(
+            {
+                "entity_type": "department",
+                "code": str(department["code"]),
+                "name": str(department["name"]),
+                "theme": _theme_for_name(str(department["name"])),
+            }
+        )
     for department in ICT_SECTION_DEPARTMENTS:
-        targets.append({"entity_type": "department", "code": str(department["code"]), "name": str(department["name"]), "theme": _theme_for_name(str(department["name"]))})
+        targets.append(
+            {
+                "entity_type": "department",
+                "code": str(department["code"]),
+                "name": str(department["name"]),
+                "theme": _theme_for_name(str(department["name"])),
+            }
+        )
     return targets
 
 
@@ -282,10 +546,30 @@ def _target_storage_path(target: dict[str, str]) -> str:
     return f"{COVER_ROOT}/{target['entity_type']}/{slugify(target['code'])}-{slugify(target['name'])}.png"
 
 
-async def _upsert_cover_media(db: AsyncSession, target: dict[str, str], path: Path, storage_path: str) -> Media:
+async def preserves_generated_school_panorama(
+    db: AsyncSession,
+    school: School,
+) -> bool:
+    """Return whether a school already has a reviewed panorama cover."""
+
+    if school.cover_image_id is None:
+        return False
+    cover_image = await db.get(Media, school.cover_image_id)
+    metadata = getattr(cover_image, "extra_metadata", None)
+    return (
+        isinstance(metadata, dict)
+        and metadata.get("source") == "generated-school-panorama"
+    )
+
+
+async def _upsert_cover_media(
+    db: AsyncSession, target: dict[str, str], path: Path, storage_path: str
+) -> Media:
     content = path.read_bytes()
     file_hash = hashlib.sha256(content).hexdigest()
-    media = (await db.execute(select(Media).where(Media.storage_path == storage_path))).scalar_one_or_none()
+    media = (
+        await db.execute(select(Media).where(Media.storage_path == storage_path))
+    ).scalar_one_or_none()
     payload = {
         "filename": path.name,
         "original_filename": path.name,
@@ -300,7 +584,12 @@ async def _upsert_cover_media(db: AsyncSession, target: dict[str, str], path: Pa
         "alt_text": f"Abstract cover artwork for {target['name']}",
         "description": f"Generated Kisii University cover artwork for {target['name']}.",
         "caption": None,
-        "tags": ["kisii-university", "cover-image", target["entity_type"], target["theme"]],
+        "tags": [
+            "kisii-university",
+            "cover-image",
+            target["entity_type"],
+            target["theme"],
+        ],
         "credit": "Generated for Kisii University seed data",
         "media_type": "image",
         "width": COVER_WIDTH,
@@ -327,7 +616,9 @@ async def _upsert_cover_media(db: AsyncSession, target: dict[str, str], path: Pa
     return media
 
 
-async def _link_cover(db: AsyncSession, media: Media, *, entity_type: str, entity_id: uuid.UUID) -> None:
+async def _link_cover(
+    db: AsyncSession, media: Media, *, entity_type: str, entity_id: uuid.UUID
+) -> None:
     link = (
         await db.execute(
             select(MediaLink).where(
@@ -365,12 +656,26 @@ async def seed_cover_images(db: AsyncSession, ctx: SeedContext) -> None:
         if target["entity_type"] == "school":
             entity = ctx.schools.get(target["code"])
             if entity is None:
-                entity = (await db.execute(select(School).where(School.code == target["code"]))).scalar_one_or_none()
+                entity = (
+                    await db.execute(
+                        select(School).where(School.code == target["code"])
+                    )
+                ).scalar_one_or_none()
         else:
             entity = ctx.departments.get(target["code"])
             if entity is None:
-                entity = (await db.execute(select(Department).where(Department.code == target["code"]))).scalar_one_or_none()
+                entity = (
+                    await db.execute(
+                        select(Department).where(Department.code == target["code"])
+                    )
+                ).scalar_one_or_none()
         if entity is None:
+            continue
+        if (
+            target["entity_type"] == "school"
+            and isinstance(entity, School)
+            and await preserves_generated_school_panorama(db, entity)
+        ):
             continue
 
         storage_path = _target_storage_path(target)
@@ -378,7 +683,9 @@ async def seed_cover_images(db: AsyncSession, ctx: SeedContext) -> None:
         _render_cover(absolute_path, name=target["name"], theme=target["theme"])
         media = await _upsert_cover_media(db, target, absolute_path, storage_path)
         entity.cover_image_id = media.id
-        await _link_cover(db, media, entity_type=target["entity_type"], entity_id=entity.id)
+        await _link_cover(
+            db, media, entity_type=target["entity_type"], entity_id=entity.id
+        )
 
     fallback_schools = (
         await db.execute(

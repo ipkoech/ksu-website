@@ -33,6 +33,8 @@ class UniversityInfoCreate(BaseSchema):
     institution_type: str | None = Field(default=None, max_length=64)
     charter_summary: str | None = None
     history_summary: str | None = None
+    philosophy: str | None = None
+    strategic_plan_summary: str | None = None
     email: str | None = None
     phone: PhoneStr | None = None
     alternate_phone: PhoneStr | None = None
@@ -78,6 +80,8 @@ class UniversityInfoUpdate(BaseSchema):
     institution_type: str | None = Field(default=None, max_length=64)
     charter_summary: str | None = None
     history_summary: str | None = None
+    philosophy: str | None = None
+    strategic_plan_summary: str | None = None
     email: str | None = None
     phone: PhoneStr | None = None
     alternate_phone: PhoneStr | None = None
@@ -123,6 +127,8 @@ class UniversityInfoRead(BaseReadSchema):
     institution_type: str | None = None
     charter_summary: str | None = None
     history_summary: str | None = None
+    philosophy: str | None = None
+    strategic_plan_summary: str | None = None
     email: str | None = None
     phone: str | None = None
     alternate_phone: str | None = None

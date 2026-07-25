@@ -1,0 +1,482 @@
+[
+  {
+    "programme_name": "PhD in Business Administration",
+    "department_code": "BUSADM",
+    "visual_family": "business systems research",
+    "subject": "an advanced enterprise research model connecting governance nodes, operational processes, market signals, organizational structures, and a central analytical lens",
+    "alt_text": "Illustration of an enterprise research model linking governance, operations, markets, organization, and analysis",
+    "distinctiveness": "Doctoral business administration represented by original whole-enterprise research across strategy, governance, markets, and operations"
+  },
+  {
+    "programme_name": "PhD in Procurement and Logistics Management",
+    "department_code": "MSC",
+    "visual_family": "supply network research",
+    "subject": "a multilayer global supply network linking supplier clusters, contract pathways, warehouse flows, freight modes, risk nodes, and a research prism",
+    "alt_text": "Illustration of suppliers, contracts, warehouses, freight, and risk nodes in an advanced supply network",
+    "distinctiveness": "Doctoral procurement and logistics represented by original research into complex sourcing, distribution, resilience, and network decisions"
+  },
+  {
+    "programme_name": "PhD in Tourism Management",
+    "department_code": "THM",
+    "visual_family": "tourism systems research",
+    "subject": "a destination research ecosystem connecting a protected landscape, cultural landmark, accommodation cluster, mobility routes, visitor-flow arcs, and sustainability indicators",
+    "alt_text": "Illustration of a destination ecosystem linking nature, culture, accommodation, travel routes, and visitor flows",
+    "distinctiveness": "Doctoral tourism management represented by advanced destination research balancing visitor systems, community value, and sustainability"
+  },
+  {
+    "programme_name": "PhD in Entrepreneurship and Management",
+    "department_code": "BUSADM",
+    "visual_family": "entrepreneurial ecosystem research",
+    "subject": "a branching venture ecosystem growing from an innovation seed into prototype, finance, team, market, and scale pathways around a research lens",
+    "alt_text": "Illustration of an innovation growing through prototype, finance, team, market, and scale pathways",
+    "distinctiveness": "Doctoral entrepreneurship represented by original research into venture creation, ecosystem interaction, organizational growth, and strategic management"
+  },
+  {
+    "programme_name": "PhD in Economics",
+    "department_code": "ACCFIN",
+    "visual_family": "economic systems research",
+    "subject": "an interconnected economic model of households, firms, public institutions, trade flows, resource markets, and layered equilibrium curves examined through a research prism",
+    "alt_text": "Illustration of households, firms, institutions, trade, markets, and equilibrium curves in an economic model",
+    "distinctiveness": "Doctoral economics represented by original theoretical and empirical research across interacting markets, institutions, and aggregate systems"
+  },
+  {
+    "programme_name": "Master in Human Resource",
+    "department_code": "HRSM",
+    "visual_family": "strategic workforce management",
+    "subject": "an organizational talent system linking recruitment funnel shapes, competency pathways, development steps, wellbeing balance, performance cycles, and succession branches",
+    "alt_text": "Illustration of a workforce system linking recruitment, competencies, development, wellbeing, performance, and succession",
+    "distinctiveness": "Graduate human-resource study represented by strategic management of the complete employee lifecycle and organizational capability"
+  },
+  {
+    "programme_name": "Master of Business Administration",
+    "department_code": "ACCFIN",
+    "visual_family": "executive enterprise leadership",
+    "subject": "an executive decision table surrounded by finance balance, market compass, operations gears, team network, and strategy pathways converging on one enterprise goal",
+    "alt_text": "Illustration of finance, markets, operations, teams, and strategy converging at an executive decision table",
+    "distinctiveness": "The broad executive degree is distinguished by integrated cross-functional leadership rather than specialization in one business discipline"
+  },
+  {
+    "programme_name": "MSc in Economics",
+    "department_code": "ACCFIN",
+    "visual_family": "applied economic analysis",
+    "subject": "a clean analytical workspace combining supply and demand curves without markings, household and firm tokens, a policy balance, sample distributions, and a forecasting lens",
+    "alt_text": "Illustration of economic curves, households, firms, policy balance, distributions, and forecasting analysis",
+    "distinctiveness": "Master's economics represented by applied modelling, econometric evidence, policy evaluation, and forecasting"
+  },
+  {
+    "programme_name": "MSc in Project Management, Monitoring and Evaluation",
+    "department_code": "BUSADM",
+    "visual_family": "project evidence and evaluation",
+    "subject": "a project pathway moving from planning blocks through resource allocation and milestone gates into an evidence dashboard, evaluation lens, and outcome branches without text",
+    "alt_text": "Illustration of a project pathway linking planning, resources, milestones, evidence, evaluation, and outcomes",
+    "distinctiveness": "This master's programme uniquely combines project delivery with monitoring evidence, evaluation methods, and outcome learning"
+  },
+  {
+    "programme_name": "MSc in Finance and Investment",
+    "department_code": "ACCFIN",
+    "visual_family": "investment analytics",
+    "subject": "a diversified investment portfolio balancing bonds, equity tokens, property forms, and cash reserves beside risk-return curves and a valuation lens",
+    "alt_text": "Illustration of a diversified portfolio with bonds, equities, property, reserves, risk curves, and valuation",
+    "distinctiveness": "Master's finance and investment represented by portfolio construction, asset valuation, capital allocation, and risk-return analysis"
+  },
+  {
+    "programme_name": "MSc in Procurement and Logistics Management",
+    "department_code": "MSC",
+    "visual_family": "strategic supply chain analysis",
+    "subject": "a supplier selection matrix without writing feeding contract, inventory, warehouse, multimodal transport, and resilience nodes around an optimization target",
+    "alt_text": "Illustration of supplier selection feeding contracts, inventory, warehousing, transport, resilience, and optimization",
+    "distinctiveness": "Master's procurement and logistics represented by analytical sourcing and end-to-end supply-chain optimization"
+  },
+  {
+    "programme_name": "Master of Purchasing and Logistics Management",
+    "department_code": "MSC",
+    "visual_family": "purchasing and distribution leadership",
+    "subject": "a purchasing portfolio with blank order sheets and supplier samples connected to a warehouse aisle, loading pallet, delivery route, and service-performance gauges",
+    "alt_text": "Illustration of a purchasing portfolio connected to suppliers, warehouse, pallet, delivery route, and performance gauges",
+    "distinctiveness": "Purchasing and logistics leadership emphasized through practical acquisition portfolios, distribution operations, and service performance"
+  },
+  {
+    "programme_name": "MSc in Entrepreneurship and Management",
+    "department_code": "BUSADM",
+    "visual_family": "venture growth analysis",
+    "subject": "a venture development canvas without writing linking an opportunity lens, prototype forms, resource bundles, market validation paths, team structure, and growth curve",
+    "alt_text": "Illustration of a venture canvas linking opportunity, prototype, resources, market validation, team, and growth",
+    "distinctiveness": "Master's entrepreneurship represented by analytical venture design, validation, resource orchestration, and managed growth"
+  },
+  {
+    "programme_name": "MSc in Marketing",
+    "department_code": "BUSADM",
+    "visual_family": "marketing strategy and analytics",
+    "subject": "a segmented market orbit surrounding a product form, brand beacon without symbols, channel pathways, customer journey arcs, and an insight lens",
+    "alt_text": "Illustration of market segments, a product, brand beacon, channels, customer journeys, and an insight lens",
+    "distinctiveness": "Master's marketing represented by advanced segmentation, positioning, channel strategy, customer behaviour, and insight analysis"
+  },
+  {
+    "programme_name": "Master of Tourism and Hospitality Management",
+    "department_code": "THM",
+    "visual_family": "destination and hospitality leadership",
+    "subject": "an integrated visitor experience linking a destination map without labels, hotel facade, dining setting, event space, travel route, and quality-management compass",
+    "alt_text": "Illustration of a destination map, hotel, dining, event space, travel route, and quality compass",
+    "distinctiveness": "Graduate tourism and hospitality leadership represented by coordinated destination, accommodation, food service, events, and quality strategy"
+  },
+  {
+    "programme_name": "Master of Entrepreneurship",
+    "department_code": "BUSADM",
+    "visual_family": "venture creation practice",
+    "subject": "an opportunity seed progressing through idea sparks, a tangible prototype, a funding bridge, customer rings, and a launch pathway toward a growing enterprise",
+    "alt_text": "Illustration of an opportunity progressing through ideas, prototype, funding, customers, launch, and growth",
+    "distinctiveness": "The practice-focused entrepreneurship master's is distinguished by the venture journey from opportunity recognition to launch and scale"
+  },
+  {
+    "programme_name": "Bachelor of Commerce",
+    "department_code": "ACCFIN",
+    "visual_family": "commerce and enterprise",
+    "subject": "a balanced commercial system combining ledger sheets without writing, market stall, payment tokens, warehouse crate, delivery path, and enterprise handshake",
+    "alt_text": "Illustration of ledgers, a market stall, payments, warehousing, delivery, and an enterprise handshake",
+    "distinctiveness": "Broad commerce education represented by the flow of accounting, trade, finance, operations, and business relationships"
+  },
+  {
+    "programme_name": "Bachelor of Entrepreneurship and Management",
+    "department_code": "BUSADM",
+    "visual_family": "entrepreneurial enterprise building",
+    "subject": "a new enterprise assembled from an opportunity lens, prototype workbench, team nodes, resource crates, customer pathways, and management gears",
+    "alt_text": "Illustration of an enterprise built from opportunity, prototype, team, resources, customers, and management",
+    "distinctiveness": "Undergraduate entrepreneurship and management represented by simultaneously creating a venture and building the systems to operate it"
+  },
+  {
+    "programme_name": "Bachelor of Purchasing and Supplies Management",
+    "department_code": "MSC",
+    "visual_family": "purchasing and supply operations",
+    "subject": "a procurement desk with blank requisition sheets, comparison trays, supplier parcels, inventory shelves, inspection gauge, and an ordered distribution flow",
+    "alt_text": "Illustration of requisitions, supplier parcels, inventory shelves, inspection, and distribution flow",
+    "distinctiveness": "Degree-level purchasing and supplies represented by the full operational cycle from requirement and sourcing to inventory control"
+  },
+  {
+    "programme_name": "Bachelor of Cooperative Management",
+    "department_code": "BUSADM",
+    "visual_family": "cooperative enterprise governance",
+    "subject": "a circular member-owned enterprise formed by linked contribution tokens around shared storage, a governance table, pooled resources, and distributed benefits",
+    "alt_text": "Illustration of member contributions surrounding shared storage, governance, pooled resources, and distributed benefits",
+    "distinctiveness": "Cooperative management represented by democratic ownership, pooled enterprise resources, shared governance, and member value"
+  },
+  {
+    "programme_name": "Bachelor of Business Information Management",
+    "department_code": "BUSADM",
+    "visual_family": "business information systems",
+    "subject": "an enterprise information hub connecting document folders without writing, database cylinders, workflow nodes, analytics panels without text, and managerial decision pathways",
+    "alt_text": "Illustration of business documents, databases, workflows, analytics panels, and decision pathways",
+    "distinctiveness": "Business information management represented by organizing enterprise data and workflows into reliable managerial insight"
+  },
+  {
+    "programme_name": "Bachelor of Human Resource Management",
+    "department_code": "HRSM",
+    "visual_family": "people and organization management",
+    "subject": "a workforce lifecycle circle connecting vacancy seat, candidate profiles without faces, onboarding doorway, learning steps, performance balance, and career branches",
+    "alt_text": "Illustration of a workforce lifecycle from vacancy and recruitment through onboarding, learning, performance, and careers",
+    "distinctiveness": "Undergraduate human-resource management represented by coordinated recruitment, development, performance, employee support, and progression"
+  },
+  {
+    "programme_name": "Bachelor of Secretarial Management and Administration",
+    "department_code": "BUSADM",
+    "visual_family": "executive office administration",
+    "subject": "an organized executive office with a blank scheduling board, document trays, correspondence envelope, meeting arrangement, filing system, and coordination pathways",
+    "alt_text": "Illustration of scheduling, documents, correspondence, meetings, filing, and office coordination",
+    "distinctiveness": "Degree-level secretarial management represented by sophisticated executive support, information control, meetings, and administrative coordination"
+  },
+  {
+    "programme_name": "Bachelor of Science in Project Management",
+    "department_code": "BUSADM",
+    "visual_family": "project planning and delivery",
+    "subject": "a project blueprint without writing unfolding into task blocks, resource vessels, linked milestones, risk shield, team workflow, and completed outcome structure",
+    "alt_text": "Illustration of a project blueprint becoming tasks, resources, milestones, risk controls, teamwork, and an outcome",
+    "distinctiveness": "Project management degree represented by the disciplined transformation of plans, resources, risks, and teams into delivered outcomes"
+  },
+  {
+    "programme_name": "Bachelor of Tourism and Hospitality Management",
+    "department_code": "THM",
+    "visual_family": "visitor experience management",
+    "subject": "a visitor journey flowing from destination landscape and travel case to reception desk, guest room, dining service, cultural attraction, and feedback compass",
+    "alt_text": "Illustration of a visitor journey through travel, reception, accommodation, dining, culture, and feedback",
+    "distinctiveness": "Combined tourism and hospitality degree represented by managing the complete visitor journey across destination and service settings"
+  },
+  {
+    "programme_name": "Bachelor of Hotel and Hospitality Management",
+    "department_code": "THM",
+    "visual_family": "hotel operations management",
+    "subject": "a cutaway hotel operation combining reception bell, prepared guest room, kitchen service hatch, dining table, housekeeping trolley, and quality-control gauge",
+    "alt_text": "Illustration of hotel reception, guest room, kitchen, dining, housekeeping, and quality control",
+    "distinctiveness": "Hotel and hospitality management focused on coordinated accommodation, food service, housekeeping, and guest-service operations"
+  },
+  {
+    "programme_name": "Bachelor of Tours and Travel Management",
+    "department_code": "THM",
+    "visual_family": "tour and travel operations",
+    "subject": "a route map without labels linking a departure terminal, tour vehicle, natural attraction, cultural site, travel case, and itinerary cards without writing",
+    "alt_text": "Illustration of a route linking a terminal, tour vehicle, natural attraction, cultural site, travel case, and itinerary cards",
+    "distinctiveness": "Tours and travel management represented by itinerary design, transport coordination, destination experiences, and traveller logistics"
+  },
+  {
+    "programme_name": "Bachelor of Business and Management",
+    "department_code": "ACCFIN",
+    "visual_family": "business operations and leadership",
+    "subject": "an operating enterprise arranged around a management compass with finance balance, production gears, customer channel, team network, and strategic direction paths",
+    "alt_text": "Illustration of finance, production, customers, teams, and strategy around a management compass",
+    "distinctiveness": "Business and management degree represented by practical coordination and leadership of core organizational functions"
+  },
+  {
+    "programme_name": "Bachelor of Science in Economics and Statistics",
+    "department_code": "ACCFIN",
+    "visual_family": "economic data analysis",
+    "subject": "an economic landscape of households, firms, and market exchanges overlaid with sample dots, probability curves, a regression line without markings, and a data lens",
+    "alt_text": "Illustration of households, firms, markets, samples, probability curves, regression, and data analysis",
+    "distinctiveness": "The combined degree is distinguished by using statistical inference and quantitative evidence to explain economic behaviour"
+  },
+  {
+    "programme_name": "Diploma in Business Administration",
+    "department_code": "BUSADM",
+    "visual_family": "business administration practice",
+    "subject": "a compact office operations desk with blank planning sheets, filing trays, payment tokens, stock box, customer counter, and a simple workflow",
+    "alt_text": "Illustration of planning sheets, filing, payments, stock, customer service, and office workflow",
+    "distinctiveness": "Diploma business administration represented by practical coordination of everyday office, finance, stock, and customer operations"
+  },
+  {
+    "programme_name": "Diploma in Sales and Marketing",
+    "department_code": "BUSADM",
+    "visual_family": "sales and market activation",
+    "subject": "a product display connected to customer segments, outreach megaphone without symbols, sales funnel shapes, distribution arrows, and a relationship handshake",
+    "alt_text": "Illustration of a product display, customer segments, outreach, sales funnel, distribution, and relationship handshake",
+    "distinctiveness": "Sales and marketing diploma represented by converting audience outreach and product presentation into customer relationships and distribution"
+  },
+  {
+    "programme_name": "Diploma in Human Resource Management",
+    "department_code": "HRSM",
+    "visual_family": "workforce administration",
+    "subject": "a personnel toolkit with blank profile cards, interview chairs, onboarding checklist without writing, training steps, attendance dial, and employee support shield",
+    "alt_text": "Illustration of profile cards, interviews, onboarding, training, attendance, and employee support",
+    "distinctiveness": "Diploma human resources represented by hands-on workforce administration from recruitment through records, training, and employee support"
+  },
+  {
+    "programme_name": "Diploma in Marketing Management",
+    "department_code": "BUSADM",
+    "visual_family": "marketing campaign coordination",
+    "subject": "a campaign planning board without writing organizing audience rings, product package, channel tiles, promotion beacon, calendar blocks, and response signals",
+    "alt_text": "Illustration of audience rings, product package, marketing channels, promotion, scheduling, and response signals",
+    "distinctiveness": "Marketing management diploma emphasized through coordinated campaign planning, channels, timing, and audience response"
+  },
+  {
+    "programme_name": "Diploma in Co-operative Management",
+    "department_code": "BUSADM",
+    "visual_family": "cooperative operations",
+    "subject": "linked member contribution vessels feeding a shared store, savings pool, meeting table, produce collection point, and fair distribution paths",
+    "alt_text": "Illustration of member contributions feeding shared storage, savings, meetings, produce collection, and distribution",
+    "distinctiveness": "Diploma cooperative management represented by practical member services, collective assets, meetings, and benefit distribution"
+  },
+  {
+    "programme_name": "Diploma in Hotel and Hospitality Management",
+    "department_code": "THM",
+    "visual_family": "hospitality service operations",
+    "subject": "a hospitality service station combining reception bell, room key without markings, folded linen, covered serving dish, table setting, and guest-service path",
+    "alt_text": "Illustration of reception, room service, linen, dining service, table setting, and a guest-service path",
+    "distinctiveness": "Diploma hotel management represented by practical front-office, accommodation, food-service, and guest-care operations"
+  },
+  {
+    "programme_name": "Diploma in Tours and Hospitality Management",
+    "department_code": "THM",
+    "visual_family": "tour hosting and guest service",
+    "subject": "a tour route flowing from a blank itinerary card and travel case through a scenic attraction to a welcoming lodge, dining stop, and service compass",
+    "alt_text": "Illustration of an itinerary, travel case, scenic attraction, lodge, dining stop, and service compass",
+    "distinctiveness": "The diploma combines tour coordination with practical hosting and hospitality service at destination stops"
+  },
+  {
+    "programme_name": "Diploma in Project Management",
+    "department_code": "BUSADM",
+    "visual_family": "project coordination",
+    "subject": "a blank project board organizing task cards, resource blocks, milestone flags without symbols, risk barrier, progress path, and delivery package",
+    "alt_text": "Illustration of a project board with tasks, resources, milestones, risk control, progress, and delivery",
+    "distinctiveness": "Diploma project management represented by practical scheduling, resourcing, progress control, risk response, and delivery"
+  },
+  {
+    "programme_name": "Diploma in County Leadership Management",
+    "department_code": "BUSADM",
+    "visual_family": "local public leadership",
+    "subject": "a county landscape connecting a civic administration building, community forum circle, service facilities, resource balance, development pathways, and accountability lens",
+    "alt_text": "Illustration of county administration, community forum, public services, resource balance, development, and accountability",
+    "distinctiveness": "County leadership management represented by local governance, community participation, public-resource stewardship, and service delivery"
+  },
+  {
+    "programme_name": "Diploma in Secretarial Management",
+    "department_code": "BUSADM",
+    "visual_family": "office coordination",
+    "subject": "a streamlined administrative workstation with blank appointment cards, correspondence envelopes, filing cabinet, meeting tray, telephone form without markings, and workflow arrows",
+    "alt_text": "Illustration of appointment cards, correspondence, filing, meeting support, telephone, and office workflow",
+    "distinctiveness": "Secretarial management diploma represented by practical scheduling, correspondence, records, communication, and meeting support"
+  },
+  {
+    "programme_name": "Diploma in Procurement and Logistics Management",
+    "department_code": "MSC",
+    "visual_family": "procurement and logistics operations",
+    "subject": "a requisition path moving through supplier parcels, inspection station, warehouse rack, inventory gauge, loading pallet, and delivery vehicle",
+    "alt_text": "Illustration of requisition, suppliers, inspection, warehousing, inventory, loading, and delivery",
+    "distinctiveness": "Diploma procurement and logistics represented by the practical movement of requirements through sourcing, storage, and delivery"
+  },
+  {
+    "programme_name": "Diploma in Accounting and Finance",
+    "department_code": "ACCFIN",
+    "visual_family": "accounting and financial operations",
+    "subject": "a balanced finance desk with blank ledger columns, receipt stack, calculator without characters, cash-flow vessels, bank form, and reconciliation scales",
+    "alt_text": "Illustration of ledgers, receipts, calculator, cash flow, banking, and reconciliation scales",
+    "distinctiveness": "Accounting and finance diploma represented by practical recording, reconciliation, cash control, and financial administration"
+  },
+  {
+    "programme_name": "Diploma in Credit Management",
+    "department_code": "ACCFIN",
+    "visual_family": "credit assessment and control",
+    "subject": "a lending pathway connecting an application folder without writing, borrower profile tokens, affordability balance, secured asset, repayment flow, and overdue-risk shield",
+    "alt_text": "Illustration of a credit application, borrower profile, affordability, security, repayment, and risk control",
+    "distinctiveness": "Credit management diploma represented by practical lending assessment, account administration, repayment monitoring, and collection risk"
+  },
+  {
+    "programme_name": "Diploma in Risk Management",
+    "department_code": "ACCFIN",
+    "visual_family": "enterprise risk control",
+    "subject": "an operational pathway passing through hazard markers, probability grid without numbers, impact balance, protective controls, contingency route, and monitoring shield",
+    "alt_text": "Illustration of hazards, probability assessment, impact balance, controls, contingency, and monitoring",
+    "distinctiveness": "Risk management diploma represented by structured identification, assessment, treatment, contingency, and monitoring of uncertainty"
+  },
+  {
+    "programme_name": "Diploma in Financial Analysis",
+    "department_code": "ACCFIN",
+    "visual_family": "financial statement analysis",
+    "subject": "a set of blank financial statement panels examined by a magnifying lens beside ratio balances, cash-flow streams, trend curves without markings, and a valuation scale",
+    "alt_text": "Illustration of financial statements, ratio balances, cash flows, trend curves, and valuation analysis",
+    "distinctiveness": "Financial analysis diploma represented by applied interpretation of statements, ratios, cash flows, trends, and enterprise value"
+  },
+  {
+    "programme_name": "Diploma in Tax Consultancy",
+    "department_code": "ACCFIN",
+    "visual_family": "tax compliance advisory",
+    "subject": "an advisory desk with blank transaction records, categorized payment vessels, filing tray, compliance shield, assessment balance, and client guidance pathway",
+    "alt_text": "Illustration of transaction records, categorized payments, filing, compliance, assessment, and client guidance",
+    "distinctiveness": "Tax consultancy diploma represented by practical record analysis, liability assessment, compliant filing, and client advisory work"
+  },
+  {
+    "programme_name": "Diploma in Business Information Technology",
+    "department_code": "BUSADM",
+    "visual_family": "digital business operations",
+    "subject": "a business workstation linking a database cylinder, network nodes, inventory scanner without symbols, payment flow, workflow panel without text, and decision chart",
+    "alt_text": "Illustration of databases, networks, inventory scanning, payments, digital workflows, and decision charts",
+    "distinctiveness": "Business information technology diploma represented by applying digital systems to transactions, inventory, workflow, and business decisions"
+  },
+  {
+    "programme_name": "Certificate in Sales and Marketing",
+    "department_code": "BUSADM",
+    "visual_family": "sales and promotion foundations",
+    "subject": "a simple product stand facing customer rings beside a promotion beacon without symbols, sales funnel forms, and a completed handshake",
+    "alt_text": "Illustration of a product stand, customer groups, promotion, sales funnel, and handshake",
+    "distinctiveness": "Foundational sales and marketing represented by presenting an offer, reaching customers, guiding interest, and building a relationship"
+  },
+  {
+    "programme_name": "Certificate in Human Resource Management",
+    "department_code": "HRSM",
+    "visual_family": "human resource foundations",
+    "subject": "a compact personnel desk with blank applicant cards, interview seats, onboarding folder, attendance clock without markings, and learning steps",
+    "alt_text": "Illustration of applicant cards, interviews, onboarding, attendance, and learning steps",
+    "distinctiveness": "Foundational human resources represented by essential recruitment, onboarding, record, attendance, and staff-development tasks"
+  },
+  {
+    "programme_name": "Certificate in Stores and Supplies Management",
+    "department_code": "MSC",
+    "visual_family": "stores and inventory foundations",
+    "subject": "an orderly storeroom with receiving pallet, inspection tray, labeled-by-shape bins without text, stock gauge, issue counter, and replenishment arrows",
+    "alt_text": "Illustration of a storeroom with receiving, inspection, bins, stock control, issuing, and replenishment",
+    "distinctiveness": "Stores and supplies certificate represented by foundational receiving, inspection, storage, stock control, issuing, and replenishment"
+  },
+  {
+    "programme_name": "Certificate in Project Management",
+    "department_code": "BUSADM",
+    "visual_family": "project delivery foundations",
+    "subject": "a short project pathway from a blank plan card through task blocks, resource tokens, checkpoint flags without symbols, and a finished package",
+    "alt_text": "Illustration of a project plan progressing through tasks, resources, checkpoints, and finished delivery",
+    "distinctiveness": "Foundational project management represented by the essential sequence of planning, organizing, tracking, and completing work"
+  },
+  {
+    "programme_name": "Certificate in Business Administration",
+    "department_code": "BUSADM",
+    "visual_family": "business office foundations",
+    "subject": "a tidy small-business desk with blank forms, document tray, calculator without characters, stock parcel, customer counter, and scheduling clock without markings",
+    "alt_text": "Illustration of business forms, documents, calculator, stock, customer service, and scheduling",
+    "distinctiveness": "Foundational business administration represented by essential records, calculations, stock handling, customer service, and time organization"
+  },
+  {
+    "programme_name": "Certificate in Marketing Management",
+    "department_code": "BUSADM",
+    "visual_family": "marketing coordination foundations",
+    "subject": "a simple campaign wheel connecting a product package, audience clusters, promotion beacon without symbols, channel tiles, and response ripples",
+    "alt_text": "Illustration of a campaign wheel connecting a product, audiences, promotion, channels, and responses",
+    "distinctiveness": "Foundational marketing management represented by coordinating a product, target audience, promotion channels, and response"
+  },
+  {
+    "programme_name": "Certificate in Co-operative Management",
+    "department_code": "BUSADM",
+    "visual_family": "cooperative service foundations",
+    "subject": "a small circle of member tokens contributing to a shared savings vessel, produce crate, meeting table, and evenly branching benefit paths",
+    "alt_text": "Illustration of members contributing to shared savings, produce, meetings, and distributed benefits",
+    "distinctiveness": "Foundational cooperative management represented by membership, contributions, shared assets, meetings, and fair benefits"
+  },
+  {
+    "programme_name": "Certificate in Hotel and Hospitality Management",
+    "department_code": "THM",
+    "visual_family": "hospitality service foundations",
+    "subject": "a welcoming service arrangement with reception bell, neatly prepared bed, folded towel, covered meal, place setting, and guest-care sparkle",
+    "alt_text": "Illustration of reception, a prepared room, linen, meal service, table setting, and guest care",
+    "distinctiveness": "Foundational hospitality represented by essential reception, room preparation, food service, table setup, and courteous guest care"
+  },
+  {
+    "programme_name": "Certificate in Accounting and Finance",
+    "department_code": "ACCFIN",
+    "visual_family": "bookkeeping and finance foundations",
+    "subject": "a basic bookkeeping desk with blank ledger sheet, receipt bundle, coin stacks, calculator without characters, cash box, and balanced reconciliation scale",
+    "alt_text": "Illustration of a ledger, receipts, coins, calculator, cash box, and reconciliation scale",
+    "distinctiveness": "Foundational accounting and finance represented by recording transactions, handling receipts, calculating totals, controlling cash, and balancing records"
+  },
+  {
+    "programme_name": "Certificate in Secretarial Management and Administration",
+    "department_code": "BUSADM",
+    "visual_family": "administrative support foundations",
+    "subject": "an organized support desk with blank calendar cards, correspondence envelopes, filing folders, meeting cup and tray, ringing telephone form without markings, and task arrows",
+    "alt_text": "Illustration of scheduling cards, correspondence, filing, meeting support, telephone, and task coordination",
+    "distinctiveness": "Foundational secretarial administration represented by essential scheduling, correspondence, records, communication, and office support"
+  },
+  {
+    "programme_name": "Certificate in Risk Management",
+    "department_code": "ACCFIN",
+    "visual_family": "risk awareness foundations",
+    "subject": "a straightforward work path encountering a hazard triangle without symbols, likelihood tokens, impact balance, protective barrier, and safe alternate route",
+    "alt_text": "Illustration of a work path with hazard awareness, likelihood, impact, protective control, and a safe route",
+    "distinctiveness": "Foundational risk management represented by recognizing hazards, judging likelihood and impact, choosing controls, and maintaining a safe alternative"
+  },
+  {
+    "programme_name": "Certificate in Credit Management",
+    "department_code": "ACCFIN",
+    "visual_family": "credit administration foundations",
+    "subject": "a basic credit desk with blank application folder, borrower asset tokens, affordability scales, payment calendar without markings, receipt tray, and account-status gauge",
+    "alt_text": "Illustration of a credit application, borrower assets, affordability, payment schedule, receipts, and account status",
+    "distinctiveness": "Foundational credit management represented by collecting applications, checking affordability, recording payments, and monitoring accounts"
+  },
+  {
+    "programme_name": "Certificate in Financial Analysis",
+    "department_code": "ACCFIN",
+    "visual_family": "financial analysis foundations",
+    "subject": "a blank income-and-expense panel under a magnifying lens beside coin stacks, comparison scales, a simple trend line without markings, and a decision compass",
+    "alt_text": "Illustration of income and expenses examined with coins, comparison scales, a trend line, and decision compass",
+    "distinctiveness": "Foundational financial analysis represented by reading basic financial information, comparing values, observing trends, and supporting decisions"
+  },
+  {
+    "programme_name": "Certificate in Tax Consultancy",
+    "department_code": "ACCFIN",
+    "visual_family": "tax support foundations",
+    "subject": "a basic tax support desk with blank receipt records, categorized transaction trays, payment vessel, filing folder, compliance shield, and advisory pointer",
+    "alt_text": "Illustration of receipts, transaction sorting, tax payment, filing, compliance, and advisory support",
+    "distinctiveness": "Foundational tax consultancy represented by organizing records, classifying transactions, supporting calculation, filing, and basic compliance guidance"
+  }
+]

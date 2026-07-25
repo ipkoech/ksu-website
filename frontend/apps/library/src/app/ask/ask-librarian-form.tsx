@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { ApiClientError, libraryServiceApi } from "@ksu/api-client";
 import type { LibraryBranch, LibraryInquiryPayload } from "@ksu/api-client";
-import { Send } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 
 type FormStatus =
   | { type: "idle"; message: null }
@@ -25,7 +25,7 @@ const inquiryTopics = [
 ];
 
 const fieldControlClass =
-  "flex min-h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+  "min-h-11 w-full rounded-md border border-border bg-white px-3 py-2 text-sm font-medium text-foreground outline-none ring-primary/20 transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4 disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-muted-foreground";
 
 export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,7 +74,7 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+      className="rounded-lg border border-border bg-white p-5 shadow-sm"
     >
       <div className="grid gap-5 lg:grid-cols-2">
         <Field label="Full name" htmlFor="sender_name" required>
@@ -84,6 +84,7 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
             type="text"
             autoComplete="name"
             required
+            disabled={isSubmitting}
             maxLength={255}
             className={fieldControlClass}
             placeholder="Your full name"
@@ -97,6 +98,7 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
             type="email"
             autoComplete="email"
             required
+            disabled={isSubmitting}
             maxLength={255}
             className={fieldControlClass}
             placeholder="name@example.com"
@@ -109,6 +111,7 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
             name="sender_phone"
             type="tel"
             autoComplete="tel"
+            disabled={isSubmitting}
             maxLength={30}
             className={fieldControlClass}
             placeholder="+254..."
@@ -120,6 +123,7 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
             id="library_id"
             name="library_id"
             defaultValue={defaultBranchId}
+            disabled={isSubmitting}
             className={fieldControlClass}
           >
             {branches.length === 0 ? (
@@ -144,6 +148,7 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
             name="subject"
             required
             defaultValue=""
+            disabled={isSubmitting}
             className={fieldControlClass}
           >
             <option value="" disabled>
@@ -164,6 +169,7 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
             required
             minLength={10}
             rows={7}
+            disabled={isSubmitting}
             className={`${fieldControlClass} min-h-40 resize-y`}
             placeholder="Include the resource title, database name, call number, branch, or deadline if it helps the library team answer quickly."
           />
@@ -174,8 +180,8 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
         <p
           className={
             status.type === "success"
-              ? "mt-5 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-800"
-              : "mt-5 rounded-md border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-800"
+              ? "mt-5 rounded-md border border-primary/20 bg-primary/5 p-3 text-sm leading-6 text-primary"
+              : "mt-5 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm leading-6 text-destructive"
           }
           role={status.type === "error" ? "alert" : "status"}
         >
@@ -184,16 +190,20 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
       ) : null}
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs leading-5 text-slate-500">
+        <p className="text-xs leading-5 text-muted-foreground">
           Required fields are marked with an asterisk. Please do not submit
           passwords or payment details.
         </p>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          <Send aria-hidden className="h-4 w-4" />
+          {isSubmitting ? (
+            <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
+          ) : (
+            <Send aria-hidden className="h-4 w-4" />
+          )}
           {isSubmitting ? "Sending..." : "Send question"}
         </button>
       </div>
@@ -213,10 +223,13 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-semibold text-slate-900" htmlFor={htmlFor}>
+    <div className="flex min-w-0 flex-col gap-2">
+      <label
+        className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground"
+        htmlFor={htmlFor}
+      >
         {label}
-        {required ? <span className="text-red-600"> *</span> : null}
+        {required ? <span className="text-destructive"> *</span> : null}
       </label>
       {children}
     </div>

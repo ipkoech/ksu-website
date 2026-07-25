@@ -14,12 +14,14 @@
     "build:library": "pnpm --filter @ksu/library build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
+    "test:e2e:school-portal": "playwright test apps/admin/e2e/school-portal.spec.ts",
     "clean": "turbo clean && rm -rf node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.5",
     "@eslint/eslintrc": "^3.3.5",
+    "@playwright/test": "^1.55.0",
     "eslint": "^9.39.4",
     "eslint-config-next": "^15.5.18",
     "prettier": "^3.5.3",

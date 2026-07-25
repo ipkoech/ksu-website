@@ -56,6 +56,14 @@ export interface CampusLifePageData {
     art?: ArtsCulture | null;
     governance?: StudentGovernance | null;
   };
+  totals?: {
+    clubs?: number;
+    accommodations?: number;
+    sports?: number;
+    arts?: number;
+    governance?: number;
+  };
+  page?: number;
 }
 
 async function safeList<T>(promise: Promise<ListEnvelope<T>>): Promise<T[]> {
@@ -65,6 +73,22 @@ async function safeList<T>(promise: Promise<ListEnvelope<T>>): Promise<T[]> {
   } catch (error) {
     console.error("Failed to fetch campus life list:", error);
     return [];
+  }
+}
+
+async function safeListWithCount<T>(
+  promise: Promise<ListEnvelope<T> & { meta?: { total?: number } }>,
+): Promise<{ data: T[]; total: number }> {
+  try {
+    const result = await promise;
+    const meta = result.meta as { total?: number } | undefined;
+    return {
+      data: result.data ?? [],
+      total: meta?.total ?? result.data?.length ?? 0,
+    };
+  } catch (error) {
+    console.error("Failed to fetch campus life list:", error);
+    return { data: [], total: 0 };
   }
 }
 
@@ -112,12 +136,14 @@ function listParamsForArea(
   fields: string,
   filters?: CampusLifeFilters,
   typeParam?: string,
+  page?: number,
 ) {
   const params = baseParams(perPage, fields);
   if (area === targetArea) {
     if (typeParam) params[typeParam] = clean(filters?.type);
     if (targetArea === "clubs") params.q = clean(filters?.q);
     Object.assign(params, statusParams(filters?.status, targetArea));
+    if (page !== undefined) params.page = page;
   }
   return params;
 }
@@ -125,85 +151,62 @@ function listParamsForArea(
 export async function getCampusLifeData(
   segments: string[] = [],
   filters: CampusLifeFilters = {},
+  page: number = 1,
 ): Promise<CampusLifePageData> {
   const [area, slug] = segments;
-  const [clubs, accommodations, sports, arts, governance, faqs, contacts] =
-    await Promise.all([
-      safeList(
-        clubsApi.list(
-          listParamsForArea(
-            area,
-            "clubs",
-            24,
-            clubListFields,
-            filters,
-            "club_type",
-          ),
-        ),
-      ),
-      safeList(
-        accommodationsApi.list(
-          listParamsForArea(
-            area,
-            "accommodation",
-            16,
-            accommodationFields,
-            filters,
-            "accommodation_type",
-          ),
-        ),
-      ),
-      safeList(
-        sportsFacilitiesApi.list(
-          listParamsForArea(
-            area,
-            "sports",
-            16,
-            sportsFields,
-            filters,
-            "facility_type",
-          ),
-        ),
-      ),
-      safeList(
-        artsCultureApi.list(
-          listParamsForArea(
-            area,
-            "gallery",
-            16,
-            artsFields,
-            filters,
-            "category",
-          ),
-        ),
-      ),
-      safeList(
-        studentGovernanceApi.list(
-          listParamsForArea(
-            area,
-            "student-life",
-            12,
-            governanceFields,
-            filters,
-            "governance_type",
-          ),
-        ),
-      ),
-      safeList(
-        faqsApi.list({
-          scope_type: "student_life",
-          per_page: 8,
-          fields: faqFields,
-        }),
-      ),
-      safeList(
-        contactsApi.list({
-          scope_type: "student_life",
-          per_page: 8,
-          fields: contactFields,
-        }),
-      ),
-    ]);
+
+  async function fetchArea<T>(
+    targetArea: string,
+    perPage: number,
+    fields: string,
+    apiCall: (params: QueryParams) => Promise<ListEnvelope<T>>,
+    typeParam: string,
+  ): Promise<{ data: T[]; total: number }> {
+    const params = listParamsForArea(
+      area,
+      targetArea,
+      perPage,
+      fields,
+      filters,
+      typeParam,
+      page,
+    );
+    if (area === targetArea) {
+      return safeListWithCount(apiCall(params) as Promise<ListEnvelope<T> & { meta?: { total?: number } }>);
+    }
+    const data = await safeList(apiCall(params));
+    return { data, total: data.length };
+  }
+
+  const [
+    clubsResult,
+    accommodationsResult,
+    sportsResult,
+    artsResult,
+    governanceResult,
+    faqs,
+    contacts,
+  ] = await Promise.all([
+    fetchArea("clubs", 24, clubListFields, clubsApi.list.bind(clubsApi), "club_type"),
+    fetchArea("accommodation", 16, accommodationFields, accommodationsApi.list.bind(accommodationsApi), "accommodation_type"),
+    fetchArea("sports", 16, sportsFields, sportsFacilitiesApi.list.bind(sportsFacilitiesApi), "facility_type"),
+    fetchArea("gallery", 16, artsFields, artsCultureApi.list.bind(artsCultureApi), "category"),
+    fetchArea("student-life", 12, governanceFields, studentGovernanceApi.list.bind(studentGovernanceApi), "governance_type"),
+    safeList(
+      faqsApi.list({
+        scope_type: "student_life",
+        per_page: 8,
+        fields: faqFields,
+      }),
+    ),
+    safeList(
+      contactsApi.list({
+        scope_type: "student_life",
+        per_page: 8,
+        fields: contactFields,
+      }),
+    ),
+  ]);
 
   const detail: CampusLifePageData["detail"] = {};
 
@@ -238,13 +241,21 @@ export async function getCampusLifeData(
   }
 
   return {
-    clubs,
-    accommodations,
-    sports,
-    arts,
-    governance,
+    clubs: clubsResult.data,
+    accommodations: accommodationsResult.data,
+    sports: sportsResult.data,
+    arts: artsResult.data,
+    governance: governanceResult.data,
     faqs,
     contacts,
     detail,
+    totals: {
+      clubs: clubsResult.total,
+      accommodations: accommodationsResult.total,
+      sports: sportsResult.total,
+      arts: artsResult.total,
+      governance: governanceResult.total,
+    },
+    page,
   };
 }

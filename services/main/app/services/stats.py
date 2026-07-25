@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
-import uuid
-
-import sqlalchemy as sa
+import httpx
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..core.config import get_settings
 from ..models import (
     Announcement,
     ArtsCulture,
     Blog,
     Campus,
     Club,
+    ClubActivity,
     ContactDirectory,
     Department,
     DepartmentService,
@@ -37,9 +37,58 @@ from ..models import (
     AlumniAssociation,
     ExchangeProgramme,
     Media,
+    MediaLink,
+    PageSection,
+    PartnershipSpotlight,
     Policy,
+    Slider,
 )
-from ..schemas.stats import PublicStatItem, PublicStatsResponse
+from ..schemas.stats import PortalStatsResponse, PublicStatItem, PublicStatsResponse
+
+
+# These names are the dashboard contract.  Main-service portals are calculated
+# below; service-owned portals use their matching research or library endpoint.
+PORTAL_STAT_CONTRACTS: dict[str, tuple[str, ...]] = {
+    "admin": (
+        "boards_count",
+        "divisions_count",
+        "offices_count",
+        "staff_assignments_count",
+        "documents_count",
+    ),
+    "corporate-communication": (
+        "pending_review_count",
+        "published_count",
+        "draft_count",
+        "scheduled_count",
+        "media_count",
+    ),
+    "schools": ("schools_count", "programmes_count", "departments_count"),
+    "departments": (
+        "departments_count",
+        "programmes_count",
+        "unpublished_count",
+    ),
+    "research": (
+        "researchers_count",
+        "published_publications_count",
+    ),
+    "library": (
+        "active_branches_count",
+        "catalogue_resources_count",
+        "active_regulations_count",
+        "loans_count",
+    ),
+}
+
+PORTAL_ALIASES = {
+    "cocms": "corporate-communication",
+    "publications": "research",
+    "governance": "admin",
+    "institutional-administration": "admin",
+}
+
+settings = get_settings()
 
 
 async def _count(db: AsyncSession, model, *conditions) -> int:
@@ -47,6 +96,64 @@ async def _count(db: AsyncSession, model, *conditions) -> int:
         select(func.count(model.id)).where(model.deleted_at.is_(None), *conditions)
     )
     return int(result.scalar_one() or 0)
+
+
+async def _published_publications_count() -> int:
+    """Read the public publication count from the owning Research service."""
+
+    async with httpx.AsyncClient(
+        base_url=settings.RESEARCH_SERVICE_URL.rstrip("/"),
+        timeout=httpx.Timeout(20.0, connect=5.0),
+        headers={"X-KSU-Proxy": "main-stats"},
+    ) as client:
+        response = await client.get("/api/v1/stats")
+        response.raise_for_status()
+        payload = response.json()
+
+    if not isinstance(payload, dict) or payload.get("status") != "success":
+        raise ValueError("Research service returned an unexpected stats payload")
+    data = payload.get("data")
+    if not isinstance(data, dict) or not isinstance(data.get("stats"), list):
+        raise ValueError("Research service returned an unexpected stats payload")
+
+    for item in data["stats"]:
+        if item.get("key") == "publications" and isinstance(item.get("value"), int):
+            return item["value"]
+
+    raise ValueError("Research service did not return a publications count")
+
+
+async def _library_portal_stat_counts() -> dict[str, int]:
+    """Read dashboard counters from the owning Library service."""
+
+    async with httpx.AsyncClient(
+        base_url=settings.LIBRARY_SERVICE_URL.rstrip("/"),
+        timeout=httpx.Timeout(20.0, connect=5.0),
+        headers={"X-KSU-Proxy": "main-stats"},
+    ) as client:
+        response = await client.get("/api/v1/stats/admin")
+        response.raise_for_status()
+        payload = response.json()
+
+    if not isinstance(payload, dict) or payload.get("status") != "success":
+        raise ValueError("Library service returned an unexpected stats payload")
+    data = payload.get("data")
+    if not isinstance(data, dict) or not isinstance(data.get("stats"), list):
+        raise ValueError("Library service returned an unexpected stats payload")
+
+    service_values: dict[str, int] = {}
+    for item in data["stats"]:
+        if isinstance(item, dict) and isinstance(item.get("value"), int):
+            key = item.get("key")
+            if isinstance(key, str):
+                service_values[key] = item["value"]
+
+    return {
+        "active_branches_count": service_values.get("active_branches", 0),
+        "catalogue_resources_count": service_values.get("catalogue_resources", 0),
+        "active_regulations_count": service_values.get("active_regulations", 0),
+        "loans_count": service_values.get("loans", 0),
+    }
 
 
 async def _sum_publications_for_people(
@@ -81,15 +188,14 @@ def _item(
 
 
 async def homepage_stats(db: AsyncSession) -> PublicStatsResponse:
-    public_content = (
-        lambda model: (
+    def public_content(model):
+        return (
             model.is_public.is_(True),
             model.is_published.is_(True),
             model.status == "published",
             model.archived_at.is_(None),
             model.deleted_at.is_(None),
         )
-    )
 
     students_result = await db.execute(
         select(
@@ -205,14 +311,13 @@ async def homepage_stats(db: AsyncSession) -> PublicStatsResponse:
 async def university_stats(db: AsyncSession) -> PublicStatsResponse:
     """Comprehensive public-safe university-wide stats."""
 
-    public_content = (
-        lambda model: (
+    def public_content(model):
+        return (
             model.is_public.is_(True),
             model.is_published.is_(True),
             model.status == "published",
             model.archived_at.is_(None),
         )
-    )
 
     students_result = await db.execute(
         select(
@@ -593,6 +698,112 @@ async def public_stats(
     if scope == "department" and slug:
         return await department_stats(db, slug)
     return None
+
+
+async def portal_stats(
+    db: AsyncSession,
+    portal: str,
+) -> PortalStatsResponse | None:
+    """Return definite counters for Main-service admin portal dashboards."""
+
+    portal = PORTAL_ALIASES.get(portal, portal)
+
+    if portal == "admin":
+        stats = {
+            "boards_count": await _count(db, Board),
+            "divisions_count": await _count(db, Division),
+            "offices_count": await _count(db, Wing),
+            "staff_assignments_count": await _count(db, StaffAssignment),
+            "documents_count": await _count(db, Document),
+        }
+        title = "Admin operational counters"
+    elif portal == "corporate-communication":
+        content_sources = (
+            (News, ()),
+            (Blog, ()),
+            (Event, ()),
+            (Announcement, ()),
+            (ClubActivity, ()),
+            (MediaLink, (MediaLink.owner_portal == "student-clubs",)),
+            (PageSection, ()),
+            (PartnershipSpotlight, ()),
+            (Slider, ()),
+        )
+        stats = {
+            "pending_review_count": sum(
+                [
+                    await _count(
+                        db,
+                        model,
+                        model.workflow_status.in_(("submitted", "in_review")),
+                        *extra_filters,
+                    )
+                    for model, extra_filters in content_sources
+                ]
+            ),
+            "published_count": sum(
+                [
+                    await _count(db, model, model.workflow_status == "published", *extra_filters)
+                    for model, extra_filters in content_sources
+                ]
+            ),
+            "draft_count": sum(
+                [
+                    await _count(db, model, model.workflow_status == "draft", *extra_filters)
+                    for model, extra_filters in content_sources
+                ]
+            ),
+            "scheduled_count": sum(
+                [
+                    await _count(db, model, model.workflow_status == "scheduled", *extra_filters)
+                    for model, extra_filters in content_sources
+                ]
+            ),
+            "media_count": await _count(db, Media),
+        }
+        title = "Corporate Communication publishing counters"
+    elif portal == "schools":
+        stats = {
+            "schools_count": await _count(db, School),
+            "programmes_count": await _count(db, Programme),
+            "departments_count": await _count(db, Department),
+        }
+        title = "School administration counters"
+    elif portal == "departments":
+        content_models = (News, Event, Announcement)
+        stats = {
+            "departments_count": await _count(db, Department),
+            "programmes_count": await _count(db, Programme),
+            "unpublished_count": sum(
+                [
+                    await _count(
+                        db,
+                        model,
+                        model.scope_type == "department",
+                        model.is_published.is_(False),
+                    )
+                    for model in content_models
+                ]
+            ),
+        }
+        title = "Department administration counters"
+    elif portal == "research":
+        stats = {
+            "researchers_count": await _count(
+                db,
+                Person,
+                Person.is_researcher.is_(True),
+            ),
+            "published_publications_count": await _published_publications_count(),
+        }
+        title = "Research and publications counters"
+    elif portal == "library":
+        stats = await _library_portal_stat_counts()
+        title = "Library administration counters"
+    else:
+        return None
+
+    return PortalStatsResponse(portal=portal, title=title, stats=stats)
 
 
 async def admin_stats(db: AsyncSession) -> PublicStatsResponse:

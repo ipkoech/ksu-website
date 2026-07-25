@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import uuid
+
 from fastapi import APIRouter, Depends, Request, status
 from ksu_common import rate_limit
 from ksu_common.schemas.responses import success
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.database import get_db
+from ...core.auth import require_scope
 from ...schemas import (
     DonationCreate,
     DonationImpactCreate,
@@ -22,7 +25,7 @@ from ...schemas import (
     PublicDonationSubmission,
     PublicDonationSubmissionRead,
 )
-from ...services import DonationImpactService, DonationService, DonationSettingsService, DonationStoryService, DonorService
+from ...services import DonationImpactService, DonationRelationshipService, DonationService, DonationSettingsService, DonationStoryService, DonorService
 from ._crud import build_crud_router
 
 router = APIRouter()
@@ -44,11 +47,32 @@ async def submit_public_donation(
             amount=donation.amount,
             currency=donation.currency,
             donation_type=donation.donation_type,
+            recurring_frequency=donation.recurring_frequency,
             designation=donation.designation,
             payment_method=donation.payment_method,
         ),
         message="Donation submission received",
     )
+
+
+@router.get("/donations/summary", tags=["Donations"], dependencies=[Depends(require_scope("donations.manage"))])
+async def get_donation_summary(db: AsyncSession = Depends(get_db)):
+    return success(data=await DonationService.summary(db))
+
+
+@router.get("/donors/id/{donor_id}/impacts", tags=["Donors"], dependencies=[Depends(require_scope("donations.manage"))])
+async def list_donor_impacts(donor_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await DonationRelationshipService.list_donor_impacts(db, donor_id))
+
+
+@router.get("/donation-impacts/id/{impact_id}/donations", tags=["Donation Impacts"], dependencies=[Depends(require_scope("donations.manage"))])
+async def list_impact_donations(impact_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await DonationRelationshipService.list_impact_donations(db, impact_id))
+
+
+@router.get("/donation-impacts/id/{impact_id}/stories", tags=["Donation Impacts"], dependencies=[Depends(require_scope("donations.manage"))])
+async def list_impact_stories(impact_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await DonationRelationshipService.list_impact_stories(db, impact_id))
 
 
 router.include_router(

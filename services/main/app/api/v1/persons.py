@@ -6,6 +6,7 @@ import uuid
 from types import SimpleNamespace
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
+from sqlalchemy.orm import selectinload
 
 from ksu_common.schemas.responses import success
 
@@ -32,6 +33,7 @@ PERSON_MANAGE_PERMISSIONS = [
     "staff.manage_assignments",
     "publications.manage",
 ]
+PERSON_MEDIA_LOAD_OPTIONS = (selectinload(Person.cv_file),)
 
 
 def _person_scope(data) -> tuple[str, uuid.UUID | None]:
@@ -68,6 +70,28 @@ async def _require_person_scope(
         )
 
 
+async def _validate_person_cv_media(
+    db: DbSession,
+    user: CurrentUser,
+    person: Person,
+    payload: dict,
+) -> None:
+    if "cv_file_id" not in payload:
+        return
+
+    cv_file_id = payload["cv_file_id"]
+    if cv_file_id is None or cv_file_id == person.cv_file_id:
+        return
+
+    cv_file = await MediaService.get_authorized_by_id(db, cv_file_id, user)
+    if cv_file is None:
+        raise HTTPException(status_code=400, detail="Choose a CV file you can access.")
+    try:
+        MediaService.validate_cv_media(cv_file)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @router.get("")
 async def list_persons(
     db: DbSession,
@@ -94,7 +118,7 @@ async def list_persons(
         employment_type=employment_type,
         is_researcher=is_researcher,
         status=status,
-        load_options=selector.load_options,
+        load_options=[*selector.load_options, *PERSON_MEDIA_LOAD_OPTIONS],
     )
     return success(data=with_person_photo_urls(selector.apply(result.items), result.items), meta=result.meta)
 
@@ -126,7 +150,7 @@ async def list_admin_persons(
         employment_type=employment_type,
         is_researcher=is_researcher,
         status=status,
-        load_options=selector.load_options,
+        load_options=[*selector.load_options, *PERSON_MEDIA_LOAD_OPTIONS],
     )
     items = []
     for item in result.items:
@@ -147,7 +171,11 @@ async def list_admin_persons(
 @router.get("/{person_id}")
 async def get_person(person_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Person, fields)
-    person = await PersonService.get_by_id(db, person_id, load_options=selector.load_options)
+    person = await PersonService.get_by_id(
+        db,
+        person_id,
+        load_options=[*selector.load_options, *PERSON_MEDIA_LOAD_OPTIONS],
+    )
     if person is None:
         raise HTTPException(status_code=404, detail="Person not found")
     return success(data=with_person_photo_urls(selector.apply(person), person))
@@ -158,7 +186,7 @@ async def create_person(data: PersonCreate, db: DbSession, user: CurrentUser):
     scope_type, scope_id = _person_scope(data)
     await _require_person_scope(db, user, PERSON_MANAGE_PERMISSIONS, scope_type, scope_id)
     person = await PersonService.create(db, **data.model_dump())
-    created = await PersonService.get_by_id(db, person.id)
+    created = await PersonService.get_by_id(db, person.id, load_options=PERSON_MEDIA_LOAD_OPTIONS)
     return success(data=with_person_photo_urls(build_selector(Person, FieldSelection(fields=())).apply(created), created), message="Person created")
 
 
@@ -170,12 +198,13 @@ async def update_person(person_id: uuid.UUID, data: PersonUpdate, db: DbSession,
     scope_type, scope_id = _person_scope(person)
     await _require_person_scope(db, user, PERSON_MANAGE_PERMISSIONS, scope_type, scope_id)
     payload = data.model_dump(exclude_unset=True)
+    await _validate_person_cv_media(db, user, person, payload)
     next_scope_type, next_scope_id = _person_scope(
         SimpleNamespace(department_id=payload.get("department_id", person.department_id))
     )
     await _require_person_scope(db, user, PERSON_MANAGE_PERMISSIONS, next_scope_type, next_scope_id)
     updated = await PersonService.update(db, person, **payload)
-    updated = await PersonService.get_by_id(db, updated.id)
+    updated = await PersonService.get_by_id(db, updated.id, load_options=PERSON_MEDIA_LOAD_OPTIONS)
     return success(data=with_person_photo_urls(build_selector(Person, FieldSelection(fields=())).apply(updated), updated), message="Person updated")
 
 
@@ -229,7 +258,7 @@ async def upload_person_photo(
         role="profile-photo",
     )
     updated = await PersonService.update(db, person, photo_id=media.id)
-    updated = await PersonService.get_by_id(db, updated.id)
+    updated = await PersonService.get_by_id(db, updated.id, load_options=PERSON_MEDIA_LOAD_OPTIONS)
     return success(data=with_person_photo_urls(build_selector(Person, FieldSelection(fields=())).apply(updated), updated), message="Profile photo updated")
 
 
@@ -242,6 +271,53 @@ async def remove_person_photo(person_id: uuid.UUID, db: DbSession, user: Current
     await _require_person_scope(db, user, PERSON_MANAGE_PERMISSIONS, scope_type, scope_id)
     updated = await PersonService.update(db, person, photo_id=None)
     return success(data=with_person_photo_urls(build_selector(Person, FieldSelection(fields=())).apply(updated), updated), message="Profile photo removed")
+
+
+@router.post("/{person_id}/cv")
+async def upload_person_cv(
+    person_id: uuid.UUID,
+    db: DbSession,
+    user: CurrentUser,
+    file: UploadFile = File(...),
+):
+    person = await PersonService.get_by_id(db, person_id)
+    if person is None:
+        raise HTTPException(status_code=404, detail="Person not found")
+    scope_type, scope_id = _person_scope(person)
+    await _require_person_scope(db, user, PERSON_MANAGE_PERMISSIONS, scope_type, scope_id)
+    try:
+        MediaService.validate_cv_mime_type(file.content_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    media = await MediaService.upload(
+        db,
+        file=file,
+        uploaded_by_id=user.id,
+        is_public=person.is_public,
+        entity_type="person",
+        entity_id=person.id,
+        role="cv",
+    )
+    updated = await PersonService.update(db, person, cv_file_id=media.id)
+    updated = await PersonService.get_by_id(db, updated.id, load_options=PERSON_MEDIA_LOAD_OPTIONS)
+    return success(
+        data=with_person_photo_urls(build_selector(Person, FieldSelection(fields=())).apply(updated), updated),
+        message="CV updated",
+    )
+
+
+@router.delete("/{person_id}/cv")
+async def remove_person_cv(person_id: uuid.UUID, db: DbSession, user: CurrentUser):
+    person = await PersonService.get_by_id(db, person_id)
+    if person is None:
+        raise HTTPException(status_code=404, detail="Person not found")
+    scope_type, scope_id = _person_scope(person)
+    await _require_person_scope(db, user, PERSON_MANAGE_PERMISSIONS, scope_type, scope_id)
+    updated = await PersonService.update(db, person, cv_file_id=None)
+    return success(
+        data=with_person_photo_urls(build_selector(Person, FieldSelection(fields=())).apply(updated), updated),
+        message="CV removed",
+    )
 
 
 @router.delete("/{person_id}", status_code=status.HTTP_204_NO_CONTENT)

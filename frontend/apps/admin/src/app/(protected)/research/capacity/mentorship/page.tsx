@@ -1,6 +1,7 @@
 "use client";
 
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { CapacityWorkspaceHeader, statusFilter } from "../_components/capacity-workspace";
 
 export default function MentorshipProgramsPage() {
   return (
@@ -10,6 +11,9 @@ export default function MentorshipProgramsPage() {
       queryKey={["research", "mentorship"]}
       resource={researchServiceApi.mentorship}
       manageScopes={["training_program.manage", "research:write"]}
+      summarySlot={<CapacityWorkspaceHeader />}
+      listFilters={[{ name: "search", label: "Search", type: "text", placeholder: "Search mentorship programs" }, statusFilter]}
+      editorMode="sheet"
       fields={[
         { name: "name", label: "Name", required: true },
         { name: "slug", label: "Slug" },
@@ -43,6 +47,8 @@ export default function MentorshipProgramsPage() {
       ]}
       defaults={{ program_type: "research", status: "active" }}
       emptyMessage="No mentorship programs were returned by the research service."
+      importResource="research-mentorship"
+      detailHref={(record) => `/research/capacity/mentorship/${record.id}`}
     />
   );
 }

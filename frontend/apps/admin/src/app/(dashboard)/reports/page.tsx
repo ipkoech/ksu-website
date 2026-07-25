@@ -3,10 +3,14 @@
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTransition } from "@/lib/animations";
-import { BarChart3, Download, FileText, TrendingUp, Users } from "lucide-react";
+import { BarChart3, Download, MousePointerClick, TrendingUp, Users } from "lucide-react";
 import { adminReportsApi, useAdminActivityReport, useContentReport, useReportsOverview, useTrafficReport } from "@ksu/api-client";
-import type { ReportDimension, ReportSeriesPoint } from "@ksu/api-client";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
+import type { ReportDimension } from "@ksu/api-client";
+import { Button, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
+import {
+  MetricCard,
+  BarChart,
+} from "@/components/analytics/chart-cards";
 
 const ranges = [
   { label: "7 days", value: 7 },
@@ -14,20 +18,6 @@ const ranges = [
   { label: "90 days", value: 90 },
   { label: "1 year", value: 365 },
 ];
-
-function MetricCard({ title, value, icon }: { title: string; value?: number; icon: React.ReactNode }) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <div className="text-muted-foreground">{icon}</div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-semibold">{value ?? "--"}</div>
-      </CardContent>
-    </Card>
-  );
-}
 
 function DimensionList({ title, rows, emptyLabel }: { title: string; rows?: ReportDimension[]; emptyLabel: string }) {
   const max = Math.max(...(rows?.map((row) => row.value) ?? [0]), 1);
@@ -48,7 +38,7 @@ function DimensionList({ title, rows, emptyLabel }: { title: string; rows?: Repo
                   <span className="text-muted-foreground">{row.value}</span>
                 </div>
                 <div className="h-2 rounded-full bg-muted">
-                  <div className="h-2 rounded-full bg-primary" style={{ width: `${Math.max(4, (row.value / max) * 100)}%` }} />
+                  <div className="h-2 rounded-full bg-primary transition-all" style={{ width: `${Math.round((row.value / max) * 100)}%` }} />
                 </div>
               </div>
             ))}
@@ -59,26 +49,14 @@ function DimensionList({ title, rows, emptyLabel }: { title: string; rows?: Repo
   );
 }
 
-function DailySeries({ rows }: { rows?: ReportSeriesPoint[] }) {
-  const max = Math.max(...(rows?.map((row) => row.value) ?? [0]), 1);
+function SeriesChart({ rows, loading }: { rows?: Array<{ label: string; value: number }>; loading?: boolean }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Traffic Trend</CardTitle>
+        <CardTitle className="text-base">Daily events</CardTitle>
       </CardHeader>
       <CardContent>
-        {!rows?.length ? (
-          <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">No traffic events have been recorded for this range.</p>
-        ) : (
-          <div className="flex h-44 items-end gap-2">
-            {rows.map((row) => (
-              <div key={row.date} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-                <div className="w-full rounded-t bg-primary" style={{ height: `${Math.max(6, (row.value / max) * 160)}px` }} />
-                <span className="w-full truncate text-center text-[10px] text-muted-foreground">{row.date.slice(5)}</span>
-              </div>
-            ))}
-          </div>
-        )}
+        <BarChart data={rows} loading={loading} />
       </CardContent>
     </Card>
   );
@@ -98,6 +76,12 @@ export default function ReportsPage() {
   const adminData = adminActivity.data?.data;
   const isLoading = overview.isLoading || traffic.isLoading || content.isLoading || adminActivity.isLoading;
 
+  const seriesData = useMemo(() => {
+    const rows = trafficData?.by_day ?? [];
+    if (!rows.length) return undefined;
+    return rows.map((r) => ({ label: r.date, value: r.value }));
+  }, [trafficData]);
+
   return (
     <PageTransition>
       <PageHeader title="Reports" description="Traffic, content, and back-office analytics from first-party events" />
@@ -112,14 +96,14 @@ export default function ReportsPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline" size="sm">
-            <a href={adminReportsApi.exportUrl("overview", { days, format: "csv" })}>
-              <Download data-icon="inline-start" />
+            <a href={adminReportsApi.exportUrl("overview", { days, format: "csv" })} rel="noreferrer">
+              <Download className="mr-1.5 h-4 w-4" />
               Overview CSV
             </a>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <a href={adminReportsApi.exportUrl("content", { days, format: "csv" })}>
-              <Download data-icon="inline-start" />
+            <a href={adminReportsApi.exportUrl("content", { days, format: "csv" })} rel="noreferrer">
+              <Download className="mr-1.5 h-4 w-4" />
               Content CSV
             </a>
           </Button>
@@ -133,26 +117,26 @@ export default function ReportsPage() {
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard title="Total Events" value={isLoading ? undefined : overviewData?.total_events} icon={<BarChart3 className="h-4 w-4" />} />
-        <MetricCard title="Page Views" value={isLoading ? undefined : trafficData?.page_views ?? overviewData?.page_views} icon={<TrendingUp className="h-4 w-4" />} />
-        <MetricCard title="Content Views" value={isLoading ? undefined : contentData?.content_views ?? overviewData?.content_views} icon={<FileText className="h-4 w-4" />} />
-        <MetricCard title="Active Admins" value={isLoading ? undefined : adminData?.active_admins} icon={<Users className="h-4 w-4" />} />
+        <MetricCard title="Total Events" value={isLoading ? "—" : (overviewData?.total_events ?? 0)} icon={BarChart3} />
+        <MetricCard title="Page Views" value={isLoading ? "—" : (trafficData?.page_views ?? overviewData?.page_views ?? 0)} icon={TrendingUp} />
+        <MetricCard title="Content Views" value={isLoading ? "—" : (contentData?.content_views ?? overviewData?.content_views ?? 0)} icon={MousePointerClick} />
+        <MetricCard title="Active Admins" value={isLoading ? "—" : (adminData?.active_admins ?? 0)} icon={Users} />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
-        <DailySeries rows={trafficData?.by_day ?? overviewData?.traffic_by_day} />
+      <div className="mt-6 grid gap-6 xl:grid-cols-2">
+        <SeriesChart rows={seriesData} loading={isLoading} />
         <Card>
           <CardHeader>
-            <CardTitle>Admin Activity</CardTitle>
+            <CardTitle className="text-base">Admin Activity</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between rounded-lg border bg-background p-3">
               <span className="text-sm font-medium">Admin events</span>
-              <Badge>{adminData?.admin_events ?? 0}</Badge>
+              <span className="text-sm font-semibold text-primary">{adminData?.admin_events ?? 0}</span>
             </div>
             <div className="flex items-center justify-between rounded-lg border bg-background p-3">
               <span className="text-sm font-medium">Content interactions</span>
-              <Badge variant="secondary">{contentData?.interactions ?? 0}</Badge>
+              <span className="text-sm font-semibold text-primary">{contentData?.interactions ?? 0}</span>
             </div>
           </CardContent>
         </Card>

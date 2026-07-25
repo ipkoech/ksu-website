@@ -13,8 +13,18 @@ from ._fields import FieldSelection, FieldsDep, build_selector
 from ._person_media import with_person_photo_urls
 from ...deps import CurrentUser, DbSession, require_scope
 from ...models import Board, StaffAssignment
-from ...schemas import BoardCreate, BoardMemberCreate, BoardUpdate
-from ...services import GovernanceService
+from ...schemas import (
+    BoardCreate,
+    BoardMemberCreate,
+    BoardUpdate,
+    CouncilMemberCreate,
+    CouncilMemberUpdate,
+    CouncilOrderUpdate,
+    GovernancePageContentUpdate,
+    GovernanceRoleCreate,
+    GovernanceRoleUpdate,
+)
+from ...services import AuditService, GovernanceService
 
 router = APIRouter()
 
@@ -26,6 +36,12 @@ def _member_error(error: ValueError) -> HTTPException:
     if "not found" in message.lower():
         return HTTPException(status_code=404, detail=message)
     return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
+
+def _council_member_payload(assignment: StaffAssignment) -> dict:
+    payload = build_selector(StaffAssignment, FieldSelection(fields=())).apply(assignment)
+    payload["reports_to"] = GovernanceService.council_member_reports_to_summary(assignment)
+    return with_person_photo_urls(payload, assignment)
 
 
 @router.get("/boards")
@@ -73,7 +89,7 @@ async def get_board_members(slug: str, db: DbSession, fields: FieldSelection = F
     board = await GovernanceService.get_board_by_slug(db, slug)
     if board is None:
         raise HTTPException(status_code=404, detail="Board not found")
-    members = await GovernanceService.get_members(db, board.id)
+    members = await GovernanceService.get_members(db, board.id, public_only=True)
     selector = build_selector(StaffAssignment, fields)
     return success(data=with_person_photo_urls(selector.apply(members), members))
 
@@ -91,21 +107,21 @@ async def get_board_members_by_id(board_id: uuid.UUID, db: DbSession, _: Current
 @router.get("/council")
 @cached_public(timeout=3600, vary_on=("fields", "include"))
 async def get_council(db: DbSession, fields: FieldSelection = FieldsDep):
-    selector = build_selector(Board, fields)
-    board = await GovernanceService.get_board_by_slug(db, "university-council", load_options=selector.load_options)
+    board = await GovernanceService.get_board_by_slug(db, "university-council")
     if board is None:
         raise HTTPException(status_code=404, detail="Council not found")
-    return success(data=selector.apply(board))
+    members = await GovernanceService.get_members(db, board.id, public_only=True)
+    return success(data=GovernanceService.public_board_data(board, members))
 
 
 @router.get("/management-board")
 @cached_public(timeout=3600, vary_on=("fields", "include"))
 async def get_management_board(db: DbSession, fields: FieldSelection = FieldsDep):
-    selector = build_selector(Board, fields)
-    board = await GovernanceService.get_board_by_slug(db, "management-board", load_options=selector.load_options)
+    board = await GovernanceService.get_board_by_slug(db, "management-board")
     if board is None:
         raise HTTPException(status_code=404, detail="Management Board not found")
-    return success(data=selector.apply(board))
+    members = await GovernanceService.get_members(db, board.id, public_only=True)
+    return success(data=GovernanceService.public_board_data(board, members))
 
 
 @router.get("/senate")
@@ -185,3 +201,513 @@ async def remove_board_member_by_id(board_id: uuid.UUID, person_id: uuid.UUID, d
     if board is None:
         raise HTTPException(status_code=404, detail="Board not found")
     await GovernanceService.remove_member(db, board.id, person_id)
+
+
+async def _council_member_or_404(db: DbSession, assignment_id: uuid.UUID) -> StaffAssignment:
+    assignment = await GovernanceService.get_council_member(db, assignment_id)
+    if assignment is None:
+        raise HTTPException(status_code=404, detail="Council member not found")
+    return assignment
+
+
+async def _board_member_or_404(db: DbSession, board_slug: str, assignment_id: uuid.UUID) -> StaffAssignment:
+    assignment = await GovernanceService.get_board_member(db, board_slug, assignment_id)
+    if assignment is None:
+        raise HTTPException(status_code=404, detail="Board member not found")
+    return assignment
+
+
+@router.get("/admin/council/dashboard", dependencies=[Depends(require_scope("governance.view"))])
+async def council_dashboard(db: DbSession, _: CurrentUser):
+    try:
+        data = await GovernanceService.council_dashboard(db)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    return success(data=data)
+
+
+@router.get("/admin/roles", dependencies=[Depends(require_scope("governance.manage_roles"))])
+async def list_governance_roles(db: DbSession, _: CurrentUser, active_only: bool = True):
+    return success(data=await GovernanceService.list_governance_roles(db, active_only=active_only))
+
+
+@router.post(
+    "/admin/roles",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_scope("governance.manage_roles"))],
+)
+async def create_governance_role(data: GovernanceRoleCreate, db: DbSession, user: CurrentUser):
+    role = await GovernanceService.create_governance_role(db, data.model_dump(), user.id)
+    return success(data=role, message="Governance role created")
+
+
+@router.patch("/admin/roles/{role_id}", dependencies=[Depends(require_scope("governance.manage_roles"))])
+async def update_governance_role(role_id: uuid.UUID, data: GovernanceRoleUpdate, db: DbSession, user: CurrentUser):
+    role = await GovernanceService.get_governance_role(db, role_id)
+    if role is None:
+        raise HTTPException(status_code=404, detail="Governance role not found")
+    role = await GovernanceService.update_governance_role(db, role, data.model_dump(exclude_unset=True), user.id)
+    return success(data=role, message="Governance role updated")
+
+
+@router.get("/admin/council/members", dependencies=[Depends(require_scope("governance.view"))])
+async def list_council_members(db: DbSession, _: CurrentUser, workflow_status: str | None = None):
+    try:
+        members = await GovernanceService.list_council_members(db, workflow_status=workflow_status)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    return success(data=[_council_member_payload(member) for member in members])
+
+
+@router.post(
+    "/admin/council/members",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_scope("governance.manage_members"))],
+)
+async def create_council_member(data: CouncilMemberCreate, db: DbSession, user: CurrentUser):
+    try:
+        assignment = await GovernanceService.create_council_member(db, data.model_dump(), user.id)
+    except ValueError as error:
+        raise _member_error(error) from error
+    return success(data=_council_member_payload(assignment), message="Council member created")
+
+
+@router.get("/admin/council/members/{assignment_id}", dependencies=[Depends(require_scope("governance.view"))])
+async def get_council_member(assignment_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    return success(data=_council_member_payload(await _council_member_or_404(db, assignment_id)))
+
+
+@router.patch(
+    "/admin/council/members/{assignment_id}",
+    dependencies=[Depends(require_scope("governance.manage_members"))],
+)
+async def update_council_member(
+    assignment_id: uuid.UUID, data: CouncilMemberUpdate, db: DbSession, user: CurrentUser
+):
+    assignment = await _council_member_or_404(db, assignment_id)
+    try:
+        assignment = await GovernanceService.update_council_member(
+            db, assignment, data.model_dump(exclude_unset=True), user.id
+        )
+    except ValueError as error:
+        raise _member_error(error) from error
+    return success(data=_council_member_payload(assignment), message="Council member updated")
+
+
+@router.delete(
+    "/admin/council/members/{assignment_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_scope("governance.manage_members"))],
+)
+async def delete_council_member(assignment_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    assignment = await _council_member_or_404(db, assignment_id)
+    assignment.status = "ended"
+    await db.flush()
+
+
+@router.get("/admin/council/order", dependencies=[Depends(require_scope("governance.view"))])
+async def get_council_order(db: DbSession, _: CurrentUser):
+    members = await GovernanceService.list_council_members(db, active_only=True)
+    return success(
+        data=[
+            {
+                "assignment_id": member.id,
+                "display_group": GovernanceService._role_group(member),
+                "display_order": member.display_order,
+                "hierarchy_level": member.hierarchy_level,
+                "reports_to_id": member.reports_to_id,
+            }
+            for member in members
+        ]
+    )
+
+
+@router.put("/admin/council/order", dependencies=[Depends(require_scope("governance.manage_order"))])
+async def update_council_order(data: CouncilOrderUpdate, db: DbSession, user: CurrentUser):
+    try:
+        members = await GovernanceService.update_council_order(db, data.nodes, user.id)
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    return success(data=members, message="Council order updated")
+
+
+@router.get("/admin/council/page-content", dependencies=[Depends(require_scope("governance.view"))])
+async def get_council_page_content(db: DbSession, _: CurrentUser):
+    board = await GovernanceService.get_university_council_board(db)
+    if board is None:
+        raise HTTPException(status_code=404, detail="University Council not found")
+    return success(data=await GovernanceService.get_council_page_content(db, board.id))
+
+
+@router.patch("/admin/council/page-content", dependencies=[Depends(require_scope("governance.manage_members"))])
+async def update_council_page_content(data: GovernancePageContentUpdate, db: DbSession, user: CurrentUser):
+    board = await GovernanceService.get_university_council_board(db)
+    if board is None:
+        raise HTTPException(status_code=404, detail="University Council not found")
+    page = await GovernanceService.upsert_council_page_content(db, board.id, data.model_dump(exclude_unset=True), user.id)
+    return success(data=page, message="Council page content updated")
+
+
+async def _transition_council_page_content(action: str, db: DbSession, user: CurrentUser):
+    board = await GovernanceService.get_university_council_board(db)
+    if board is None:
+        raise HTTPException(status_code=404, detail="University Council not found")
+    page = await GovernanceService.get_council_page_content(db, board.id)
+    if page is None:
+        raise HTTPException(status_code=404, detail="Council page content not found")
+    try:
+        page = await GovernanceService.transition_council_page_content(db, page, action, user.id)
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    return success(data=page, message=f"Council page content {action}")
+
+
+@router.post(
+    "/admin/council/page-content/submit-review",
+    dependencies=[Depends(require_scope("governance.manage_members"))],
+)
+async def submit_council_page_content_for_review(db: DbSession, user: CurrentUser):
+    return await _transition_council_page_content("submit-review", db, user)
+
+
+@router.post(
+    "/admin/council/page-content/approve",
+    dependencies=[Depends(require_scope("governance.approve"))],
+)
+async def approve_council_page_content(db: DbSession, user: CurrentUser):
+    return await _transition_council_page_content("approve", db, user)
+
+
+@router.post(
+    "/admin/council/page-content/publish",
+    dependencies=[Depends(require_scope("governance.publish"))],
+)
+async def publish_council_page_content(db: DbSession, user: CurrentUser):
+    return await _transition_council_page_content("publish", db, user)
+
+
+@router.post(
+    "/admin/council/page-content/unpublish",
+    dependencies=[Depends(require_scope("governance.publish"))],
+)
+async def unpublish_council_page_content(db: DbSession, user: CurrentUser):
+    return await _transition_council_page_content("unpublish", db, user)
+
+
+@router.post(
+    "/admin/council/page-content/archive",
+    dependencies=[Depends(require_scope("governance.archive"))],
+)
+async def archive_council_page_content(db: DbSession, user: CurrentUser):
+    return await _transition_council_page_content("archive", db, user)
+
+
+@router.get("/admin/council/preview", dependencies=[Depends(require_scope("governance.view"))])
+async def preview_council(db: DbSession, _: CurrentUser):
+    try:
+        return success(data=await GovernanceService.preview_university_council(db))
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+async def _transition_council_member(
+    assignment_id: uuid.UUID, action: str, db: DbSession, user: CurrentUser, comment: str | None = None
+):
+    assignment = await _council_member_or_404(db, assignment_id)
+    try:
+        assignment = await GovernanceService.transition_council_member(db, assignment, action, user.id, comment)
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    return success(data=assignment, message=f"Council member {action}")
+
+
+@router.post(
+    "/admin/council/members/{assignment_id}/submit-review",
+    dependencies=[Depends(require_scope("governance.manage_members"))],
+)
+async def submit_council_member_for_review(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
+    return await _transition_council_member(assignment_id, "submit-review", db, user, comment)
+
+
+@router.post(
+    "/admin/council/members/{assignment_id}/approve",
+    dependencies=[Depends(require_scope("governance.approve"))],
+)
+async def approve_council_member(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
+    return await _transition_council_member(assignment_id, "approve", db, user, comment)
+
+
+@router.post(
+    "/admin/council/members/{assignment_id}/publish",
+    dependencies=[Depends(require_scope("governance.publish"))],
+)
+async def publish_council_member(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
+    return await _transition_council_member(assignment_id, "publish", db, user, comment)
+
+
+@router.post(
+    "/admin/council/members/{assignment_id}/unpublish",
+    dependencies=[Depends(require_scope("governance.publish"))],
+)
+async def unpublish_council_member(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
+    return await _transition_council_member(assignment_id, "unpublish", db, user, comment)
+
+
+@router.post(
+    "/admin/council/members/{assignment_id}/archive",
+    dependencies=[Depends(require_scope("governance.archive"))],
+)
+async def archive_council_member(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
+    return await _transition_council_member(assignment_id, "archive", db, user, comment)
+
+
+@router.get("/admin/council/audit-log", dependencies=[Depends(require_scope("governance.view"))])
+async def list_council_audit_log(db: DbSession, _: CurrentUser, page: int = 1, per_page: int = 20):
+    result = await AuditService.list(
+        db,
+        page=page,
+        per_page=per_page,
+        request_path_prefix="/api/v1/governance/admin/council",
+    )
+    return success(data=result.items, meta=result.meta)
+
+
+@router.get("/admin/management-board/dashboard", dependencies=[Depends(require_scope("governance.view"))])
+async def management_board_dashboard(db: DbSession, _: CurrentUser):
+    try:
+        data = await GovernanceService.board_dashboard(db, "management-board")
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    return success(data=data)
+
+
+@router.get("/admin/management-board/members", dependencies=[Depends(require_scope("governance.view"))])
+async def list_management_board_members(db: DbSession, _: CurrentUser, workflow_status: str | None = None):
+    try:
+        members = await GovernanceService.list_board_members(db, "management-board", workflow_status=workflow_status)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    return success(data=[_council_member_payload(member) for member in members])
+
+
+@router.post(
+    "/admin/management-board/members",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_scope("governance.manage_members"))],
+)
+async def create_management_board_member(data: CouncilMemberCreate, db: DbSession, user: CurrentUser):
+    try:
+        assignment = await GovernanceService.create_board_member(db, "management-board", data.model_dump(), user.id)
+    except ValueError as error:
+        raise _member_error(error) from error
+    return success(data=_council_member_payload(assignment), message="Management Board member created")
+
+
+@router.get("/admin/management-board/members/{assignment_id}", dependencies=[Depends(require_scope("governance.view"))])
+async def get_management_board_member(assignment_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    return success(data=_council_member_payload(await _board_member_or_404(db, "management-board", assignment_id)))
+
+
+@router.patch(
+    "/admin/management-board/members/{assignment_id}",
+    dependencies=[Depends(require_scope("governance.manage_members"))],
+)
+async def update_management_board_member(
+    assignment_id: uuid.UUID, data: CouncilMemberUpdate, db: DbSession, user: CurrentUser
+):
+    assignment = await _board_member_or_404(db, "management-board", assignment_id)
+    try:
+        assignment = await GovernanceService.update_council_member(
+            db, assignment, data.model_dump(exclude_unset=True), user.id
+        )
+    except ValueError as error:
+        raise _member_error(error) from error
+    return success(data=_council_member_payload(assignment), message="Management Board member updated")
+
+
+@router.delete(
+    "/admin/management-board/members/{assignment_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_scope("governance.manage_members"))],
+)
+async def delete_management_board_member(assignment_id: uuid.UUID, db: DbSession, _: CurrentUser):
+    assignment = await _board_member_or_404(db, "management-board", assignment_id)
+    assignment.status = "ended"
+    await db.flush()
+
+
+@router.get("/admin/management-board/order", dependencies=[Depends(require_scope("governance.view"))])
+async def get_management_board_order(db: DbSession, _: CurrentUser):
+    members = await GovernanceService.list_board_members(db, "management-board", active_only=True)
+    return success(
+        data=[
+            {
+                "assignment_id": member.id,
+                "display_group": GovernanceService._role_group(member),
+                "display_order": member.display_order,
+                "hierarchy_level": member.hierarchy_level,
+                "reports_to_id": member.reports_to_id,
+            }
+            for member in members
+        ]
+    )
+
+
+@router.put("/admin/management-board/order", dependencies=[Depends(require_scope("governance.manage_order"))])
+async def update_management_board_order(data: CouncilOrderUpdate, db: DbSession, user: CurrentUser):
+    try:
+        members = await GovernanceService.update_board_order(db, "management-board", data.nodes, user.id)
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    return success(data=members, message="Management Board order updated")
+
+
+async def _management_board_or_404(db: DbSession):
+    board = await GovernanceService.get_board_by_slug(db, "management-board")
+    if board is None:
+        raise HTTPException(status_code=404, detail="Management Board not found")
+    return board
+
+
+@router.get("/admin/management-board/page-content", dependencies=[Depends(require_scope("governance.view"))])
+async def get_management_board_page_content(db: DbSession, _: CurrentUser):
+    board = await _management_board_or_404(db)
+    return success(data=await GovernanceService.get_council_page_content(db, board.id))
+
+
+@router.patch("/admin/management-board/page-content", dependencies=[Depends(require_scope("governance.manage_members"))])
+async def update_management_board_page_content(data: GovernancePageContentUpdate, db: DbSession, user: CurrentUser):
+    board = await _management_board_or_404(db)
+    page = await GovernanceService.upsert_council_page_content(db, board.id, data.model_dump(exclude_unset=True), user.id)
+    return success(data=page, message="Management Board page content updated")
+
+
+async def _transition_management_board_page_content(action: str, db: DbSession, user: CurrentUser):
+    board = await _management_board_or_404(db)
+    page = await GovernanceService.get_council_page_content(db, board.id)
+    if page is None:
+        raise HTTPException(status_code=404, detail="Management Board page content not found")
+    try:
+        page = await GovernanceService.transition_council_page_content(db, page, action, user.id)
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    return success(data=page, message=f"Management Board page content {action}")
+
+
+@router.post(
+    "/admin/management-board/page-content/submit-review",
+    dependencies=[Depends(require_scope("governance.manage_members"))],
+)
+async def submit_management_board_page_content_for_review(db: DbSession, user: CurrentUser):
+    return await _transition_management_board_page_content("submit-review", db, user)
+
+
+@router.post(
+    "/admin/management-board/page-content/approve",
+    dependencies=[Depends(require_scope("governance.approve"))],
+)
+async def approve_management_board_page_content(db: DbSession, user: CurrentUser):
+    return await _transition_management_board_page_content("approve", db, user)
+
+
+@router.post(
+    "/admin/management-board/page-content/publish",
+    dependencies=[Depends(require_scope("governance.publish"))],
+)
+async def publish_management_board_page_content(db: DbSession, user: CurrentUser):
+    return await _transition_management_board_page_content("publish", db, user)
+
+
+@router.post(
+    "/admin/management-board/page-content/unpublish",
+    dependencies=[Depends(require_scope("governance.publish"))],
+)
+async def unpublish_management_board_page_content(db: DbSession, user: CurrentUser):
+    return await _transition_management_board_page_content("unpublish", db, user)
+
+
+@router.post(
+    "/admin/management-board/page-content/archive",
+    dependencies=[Depends(require_scope("governance.archive"))],
+)
+async def archive_management_board_page_content(db: DbSession, user: CurrentUser):
+    return await _transition_management_board_page_content("archive", db, user)
+
+
+@router.get("/admin/management-board/preview", dependencies=[Depends(require_scope("governance.view"))])
+async def preview_management_board(db: DbSession, _: CurrentUser):
+    try:
+        return success(data=await GovernanceService.preview_board(db, "management-board"))
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+async def _transition_management_board_member(
+    assignment_id: uuid.UUID, action: str, db: DbSession, user: CurrentUser, comment: str | None = None
+):
+    assignment = await _board_member_or_404(db, "management-board", assignment_id)
+    try:
+        assignment = await GovernanceService.transition_council_member(db, assignment, action, user.id, comment)
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    return success(data=assignment, message=f"Management Board member {action}")
+
+
+@router.post(
+    "/admin/management-board/members/{assignment_id}/submit-review",
+    dependencies=[Depends(require_scope("governance.manage_members"))],
+)
+async def submit_management_board_member_for_review(
+    assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None
+):
+    return await _transition_management_board_member(assignment_id, "submit-review", db, user, comment)
+
+
+@router.post(
+    "/admin/management-board/members/{assignment_id}/approve",
+    dependencies=[Depends(require_scope("governance.approve"))],
+)
+async def approve_management_board_member(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
+    return await _transition_management_board_member(assignment_id, "approve", db, user, comment)
+
+
+@router.post(
+    "/admin/management-board/members/{assignment_id}/publish",
+    dependencies=[Depends(require_scope("governance.publish"))],
+)
+async def publish_management_board_member(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
+    return await _transition_management_board_member(assignment_id, "publish", db, user, comment)
+
+
+@router.post(
+    "/admin/management-board/members/{assignment_id}/unpublish",
+    dependencies=[Depends(require_scope("governance.publish"))],
+)
+async def unpublish_management_board_member(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
+    return await _transition_management_board_member(assignment_id, "unpublish", db, user, comment)
+
+
+@router.post(
+    "/admin/management-board/members/{assignment_id}/archive",
+    dependencies=[Depends(require_scope("governance.archive"))],
+)
+async def archive_management_board_member(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser, comment: str | None = None):
+    return await _transition_management_board_member(assignment_id, "archive", db, user, comment)
+
+
+@router.get("/public/university-council")
+@cached_public(timeout=3600)
+async def public_university_council(db: DbSession):
+    try:
+        return success(data=await GovernanceService.public_university_council(db))
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.get("/public/university-council/{slug}")
+@cached_public(timeout=3600, vary_on=("slug",))
+async def public_university_council_profile(slug: str, db: DbSession):
+    profile = await GovernanceService.public_university_council_profile(db, slug)
+    if profile is None:
+        raise HTTPException(status_code=404, detail="Council member profile not found")
+    return success(data=profile)

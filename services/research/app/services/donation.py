@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import uuid
 from datetime import date
+from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models import Donation, DonationImpact, DonationSettings, DonationStory, Donor
@@ -16,10 +18,316 @@ DonationImpactService = build_simple_service(DonationImpact, "title", "summary",
 DonationStoryService = build_simple_service(DonationStory, "title", "donor_name", "donor_organization", "summary")
 
 
+def _brief(item: Any, *extra_fields: str) -> dict[str, Any]:
+    payload = {
+        "id": item.id,
+        "title": getattr(item, "title", None),
+        "name": getattr(item, "name", None),
+        "slug": getattr(item, "slug", None),
+        "status": getattr(item, "status", None),
+        "created_at": getattr(item, "created_at", None),
+        "updated_at": getattr(item, "updated_at", None),
+    }
+    for field in extra_fields:
+        payload[field] = getattr(item, field, None)
+    return {key: value for key, value in payload.items() if value is not None}
+
+
+async def _related_many(db: AsyncSession, statement, *extra_fields: str) -> list[dict[str, Any]]:
+    result = await db.execute(statement)
+    return [_brief(item, *extra_fields) for item in result.scalars().all()]
+
+
+def _source_conditions(model, source: dict[str, uuid.UUID | None]):
+    conditions = []
+    for field, value in source.items():
+        if value is not None and hasattr(model, field):
+            conditions.append(getattr(model, field) == value)
+    return conditions
+
+
+class DonationRelationshipService:
+    """Read donation relationships backed by source binding fields."""
+
+    @staticmethod
+    async def _ensure_donor(db: AsyncSession, donor_id: uuid.UUID) -> Donor:
+        return await Donor.get_or_raise(db, donor_id, error_message="Donor not found")
+
+    @staticmethod
+    async def _ensure_impact(db: AsyncSession, impact_id: uuid.UUID) -> DonationImpact:
+        return await DonationImpact.get_or_raise(db, impact_id, error_message="Donation impact not found")
+
+    @staticmethod
+    async def list_donor_impacts(db: AsyncSession, donor_id: uuid.UUID) -> list[dict[str, Any]]:
+        await DonationRelationshipService._ensure_donor(db, donor_id)
+        source_result = await db.execute(
+            select(
+                Donation.project_id,
+                Donation.center_id,
+                Donation.scholarship_id,
+                Donation.fund_id,
+            )
+            .where(
+                Donation.deleted_at.is_(None),
+                Donation.donor_id == donor_id,
+                Donation.status == "completed",
+            )
+            .distinct()
+        )
+        conditions = []
+        for project_id, center_id, scholarship_id, fund_id in source_result.all():
+            conditions.extend(
+                _source_conditions(
+                    DonationImpact,
+                    {
+                        "project_id": project_id,
+                        "center_id": center_id,
+                        "scholarship_id": scholarship_id,
+                        "fund_id": fund_id,
+                    },
+                )
+            )
+        if not conditions:
+            return []
+
+        return await _related_many(
+            db,
+            DonationImpact.active_query()
+            .where(or_(*conditions))
+            .order_by(DonationImpact.reporting_year.desc().nullslast(), DonationImpact.created_at.desc()),
+            "impact_type",
+            "reporting_year",
+            "total_raised",
+            "currency",
+        )
+
+    @staticmethod
+    async def list_impact_donations(db: AsyncSession, impact_id: uuid.UUID) -> list[dict[str, Any]]:
+        impact = await DonationRelationshipService._ensure_impact(db, impact_id)
+        conditions = _source_conditions(
+            Donation,
+            {
+                "project_id": impact.project_id,
+                "center_id": impact.center_id,
+                "scholarship_id": impact.scholarship_id,
+                "fund_id": impact.fund_id,
+            },
+        )
+        if not conditions:
+            return []
+
+        return await _related_many(
+            db,
+            Donation.active_query()
+            .where(or_(*conditions))
+            .order_by(Donation.donation_date.desc(), Donation.created_at.desc()),
+            "donor_id",
+            "amount",
+            "currency",
+            "donation_type",
+            "designation",
+            "purpose",
+            "donation_date",
+        )
+
+    @staticmethod
+    async def list_impact_stories(db: AsyncSession, impact_id: uuid.UUID) -> list[dict[str, Any]]:
+        impact = await DonationRelationshipService._ensure_impact(db, impact_id)
+        conditions = _source_conditions(
+            Donation,
+            {
+                "project_id": impact.project_id,
+                "center_id": impact.center_id,
+                "scholarship_id": impact.scholarship_id,
+                "fund_id": impact.fund_id,
+            },
+        )
+        if not conditions:
+            return []
+
+        donor_result = await db.execute(
+            select(Donation.donor_id)
+            .where(
+                Donation.deleted_at.is_(None),
+                Donation.status == "completed",
+                or_(*conditions),
+            )
+            .distinct()
+        )
+        donor_ids = [row[0] for row in donor_result.all() if row[0]]
+        if not donor_ids:
+            return []
+
+        return await _related_many(
+            db,
+            DonationStory.active_query()
+            .where(DonationStory.donor_id.in_(donor_ids))
+            .order_by(DonationStory.is_featured.desc(), DonationStory.created_at.desc()),
+            "donor_id",
+            "donor_name",
+            "donor_organization",
+            "is_featured",
+        )
+
+
 class DonationService(CRUDService):
     model = Donation
     search_fields = ("donation_number", "purpose", "payment_reference", "status")
     default_order = ("created_at",)
+
+    @staticmethod
+    async def _donation_setting_value(db: AsyncSession, keys: tuple[str, ...], fallback: str = "") -> str:
+        result = await db.execute(
+            select(DonationSettings)
+            .where(
+                DonationSettings.deleted_at.is_(None),
+                DonationSettings.is_active.is_(True),
+                DonationSettings.key.in_(keys),
+            )
+        )
+        settings_by_key = {setting.key: setting for setting in result.scalars().all()}
+        for key in keys:
+            setting = settings_by_key.get(key)
+            if setting and setting.value:
+                return setting.value
+        return fallback
+
+    @staticmethod
+    def _donation_reference(donation: Donation) -> str:
+        return donation.donation_number or str(donation.id)
+
+    @staticmethod
+    def _donor_name(donor: Donor | None) -> str:
+        if donor is None:
+            return "A donor"
+        return donor.name
+
+    @classmethod
+    async def _queue_submission_side_effects(cls, db: AsyncSession, donation: Donation, donor: Donor) -> None:
+        research_email = await cls._donation_setting_value(
+            db,
+            ("contact_email", "giving_email", "research_email"),
+            "research@kisiiuniversity.ac.ke",
+        )
+        donor_name = cls._donor_name(donor)
+        amount = str(donation.amount)
+        reference = cls._donation_reference(donation)
+
+        from ..tasks.donations import (
+            notify_research_admins_of_donation,
+            send_donation_submission_email,
+            send_research_donation_request_email,
+        )
+
+        notify_research_admins_of_donation.delay(
+            donation_id=str(donation.id),
+            donor_name=donor_name,
+            amount=amount,
+            currency=donation.currency,
+            reference=reference,
+        )
+        send_research_donation_request_email.delay(
+            research_email=research_email,
+            donor_name=donor_name,
+            donor_email=donor.email,
+            amount=amount,
+            currency=donation.currency,
+            reference=reference,
+            designation=donation.designation,
+        )
+        if donor.email:
+            send_donation_submission_email.delay(
+                donor_email=donor.email,
+                donor_name=donor_name,
+                amount=amount,
+                currency=donation.currency,
+                reference=reference,
+                research_email=research_email,
+            )
+
+    @classmethod
+    async def _queue_confirmation_side_effects(cls, db: AsyncSession, donation: Donation) -> None:
+        donor = await Donor.get_or_raise(db, donation.donor_id, error_message="Donor not found")
+        if not donor.email:
+            return
+
+        donor_name = cls._donor_name(donor)
+        amount = str(donation.amount)
+        reference = cls._donation_reference(donation)
+
+        from ..tasks.donations import (
+            send_donation_appreciation_email,
+            send_recurring_donation_reminder,
+            _next_reminder_eta,
+        )
+
+        send_donation_appreciation_email.delay(
+            donor_email=donor.email,
+            donor_name=donor_name,
+            amount=amount,
+            currency=donation.currency,
+            reference=reference,
+        )
+        if donation.donation_type == "recurring" and donation.recurring_frequency:
+            send_recurring_donation_reminder.apply_async(
+                kwargs={
+                    "donor_email": donor.email,
+                    "donor_name": donor_name,
+                    "amount": amount,
+                    "currency": donation.currency,
+                    "reference": reference,
+                    "recurring_frequency": donation.recurring_frequency,
+                },
+                eta=_next_reminder_eta(donation.recurring_frequency),
+            )
+
+    @classmethod
+    async def summary(cls, db: AsyncSession) -> dict:
+        donation_totals = await db.execute(
+            select(
+                func.coalesce(func.sum(Donation.amount), 0),
+                func.count(Donation.id),
+            ).where(
+                Donation.deleted_at.is_(None),
+                Donation.status == "completed",
+            )
+        )
+        total_donations, donation_count = donation_totals.one()
+
+        donor_count = await db.scalar(
+            select(func.count(Donor.id)).where(
+                Donor.deleted_at.is_(None),
+                Donor.is_active.is_(True),
+            )
+        )
+        impact_count = await db.scalar(
+            select(func.count(DonationImpact.id)).where(
+                DonationImpact.deleted_at.is_(None),
+                DonationImpact.is_active.is_(True),
+            )
+        )
+        story_count = await db.scalar(
+            select(func.count(DonationStory.id)).where(
+                DonationStory.deleted_at.is_(None),
+                DonationStory.is_active.is_(True),
+                DonationStory.status == "published",
+            )
+        )
+        pending_count = await db.scalar(
+            select(func.count(Donation.id)).where(
+                Donation.deleted_at.is_(None),
+                Donation.status == "pending",
+            )
+        )
+
+        return {
+            "total_donations": total_donations,
+            "donation_count": donation_count or 0,
+            "donors": donor_count or 0,
+            "impact_records": impact_count or 0,
+            "stories_published": story_count or 0,
+            "pending_donations": pending_count or 0,
+        }
 
     @staticmethod
     def _public_display_name(payload: dict) -> str | None:
@@ -60,6 +368,7 @@ class DonationService(CRUDService):
             amount=payload["amount"],
             currency=payload.get("currency", "KES"),
             donation_type=payload.get("donation_type", "one_time"),
+            recurring_frequency=payload.get("recurring_frequency"),
             designation=payload.get("designation", "unrestricted"),
             purpose=payload.get("purpose"),
             fund_id=payload.get("fund_id"),
@@ -80,6 +389,7 @@ class DonationService(CRUDService):
         await db.flush()
         await db.refresh(donor)
         await db.refresh(donation)
+        await cls._queue_submission_side_effects(db, donation, donor)
         return donation
 
     @classmethod
@@ -112,9 +422,12 @@ class DonationService(CRUDService):
 
     @classmethod
     async def update(cls, db: AsyncSession, item, data, *, actor_id=None):
+        previous_status = item.status
         donation = await super().update(db, item, data, actor_id=actor_id)
         await cls._sync_donor_stats(db, donation.donor_id)
         await db.refresh(donation)
+        if previous_status != "completed" and donation.status == "completed":
+            await cls._queue_confirmation_side_effects(db, donation)
         return donation
 
     @classmethod

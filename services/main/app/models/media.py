@@ -13,9 +13,25 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ksu_common.models.base import Base
 
 from ..core.config import get_settings
+from .content import WorkflowMetadataMixin
 
 if TYPE_CHECKING:
     from .auth import User
+
+
+MEDIA_ATTACHMENT_ROLES = frozenset(
+    {
+        "cover",
+        "gallery",
+        "logo",
+        "video",
+        "document",
+        "poster",
+        "cv",
+        "brochure",
+        "attachment",
+    }
+)
 
 
 def _media_url(value: str) -> str:
@@ -195,7 +211,7 @@ class Media(Base):
         return f"<Media {self.filename}>"
 
 
-class MediaLink(Base):
+class MediaLink(Base, WorkflowMetadataMixin):
     """Polymorphic attachment link for any entity."""
 
     __tablename__ = "media_links"
@@ -215,6 +231,15 @@ class MediaLink(Base):
     )
     display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
     is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    is_published: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"), index=True)
+    published_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True, index=True)
+    archived_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True, index=True)
+    status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="draft", index=True)
+    author_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     media: Mapped["Media"] = relationship("Media", back_populates="links")
     folder: Mapped[Optional["MediaFolder"]] = relationship("MediaFolder", back_populates="links")
@@ -224,4 +249,4 @@ class MediaLink(Base):
     )
 
 
-__all__ = ["Media", "MediaFolder", "MediaLink"]
+__all__ = ["MEDIA_ATTACHMENT_ROLES", "Media", "MediaFolder", "MediaLink"]

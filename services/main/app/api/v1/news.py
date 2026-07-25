@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Query, status
 
@@ -11,10 +12,11 @@ from ksu_common.schemas.responses import success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
 from ._scoped import can_access_scoped_record, require_scoped_record
-from ...deps import CurrentUser, DbSession
+from ...deps import CurrentUser, DbSession, permissions_for_user
 from ...models import News
 from ...schemas import NewsCreate, NewsUpdate
-from ...services import NewsService
+from ...services import ContentWorkflowService, NewsService
+from .content_workflow import authorize_content_workflow_action
 
 router = APIRouter()
 
@@ -69,6 +71,12 @@ async def list_admin_news(
     is_main: bool | None = None,
     is_published: bool | None = None,
     status: str | None = None,
+    workflow_status: str | None = None,
+    owner_portal: str | None = None,
+    owner_scope_type: str | None = None,
+    owner_scope_id: uuid.UUID | None = None,
+    scheduled_from: datetime | None = None,
+    scheduled_to: datetime | None = None,
     search: str | None = None,
     fields: FieldSelection = FieldsDep,
 ):
@@ -82,6 +90,12 @@ async def list_admin_news(
         is_main=is_main,
         is_published=is_published,
         status=status,
+        workflow_status=workflow_status,
+        owner_portal=owner_portal,
+        owner_scope_type=owner_scope_type,
+        owner_scope_id=owner_scope_id,
+        scheduled_from=scheduled_from,
+        scheduled_to=scheduled_to,
         search=search,
         load_options=selector.load_options,
     )
@@ -137,7 +151,14 @@ async def create_news(data: NewsCreate, db: DbSession, user: CurrentUser):
         data.scope_id,
         resource_name="news",
     )
-    item = await NewsService.create(db, **data.model_dump())
+    payload = ContentWorkflowService.authoring_create_payload(
+        data.model_dump(),
+        actor_id=user.id,
+        **ContentWorkflowService.owner_metadata_for_scope(
+            data.scope_type, data.scope_id, is_main=data.is_main,
+        ),
+    )
+    item = await NewsService.create(db, **payload)
     return success(data=item, message="News created")
 
 
@@ -163,6 +184,26 @@ async def update_news(news_id: uuid.UUID, data: NewsUpdate, db: DbSession, user:
         payload.get("scope_id", item.scope_id),
         resource_name="news",
     )
+    current_status = item.workflow_status or item.status
+    permissions = permissions_for_user(user)
+    if current_status in {"submitted", "in_review", "approved", "scheduled"}:
+        authorize_content_workflow_action(user, item, "edit", permissions)
+    try:
+        await ContentWorkflowService.apply_edit_policy(
+            db,
+            item,
+            "news",
+            user.id,
+            actor_kind=(
+                "reviewer"
+                if current_status == "in_review"
+                and {"content.review", "content.manage"}.intersection(permissions)
+                else "author"
+            ),
+            changed_fields=payload,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     item = await NewsService.update(db, item, **payload)
     return success(data=item, message="News updated")
 
@@ -180,7 +221,14 @@ async def publish_news(news_id: uuid.UUID, db: DbSession, user: CurrentUser):
         item.scope_id,
         resource_name="news",
     )
-    item = await NewsService.publish(db, item)
+    permissions = permissions_for_user(user)
+    authorize_content_workflow_action(user, item, "publish", permissions)
+    try:
+        item = await ContentWorkflowService.publish_content(db, item, "news", user.id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    await db.flush()
+    await db.refresh(item)
     return success(data=item, message="News published")
 
 
@@ -197,7 +245,14 @@ async def unpublish_news(news_id: uuid.UUID, db: DbSession, user: CurrentUser):
         item.scope_id,
         resource_name="news",
     )
-    item = await NewsService.unpublish(db, item)
+    permissions = permissions_for_user(user)
+    authorize_content_workflow_action(user, item, "unpublish", permissions)
+    try:
+        item = await ContentWorkflowService.unpublish_content(db, item, "news", user.id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    await db.flush()
+    await db.refresh(item)
     return success(data=item, message="News unpublished")
 
 

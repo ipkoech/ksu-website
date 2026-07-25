@@ -232,15 +232,15 @@ function MemberCard({
   directReports: number;
 }) {
   return (
-    <article className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/25 hover:shadow-md">
+    <article className="min-w-0 rounded-lg border border-border bg-white p-4 shadow-sm transition hover:border-primary/25 hover:shadow-md">
       <div className="flex min-w-0 gap-3">
-        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-surface-muted">
           <Avatar member={member} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="truncate text-base font-semibold text-slate-950">
+              <h3 className="truncate text-base font-semibold text-foreground">
                 {member.name}
               </h3>
               <p className="mt-1 line-clamp-2 text-sm font-semibold capitalize leading-5 text-primary">
@@ -254,7 +254,7 @@ function MemberCard({
             ) : null}
           </div>
 
-          <div className="mt-3 grid gap-1.5 text-xs font-medium text-slate-600">
+          <div className="mt-3 grid gap-1.5 text-xs font-medium text-muted-foreground">
             {member.email ? (
               <a
                 href={`mailto:${member.email}`}
@@ -281,19 +281,19 @@ function MemberCard({
             ) : null}
           </div>
 
-          <div className="mt-3 flex min-w-0 flex-wrap gap-1.5 border-t border-slate-100 pt-3 text-xs font-bold">
+          <div className="mt-3 flex min-w-0 flex-wrap gap-1.5 border-t border-border pt-3 text-xs font-bold">
             {member.assignment?.is_acting ? (
               <span className="rounded-full bg-orange-50 px-2 py-1 text-orange-700">
                 Acting
               </span>
             ) : null}
             {reportsTo ? (
-              <span className="max-w-full truncate rounded-full bg-slate-100 px-2 py-1 text-slate-700">
+              <span className="max-w-full truncate rounded-full bg-surface-muted px-2 py-1 text-muted-foreground">
                 Reports to {reportsTo.name}
               </span>
             ) : null}
             {directReports ? (
-              <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
+              <span className="rounded-full bg-surface-muted px-2 py-1 text-muted-foreground">
                 {directReports} report{directReports === 1 ? "" : "s"}
               </span>
             ) : null}
@@ -381,8 +381,8 @@ export function DepartmentTeamDirectory({
 
   if (!members.length) {
     return (
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm font-semibold text-slate-950">
+      <section className="rounded-lg border border-border bg-white p-6 shadow-sm">
+        <p className="text-sm font-semibold text-foreground">
           No published ICT team records are available yet.
         </p>
       </section>
@@ -392,14 +392,14 @@ export function DepartmentTeamDirectory({
   return (
     <section
       id="ict-team-directory"
-      className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm"
+      className="rounded-[1.25rem] border border-border bg-white p-4 shadow-sm"
     >
-      <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
             Team Structure
           </p>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
             Staff are grouped by assignment hierarchy, with reporting lines
             shown where they are part of the public record.
           </p>
@@ -414,24 +414,24 @@ export function DepartmentTeamDirectory({
         <label className="relative block">
           <Search
             aria-hidden
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70"
           />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search by name, role, email, or office"
-            className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4"
+            className="h-10 w-full rounded-lg border border-border bg-white pl-9 pr-3 text-sm outline-none ring-primary/20 transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4"
           />
         </label>
-        <div className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+        <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-subtle p-1">
           <SlidersHorizontal
             aria-hidden
-            className="ml-2 h-4 w-4 text-slate-500"
+            className="ml-2 h-4 w-4 text-muted-foreground"
           />
           <select
             value={filter}
             onChange={(event) => setFilter(event.target.value as TeamFilter)}
-            className="h-8 rounded-md bg-transparent px-2 text-sm font-semibold text-slate-700 outline-none"
+            className="h-8 rounded-md bg-transparent px-2 text-sm font-semibold text-muted-foreground outline-none"
           >
             {filters.map((item) => (
               <option key={item.value} value={item.value}>
@@ -452,7 +452,7 @@ export function DepartmentTeamDirectory({
               {groupIndex > 0 ? (
                 <span
                   aria-hidden
-                  className="absolute -top-4 left-5 hidden h-4 border-l border-slate-200 lg:block"
+                  className="absolute -top-4 left-5 hidden h-4 border-l border-border lg:block"
                 />
               ) : null}
               <div className="flex items-start gap-2 lg:block">
@@ -460,15 +460,15 @@ export function DepartmentTeamDirectory({
                   {group.level === null ? "Staff" : group.level}
                 </span>
                 <div className="min-w-0 lg:mt-2">
-                  <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+                  <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
                     {group.level === null
                       ? "Unassigned"
                       : `Level ${group.level}`}
                   </p>
-                  <p className="mt-1 text-sm font-bold text-slate-950">
+                  <p className="mt-1 text-sm font-bold text-foreground">
                     {group.label}
                   </p>
-                  <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                  <p className="mt-0.5 text-xs font-semibold text-muted-foreground">
                     {group.members.length} profile
                     {group.members.length === 1 ? "" : "s"}
                   </p>
@@ -498,7 +498,7 @@ export function DepartmentTeamDirectory({
           ))}
         </ol>
       ) : (
-        <p className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <p className="mt-4 rounded-lg border border-border bg-surface-subtle p-4 text-sm text-muted-foreground">
           No team members match the current search and filter.
         </p>
       )}

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { FileText, X } from "lucide-react";
+import { FileText, PlayCircle, X } from "lucide-react";
 
 export type MediaGalleryBentoItem = {
   id: string;
@@ -75,7 +75,7 @@ function GalleryMedia({
 
   if (item.type === "video" && item.url) {
     return (
-      <div className={`relative overflow-hidden bg-slate-950 ${className ?? ""}`}>
+      <div className={`relative overflow-hidden bg-brand-overlay ${className ?? ""}`}>
         <video
           ref={videoRef}
           className="h-full w-full object-cover"
@@ -134,7 +134,7 @@ function GalleryModal({
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[80] bg-slate-950/40 p-3 backdrop-blur-xl sm:p-5"
+        className="fixed inset-0 z-[80] bg-brand-overlay/40 p-3 backdrop-blur-xl sm:p-5"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -149,17 +149,17 @@ function GalleryModal({
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-3 top-3 z-20 grid h-10 w-10 place-items-center rounded-full bg-white/85 text-slate-700 shadow-sm backdrop-blur transition hover:bg-white"
+            className="absolute right-3 top-3 z-20 grid h-10 w-10 place-items-center rounded-full bg-white/85 text-muted-foreground shadow-sm backdrop-blur transition hover:bg-white"
             aria-label="Close gallery preview"
           >
             <X className="h-4 w-4" aria-hidden />
           </button>
 
-          <div className="grid min-h-0 flex-1 place-items-center bg-slate-50/70 p-3 sm:p-5">
+          <div className="grid min-h-0 flex-1 place-items-center bg-surface-subtle/70 p-3 sm:p-5">
             <AnimatePresence mode="wait">
               <motion.figure
                 key={selectedItem.id}
-                className="relative h-full max-h-[72vh] w-full max-w-5xl overflow-hidden rounded-lg bg-slate-950 shadow-md"
+                className="relative h-full max-h-[72vh] w-full max-w-5xl overflow-hidden rounded-lg bg-brand-overlay shadow-md"
                 initial={{ opacity: 0, y: 22, scale: 0.97 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 22, scale: 0.97 }}
@@ -187,14 +187,14 @@ function GalleryModal({
           dragElastic={0.1}
           className="fixed bottom-5 left-1/2 z-[90] -translate-x-1/2 touch-none"
         >
-          <div className="rounded-xl border border-blue-300/40 bg-sky-100/40 px-3 py-2 shadow-lg backdrop-blur-xl">
+          <div className="rounded-xl border border-border/40 bg-sky-100/40 px-3 py-2 shadow-lg backdrop-blur-xl">
             <div className="flex items-center -space-x-2">
               {items.slice(0, 12).map((item, index) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => onSelect(item)}
-                  className={`relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-slate-200 transition ${
+                  className={`relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-surface-muted transition ${
                     selectedItem.id === item.id
                       ? "z-30 -translate-y-2 scale-110 ring-2 ring-white shadow-lg"
                       : "hover:z-20 hover:-translate-y-1 hover:ring-2 hover:ring-white/60"
@@ -232,28 +232,28 @@ export function MediaGalleryBento({
 
   if (!orderedItems.length) {
     return (
-      <article className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
+      <article className="rounded-lg border border-dashed border-border bg-surface-subtle p-5 text-sm text-muted-foreground">
         No gallery records are currently published.
       </article>
     );
   }
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 lg:p-6">
+    <section className="rounded-lg border border-border bg-white p-4 shadow-sm sm:p-5 lg:p-6">
       <div className="mb-6 text-center">
         <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
           Gallery
         </p>
-        <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+        <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
           {title}
         </h1>
-        <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
           {description}
         </p>
       </div>
 
       <motion.div
-        className="grid grid-cols-1 gap-3 auto-rows-[76px] sm:grid-cols-3 md:grid-cols-4"
+        className="grid grid-cols-1 gap-3 auto-rows-[76px] sm:grid-cols-2 lg:grid-cols-3"
         initial="hidden"
         animate="visible"
         variants={{
@@ -265,7 +265,7 @@ export function MediaGalleryBento({
           <motion.button
             key={item.id}
             type="button"
-            className={`group relative overflow-hidden rounded-xl bg-slate-100 text-left shadow-sm outline-none ring-primary/35 transition focus-visible:ring-2 ${item.span}`}
+            className={`group relative overflow-hidden rounded-xl bg-surface-muted text-left shadow-sm outline-none ring-primary/35 transition focus-visible:ring-2 ${item.span}`}
             onClick={() => {
               if (!isDragging) setSelectedItem(item);
             }}
@@ -307,6 +307,12 @@ export function MediaGalleryBento({
           >
             <GalleryMedia item={item} className="absolute inset-0" priority={index < 2} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-85 transition group-hover:opacity-100" />
+            {item.type === "video" ? (
+              <div className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-white backdrop-blur">
+                <PlayCircle className="h-3.5 w-3.5" aria-hidden />
+                Video
+              </div>
+            ) : null}
             <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
               <h2 className="line-clamp-1 text-sm font-bold text-white sm:text-base">
                 {item.title}

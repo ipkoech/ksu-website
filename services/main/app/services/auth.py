@@ -46,6 +46,8 @@ def _active_permissions(user: User) -> list[str]:
 def _active_scope_grants(user: User) -> list[dict[str, object]]:
     grants: list[dict[str, object]] = []
     for grant in user_scoped_grants(user):
+        if grant.scope_type in {"global", "university"}:
+            continue
         grants.append(
             {
                 "permissions": sorted(grant.permissions),
@@ -80,7 +82,6 @@ class AuthService:
             str(user.id),
             roles,
             permissions=permissions,
-            scopes=permissions,
             scope_grants=scope_grants,
         )
         session = Session(
@@ -126,7 +127,6 @@ class AuthService:
             roles,
             session.jti,
             permissions=permissions,
-            scopes=permissions,
             scope_grants=scope_grants,
         )
         session.touch()

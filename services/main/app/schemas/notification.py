@@ -122,6 +122,7 @@ class NotificationUpdate(BaseSchema):
 class NotificationRead(BaseReadSchema):
     user_id: uuid.UUID
     template_id: uuid.UUID | None = None
+    source_event_id: uuid.UUID | None = None
     title: str
     subject: str | None = None
     message: str
@@ -141,3 +142,10 @@ class NotificationRead(BaseReadSchema):
     template: dict[str, Any] | None = None
     user: dict[str, Any] | None = None
     deleted_at: datetime | None = None
+
+
+class NotificationPreferences(BaseSchema):
+    in_app: bool = True
+    email: bool = True
+    sms: bool = False
+    push: bool = False

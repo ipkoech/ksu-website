@@ -11,13 +11,14 @@ from ksu_common.schemas.responses import success
 
 from ...core.config import get_settings
 from ...deps import CurrentUser, DbSession, require_scope
-from ...models import Newsletter
+from ...models import Newsletter, NewsletterSubscriber
 from ...schemas import NewsletterCreate, NewsletterSubscriberCreate, NewsletterUpdate
 from ...services import NewsletterService, NewsletterSubscriberService
 from ._fields import FieldSelection, FieldsDep, build_selector
 
 router = APIRouter()
 settings = get_settings()
+NEWSLETTER_ADMIN_SCOPE = "marketing.manage_newsletters"
 
 
 @router.get("")
@@ -32,6 +33,55 @@ async def list_newsletters(
     selector = build_selector(Newsletter, fields)
     result = await NewsletterService.list(db, page=page, per_page=per_page, q=q, load_options=selector.load_options)
     return success(data=selector.apply(result.items), meta=result.meta)
+
+
+@router.get("/admin", dependencies=[Depends(require_scope(NEWSLETTER_ADMIN_SCOPE))])
+async def list_newsletters_admin(
+    db: DbSession,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    q: str | None = None,
+    status: str | None = None,
+    fields: FieldSelection = FieldsDep,
+):
+    selector = build_selector(Newsletter, fields)
+    result = await NewsletterService.list(
+        db,
+        page=page,
+        per_page=per_page,
+        q=q,
+        status=status,
+        public_only=False,
+        load_options=selector.load_options,
+    )
+    return success(data=selector.apply(result.items), meta=result.meta)
+
+
+@router.get("/subscribers", dependencies=[Depends(require_scope(NEWSLETTER_ADMIN_SCOPE))])
+async def list_newsletter_subscribers(
+    db: DbSession,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    status: str | None = None,
+    fields: FieldSelection = FieldsDep,
+):
+    selector = build_selector(NewsletterSubscriber, fields)
+    result = await NewsletterSubscriberService.list(
+        db,
+        page=page,
+        per_page=per_page,
+        status=status,
+    )
+    return success(data=selector.apply(result.items), meta=result.meta)
+
+
+@router.get("/admin/{item_id}", dependencies=[Depends(require_scope(NEWSLETTER_ADMIN_SCOPE))])
+async def get_newsletter_admin(item_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
+    selector = build_selector(Newsletter, fields)
+    item = await NewsletterService.get_by_id(db, item_id, load_options=selector.load_options)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Newsletter not found")
+    return success(data=selector.apply(item))
 
 
 @router.get("/{slug}")
@@ -68,13 +118,13 @@ async def unsubscribe_newsletter(request: Request, email: str, db: DbSession):
     return success(data=item, message="Subscription cancelled")
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope(NEWSLETTER_ADMIN_SCOPE))])
 async def create_newsletter(data: NewsletterCreate, db: DbSession, _: CurrentUser):
     item = await NewsletterService.create(db, **data.model_dump())
     return success(data=item, message="Newsletter created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.patch("/{item_id}", dependencies=[Depends(require_scope(NEWSLETTER_ADMIN_SCOPE))])
 async def update_newsletter(item_id: uuid.UUID, data: NewsletterUpdate, db: DbSession, _: CurrentUser):
     item = await NewsletterService.get_by_id(db, item_id)
     if item is None:
@@ -83,7 +133,7 @@ async def update_newsletter(item_id: uuid.UUID, data: NewsletterUpdate, db: DbSe
     return success(data=item, message="Newsletter updated")
 
 
-@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope(NEWSLETTER_ADMIN_SCOPE))])
 async def delete_newsletter(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await NewsletterService.get_by_id(db, item_id)
     if item is None:
