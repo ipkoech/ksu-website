@@ -43,7 +43,7 @@ export function ResearchInstitutionalHero({
   secondaryAction?: { label: string; href: string };
 }) {
   return (
-    <section className="relative overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_46%,#eef4ff_100%)] px-4 py-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <section className="relative overflow-hidden border-b border-border bg-[linear-gradient(135deg,hsl(var(--surface-subtle))_0%,#ffffff_46%,#eef4ff_100%)] px-4 py-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.16),transparent_66%)]" />
       <div className="relative mx-auto w-full max-w-[1680px]">
         <BreadcrumbTrail items={breadcrumbs} />
@@ -51,7 +51,7 @@ export function ResearchInstitutionalHero({
         <div className="mt-4 grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_300px] lg:items-start">
           <InstitutionalNav title="Research" links={localLinks} />
 
-          <ScrollReveal className="overflow-hidden rounded-[1.5rem] border border-slate-800 bg-slate-950 text-white shadow-[0_24px_70px_-44px_rgba(15,23,42,0.7)]">
+          <ScrollReveal className="overflow-hidden rounded-[1.5rem] border border-border bg-brand-overlay text-white shadow-[0_24px_70px_-44px_rgba(15,23,42,0.7)]">
             <div className="px-5 py-5 sm:px-6 lg:px-7 lg:py-6">
               <p className="text-sm font-semibold uppercase text-secondary">
                 {eyebrow}
@@ -136,7 +136,7 @@ export function InstitutionalPanel({
   return (
     <article
       id={id}
-      className={`min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)] ${className}`}
+      className={`min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)] ${className}`}
     >
       {children}
     </article>
@@ -145,7 +145,7 @@ export function InstitutionalPanel({
 
 export function InstitutionalEmpty({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-sm leading-7 text-slate-600">
+    <div className="rounded-lg border border-dashed border-border bg-surface-subtle p-6 text-sm leading-7 text-muted-foreground">
       {children}
     </div>
   );
@@ -159,7 +159,7 @@ function BreadcrumbTrail({
   return (
     <nav
       aria-label="Breadcrumb"
-      className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500"
+      className="flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground"
     >
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
@@ -174,12 +174,12 @@ function BreadcrumbTrail({
                 {item.label}
               </Link>
             ) : (
-              <span className={isLast ? "text-slate-900" : undefined}>
+              <span className={isLast ? "text-foreground" : undefined}>
                 {item.label}
               </span>
             )}
             {!isLast ? (
-              <ChevronRight aria-hidden className="h-3.5 w-3.5 text-slate-300" />
+              <ChevronRight aria-hidden className="h-3.5 w-3.5 text-muted-foreground/60" />
             ) : null}
           </span>
         );
@@ -198,7 +198,7 @@ function InstitutionalNav({
   return (
     <nav
       aria-label={`${title} section links`}
-      className="rounded-[1rem] border border-slate-200 bg-white/80 p-3 shadow-sm backdrop-blur lg:sticky lg:top-28"
+      className="rounded-[1rem] border border-border bg-white/80 p-3 shadow-sm backdrop-blur lg:sticky lg:top-28"
     >
       <p className="px-2 text-xs font-semibold uppercase text-secondary">
         Explore {title}
@@ -211,15 +211,15 @@ function InstitutionalNav({
             <li key={item.href}>
               <Link
                 href={item.href}
-                className="group flex items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
+                className="group flex items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-muted-foreground transition hover:border-primary/20 hover:bg-primary/5 hover:text-foreground"
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-primary transition group-hover:bg-primary group-hover:text-white">
                   <Icon aria-hidden className="h-4 w-4" />
                 </span>
                 <span className="min-w-0 flex-1">{item.label}</span>
                 <ChevronRight
                   aria-hidden
-                  className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                  className="h-4 w-4 text-muted-foreground/70 transition group-hover:translate-x-0.5 group-hover:text-primary"
                 />
               </Link>
             </li>
@@ -235,7 +235,7 @@ function InstitutionalRelated({ links }: { links: InstitutionalLink[] }) {
     <aside className="h-fit min-w-0">
       <nav
         aria-label="Related research pages"
-        className="rounded-[1rem] border border-slate-200 bg-white/80 p-3 shadow-sm backdrop-blur"
+        className="rounded-[1rem] border border-border bg-white/80 p-3 shadow-sm backdrop-blur"
       >
         <p className="px-2 text-xs font-semibold uppercase text-secondary">
           Related Pages
@@ -248,22 +248,22 @@ function InstitutionalRelated({ links }: { links: InstitutionalLink[] }) {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="group flex items-start gap-2 rounded-md border border-transparent px-2 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
+                  className="group flex items-start gap-2 rounded-md border border-transparent px-2 py-2 text-sm font-semibold text-muted-foreground transition hover:border-primary/20 hover:bg-primary/5 hover:text-foreground"
                 >
-                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
+                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-primary transition group-hover:bg-primary group-hover:text-white">
                     <Icon aria-hidden className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block">{item.label}</span>
                     {item.description ? (
-                      <span className="mt-1 block text-xs font-normal leading-5 text-slate-500">
+                      <span className="mt-1 block text-xs font-normal leading-5 text-muted-foreground">
                         {item.description}
                       </span>
                     ) : null}
                   </span>
                   <ChevronRight
                     aria-hidden
-                    className="mt-1 h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                    className="mt-1 h-4 w-4 text-muted-foreground/70 transition group-hover:translate-x-0.5 group-hover:text-primary"
                   />
                 </Link>
               </li>

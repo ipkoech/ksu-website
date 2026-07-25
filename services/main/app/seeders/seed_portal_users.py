@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 import os
+import uuid
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models import Person, StaffAssignment, User, UserRole
+
 from ._shared import (
+    LEADERSHIP_PEOPLE,
+    SCHOOL_SPECS,
     SeedContext,
     get_or_create_person,
     upsert_user,
@@ -17,89 +23,66 @@ from ._shared import (
 
 PORTAL_USER_SPECS = [
     {
-        "key": "portal_system_admin",
-        "email": "system.admin@example.invalid",
-        "full_name": "KSU System Admin",
-        "role": "system_admin",
-        "institutional_role": "system_admin",
+        "key": "portal_super_admin",
+        "email": "system.admin@ksu.dev.com",
+        "full_name": "KSU Super Admin",
+        "role": "super_admin",
+        "institutional_role": "super_admin",
     },
     {
-        "key": "portal_governance_admin",
-        "email": "governance.admin@example.invalid",
-        "full_name": "KSU Governance Admin",
-        "role": "staff_admin",
-        "institutional_role": "governance_admin",
+        "key": "portal_system_admin",
+        "email": "admin@ksu.dev.com",
+        "full_name": "KSU Admin",
+        "role": "admin",
+        "institutional_role": "admin",
     },
     {
         "key": "portal_school_admin",
-        "email": "school.admin@example.invalid",
+        "email": "school.admin@ksu.dev.com",
         "full_name": "KSU School Admin",
         "role": "school_admin",
         "institutional_role": "school_admin",
     },
     {
         "key": "portal_department_admin",
-        "email": "department.admin@example.invalid",
+        "email": "department.admin@ksu.dev.com",
         "full_name": "KSU Department Admin",
         "role": "dept_admin",
         "institutional_role": "department_admin",
     },
     {
         "key": "portal_corporate_admin",
-        "email": "corporate.admin@example.invalid",
+        "email": "corporate.admin@ksu.dev.com",
         "full_name": "KSU Corporate Communication Admin",
-        "role": "content_admin",
+        "role": "corporate_communication_admin",
         "institutional_role": "corporate_communication_admin",
     },
     {
         "key": "portal_research_admin",
-        "email": "research@kisiiuniversity.ac.ke",
+        "email": "research.admin@ksu.dev.com",
         "full_name": "KSU Research Admin",
         "role": "research_admin",
         "institutional_role": "research_admin",
     },
     {
-        "key": "portal_research_content",
-        "email": "research.content@example.invalid",
-        "full_name": "KSU Research Content",
-        "role": "research_content",
-        "institutional_role": "research_content",
-    },
-    {
-        "key": "portal_research_farm",
-        "email": "research.farm@example.invalid",
-        "full_name": "KSU Research Farm",
-        "role": "research_farm",
-        "institutional_role": "research_farm",
-    },
-    {
-        "key": "portal_research_sustainability",
-        "email": "research.sustainability@example.invalid",
-        "full_name": "KSU Research Sustainability",
-        "role": "research_sustainability",
-        "institutional_role": "research_sustainability",
-    },
-    {
         "key": "portal_library_admin",
-        "email": "library.admin@example.invalid",
+        "email": "library.admin@ksu.dev.com",
         "full_name": "KSU Library Admin",
         "role": "library_admin",
         "institutional_role": "library_admin",
     },
+]
+
+SCHOOL_DEAN_PORTAL_USER_PASSWORD = "ChangeMe@26"
+
+SCHOOL_DEAN_PORTAL_USER_SPECS = [
     {
-        "key": "portal_researcher",
-        "email": "researcher@example.invalid",
-        "full_name": "KSU Researcher",
-        "role": "researcher",
-        "institutional_role": "researcher",
-    },
-    {
-        "key": "portal_staff_profile_editor",
-        "email": "staff.profile@example.invalid",
-        "full_name": "KSU Staff Profile Editor",
-        "role": "staff",
-        "institutional_role": "staff_profile_editor",
-    },
+        "key": f"school_dean_{school_spec['code'].lower()}",
+        "school_code": school_spec["code"],
+        "dean_key": school_spec["dean_key"],
+        "role": "school_admin",
+    }
+    for school_spec in SCHOOL_SPECS
 ]
 
 PORTAL_ROLE_EXTRA_PERMISSIONS = {
@@ -111,6 +94,18 @@ PORTAL_ROLE_EXTRA_PERMISSIONS = {
         "content.manage_events",
     ],
 }
+
+LEGACY_PORTAL_USER_EMAILS = frozenset({
+    "super.admin@ksu.dev.com",
+    "governance.admin@ksu.dev.com",
+    "research.content@ksu.dev.com",
+    "research.farm@ksu.dev.com",
+    "research.sustainability@ksu.dev.com",
+    "publications.admin@ksu.dev.com",
+    "student.clubs.admin@ksu.dev.com",
+    "researcher@ksu.dev.com",
+    "staff.profile@ksu.dev.com",
+})
 
 
 def portal_user_password() -> str:
@@ -124,6 +119,7 @@ def portal_user_password() -> str:
 
 async def seed_portal_users(db: AsyncSession, ctx: SeedContext) -> None:
     password = portal_user_password()
+    await _retire_legacy_portal_users(db)
     for spec in PORTAL_USER_SPECS:
         person = await get_or_create_person(
             db,
@@ -152,12 +148,13 @@ async def seed_portal_users(db: AsyncSession, ctx: SeedContext) -> None:
             mfa_secret=None,
             failed_login_attempts=0,
         )
-        person.user_id = user.id
-        await db.flush()
+        await _assign_user_to_person(db, person, user)
 
         role = ctx.roles.get(spec["role"])
         if role is None:
             raise ValueError(f"{spec['role']} role must be seeded before portal users")
+
+        await _reconcile_portal_user_role_assignments(db, user, role.id)
 
         for permission_name in PORTAL_ROLE_EXTRA_PERMISSIONS.get(spec["role"], []):
             permission = ctx.permissions.get(permission_name)
@@ -170,5 +167,126 @@ async def seed_portal_users(db: AsyncSession, ctx: SeedContext) -> None:
             user,
             role,
             assigned_by_id=user.id,
+            scope_type=None,
+            scope_id=None,
             note="Seeded portal-specific assignment for browser QA",
         )
+
+    await _seed_school_dean_portal_users(db, ctx)
+
+
+async def _seed_school_dean_portal_users(
+    db: AsyncSession,
+    ctx: SeedContext,
+) -> None:
+    role = ctx.roles.get("school_admin")
+    if role is None:
+        raise ValueError("school_admin role must be seeded before dean portal users")
+
+    for spec in SCHOOL_DEAN_PORTAL_USER_SPECS:
+        school = ctx.schools.get(spec["school_code"])
+        if school is None:
+            raise ValueError(f"{spec['school_code']} school must be seeded before dean portal users")
+
+        dean_spec = LEADERSHIP_PEOPLE[spec["dean_key"]]
+        person = await get_or_create_person(db, ctx, spec["dean_key"], **dean_spec)
+        user = await upsert_user(
+            db,
+            ctx,
+            spec["key"],
+            email=person.email,
+            password=SCHOOL_DEAN_PORTAL_USER_PASSWORD,
+            full_name=person.full_name,
+            phone=person.phone,
+            avatar_url=None,
+            push_tokens=None,
+            is_active=True,
+            is_verified=True,
+            mfa_enabled=False,
+            mfa_secret=None,
+            failed_login_attempts=0,
+        )
+        await _assign_user_to_person(db, person, user)
+
+        assignment = ctx.assignments.get(f"school-{spec['school_code']}-dean")
+        if assignment is None:
+            assignment = (
+                await db.execute(
+                    select(StaffAssignment).where(
+                        StaffAssignment.entity_type == "school",
+                        StaffAssignment.entity_id == school.id,
+                        StaffAssignment.role == "dean",
+                        StaffAssignment.status == "active",
+                        StaffAssignment.deleted_at.is_(None),
+                    )
+                )
+            ).scalar_one_or_none()
+        if assignment is not None:
+            assignment.person_id = person.id
+            assignment.user_id = user.id
+
+        await upsert_user_role(
+            db,
+            user,
+            role,
+            assigned_by_id=user.id,
+            scope_type="school",
+            scope_id=school.id,
+            note=f"Seeded school admin assignment for {school.name}",
+        )
+
+
+async def _assign_user_to_person(db: AsyncSession, person: Person, user: User) -> None:
+    """Link a seeded user to its canonical person without violating one-to-one links."""
+    existing_link = (
+        await db.execute(
+            select(Person).where(
+                Person.user_id == user.id,
+                Person.id != person.id,
+                Person.deleted_at.is_(None),
+            )
+        )
+    ).scalar_one_or_none()
+    if existing_link is not None:
+        existing_link.user_id = None
+
+    person.user_id = user.id
+    await db.flush()
+
+
+async def _retire_legacy_portal_users(db: AsyncSession) -> None:
+    """Deactivate portal QA accounts removed from the canonical seven-user seed."""
+    legacy_users = (
+        await db.execute(select(User).where(User.email.in_(LEGACY_PORTAL_USER_EMAILS)))
+    ).scalars().all()
+    if not legacy_users:
+        return
+
+    for user in legacy_users:
+        user.is_active = False
+
+    assignments = (
+        await db.execute(select(UserRole).where(UserRole.user_id.in_({user.id for user in legacy_users})))
+    ).scalars().all()
+    for assignment in assignments:
+        assignment.is_active = False
+    await db.flush()
+
+
+async def _reconcile_portal_user_role_assignments(
+    db: AsyncSession,
+    user: User,
+    canonical_role_id: uuid.UUID,
+) -> None:
+    """Leave each seeded portal account with only its canonical global role active."""
+    assignments = (
+        await db.execute(select(UserRole).where(UserRole.user_id == user.id))
+    ).scalars().all()
+    for assignment in assignments:
+        if (
+            assignment.role_id != canonical_role_id
+            or assignment.scope_type is not None
+            or assignment.scope_id is not None
+        ):
+            assignment.is_active = False
+    await db.flush()

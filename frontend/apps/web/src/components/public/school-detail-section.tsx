@@ -3,10 +3,8 @@ import type { ReactNode } from "react";
 import type { EntityHeaderNavItem } from "@ksu/ui/layout/public";
 import {
   ArrowRight,
-  CalendarDays,
   Download,
   FileText,
-  Globe,
   GraduationCap,
   Mail,
   MapPin,
@@ -16,9 +14,18 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { ScrollReveal } from "@ksu/ui/components";
+import { AmbientPageBackground, ScrollReveal } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
-import { PublicTeamSection } from "@/components/public/public-team-section";
+import { EntityTeamSection } from "@/components/public/entity-team-section";
+import { EntityInquiryLauncher } from "@/components/public/entity-inquiry-launcher";
+import { EntityMediaMosaic } from "@/components/public/entity-media-mosaic";
+import {
+  ExploreMorePanel,
+  MobileSchoolLinksGrid,
+  SchoolLinksPanel,
+  buildSchoolMediaLinks,
+  buildSchoolQuickLinks,
+} from "@/components/public/school-detail-navigation";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import type { SchoolDetailOverviewData } from "@/lib/school-detail-data";
 import {
@@ -38,13 +45,6 @@ export type SchoolDetailSectionKey =
   | "clubs"
   | "contact";
 
-type QuickLink = {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-  section: SchoolDetailSectionKey | EntityMediaType;
-};
-
 type SectionMeta = {
   eyebrow: string;
   title: string;
@@ -54,9 +54,9 @@ type SectionMeta = {
 
 const sectionMeta: Record<SchoolDetailSectionKey, SectionMeta> = {
   team: {
-    eyebrow: "School Team",
-    title: "Leadership and staff",
-    body: "Meet the school leadership and published staff records.",
+    eyebrow: "Our People",
+    title: "School Leadership & Staff",
+    body: "Meet the school leaders, department heads, academic staff, and professional team.",
     icon: Users,
   },
   programmes: {
@@ -142,67 +142,6 @@ function compactMeta(values: Array<string | number | null | undefined>) {
     .join(" · ");
 }
 
-function navHas(navItems: EntityHeaderNavItem[] | undefined, label: string) {
-  return Boolean(navItems?.some((item) => item.label === label));
-}
-
-function buildQuickLinks({
-  baseHref,
-  navItems,
-  counts,
-}: {
-  baseHref: string;
-  navItems?: EntityHeaderNavItem[];
-  counts: SchoolDetailOverviewData["counts"];
-}) {
-  const links: QuickLink[] = [
-    {
-      label: "Programmes",
-      href: `${baseHref}/programmes`,
-      icon: GraduationCap,
-      section: "programmes",
-    },
-    { label: "Team", href: `${baseHref}/team`, icon: Users, section: "team" },
-  ];
-
-  if (counts.publications > 0 || navHas(navItems, "Publications")) {
-    links.push({
-      label: "Publications",
-      href: `${baseHref}/publications`,
-      icon: FileText,
-      section: "publications",
-    });
-  }
-
-  links.push(
-    { label: "Media", href: `${baseHref}/media`, icon: Newspaper, section: "media" },
-    {
-      label: "Downloads",
-      href: `${baseHref}/downloads`,
-      icon: Download,
-      section: "downloads",
-    },
-  );
-
-  if (counts.clubs > 0 || navHas(navItems, "Clubs")) {
-    links.push({
-      label: "Clubs & Societies",
-      href: `${baseHref}/clubs`,
-      icon: Sparkles,
-      section: "clubs",
-    });
-  }
-
-  links.push({
-    label: "Contact",
-    href: `${baseHref}/contact`,
-    icon: Phone,
-    section: "contact",
-  });
-
-  return links;
-}
-
 function SectionKicker({ children }: { children: string }) {
   return (
     <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
@@ -211,117 +150,18 @@ function SectionKicker({ children }: { children: string }) {
   );
 }
 
-function QuickLinksPanel({
-  links,
-  activeSection,
-  title = "Quick Links",
-}: {
-  links: QuickLink[];
-  activeSection: SchoolDetailSectionKey | EntityMediaType;
-  title?: string;
-}) {
-  return (
-    <section className="rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-sm">
-      <SectionKicker>{title}</SectionKicker>
-      <nav aria-label="School quick links" className="mt-3">
-        <ul className="divide-y divide-slate-100">
-          {links.map((item) => {
-            const Icon = item.icon;
-            const active = item.section === activeSection;
-
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={`group flex min-h-10 items-center gap-3 py-2 text-sm font-medium transition ${active ? "text-primary" : "text-slate-700 hover:text-primary"
-                    }`}
-                >
-                  <Icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
-                  <span className="min-w-0 flex-1">{item.label}</span>
-                  <ArrowRight
-                    aria-hidden
-                    className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
-                  />
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-    </section>
-  );
-}
-
-function MobileQuickGrid({
-  links,
-  activeSection,
-}: {
-  links: QuickLink[];
-  activeSection: SchoolDetailSectionKey | EntityMediaType;
-}) {
-  return (
-    <section className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:hidden">
-      {links.map((item) => {
-        const Icon = item.icon;
-        const active = item.section === activeSection;
-
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-current={active ? "page" : undefined}
-            className={`flex min-h-[4.5rem] flex-col items-center justify-center gap-2 rounded-[1.1rem] border bg-white p-2 text-center text-[0.72rem] font-semibold leading-4 shadow-sm transition ${active
-                ? "border-primary/30 text-primary"
-                : "border-slate-200 text-slate-700 hover:border-primary/30 hover:text-primary"
-              }`}
-          >
-            <Icon aria-hidden className="h-5 w-5 text-primary" />
-            <span>{item.label}</span>
-          </Link>
-        );
-      })}
-    </section>
-  );
-}
-
-function buildMediaTypeLinks(baseHref: string): QuickLink[] {
-  return [
-    { label: "News", href: `${baseHref}/media/news`, icon: Newspaper, section: "news" },
-    {
-      label: "Events",
-      href: `${baseHref}/media/events`,
-      icon: CalendarDays,
-      section: "events",
-    },
-    { label: "Blogs", href: `${baseHref}/media/blogs`, icon: FileText, section: "blogs" },
-    {
-      label: "Announcements",
-      href: `${baseHref}/media/announcements`,
-      icon: Download,
-      section: "announcements",
-    },
-    {
-      label: "Gallery",
-      href: `${baseHref}/media/gallery`,
-      icon: Sparkles,
-      section: "gallery",
-    },
-  ];
-}
-
 function PageIntro({ meta }: { meta: SectionMeta }) {
   const Icon = meta.icon;
 
   return (
-    <section className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-[1.25rem] border border-border bg-white p-4 shadow-sm">
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_7rem] md:items-center">
         <div>
           <SectionKicker>{meta.eyebrow}</SectionKicker>
-          <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+          <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             {meta.title}
           </h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700">
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
             {meta.body}
           </p>
         </div>
@@ -339,13 +179,12 @@ function ContactPanel({ data }: { data: SchoolDetailOverviewData }) {
     { label: "Office", value: present(school.office_location), icon: MapPin },
     { label: "Phone", value: present(school.phone), icon: Phone },
     { label: "Email", value: present(school.email), icon: Mail },
-    { label: "Website", value: present(school.website), icon: Globe },
   ].filter((item) => item.value);
 
   if (!rows.length) return null;
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-sm">
+    <section className="min-w-0 overflow-hidden rounded-[1.25rem] border border-border bg-white p-3 shadow-sm">
       <SectionKicker>Contact Information</SectionKicker>
       <div className="mt-3 grid min-w-0 gap-1.5">
         {rows.map((item) => {
@@ -353,9 +192,9 @@ function ContactPanel({ data }: { data: SchoolDetailOverviewData }) {
 
           return (
             <div key={item.label} className="flex w-full min-w-0 gap-3 rounded-xl p-2">
-              <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-slate-500" />
+              <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
               <span className="min-w-0 flex-1">
-                <span className="block text-xs font-bold text-slate-950">
+                <span className="block text-xs font-bold text-foreground">
                   {item.label}
                 </span>
                 <span className="mt-0.5 block break-words text-sm font-medium leading-5 text-primary [overflow-wrap:anywhere]">
@@ -381,7 +220,7 @@ function SchoolInfoPanel({ data }: { data: SchoolDetailOverviewData }) {
   if (!rows.length) return null;
 
   return (
-    <section className="rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-sm">
+    <section className="rounded-[1.25rem] border border-border bg-white p-3 shadow-sm">
       <SectionKicker>School Information</SectionKicker>
       <dl className="mt-3 grid gap-2">
         {rows.map((item) => {
@@ -391,7 +230,7 @@ function SchoolInfoPanel({ data }: { data: SchoolDetailOverviewData }) {
             <div key={item.label} className="flex w-full min-w-0 gap-3 rounded-xl p-2">
               <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
               <div className="min-w-0 flex-1">
-                <dt className="text-xs font-bold text-slate-950">{item.label}</dt>
+                <dt className="text-xs font-bold text-foreground">{item.label}</dt>
                 <dd className="mt-0.5 break-words text-sm font-medium leading-5 text-primary [overflow-wrap:anywhere]">
                   {item.value}
                 </dd>
@@ -406,9 +245,8 @@ function SchoolInfoPanel({ data }: { data: SchoolDetailOverviewData }) {
 
 function TeamSection({ data }: { data: SchoolDetailOverviewData }) {
   return (
-    <PublicTeamSection
+    <EntityTeamSection
       team={data.team}
-      title="School Team"
       emptyTitle="No public school team records are available yet."
     />
   );
@@ -422,7 +260,7 @@ function ProgrammesSection({ data }: { data: SchoolDetailOverviewData }) {
   if (!data.programmes.length) return null;
 
   return (
-    <section className="grid gap-3 md:grid-cols-2">
+    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {data.programmes.map((programme) => {
         const meta = compactMeta([
           programme.level,
@@ -435,18 +273,18 @@ function ProgrammesSection({ data }: { data: SchoolDetailOverviewData }) {
           <Link
             key={programme.id}
             href={`/academics/programmes/${programme.slug}`}
-            className="group rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
+            className="group rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
           >
             <div className="flex gap-3">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
                 <GraduationCap aria-hidden className="h-5 w-5" />
               </span>
               <div className="min-w-0 flex-1">
-                <h2 className="text-base font-bold text-slate-950 group-hover:text-primary">
+                <h2 className="text-base font-bold text-foreground group-hover:text-primary">
                   {programme.name}
                 </h2>
                 {meta ? (
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     {meta}
                   </p>
                 ) : null}
@@ -458,7 +296,7 @@ function ProgrammesSection({ data }: { data: SchoolDetailOverviewData }) {
               </div>
               <ArrowRight
                 aria-hidden
-                className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                className="h-4 w-4 shrink-0 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:text-primary"
               />
             </div>
           </Link>
@@ -476,18 +314,18 @@ function PublicationsSection({ data }: { data: SchoolDetailOverviewData }) {
   if (!publicationHolders.length) return null;
 
   return (
-    <section className="grid gap-3 md:grid-cols-2">
+    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {publicationHolders.map((person) => {
         const name = personDisplayName(person);
 
         return (
           <article
             key={person.id}
-            className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm"
+            className="rounded-[1.25rem] border border-border bg-white p-4 shadow-sm"
           >
             <SectionKicker>Publication Records</SectionKicker>
-            <h2 className="mt-2 text-base font-bold text-slate-950">{name}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
+            <h2 className="mt-2 text-base font-bold text-foreground">{name}</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
               {Number(person.publications_count ?? 0)} publication record
               {Number(person.publications_count ?? 0) === 1 ? "" : "s"} linked
               to this staff profile.
@@ -496,73 +334,6 @@ function PublicationsSection({ data }: { data: SchoolDetailOverviewData }) {
         );
       })}
     </section>
-  );
-}
-
-function mediaHref(item: SchoolDetailOverviewData["updates"][number]) {
-  if (item.recordType === "blog") return `/media/articles/${item.slug}`;
-  if (item.recordType === "event") return `/media/events/${item.slug}`;
-  if (item.recordType === "announcement") return `/media/announcements/${item.slug}`;
-  if (item.recordType === "gallery") return `/media/gallery/${item.id}`;
-  return `/media/news/${item.slug}`;
-}
-
-function mediaDate(item: SchoolDetailOverviewData["updates"][number]) {
-  if (item.recordType === "gallery") return formatDate(item.created_at);
-  if (item.recordType === "event") return formatDate(item.start_date);
-  return formatDate(item.published_at ?? item.created_at);
-}
-
-function mediaTitle(item: SchoolDetailOverviewData["updates"][number]) {
-  if (item.recordType === "gallery") {
-    return present(item.title) ?? present(item.original_filename) ?? "Gallery image";
-  }
-  return item.title;
-}
-
-function mediaSummary(item: SchoolDetailOverviewData["updates"][number]) {
-  if (item.recordType === "gallery") {
-    return (
-      present(item.description) ?? present(item.caption) ?? present(item.alt_text)
-    );
-  }
-  return present(item.summary);
-}
-
-function mediaLabel(item: SchoolDetailOverviewData["updates"][number]) {
-  if (item.recordType === "gallery") return "Gallery";
-  if (item.recordType === "blog") return "Blog";
-  if (item.recordType === "event") return "Event";
-  if (item.recordType === "announcement") return "Announcement";
-  return "News";
-}
-
-function LinkedMediaCategory({ item }: { item: QuickLink }) {
-  const Icon = item.icon;
-
-  return (
-    <Link
-      href={item.href}
-      className="group rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
-    >
-      <div className="flex gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
-          <Icon aria-hidden className="h-5 w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
-            Media category
-          </p>
-          <h2 className="mt-1 text-base font-bold text-slate-950 group-hover:text-primary">
-            {item.label}
-          </h2>
-        </div>
-        <ArrowRight
-          aria-hidden
-          className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
-        />
-      </div>
-    </Link>
   );
 }
 
@@ -581,53 +352,19 @@ function MediaSection({
 
   return (
     <section className="grid gap-3">
-      {!mediaType ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {buildMediaTypeLinks(`/academics/schools/${data.school.slug}`).map(
-            (item) => (
-              <LinkedMediaCategory key={item.href} item={item} />
-            ),
-          )}
-        </div>
-      ) : null}
       {fallbackCount > 0 && scopedCount === 0 && mediaType !== "gallery" ? (
-        <p className="rounded-[1.25rem] border border-dashed border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
+        <p className="rounded-[1.25rem] border border-dashed border-border bg-white p-4 text-sm leading-6 text-muted-foreground">
           No records are currently published for this school, so the latest
           university-wide {entityMediaTypeTitle(mediaType).toLowerCase()} are shown.
         </p>
       ) : null}
       {!updates.length ? (
-        <p className="rounded-[1.25rem] border border-dashed border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
+        <p className="rounded-[1.25rem] border border-dashed border-border bg-white p-4 text-sm leading-6 text-muted-foreground">
           No {mediaType ? entityMediaTypeTitle(mediaType).toLowerCase() : "media"} records
           are currently published for this school.
         </p>
       ) : null}
-      <div className="grid gap-3 md:grid-cols-2">
-        {updates.map((item) => (
-          <Link
-            key={`${item.recordType}-${item.id}`}
-            href={mediaHref(item)}
-            className="group rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
-          >
-            <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
-              {mediaLabel(item)}
-            </p>
-            <h2 className="mt-2 text-base font-bold text-slate-950 group-hover:text-primary">
-              {mediaTitle(item)}
-            </h2>
-            {mediaSummary(item) ? (
-              <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
-                {mediaSummary(item)}
-              </p>
-            ) : null}
-            {mediaDate(item) ? (
-              <p className="mt-3 text-xs font-semibold text-slate-500">
-                {mediaDate(item)}
-              </p>
-            ) : null}
-          </Link>
-        ))}
-      </div>
+      <EntityMediaMosaic items={updates} />
     </section>
   );
 }
@@ -649,18 +386,18 @@ function DownloadsSection({ data }: { data: SchoolDetailOverviewData }) {
         return (
           <article
             key={document.id}
-            className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm"
+            className="rounded-[1.25rem] border border-border bg-white p-4 shadow-sm"
           >
             <div className="flex gap-3">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
                 <FileText aria-hidden className="h-5 w-5" />
               </span>
               <div className="min-w-0 flex-1">
-                <h2 className="text-base font-bold text-slate-950">
+                <h2 className="text-base font-bold text-foreground">
                   {document.title}
                 </h2>
                 {meta ? (
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     {meta}
                   </p>
                 ) : null}
@@ -686,18 +423,18 @@ function ClubsSection({ data }: { data: SchoolDetailOverviewData }) {
   if (!data.clubs.length) return null;
 
   return (
-    <section className="grid gap-3 md:grid-cols-2">
+    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {data.clubs.map((club) => (
         <article
           key={club.id}
-          className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm"
+          className="rounded-[1.25rem] border border-border bg-white p-4 shadow-sm"
         >
           {present(club.club_type) ? (
             <SectionKicker>{club.club_type}</SectionKicker>
           ) : null}
-          <h2 className="mt-2 text-base font-bold text-slate-950">{club.name}</h2>
+          <h2 className="mt-2 text-base font-bold text-foreground">{club.name}</h2>
           {present(club.about ?? club.objectives ?? club.mission) ? (
-            <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+            <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
               {club.about ?? club.objectives ?? club.mission}
             </p>
           ) : null}
@@ -719,23 +456,22 @@ function ContactSection({ data }: { data: SchoolDetailOverviewData }) {
     { label: "Office", value: present(school.office_location), icon: MapPin },
     { label: "Email", value: present(school.email), icon: Mail },
     { label: "Phone", value: present(school.phone), icon: Phone },
-    { label: "Website", value: present(school.website), icon: Globe },
   ].filter((item) => item.value);
 
   if (!rows.length) return null;
 
   return (
-    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {rows.map((item) => {
         const Icon = item.icon;
 
         return (
           <article
             key={item.label}
-            className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm"
+            className="rounded-[1.25rem] border border-border bg-white p-4 shadow-sm"
           >
             <Icon aria-hidden className="h-5 w-5 text-primary" />
-            <h2 className="mt-4 text-sm font-bold text-slate-950">
+            <h2 className="mt-4 text-sm font-bold text-foreground">
               {item.label}
             </h2>
             <p className="mt-1 break-words text-sm font-semibold leading-6 text-primary [overflow-wrap:anywhere]">
@@ -785,15 +521,6 @@ export function SchoolDetailSection({
   mediaType?: EntityMediaType;
 }) {
   const baseHref = `/academics/schools/${data.school.slug}`;
-  const quickLinks =
-    section === "media"
-      ? buildMediaTypeLinks(baseHref)
-      : buildQuickLinks({
-        baseHref,
-        navItems,
-        counts: data.counts,
-      });
-  const activeSection = mediaType ?? section;
   const baseMeta = sectionMeta[section];
   const meta =
     section === "media"
@@ -803,11 +530,18 @@ export function SchoolDetailSection({
         body: entityMediaTypeBody(mediaType),
       }
       : baseMeta;
+  const navigationLinks =
+    section === "media"
+      ? buildSchoolMediaLinks(baseHref)
+      : buildSchoolQuickLinks({ baseHref, navItems, counts: data.counts });
+  const activeSection = section === "media" ? (mediaType ?? "media") : section;
+  const navTitle = section === "media" ? "Content Items" : "Quick Links";
 
   return (
     <PageShell header={header}>
       <AboutPageLenis>
-        <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_70%)] px-4 py-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <AmbientPageBackground variant="academic" intensity="soft">
+          <section className="w-full px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mb-4">
             <BreadcrumbTrail
               items={[
@@ -822,33 +556,50 @@ export function SchoolDetailSection({
               ]}
             />
           </div>
-          <div className="grid w-full gap-3 xl:grid-cols-[minmax(220px,0.22fr)_minmax(0,1fr)_minmax(240px,0.24fr)] 2xl:grid-cols-[minmax(240px,0.2fr)_minmax(0,1fr)_minmax(280px,0.22fr)] xl:items-start">
-            <aside className="hidden min-w-0 space-y-3 xl:block xl:sticky xl:top-28">
-              <QuickLinksPanel
-                links={quickLinks}
+          <div className="grid w-full gap-4 xl:grid-cols-[minmax(220px,0.2fr)_minmax(0,1fr)_minmax(260px,0.22fr)] 2xl:grid-cols-[minmax(240px,0.18fr)_minmax(0,1fr)_minmax(300px,0.22fr)] xl:items-start">
+            <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
+              <SchoolLinksPanel
+                links={navigationLinks}
                 activeSection={activeSection}
-                title={section === "media" ? "Content Types" : "Quick Links"}
+                title={navTitle}
+                ariaLabel={
+                  section === "media"
+                    ? "School media content navigation"
+                    : "School quick links"
+                }
               />
+              {section === "media" ? null : <ExploreMorePanel />}
             </aside>
 
-            <ScrollReveal as="main" className="grid min-w-0 gap-3">
+            <ScrollReveal as="main" className="grid min-w-0 gap-4">
               <PageIntro meta={meta} />
-              <MobileQuickGrid links={quickLinks} activeSection={activeSection} />
+              <MobileSchoolLinksGrid
+                links={navigationLinks}
+                activeSection={activeSection}
+              />
               {renderSection(section, data, mediaType)}
             </ScrollReveal>
 
-            <aside className="hidden min-w-0 space-y-3 xl:block xl:sticky xl:top-28">
+            <aside className="hidden min-w-0 space-y-4 xl:block xl:sticky xl:top-28">
               <ContactPanel data={data} />
-              <SchoolInfoPanel data={data} />
+              {section === "team" ? null : <SchoolInfoPanel data={data} />}
             </aside>
 
-            <aside className="grid gap-3 xl:hidden">
+            <aside className="grid gap-4 xl:hidden">
               <ContactPanel data={data} />
-              <SchoolInfoPanel data={data} />
+              {section === "team" ? null : <SchoolInfoPanel data={data} />}
             </aside>
           </div>
-        </section>
+          </section>
+        </AmbientPageBackground>
       </AboutPageLenis>
+      <EntityInquiryLauncher
+        target={{
+          type: "school",
+          slug: data.school.slug,
+          name: data.school.name,
+        }}
+      />
     </PageShell>
   );
 }

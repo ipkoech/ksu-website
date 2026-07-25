@@ -3,7 +3,7 @@ import unittest
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocketDisconnect
 
 from app.api.v1 import register_routes
 from app.api.v1 import realtime
@@ -53,11 +53,13 @@ class RealtimeEndpointTests(unittest.TestCase):
 
         self.assertEqual("header-token", realtime._extract_websocket_token(websocket))
 
-    def test_extract_token_supports_query_and_cookie_fallbacks(self):
-        query_websocket = _WebSocket(query_params={"token": "query-token"})
+    def test_extract_token_supports_ticket_and_cookie_but_not_access_query(self):
+        query_websocket = _WebSocket(query_params={"ticket": "socket-ticket"})
+        access_query_websocket = _WebSocket(query_params={"access_token": "access-token"})
         cookie_websocket = _WebSocket(cookies={"ksu_access": "cookie-token"})
 
-        self.assertEqual("query-token", realtime._extract_websocket_token(query_websocket))
+        self.assertEqual("socket-ticket", realtime._extract_websocket_token(query_websocket))
+        self.assertIsNone(realtime._extract_websocket_token(access_query_websocket))
         self.assertEqual("cookie-token", realtime._extract_websocket_token(cookie_websocket))
 
     def test_notification_payload_is_json_safe_and_explicit(self):
@@ -119,6 +121,47 @@ class RealtimeEndpointTests(unittest.TestCase):
         self.assertIn("notifications", payload["channels"])
         self.assertIn("research", payload["channels"])
         self.assertGreater(payload["heartbeat_seconds"], 0)
+
+
+class RealtimeConnectionLifecycleTests(unittest.IsolatedAsyncioTestCase):
+    async def test_user_is_authenticated_before_handshake_is_accepted(self):
+        events = []
+
+        class HandshakeWebSocket(_WebSocket):
+            client = SimpleNamespace(host="127.0.0.1")
+
+            async def accept(self):
+                events.append("accept")
+
+            async def send_json(self, payload):
+                events.append("send")
+
+            async def receive_text(self):
+                raise WebSocketDisconnect()
+
+            async def close(self, **kwargs):
+                events.append("close")
+
+        async def resolve_user(token, **kwargs):
+            events.append("resolve")
+            return SimpleNamespace(id=uuid.uuid4(), role_assignments=[])
+
+        async def latest_notifications(user_id):
+            return []
+
+        websocket = HandshakeWebSocket(query_params={"ticket": "valid-token"})
+        original_resolver = realtime._resolve_websocket_user
+        original_latest = realtime._latest_unread_notifications
+        realtime._resolve_websocket_user = resolve_user
+        realtime._latest_unread_notifications = latest_notifications
+        try:
+            await realtime.realtime(websocket)
+        finally:
+            realtime._resolve_websocket_user = original_resolver
+            realtime._latest_unread_notifications = original_latest
+
+        self.assertEqual("resolve", events[0])
+        self.assertEqual("accept", events[1])
 
 
 if __name__ == "__main__":

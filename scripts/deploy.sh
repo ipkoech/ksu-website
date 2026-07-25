@@ -568,6 +568,10 @@ NEXT_PUBLIC_PUBLIC_FRONTEND_URL=\${PUBLIC_URL}
 NEXT_PUBLIC_RESEARCH_FRONTEND_URL=\${RESEARCH_URL}
 NEXT_PUBLIC_LIBRARY_FRONTEND_URL=\${LIBRARY_URL}
 NEXT_PUBLIC_APP_URL=\${ADMIN_URL}
+VM_FRONTEND_BUILD_API_URL=http://\${EDGE_PROXY_TARGET}
+VM_FRONTEND_BUILD_MAIN_API_URL=http://127.0.0.1:\${MAIN_SERVICE_PORT:-8000}
+VM_FRONTEND_BUILD_RESEARCH_API_URL=http://127.0.0.1:\${RESEARCH_SERVICE_PORT:-8001}
+VM_FRONTEND_BUILD_LIBRARY_API_URL=http://127.0.0.1:\${LIBRARY_SERVICE_PORT:-8002}
 KSU_MAIN_API_URL=http://main:8000
 KSU_RESEARCH_API_URL=http://research:8001
 KSU_LIBRARY_API_URL=http://library:8002
@@ -851,6 +855,9 @@ server {
     server_name \${RESEARCH_HOST};
 
     client_max_body_size 25M;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
 
     location / {
         proxy_pass http://\${EDGE_PROXY_TARGET};
@@ -872,6 +879,9 @@ server {
     server_name \${API_HOST};
 
     client_max_body_size 25M;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
 
     location / {
         proxy_pass http://\${EDGE_PROXY_TARGET};
@@ -891,6 +901,9 @@ server {
     server_name \${PUBLIC_HOST};
 
     client_max_body_size 25M;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
 
     location / {
         proxy_pass http://\${EDGE_PROXY_TARGET};
@@ -909,6 +922,9 @@ server {
     server_name \${API_HOST};
 
     client_max_body_size 25M;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
 
     location / {
         proxy_pass http://\${EDGE_PROXY_TARGET};
@@ -925,6 +941,9 @@ server {
     server_name \${RESEARCH_HOST};
 
     client_max_body_size 25M;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
 
     location / {
         proxy_pass http://\${EDGE_PROXY_TARGET};

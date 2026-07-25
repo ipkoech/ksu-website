@@ -109,7 +109,7 @@ export default async function OutputsPage({
   const centerNames = new Map(centers.data.map((center) => [center.id, center.name ?? center.title ?? center.code ?? ""]));
 
   return (
-    <main id="research-main" className="min-h-screen bg-white text-slate-950">
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
       <ResearchPortfolioHero
         eyebrow="Published output catalogue"
         title="Research Outputs"
@@ -262,16 +262,16 @@ function OutputCard({
   return (
     <Link
       href={href}
-      className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+      className="group overflow-hidden rounded-lg border border-border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
     >
       {image ? (
         <div
-          className="aspect-[4/3] bg-slate-100 bg-cover bg-center"
+          className="aspect-[4/3] bg-surface-muted bg-cover bg-center"
           style={{ backgroundImage: `url('${image}')` }}
         />
       ) : (
-        <div className="relative aspect-[4/3] overflow-hidden bg-[#071b34]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_22%,rgba(245,158,11,0.5),transparent_30%),linear-gradient(135deg,#071b34,#075985)]" />
+        <div className="relative aspect-[4/3] overflow-hidden bg-[hsl(var(--brand-overlay))]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_22%,rgba(245,158,11,0.5),transparent_30%),linear-gradient(135deg,hsl(var(--brand-overlay)),#075985)]" />
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.12)_1px,transparent_1px)] bg-[size:22px_22px] opacity-60" />
           <div className="absolute left-3 right-3 top-4 h-2 rounded-full bg-white/25" />
           <div className="absolute bottom-3 left-3 right-3 h-12 rounded-md border border-white/20 bg-white/10" />
@@ -288,14 +288,14 @@ function OutputCard({
             </span>
           ) : null}
         </div>
-        <h2 className="mt-2 line-clamp-2 min-h-[2.5rem] text-xs font-semibold leading-5 text-slate-950 transition group-hover:text-primary sm:text-sm">
+        <h2 className="mt-2 line-clamp-2 min-h-[2.5rem] text-xs font-semibold leading-5 text-foreground transition group-hover:text-primary sm:text-sm">
           {title}
         </h2>
-        <p className="mt-1 truncate text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">
+        <p className="mt-1 truncate text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
           {type}
         </p>
         {source ? (
-          <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-500">{source}</p>
+          <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-muted-foreground">{source}</p>
         ) : null}
       </div>
     </Link>

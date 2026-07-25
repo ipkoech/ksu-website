@@ -26,10 +26,10 @@ export default function HelpDeskPage() {
 
         <div className="mt-8">
           <p className="text-sm font-semibold uppercase text-secondary">Help Desk</p>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
+          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
             Customer care and service support
           </h1>
-          <p className="mt-4 text-base leading-8 text-slate-600">
+          <p className="mt-4 text-base leading-8 text-muted-foreground">
             Use the official Kisii University digital service channels to raise
             support tickets, submit feedback, request information, and follow up
             on existing requests.
@@ -37,7 +37,7 @@ export default function HelpDeskPage() {
         </div>
 
         <section className="mt-10">
-          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
             Service request pathways
           </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -58,14 +58,14 @@ export default function HelpDeskPage() {
                   href={item.href}
                   target={external ? "_blank" : undefined}
                   rel={external ? "noopener noreferrer" : undefined}
-                  className="group flex items-start gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:shadow-md"
+                  className="group flex items-start gap-3 rounded-md border border-border bg-white p-4 shadow-sm transition hover:border-primary/30 hover:shadow-md"
                 >
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <Icon aria-hidden className="h-4 w-4" />
                   </span>
                   <span>
-                    <span className="block text-sm font-semibold text-slate-950">{item.label}</span>
-                    <span className="mt-1 block text-xs leading-5 text-slate-600">{item.body}</span>
+                    <span className="block text-sm font-semibold text-foreground">{item.label}</span>
+                    <span className="mt-1 block text-xs leading-5 text-muted-foreground">{item.body}</span>
                     <span className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-primary">
                       Open <ArrowRight aria-hidden className="h-3 w-3" />
                     </span>
@@ -77,10 +77,10 @@ export default function HelpDeskPage() {
         </section>
 
         <section className="mt-10">
-          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
             Complaints, suggestions, and compliments
           </h2>
-          <p className="mt-3 text-base leading-8 text-slate-600">
+          <p className="mt-3 text-base leading-8 text-muted-foreground">
             Use the dedicated feedback forms so each submission enters the correct
             official service workflow.
           </p>
@@ -98,27 +98,27 @@ export default function HelpDeskPage() {
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group rounded-[1.25rem] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md"
+                  className="group rounded-[1.25rem] border border-border bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md"
                 >
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <Icon aria-hidden className="h-5 w-5" />
                   </span>
-                  <h3 className="mt-4 font-[family-name:var(--font-display)] text-lg font-semibold text-slate-950">{item.label}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+                  <h3 className="mt-4 font-[family-name:var(--font-display)] text-lg font-semibold text-foreground">{item.label}</h3>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.body}</p>
                 </a>
               );
             })}
           </div>
         </section>
 
-        <div className="mt-10 rounded-[1.25rem] border border-blue-100 bg-blue-50/60 p-6">
+        <div className="mt-10 rounded-[1.25rem] border border-border bg-accent/60 p-6">
           <div className="flex items-start gap-4">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Handshake aria-hidden className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold text-slate-950">Open the customer care centre</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <h2 className="text-lg font-semibold text-foreground">Open the customer care centre</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 All official service requests, tickets, feedback, and information
                 requests are processed through the digital service centre.
               </p>

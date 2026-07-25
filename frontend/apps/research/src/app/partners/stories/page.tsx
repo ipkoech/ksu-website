@@ -75,12 +75,12 @@ export default async function PartnerStoriesPage({
   const errors = partners.error ? [partners.error] : [];
 
   return (
-    <main id="research-main" className="min-h-screen bg-white text-slate-950">
-      <section className="relative isolate overflow-hidden bg-[#061A36] px-4 py-7 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div aria-hidden className="absolute inset-0 bg-[linear-gradient(115deg,#061A36_0%,#07315f_48%,#07543f_100%)]" />
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
+      <section className="relative isolate overflow-hidden bg-[hsl(var(--brand-overlay))] px-4 py-7 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div aria-hidden className="absolute inset-0 bg-[linear-gradient(115deg,hsl(var(--brand-overlay))_0%,hsl(var(--primary)/.82)_48%,hsl(var(--primary)/.62)_100%)]" />
         <div aria-hidden className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:42px_42px] opacity-60" />
         <svg aria-hidden viewBox="0 0 900 260" className="absolute right-0 top-1/2 hidden h-full w-[58%] -translate-y-1/2 opacity-70 lg:block" fill="none">
-          <g stroke="#FDE68A" strokeOpacity="0.44" strokeWidth="1.5">
+          <g stroke="hsl(var(--secondary))" strokeOpacity="0.44" strokeWidth="1.5">
             <rect x="92" y="74" width="156" height="116" rx="14" />
             <path d="M122 112h92M122 144h58M122 170h84" />
             <rect x="374" y="58" width="150" height="150" rx="16" />
@@ -90,11 +90,11 @@ export default async function PartnerStoriesPage({
           <g stroke="#10B981" strokeOpacity="0.38">
             <path d="M250 132h104M526 132h84M656 132h38" />
             {[250, 354, 526, 610, 656, 694].map((x, index) => (
-              <circle key={x} cx={x} cy={index % 2 ? 112 : 132} r="7" fill="#061A36" stroke="#FDE68A" />
+              <circle key={x} cx={x} cy={index % 2 ? 112 : 132} r="7" fill="hsl(var(--brand-overlay))" stroke="hsl(var(--secondary))" />
             ))}
           </g>
         </svg>
-        <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[#061A36]/95 via-[#061A36]/70 to-[#061A36]/20" />
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--brand-overlay))]/95 via-[hsl(var(--brand-overlay))]/70 to-[hsl(var(--brand-overlay))]/20" />
         <div className="relative mx-auto flex min-h-[230px] max-w-[1680px] items-center">
           <div className="max-w-3xl">
             <p className="inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white">Partner Evidence</p>
@@ -114,7 +114,7 @@ export default async function PartnerStoriesPage({
             <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Published evidence</p>
-                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">What partnerships have produced</h2>
+                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">What partnerships have produced</h2>
               </div>
               <div className="flex flex-wrap gap-2">
                 {typeTabs.map((tab) => (
@@ -124,7 +124,7 @@ export default async function PartnerStoriesPage({
                     className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                       (params.type ?? "") === tab.value
                         ? "border-primary bg-primary text-white"
-                        : "border-slate-200 bg-white text-slate-600 hover:border-primary/35 hover:text-primary"
+                        : "border-border bg-white text-muted-foreground hover:border-primary/35 hover:text-primary"
                     }`}
                   >
                     {tab.label}
@@ -156,18 +156,18 @@ export default async function PartnerStoriesPage({
           </div>
 
           <aside className="grid gap-4 xl:sticky xl:top-24">
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
               <h2 className="text-lg font-semibold text-primary">Impact themes</h2>
               <div className="mt-3 flex flex-wrap gap-2">
                 {Array.from(new Set(items.flatMap((item) => item.badges).filter(Boolean))).slice(0, 12).map((badge) => (
-                  <span key={badge} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">{formatLabel(badge)}</span>
+                  <span key={badge} className="rounded-full border border-border bg-surface-subtle px-3 py-1 text-xs font-semibold text-muted-foreground">{formatLabel(badge)}</span>
                 ))}
               </div>
             </section>
-            <section className="rounded-lg border border-primary/20 bg-emerald-50/70 p-5 shadow-sm">
+            <section className="rounded-lg border border-primary/20 bg-accent/70 p-5 shadow-sm">
               <Handshake aria-hidden className="h-7 w-7 text-primary" />
               <h2 className="mt-3 font-semibold text-primary">Create the next case study</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Start with the partnership guide, then connect with the research office.</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">Start with the partnership guide, then connect with the research office.</p>
               <Link href="/partners/how-to-partner" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
                 View guide
                 <ArrowRight aria-hidden className="h-4 w-4" />
@@ -178,17 +178,17 @@ export default async function PartnerStoriesPage({
       </section>
 
       {testimonials.length > 0 ? (
-        <section className="border-y border-slate-200 bg-slate-50 px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <section className="border-y border-border bg-surface-subtle px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mx-auto max-w-[1680px]">
             <div className="mb-5 max-w-3xl">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Testimonials</p>
-              <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">Partner profile highlights</h2>
+              <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">Partner profile highlights</h2>
             </div>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {testimonials.map(({ partner, quote }) => (
-                <Link key={partner.id} href={partner.slug ? `/partners/${partner.slug}` : "/partners"} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/35 hover:shadow-md">
+                <Link key={partner.id} href={partner.slug ? `/partners/${partner.slug}` : "/partners"} className="rounded-lg border border-border bg-white p-5 shadow-sm transition hover:border-primary/35 hover:shadow-md">
                   <MessageSquareQuote aria-hidden className="h-6 w-6 text-primary" />
-                  <p className="mt-3 line-clamp-4 text-sm leading-6 text-slate-700">{quote}</p>
+                  <p className="mt-3 line-clamp-4 text-sm leading-6 text-muted-foreground">{quote}</p>
                   <p className="mt-4 text-sm font-semibold text-primary">{getRecordTitle(partner, "Partner")}</p>
                 </Link>
               ))}
@@ -250,20 +250,20 @@ function recordHref(hrefBase: string, record: ResearchGenericRecord) {
 function StoryCard({ item, featured = false }: { item: PartnerStoryItem; featured?: boolean }) {
   const Icon = iconForType(item.type);
   return (
-    <Link href={item.href} className={`group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md ${featured ? "lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center" : ""}`}>
+    <Link href={item.href} className={`group rounded-lg border border-border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md ${featured ? "lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center" : ""}`}>
       <div>
         <div className="flex flex-wrap gap-2">
           <Badge>{item.typeLabel}</Badge>
           {item.badges.slice(0, 2).map((badge) => <Badge key={badge}>{formatLabel(badge)}</Badge>)}
         </div>
         <h3 className={`${featured ? "text-2xl" : "text-lg"} mt-3 font-semibold leading-tight text-primary`}>{item.title}</h3>
-        {item.summary ? <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{item.summary}</p> : null}
+        {item.summary ? <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{item.summary}</p> : null}
       </div>
-      <div className={`${featured ? "mt-5 border-t border-slate-200 pt-4 lg:mt-0 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0" : "mt-4 border-t border-slate-200 pt-3"} flex items-center justify-between gap-4`}>
+      <div className={`${featured ? "mt-5 border-t border-border pt-4 lg:mt-0 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0" : "mt-4 border-t border-border pt-3"} flex items-center justify-between gap-4`}>
         <span>
-          <span className="block text-xs font-semibold uppercase text-slate-500">Partner</span>
-          <span className="mt-1 block text-sm font-semibold text-slate-950">{item.partnerName}</span>
-          {item.date ? <span className="mt-1 block text-xs text-slate-500">{item.date}</span> : null}
+          <span className="block text-xs font-semibold uppercase text-muted-foreground">Partner</span>
+          <span className="mt-1 block text-sm font-semibold text-foreground">{item.partnerName}</span>
+          {item.date ? <span className="mt-1 block text-xs text-muted-foreground">{item.date}</span> : null}
         </span>
         <span className="grid h-11 w-11 place-items-center rounded-md bg-primary/10 text-primary">
           <Icon aria-hidden className="h-5 w-5" />

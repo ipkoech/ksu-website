@@ -9,10 +9,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
-from ...deps import CurrentUser, DbSession, require_scope
+from ...deps import CurrentUser, DbSession, permissions_for_user, require_scope
 from ...models import Slider, SliderGroup
 from ...schemas import SliderCreate, SliderGroupCreate, SliderGroupUpdate, SliderUpdate
-from ...services import SliderGroupService, SliderService
+from ...services import ContentWorkflowService, SliderGroupService, SliderService
+from .content_workflow import authorize_content_workflow_action
 from ._fields import FieldSelection, FieldsDep, build_selector
 
 router = APIRouter()
@@ -122,8 +123,16 @@ async def delete_slider_group(group_id: uuid.UUID, db: DbSession, _: CurrentUser
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
-async def create_slider(data: SliderCreate, db: DbSession, _: CurrentUser):
-    item = await SliderService.create(db, **data.model_dump())
+async def create_slider(data: SliderCreate, db: DbSession, user: CurrentUser):
+    payload = {
+        **data.model_dump(),
+        "workflow_status": "draft",
+        "is_public": False,
+        **ContentWorkflowService.owner_metadata_for_scope(
+            data.scope_type, data.scope_id, is_main=data.is_main,
+        ),
+    }
+    item = await SliderService.create(db, **payload)
     return success(data=item, message="Slider created")
 
 
@@ -137,11 +146,18 @@ async def get_slider(slider_id: uuid.UUID, db: DbSession, _: CurrentUser, fields
 
 
 @router.patch("/{slider_id}", dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
-async def update_slider(slider_id: uuid.UUID, data: SliderUpdate, db: DbSession, _: CurrentUser):
+async def update_slider(slider_id: uuid.UUID, data: SliderUpdate, db: DbSession, user: CurrentUser):
     item = await SliderService.get_by_id(db, slider_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Slider not found")
-    item = await SliderService.update(db, item, **data.model_dump(exclude_unset=True))
+    payload = data.model_dump(exclude_unset=True)
+    current_status = item.workflow_status
+    if current_status in {"submitted", "in_review", "approved", "scheduled"}:
+        authorize_content_workflow_action(user, item, "edit", permissions_for_user(user))
+    await ContentWorkflowService.reset_after_authoring_edit(
+        db, item, "sliders", user.id, changed_fields=payload,
+    )
+    item = await SliderService.update(db, item, **payload)
     return success(data=item, message="Slider updated")
 
 

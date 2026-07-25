@@ -13,8 +13,12 @@ from sqlalchemy.orm import selectinload
 
 from ..core.database import AsyncSessionLocal
 from ..helpers import send_notification_email, send_push, send_sms
-from ..models import Notification, NotificationDelivery
+from ..models import Notification, NotificationDelivery, OutboxEvent
 from ..services import NotificationService
+from ..services.notification import (
+    notification_channels_from_preferences,
+    notification_policy_for_event,
+)
 from .celery_app import celery_app
 
 
@@ -147,3 +151,72 @@ def expire_notifications() -> int:
             return count
 
     return asyncio.run(_expire())
+
+
+async def _consume_event(event_id: uuid.UUID) -> int:
+    async with AsyncSessionLocal() as db:
+        event = await OutboxEvent.get_by_id(db, event_id)
+        if event is None:
+            return 0
+        policy = notification_policy_for_event(event.event_type)
+        if policy is None:
+            return 0
+        audience = policy["audience"]
+        if audience == "actor":
+            recipients = [event.actor_id] if event.actor_id else []
+        elif audience == "cocms":
+            recipients = await NotificationService.resolve_user_ids(
+                db,
+                role_names=["cocms_admin", "corporate_communication_admin"],
+            )
+        else:
+            recipients = await NotificationService.resolve_user_ids(
+                db,
+                audience_scope_type=event.scope_type,
+                audience_scope_id=event.scope_id,
+            )
+
+        created = 0
+        for user_id in recipients:
+            existing = await db.execute(
+                select(Notification.id).where(
+                    Notification.user_id == user_id,
+                    Notification.source_event_id == event.id,
+                )
+            )
+            if existing.scalar_one_or_none() is not None:
+                continue
+            preferences = await NotificationService.notification_preferences(db, user_id)
+            channels = notification_channels_from_preferences(policy, preferences)
+            if not channels:
+                continue
+            notification = await NotificationService.create(
+                db,
+                user_id=user_id,
+                source_event_id=event.id,
+                title=policy["title"],
+                subject=policy["title"],
+                message=policy["message"],
+                notification_type="school_event",
+                priority="high" if "failed" in event.event_type else "normal",
+                action_url=policy.get("action_url"),
+                scope_type=event.scope_type,
+                scope_id=event.scope_id,
+                channels=channels,
+                payload={
+                    "event_id": str(event.id),
+                    "event_type": event.event_type,
+                    "resource_type": event.resource_type,
+                    "resource_id": str(event.resource_id),
+                    **(event.payload or {}),
+                },
+            )
+            await NotificationService.queue_deliveries(db, notification)
+            created += 1
+        await db.commit()
+        return created
+
+
+@celery_app.task(name="main.notifications.consume_event")
+def consume_event_notifications(event_id: str) -> int:
+    return asyncio.run(_consume_event(uuid.UUID(event_id)))

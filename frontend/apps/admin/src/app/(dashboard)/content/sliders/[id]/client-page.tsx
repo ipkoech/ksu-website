@@ -74,10 +74,8 @@ const schema = z
     display_order: z.coerce.number().int().min(0),
     start_datetime: z.string().optional(),
     end_datetime: z.string().optional(),
-    archived_at: z.string().optional(),
     is_main: z.boolean(),
     is_active: z.boolean(),
-    is_public: z.boolean(),
     open_in_new_tab: z.boolean(),
   })
   .refine(
@@ -107,10 +105,8 @@ const defaultValues: FormValues = {
   display_order: 100,
   start_datetime: "",
   end_datetime: "",
-  archived_at: "",
   is_main: false,
   is_active: true,
-  is_public: true,
   open_in_new_tab: false,
 };
 
@@ -128,10 +124,8 @@ const sliderPayloadFieldMap = {
   display_order: ["display_order"],
   start_datetime: ["start_datetime"],
   end_datetime: ["end_datetime"],
-  archived_at: ["archived_at"],
   is_main: ["is_main"],
   is_active: ["is_active"],
-  is_public: ["is_public"],
   open_in_new_tab: ["open_in_new_tab"],
 } satisfies PayloadFieldMap<Partial<Slider>>;
 
@@ -169,10 +163,8 @@ function sliderValues(slider: Slider): FormValues {
     display_order: slider.display_order ?? 100,
     start_datetime: toDateTimeInput(slider.start_datetime),
     end_datetime: toDateTimeInput(slider.end_datetime),
-    archived_at: toDateTimeInput(slider.archived_at),
     is_main: slider.is_main ?? false,
     is_active: slider.is_active ?? true,
-    is_public: slider.is_public ?? true,
     open_in_new_tab: slider.open_in_new_tab ?? false,
   };
 }
@@ -341,10 +333,8 @@ export default function SliderItemsPage() {
       display_order: values.display_order,
       start_datetime: fromDateTimeInput(values.start_datetime),
       end_datetime: fromDateTimeInput(values.end_datetime),
-      archived_at: editingSlider ? fromDateTimeInput(values.archived_at) : undefined,
       is_main: values.is_main,
       is_active: values.is_active,
-      is_public: values.is_public,
       open_in_new_tab: values.open_in_new_tab,
     };
 
@@ -608,11 +598,6 @@ export default function SliderItemsPage() {
                         <FormField control={form.control} name="display_order" render={({ field }) => (
                           <FormItem><FormLabel>Display Order</FormLabel><Input type="number" min={0} {...field} /><FormMessage /></FormItem>
                         )} />
-                        {editingSlider ? (
-                          <FormField control={form.control} name="archived_at" render={({ field }) => (
-                            <FormItem><FormLabel>Archived at</FormLabel><Input type="datetime-local" {...field} /><FormMessage /></FormItem>
-                          )} />
-                        ) : null}
                       </CardContent>
                     </Card>
 
@@ -644,7 +629,7 @@ export default function SliderItemsPage() {
                         <CardTitle className="text-base">Visibility</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-3">
-                        {(["is_active", "is_public", "is_main"] as const).map((name) => (
+                        {(["is_active", "is_main"] as const).map((name) => (
                           <FormField key={name} control={form.control} name={name} render={({ field }) => (
                             <FormItem className="flex items-center justify-between rounded-lg border p-3">
                               <FormLabel className="cursor-pointer">{name.replace(/_/g, " ")}</FormLabel>

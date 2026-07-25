@@ -58,18 +58,18 @@ export function ResearchDetailHero({
     .filter((fact) => fact.value);
   return (
     <>
-      <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <section className="border-b border-border bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mx-auto grid w-full max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-stretch">
           <div className="min-w-0">
             <DetailBreadcrumbs items={breadcrumbs} />
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
               {eyebrow}
             </p>
-            <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+            <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
               {title}
             </h1>
             {body ? (
-              <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">
+              <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">
                 {body}
               </p>
             ) : null}
@@ -102,7 +102,7 @@ export function ResearchDetailHero({
             </div>
           </div>
 
-          <div className="relative hidden min-h-[220px] overflow-hidden rounded-lg border border-slate-200 bg-slate-100 shadow-sm lg:block">
+          <div className="relative hidden min-h-[220px] overflow-hidden rounded-lg border border-border bg-surface-muted shadow-sm lg:block">
             <Image
               src={imageSrc}
               alt={imageAlt || title}
@@ -115,14 +115,14 @@ export function ResearchDetailHero({
       </section>
 
       {cleanFacts.length > 0 ? (
-        <section className="border-b border-slate-200 bg-slate-50 px-4 py-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <section className="border-b border-border bg-surface-subtle px-4 py-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <dl className="mx-auto grid w-full max-w-[1680px] gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {cleanFacts.slice(0, 6).map((fact) => (
-              <div key={fact.label} className="min-w-0 rounded-md border border-slate-200 bg-white px-3 py-2">
-                <dt className="text-[11px] font-semibold uppercase text-slate-500">
+              <div key={fact.label} className="min-w-0 rounded-md border border-border bg-white px-3 py-2">
+                <dt className="text-[11px] font-semibold uppercase text-muted-foreground">
                   {fact.label}
                 </dt>
-                <dd className="mt-1 break-words text-sm font-semibold leading-6 text-slate-950 [overflow-wrap:anywhere]">
+                <dd className="mt-1 break-words text-sm font-semibold leading-6 text-foreground [overflow-wrap:anywhere]">
                   {fact.value}
                 </dd>
               </div>
@@ -231,13 +231,13 @@ function DetailTextSection({
   if (entries.length === 0) return null;
 
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">{section.title}</h2>
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{section.title}</h2>
       <div className="mt-4 flex flex-col gap-4">
         {entries.map((entry) => (
           <div key={entry.label}>
-            <p className="text-xs font-semibold uppercase text-slate-500">{entry.label}</p>
-            <p className="mt-1 break-words whitespace-pre-line text-sm leading-7 text-slate-600">
+            <p className="text-xs font-semibold uppercase text-muted-foreground">{entry.label}</p>
+            <p className="mt-1 break-words whitespace-pre-line text-sm leading-7 text-muted-foreground">
               {entry.value}
             </p>
           </div>
@@ -257,7 +257,7 @@ function DetailBreadcrumbs({
   return (
     <nav
       aria-label="Breadcrumb"
-      className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500"
+      className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground"
     >
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
@@ -268,9 +268,9 @@ function DetailBreadcrumbs({
                 {item.label}
               </Link>
             ) : (
-              <span className={isLast ? "text-slate-900" : undefined}>{item.label}</span>
+              <span className={isLast ? "text-foreground" : undefined}>{item.label}</span>
             )}
-            {!isLast ? <span className="text-slate-300">/</span> : null}
+            {!isLast ? <span className="text-muted-foreground/60">/</span> : null}
           </span>
         );
       })}
@@ -292,23 +292,23 @@ export function ResearchTextPanel({
     .filter(([, value]) => value);
 
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">
         {title}
       </h2>
       {entries.length > 0 ? (
         <div className="mt-4 flex flex-col gap-4">
           {entries.map(([label, value]) => (
             <div key={label}>
-              <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
-              <p className="mt-1 break-words whitespace-pre-line text-sm leading-7 text-slate-600">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">{label}</p>
+              <p className="mt-1 break-words whitespace-pre-line text-sm leading-7 text-muted-foreground">
                 {value}
               </p>
             </div>
           ))}
         </div>
       ) : (
-        <p className="mt-3 text-sm leading-7 text-slate-600">{empty}</p>
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">{empty}</p>
       )}
     </section>
   );
@@ -316,9 +316,9 @@ export function ResearchTextPanel({
 
 export function ResearchFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-md bg-slate-50 p-3">
-      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 break-words font-semibold text-slate-950 [overflow-wrap:anywhere]">
+    <div className="min-w-0 rounded-md bg-surface-subtle p-3">
+      <dt className="text-xs font-semibold uppercase text-muted-foreground">{label}</dt>
+      <dd className="mt-1 break-words font-semibold text-foreground [overflow-wrap:anywhere]">
         {value || "Not published"}
       </dd>
     </div>
@@ -362,7 +362,7 @@ export function ResearchDetailSidebar({
   }
 
   return (
-    <aside className="h-fit min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <aside className="h-fit min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
       {cleanLabels.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {cleanLabels.map((label) => (
@@ -398,13 +398,13 @@ export function ResearchSidePanel({
   children: ReactNode;
 }) {
   return (
-    <aside className="h-fit min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <aside className="h-fit min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
       {eyebrow ? (
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
           {eyebrow}
         </p>
       ) : null}
-      <h2 className={eyebrow ? "mt-3 text-xl font-semibold text-slate-950" : "text-xl font-semibold text-slate-950"}>
+      <h2 className={eyebrow ? "mt-3 text-xl font-semibold text-foreground" : "text-xl font-semibold text-foreground"}>
         {title}
       </h2>
       <div className="mt-4">{children}</div>
@@ -424,8 +424,8 @@ export function ResearchRecordPanel({
   empty?: string;
 }) {
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
       <div className="mt-4 divide-y divide-slate-200">
         {records.slice(0, 8).map((record, index) => (
           <SimpleRecordItem
@@ -436,7 +436,7 @@ export function ResearchRecordPanel({
           />
         ))}
         {records.length === 0 ? (
-          <p className="py-4 text-sm text-slate-600">{empty}</p>
+          <p className="py-4 text-sm text-muted-foreground">{empty}</p>
         ) : null}
       </div>
     </section>
@@ -453,11 +453,11 @@ export function ResearchRecordGrid({
   return (
     <div className="grid gap-5 lg:grid-cols-3">
       {records.map((record, index) => (
-        <article key={record.id ?? index} className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-base font-semibold text-slate-950">
+        <article key={record.id ?? index} className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+          <h2 className="text-base font-semibold text-foreground">
             {record.name ?? record.title ?? record.file_name ?? record.document_name ?? `File ${index + 1}`}
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
             {compactText(record.description) ||
               compactText(record.summary) ||
               compactText(record.caption) ||
@@ -487,11 +487,11 @@ export function ResearchRelationshipCard({
   empty: string;
 }) {
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
       {record ? (
         <>
-          <h3 className="mt-4 text-base font-semibold text-slate-950">
+          <h3 className="mt-4 text-base font-semibold text-foreground">
             {record.slug ? (
               <Link href={`${hrefBase}/${record.slug}`} className="transition hover:text-primary">
                 {record.name ?? record.title}
@@ -500,7 +500,7 @@ export function ResearchRelationshipCard({
               record.name ?? record.title
             )}
           </h3>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-sm leading-7 text-muted-foreground">
             {compactText(record.summary) ||
               compactText(record.about) ||
               compactText(record.description) ||
@@ -508,7 +508,7 @@ export function ResearchRelationshipCard({
           </p>
         </>
       ) : (
-        <p className="mt-3 text-sm leading-7 text-slate-600">{empty}</p>
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">{empty}</p>
       )}
     </section>
   );
@@ -536,7 +536,7 @@ function SimpleRecordItem({
 
   return (
     <article className="py-4 first:pt-0 last:pb-0">
-      <h3 className="text-base font-semibold text-slate-950">
+      <h3 className="text-base font-semibold text-foreground">
         {hrefBase && record.slug ? (
           <Link href={`${hrefBase}/${record.slug}`} className="transition hover:text-primary">
             {title}
@@ -545,7 +545,7 @@ function SimpleRecordItem({
           title
         )}
       </h3>
-      <p className="mt-2 text-sm leading-6 text-slate-600">
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">
         {compactText(record.motivation) ||
           compactText(record.goals) ||
           compactText(record.role) ||

@@ -56,7 +56,7 @@ export default async function GuidelinesPage({ searchParams }: { searchParams?: 
         {visibleGuidelines.length ? (
           <>
             {featuredGuideline ? <div className="mt-6"><FeaturedGuideline item={featuredGuideline} /></div> : null}
-            <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">{rowGuidelines.map((item) => <GuidelineRow key={item.id} item={item} hrefBase="/guidelines" />)}</div>
+            <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-border bg-white shadow-sm">{rowGuidelines.map((item) => <GuidelineRow key={item.id} item={item} hrefBase="/guidelines" />)}</div>
           </>
         ) : <div className="mt-7"><StatusMessage>No guidelines match the current filters.</StatusMessage></div>}
       </ResearchSection>
@@ -76,26 +76,26 @@ function GuidelinesMasthead({ resultCount, publishedCount, grantGuidanceCount, c
   ];
 
   return (
-    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <section className="border-b border-border bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
         <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
             <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-slate-300">/</span>
+            <span className="text-muted-foreground/60">/</span>
             <Link href="/funding" className="transition hover:text-primary">Funding</Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">Guidelines</span>
+            <span className="text-muted-foreground/60">/</span>
+            <span className="text-foreground">Guidelines</span>
           </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Research Support</p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">Controlled documents for research policy, procedure, grant work, and compliance</h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">Scan active guidance by version, effective date, review window, status, and mandatory flag.</p>
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">Controlled documents for research policy, procedure, grant work, and compliance</h1>
+          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">Scan active guidance by version, effective date, review window, status, and mandatory flag.</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <PrimaryLink href="/forms">Open forms</PrimaryLink>
             <SecondaryLink href="/funding">View funding</SecondaryLink>
           </div>
         </div>
         <dl className="grid gap-2 sm:grid-cols-2">
-          {stats.map((stat) => <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2"><dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt><dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd></div>)}
+          {stats.map((stat) => <div key={stat.label} className="rounded-md border border-border bg-surface-subtle px-3 py-2"><dt className="text-[11px] font-semibold uppercase text-muted-foreground">{stat.label}</dt><dd className="mt-1 text-lg font-semibold text-foreground">{stat.value}</dd></div>)}
         </dl>
       </div>
     </section>
@@ -133,12 +133,12 @@ function FeaturedGuideline({ item }: { item: ResearchGenericRecord }) {
           {item.is_mandatory ? <FilledBadge>Mandatory</FilledBadge> : null}
           {item.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
         </div>
-        <h2 className="mt-3 text-lg font-semibold leading-7 text-slate-950">{getRecordTitle(item, "Research guideline")}</h2>
-        <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{getRecordSummary(item) || compactText(item.scope) || "Guideline summary has not been published yet."}</p>
+        <h2 className="mt-3 text-lg font-semibold leading-7 text-foreground">{getRecordTitle(item, "Research guideline")}</h2>
+        <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{getRecordSummary(item) || compactText(item.scope) || "Guideline summary has not been published yet."}</p>
       </div>
       <dl className="grid gap-2 text-sm">
-        <div className="rounded-md bg-white p-2.5"><dt className="text-xs font-semibold uppercase text-slate-500">Effective</dt><dd className="mt-1 font-semibold text-slate-950">{formatDate(item.effective_date) || "Not published"}</dd></div>
-        <div className="rounded-md bg-white p-2.5"><dt className="text-xs font-semibold uppercase text-slate-500">Review</dt><dd className="mt-1 font-semibold text-slate-950">{formatDate(item.review_date) || "Not published"}</dd></div>
+        <div className="rounded-md bg-white p-2.5"><dt className="text-xs font-semibold uppercase text-muted-foreground">Effective</dt><dd className="mt-1 font-semibold text-foreground">{formatDate(item.effective_date) || "Not published"}</dd></div>
+        <div className="rounded-md bg-white p-2.5"><dt className="text-xs font-semibold uppercase text-muted-foreground">Review</dt><dd className="mt-1 font-semibold text-foreground">{formatDate(item.review_date) || "Not published"}</dd></div>
       </dl>
       <span className="inline-flex min-h-10 items-center justify-center rounded-md border border-primary/20 px-3 text-sm font-semibold text-primary transition group-hover:bg-primary group-hover:text-white">Open guideline</span>
     </Link>
@@ -164,7 +164,7 @@ function GuidelineRow({ item, hrefBase }: { item: ResearchGenericRecord; hrefBas
 
 function GuidelineCard({ item }: { item: ResearchGenericRecord }) {
   const downloadHref = getResearchRecordDownloadHref(item, "guideline");
-  return <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><Badge>{formatLabel(item.guideline_type ?? "grant guidance")}</Badge><h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">{item.title ?? "Grant guideline"}</h2><p className="mt-3 text-sm leading-7 text-slate-600">{compactText(item.summary) || compactText(item.description) || "Grant guidance details are not published yet."}</p>{downloadHref ? <a href={downloadHref} className="mt-4 inline-flex text-sm font-semibold text-primary">Download document</a> : null}</article>;
+  return <article className="rounded-lg border border-border bg-white p-5 shadow-sm"><Badge>{formatLabel(item.guideline_type ?? "grant guidance")}</Badge><h2 className="mt-4 text-xl font-semibold leading-7 text-foreground">{item.title ?? "Grant guideline"}</h2><p className="mt-3 text-sm leading-7 text-muted-foreground">{compactText(item.summary) || compactText(item.description) || "Grant guidance details are not published yet."}</p>{downloadHref ? <a href={downloadHref} className="mt-4 inline-flex text-sm font-semibold text-primary">Download document</a> : null}</article>;
 }
 
 function getActiveFlags(value?: string) {

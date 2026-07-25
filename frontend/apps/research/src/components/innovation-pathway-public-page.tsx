@@ -281,9 +281,9 @@ export async function InnovationPathwayPublicPage({
   const context = buildContextMaps(innovations.data, partners.data, startups.data);
 
   return (
-    <main id="research-main" className="min-h-screen bg-white text-slate-950">
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
       <PathwayHero config={config} />
-      <section className="bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_48%,#ffffff_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <section className="bg-[linear-gradient(180deg,#ffffff_0%,hsl(var(--surface-subtle))_48%,#ffffff_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mx-auto grid max-w-[1680px] gap-6 xl:grid-cols-[minmax(0,1fr)_350px] xl:items-start">
           <div className="min-w-0">
             <PathwayFilters
@@ -313,10 +313,10 @@ export async function InnovationPathwayPublicPage({
             {visibleRecords.length > 0 ? (
               <>
                 <div className="mt-5 flex items-center justify-between gap-4">
-                  <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
+                  <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">
                     {config.allTitle}
                   </h2>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     {visibleRecords.length} shown
                   </p>
                 </div>
@@ -359,11 +359,11 @@ export async function InnovationPathwayPublicPage({
 function PathwayHero({ config }: { config: PathwayPageConfig }) {
   const Icon = config.heroIcon;
   return (
-    <section className="relative isolate overflow-hidden bg-[#061A36] px-4 py-6 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div aria-hidden className="absolute inset-0 bg-[linear-gradient(110deg,#061A36_0%,#07315f_45%,#07543f_100%)]" />
+    <section className="relative isolate overflow-hidden bg-[hsl(var(--brand-overlay))] px-4 py-6 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <div aria-hidden className="absolute inset-0 bg-[linear-gradient(110deg,hsl(var(--brand-overlay))_0%,hsl(var(--primary)/.82)_45%,hsl(var(--primary)/.62)_100%)]" />
       <div aria-hidden className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:44px_44px] opacity-60" />
       <PathwayHeroArt kind={config.kind} />
-      <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[#061A36]/92 via-[#061A36]/62 to-[#061A36]/10" />
+      <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--brand-overlay))]/92 via-[hsl(var(--brand-overlay))]/62 to-[hsl(var(--brand-overlay))]/10" />
       <div className="relative mx-auto flex min-h-[200px] max-w-[1680px] items-center py-2">
         <div className="max-w-2xl">
           <p className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white">
@@ -407,7 +407,7 @@ function PathwayHeroArt({ kind }: { kind: PathwayKind }) {
   const isIncubation = kind === "incubation";
   return (
     <svg aria-hidden viewBox="0 0 1100 300" className="absolute right-0 top-1/2 hidden h-full w-[72%] -translate-y-1/2 opacity-90 lg:block" fill="none">
-      <g stroke="#FDE68A" strokeOpacity="0.42" strokeWidth="1.5">
+      <g stroke="hsl(var(--secondary))" strokeOpacity="0.42" strokeWidth="1.5">
         <circle cx="120" cy="150" r="70" />
         <path d="M120 205V91M120 154c-31-9-50-31-57-66 38 2 61 22 57 66Zm0-8c29-13 49-38 56-73-38 5-61 28-56 73Z" />
         {isCompetition ? (
@@ -433,7 +433,7 @@ function PathwayHeroArt({ kind }: { kind: PathwayKind }) {
       <g stroke="#10B981" strokeOpacity="0.36">
         <path d="M220 150h120M592 150h100M840 150h74M1018 130h70" />
         {[220, 340, 592, 692, 840, 914, 1018, 1088].map((x, index) => (
-          <circle key={`${kind}-${x}`} cx={x} cy={index % 2 ? 130 : 150} r="7" fill="#061A36" stroke="#FDE68A" />
+          <circle key={`${kind}-${x}`} cx={x} cy={index % 2 ? 130 : 150} r="7" fill="hsl(var(--brand-overlay))" stroke="hsl(var(--secondary))" />
         ))}
       </g>
     </svg>
@@ -536,10 +536,10 @@ function PathwayFeaturedCard({
   context: ContextMaps;
 }) {
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <article className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
       <div className="grid lg:grid-cols-[250px_minmax(0,1fr)_310px]">
         <PathwayVisual config={config} featured label={config.featuredLabel} />
-        <div className="border-y border-slate-200 p-5 lg:border-x lg:border-y-0">
+        <div className="border-y border-border p-5 lg:border-x lg:border-y-0">
           <div className="flex flex-wrap gap-2">
             {primaryBadge(config.kind, record) ? <Badge>{primaryBadge(config.kind, record)}</Badge> : null}
             {secondaryBadge(config.kind, record) ? <FilledBadge>{secondaryBadge(config.kind, record)}</FilledBadge> : null}
@@ -547,7 +547,7 @@ function PathwayFeaturedCard({
           <h2 className="mt-3 text-2xl font-semibold leading-tight text-primary">
             {getRecordTitle(record, config.allTitle)}
           </h2>
-          <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-700">
+          <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">
             {pathwaySummary(config.kind, record)}
           </p>
           <PathwayProgress kind={config.kind} record={record} className="mt-7" />
@@ -581,9 +581,9 @@ function PathwayRecordCard({
   context: ContextMaps;
 }) {
   return (
-    <article className="grid min-h-[158px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md sm:grid-cols-[112px_minmax(0,1fr)_170px]">
+    <article className="grid min-h-[158px] overflow-hidden rounded-lg border border-border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md sm:grid-cols-[112px_minmax(0,1fr)_170px]">
       <PathwayVisual config={config} />
-      <div className="min-w-0 border-y border-slate-200 p-4 sm:border-x sm:border-y-0">
+      <div className="min-w-0 border-y border-border p-4 sm:border-x sm:border-y-0">
         <div className="flex flex-wrap gap-1.5">
           {primaryBadge(config.kind, record) ? <Badge>{primaryBadge(config.kind, record)}</Badge> : null}
           {secondaryBadge(config.kind, record) ? <FilledBadge>{secondaryBadge(config.kind, record)}</FilledBadge> : null}
@@ -591,7 +591,7 @@ function PathwayRecordCard({
         <h3 className="mt-2 line-clamp-2 text-base font-semibold leading-6 text-primary">
           {getRecordTitle(record, config.allTitle)}
         </h3>
-        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">
+        <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
           {pathwaySummary(config.kind, record)}
         </p>
         <PathwayProgress kind={config.kind} record={record} compact className="mt-3" />
@@ -611,7 +611,7 @@ function PathwayRecordCard({
 function PathwayVisual({ config, featured = false, label }: { config: PathwayPageConfig; featured?: boolean; label?: string }) {
   const Icon = config.heroIcon;
   return (
-    <div className={`relative min-h-[118px] overflow-hidden bg-[linear-gradient(135deg,#061A36,#06543f)] ${featured ? "lg:min-h-[230px]" : ""}`}>
+    <div className={`relative min-h-[118px] overflow-hidden bg-[linear-gradient(135deg,hsl(var(--brand-overlay)),hsl(var(--primary)/.62))] ${featured ? "lg:min-h-[230px]" : ""}`}>
       {label ? (
         <span className="absolute left-3 top-3 z-10 rounded bg-primary px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
           {label}
@@ -637,14 +637,14 @@ function PathwayProgress({ kind, record, compact = false, className = "" }: { ki
         return (
           <div key={step} className="contents">
             <div className="grid justify-items-center gap-1">
-              <span className={`${compact ? "h-6 w-6" : "h-9 w-9"} grid place-items-center rounded-full border text-[10px] font-bold ${active ? "border-primary bg-primary text-white" : "border-slate-200 bg-white text-slate-500"}`}>
+              <span className={`${compact ? "h-6 w-6" : "h-9 w-9"} grid place-items-center rounded-full border text-[10px] font-bold ${active ? "border-primary bg-primary text-white" : "border-border bg-white text-muted-foreground"}`}>
                 {index + 1}
               </span>
-              <span className={`${compact ? "text-[9px]" : "text-[11px]"} text-center font-semibold text-slate-700`}>
+              <span className={`${compact ? "text-[9px]" : "text-[11px]"} text-center font-semibold text-muted-foreground`}>
                 {step}
               </span>
             </div>
-            {index < steps.length - 1 ? <span className="mt-2 text-center text-xs font-semibold text-slate-400">→</span> : null}
+            {index < steps.length - 1 ? <span className="mt-2 text-center text-xs font-semibold text-muted-foreground/70">→</span> : null}
           </div>
         );
       })}
@@ -655,27 +655,27 @@ function PathwayProgress({ kind, record, compact = false, className = "" }: { ki
 function PathwayAside({ config }: { config: PathwayPageConfig }) {
   return (
     <aside className="grid gap-4 xl:sticky xl:top-24">
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-primary">{config.rightTitle}</h2>
         <div className="mt-4 space-y-4">
           {config.rightRows.map((row, index) => {
             const Icon = row.icon;
             return (
               <div key={row.label} className="grid grid-cols-[42px_22px_minmax(0,1fr)] items-start gap-3">
-                <span className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 text-primary">
+                <span className="grid h-10 w-10 place-items-center rounded-full border border-border text-primary">
                   <Icon aria-hidden className="h-5 w-5" />
                 </span>
-                <span className="pt-2 text-sm font-semibold text-slate-700">{index + 1}</span>
+                <span className="pt-2 text-sm font-semibold text-muted-foreground">{index + 1}</span>
                 <span>
                   <span className="block font-semibold text-primary">{row.label}</span>
-                  <span className="mt-1 block text-xs leading-5 text-slate-600">{row.body}</span>
+                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">{row.body}</span>
                 </span>
               </div>
             );
           })}
         </div>
       </section>
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-primary">Quick paths</h2>
         <div className="mt-2 divide-y divide-slate-200">
           {config.quickLinks.map((link) => (
@@ -686,12 +686,12 @@ function PathwayAside({ config }: { config: PathwayPageConfig }) {
           ))}
         </div>
       </section>
-      <section className="rounded-lg border border-primary/20 bg-emerald-50/70 p-5 shadow-sm">
+      <section className="rounded-lg border border-primary/20 bg-accent/70 p-5 shadow-sm">
         <div className="flex gap-3">
           <Handshake aria-hidden className="mt-1 h-6 w-6 shrink-0 text-primary" />
           <div>
             <h2 className="font-semibold text-primary">{config.ctaTitle}</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">{config.ctaBody}</p>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">{config.ctaBody}</p>
             <div className="mt-4 flex flex-wrap gap-3">
               {config.ctaLinks.map((link) => (
                 <Link key={link.href} href={link.href} className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-secondary">
@@ -878,7 +878,7 @@ function StoryFact({ label, value }: { label: string; value: string }) {
   return (
     <div className="py-3 first:pt-0">
       <dt className="font-semibold text-primary">{label}</dt>
-      <dd className="mt-1 line-clamp-2 leading-5 text-slate-600">{value}</dd>
+      <dd className="mt-1 line-clamp-2 leading-5 text-muted-foreground">{value}</dd>
     </div>
   );
 }
@@ -888,7 +888,7 @@ function MiniMeta({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="font-semibold text-primary">{label}</p>
-      <p className="mt-0.5 line-clamp-2 leading-4 text-slate-500">{value}</p>
+      <p className="mt-0.5 line-clamp-2 leading-4 text-muted-foreground">{value}</p>
     </div>
   );
 }

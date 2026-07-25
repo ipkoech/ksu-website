@@ -118,7 +118,7 @@ export function ResearchFilterForm({
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="rounded-lg border border-border bg-white p-3 shadow-sm">
       <div className="flex flex-col gap-3">
         <form id={formId} action={action} className="flex gap-2 md:gap-3">
           <ResearchTextField
@@ -226,12 +226,12 @@ export function ResearchSelectField({
 }: ResearchSelectFieldProps) {
   return (
     <label className={`block min-w-0 ${className}`}>
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
+      <span className="text-xs font-semibold uppercase text-muted-foreground">{label}</span>
       <select
         form={formId}
         name={name}
         defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
+        className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
       >
         {includeAllOption ? <option value="">{allLabel ?? `All ${label.toLowerCase()}`}</option> : null}
         {normalizeOptions(options).map((option) => (
@@ -261,12 +261,12 @@ function ResearchTextField({
 
   return (
     <label className={`block min-w-0 ${className}`}>
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
+      <span className="text-xs font-semibold uppercase text-muted-foreground">{label}</span>
       <span className="relative mt-2 block">
         {isSearch ? (
           <Search
             aria-hidden
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70"
           />
         ) : null}
         <input
@@ -276,7 +276,7 @@ function ResearchTextField({
           defaultValue={value ?? ""}
           placeholder={placeholder}
           autoComplete="off"
-          className={`h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4 ${
+          className={`h-11 w-full rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground outline-none ring-primary/20 transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4 ${
             isSearch ? "pl-9" : ""
           }`}
         />
@@ -323,7 +323,7 @@ export function ResearchListCard({
   const cleanFilledBadges = uniqueDisplayValues(filledBadges.map((badge) => compactText(badge)));
 
   return (
-    <article className="group flex min-h-[220px] flex-col rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:shadow-[0_20px_50px_-42px_rgba(15,23,42,0.45)]">
+    <article className="group flex min-h-[220px] flex-col rounded-lg border border-border bg-white p-4 shadow-sm transition hover:border-primary/30 hover:shadow-[0_20px_50px_-42px_rgba(15,23,42,0.45)]">
       <div className="flex flex-wrap gap-2">
         {cleanBadges.map((badge) => (
           <Badge key={badge}>{badge}</Badge>
@@ -337,12 +337,12 @@ export function ResearchListCard({
           </span>
         ))}
       </div>
-      <h2 className="mt-3 text-pretty text-lg font-semibold leading-7 text-slate-950">
+      <h2 className="mt-3 text-pretty text-lg font-semibold leading-7 text-foreground">
         <Link href={href} className="rounded-sm transition hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
           {title}
         </Link>
       </h2>
-      <p className="mt-2 line-clamp-3 text-pretty text-sm leading-6 text-slate-600">{description}</p>
+      <p className="mt-2 line-clamp-3 text-pretty text-sm leading-6 text-muted-foreground">{description}</p>
       {facts.length > 0 ? (
         <dl className="mt-auto grid grid-cols-2 gap-2 pt-4 text-sm">
           {facts.map((fact) => (
@@ -356,9 +356,9 @@ export function ResearchListCard({
 
 export function ResearchListingFact({ label, value }: ListingFact) {
   return (
-    <div className="rounded-md bg-slate-50 p-2.5">
-      <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 break-words font-semibold text-slate-950">
+    <div className="rounded-md bg-surface-subtle p-2.5">
+      <dt className="text-xs font-semibold uppercase text-muted-foreground">{label}</dt>
+      <dd className="mt-1 break-words font-semibold text-foreground">
         {value || "Not published"}
       </dd>
     </div>
@@ -386,7 +386,7 @@ export function ResearchRecordRow({
   const cleanFilledBadges = uniqueDisplayValues(filledBadges.map((badge) => compactText(badge)));
 
   return (
-    <article className="group grid gap-4 p-4 transition hover:bg-slate-50/70 lg:grid-cols-[minmax(0,1fr)_260px_auto] lg:items-center">
+    <article className="group grid gap-4 p-4 transition hover:bg-surface-subtle/70 lg:grid-cols-[minmax(0,1fr)_260px_auto] lg:items-center">
       <div>
         <div className="flex flex-wrap gap-2">
           {cleanBadges.map((badge) => (
@@ -401,12 +401,12 @@ export function ResearchRecordRow({
             </span>
           ))}
         </div>
-        <h2 className="mt-3 text-pretty text-lg font-semibold leading-7 text-slate-950">
+        <h2 className="mt-3 text-pretty text-lg font-semibold leading-7 text-foreground">
           <Link href={href} className="rounded-sm transition hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
             {title}
           </Link>
         </h2>
-        <p className="mt-2 line-clamp-2 text-pretty text-sm leading-6 text-slate-600">{description}</p>
+        <p className="mt-2 line-clamp-2 text-pretty text-sm leading-6 text-muted-foreground">{description}</p>
       </div>
       <dl className="grid gap-2 text-sm">
         {facts.map((fact) => (
@@ -416,7 +416,7 @@ export function ResearchRecordRow({
       <Link
         href={href}
         aria-label="Open item"
-        className="hidden h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-white text-primary transition group-hover:border-primary/30 group-hover:bg-primary group-hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 lg:inline-flex"
+        className="hidden h-10 w-10 items-center justify-center rounded-md border border-border bg-white text-primary transition group-hover:border-primary/30 group-hover:bg-primary group-hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 lg:inline-flex"
       >
         <ArrowRight aria-hidden className="h-4 w-4" />
       </Link>
@@ -478,7 +478,7 @@ export function GenericRecordList({
   const visibleRecords = limit ? records.data.slice(0, limit) : records.data;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
       {records.error || error ? (
         <StatusMessage tone="error">{records.error || error}</StatusMessage>
       ) : null}
@@ -492,11 +492,11 @@ export function GenericRecordList({
               ))}
             </div>
             ) : null}
-            <h3 className="mt-3 text-base font-semibold leading-6 text-slate-950">
+            <h3 className="mt-3 text-base font-semibold leading-6 text-foreground">
               {getRecordTitle(record)}
             </h3>
             {getRecordDescription(record, descriptionFields) ? (
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {getRecordDescription(record, descriptionFields)}
               </p>
             ) : null}
@@ -534,16 +534,16 @@ function GenericRecordCard({
           ))}
         </div>
       ) : null}
-      <h2 className="mt-4 text-pretty text-xl font-semibold leading-7 text-slate-950">
+      <h2 className="mt-4 text-pretty text-xl font-semibold leading-7 text-foreground">
         {getRecordTitle(record)}
       </h2>
       {getRecordDescription(record, descriptionFields) ? (
-        <p className="mt-3 text-pretty text-sm leading-7 text-slate-600">
+        <p className="mt-3 text-pretty text-sm leading-7 text-muted-foreground">
           {getRecordDescription(record, descriptionFields)}
         </p>
       ) : null}
       {meta.length > 0 ? (
-        <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
+        <p className="mt-5 rounded-md bg-surface-subtle p-3 text-sm font-semibold text-muted-foreground">
           {meta.join(" · ")}
         </p>
       ) : null}
@@ -553,12 +553,12 @@ function GenericRecordCard({
   return href ? (
     <Link
       href={href}
-      className="block rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:shadow-[0_20px_50px_-42px_rgba(15,23,42,0.45)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+      className="block rounded-lg border border-border bg-white p-4 shadow-sm transition hover:border-primary/30 hover:shadow-[0_20px_50px_-42px_rgba(15,23,42,0.45)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
     >
       {content}
     </Link>
   ) : (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="rounded-lg border border-border bg-white p-4 shadow-sm">
       {content}
     </article>
   );

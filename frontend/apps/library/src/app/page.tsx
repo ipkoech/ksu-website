@@ -133,14 +133,14 @@ export default async function LibraryPage() {
             />
           </div>
           <SidePanel title="Library contact point" eyebrow="Support desk">
-            <h3 className="text-xl font-semibold text-slate-950">
+            <h3 className="text-xl font-semibold text-foreground">
               {primaryBranch?.name ?? "Kisii University Library"}
             </h3>
-            <p className="mt-3 text-sm leading-7 text-slate-600">
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
               {compactText(primaryBranch?.description) ||
                 "Branch and service information is maintained by the library team."}
             </p>
-            <dl className="mt-5 grid gap-3 text-sm text-slate-600">
+            <dl className="mt-5 grid gap-3 text-sm text-muted-foreground">
               <Meta label="Location" value={primaryBranch?.address} />
               <Meta label="Phone" value={primaryBranch?.phone} />
               <Meta label="Email" value={primaryBranch?.email} />
@@ -290,9 +290,9 @@ function RecordPanel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-4">
-        <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
+        <h3 className="text-lg font-semibold text-foreground">{title}</h3>
         <a href={href} className="text-sm font-semibold text-primary">
           Open
         </a>
@@ -301,7 +301,7 @@ function RecordPanel({
         {Children.count(children) > 0 ? (
           children
         ) : (
-          <p className="py-4 text-sm text-slate-600">No records available.</p>
+          <p className="py-4 text-sm text-muted-foreground">No records available.</p>
         )}
       </div>
     </section>
@@ -318,13 +318,13 @@ function OverviewList({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       <div className="mt-4 divide-y divide-slate-200">
         {Children.count(children) > 0 ? (
           children
         ) : (
-          <p className="py-4 text-sm text-slate-600">{empty}</p>
+          <p className="py-4 text-sm text-muted-foreground">{empty}</p>
         )}
       </div>
     </section>
@@ -342,9 +342,9 @@ function RecordRow({
 
   return (
     <article className="py-4">
-      <h4 className="text-sm font-semibold leading-6 text-slate-950">{title}</h4>
+      <h4 className="text-sm font-semibold leading-6 text-foreground">{title}</h4>
       {details.length > 0 ? (
-        <p className="mt-1 text-xs leading-5 text-slate-500">
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
           {details.join(" · ")}
         </p>
       ) : null}
@@ -363,7 +363,7 @@ function Meta({
 
   return (
     <div>
-      <dt className="font-semibold text-slate-950">{label}</dt>
+      <dt className="font-semibold text-foreground">{label}</dt>
       <dd className="mt-1">{value}</dd>
     </div>
   );

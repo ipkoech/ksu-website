@@ -74,7 +74,7 @@ export default async function ConsultancyDetailPage({
           { label: "Back to consultancies", href: "/consultancies", variant: "secondary" },
           ...(partner?.slug ? [{ label: "View partner", href: `/partners/${partner.slug}` }] : []),
         ]}
-        imageSrc="/images/research/research-about-hero.svg"
+        imageSrc={compactText(consultancy.cover_image_url) || "/images/research/research-about-hero.webp"}
         imageAlt="Consultancy engagement profile and deliverables"
       />
 
@@ -94,8 +94,8 @@ export default async function ConsultancyDetailPage({
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
-            <ConsultancyStory sections={storySections} />
-            <ResearchRecordPanel title="Documents and outputs" records={documents} empty="No public consultancy documents are published yet." />
+            <ConsultancyStoryPanel sections={storySections} />
+            {documents.length > 0 ? <ResearchRecordPanel title="Documents and outputs" records={documents} /> : null}
           </div>
           <ResearchDetailSidebar
             labels={[consultancy.consultancy_type ?? "consultancy", consultancy.client_type, consultancy.status]}
@@ -121,15 +121,15 @@ export default async function ConsultancyDetailPage({
         <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-4">
           <ContextCard title="Partner" record={partner} hrefBase="/partners" empty="No public partner is linked." />
           <ContextCard title="Center" record={center} hrefBase="/centers" empty="No public center is linked." />
-          <ResearchRecordPanel title="Team" records={team} />
-          <ResearchRecordPanel title="Documents" records={documents} />
+          {team.length > 0 ? <ResearchRecordPanel title="Team" records={team} /> : null}
+          {documents.length > 0 ? <ResearchRecordPanel title="Documents" records={documents} /> : null}
         </div>
       </ResearchSection>
     </main>
   );
 }
 
-function ConsultancyStory({ sections }: { sections: Array<{ title: string; body: string }> }) {
+function ConsultancyStoryPanel({ sections }: { sections: Array<{ title: string; body: string }> }) {
   return (
     <ResearchStoryAccordion
       sections={sections}
@@ -150,11 +150,11 @@ function ContextCard({
   empty: string;
 }) {
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
       {record ? (
         <>
-          <h3 className="mt-4 text-base font-semibold text-slate-950">
+          <h3 className="mt-4 text-base font-semibold text-foreground">
             {record.slug ? (
               <Link href={`${hrefBase}/${record.slug}`} className="transition hover:text-primary">
                 {getRecordTitle(record, title)}
@@ -164,11 +164,11 @@ function ContextCard({
             )}
           </h3>
           {getRecordSummary(record) ? (
-            <p className="mt-2 text-sm leading-7 text-slate-600">{getRecordSummary(record)}</p>
+            <p className="mt-2 text-sm leading-7 text-muted-foreground">{getRecordSummary(record)}</p>
           ) : null}
         </>
       ) : (
-        <p className="mt-3 text-sm leading-7 text-slate-600">{empty}</p>
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">{empty}</p>
       )}
     </section>
   );

@@ -17,8 +17,17 @@ def _append_person_photo_url(data: dict[str, Any], source: Any) -> dict[str, Any
     return data
 
 
+def _append_person_cv_url(data: dict[str, Any], source: Any) -> dict[str, Any]:
+    media = data.get("cv_file")
+    cv_file_url = data.get("cv_file_url") or get_media_public_url(media)
+    if not cv_file_url:
+        cv_file_url = get_media_public_url(getattr(source, "__dict__", {}).get("cv_file"))
+    data["cv_file_url"] = cv_file_url
+    return data
+
+
 def with_person_photo_urls(data: Any, source: Any = None) -> Any:
-    """Add resolved ``photo_url`` to Person-shaped payloads, including nested assignment.person."""
+    """Add resolved person media URLs, including nested assignment.person payloads."""
     if isinstance(data, list):
         sources = source or []
         return [
@@ -34,7 +43,10 @@ def with_person_photo_urls(data: Any, source: Any = None) -> Any:
     if isinstance(result.get("person"), dict):
         result["person"] = with_person_photo_urls(result["person"], nested_person_source)
 
-    if source is not None and hasattr(source, "photo_url"):
-        return _append_person_photo_url(result, source)
+    if source is not None:
+        if hasattr(source, "photo_url"):
+            _append_person_photo_url(result, source)
+        if "cv_file_id" in result or "cv_file" in result or getattr(source, "__dict__", {}).get("cv_file") is not None:
+            _append_person_cv_url(result, source)
 
     return result

@@ -196,7 +196,7 @@ export function PublicCardSurface({
     ? `group flex min-h-[220px] flex-col rounded-lg border border-white/10 bg-white/[0.04] p-5 transition ${
         linked ? "hover:-translate-y-1 hover:bg-white/[0.08]" : ""
       }`
-    : `group flex min-h-[220px] flex-col rounded-lg border border-slate-200 bg-slate-50 p-5 shadow-sm transition ${
+    : `group flex min-h-[220px] flex-col rounded-lg border border-border bg-surface-subtle p-5 shadow-sm transition ${
         linked
           ? "hover:-translate-y-1 hover:border-primary/30 hover:bg-white hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
           : ""
@@ -208,7 +208,7 @@ export function PublicCardSurface({
         className={
           dark
             ? "inline-flex h-11 w-11 items-center justify-center rounded-md bg-white/10 text-secondary ring-1 ring-white/10"
-            : "inline-flex h-11 w-11 items-center justify-center rounded-md bg-white text-primary shadow-sm ring-1 ring-slate-200 transition group-hover:bg-primary group-hover:text-white"
+            : "inline-flex h-11 w-11 items-center justify-center rounded-md bg-white text-primary shadow-sm ring-1 ring-ring transition group-hover:bg-primary group-hover:text-white"
         }
       >
         <PublicIconGlyph icon={card.icon} />
@@ -222,7 +222,7 @@ export function PublicCardSurface({
         className={
           dark
             ? "mt-4 text-lg font-semibold leading-7 text-white"
-            : "mt-4 text-lg font-semibold leading-7 text-slate-950"
+            : "mt-4 text-lg font-semibold leading-7 text-foreground"
         }
       >
         {card.title}
@@ -231,7 +231,7 @@ export function PublicCardSurface({
         className={
           dark
             ? "mt-4 text-sm leading-7 text-white/70"
-            : "mt-4 text-sm leading-7 text-slate-600"
+            : "mt-4 text-sm leading-7 text-muted-foreground"
         }
       >
         {card.body}
@@ -281,7 +281,7 @@ export function PublicFilterTextInput({
       <span
         className={
           visibleLabel
-            ? "text-xs font-semibold uppercase tracking-[0.08em] text-slate-500"
+            ? "text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground"
             : "sr-only"
         }
       >
@@ -293,7 +293,7 @@ export function PublicFilterTextInput({
           className={
             dark
               ? "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45"
-              : "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+              : "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70"
           }
         />
         <input
@@ -303,8 +303,8 @@ export function PublicFilterTextInput({
           placeholder={placeholder}
           className={
             dark
-              ? "h-11 w-full rounded-md border border-white/10 bg-slate-950/60 pl-9 pr-3 text-sm font-medium text-white outline-none transition placeholder:text-white/40 focus:border-secondary focus:ring-2 focus:ring-secondary/20"
-              : "h-11 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4"
+              ? "h-11 w-full rounded-md border border-white/10 bg-brand-overlay/60 pl-9 pr-3 text-sm font-medium text-white outline-none transition placeholder:text-white/40 focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+              : "h-11 w-full rounded-md border border-border bg-white pl-9 pr-3 text-sm font-medium text-foreground outline-none ring-primary/20 transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4"
           }
         />
       </span>
@@ -334,7 +334,7 @@ export function PublicFilterSelect({
       <span
         className={
           visibleLabel
-            ? "text-xs font-semibold uppercase tracking-[0.08em] text-slate-500"
+            ? "text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground"
             : "sr-only"
         }
       >
@@ -345,8 +345,8 @@ export function PublicFilterSelect({
         defaultValue={value?.trim() ?? ""}
         className={
           dark
-            ? "h-11 w-full rounded-md border border-white/10 bg-slate-950/60 px-3 text-sm font-semibold text-white outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/20"
-            : `${visibleLabel ? "mt-2 " : ""}h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none ring-primary/20 transition focus:border-primary focus:ring-4`
+            ? "h-11 w-full rounded-md border border-white/10 bg-brand-overlay/60 px-3 text-sm font-semibold text-white outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+            : `${visibleLabel ? "mt-2 " : ""}h-11 w-full rounded-md border border-border bg-white px-3 text-sm font-semibold text-foreground outline-none ring-primary/20 transition focus:border-primary focus:ring-4`
         }
       >
         {allLabel ? <option value="">{allLabel}</option> : null}
@@ -372,7 +372,7 @@ export function PublicFilterButton({
       type="submit"
       className={
         dark
-          ? "inline-flex h-11 items-center justify-center rounded-md bg-secondary px-4 text-sm font-semibold text-slate-950 transition hover:bg-secondary/90"
+          ? "inline-flex h-11 items-center justify-center rounded-md bg-secondary px-4 text-sm font-semibold text-foreground transition hover:bg-secondary/90"
           : "inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
       }
     >
@@ -394,7 +394,7 @@ export function PublicFilterClearLink({
       className={
         dark
           ? "inline-flex h-11 items-center justify-center rounded-md border border-white/10 px-4 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
-          : "inline-flex h-11 items-center justify-center rounded-md border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:border-primary/25 hover:bg-primary/5 hover:text-primary"
+          : "inline-flex h-11 items-center justify-center rounded-md border border-border px-4 text-sm font-semibold text-muted-foreground transition hover:border-primary/25 hover:bg-primary/5 hover:text-primary"
       }
     >
       Clear
@@ -408,7 +408,7 @@ export function PublicFactRow({ item }: { item: PublicFactItem }) {
     <>
       <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
       <span className="min-w-0 flex-1">
-        <span className="block text-xs font-bold text-slate-950">
+        <span className="block text-xs font-bold text-foreground">
           {item.label}
         </span>
         <span className="mt-0.5 block break-words text-sm font-medium leading-5 text-primary [overflow-wrap:anywhere]">
@@ -433,7 +433,7 @@ export function PublicFactRow({ item }: { item: PublicFactItem }) {
 
 export function PublicFactStrip({ facts }: { facts: PublicFactItem[] }) {
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-px bg-slate-200 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-px bg-surface-muted sm:grid-cols-2 lg:grid-cols-4">
       {facts.slice(0, 4).map((item) => {
         const Icon = item.icon;
 
@@ -444,10 +444,10 @@ export function PublicFactStrip({ facts }: { facts: PublicFactItem[] }) {
           >
             <Icon aria-hidden className="h-5 w-5 shrink-0 text-primary" />
             <span className="min-w-0">
-              <span className="block text-[0.68rem] font-bold uppercase leading-4 text-slate-500">
+              <span className="block text-[0.68rem] font-bold uppercase leading-4 text-muted-foreground">
                 {item.label}
               </span>
-              <span className="mt-1 block break-words text-sm font-bold leading-5 text-slate-950">
+              <span className="mt-1 block break-words text-sm font-bold leading-5 text-foreground">
                 {item.value}
               </span>
             </span>

@@ -5,6 +5,13 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ._shared import LEADERSHIP_PEOPLE, SeedContext, get_or_create_person, upsert_university_info
+from .seed_handbook import (
+    HANDBOOK_GOVERNANCE_FACTS,
+    HANDBOOK_INSTITUTIONAL_FACTS,
+    HANDBOOK_SECTIONS,
+    HANDBOOK_SOURCE,
+    HANDBOOK_SOURCE_PHRASES,
+)
 
 
 async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
@@ -34,29 +41,42 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
         slug="kisii-university",
         motto=None,
         overview=(
-            "Kisii University College was founded in 1965 as a Primary Teachers Training College on a 61 acre "
-            "land donated by the County Council of Gusii. The college was upgraded to a Secondary Teachers "
-            "College in 1983, taken over by Egerton University as a campus in 1994, established as a constituent "
-            "college on 23 August 2007, and granted a charter on 6 February 2013."
+            "Kisii University is a premier public institution of higher learning in Kenya, dedicated to "
+            "advancing academic excellence, research, innovation, and community service. Established to "
+            "provide accessible and transformative education, the university offers undergraduate, postgraduate, and doctoral programmes "
+            "across diverse fields including science, technology, "
+            "business, education, agriculture, law, and health sciences. Located in Kisii County, the "
+            "university provides a dynamic campus environment for teaching, research, professional training, "
+            "strategic partnerships, and community engagement."
         ),
-        vision="An inclusive and borderless University that creates positive change in the world",
-        mission=(
-            "Creating a transformative environment that preserves knowledge, enriches the student experience, "
-            "delivers quality training and research, and promotes community engagement for sustainable development."
+        vision=(
+            "To be a World Class University in the advancement of academic excellence, research, innovation, "
+            "and enhancement of social welfare."
         ),
+        mission=HANDBOOK_INSTITUTIONAL_FACTS["mission"],
         core_values=(
-            "Transformative thinking; Respect; Inclusivity; Fairness."
+            "Integrity; Diligence; Hard work; Professionalism; Academic freedom; Civility; Social responsiveness; Accountability."
         ),
         founding_year=1965,
         institution_type="public_university",
         charter_summary=(
             "Kisii University was granted a charter on 6 February 2013 through Legal Notice No. 225 "
-            "in accordance with the Universities Act 2012."
+            "in accordance with the Universities Act 2012. The revised student handbook records this milestone "
+            "as Kisii University becoming the 13th Public University in Kenya."
         ),
         history_summary=(
             "The institution began in 1965 as a Primary Teachers Training College, became a Secondary Teachers "
             "College in 1983, was taken over by Egerton University in 1994, introduced its first degree programme "
             "in 1999, became a constituent college in 2007, and attained full university status in 2013."
+        ),
+        philosophy=(
+            "World-class education in an atmosphere of academic freedom, civility, social responsiveness, "
+            "integrity and accountability."
+        ),
+        strategic_plan_summary=(
+            "Kisii University's strategic direction advances quality education and training, knowledge "
+            "generation and preservation, research and innovation, partnerships and community outreach, "
+            "sustainable infrastructure, financial resilience, and its niche in cancer management and research."
         ),
         email="info@kisiiuniversity.ac.ke",
         phone="+254720875082",
@@ -79,9 +99,27 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
             "charter_year": 2013,
             "schools": 8,
             "main_campus": "Main Campus",
+            "handbook": {
+                "title": HANDBOOK_SOURCE["title"],
+                "edition": HANDBOOK_SOURCE["edition"],
+                "pages": HANDBOOK_SOURCE["pages"],
+                "publisher": HANDBOOK_SOURCE["publisher"],
+                "publisher_email": HANDBOOK_SOURCE["publisher_email"],
+                "source_url": HANDBOOK_SOURCE["url"],
+                "source_phrases": list(HANDBOOK_SOURCE_PHRASES),
+            },
+            "handbook_history": {
+                "founded_as": "Primary Teachers Training College",
+                "constituent_college_date": "23 August 2007",
+                "charter_date": "6 February 2013",
+                "charter_rank_phrase": "13th Public University in Kenya",
+            },
+            "handbook_sections": list(HANDBOOK_SECTIONS),
+            "governance": HANDBOOK_GOVERNANCE_FACTS,
+            "institutional_facts": HANDBOOK_INSTITUTIONAL_FACTS,
         },
         strategic_priorities={
-            "philosophy": "Creative, scientific, technological, innovative, and critical thinking, responsive to societal needs and service to humanity.",
+            "philosophy": "World-class education in an atmosphere of academic freedom, civility, social responsiveness, integrity and accountability.",
             "mandate": [
                 "Produce competent and high-quality graduates.",
                 "Generate appropriate knowledge, skills, competencies, and innovation outputs impacting national development goals and social welfare.",
@@ -106,18 +144,22 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
         council_chair_id=council_chair.id,
         chancellor_message_title="Message from the Chancellor",
         chancellor_message=(
-            "The current official About sources do not publish a dedicated Chancellor message. "
-            "Official university publications describe the Chancellor as the titular head of the "
-            "University who, in the name of the University, confers degrees, diplomas, "
-            "certificates, and other awards in consultation with the University Council and Senate."
+            "Kisii University is guided by a strategic commitment to quality education, knowledge "
+            "generation, partnerships, infrastructure development, financial sustainability, and "
+            "its niche in cancer management and research. As Chancellor, I welcome students, staff, "
+            "alumni, partners, and the wider community to a public university whose mandate is to "
+            "produce competent graduates, advance innovation, disseminate technology, and serve "
+            "society with integrity, accountability, and social responsiveness."
         ),
         vc_message_title="Message from the Vice Chancellor",
         vc_message=(
             "On behalf of Kisii University Council, Management and the entire University community, "
-            "the Vice Chancellor welcomes students to a fast-growing and dynamic institution. "
-            "Kisii University is committed to academic excellence, research, integrity, "
-            "professionalism, and social responsibility while preparing learners to contribute "
-            "meaningfully in a rapidly changing world."
+            "I welcome you to a fast-growing and dynamic public university. Our strategic direction "
+            "places quality education, knowledge preservation and generation, collaborations, "
+            "community outreach, infrastructure, financial sustainability, and cancer management "
+            "and research at the centre of institutional growth. We remain committed to academic "
+            "excellence, integrity, professionalism, innovation, and social responsibility while "
+            "preparing learners to contribute meaningfully in a rapidly changing world."
         ),
         council_chair_message_title="Message from the Chairperson, University Council",
         council_chair_message=None,

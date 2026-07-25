@@ -1,6 +1,17 @@
 // Centralized query keys for cache management
 
 export const queryKeys = {
+  viceChancellor: {
+    all: ["vice-chancellor"] as const,
+    hub: ["vice-chancellor", "hub"] as const,
+    portraits: ["vice-chancellor", "portraits"] as const,
+    videos: ["vice-chancellor", "videos"] as const,
+    speeches: ["vice-chancellor", "speeches"] as const,
+    galleries: ["vice-chancellor", "galleries"] as const,
+    placements: ["vice-chancellor", "placements"] as const,
+    newsLookup: (q?: string) => ["vice-chancellor", "lookups", "news", q] as const,
+    eventsLookup: (q?: string) => ["vice-chancellor", "lookups", "events", q] as const,
+  },
   // Auth
   auth: {
     me: ["auth", "me"] as const,
@@ -95,6 +106,7 @@ export const queryKeys = {
     all: ["intakes"] as const,
     list: (params?: Record<string, unknown>) => ["intakes", "list", params] as const,
     detail: (id: string) => ["intakes", "detail", id] as const,
+    homepageAdmission: (id: string) => ["intakes", "detail", id, "homepage-admission"] as const,
     bySlug: (slug: string) => ["intakes", "slug", slug] as const,
   },
 

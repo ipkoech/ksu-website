@@ -1,5 +1,6 @@
 import {
   mainApi,
+  publicEntityApi,
   type Announcement,
   type Blog,
   type Event,
@@ -7,6 +8,8 @@ import {
   type MediaLink,
   type News,
   type PaginatedResponse,
+  type Document,
+  type PublicEntityContentType,
 } from "@ksu/api-client";
 
 type ListResponse<T> = {
@@ -267,4 +270,65 @@ export async function getScopedEntityMedia(
       new Date(mediaDate(second) ?? 0).getTime() -
       new Date(mediaDate(first) ?? 0).getTime(),
   );
+}
+
+const entityContentFields = [
+  "entity(id,type,name,slug)",
+  "content_type",
+  "records(id,record_type,title,slug,summary,description,caption,alt_text,filename,original_filename,featured_media_id,featured_media_url,file_id,file_url,media_type,mime_type,public_url,url,thumbnail_url,document_type,category,version,location,is_virtual,start_date,end_date,published_at,created_at,updated_at,scope_type,scope_id,width,height,duration,display_order,download_count,credit)",
+  "meta(page,per_page,total,pages)",
+].join(",");
+
+export async function getEntityContent(
+  entityType: "school" | "department",
+  entityId: string,
+  contentType: PublicEntityContentType,
+  options?: { page?: number; perPage?: number; search?: string },
+) {
+  try {
+    const response = await publicEntityApi.content(entityType, entityId, {
+      content_type: contentType,
+      page: options?.page,
+      per_page: options?.perPage ?? 40,
+      search: options?.search,
+      fields: entityContentFields,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to load ${entityType} ${contentType}:`, error);
+    return null;
+  }
+}
+
+export async function getEntityMediaRecords(
+  entityType: "school" | "department",
+  entityId: string,
+): Promise<EntityMediaRecord[]> {
+  const data = await getEntityContent(entityType, entityId, "all", { perPage: 100 });
+  if (!data) return [];
+
+  return data.records
+    .filter((record) => record.record_type !== "download")
+    .map((record) => {
+      if (record.record_type === "gallery") {
+        return {
+          ...record,
+          recordType: "gallery" as const,
+          recordScope: "scoped" as const,
+        } as unknown as EntityMediaRecord;
+      }
+      return {
+        ...record,
+        recordType: record.record_type === "event" ? ("event" as const) : ("news" as const),
+        recordScope: "scoped" as const,
+      } as unknown as EntityMediaRecord;
+    });
+}
+
+export async function getEntityDownloads(
+  entityType: "school" | "department",
+  entityId: string,
+): Promise<Document[]> {
+  const data = await getEntityContent(entityType, entityId, "downloads", { perPage: 100 });
+  return (data?.records ?? []).map((record) => record as unknown as Document);
 }

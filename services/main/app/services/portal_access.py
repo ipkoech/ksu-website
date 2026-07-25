@@ -13,6 +13,7 @@ from ..schemas.access import PortalAccessRead
 from ..security.scopes import (
     LIBRARY_LEADERSHIP_SCOPE_ROLES,
     RESEARCH_LEADERSHIP_SCOPE_ROLES,
+    SCHOOL_PORTAL_PERMISSION_NAMES,
 )
 
 ScopeKey = tuple[str, uuid.UUID]
@@ -48,25 +49,36 @@ DEPARTMENT_LEADERSHIP_ASSIGNMENT_ROLES = {
 PROFILE_PERMISSION = "profile.self_edit"
 PROFILE_PORTAL_KEY = "staff-profile"
 GLOBAL_ADMIN_PERMISSIONS = {"*", "admin:*"}
+STUDENT_CLUB_ASSIGNMENT_PERMISSIONS = {
+    "clubs.view",
+    "clubs.manage_own",
+    "clubs.content_submit",
+    "clubs.events_manage",
+    "clubs.stories_manage",
+}
 
 PORTAL_DEFINITIONS = {
+    "super-admin": {
+        "label": "Super Admin Portal",
+        "service": "system",
+        "href": "/super-admin",
+        "permissions": {"users.view", "roles.view", "permissions.view", "audit.view", "settings.manage"},
+    },
     PROFILE_PORTAL_KEY: {
         "label": "Staff Profile Portal",
         "service": "main",
         "href": "/settings/profile",
         "permissions": {PROFILE_PERMISSION},
     },
-    "governance": {
-        "label": "Governance Portal",
+    "admin": {
+        "label": "Admin Portal",
         "service": "main",
-        "href": "/governance",
-        "permissions": {"governance.view", "governance.manage_boards", "policy.view", "policy.manage"},
-    },
-    "institutional-administration": {
-        "label": "Institutional Administration Portal",
-        "service": "main",
-        "href": "/institutional-administration",
+        "href": "/admin",
         "permissions": {
+            "governance.view",
+            "governance.manage_boards",
+            "policy.view",
+            "policy.manage",
             "administration.view",
             "administration.manage_units",
             "administration.manage_content",
@@ -84,7 +96,11 @@ PORTAL_DEFINITIONS = {
         "label": "Schools Portal",
         "service": "main",
         "href": "/schools",
-        "permissions": {"academic.view", "academic.manage_schools"},
+        "permissions": {
+            "academic.view",
+            "academic.manage_schools",
+            *SCHOOL_PORTAL_PERMISSION_NAMES,
+        },
     },
     "departments": {
         "label": "Departmental Portal",
@@ -93,34 +109,88 @@ PORTAL_DEFINITIONS = {
         "permissions": {"academic.view", "academic.manage_departments"},
     },
     "corporate-communication": {
-        "label": "Corporate Communication Portal",
+        "label": "Corporate Communication",
         "service": "main",
         "href": "/corporate-communication",
-        "permissions": {"content.view", "content.publish", "media.view", "marketing.view"},
+        "permissions": {
+            "about.manage",
+            "content.view",
+            "content.manage",
+            "content.manage_stories",
+            "content.manage_pages",
+            "content.manage_news",
+            "content.manage_events",
+            "content.manage_blogs",
+            "content.manage_announcements",
+            "content.manage_categories",
+            "content.review",
+            "content.edit_submitted",
+            "content.approve",
+            "content.publish",
+            "content.schedule",
+            "content.unpublish",
+            "media.view",
+            "media.manage",
+            "media.upload",
+            "homepage.view",
+            "homepage.manage",
+            "homepage.publish",
+            "marketing.view",
+            "marketing.manage_sliders",
+            "marketing.manage_testimonials",
+            "page_sections.view",
+            "page_sections.manage",
+            "page_sections.create",
+            "page_sections.update",
+            "page_sections.delete",
+            "page_sections.review",
+            "page_sections.publish",
+            "partnership_spotlights.manage",
+            "clubs.view",
+            "clubs.content_submit",
+            "clubs.manage_own",
+            "clubs.events_manage",
+            "clubs.stories_manage",
+        },
+    },
+    "story-contributor": {
+        "label": "Story Contributor Portal",
+        "service": "main",
+        "href": "/story-contributor",
+        "permissions": {
+            "content.submit",
+            "stories.submit",
+            "stories.view_own",
+            "stories.update_own",
+        },
     },
     "research": {
         "label": "Research Portal",
         "service": "research",
         "href": "/research",
-        "permissions": {"research.view", "research.view_projects"},
+        "permissions": {
+            "research.view",
+            "research.view_projects",
+            "publications.view",
+            "publications.submit",
+            "publications.review",
+            "publications.approve",
+            "publications.manage",
+        },
     },
     "library": {
         "label": "Library Portal",
         "service": "library",
         "href": "/library",
-        "permissions": {"library.view"},
-    },
-    "publications": {
-        "label": "Publications Portal",
-        "service": "research",
-        "href": "/publications",
-        "permissions": {"publications.view", "publications.submit", "publications.review", "publications.approve"},
-    },
-    "system": {
-        "label": "System Administration Portal",
-        "service": "system",
-        "href": "/system",
-        "permissions": {"users.view", "roles.view", "permissions.view", "audit.view", "settings.manage"},
+        "permissions": {
+            "library.view",
+            "library:read",
+            "library.manage_resources",
+            "library.manage_services",
+            "library.manage_collections",
+            "library.manage_staff",
+            "library.manage_loans",
+        },
     },
 }
 
@@ -243,7 +313,7 @@ def _portal_keys_for_permissions(permissions: set[str], scope_type: str | None) 
         "persons.view",
         "persons.manage",
     }):
-        keys.append("institutional-administration")
+        keys.append("admin")
 
     return list(dict.fromkeys(keys))
 
@@ -296,7 +366,7 @@ def build_portal_access_records(user: User, scope_labels: Mapping[ScopeKey, str]
         if entity_type in ADMINISTRATION_SCOPE_TYPES and role in LEADERSHIP_ASSIGNMENT_ROLES:
             _add_or_merge(
                 records,
-                key="institutional-administration",
+                key="admin",
                 scope_type=entity_type,
                 scope_id=entity_id,
                 permissions=[
@@ -360,6 +430,16 @@ def build_portal_access_records(user: User, scope_labels: Mapping[ScopeKey, str]
                     "research.view_projects",
                     "research.manage_projects",
                 ],
+                scope_labels=scope_labels,
+                source="assignment",
+            )
+        elif entity_type == "club":
+            _add_or_merge(
+                records,
+                key="corporate-communication",
+                scope_type=entity_type,
+                scope_id=entity_id,
+                permissions=STUDENT_CLUB_ASSIGNMENT_PERMISSIONS,
                 scope_labels=scope_labels,
                 source="assignment",
             )

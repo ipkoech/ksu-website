@@ -141,7 +141,7 @@ export function LibraryHeader() {
               <span className="block truncate font-[family-name:var(--font-display)] text-base font-bold uppercase leading-none text-primary sm:text-xl lg:text-xl">
                 Kisii University
               </span>
-              <span className="mt-1 block truncate text-xs font-semibold leading-none text-slate-600 sm:text-sm lg:text-xs">
+              <span className="mt-1 block truncate text-xs font-semibold leading-none text-muted-foreground sm:text-sm lg:text-xs">
                 Library
               </span>
             </span>
@@ -194,7 +194,7 @@ export function LibraryHeader() {
           <div className="max-h-[calc(100dvh-96px)] overflow-y-auto border-t border-primary/10 py-3 xl:hidden">
             <div className="grid gap-3 sm:grid-cols-2">
               {libraryNavGroups.map((group) => (
-                <section key={group.label} className="rounded-lg border border-slate-200 bg-white p-3">
+                <section key={group.label} className="rounded-lg border border-border bg-white p-3">
                   <p className="px-2 text-xs font-semibold uppercase tracking-[0.16em] text-secondary">
                     {group.label}
                   </p>
@@ -249,7 +249,7 @@ function HeaderGroup({
         className={
           active || open
             ? "inline-flex min-h-11 items-center gap-1 rounded-md bg-primary/10 px-3 py-2 text-sm font-semibold text-primary"
-            : "inline-flex min-h-11 items-center gap-1 rounded-md px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-primary/10 hover:text-primary"
+            : "inline-flex min-h-11 items-center gap-1 rounded-md px-3 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
         }
         aria-haspopup="menu"
         aria-expanded={open}
@@ -264,7 +264,7 @@ function HeaderGroup({
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-full mt-3 w-[min(26rem,calc(100vw-2rem))] rounded-lg border border-slate-200 bg-white p-2 shadow-xl"
+          className="absolute right-0 top-full mt-3 w-[min(26rem,calc(100vw-2rem))] rounded-lg border border-border bg-white p-2 shadow-xl"
         >
           <div className="grid gap-1">
             {group.items.map((item) => (
@@ -275,11 +275,11 @@ function HeaderGroup({
                 onClick={onClose}
                 className="block rounded-md px-3 py-3 transition hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
               >
-                <span className="block text-sm font-semibold text-slate-950">
+                <span className="block text-sm font-semibold text-foreground">
                   {item.label}
                 </span>
                 {item.description ? (
-                  <span className="mt-1 block text-sm leading-6 text-slate-600">
+                  <span className="mt-1 block text-sm leading-6 text-muted-foreground">
                     {item.description}
                   </span>
                 ) : null}
@@ -318,7 +318,7 @@ function HeaderLink({
       className={
         active
           ? `${widthClass} ${shapeClass} inline-flex min-h-11 items-center px-3 py-2 text-sm font-semibold text-primary ${menu ? "bg-primary/5" : "bg-primary/10"}`
-          : `${widthClass} ${shapeClass} inline-flex min-h-11 items-center px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-primary/10 hover:text-primary`
+          : `${widthClass} ${shapeClass} inline-flex min-h-11 items-center px-3 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-primary/10 hover:text-primary`
       }
     >
       {label}

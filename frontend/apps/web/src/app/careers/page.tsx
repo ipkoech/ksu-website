@@ -76,20 +76,20 @@ export default async function CareersPage() {
           <p className="text-sm font-semibold uppercase text-secondary">
             Careers
           </p>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
+          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
             Careers and job adverts
           </h1>
-          <p className="mt-4 text-base leading-8 text-slate-600">
+          <p className="mt-4 text-base leading-8 text-muted-foreground">
             Open job adverts and career-related notices. Formal applications
             are handled through the official digital job portal.
           </p>
         </div>
 
         <div className="mt-10">
-          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
             Current notices
           </h2>
-          <p className="mt-3 text-base leading-8 text-slate-600">
+          <p className="mt-3 text-base leading-8 text-muted-foreground">
             {notices.length
               ? "These notices are loaded from published announcement records."
               : "No career notices were returned. Use the official job portal for current adverts."}
@@ -104,16 +104,16 @@ export default async function CareersPage() {
           )}
         </div>
 
-        <div className="mt-12 rounded-[1.25rem] border border-blue-100 bg-blue-50/60 p-6">
+        <div className="mt-12 rounded-[1.25rem] border border-border bg-accent/60 p-6">
           <div className="flex items-start gap-4">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <BriefcaseBusiness aria-hidden className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold text-slate-950">
+              <h2 className="text-lg font-semibold text-foreground">
                 Open job portal
               </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 View and apply for current open adverts through the official
                 digital job portal. All formal applications are processed
                 through this channel.
@@ -139,25 +139,25 @@ function Card({ notice }: { notice: Announcement }) {
   return (
     <Link
       href={`/media/announcements/${notice.slug}`}
-      className="group block rounded-[1.25rem] border border-slate-200 bg-white p-5 transition-shadow hover:shadow-md"
+      className="group block rounded-[1.25rem] border border-border bg-white p-5 transition-shadow hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-snug text-slate-950 group-hover:text-primary">
+          <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-snug text-foreground group-hover:text-primary">
             {notice.title}
           </h3>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
             {shortText(
               notice.rich_text ?? notice.content ?? notice.plain_text,
               "No summary available.",
             )}
           </p>
         </div>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 group-hover:bg-primary/10 group-hover:text-primary">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary">
           <Users aria-hidden className="h-5 w-5" />
         </span>
       </div>
-      <p className="mt-3 text-xs font-medium text-slate-400">
+      <p className="mt-3 text-xs font-medium text-muted-foreground/70">
         {formatDate(notice.published_at)}
       </p>
     </Link>

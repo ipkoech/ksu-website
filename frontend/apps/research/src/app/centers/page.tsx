@@ -103,7 +103,7 @@ export default async function CentersPage({
     (params.month ? visibleCenters.length : centers.total) / centers.perPage,
   );
   return (
-    <main id="research-main" className="min-h-screen bg-white text-slate-950">
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
       <ResearchPortfolioHero
         eyebrow="Institutional research anchors"
         title="Research Centers"
@@ -142,8 +142,8 @@ export default async function CentersPage({
 
         {visibleCenters.length > 0 ? (
           <>
-            <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-              <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 md:grid">
+            <div className="mt-6 overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+              <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-border bg-surface-subtle px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground md:grid">
                 <span>Center</span>
                 <span>Type</span>
                 <span>Status</span>
@@ -218,17 +218,17 @@ function CenterRow({ center }: { center: ResearchGenericRecord }) {
   return (
     <Link
       href={href}
-      className="group grid gap-2 px-4 py-3 transition hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
+      className="group grid gap-2 px-4 py-3 transition hover:bg-surface-subtle/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
     >
       <div className="min-w-0">
-        <h2 className="truncate text-sm font-semibold leading-6 text-slate-950 transition group-hover:text-primary">
+        <h2 className="truncate text-sm font-semibold leading-6 text-foreground transition group-hover:text-primary">
           {title}
         </h2>
         {center.code ? (
-          <p className="mt-0.5 truncate text-xs font-medium text-slate-500">{compactText(center.code)}</p>
+          <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">{compactText(center.code)}</p>
         ) : null}
       </div>
-      <div className="text-xs font-medium text-slate-600 md:text-sm">
+      <div className="text-xs font-medium text-muted-foreground md:text-sm">
         {formatLabel(compactText(center.center_type) || "research center")}
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -243,13 +243,13 @@ function FacilityTile({ facility }: { facility: ResearchGenericRecord }) {
   return (
     <Link
       href={facility.slug ? `/farm/${facility.slug}` : "/farm"}
-      className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/5"
+      className="rounded-lg border border-border bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/5"
     >
       <Badge>{formatLabel(compactText(facility.farm_type) || "facility")}</Badge>
-      <h3 className="mt-3 text-base font-semibold leading-6 text-slate-950">
+      <h3 className="mt-3 text-base font-semibold leading-6 text-foreground">
         {getRecordTitle(facility, "Research facility")}
       </h3>
-      <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+      <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
         {compactText(facility.about) ||
           compactText(facility.activities) ||
           compactText(facility.facilities) ||

@@ -128,7 +128,7 @@ export default async function ProjectsPage({
   );
 
   return (
-    <main id="research-main" className="min-h-screen bg-white text-slate-950">
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
       <ResearchPortfolioHero
         eyebrow="Published project portfolio"
         title="Research Projects"
@@ -258,7 +258,7 @@ function ProjectViewSwitch({
   ];
 
   return (
-    <div className="col-span-3 inline-flex rounded-md border border-slate-200 bg-white p-1 sm:col-span-1">
+    <div className="col-span-3 inline-flex rounded-md border border-border bg-white p-1 sm:col-span-1">
         {options.map((option) => {
           const Icon = option.icon;
           const active = view === option.value;
@@ -269,7 +269,7 @@ function ProjectViewSwitch({
               className={
                 active
                   ? "inline-flex h-9 items-center gap-2 rounded bg-primary px-3 text-xs font-semibold text-white"
-                  : "inline-flex h-9 items-center gap-2 rounded px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-primary"
+                  : "inline-flex h-9 items-center gap-2 rounded px-3 text-xs font-semibold text-muted-foreground transition hover:bg-surface-subtle hover:text-primary"
               }
             >
               <Icon aria-hidden className="h-4 w-4" />
@@ -283,8 +283,8 @@ function ProjectViewSwitch({
 
 function ProjectTable({ projects }: { projects: ResearchProject[] }) {
   return (
-    <div className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 md:grid">
+    <div className="mt-4 overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+      <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-border bg-surface-subtle px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground md:grid">
         <span>Project</span>
         <span>Type</span>
         <span>Status</span>
@@ -303,17 +303,17 @@ function ProjectRow({ project }: { project: ResearchProject }) {
   return (
     <Link
       href={href}
-      className="group grid gap-2 px-4 py-3 transition hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
+      className="group grid gap-2 px-4 py-3 transition hover:bg-surface-subtle/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
     >
       <div className="min-w-0">
-        <h2 className="truncate text-sm font-semibold leading-6 text-slate-950 transition group-hover:text-primary">
+        <h2 className="truncate text-sm font-semibold leading-6 text-foreground transition group-hover:text-primary">
           {project.title}
         </h2>
         {project.code ? (
-          <p className="mt-0.5 truncate text-xs font-medium text-slate-500">{project.code}</p>
+          <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">{project.code}</p>
         ) : null}
       </div>
-      <div className="text-xs font-medium text-slate-600 md:text-sm">
+      <div className="text-xs font-medium text-muted-foreground md:text-sm">
         {project.project_type ? formatLabel(project.project_type) : "Research"}
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -340,16 +340,16 @@ function ProjectCard({ project }: { project: ResearchProject }) {
   return (
     <Link
       href={href}
-      className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+      className="group overflow-hidden rounded-lg border border-border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
     >
       {image ? (
         <div
-          className="aspect-[4/3] bg-slate-100 bg-cover bg-center"
+          className="aspect-[4/3] bg-surface-muted bg-cover bg-center"
           style={{ backgroundImage: `url('${image}')` }}
         />
       ) : (
-        <div className="relative aspect-[4/3] overflow-hidden bg-[#071b34]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_25%,rgba(16,185,129,0.42),transparent_28%),linear-gradient(135deg,#071b34,#0f766e)]" />
+        <div className="relative aspect-[4/3] overflow-hidden bg-[hsl(var(--brand-overlay))]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_25%,rgba(16,185,129,0.42),transparent_28%),linear-gradient(135deg,hsl(var(--brand-overlay)),#0f766e)]" />
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.12)_1px,transparent_1px)] bg-[size:22px_22px] opacity-60" />
           <div className="absolute bottom-3 left-3 right-3 h-10 rounded-md border border-white/20 bg-white/10" />
         </div>
@@ -365,11 +365,11 @@ function ProjectCard({ project }: { project: ResearchProject }) {
             </span>
           ) : null}
         </div>
-        <h2 className="mt-2 line-clamp-2 min-h-[2.5rem] text-xs font-semibold leading-5 text-slate-950 transition group-hover:text-primary sm:text-sm">
+        <h2 className="mt-2 line-clamp-2 min-h-[2.5rem] text-xs font-semibold leading-5 text-foreground transition group-hover:text-primary sm:text-sm">
           {project.title}
         </h2>
         {project.summary ? (
-          <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-500">
+          <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-muted-foreground">
             {project.summary}
           </p>
         ) : null}

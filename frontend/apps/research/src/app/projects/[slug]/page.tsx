@@ -113,7 +113,7 @@ export default async function ProjectDetailPage({
   ]);
 
   return (
-    <main id="research-main" className="min-h-screen bg-white text-slate-950">
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
       <ProjectHero
         title={title}
         summary={summary}
@@ -209,7 +209,7 @@ function ProjectHero({
     .filter(Boolean);
 
   return (
-    <section className="relative isolate overflow-hidden bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8 lg:py-9 xl:px-10 2xl:px-12">
+    <section className="relative isolate overflow-hidden bg-brand-overlay px-4 py-8 text-white sm:px-6 lg:px-8 lg:py-9 xl:px-10 2xl:px-12">
       <Image
         src={coverImage}
         alt=""
@@ -219,7 +219,7 @@ function ProjectHero({
         priority
         unoptimized
       />
-      <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-slate-950/88 via-slate-950/52 to-slate-950/8" />
+      <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-brand-overlay/88 via-brand-overlay/52 to-brand-overlay/8" />
       <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-white/20" />
       <div className="relative mx-auto max-w-[1680px]">
         <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-white/75">
@@ -340,7 +340,7 @@ function ProjectGlance({
   if (!cards.length) return null;
 
   return (
-    <section className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <section className="border-b border-border bg-white px-4 py-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <dl
         className={`mx-auto grid max-w-[1680px] gap-2 sm:grid-cols-2 lg:grid-cols-3 ${
           cards.length <= 5 ? "xl:grid-cols-5" : "xl:grid-cols-7"
@@ -349,15 +349,15 @@ function ProjectGlance({
         {cards.map((fact) => {
           const Icon = fact.icon;
           return (
-            <div key={fact.label} className="flex min-h-20 gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+            <div key={fact.label} className="flex min-h-20 gap-3 rounded-lg border border-border bg-white px-4 py-3 shadow-sm">
               <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
               <div className="min-w-0">
-                <dt className="text-xs font-semibold text-slate-700">{fact.label}</dt>
-                <dd className="mt-1 line-clamp-3 break-words text-sm font-semibold leading-5 text-slate-950 [overflow-wrap:anywhere]">
+                <dt className="text-xs font-semibold text-muted-foreground">{fact.label}</dt>
+                <dd className="mt-1 line-clamp-3 break-words text-sm font-semibold leading-5 text-foreground [overflow-wrap:anywhere]">
                   {fact.value}
                 </dd>
                 {fact.caption ? (
-                  <p className="mt-1 line-clamp-1 break-words text-xs leading-4 text-slate-600 [overflow-wrap:anywhere]">
+                  <p className="mt-1 line-clamp-1 break-words text-xs leading-4 text-muted-foreground [overflow-wrap:anywhere]">
                     {fact.caption}
                   </p>
                 ) : null}
@@ -373,8 +373,8 @@ function ProjectGlance({
 function ProjectStoryTable({ sections }: { sections: Array<{ title: string; body: string }> }) {
   const icons = [Target, FileText, Network, LineChart, UsersRound];
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <h2 className="border-b border-slate-200 px-5 py-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+    <section className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+      <h2 className="border-b border-border px-5 py-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
         Project Story
       </h2>
       <div className="divide-y divide-slate-200">
@@ -391,7 +391,7 @@ function ProjectStoryTable({ sections }: { sections: Array<{ title: string; body
                 </span>
                 <h3 className="text-sm font-semibold text-primary">{section.title}</h3>
               </div>
-              <ResearchRichText content={section.body} className="text-sm leading-6 text-slate-700" />
+              <ResearchRichText content={section.body} className="text-sm leading-6 text-muted-foreground" />
             </article>
           );
         })}
@@ -417,13 +417,13 @@ function EvidenceOutputs({
   }>;
 
   return (
-    <section id="evidence-outputs" className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <h2 className="border-b border-slate-200 px-5 py-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+    <section id="evidence-outputs" className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+      <h2 className="border-b border-border px-5 py-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
         Evidence & Outputs
       </h2>
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 px-5 py-3">
+      <div className="flex flex-wrap gap-2 border-b border-border px-5 py-3">
         {groups.map((group) => (
-          <span key={group.title} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-primary">
+          <span key={group.title} className="rounded-md border border-border bg-surface-subtle px-3 py-1.5 text-xs font-semibold text-primary">
             {group.title} {group.records.length}
           </span>
         ))}
@@ -436,13 +436,13 @@ function EvidenceOutputs({
               <Link
                 key={`${group.title}-${generic.id}`}
                 href={generic.slug ? `${group.hrefBase}/${generic.slug}` : group.hrefBase}
-                className="grid gap-2 px-5 py-3 text-sm transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_140px_110px_80px] sm:items-center"
+                className="grid gap-2 px-5 py-3 text-sm transition hover:bg-surface-subtle sm:grid-cols-[minmax(0,1fr)_140px_110px_80px] sm:items-center"
               >
-                <span className="min-w-0 truncate font-semibold text-slate-900">
+                <span className="min-w-0 truncate font-semibold text-foreground">
                   {getRecordTitle(generic, group.title)}
                 </span>
-                <span className="text-xs font-medium text-slate-600">{formatLabel(compactText(generic.output_type) || compactText(generic.publication_type) || group.title.slice(0, -1))}</span>
-                <span className="text-xs font-medium text-slate-600">{formatDate(generic.publication_date) || formatDate(generic.created_at)}</span>
+                <span className="text-xs font-medium text-muted-foreground">{formatLabel(compactText(generic.output_type) || compactText(generic.publication_type) || group.title.slice(0, -1))}</span>
+                <span className="text-xs font-medium text-muted-foreground">{formatDate(generic.publication_date) || formatDate(generic.created_at)}</span>
                 <span className="text-xs font-semibold text-primary">View</span>
               </Link>
             );
@@ -463,12 +463,12 @@ function ProjectMilestoneTable({
   const impact = compactText(project.impact) || compactText(project.expected_outcomes);
 
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <h2 className="border-b border-slate-200 px-5 py-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+    <section className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+      <h2 className="border-b border-border px-5 py-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
         Milestones & Impact
       </h2>
       {milestones.length > 0 ? (
-        <div className="hidden grid-cols-[minmax(220px,1fr)_minmax(0,1fr)] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-3 text-xs font-semibold text-slate-600 md:grid">
+        <div className="hidden grid-cols-[minmax(220px,1fr)_minmax(0,1fr)] gap-4 border-b border-border bg-surface-subtle px-5 py-3 text-xs font-semibold text-muted-foreground md:grid">
           <span>Milestone</span>
           <span>Published value</span>
         </div>
@@ -477,18 +477,18 @@ function ProjectMilestoneTable({
         {milestones.map((milestone) => (
           <div key={`${milestone.label}-${milestone.value}`} className="grid gap-2 px-5 py-3 text-sm md:grid-cols-[minmax(220px,1fr)_minmax(0,1fr)]">
             <span className="font-semibold text-primary">{milestone.label}</span>
-            <span className="font-medium text-slate-900">{milestone.value}</span>
+            <span className="font-medium text-foreground">{milestone.value}</span>
           </div>
         ))}
       </div>
       {impact ? (
-        <div className="border-t border-slate-200 px-5 py-4">
+        <div className="border-t border-border px-5 py-4">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Impact note</p>
-          <ResearchRichText content={impact} className="mt-2 text-sm leading-7 text-slate-700" />
+          <ResearchRichText content={impact} className="mt-2 text-sm leading-7 text-muted-foreground" />
         </div>
       ) : null}
       {milestones.length === 0 && !impact ? (
-        <p className="px-5 py-4 text-sm leading-6 text-slate-600">
+        <p className="px-5 py-4 text-sm leading-6 text-muted-foreground">
           Project milestones and impact notes will appear when dates, outputs, or outcomes are published.
         </p>
       ) : null}
@@ -511,8 +511,8 @@ function LinkedWork({
 }) {
   const linkedPeople = partners.length > 0 ? partners : teamMembers;
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <h2 className="border-b border-slate-200 px-5 py-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+    <section className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+      <h2 className="border-b border-border px-5 py-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
         Linked Work
       </h2>
       <div className="grid gap-0 divide-y divide-slate-200 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
@@ -524,21 +524,21 @@ function LinkedWork({
                 <Link
                   key={record.id ?? index}
                   href={record.slug && partners.length > 0 ? `/partners/${record.slug}` : "/team"}
-                  className="rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-primary transition hover:bg-primary/5"
+                  className="rounded-md border border-border px-3 py-2 text-xs font-semibold text-primary transition hover:bg-primary/5"
                 >
                   {getRecordTitle(record, `Contributor ${index + 1}`)}
                 </Link>
               ))}
             </div>
           ) : (
-            <p className="mt-3 text-sm leading-6 text-slate-600">
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
               No public partners or team contributors are linked to this project yet.
             </p>
           )}
         </div>
         <div className="p-5">
           <h3 className="text-sm font-semibold text-primary">Useful paths</h3>
-          <div className="mt-3 divide-y divide-slate-200 border-t border-slate-200">
+          <div className="mt-3 divide-y divide-slate-200 border-t border-border">
             {getExploreLinks(center, program, project).map((link) => (
               <Link
                 key={link.href}
@@ -546,7 +546,7 @@ function LinkedWork({
                 className="group flex items-center justify-between gap-4 py-3 text-sm font-semibold text-primary hover:text-secondary"
               >
                 {link.label}
-                <ArrowRight aria-hidden className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-1 group-hover:text-secondary" />
+                <ArrowRight aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground/70 transition group-hover:translate-x-1 group-hover:text-secondary" />
               </Link>
             ))}
           </div>
@@ -592,16 +592,16 @@ function ProjectFactsSidebar({
   const visibleRows = rows.length ? rows : facts;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
         Project facts
       </h2>
       {visibleRows.length > 0 ? (
-        <dl className="mt-4 divide-y divide-slate-200 border-t border-slate-200">
+        <dl className="mt-4 divide-y divide-slate-200 border-t border-border">
           {visibleRows.map((fact) => (
             <div key={fact.label} className="grid grid-cols-[120px_minmax(0,1fr)] gap-4 py-3">
-              <dt className="text-xs font-semibold text-slate-600">{fact.label}</dt>
-              <dd className="break-words text-sm font-medium text-slate-900 [overflow-wrap:anywhere]">
+              <dt className="text-xs font-semibold text-muted-foreground">{fact.label}</dt>
+              <dd className="break-words text-sm font-medium text-foreground [overflow-wrap:anywhere]">
                 {fact.value}
               </dd>
             </div>
@@ -634,11 +634,11 @@ function QuickPaths({
   if (!links.length) return null;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
         Quick paths
       </h2>
-      <div className="mt-3 divide-y divide-slate-200 border-t border-slate-200">
+      <div className="mt-3 divide-y divide-slate-200 border-t border-border">
         {links.map((link) => (
           <Link
             key={link.href}
@@ -646,7 +646,7 @@ function QuickPaths({
             className="group flex items-center justify-between gap-4 py-3 text-sm font-semibold text-primary hover:text-secondary"
           >
             {link.label}
-            <ArrowRight aria-hidden className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-1 group-hover:text-secondary" />
+            <ArrowRight aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground/70 transition group-hover:translate-x-1 group-hover:text-secondary" />
           </Link>
         ))}
       </div>
@@ -665,11 +665,11 @@ function ContactCard({
   if (!contactEmail && !phone) return null;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
         Contact
       </h2>
-      <p className="mt-3 text-sm text-slate-700">Questions about this project?</p>
+      <p className="mt-3 text-sm text-muted-foreground">Questions about this project?</p>
       <div className="mt-4 grid gap-3">
         {contactEmail ? (
           <a href={`mailto:${contactEmail}`} className="flex items-center gap-3 text-sm font-semibold text-primary hover:text-secondary">
@@ -699,14 +699,14 @@ function ContactCard({
 
 function PartnerChips({ partners }: { partners: ResearchGenericRecord[] }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-950">Partners</h2>
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-lg font-semibold text-foreground">Partners</h2>
       <div className="mt-3 flex flex-wrap gap-2">
         {partners.slice(0, 8).map((partner, index) => (
           <Link
             key={partner.id ?? index}
             href={partner.slug ? `/partners/${partner.slug}` : "/partners"}
-            className="rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-primary transition hover:bg-primary/5"
+            className="rounded-md border border-border px-3 py-2 text-xs font-semibold text-primary transition hover:bg-primary/5"
           >
             {getRecordTitle(partner, `Partner ${index + 1}`)}
           </Link>
@@ -718,11 +718,11 @@ function PartnerChips({ partners }: { partners: ResearchGenericRecord[] }) {
 
 function EmptyPanel({ title, message }: { title: string; message: string }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
         {title}
       </h2>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{message}</p>
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">{message}</p>
     </section>
   );
 }

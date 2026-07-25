@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { Bell, Check, ExternalLink } from "lucide-react";
-import { Button } from "@ksu/ui/components";
+import { Bell, Check, ExternalLink, Settings } from "lucide-react";
+import { Button, Switch } from "@ksu/ui/components";
 import {
   Popover,
   PopoverContent,
@@ -37,6 +37,7 @@ function useNotifications() {
       if (!token) return { data: [], meta: { total: 0 } };
       const baseUrl = getMainApiBaseUrl();
       let response = await fetch(`${baseUrl}/api/v1/notifications?per_page=5&unread_only=true`, {
+        credentials: "include",
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.status === 401) {
@@ -44,6 +45,7 @@ function useNotifications() {
         token = getStoredAccessToken();
         if (refreshed && token) {
           response = await fetch(`${baseUrl}/api/v1/notifications?per_page=5&unread_only=true`, {
+            credentials: "include",
             headers: { Authorization: `Bearer ${token}` },
           });
         } else {
@@ -55,6 +57,29 @@ function useNotifications() {
       return response.json() as Promise<NotificationsResponse>;
     },
     refetchInterval: 30_000,
+  });
+}
+
+function useUnreadCount() {
+  return useQuery({
+    queryKey: ["current-user", "notifications", "unread-count"],
+    queryFn: async () => {
+      const response = await notificationRequest("/api/v1/notifications/unread-count");
+      return (await response.json()) as { data: { count: number } };
+    },
+    refetchInterval: 30_000,
+  });
+}
+
+function useNotificationPreferences() {
+  return useQuery({
+    queryKey: ["current-user", "notifications", "preferences"],
+    queryFn: async () => {
+      const response = await notificationRequest("/api/v1/notifications/preferences");
+      return (await response.json()) as {
+        data: { in_app: boolean; email: boolean; sms: boolean; push: boolean };
+      };
+    },
   });
 }
 
@@ -75,6 +100,7 @@ async function markAsRead(notificationId: string) {
   const baseUrl = getMainApiBaseUrl();
   let response = await fetch(`${baseUrl}/api/v1/notifications/${notificationId}/read`, {
     method: "PATCH",
+    credentials: "include",
     headers: { Authorization: `Bearer ${token}` },
   });
   if (response.status === 401) {
@@ -83,6 +109,7 @@ async function markAsRead(notificationId: string) {
     if (refreshed && token) {
       response = await fetch(`${baseUrl}/api/v1/notifications/${notificationId}/read`, {
         method: "PATCH",
+        credentials: "include",
         headers: { Authorization: `Bearer ${token}` },
       });
     } else {
@@ -91,19 +118,84 @@ async function markAsRead(notificationId: string) {
   }
 }
 
+async function notificationRequest(path: string, init?: RequestInit) {
+  let token = getStoredAccessToken();
+  const baseUrl = getMainApiBaseUrl();
+  let response = await fetch(`${baseUrl}${path}`, {
+    ...init,
+    credentials: "include",
+    headers: {
+      ...(init?.body ? { "Content-Type": "application/json" } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init?.headers,
+    },
+  });
+  if (response.status === 401) {
+    const refreshed = await refreshStoredAccessToken(baseUrl);
+    token = getStoredAccessToken();
+    if (refreshed && token) {
+      response = await fetch(`${baseUrl}${path}`, {
+        ...init,
+        credentials: "include",
+        headers: {
+          ...(init?.body ? { "Content-Type": "application/json" } : {}),
+          Authorization: `Bearer ${token}`,
+          ...init?.headers,
+        },
+      });
+    }
+  }
+  if (!response.ok) throw new Error("Notification request failed");
+  return response;
+}
+
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
+  const [showPreferences, setShowPreferences] = useState(false);
   const queryClient = useQueryClient();
-  const { notifications: liveNotifications, status } = useRealtime();
+  const {
+    notifications: liveNotifications,
+    status,
+    markNotificationRead,
+    markAllNotificationsRead,
+  } = useRealtime();
   const { data, isLoading } = useNotifications();
+  const unreadQuery = useUnreadCount();
+  const preferencesQuery = useNotificationPreferences();
   const notifications = mergeNotifications(liveNotifications, data?.data ?? []).slice(0, 5);
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const unreadCount = unreadQuery.data?.data.count ?? notifications.filter((n) => !n.is_read).length;
   const hasUnread = unreadCount > 0;
 
   const handleMarkRead = async (id: string) => {
     await markAsRead(id);
+    markNotificationRead(id);
     queryClient.invalidateQueries({ queryKey: ["current-user", "notifications"] });
   };
+  const handleMarkAllRead = async () => {
+    await notificationRequest("/api/v1/notifications/read-all", { method: "POST" });
+    markAllNotificationsRead();
+    await queryClient.invalidateQueries({ queryKey: ["current-user", "notifications"] });
+  };
+  const updatePreference = async (
+    key: "in_app" | "email" | "sms" | "push",
+    checked: boolean,
+  ) => {
+    const current = preferencesQuery.data?.data;
+    if (!current) return;
+    await notificationRequest("/api/v1/notifications/preferences", {
+      method: "PUT",
+      body: JSON.stringify({ ...current, [key]: checked }),
+    });
+    await preferencesQuery.refetch();
+  };
+  const liveLabel =
+    status === "connected"
+      ? "Live"
+      : status === "connecting"
+        ? "Connecting"
+        : status === "error" || status === "disconnected"
+          ? "Offline"
+          : "Idle";
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -124,9 +216,8 @@ export function NotificationBell() {
             <span className="text-xs text-muted-foreground">
               {unreadCount} unread
             </span>
-          ) : status === "connected" ? (
-            <span className="text-xs text-emerald-600">Live</span>
           ) : null}
+          <span className={cn("text-xs", status === "connected" ? "text-emerald-600" : "text-muted-foreground")}>{liveLabel}</span>
         </div>
 
         {isLoading ? (
@@ -193,12 +284,32 @@ export function NotificationBell() {
           </div>
         )}
 
+        {showPreferences && preferencesQuery.data ? (
+          <div className="space-y-2 border-t px-4 py-3">
+            {(["in_app", "email", "sms", "push"] as const).map((key) => (
+              <div key={key} className="flex items-center justify-between">
+                <span className="text-xs capitalize">{key.replaceAll("_", " ")}</span>
+                <Switch
+                  checked={preferencesQuery.data.data[key]}
+                  onCheckedChange={(checked) => updatePreference(key, checked)}
+                  aria-label={`${key} notifications`}
+                />
+              </div>
+            ))}
+          </div>
+        ) : null}
         {notifications.length > 0 ? (
-          <div className="border-t px-4 py-2">
+          <div className="flex items-center gap-1 border-t px-2 py-2">
+            <Button variant="ghost" size="sm" className="text-xs" onClick={handleMarkAllRead}>
+              Mark all read
+            </Button>
+            <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowPreferences((current) => !current)}>
+              <Settings className="mr-1 size-3" /> Preferences
+            </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="w-full text-xs text-muted-foreground"
+              className="ml-auto text-xs text-muted-foreground"
               asChild
             >
               <Link href="/system/notifications" onClick={() => setOpen(false)}>

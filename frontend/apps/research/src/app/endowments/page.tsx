@@ -89,7 +89,7 @@ export default async function EndowmentsPage({
     : visibleEndowments;
 
   return (
-    <main id="research-main" className="min-h-screen bg-slate-50">
+    <main id="research-main" className="min-h-screen bg-surface-subtle">
       <EndowmentsMasthead
         resultCount={visibleEndowments.length}
         publishedCount={allEndowments.data.length}
@@ -118,7 +118,7 @@ export default async function EndowmentsPage({
                 <FeaturedEndowment fund={featuredEndowment} />
               </div>
             ) : null}
-            <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-border bg-white shadow-sm">
               {rowEndowments.map((fund) => (
                 <EndowmentRow key={fund.id} fund={fund} />
               ))}
@@ -138,13 +138,13 @@ export default async function EndowmentsPage({
       >
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {funders.data.slice(0, 6).map((funder) => (
-            <article key={funder.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <article key={funder.id} className="rounded-lg border border-border bg-white p-5 shadow-sm">
               <Badge>{formatLabel(funder.funder_type ?? funder.category ?? "funder")}</Badge>
-              <h2 className="mt-4 text-xl font-semibold text-slate-950">
+              <h2 className="mt-4 text-xl font-semibold text-foreground">
                 {funder.name ?? funder.title}
               </h2>
               {compactText(funder.about) || compactText(funder.summary) || compactText(funder.description) ? (
-                <p className="mt-3 text-sm leading-7 text-slate-600">
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">
                   {compactText(funder.about) || compactText(funder.summary) || compactText(funder.description)}
                 </p>
               ) : null}
@@ -227,10 +227,10 @@ function FeaturedEndowment({ fund }: { fund: ResearchGenericRecord }) {
           {fund.status ? <Badge>{formatLabel(fund.status)}</Badge> : null}
           <FilledBadge>Featured</FilledBadge>
         </div>
-        <h2 className="mt-3 text-lg font-semibold leading-7 text-slate-950">
+        <h2 className="mt-3 text-lg font-semibold leading-7 text-foreground">
           {getRecordTitle(fund, "Endowment fund")}
         </h2>
-        {compactText(fund.purpose) || getRecordSummary(fund) || compactText(fund.donor_message) ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+        {compactText(fund.purpose) || getRecordSummary(fund) || compactText(fund.donor_message) ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
           {compactText(fund.purpose) ||
             getRecordSummary(fund) ||
             compactText(fund.donor_message)}
@@ -238,12 +238,12 @@ function FeaturedEndowment({ fund }: { fund: ResearchGenericRecord }) {
       </div>
       <dl className="grid gap-2 text-sm">
         {formatMoney(fund.current_value, fund.currency) ? <div className="rounded-md bg-white p-2.5">
-          <dt className="text-xs font-semibold uppercase text-slate-500">Current value</dt>
-          <dd className="mt-1 font-semibold text-slate-950">{formatMoney(fund.current_value, fund.currency)}</dd>
+          <dt className="text-xs font-semibold uppercase text-muted-foreground">Current value</dt>
+          <dd className="mt-1 font-semibold text-foreground">{formatMoney(fund.current_value, fund.currency)}</dd>
         </div> : null}
         {formatDate(fund.established_date) ? <div className="rounded-md bg-white p-2.5">
-          <dt className="text-xs font-semibold uppercase text-slate-500">Established</dt>
-          <dd className="mt-1 font-semibold text-slate-950">{formatDate(fund.established_date)}</dd>
+          <dt className="text-xs font-semibold uppercase text-muted-foreground">Established</dt>
+          <dd className="mt-1 font-semibold text-foreground">{formatDate(fund.established_date)}</dd>
         </div> : null}
       </dl>
       <span className="inline-flex min-h-10 items-center justify-center rounded-md border border-primary/20 px-3 text-sm font-semibold text-primary transition group-hover:bg-primary group-hover:text-white">

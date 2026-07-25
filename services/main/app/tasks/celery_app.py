@@ -27,12 +27,20 @@ celery_app.conf.update(
     task_routes={
         "main.notifications.dispatch_delivery": {"queue": "main.notifications"},
         "main.notifications.expire": {"queue": "main.maintenance"},
+        "main.newsletters.send": {"queue": "main.email"},
+        "main.newsletters.send_due": {"queue": "main.maintenance"},
         "main.social.queue_publish": {"queue": "main.social"},
         "main.social.publish_due": {"queue": "main.social"},
         "main.email.send_account_created": {"queue": "main.email"},
         "main.email.send_password_reset": {"queue": "main.email"},
         "main.email.send_verification": {"queue": "main.email"},
         "main.imports.commit": {"queue": "main.imports"},
+        "main.media.process_upload_file": {"queue": "main.media"},
+        "main.media.cleanup_expired_batches": {"queue": "main.maintenance"},
+        "main.inquiries.send_reply": {"queue": "main.email"},
+        "main.outbox.publish_one": {"queue": "main.events"},
+        "main.outbox.publish_pending": {"queue": "main.events"},
+        "main.notifications.consume_event": {"queue": "main.notifications"},
     },
     beat_schedule={
         "expire-notifications-every-15-minutes": {
@@ -43,6 +51,18 @@ celery_app.conf.update(
             "task": "main.social.publish_due",
             "schedule": crontab(minute="*/10"),
         },
+        "send-due-newsletters-every-5-minutes": {
+            "task": "main.newsletters.send_due",
+            "schedule": crontab(minute="*/5"),
+        },
+        "cleanup-expired-upload-batches-hourly": {
+            "task": "main.media.cleanup_expired_batches",
+            "schedule": crontab(minute=15),
+        },
+        "publish-pending-outbox": {
+            "task": "main.outbox.publish_pending",
+            "schedule": 10.0,
+        },
     },
 )
 
@@ -50,6 +70,10 @@ celery_app.autodiscover_tasks(["app.tasks"])
 celery_app.conf.imports = (
     "app.tasks.email",
     "app.tasks.imports",
+    "app.tasks.newsletters",
     "app.tasks.notifications",
     "app.tasks.social_posts",
+    "app.tasks.media",
+    "app.tasks.inquiries",
+    "app.tasks.outbox",
 )

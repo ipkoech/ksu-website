@@ -29,13 +29,23 @@ export type RealtimeEvent =
       notifications: RealtimeNotification[];
     }
   | {
-      type: "notification.created";
-      notification: RealtimeNotification;
+      type: "event";
+      cursor: string;
+      event: {
+        id?: string;
+        type: string;
+        scope?: { type?: string; id?: string };
+        data?: Record<string, unknown>;
+        occurred_at?: string;
+      };
     }
   | {
-      type: "heartbeat";
+      type: "ping";
       ts: string;
-      unread_notifications?: RealtimeNotification[];
+    }
+  | {
+      type: "sync.required";
+      reason: string;
     }
   | {
       type: "error";
@@ -53,6 +63,22 @@ export type ResearchRealtimeConfig = {
 };
 
 export const realtimeApi = {
+  ticket: () => {
+    const token = getStoredAccessToken();
+    return fetch(new URL("/api/v1/realtime/ticket", getMainApiBaseUrl()), {
+      method: "POST",
+      credentials: "include",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    }).then(async (response) => {
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.detail || error.message || "Realtime ticket request failed");
+      }
+      return response.json() as Promise<{
+        data: { ticket: string; expires_in: number };
+      }>;
+    });
+  },
   researchConfig: () => {
     const token = getStoredAccessToken();
     return fetch(new URL("/api/v1/realtime/research/config", getResearchApiBaseUrl()), {
@@ -70,21 +96,23 @@ export const realtimeApi = {
 
 type Listener = (event: RealtimeEvent) => void;
 type StatusListener = (status: RealtimeStatus) => void;
-const MAX_WEBSOCKET_QUERY_TOKEN_LENGTH = 2048;
 
 export class RealtimeClient {
   private socket: WebSocket | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectAttempts = 0;
   private closedByClient = false;
+  private connectionGeneration = 0;
   private listeners = new Set<Listener>();
   private statusListeners = new Set<StatusListener>();
+  private seenEventIds = new Set<string>();
+  private readonly cursorStorageKey = "ksu:realtime:last-event-id";
 
   constructor(
     private readonly options: {
       baseUrl?: string;
-      tokenProvider?: () => string | undefined;
       maxReconnectDelayMs?: number;
+      ticketProvider?: () => Promise<{ ticket: string; expires_in: number }>;
     } = {}
   ) {}
 
@@ -97,27 +125,53 @@ export class RealtimeClient {
       return;
     }
 
-    const token = (this.options.tokenProvider ?? getStoredAccessToken)();
-    if (!token) {
-      this.emitStatus("idle");
-      return;
-    }
-
     this.closedByClient = false;
     this.emitStatus("connecting");
-    const url = this.buildUrl(token);
-    this.socket = new WebSocket(url);
+    const generation = ++this.connectionGeneration;
+    void this.openSocket(generation);
+  }
+
+  private async openSocket(generation: number) {
+    try {
+      const ticketResponse = this.options.ticketProvider
+        ? await this.options.ticketProvider()
+        : (await realtimeApi.ticket()).data;
+      if (this.closedByClient || generation !== this.connectionGeneration) return;
+      const lastEventId = this.getLastEventId();
+      const url = this.buildUrl(ticketResponse.ticket, lastEventId);
+      this.socket = new WebSocket(url);
 
     this.socket.addEventListener("open", () => {
       this.reconnectAttempts = 0;
       this.emitStatus("connected");
+      if (lastEventId) {
+        this.sendControl({ type: "resume", last_event_id: lastEventId });
+      }
     });
 
     this.socket.addEventListener("message", (message) => {
       const event = parseRealtimeEvent(message.data);
-      if (event) {
-        this.listeners.forEach((listener) => listener(event));
+      if (!event) return;
+      if (event.type === "ping") {
+        this.sendControl({ type: "pong", ts: event.ts });
+        return;
       }
+      if (event.type === "event") {
+        const eventId = event.event.id || event.cursor;
+        if (this.seenEventIds.has(eventId)) {
+          this.sendControl({ type: "ack", cursor: event.cursor });
+          return;
+        }
+        this.seenEventIds.add(eventId);
+        if (this.seenEventIds.size > 1000) {
+          this.seenEventIds.delete(this.seenEventIds.values().next().value as string);
+        }
+        this.setLastEventId(event.cursor);
+        this.listeners.forEach((listener) => listener(event));
+        this.sendControl({ type: "ack", cursor: event.cursor });
+        return;
+      }
+      this.listeners.forEach((listener) => listener(event));
     });
 
     this.socket.addEventListener("close", () => {
@@ -129,10 +183,16 @@ export class RealtimeClient {
     this.socket.addEventListener("error", () => {
       this.emitStatus("error");
     });
+    } catch {
+      if (this.closedByClient || generation !== this.connectionGeneration) return;
+      this.emitStatus("error");
+      this.scheduleReconnect();
+    }
   }
 
   disconnect() {
     this.closedByClient = true;
+    this.connectionGeneration += 1;
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -152,14 +212,35 @@ export class RealtimeClient {
     return () => this.statusListeners.delete(listener);
   }
 
-  private buildUrl(token: string) {
+  private buildUrl(ticket: string, lastEventId: string | null) {
     const baseUrl = this.options.baseUrl ?? getMainApiBaseUrl();
     const url = new URL("/api/v1/realtime", baseUrl);
     url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-    if (token.length <= MAX_WEBSOCKET_QUERY_TOKEN_LENGTH) {
-      url.searchParams.set("access_token", token);
-    }
+    url.searchParams.set("ticket", ticket);
+    if (lastEventId) url.searchParams.set("last_event_id", lastEventId);
     return url.toString();
+  }
+
+  private sendControl(message: Record<string, unknown>) {
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify(message));
+    }
+  }
+
+  private getLastEventId() {
+    try {
+      return window.localStorage.getItem(this.cursorStorageKey);
+    } catch {
+      return null;
+    }
+  }
+
+  private setLastEventId(cursor: string) {
+    try {
+      window.localStorage.setItem(this.cursorStorageKey, cursor);
+    } catch {
+      // Resume remains best-effort when storage is unavailable.
+    }
   }
 
   private scheduleReconnect() {
@@ -181,7 +262,7 @@ function parseRealtimeEvent(raw: unknown): RealtimeEvent | null {
   try {
     const event = JSON.parse(raw) as Partial<RealtimeEvent>;
     if (!event || typeof event.type !== "string") return null;
-    if (!["connected", "notification.created", "heartbeat", "error"].includes(event.type)) return null;
+    if (!["connected", "event", "ping", "sync.required", "error"].includes(event.type)) return null;
     return event as RealtimeEvent;
   } catch {
     return null;

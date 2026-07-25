@@ -317,7 +317,7 @@ function CampusListFilters({
 }) {
   return (
     <PublicListFilterForm
-      className="mb-6 border border-slate-200 bg-white p-4 shadow-sm"
+      className="mb-6 border border-border bg-white p-4 shadow-sm"
       searchValue={filters?.q}
       searchPlaceholder="Search records"
       selects={[
@@ -351,7 +351,7 @@ function SideNav({ currentHref }: { currentHref: string }) {
   return (
     <nav
       aria-label="Campus life navigation"
-      className="border border-slate-200 bg-white p-3 shadow-sm lg:sticky lg:top-28"
+      className="border border-border bg-white p-3 shadow-sm lg:sticky lg:top-28"
     >
       <p className="px-3 py-2 text-xs font-semibold uppercase text-secondary">
         Campus Life
@@ -366,22 +366,22 @@ function SideNav({ currentHref }: { currentHref: string }) {
               href={item.href}
               className={`group flex gap-3 border px-3 py-3 text-sm transition ${
                 active
-                  ? "border-primary/30 bg-primary/5 text-slate-950"
-                  : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950"
+                  ? "border-primary/30 bg-primary/5 text-foreground"
+                  : "border-transparent text-muted-foreground hover:border-border hover:bg-surface-subtle hover:text-foreground"
               }`}
             >
               <span
                 className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center ${
                   active
                     ? "bg-primary text-white"
-                    : "bg-slate-100 text-primary group-hover:bg-primary group-hover:text-white"
+                    : "bg-surface-muted text-primary group-hover:bg-primary group-hover:text-white"
                 }`}
               >
                 <Icon aria-hidden className="h-4 w-4" />
               </span>
               <span>
                 <span className="block font-semibold">{item.title}</span>
-                <span className="mt-1 block text-xs leading-5 text-slate-500">
+                <span className="mt-1 block text-xs leading-5 text-muted-foreground">
                   {item.description}
                 </span>
               </span>
@@ -405,7 +405,7 @@ function Hero({
   image: string;
 }) {
   return (
-    <section className="border-b border-slate-200 bg-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+    <section className="border-b border-border bg-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
       <div className="w-full">
         <BreadcrumbTrail
           items={[
@@ -419,10 +419,10 @@ function Hero({
             <p className="text-sm font-semibold uppercase text-secondary">
               {eyebrow}
             </p>
-            <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-slate-950 sm:text-5xl lg:text-6xl">
+            <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-foreground sm:text-5xl lg:text-6xl">
               {title}
             </h1>
-            <p className="mt-6 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
+            <p className="mt-6 max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">
               {body}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -437,7 +437,7 @@ function Hero({
               </ActionLink>
             </div>
           </div>
-          <div className="relative min-h-[320px] overflow-hidden border border-slate-200 bg-slate-100">
+          <div className="relative min-h-[320px] overflow-hidden border border-border bg-surface-muted">
             <PublicImage
               src={image}
               alt=""
@@ -445,7 +445,7 @@ function Hero({
               sizes="(min-width: 1024px) 50vw, 100vw"
               className="absolute inset-0 h-full w-full"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-950/10 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-brand-overlay/65 via-brand-overlay/10 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
               <p className="text-sm font-semibold uppercase text-white/80">
                 Student experience
@@ -479,8 +479,8 @@ function Section({
       as="section"
       className={
         dark
-          ? "border-y border-slate-900 bg-slate-950 px-4 py-14 text-white sm:px-6 lg:px-8 lg:py-16"
-          : "border-b border-slate-200 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16"
+          ? "border-y border-border bg-brand-overlay px-4 py-14 text-white sm:px-6 lg:px-8 lg:py-16"
+          : "border-b border-border bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16"
       }
     >
       <div className="grid w-full gap-9 xl:grid-cols-[340px_minmax(0,1fr)]">
@@ -492,7 +492,7 @@ function Section({
             className={
               dark
                 ? "mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-4xl"
-                : "mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl"
+                : "mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl"
             }
           >
             {title}
@@ -502,7 +502,7 @@ function Section({
               className={
                 dark
                   ? "mt-5 text-base leading-8 text-white/70"
-                  : "mt-5 text-base leading-8 text-slate-600"
+                  : "mt-5 text-base leading-8 text-muted-foreground"
               }
             >
               {body}
@@ -523,7 +523,7 @@ function StatStrip({ data }: { data: CampusLifePageData }) {
   const contacts = data.contacts.length + data.faqs.length;
 
   return (
-    <div className="grid border border-slate-200 bg-white md:grid-cols-4">
+    <div className="grid border border-border bg-white md:grid-cols-4">
       {[
         ["Clubs", data.clubs.length || "Published records"],
         ["Sports facilities", data.sports.length || "Campus activities"],
@@ -532,12 +532,12 @@ function StatStrip({ data }: { data: CampusLifePageData }) {
       ].map(([label, value]) => (
         <div
           key={label}
-          className="border-b border-slate-200 p-5 md:border-b-0 md:border-r last:md:border-r-0"
+          className="border-b border-border p-5 md:border-b-0 md:border-r last:md:border-r-0"
         >
-          <p className="text-xs font-semibold uppercase text-slate-500">
+          <p className="text-xs font-semibold uppercase text-muted-foreground">
             {label}
           </p>
-          <p className="mt-2 text-2xl font-semibold text-slate-950">{value}</p>
+          <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
         </div>
       ))}
     </div>
@@ -562,7 +562,7 @@ function FeatureGrid({
             className={
               dark
                 ? "group border border-white/10 bg-white/[0.04] p-5 transition hover:bg-white/[0.08]"
-                : "group border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+                : "group border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
             }
           >
             <span
@@ -578,7 +578,7 @@ function FeatureGrid({
               className={
                 dark
                   ? "mt-5 text-lg font-semibold text-white"
-                  : "mt-5 text-lg font-semibold text-slate-950"
+                  : "mt-5 text-lg font-semibold text-foreground"
               }
             >
               {item.title}
@@ -587,7 +587,7 @@ function FeatureGrid({
               className={
                 dark
                   ? "mt-2 text-sm leading-7 text-white/70"
-                  : "mt-2 text-sm leading-7 text-slate-600"
+                  : "mt-2 text-sm leading-7 text-muted-foreground"
               }
             >
               {item.description}
@@ -620,9 +620,9 @@ function RecordGrid<T>({
 }) {
   if (!items.length) {
     return (
-      <div className="border border-slate-200 bg-white p-6">
-        <h3 className="text-xl font-semibold text-slate-950">{emptyTitle}</h3>
-        <p className="mt-3 text-sm leading-7 text-slate-600">
+      <div className="border border-border bg-white p-6">
+        <h3 className="text-xl font-semibold text-foreground">{emptyTitle}</h3>
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">
           No public records were returned for this category. Use official
           university channels for current student-life guidance.
         </p>
@@ -646,28 +646,28 @@ function ClubCard({ club }: { club: Club }) {
   return (
     <Link
       href={`/campus-life/clubs/${club.slug}`}
-      className="group border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+      className="group border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
     >
       <p className="text-xs font-semibold uppercase text-secondary">
         {club.club_type || "Club"}
       </p>
-      <h3 className="mt-3 text-lg font-semibold text-slate-950">{club.name}</h3>
-      <p className="mt-2 text-sm leading-7 text-slate-600">
+      <h3 className="mt-3 text-lg font-semibold text-foreground">{club.name}</h3>
+      <p className="mt-2 text-sm leading-7 text-muted-foreground">
         {shortText(
           club.about ?? club.mission ?? club.objectives,
           "Student club or society.",
         )}
       </p>
-      <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-slate-200 pt-4 text-sm">
+      <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-border pt-4 text-sm">
         <div>
-          <dt className="text-xs uppercase text-slate-500">Members</dt>
-          <dd className="mt-1 font-semibold text-slate-950">
+          <dt className="text-xs uppercase text-muted-foreground">Members</dt>
+          <dd className="mt-1 font-semibold text-foreground">
             {club.membership_count || "Not published"}
           </dd>
         </div>
         <div>
-          <dt className="text-xs uppercase text-slate-500">Meeting</dt>
-          <dd className="mt-1 font-semibold text-slate-950">
+          <dt className="text-xs uppercase text-muted-foreground">Meeting</dt>
+          <dd className="mt-1 font-semibold text-foreground">
             {club.meeting_schedule || "Contact club"}
           </dd>
         </div>
@@ -684,9 +684,9 @@ function HousingCard({ item }: { item: Accommodation }) {
   return (
     <Link
       href={`/campus-life/accommodation/${item.slug}`}
-      className="grid gap-5 border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5 md:grid-cols-[160px_minmax(0,1fr)]"
+      className="grid gap-5 border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5 md:grid-cols-[160px_minmax(0,1fr)]"
     >
-      <div className="min-h-36 bg-slate-100">
+      <div className="min-h-36 bg-surface-muted">
         <PublicImage
           src={media.accommodation}
           alt=""
@@ -699,13 +699,13 @@ function HousingCard({ item }: { item: Accommodation }) {
         <p className="text-xs font-semibold uppercase text-secondary">
           {item.accommodation_type} · {item.gender}
         </p>
-        <h3 className="mt-2 text-xl font-semibold text-slate-950">
+        <h3 className="mt-2 text-xl font-semibold text-foreground">
           {item.name}
         </h3>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
+        <p className="mt-2 text-sm leading-7 text-muted-foreground">
           {shortText(item.about ?? item.rules, "Accommodation record.")}
         </p>
-        <div className="mt-4 grid gap-2 text-sm text-slate-700 sm:grid-cols-3">
+        <div className="mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
           <span>Capacity: {item.capacity || "Not published"}</span>
           <span>Rooms: {item.total_rooms || "Not published"}</span>
           <span>Fee: {money(item.fee_per_semester)}</span>
@@ -719,19 +719,19 @@ function SportCard({ item }: { item: SportsFacility }) {
   return (
     <Link
       href={`/campus-life/sports/${item.slug}`}
-      className="border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+      className="border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
     >
       <span className="flex h-11 w-11 items-center justify-center bg-primary/10 text-primary">
         <Dumbbell aria-hidden className="h-5 w-5" />
       </span>
-      <h3 className="mt-5 text-lg font-semibold text-slate-950">{item.name}</h3>
-      <p className="mt-2 text-sm leading-7 text-slate-600">
+      <h3 className="mt-5 text-lg font-semibold text-foreground">{item.name}</h3>
+      <p className="mt-2 text-sm leading-7 text-muted-foreground">
         {shortText(
           item.about,
           listValue(item.sport_types, "Sports facility record."),
         )}
       </p>
-      <p className="mt-4 text-sm font-semibold text-slate-950">
+      <p className="mt-4 text-sm font-semibold text-foreground">
         {item.location || item.facility_type || "Main Campus"}
       </p>
     </Link>
@@ -742,9 +742,9 @@ function ArtCard({ item }: { item: ArtsCulture }) {
   return (
     <Link
       href={`/campus-life/gallery/${item.slug}`}
-      className="group overflow-hidden border border-slate-200 bg-white transition hover:border-primary/35"
+      className="group overflow-hidden border border-border bg-white transition hover:border-primary/35"
     >
-      <div className="h-44 bg-slate-100">
+      <div className="h-44 bg-surface-muted">
         <PublicImage
           src={media.gallery}
           alt=""
@@ -758,10 +758,10 @@ function ArtCard({ item }: { item: ArtsCulture }) {
         <p className="text-xs font-semibold uppercase text-secondary">
           {item.category || "Gallery"}
         </p>
-        <h3 className="mt-2 text-lg font-semibold text-slate-950">
+        <h3 className="mt-2 text-lg font-semibold text-foreground">
           {item.title}
         </h3>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
+        <p className="mt-2 text-sm leading-7 text-muted-foreground">
           {shortText(item.about, "Arts, culture, and campus-life record.")}
         </p>
       </div>
@@ -773,19 +773,19 @@ function GovernanceCard({ item }: { item: StudentGovernance }) {
   return (
     <Link
       href={`/campus-life/student-life/${item.slug}`}
-      className="border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+      className="border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
     >
       <p className="text-xs font-semibold uppercase text-secondary">
         {item.acronym || item.governance_type || "Student body"}
       </p>
-      <h3 className="mt-3 text-lg font-semibold text-slate-950">{item.name}</h3>
-      <p className="mt-2 text-sm leading-7 text-slate-600">
+      <h3 className="mt-3 text-lg font-semibold text-foreground">{item.name}</h3>
+      <p className="mt-2 text-sm leading-7 text-muted-foreground">
         {shortText(
           item.about ?? item.mandate ?? item.constitution,
           "Student governance record.",
         )}
       </p>
-      <p className="mt-4 text-sm text-slate-600">
+      <p className="mt-4 text-sm text-muted-foreground">
         Term: {dateText(item.term_start)} to {dateText(item.term_end)}
       </p>
     </Link>
@@ -865,9 +865,9 @@ function ExperiencePanel({
   return (
     <Link
       href={href}
-      className="group overflow-hidden border border-slate-200 bg-white"
+      className="group overflow-hidden border border-border bg-white"
     >
-      <div className="h-48 bg-slate-100">
+      <div className="h-48 bg-surface-muted">
         <PublicImage
           src={image}
           alt=""
@@ -878,8 +878,8 @@ function ExperiencePanel({
         />
       </div>
       <div className="p-5">
-        <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
-        <p className="mt-2 text-sm leading-7 text-slate-600">{body}</p>
+        <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+        <p className="mt-2 text-sm leading-7 text-muted-foreground">{body}</p>
         <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary">
           Explore
           <ArrowRight aria-hidden className="h-4 w-4" />
@@ -1344,16 +1344,16 @@ function SupportPage({
             const Icon = service.icon;
             const external = service.href.startsWith("http");
             const className =
-              "border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5";
+              "border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5";
             const inner = (
               <>
                 <span className="flex h-11 w-11 items-center justify-center bg-primary/10 text-primary">
                   <Icon aria-hidden className="h-5 w-5" />
                 </span>
-                <h3 className="mt-5 text-lg font-semibold text-slate-950">
+                <h3 className="mt-5 text-lg font-semibold text-foreground">
                   {service.title}
                 </h3>
-                <p className="mt-2 text-sm leading-7 text-slate-600">
+                <p className="mt-2 text-sm leading-7 text-muted-foreground">
                   {service.body}
                 </p>
               </>
@@ -1564,16 +1564,16 @@ function GalleryDetail({ item }: { item?: ArtsCulture | null }) {
 
 function DetailGrid({ rows }: { rows: [string, string][] }) {
   return (
-    <dl className="grid border border-slate-200 bg-white md:grid-cols-2">
+    <dl className="grid border border-border bg-white md:grid-cols-2">
       {rows.map(([label, value]) => (
         <div
           key={label}
-          className="border-b border-slate-200 p-5 odd:md:border-r"
+          className="border-b border-border p-5 odd:md:border-r"
         >
-          <dt className="text-xs font-semibold uppercase text-slate-500">
+          <dt className="text-xs font-semibold uppercase text-muted-foreground">
             {label}
           </dt>
-          <dd className="mt-2 text-sm font-semibold leading-7 text-slate-950">
+          <dd className="mt-2 text-sm font-semibold leading-7 text-foreground">
             {value}
           </dd>
         </div>
@@ -1597,14 +1597,14 @@ function TextBlocks({
           className={
             dark
               ? "border border-white/10 bg-white/[0.04] p-5"
-              : "border border-slate-200 bg-white p-5"
+              : "border border-border bg-white p-5"
           }
         >
           <h3
             className={
               dark
                 ? "text-lg font-semibold text-white"
-                : "text-lg font-semibold text-slate-950"
+                : "text-lg font-semibold text-foreground"
             }
           >
             {title}
@@ -1613,7 +1613,7 @@ function TextBlocks({
             className={
               dark
                 ? "mt-2 text-sm leading-7 text-white/70"
-                : "mt-2 text-sm leading-7 text-slate-600"
+                : "mt-2 text-sm leading-7 text-muted-foreground"
             }
           >
             {body}
@@ -1639,7 +1639,7 @@ function StepList({
           className={
             dark
               ? "grid gap-4 border border-white/10 bg-white/[0.04] p-4 text-white sm:grid-cols-[48px_minmax(0,1fr)]"
-              : "grid gap-4 border border-slate-200 bg-white p-4 text-slate-950 sm:grid-cols-[48px_minmax(0,1fr)]"
+              : "grid gap-4 border border-border bg-white p-4 text-foreground sm:grid-cols-[48px_minmax(0,1fr)]"
           }
         >
           <span className="flex h-10 w-10 items-center justify-center bg-primary text-sm font-semibold text-white">
@@ -1649,7 +1649,7 @@ function StepList({
             className={
               dark
                 ? "text-sm leading-7 text-white/75"
-                : "text-sm leading-7 text-slate-600"
+                : "text-sm leading-7 text-muted-foreground"
             }
           >
             {step}
@@ -1804,7 +1804,7 @@ export function CampusLifeContent({
           body={copy.body}
           image={copy.image}
         />
-        <div className="grid w-full gap-8 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-8">
+        <div className="grid w-full gap-8 bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-8">
           <SideNav currentHref={currentHref} />
           <div className="min-w-0">
             <ContentByArea
@@ -1815,16 +1815,16 @@ export function CampusLifeContent({
             />
           </div>
         </div>
-        <section className="border-y border-slate-200 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
+        <section className="border-y border-border bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
           <div className="grid w-full gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
             <div>
               <p className="text-sm font-semibold uppercase text-secondary">
                 Student Services
               </p>
-              <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
+              <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground sm:text-4xl">
                 Keep moving through campus life
               </h2>
-              <p className="mt-4 text-base leading-8 text-slate-600">
+              <p className="mt-4 text-base leading-8 text-muted-foreground">
                 Use official systems for service requests and student portals,
                 and use the campus-life pages to understand what support,
                 housing, activities, and student communities are available.

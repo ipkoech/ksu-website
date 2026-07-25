@@ -98,7 +98,7 @@ export default async function ProgramsPage({
   const errors = [programs.error, centers.error].filter(Boolean);
 
   return (
-    <main id="research-main" className="min-h-screen bg-white text-slate-950">
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
       <ResearchPortfolioHero
         eyebrow="Published program portfolio"
         title="Research Programs"
@@ -116,10 +116,10 @@ export default async function ProgramsPage({
           <div className="min-w-0">
             <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
               <div className="pt-1">
-                <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 lg:whitespace-nowrap">
+                <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground lg:whitespace-nowrap">
                   Program Portfolio
                 </h1>
-                <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
+                <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
                   Search, filter, sort, and open published research programs.
                 </p>
               </div>
@@ -144,7 +144,7 @@ export default async function ProgramsPage({
                 <ProgramsTable programs={visiblePrograms} />
               </div>
             ) : !errors.length ? (
-              <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-5 text-sm font-medium text-slate-600">
+              <div className="mt-5 rounded-lg border border-border bg-surface-subtle p-5 text-sm font-medium text-muted-foreground">
                 No published research programs match the current filters.
               </div>
             ) : null}
@@ -201,8 +201,8 @@ function ProgramFilters({
 
 function ProgramsTable({ programs }: { programs: ResearchGenericRecord[] }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 md:grid">
+    <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+      <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-border bg-surface-subtle px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground md:grid">
         <span>Program</span>
         <span>Type</span>
         <span>Status</span>
@@ -223,17 +223,17 @@ function ProgramTableRow({ program }: { program: ResearchGenericRecord }) {
   return (
     <Link
       href={href}
-      className="group grid gap-2 px-4 py-3 transition hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
+      className="group grid gap-2 px-4 py-3 transition hover:bg-surface-subtle/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
     >
       <div className="min-w-0">
-        <h2 className="truncate text-sm font-semibold leading-6 text-slate-950 transition group-hover:text-primary">
+        <h2 className="truncate text-sm font-semibold leading-6 text-foreground transition group-hover:text-primary">
           {title}
         </h2>
         {program.code ? (
-          <p className="mt-0.5 truncate text-xs font-medium text-slate-500">{compactText(program.code)}</p>
+          <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">{compactText(program.code)}</p>
         ) : null}
       </div>
-      <div className="text-xs font-medium text-slate-600 md:text-sm">
+      <div className="text-xs font-medium text-muted-foreground md:text-sm">
         {program.program_type ? formatLabel(program.program_type) : "Program"}
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -246,7 +246,7 @@ function ProgramTableRow({ program }: { program: ResearchGenericRecord }) {
 
 function ProgramQuickLinks() {
   return (
-    <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm xl:sticky xl:top-24">
+    <aside className="rounded-lg border border-border bg-white p-4 shadow-sm xl:sticky xl:top-24">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
         Quick links
       </p>
@@ -261,11 +261,11 @@ function ProgramQuickLinks() {
               <span className="block font-semibold text-primary group-hover:text-secondary">
                 {link.label}
               </span>
-              <span className="mt-1 block text-xs leading-5 text-slate-500">{link.body}</span>
+              <span className="mt-1 block text-xs leading-5 text-muted-foreground">{link.body}</span>
             </span>
             <ArrowRight
               aria-hidden
-              className="mt-1 h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-1 group-hover:text-secondary"
+              className="mt-1 h-4 w-4 shrink-0 text-muted-foreground/70 transition group-hover:translate-x-1 group-hover:text-secondary"
             />
           </Link>
         ))}

@@ -50,17 +50,17 @@ export default function SitemapPage() {
           <p className="text-sm font-semibold uppercase text-secondary">
             Sitemap
           </p>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
+          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
             Website sitemap
           </h1>
-          <p className="mt-4 text-base leading-8 text-slate-600">
+          <p className="mt-4 text-base leading-8 text-muted-foreground">
             Browse the main public areas of the Kisii University website.
           </p>
         </div>
 
         <div className="mt-10 space-y-10">
           <section>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Main sections
             </h2>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -68,9 +68,9 @@ export default function SitemapPage() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="group flex items-center gap-3 rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary/30 hover:text-primary"
+                  className="group flex items-center gap-3 rounded-md border border-border bg-white px-4 py-3 text-sm font-semibold text-muted-foreground shadow-sm transition hover:border-primary/30 hover:text-primary"
                 >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-primary transition group-hover:bg-primary group-hover:text-white">
                     <item.icon aria-hidden className="h-4 w-4" />
                   </span>
                   {item.label}
@@ -80,7 +80,7 @@ export default function SitemapPage() {
           </section>
 
           <section>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Utility pages
             </h2>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -88,7 +88,7 @@ export default function SitemapPage() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="group flex items-center gap-3 rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary/30 hover:text-primary"
+                  className="group flex items-center gap-3 rounded-md border border-border bg-white px-4 py-3 text-sm font-semibold text-muted-foreground shadow-sm transition hover:border-primary/30 hover:text-primary"
                 >
                   <ArrowRight aria-hidden className="h-4 w-4 text-primary/60" />
                   {item.label}

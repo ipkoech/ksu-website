@@ -64,7 +64,7 @@ function AnimatedValue({ value }: { value: string }) {
 
 export function AnimatedStatRow({ facts }: { facts: HomeMetric[] }) {
   return (
-    <div className="-mx-4 border-b border-blue-100 bg-white px-4 py-4 shadow-sm shadow-blue-100/70 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
+    <div className="-mx-4 border-b border-border bg-white px-4 py-4 shadow-sm shadow-primary/70 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {facts.map((fact, index) => {
           const Icon = factIcons[index % factIcons.length];
@@ -72,16 +72,16 @@ export function AnimatedStatRow({ facts }: { facts: HomeMetric[] }) {
           return (
             <div
               key={`${fact.label}-${fact.value}`}
-              className="flex min-h-24 items-center gap-4 rounded-md border border-blue-100 bg-[linear-gradient(135deg,#ffffff_0%,#f0f7ff_100%)] px-4 py-4 shadow-sm shadow-blue-100/50"
+              className="flex min-h-24 items-center gap-4 rounded-md border border-border bg-[linear-gradient(135deg,#ffffff_0%,#f0f7ff_100%)] px-4 py-4 shadow-sm shadow-primary/50"
             >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-blue-50 text-secondary ring-1 ring-blue-100">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-accent text-secondary ring-1 ring-border">
                 <Icon className="h-6 w-6 stroke-[1.8]" aria-hidden />
               </span>
               <span className="min-w-0">
                 <span className="block font-[family-name:var(--font-display)] text-3xl font-bold leading-none text-primary">
                   <AnimatedValue value={fact.value} />
                 </span>
-                <span className="mt-2 block text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                <span className="mt-2 block text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
                   {fact.label}
                 </span>
               </span>

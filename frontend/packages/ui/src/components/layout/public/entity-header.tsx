@@ -82,7 +82,7 @@ export function EntityHeader({
             </Link>
 
             <div className="min-w-0">
-              <div className="flex min-w-0 items-center gap-2 text-xs font-semibold uppercase text-slate-500">
+              <div className="flex min-w-0 items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
                 <Link
                   href={parentHref}
                   className="truncate transition hover:text-primary"
@@ -94,7 +94,7 @@ export function EntityHeader({
               </div>
               <Link
                 href={href}
-                className="mt-1 block truncate font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-slate-950 transition hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl"
+                className="mt-1 block truncate font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-foreground transition hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl"
               >
                 {title}
               </Link>
@@ -117,7 +117,7 @@ export function EntityHeader({
           <div className="flex items-center gap-2 xl:hidden">
             <Link
               href="/"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-700 transition hover:bg-slate-100 hover:text-primary"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-foreground/85 transition hover:bg-accent hover:text-primary"
               aria-label="University home"
             >
               <Home aria-hidden className="h-5 w-5" />
@@ -156,7 +156,7 @@ export function EntityHeader({
                 <div className="border-b px-4 py-3">
                   <Link
                     href={parentHref}
-                    className="inline-flex min-h-9 items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-primary"
+                    className="inline-flex min-h-9 items-center gap-2 text-sm font-semibold text-muted-foreground transition hover:text-primary"
                     onClick={() => setIsMobileOpen(false)}
                   >
                     <Home aria-hidden className="h-4 w-4" />
@@ -199,7 +199,7 @@ function EntityHeaderLink({
     "inline-flex min-h-10 items-center gap-1 rounded-xl px-3 py-2 text-sm font-semibold transition",
     active
       ? "bg-primary/10 text-primary"
-      : "text-slate-700 hover:bg-slate-100 hover:text-slate-950"
+      : "text-foreground/85 hover:bg-accent hover:text-foreground"
   );
   const hasDropdown = item.children !== undefined;
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -310,7 +310,7 @@ function EntityHeaderLink({
         {open && dropdownFrame ? (
           <div
             role="menu"
-            className="fixed z-50 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl"
+            className="fixed z-50 rounded-2xl border border-border bg-white p-3 shadow-xl"
             onMouseEnter={clearCloseTimeout}
             onMouseLeave={scheduleCloseDropdown}
             style={{
@@ -335,7 +335,7 @@ function EntityHeaderLink({
                 ))}
               </div>
             ) : (
-              <p className="rounded-xl bg-slate-50 px-3 py-4 text-sm font-medium text-slate-500">
+              <p className="rounded-xl bg-surface-subtle px-3 py-4 text-sm font-medium text-muted-foreground">
                 No departments have been published for this school yet.
               </p>
             )}
@@ -347,7 +347,7 @@ function EntityHeaderLink({
 
   if (!item.href) {
     return (
-      <span className={cn(className, "cursor-default text-slate-400")}>
+      <span className={cn(className, "cursor-default text-muted-foreground/70")}>
         {item.label}
       </span>
     );
@@ -377,7 +377,7 @@ function EntityHeaderLink({
 function EntityHeaderDropdownLink({ item }: { item: EntityHeaderNavItem }) {
   if (!item.href) {
     return (
-      <span className="rounded-xl px-3 py-2 text-sm font-medium text-slate-500">
+      <span className="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground">
         {item.label}
       </span>
     );
@@ -389,7 +389,7 @@ function EntityHeaderDropdownLink({ item }: { item: EntityHeaderNavItem }) {
         href={item.href}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex min-h-10 items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-primary/5 hover:text-primary"
+        className="flex min-h-10 items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-foreground/85 transition hover:bg-primary/5 hover:text-primary"
       >
         <span className="min-w-0 flex-1 break-words">{item.label}</span>
         <ExternalLink aria-hidden className="h-3.5 w-3.5 shrink-0" />
@@ -400,7 +400,7 @@ function EntityHeaderDropdownLink({ item }: { item: EntityHeaderNavItem }) {
   return (
     <Link
       href={item.href}
-      className="block min-h-10 rounded-xl px-3 py-2 text-sm font-semibold leading-6 text-slate-700 transition hover:bg-primary/5 hover:text-primary"
+      className="block min-h-10 rounded-xl px-3 py-2 text-sm font-semibold leading-6 text-foreground/85 transition hover:bg-primary/5 hover:text-primary"
     >
       {item.label}
     </Link>
@@ -418,13 +418,13 @@ function MobileEntityHeaderLink({
 }) {
   if (item.children !== undefined) {
     return (
-      <details className="group border-b border-slate-100 last:border-b-0">
+      <details className="group border-b border-border last:border-b-0">
         <summary
           className={cn(
             "flex min-h-12 cursor-pointer list-none items-center justify-between px-5 py-3 text-sm font-semibold transition [&::-webkit-details-marker]:hidden",
             active
               ? "bg-primary/10 text-primary"
-              : "text-slate-800 hover:bg-slate-50 hover:text-primary",
+              : "text-foreground/85 hover:bg-surface-subtle hover:text-primary",
           )}
         >
           <span>{item.label}</span>
@@ -433,7 +433,7 @@ function MobileEntityHeaderLink({
             className="h-4 w-4 transition group-open:rotate-180"
           />
         </summary>
-        <div className="bg-slate-50 py-2">
+        <div className="bg-surface-subtle py-2">
           {item.children.length ? (
             item.children.map((child) => (
               <MobileEntityHeaderChildLink
@@ -443,7 +443,7 @@ function MobileEntityHeaderLink({
               />
             ))
           ) : (
-            <p className="px-8 py-3 text-sm font-medium text-slate-500">
+            <p className="px-8 py-3 text-sm font-medium text-muted-foreground">
               No departments have been published for this school yet.
             </p>
           )}
@@ -456,11 +456,11 @@ function MobileEntityHeaderLink({
     "flex min-h-12 items-center justify-between px-5 py-3 text-sm font-semibold transition",
     active
       ? "bg-primary/10 text-primary"
-      : "text-slate-800 hover:bg-slate-50 hover:text-primary"
+      : "text-foreground/85 hover:bg-surface-subtle hover:text-primary"
   );
 
   if (!item.href) {
-    return <span className={cn(className, "text-slate-400")}>{item.label}</span>;
+    return <span className={cn(className, "text-muted-foreground/70")}>{item.label}</span>;
   }
 
   if (item.external) {
@@ -494,7 +494,7 @@ function MobileEntityHeaderChildLink({
 }) {
   if (!item.href) {
     return (
-      <span className="block px-8 py-2.5 text-sm font-medium text-slate-500">
+      <span className="block px-8 py-2.5 text-sm font-medium text-muted-foreground">
         {item.label}
       </span>
     );
@@ -506,7 +506,7 @@ function MobileEntityHeaderChildLink({
         href={item.href}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex min-h-10 items-center justify-between gap-3 px-8 py-2.5 text-sm font-semibold text-slate-700 transition hover:text-primary"
+        className="flex min-h-10 items-center justify-between gap-3 px-8 py-2.5 text-sm font-semibold text-foreground/85 transition hover:text-primary"
         onClick={onClick}
       >
         <span className="min-w-0 flex-1">{item.label}</span>
@@ -518,7 +518,7 @@ function MobileEntityHeaderChildLink({
   return (
     <Link
       href={item.href}
-      className="block min-h-10 px-8 py-2.5 text-sm font-semibold text-slate-700 transition hover:text-primary"
+      className="block min-h-10 px-8 py-2.5 text-sm font-semibold text-foreground/85 transition hover:text-primary"
       onClick={onClick}
     >
       {item.label}

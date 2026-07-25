@@ -106,18 +106,6 @@ export function buildMediaTypeLinks(baseHref: string): EntityQuickLink[] {
       section: "events",
     },
     {
-      label: "Blogs",
-      href: `${baseHref}/media/blogs`,
-      icon: FileText,
-      section: "blogs",
-    },
-    {
-      label: "Announcements",
-      href: `${baseHref}/media/announcements`,
-      icon: Quote,
-      section: "announcements",
-    },
-    {
       label: "Gallery",
       href: `${baseHref}/media/gallery`,
       icon: Download,
@@ -138,7 +126,7 @@ export function QuickLinksPanel({
   ariaLabel?: string;
 }) {
   return (
-    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-[1.5rem] border border-border bg-white p-4 shadow-sm">
       <SectionKicker>{title}</SectionKicker>
       <nav aria-label={ariaLabel} className="mt-3">
         <ul className="divide-y divide-slate-100">
@@ -152,14 +140,14 @@ export function QuickLinksPanel({
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={`group flex min-h-10 items-center gap-3 py-2 text-sm font-medium transition ${
-                    active ? "text-primary" : "text-slate-700 hover:text-primary"
+                    active ? "text-primary" : "text-muted-foreground hover:text-primary"
                   }`}
                 >
                   <Icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
                   <span className="min-w-0 flex-1">{item.label}</span>
                   <ArrowRight
                     aria-hidden
-                    className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                    className="h-4 w-4 shrink-0 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:text-primary"
                   />
                 </Link>
               </li>
@@ -192,7 +180,7 @@ export function MobileQuickGrid({
             className={`flex min-h-[5rem] flex-col items-center justify-center gap-2 rounded-[1.1rem] border bg-white p-2 text-center text-[0.72rem] font-semibold leading-4 shadow-sm transition ${
               active
                 ? "border-primary/30 text-primary"
-                : "border-slate-200 text-slate-700 hover:border-primary/30 hover:text-primary"
+                : "border-border text-muted-foreground hover:border-primary/30 hover:text-primary"
             }`}
           >
             <Icon aria-hidden className="h-5 w-5 text-primary" />

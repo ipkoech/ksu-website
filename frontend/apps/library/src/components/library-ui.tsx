@@ -87,7 +87,7 @@ export function LibraryHero({
         className="object-cover object-[48%_50%]"
       />
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.94)_0%,rgba(2,20,49,0.82)_42%,rgba(2,20,49,0.32)_78%,rgba(2,20,49,0.12)_100%)]" />
-      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/40 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-brand-overlay/40 to-transparent" />
       <div className="relative mx-auto flex min-h-[70vh] max-w-[1680px] flex-col justify-center px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <LibraryHeroContentMotion>
           {breadcrumbs?.length ? (
@@ -158,7 +158,7 @@ export function LibrarySection({
       className={
         tone === "white"
           ? "bg-white px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
-          : "border-y border-slate-200 bg-slate-50 px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+          : "border-y border-border bg-surface-subtle px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       }
     >
       <div className="mx-auto w-full max-w-[1680px]">
@@ -166,11 +166,11 @@ export function LibrarySection({
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary sm:text-sm sm:tracking-[0.24em]">
             {eyebrow}
           </p>
-          <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+          <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground sm:text-4xl">
             {title}
           </h2>
           {body ? (
-            <p className="mt-4 text-pretty text-base leading-7 text-slate-600">{body}</p>
+            <p className="mt-4 text-pretty text-base leading-7 text-muted-foreground">{body}</p>
           ) : null}
         </div>
         {children}
@@ -200,10 +200,10 @@ export function IconCard({
       <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary text-white shadow-sm">
         <Icon aria-hidden className="h-5 w-5" />
       </span>
-      <h3 className="mt-5 text-lg font-semibold leading-7 text-slate-950">
+      <h3 className="mt-5 text-lg font-semibold leading-7 text-foreground">
         {title}
       </h3>
-      <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
+      <p className="mt-3 text-sm leading-7 text-muted-foreground">{body}</p>
       {children}
       {href ? (
         <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-primary">
@@ -215,7 +215,7 @@ export function IconCard({
   );
 
   const className =
-    "group flex min-h-[230px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20";
+    "group flex min-h-[230px] flex-col rounded-lg border border-border bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20";
 
   return href ? (
     <Link href={href} className={className}>
@@ -308,10 +308,10 @@ export function LibraryBadge({
   tone?: "neutral" | "primary" | "secondary" | "muted";
 }) {
   const toneClass = {
-    neutral: "border-slate-200 bg-slate-50 text-slate-700",
+    neutral: "border-border bg-surface-subtle text-muted-foreground",
     primary: "border-primary/15 bg-primary/10 text-primary",
     secondary: "border-secondary/20 bg-secondary text-white",
-    muted: "border-slate-200 bg-slate-200 text-slate-700",
+    muted: "border-border bg-surface-muted text-muted-foreground",
   }[tone];
 
   return (
@@ -334,7 +334,7 @@ export function StatusMessage({
       className={
         tone === "error"
           ? "rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
-          : "rounded-md border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600"
+          : "rounded-md border border-border bg-white p-4 text-sm leading-6 text-muted-foreground"
       }
     >
       {children}
@@ -361,7 +361,7 @@ export function LibraryContentBand({
     <section
       className={
         tone === "soft"
-          ? "border-y border-slate-200 bg-slate-50 px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+          ? "border-y border-border bg-surface-subtle px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
           : "bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       }
     >
@@ -384,17 +384,17 @@ export function LibrarySectionHeading({
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary sm:text-sm sm:tracking-[0.22em]">
         {eyebrow}
       </p>
-      <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+      <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground sm:text-4xl">
         {title}
       </h2>
-      {body ? <p className="mt-4 text-pretty text-base leading-7 text-slate-600">{body}</p> : null}
+      {body ? <p className="mt-4 text-pretty text-base leading-7 text-muted-foreground">{body}</p> : null}
     </div>
   );
 }
 
 export function SearchPanel({ children }: { children: ReactNode }) {
   return (
-    <div className="-mt-4 min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)] sm:-mt-8 sm:p-5">
+    <div className="-mt-4 min-w-0 rounded-lg border border-border bg-white p-4 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)] sm:-mt-8 sm:p-5">
       {children}
     </div>
   );
@@ -420,13 +420,13 @@ export function LibraryFilterTextInput({
 }) {
   return (
     <label className={`block min-w-0 ${className}`}>
-      <span className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+      <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         {label}
       </span>
       <span className="relative mt-2 block">
         <Search
           aria-hidden
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70"
         />
         <input
           type="search"
@@ -434,7 +434,7 @@ export function LibraryFilterTextInput({
           defaultValue={value?.trim() ?? ""}
           placeholder={placeholder}
           autoComplete="off"
-          className="h-11 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm font-medium text-slate-950 outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4"
+          className="h-11 w-full rounded-md border border-border bg-white pl-9 pr-3 text-sm font-medium text-foreground outline-none ring-primary/20 transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4"
         />
       </span>
     </label>
@@ -462,13 +462,13 @@ export function LibraryFilterSelect({
 
   return (
     <label className={`block min-w-0 ${className}`}>
-      <span className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+      <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         {label}
       </span>
       <select
         name={name}
         defaultValue={value?.trim() ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
+        className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm font-semibold text-foreground outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
       >
         {includeAllOption ? <option value="">{allLabel ?? `All ${label.toLowerCase()}`}</option> : null}
         {normalizedOptions.map((option) => (
@@ -493,13 +493,13 @@ export function LibraryFilterCheckbox({
   children: ReactNode;
 }) {
   return (
-    <label className="inline-flex min-h-11 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/20">
+    <label className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border bg-white px-3 py-2 text-sm font-semibold text-muted-foreground transition focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/20">
       <input
         type="checkbox"
         name={name}
         value={value}
         defaultChecked={checked}
-        className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+        className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
       />
       {children}
     </label>
@@ -527,7 +527,7 @@ export function LibraryFilterClearLink({
   return (
     <Link
       href={href}
-      className="inline-flex min-h-11 items-center justify-center rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/25 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+      className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-white px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:border-primary/25 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
     >
       {children}
     </Link>
@@ -555,13 +555,13 @@ export function SidePanel({
   children: ReactNode;
 }) {
   return (
-    <aside className="h-fit min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <aside className="h-fit min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
       {eyebrow ? (
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
           {eyebrow}
         </p>
       ) : null}
-      <h3 className={eyebrow ? "mt-3 text-lg font-semibold text-slate-950 sm:text-xl" : "text-lg font-semibold text-slate-950 sm:text-xl"}>
+      <h3 className={eyebrow ? "mt-3 text-lg font-semibold text-foreground sm:text-xl" : "text-lg font-semibold text-foreground sm:text-xl"}>
         {title}
       </h3>
       <div className="mt-4">{children}</div>
@@ -579,14 +579,14 @@ export function MetricStrip({
       {items.map((item) => (
         <div
           key={item.label}
-          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+          className="rounded-lg border border-border bg-white p-5 shadow-sm"
         >
-          <p className="text-3xl font-bold text-slate-950">{item.value}</p>
+          <p className="text-3xl font-bold text-foreground">{item.value}</p>
           <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
             {item.label}
           </p>
           {item.detail ? (
-            <p className="mt-2 text-sm leading-6 text-slate-600">{item.detail}</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.detail}</p>
           ) : null}
         </div>
       ))}
@@ -605,7 +605,7 @@ export function PillNav({
         <Link
           key={item.href}
           href={item.href}
-          className="inline-flex min-h-11 shrink-0 items-center rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="inline-flex min-h-11 shrink-0 items-center rounded-md border border-border bg-white px-4 py-2 text-sm font-semibold text-muted-foreground shadow-sm transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
         >
           {item.label}
         </Link>
@@ -644,12 +644,12 @@ export function CompactRecord({
             {eyebrow}
           </p>
         ) : null}
-        <h3 className="mt-1 text-base font-semibold leading-7 text-slate-950 sm:text-lg">
+        <h3 className="mt-1 text-base font-semibold leading-7 text-foreground sm:text-lg">
           {title}
         </h3>
-        {body ? <p className="mt-2 text-sm leading-7 text-slate-600">{body}</p> : null}
+        {body ? <p className="mt-2 text-sm leading-7 text-muted-foreground">{body}</p> : null}
         {details.length > 0 ? (
-          <p className="mt-3 text-xs leading-5 text-slate-500">
+          <p className="mt-3 text-xs leading-5 text-muted-foreground">
             {details.join(" · ")}
           </p>
         ) : null}
@@ -666,12 +666,12 @@ export function CompactRecord({
   return href ? (
     <Link
       href={href}
-      className="block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+      className="block rounded-lg border border-border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
     >
       {content}
     </Link>
   ) : (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="rounded-lg border border-border bg-white p-5 shadow-sm">
       {content}
     </article>
   );
@@ -687,12 +687,12 @@ export function QuickStat({
   detail?: string | null;
 }) {
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-2xl font-bold text-slate-950">{value}</p>
+    <div className="rounded-md border border-border bg-white p-4 shadow-sm">
+      <p className="text-2xl font-bold text-foreground">{value}</p>
       <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-secondary">
         {label}
       </p>
-      {detail ? <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p> : null}
+      {detail ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{detail}</p> : null}
     </div>
   );
 }
@@ -736,10 +736,10 @@ export function RecordListItem({
           {eyebrow}
         </p>
       ) : null}
-      <h3 className="mt-2 text-lg font-semibold leading-7 text-slate-950">{title}</h3>
-      {body ? <p className="mt-2 text-sm leading-7 text-slate-600">{body}</p> : null}
+      <h3 className="mt-2 text-lg font-semibold leading-7 text-foreground">{title}</h3>
+      {body ? <p className="mt-2 text-sm leading-7 text-muted-foreground">{body}</p> : null}
       {details.length > 0 ? (
-        <p className="mt-3 text-xs leading-5 text-slate-500">{details.join(" · ")}</p>
+        <p className="mt-3 text-xs leading-5 text-muted-foreground">{details.join(" · ")}</p>
       ) : null}
       {href ? (
         <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
@@ -753,12 +753,12 @@ export function RecordListItem({
   return href ? (
     <Link
       href={href}
-      className="block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+      className="block rounded-lg border border-border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
     >
       {content}
     </Link>
   ) : (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="rounded-lg border border-border bg-white p-5 shadow-sm">
       {content}
     </article>
   );

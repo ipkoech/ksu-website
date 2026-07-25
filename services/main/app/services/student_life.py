@@ -12,7 +12,7 @@ from sqlalchemy.orm import selectinload
 from ksu_common import PaginatedResult
 
 from ..helpers.slug import unique_slug
-from ..models import Accommodation, ArtsCulture, Club, ClubActivity, SportsFacility, StudentGovernance
+from ..models import Accommodation, ArtsCulture, Club, ClubActivity, SportsFacility, StaffAssignment, StudentGovernance
 from ._base import apply_updates, ilike_any, paginate_query
 
 
@@ -97,7 +97,12 @@ class ClubService:
     ) -> list[ClubActivity]:
         query = select(ClubActivity).where(ClubActivity.club_id == club_id).order_by(ClubActivity.start_datetime.desc())
         if public_only:
-            query = query.where(ClubActivity.is_public.is_(True))
+            query = query.where(
+                ClubActivity.is_public.is_(True),
+                ClubActivity.is_published.is_(True),
+                ClubActivity.workflow_status == "published",
+                ClubActivity.archived_at.is_(None),
+            )
         result = await db.execute(query)
         return list(result.scalars().all())
 
@@ -127,6 +132,20 @@ class ClubService:
     async def delete_activity(db: AsyncSession, item: ClubActivity) -> None:
         await db.delete(item)
         await db.flush()
+
+    @staticmethod
+    async def list_leaders(db: AsyncSession, club_id: uuid.UUID) -> list[StaffAssignment]:
+        result = await db.execute(
+            select(StaffAssignment)
+            .options(selectinload(StaffAssignment.person))
+            .where(
+                StaffAssignment.entity_type == "club",
+                StaffAssignment.entity_id == club_id,
+                StaffAssignment.status == "active",
+            )
+            .order_by(StaffAssignment.hierarchy_level.asc(), StaffAssignment.created_at.asc())
+        )
+        return list(result.scalars().all())
 
 
 class AccommodationService:

@@ -133,9 +133,9 @@ export function ResearchHeader({
       {/* Main Header */}
       <header
         className={cn(
-          "sticky top-0 z-[100] w-full border-b border-slate-200 transition-all duration-300 ease-out",
+          "sticky top-0 z-[100] w-full border-b border-border transition-all duration-300 ease-out",
           isScrolled
-            ? "bg-white/95 shadow-lg shadow-slate-900/10 backdrop-blur"
+            ? "bg-white/95 shadow-lg shadow-primary/10 backdrop-blur"
             : "bg-white",
         )}
       >
@@ -159,7 +159,7 @@ export function ResearchHeader({
               />
             </motion.div>
             <div className="flex min-w-0 flex-col">
-              <p className="truncate font-[family-name:var(--font-display)] text-base font-black uppercase tracking-[0.08em] text-slate-950 sm:text-xl sm:tracking-[0.1em]">
+              <p className="truncate font-[family-name:var(--font-display)] text-base font-black uppercase tracking-[0.08em] text-foreground sm:text-xl sm:tracking-[0.1em]">
                 Kisii University
               </p>
               <p className="hidden max-w-[230px] text-[8px] font-bold uppercase leading-4 tracking-[0.1em] text-primary sm:block sm:text-[9px]">
@@ -186,7 +186,7 @@ export function ResearchHeader({
                         "relative rounded-lg px-3 py-2 text-xs font-bold tracking-tight whitespace-nowrap transition-all 2xl:px-4 2xl:text-sm",
                         isActive
                           ? "bg-primary/10 text-primary"
-                          : "text-slate-700 hover:bg-primary/5 hover:text-primary",
+                          : "text-muted-foreground hover:bg-primary/5 hover:text-primary",
                       )}
                     >
                       {item.title}
@@ -222,7 +222,7 @@ export function ResearchHeader({
                         "flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold tracking-tight whitespace-nowrap transition-all 2xl:px-4 2xl:text-sm",
                         isActive
                           ? "bg-primary/10 text-primary"
-                          : "text-slate-700 hover:bg-primary/5 hover:text-primary",
+                          : "text-muted-foreground hover:bg-primary/5 hover:text-primary",
                       )}
                     >
                       {item.title}
@@ -241,18 +241,18 @@ export function ResearchHeader({
                         index > 2 ? "right-0" : "left-1/2 -translate-x-1/2",
                       )}
                     >
-                      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
+                      <div className="overflow-hidden rounded-xl border border-border bg-white shadow-2xl">
                         <div className="grid grid-cols-1 md:grid-cols-[280px_1fr]">
                           {/* Featured panel */}
-                          <div className="flex flex-col justify-between border-b border-slate-100 bg-slate-50 p-6 md:border-b-0 md:border-r">
+                          <div className="flex flex-col justify-between border-b border-border bg-surface-subtle p-6 md:border-b-0 md:border-r">
                             <div>
                               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-inner">
                                 <item.icon className="h-6 w-6" />
                               </div>
-                              <h3 className="mt-4 text-lg font-bold text-slate-900">
+                              <h3 className="mt-4 text-lg font-bold text-foreground">
                                 {item.title}
                               </h3>
-                              <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                                 {item.description}
                               </p>
                             </div>
@@ -269,7 +269,7 @@ export function ResearchHeader({
                           <div className="grid gap-6 p-6 sm:grid-cols-2 min-w-[400px] lg:min-w-[500px]">
                             {item.columns.map((col, colIdx) => (
                               <div key={col.heading} className="space-y-1">
-                                <h4 className="border-b border-slate-100 pb-3 mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                <h4 className="border-b border-border pb-3 mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">
                                   {col.heading}
                                 </h4>
                                 {col.items.map((sub, sIdx) => (
@@ -283,12 +283,12 @@ export function ResearchHeader({
                                   >
                                     <Link
                                       href={sub.href}
-                                      className="block rounded-2xl border border-transparent p-3 transition-all hover:border-slate-100 hover:bg-slate-50 hover:shadow-sm"
+                                      className="block rounded-2xl border border-transparent p-3 transition-all hover:border-border hover:bg-surface-subtle hover:shadow-sm"
                                     >
-                                      <p className="text-sm font-bold text-slate-900 transition-colors hover:text-primary">
+                                      <p className="text-sm font-bold text-foreground transition-colors hover:text-primary">
                                         {sub.title}
                                       </p>
-                                      <p className="mt-0.5 line-clamp-1 text-[11px] font-medium text-slate-500">
+                                      <p className="mt-0.5 line-clamp-1 text-[11px] font-medium text-muted-foreground">
                                         {sub.description}
                                       </p>
                                     </Link>
@@ -310,7 +310,7 @@ export function ResearchHeader({
           <div className="flex shrink-0 items-center gap-2">
             <button
               onClick={() => setSearchOpen(true)}
-              className="hidden h-11 w-11 items-center justify-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-primary/5 hover:text-primary xl:flex"
+              className="hidden h-11 w-11 items-center justify-center rounded-md border border-border text-muted-foreground transition hover:bg-primary/5 hover:text-primary xl:flex"
               aria-label="Search"
             >
               <Search className="h-5 w-5" />
@@ -339,7 +339,7 @@ export function ResearchHeader({
               </Button>
               <button
                 onClick={() => setSearchOpen(true)}
-                className="hidden h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-primary/5 hover:text-primary sm:flex xl:hidden"
+                className="hidden h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-primary/5 hover:text-primary sm:flex xl:hidden"
                 aria-label="Search"
               >
                 <Search className="h-5 w-5" />
@@ -347,7 +347,7 @@ export function ResearchHeader({
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
                   <button
-                    className="flex h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-primary/5 hover:text-primary"
+                    className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-primary/5 hover:text-primary"
                     aria-label={mobileOpen ? "Close menu" : "Open menu"}
                   >
                     {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -386,15 +386,15 @@ export function ResearchHeader({
                   >
                     {/* Mobile Search */}
                     <div className="relative">
-                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
                       <Input
                         placeholder="Search publications, projects..."
-                        className="h-9 border-slate-200 bg-slate-50 pl-9 text-sm text-slate-900 placeholder:text-slate-400"
+                        className="h-9 border-border bg-surface-subtle pl-9 text-sm text-foreground placeholder:text-muted-foreground/70"
                       />
                     </div>
 
                     <div>
-                      <p className="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                      <p className="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">
                         Quick access
                       </p>
                       <div className="grid grid-cols-2 gap-2">
@@ -403,7 +403,7 @@ export function ResearchHeader({
                             key={link.href}
                             href={link.href}
                             onClick={() => setMobileOpen(false)}
-                            className="flex min-h-12 items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-bold text-slate-700 transition hover:border-primary/30 hover:bg-white hover:text-primary"
+                            className="flex min-h-12 items-center justify-between rounded-lg border border-border bg-surface-subtle px-3 text-sm font-bold text-muted-foreground transition hover:border-primary/30 hover:bg-white hover:text-primary"
                           >
                             {link.label}
                             <ArrowRight className="h-3.5 w-3.5" />
@@ -432,13 +432,13 @@ export function ResearchHeader({
                                 "flex items-center gap-4 rounded-xl px-4 py-4 text-lg font-bold transition-all",
                                 isActive
                                   ? "bg-primary text-white"
-                                  : "text-slate-700 hover:bg-slate-50 hover:text-primary",
+                                  : "text-muted-foreground hover:bg-surface-subtle hover:text-primary",
                               )}
                             >
                               <Icon
                                 className={cn(
                                   "h-6 w-6",
-                                  isActive ? "text-white" : "text-slate-400",
+                                  isActive ? "text-white" : "text-muted-foreground/70",
                                 )}
                               />
                               {item.title}
@@ -452,9 +452,9 @@ export function ResearchHeader({
                                         key={`${item.title}-s${sIdx}`}
                                       href={sub.href}
                                       onClick={() => setMobileOpen(false)}
-                                      className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-slate-500 transition-colors hover:bg-slate-50 hover:text-primary"
+                                      className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-surface-subtle hover:text-primary"
                                     >
-                                      <span className="h-1 w-1 shrink-0 rounded-full bg-slate-300" />
+                                      <span className="h-1 w-1 shrink-0 rounded-full bg-surface-muted" />
                                       {sub.title}
                                     </Link>
                                   ),
@@ -467,11 +467,11 @@ export function ResearchHeader({
                     </div>
 
                     {/* Mobile back link + CTA */}
-                    <div className="space-y-4 border-t border-slate-200 pt-6">
+                    <div className="space-y-4 border-t border-border pt-6">
                       <Link
                         href={publicHref}
                         onClick={() => setMobileOpen(false)}
-                        className="flex items-center gap-2 text-xs font-bold text-slate-500 transition-colors hover:text-primary"
+                        className="flex items-center gap-2 text-xs font-bold text-muted-foreground transition-colors hover:text-primary"
                       >
                         <ArrowRight className="h-4 w-4 rotate-180" />
                         BACK TO MAIN SITE
@@ -496,19 +496,19 @@ export function ResearchHeader({
 
       {/* Search Dialog */}
       <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <DialogContent className="max-w-[580px] border border-slate-200 bg-white p-0 shadow-2xl">
+        <DialogContent className="max-w-[580px] border border-border bg-white p-0 shadow-2xl">
           <DialogTitle className="sr-only">Search Research</DialogTitle>
           <div className="p-8">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground/70" />
               <Input
                 placeholder="Search publications, projects, grants..."
-                className="h-12 rounded-lg border-slate-200 bg-slate-50 pl-12 text-base placeholder:text-slate-400 focus:border-primary"
+                className="h-12 rounded-lg border-border bg-surface-subtle pl-12 text-base placeholder:text-muted-foreground/70 focus:border-primary"
                 autoFocus
               />
             </div>
             <div className="mt-8">
-              <h4 className="mb-4 text-[11px] font-black uppercase tracking-widest text-slate-400">
+              <h4 className="mb-4 text-[11px] font-black uppercase tracking-widest text-muted-foreground/70">
                 Popular Searches
               </h4>
               <div className="flex flex-wrap gap-2">
@@ -517,7 +517,7 @@ export function ResearchHeader({
                     key={term}
                     href={`/search?q=${term.toLowerCase()}`}
                     onClick={() => setSearchOpen(false)}
-                    className="rounded-xl bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 transition-all hover:bg-slate-200 active:scale-95"
+                    className="rounded-xl bg-surface-muted px-4 py-2 text-sm font-bold text-muted-foreground transition-all hover:bg-surface-muted active:scale-95"
                   >
                     {term}
                   </Link>

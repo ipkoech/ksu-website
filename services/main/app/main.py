@@ -11,12 +11,16 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import select
 
 from ksu_common import configure_service_logging, invalidate_prefix, persist_audit_log, should_skip_audit
+from ksu_common.cache import close_redis
 
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal
 from .api.v1 import register_routes
+from .cache_invalidation import should_invalidate_public_cache
 from .helpers.storage import normalize_storage_path
 from .models import Media
+from .realtime.connection_manager import manager
+from .realtime.redis_subscriber import subscriber
 
 settings = get_settings()
 
@@ -27,17 +31,15 @@ configure_service_logging(
     log_format=settings.LOG_FORMAT,
 )
 
-PUBLIC_CACHE_INVALIDATION_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
-PUBLIC_CACHE_INVALIDATION_EXCLUDED_PREFIXES = (
-    "/api/v1/analytics",
-    "/api/v1/auth",
-    "/api/v1/notifications",
-)
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    yield
+    await subscriber.start()
+    try:
+        yield
+    finally:
+        await subscriber.stop()
+        await manager.close_all()
+        await close_redis()
 
 
 def create_app() -> FastAPI:
@@ -97,7 +99,7 @@ def create_app() -> FastAPI:
             request=request,
             status_code=response.status_code,
         )
-        if _should_invalidate_public_cache(request, response.status_code):
+        if should_invalidate_public_cache(request, response.status_code):
             await invalidate_prefix("public")
         return response
 
@@ -131,15 +133,3 @@ def create_app() -> FastAPI:
 
     register_routes(app)
     return app
-
-
-def _should_invalidate_public_cache(request: Request, status_code: int) -> bool:
-    if request.method not in PUBLIC_CACHE_INVALIDATION_METHODS:
-        return False
-    if status_code >= 400:
-        return False
-
-    path = request.url.path
-    if not path.startswith("/api/v1/"):
-        return False
-    return not path.startswith(PUBLIC_CACHE_INVALIDATION_EXCLUDED_PREFIXES)

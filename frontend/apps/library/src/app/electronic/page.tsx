@@ -183,7 +183,7 @@ export default async function ElectronicResourcesPage({
             <a
               key={letter}
               href={`#letter-${letter}`}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:border-primary/30 hover:text-primary"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-white text-sm font-semibold text-muted-foreground hover:border-primary/30 hover:text-primary"
             >
               {letter}
             </a>
@@ -206,7 +206,7 @@ export default async function ElectronicResourcesPage({
                   <section key={letter} aria-labelledby={`letter-${letter}`}>
                     <h2
                       id={`letter-${letter}`}
-                      className="mb-4 border-b border-slate-200 pb-2 text-2xl font-semibold text-slate-950"
+                      className="mb-4 border-b border-border pb-2 text-2xl font-semibold text-foreground"
                     >
                       {letter}
                     </h2>
@@ -228,11 +228,11 @@ export default async function ElectronicResourcesPage({
                   ]}
                 />
                 <SidePanel title="Remote access" eyebrow="Support">
-                  <p className="text-sm leading-7 text-slate-600">
+                  <p className="text-sm leading-7 text-muted-foreground">
                     Some platforms require campus network access, VPN, or a personal account.
                     Use the access notes on each record before opening the provider site.
                   </p>
-                  <p className="mt-3 text-sm font-semibold text-slate-950">
+                  <p className="mt-3 text-sm font-semibold text-foreground">
                     {registrationCount} resources require registration.
                   </p>
                 </SidePanel>
@@ -281,7 +281,7 @@ function ResourceCard({
       className={
         featured
           ? "rounded-lg border border-primary/30 bg-white p-5 shadow-sm"
-          : "rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+          : "rounded-lg border border-border bg-white p-5 shadow-sm"
       }
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -300,15 +300,15 @@ function ResourceCard({
           <LibraryBadge tone="primary">Featured</LibraryBadge>
         ) : null}
       </div>
-      <h3 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
+      <h3 className="mt-4 text-xl font-semibold leading-7 text-foreground">
         {resource.name ?? "Untitled resource"}
       </h3>
-      <p className="mt-3 text-sm leading-7 text-slate-600">
+      <p className="mt-3 text-sm leading-7 text-muted-foreground">
         {compactText(resource.description) ||
           compactText(resource.provider) ||
           "Access details are managed by the library team."}
       </p>
-      <dl className="mt-5 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+      <dl className="mt-5 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
         <Meta label="Provider" value={resource.provider} />
         <Meta label="Audience" value={formatLabel(resource.access_level)} />
         <Meta label="Access" value={formatLabel(resource.access_type)} />
@@ -323,7 +323,7 @@ function ResourceCard({
         </div>
       ) : null}
       {notes ? (
-        <p className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-600">
+        <p className="mt-5 rounded-md border border-border bg-surface-subtle p-3 text-sm leading-6 text-muted-foreground">
           {notes}
         </p>
       ) : null}
@@ -332,7 +332,7 @@ function ResourceCard({
           <ExternalAnchor href={accessUrl}>Open resource</ExternalAnchor>
         </div>
       ) : (
-        <p className="mt-6 text-sm text-slate-500">
+        <p className="mt-6 text-sm text-muted-foreground">
           Access link pending library verification.
         </p>
       )}
@@ -342,9 +342,9 @@ function ResourceCard({
 
 function AccessHelp() {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-950">Access help</h2>
-      <ul className="mt-4 flex flex-col gap-3 text-sm leading-6 text-slate-600">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-lg font-semibold text-foreground">Access help</h2>
+      <ul className="mt-4 flex flex-col gap-3 text-sm leading-6 text-muted-foreground">
         <li>Use your university network or approved off-campus access method.</li>
         <li>Check resource badges for VPN or registration requirements.</li>
         <li>Contact the library team when a subscription link does not open.</li>
@@ -391,7 +391,7 @@ function Meta({
 
   return (
     <div>
-      <dt className="font-semibold text-slate-950">{label}</dt>
+      <dt className="font-semibold text-foreground">{label}</dt>
       <dd className="mt-1">{value}</dd>
     </div>
   );

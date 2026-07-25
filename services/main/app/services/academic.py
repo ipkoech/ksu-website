@@ -13,7 +13,8 @@ from sqlalchemy.orm import selectinload
 from ksu_common import PaginatedResult
 
 from ..helpers.slug import unique_slug
-from ..models import Campus, Department, DepartmentService as DepartmentServiceModel, HierarchyLevel, Person, School, StaffAssignment
+from ..models import Campus, Department, DepartmentService as DepartmentServiceModel, Person, School, StaffAssignment
+from ..models.staff import HIERARCHY_LEVEL_HEAD
 from ._base import apply_updates, ilike_any, paginate_query
 
 
@@ -273,7 +274,7 @@ class DepartmentService:
                 matched_assignment = assignment
                 assignment.role = target_role
                 assignment.title = target_title
-                assignment.hierarchy_level = int(HierarchyLevel.HEAD)
+                assignment.hierarchy_level = HIERARCHY_LEVEL_HEAD
                 assignment.is_primary = True
                 assignment.is_public = True
                 assignment.status = "active"
@@ -292,7 +293,7 @@ class DepartmentService:
                     entity_id=department.id,
                     role=target_role,
                     title=target_title,
-                    hierarchy_level=int(HierarchyLevel.HEAD),
+                    hierarchy_level=HIERARCHY_LEVEL_HEAD,
                     is_primary=True,
                     is_public=True,
                     status="active",

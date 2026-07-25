@@ -17,7 +17,7 @@ export async function ResourcesSectionPage({
   const model = await getResourcesWorkspacePageModel(params);
 
   return (
-    <main id="research-main" className="min-h-screen bg-white text-slate-950">
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
       <ResourcesWorkspace
         {...model}
         activeItem={activeItem}

@@ -103,13 +103,13 @@ function ContactPanel({ record }: { record: ResearchGenericRecord }) {
   ].filter(([, value]) => value);
 
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">Contact</h2>
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">Contact</h2>
       {items.length ? (
         <dl className="mt-4 grid gap-3 text-sm">
-          {items.map(([label, value]) => <div key={label} className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 break-words font-semibold text-slate-950">{value}</dd></div>)}
+          {items.map(([label, value]) => <div key={label} className="rounded-md bg-surface-subtle p-3"><dt className="text-xs font-semibold uppercase text-muted-foreground">{label}</dt><dd className="mt-1 break-words font-semibold text-foreground">{value}</dd></div>)}
         </dl>
-      ) : <p className="mt-3 text-sm leading-7 text-slate-600">Contact details are not published yet.</p>}
+      ) : <p className="mt-3 text-sm leading-7 text-muted-foreground">Contact details are not published yet.</p>}
     </section>
   );
 }

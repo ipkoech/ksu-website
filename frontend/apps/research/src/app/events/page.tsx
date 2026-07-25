@@ -128,7 +128,7 @@ export default async function EventsPage({
                   <FeaturedEvent event={featuredEvent} />
                 </div>
               ) : null}
-              <div className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="divide-y divide-slate-200 rounded-lg border border-border bg-white shadow-sm">
                 {rowEvents.map((event) => (
                   <EventRow key={event.id} event={event} />
                 ))}
@@ -164,23 +164,23 @@ function EventsMasthead({
   ];
 
   return (
-    <section className="border-b border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <section className="border-b border-border bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
         <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
             <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-slate-300">/</span>
+            <span className="text-muted-foreground/60">/</span>
             <Link href="/training" className="transition hover:text-primary">Learning</Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">Events</span>
+            <span className="text-muted-foreground/60">/</span>
+            <span className="text-foreground">Events</span>
           </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
             Events
           </p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             Research workshops, forums, seminars, and conferences
           </h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-slate-700 sm:text-base">
+          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">
             Browse the public research calendar by event type, date, center, venue, platform, and registration status.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
@@ -190,9 +190,9 @@ function EventsMasthead({
         </div>
         <dl className="grid gap-2 sm:grid-cols-2">
           {stats.map((stat) => (
-            <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-              <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
-              <dd className="mt-1 text-lg font-semibold text-slate-950">{stat.value}</dd>
+            <div key={stat.label} className="rounded-md border border-border bg-surface-subtle px-3 py-2">
+              <dt className="text-[11px] font-semibold uppercase text-muted-foreground">{stat.label}</dt>
+              <dd className="mt-1 text-lg font-semibold text-foreground">{stat.value}</dd>
             </div>
           ))}
         </dl>
@@ -245,10 +245,10 @@ function CalendarRail({ events }: { events: ResearchGenericRecord[] }) {
             <p className="text-xs font-semibold uppercase text-secondary">
               {formatDate(event.start_date) || formatDate(event.event_date)}
             </p>
-            <h3 className="mt-1 text-sm font-semibold leading-6 text-slate-950">
+            <h3 className="mt-1 text-sm font-semibold leading-6 text-foreground">
               {getRecordTitle(event, "Research event")}
             </h3>
-            <p className="mt-1 text-xs font-semibold uppercase text-slate-500">
+            <p className="mt-1 text-xs font-semibold uppercase text-muted-foreground">
               {formatLabel(event.event_type ?? event.status)}
             </p>
           </article>
@@ -307,10 +307,10 @@ function EventRowContent({
           <Badge>{mode}</Badge>
           {featured || event.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
         </div>
-        <h2 className="mt-3 text-lg font-semibold leading-7 text-slate-950">
+        <h2 className="mt-3 text-lg font-semibold leading-7 text-foreground">
           {getRecordTitle(event, "Research event")}
         </h2>
-        <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+        <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
           {getRecordSummary(event) ||
             compactText(event.agenda) ||
             "Event details have not been published yet."}
@@ -318,12 +318,12 @@ function EventRowContent({
       </div>
       <dl className="grid gap-2 text-sm">
         <div className="rounded-md bg-white p-2.5">
-          <dt className="text-xs font-semibold uppercase text-slate-500">Date</dt>
-          <dd className="mt-1 font-semibold text-slate-950">{formatDate(event.start_date) || formatDate(event.event_date) || "Not published"}</dd>
+          <dt className="text-xs font-semibold uppercase text-muted-foreground">Date</dt>
+          <dd className="mt-1 font-semibold text-foreground">{formatDate(event.start_date) || formatDate(event.event_date) || "Not published"}</dd>
         </div>
         <div className="rounded-md bg-white p-2.5">
-          <dt className="text-xs font-semibold uppercase text-slate-500">Venue</dt>
-          <dd className="mt-1 font-semibold text-slate-950">{compactText(event.venue) || compactText(event.platform) || "Not published"}</dd>
+          <dt className="text-xs font-semibold uppercase text-muted-foreground">Venue</dt>
+          <dd className="mt-1 font-semibold text-foreground">{compactText(event.venue) || compactText(event.platform) || "Not published"}</dd>
         </div>
       </dl>
       <span className="inline-flex min-h-10 items-center justify-center rounded-md border border-primary/20 px-3 text-sm font-semibold text-primary transition group-hover:bg-primary group-hover:text-white">

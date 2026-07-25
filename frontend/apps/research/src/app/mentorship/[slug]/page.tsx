@@ -50,15 +50,15 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
           { label: "Back to mentorship", href: "/mentorship", variant: "secondary" },
           ...(compactText(mentorship.brochure_url) ? [{ label: "Download brochure", href: compactText(mentorship.brochure_url) }] : []),
         ]}
-        imageSrc="/images/research/research-about-hero.svg"
+        imageSrc={compactText(mentorship.cover_image_url) || "/images/research/research-about-hero.webp"}
         imageAlt="Research mentorship programme and application information"
       />
       {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}
       <ResearchSection eyebrow="Mentorship Story" title="Programme fit, expectations, and application window" body="The mentorship record is grouped around fit, participation requirements, benefits, and cohort expectations." tone="white">
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
-            <MentorshipStory sections={storySections} />
-            <ResearchRecordPanel title="Matches" records={matches} empty="No public matches are published yet." />
+            <MentorshipStoryPanel sections={storySections} />
+            {matches.length > 0 ? <ResearchRecordPanel title="Matches" records={matches} /> : null}
           </div>
           <ResearchDetailSidebar
             labels={[mentorship.program_type ?? "mentorship", mentorship.status]}
@@ -77,8 +77,9 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
       </ResearchSection>
       <ResearchSection eyebrow="Programme Records" title="Applications, matches, and contact" body="Programme applications, matches, and contact details appear when published.">
         <div className="grid gap-5 lg:grid-cols-3">
-          <ResearchRecordPanel title="Applications" records={applications} />
-          <ResearchRecordPanel title="Matches" records={matches} />
+          <ApplicationWindowCard record={mentorship} />
+          {applications.length > 0 ? <ResearchRecordPanel title="Applications" records={applications} /> : null}
+          {matches.length > 0 ? <ResearchRecordPanel title="Matches" records={matches} /> : null}
           <ContactPanel record={mentorship} />
         </div>
       </ResearchSection>
@@ -86,12 +87,37 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
   );
 }
 
-function MentorshipStory({ sections }: { sections: Array<{ title: string; body: string }> }) {
+function MentorshipStoryPanel({ sections }: { sections: Array<{ title: string; body: string }> }) {
   return (
     <ResearchStoryAccordion
       sections={sections}
       empty="The mentorship story appears when fit, requirements, benefits, or expectations fields are published."
     />
+  );
+}
+
+function ApplicationWindowCard({ record }: { record: ResearchGenericRecord }) {
+  const items = [
+    ["Applications open", formatDate(record.application_open)],
+    ["Application deadline", formatDate(record.application_deadline)],
+    ["Cohort start", formatDate(record.cohort_start_date)],
+    ["Cohort end", formatDate(record.cohort_end_date)],
+  ].filter(([, value]) => value);
+
+  if (items.length === 0) return null;
+
+  return (
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">Application window</h2>
+      <dl className="mt-4 grid gap-3 text-sm">
+        {items.map(([label, value]) => (
+          <div key={label} className="rounded-md bg-surface-subtle p-3">
+            <dt className="text-xs font-semibold uppercase text-muted-foreground">{label}</dt>
+            <dd className="mt-1 font-semibold text-foreground">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }
 
@@ -102,13 +128,13 @@ function ContactPanel({ record }: { record: ResearchGenericRecord }) {
   ].filter(([, value]) => value);
 
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">Contact</h2>
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">Contact</h2>
       {items.length ? (
         <dl className="mt-4 grid gap-3 text-sm">
-          {items.map(([label, value]) => <div key={label} className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 break-words font-semibold text-slate-950">{value}</dd></div>)}
+          {items.map(([label, value]) => <div key={label} className="rounded-md bg-surface-subtle p-3"><dt className="text-xs font-semibold uppercase text-muted-foreground">{label}</dt><dd className="mt-1 break-words font-semibold text-foreground">{value}</dd></div>)}
         </dl>
-      ) : <p className="mt-3 text-sm leading-7 text-slate-600">Contact details are not published yet.</p>}
+      ) : <p className="mt-3 text-sm leading-7 text-muted-foreground">Contact details are not published yet.</p>}
     </section>
   );
 }

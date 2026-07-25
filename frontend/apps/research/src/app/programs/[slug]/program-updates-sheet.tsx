@@ -31,13 +31,13 @@ export function ProgramUpdatesSheet({ groups }: { groups: ProgramUpdateGroup[] }
   if (!visibleGroups.length) return null;
 
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+    <section className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
         <div>
-          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
             Program updates
           </h2>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-sm text-muted-foreground">
             Stories, news, and activities connected to this program.
           </p>
         </div>
@@ -45,7 +45,7 @@ export function ProgramUpdatesSheet({ groups }: { groups: ProgramUpdateGroup[] }
           {visibleGroups.map((group) => (
             <span
               key={group.title}
-              className="rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-primary"
+              className="rounded-md border border-border bg-surface-subtle px-3 py-1.5 text-xs font-semibold text-primary"
             >
               {group.label} {group.records.length}
             </span>
@@ -55,7 +55,7 @@ export function ProgramUpdatesSheet({ groups }: { groups: ProgramUpdateGroup[] }
       <div className="grid gap-4 p-5 lg:grid-cols-3">
         {visibleGroups.map((group) => (
           <div key={group.title} className="min-w-0">
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
               {group.title}
             </h3>
             <div className="grid gap-2">
@@ -99,42 +99,42 @@ function ProgramUpdateSheetItem({
       <SheetTrigger asChild>
         <button
           type="button"
-          className="group w-full rounded-lg border border-slate-200 bg-white p-4 text-left transition hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+          className="group w-full rounded-lg border border-border bg-white p-4 text-left transition hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
         >
           <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-primary">
             <Icon aria-hidden className="h-4 w-4" />
             {label}
           </span>
-          <span className="mt-2 line-clamp-2 block text-sm font-semibold leading-6 text-slate-950">
+          <span className="mt-2 line-clamp-2 block text-sm font-semibold leading-6 text-foreground">
             {title}
           </span>
           {summary ? (
-            <span className="mt-1 line-clamp-2 block text-xs leading-5 text-slate-600">
+            <span className="mt-1 line-clamp-2 block text-xs leading-5 text-muted-foreground">
               {summary}
             </span>
           ) : null}
-          <span className="mt-3 flex flex-wrap gap-3 text-xs font-medium text-slate-500">
+          <span className="mt-3 flex flex-wrap gap-3 text-xs font-medium text-muted-foreground">
             {date ? <span>{date}</span> : null}
             {location ? <span>{location}</span> : null}
           </span>
         </button>
       </SheetTrigger>
       <SheetContent side="right" className="w-full overflow-y-auto bg-white p-0 sm:max-w-xl">
-        <SheetHeader className="border-b border-slate-200 px-6 py-5 text-left">
+        <SheetHeader className="border-b border-border px-6 py-5 text-left">
           <span className="mb-2 w-fit rounded-md bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
             {label}
           </span>
-          <SheetTitle className="text-2xl font-semibold leading-tight text-slate-950">
+          <SheetTitle className="text-2xl font-semibold leading-tight text-foreground">
             {title}
           </SheetTitle>
           {summary ? (
-            <SheetDescription className="text-sm leading-6 text-slate-600">
+            <SheetDescription className="text-sm leading-6 text-muted-foreground">
               {summary}
             </SheetDescription>
           ) : null}
         </SheetHeader>
         <div className="grid gap-5 px-6 py-5">
-          <dl className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm">
+          <dl className="grid gap-3 rounded-lg border border-border bg-surface-subtle p-4 text-sm">
             {date ? <MetaRow icon={CalendarDays} label="Date" value={date} /> : null}
             {location ? <MetaRow icon={MapPin} label="Location" value={location} /> : null}
           </dl>
@@ -169,8 +169,8 @@ function RecordNarrative({ record }: { record: ResearchGenericRecord }) {
     <div className="grid gap-4">
       {sections.map((section) => (
         <section key={section.label}>
-          <h3 className="text-sm font-semibold text-slate-950">{section.label}</h3>
-          <ResearchRichText content={section.value} className="mt-2 text-sm leading-7 text-slate-700" />
+          <h3 className="text-sm font-semibold text-foreground">{section.label}</h3>
+          <ResearchRichText content={section.value} className="mt-2 text-sm leading-7 text-muted-foreground" />
         </section>
       ))}
     </div>
@@ -189,8 +189,8 @@ function MetaRow({
   return (
     <div className="grid grid-cols-[20px_90px_minmax(0,1fr)] gap-2">
       <Icon aria-hidden className="mt-0.5 h-4 w-4 text-primary" />
-      <dt className="font-semibold text-slate-600">{label}</dt>
-      <dd className="min-w-0 break-words text-slate-900 [overflow-wrap:anywhere]">{value}</dd>
+      <dt className="font-semibold text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 break-words text-foreground [overflow-wrap:anywhere]">{value}</dd>
     </div>
   );
 }

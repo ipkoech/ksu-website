@@ -72,7 +72,7 @@ export default async function LibraryNewsPage({ searchParams }: NewsPageProps) {
       >
         <form
           action="/news"
-          className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end"
+          className="grid gap-4 rounded-lg border border-border bg-surface-subtle p-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end"
         >
           <LibraryFilterTextInput
             name="q"

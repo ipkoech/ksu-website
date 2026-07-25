@@ -22,10 +22,10 @@ export default function PrivacyPage() {
           <p className="text-sm font-semibold uppercase text-secondary">
             Privacy Policy
           </p>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
+          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
             Data privacy and information handling
           </h1>
-          <p className="mt-4 text-base leading-8 text-slate-600">
+          <p className="mt-4 text-base leading-8 text-muted-foreground">
             Kisii University is committed to responsible handling of personal
             information in accordance with the Data Protection Act, 2019 and
             the university's institutional policies.
@@ -34,10 +34,10 @@ export default function PrivacyPage() {
 
         <div className="mt-10 space-y-8">
           <section>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Information we collect
             </h2>
-            <p className="mt-3 text-base leading-8 text-slate-600">
+            <p className="mt-3 text-base leading-8 text-muted-foreground">
               The university collects personal information necessary for
               teaching, learning, research, administration, and service
               delivery. This may include names, contact details, academic
@@ -48,10 +48,10 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               How we use information
             </h2>
-            <p className="mt-3 text-base leading-8 text-slate-600">
+            <p className="mt-3 text-base leading-8 text-muted-foreground">
               Personal information is used for the purposes for which it was
               collected, including academic administration, student services,
               human resources, research management, library services,
@@ -62,10 +62,10 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Data retention and security
             </h2>
-            <p className="mt-3 text-base leading-8 text-slate-600">
+            <p className="mt-3 text-base leading-8 text-muted-foreground">
               The university retains personal information for as long as
               necessary to fulfil the purposes for which it was collected, or
               as required by law. Appropriate technical and organisational
@@ -75,10 +75,10 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Your rights
             </h2>
-            <p className="mt-3 text-base leading-8 text-slate-600">
+            <p className="mt-3 text-base leading-8 text-muted-foreground">
               Under the Data Protection Act, 2019, you have the right to
               access, correct, and request deletion of your personal
               information held by the university. You may also object to
@@ -89,10 +89,10 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Third-party services
             </h2>
-            <p className="mt-3 text-base leading-8 text-slate-600">
+            <p className="mt-3 text-base leading-8 text-muted-foreground">
               The university website links to external systems including the
               student portal, digital service centre, library platforms, and
               research repositories. Each external system has its own privacy
@@ -102,10 +102,10 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Changes to this policy
             </h2>
-            <p className="mt-3 text-base leading-8 text-slate-600">
+            <p className="mt-3 text-base leading-8 text-muted-foreground">
               This privacy policy may be updated from time to time. The
               current version is maintained on this page. Material changes
               will be communicated through university channels.
@@ -113,16 +113,16 @@ export default function PrivacyPage() {
           </section>
         </div>
 
-        <div className="mt-12 rounded-[1.25rem] border border-blue-100 bg-blue-50/60 p-6">
+        <div className="mt-12 rounded-[1.25rem] border border-border bg-accent/60 p-6">
           <div className="flex items-start gap-4">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <ShieldCheck aria-hidden className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold text-slate-950">
+              <h2 className="text-lg font-semibold text-foreground">
                 Data protection contact
               </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 For privacy enquiries or to exercise your data protection
                 rights, contact the university through the official contact
                 channels. The Data Protection Officer can be reached through

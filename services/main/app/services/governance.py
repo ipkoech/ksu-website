@@ -3,13 +3,18 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 from typing import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from ..models import Board, StaffAssignment
+from ..models import Board, GovernancePageContent, GovernanceRole, Person, StaffAssignment
 from .staff import StaffService
+
+_COUNCIL_SLUG = "university-council"
+_MANAGEMENT_BOARD_SLUG = "management-board"
 
 
 class GovernanceService:
@@ -79,8 +84,81 @@ class GovernanceService:
         await db.flush()
 
     @staticmethod
-    async def get_members(db: AsyncSession, board_id: uuid.UUID) -> list[StaffAssignment]:
-        return await StaffService.get_assignments_for_entity(db, "board", board_id)
+    async def get_members(
+        db: AsyncSession,
+        board_id: uuid.UUID,
+        *,
+        public_only: bool = False,
+    ) -> list[StaffAssignment]:
+        query = (
+            select(StaffAssignment)
+            .join(StaffAssignment.person)
+            .options(
+                selectinload(StaffAssignment.person).selectinload(Person.photo),
+                selectinload(StaffAssignment.reports_to).selectinload(StaffAssignment.person),
+            )
+            .where(
+                StaffAssignment.entity_type == "board",
+                StaffAssignment.entity_id == board_id,
+                StaffAssignment.deleted_at.is_(None),
+                StaffAssignment.status == "active",
+            )
+            .order_by(
+                StaffAssignment.hierarchy_level.asc(),
+                StaffAssignment.display_order.asc(),
+                Person.full_name.asc(),
+            )
+        )
+        if public_only:
+            query = query.where(
+                StaffAssignment.is_public.is_(True),
+                StaffAssignment.workflow_status == "published",
+                StaffAssignment.appointment_status == "published",
+            )
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
+    @staticmethod
+    def member_display_data(member: StaffAssignment) -> dict:
+        """Return the stable, nested member shape used by public governance pages."""
+        reports_to = member.reports_to
+        return {
+            "id": member.id,
+            "display_label": member.person.display_name,
+            "role": member.role,
+            "role_label": StaffService.role_label(member.role),
+            "title": member.title,
+            "hierarchy_level": member.hierarchy_level,
+            "reports_to": (
+                {
+                    "id": reports_to.id,
+                    "display_label": reports_to.person.display_name,
+                    "role_label": StaffService.role_label(reports_to.role),
+                }
+                if reports_to is not None
+                else None
+            ),
+            "display_order": member.display_order,
+            "is_acting": member.is_acting,
+        }
+
+    @staticmethod
+    def public_board_data(board: Board, members: Sequence[StaffAssignment]) -> dict:
+        """Return board and member display data without UUID-only relationships."""
+        return {
+            "id": board.id,
+            "display_label": board.name,
+            "name": board.name,
+            "slug": board.slug,
+            "board_type": board.board_type,
+            "description": board.description,
+            "mandate": board.mandate,
+            "mission": board.mission,
+            "vision": board.vision,
+            "meeting_schedule": board.meeting_schedule,
+            "display_order": board.display_order,
+            "members": [GovernanceService.member_display_data(member) for member in members],
+        }
 
     @staticmethod
     async def add_member(
@@ -147,3 +225,586 @@ class GovernanceService:
             raise ValueError("Board member assignment not found")
         assignment.status = "ended"
         await db.flush()
+
+    @staticmethod
+    async def get_university_council_board(db: AsyncSession) -> Board | None:
+        return await GovernanceService.get_board_by_slug(db, _COUNCIL_SLUG)
+
+    @staticmethod
+    async def council_dashboard(db: AsyncSession) -> dict:
+        return await GovernanceService.board_dashboard(db, _COUNCIL_SLUG)
+
+    @staticmethod
+    async def board_dashboard(db: AsyncSession, board_slug: str) -> dict:
+        board = await GovernanceService.get_board_by_slug(db, board_slug)
+        if board is None:
+            raise ValueError("Governance board not found")
+
+        scope = (
+            StaffAssignment.entity_type == "board",
+            StaffAssignment.entity_id == board.id,
+            StaffAssignment.deleted_at.is_(None),
+        )
+        result = await db.execute(
+            select(
+                func.count(StaffAssignment.id).filter(StaffAssignment.status == "active"),
+                func.count(StaffAssignment.id).filter(StaffAssignment.workflow_status == "draft"),
+                func.count(StaffAssignment.id).filter(StaffAssignment.workflow_status == "published"),
+                func.count(StaffAssignment.id).filter(StaffAssignment.status != "active"),
+                func.max(StaffAssignment.updated_at),
+            ).where(*scope)
+        )
+        total_active, draft, published, inactive, last_updated = result.one()
+        members = await GovernanceService.list_board_members(db, board_slug)
+        chairperson = next((member for member in members if GovernanceService._role_group(member) == "chairperson"), None)
+        secretary = next((member for member in members if GovernanceService._role_group(member) == "secretary"), None)
+        member_roles = [member for member in members if GovernanceService._role_group(member) == "member"]
+        return {
+            "total_active_members": int(total_active or 0),
+            "chairperson": chairperson,
+            "member_count": len(member_roles),
+            "government_representative_count": sum(
+                1 for member in member_roles if (member.appointment_category or "") == "government_representative"
+            ),
+            "other_representative_count": sum(
+                1 for member in member_roles if (member.appointment_category or "") != "government_representative"
+            ),
+            "secretary": secretary,
+            "draft_profile_count": int(draft or 0),
+            "published_profile_count": int(published or 0),
+            "inactive_profile_count": int(inactive or 0),
+            "vacant_position_count": int(getattr(board, "member_count", 0) or 0) - int(total_active or 0),
+            "last_updated_at": last_updated,
+        }
+
+    @staticmethod
+    async def list_governance_roles(db: AsyncSession, active_only: bool = True) -> list[GovernanceRole]:
+        query = select(GovernanceRole).order_by(
+            GovernanceRole.display_group.asc(),
+            GovernanceRole.default_display_order.asc(),
+            GovernanceRole.name.asc(),
+        )
+        if active_only:
+            query = query.where(GovernanceRole.is_active.is_(True))
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def get_governance_role(db: AsyncSession, role_id: uuid.UUID) -> GovernanceRole | None:
+        result = await db.execute(select(GovernanceRole).where(GovernanceRole.id == role_id))
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def create_governance_role(db: AsyncSession, data: dict, user_id: uuid.UUID) -> GovernanceRole:
+        role = GovernanceRole(**data, created_by_id=user_id, updated_by_id=user_id)
+        db.add(role)
+        await db.flush()
+        await db.refresh(role)
+        return role
+
+    @staticmethod
+    async def update_governance_role(
+        db: AsyncSession, role: GovernanceRole, data: dict, user_id: uuid.UUID
+    ) -> GovernanceRole:
+        for key, value in data.items():
+            if hasattr(role, key):
+                setattr(role, key, value)
+        role.updated_by_id = user_id
+        await db.flush()
+        await db.refresh(role)
+        return role
+
+    @staticmethod
+    async def get_council_page_content(
+        db: AsyncSession, board_id: uuid.UUID, *, published_only: bool = False
+    ) -> GovernancePageContent | None:
+        query = (
+            select(GovernancePageContent)
+            .options(selectinload(GovernancePageContent.hero_image))
+            .where(GovernancePageContent.board_id == board_id, GovernancePageContent.page_key == "overview")
+        )
+        if published_only:
+            query = query.where(
+                GovernancePageContent.status == "published",
+                GovernancePageContent.workflow_status == "published",
+                GovernancePageContent.published_at.is_not(None),
+            )
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def upsert_council_page_content(
+        db: AsyncSession, board_id: uuid.UUID, data: dict, user_id: uuid.UUID
+    ) -> GovernancePageContent:
+        payload = dict(data)
+        for field in ("status", "workflow_status"):
+            payload.pop(field, None)
+        page = await GovernanceService.get_council_page_content(db, board_id)
+        if page is None:
+            page = GovernancePageContent(
+                board_id=board_id,
+                page_key="overview",
+                created_by_id=user_id,
+                status="draft",
+                workflow_status="draft",
+                **payload,
+            )
+            db.add(page)
+        else:
+            for key, value in payload.items():
+                if hasattr(page, key):
+                    setattr(page, key, value)
+            if payload:
+                page.status = "draft"
+                page.workflow_status = "draft"
+                page.published_at = None
+                page.updated_by_id = user_id
+        await db.flush()
+        await db.refresh(page)
+        return page
+
+    @staticmethod
+    async def transition_council_page_content(
+        db: AsyncSession,
+        page: GovernancePageContent,
+        action: str,
+        user_id: uuid.UUID,
+    ) -> GovernancePageContent:
+        now = datetime.now(timezone.utc)
+        current = page.workflow_status
+        if action == "submit-review" and current == "draft":
+            page.workflow_status = "submitted"
+            page.status = "submitted"
+            page.submitted_by_id = user_id
+            page.submitted_at = now
+        elif action == "approve" and current == "submitted":
+            page.workflow_status = "approved"
+            page.status = "approved"
+            page.approved_by_id = user_id
+            page.approved_at = now
+        elif action == "publish" and current == "approved":
+            page.workflow_status = "published"
+            page.status = "published"
+            page.published_by_id = user_id
+            page.published_at = now
+        elif action == "unpublish" and current == "published":
+            page.workflow_status = "approved"
+            page.status = "approved"
+            page.unpublished_at = now
+        elif action == "archive" and current != "published":
+            page.workflow_status = "archived"
+            page.status = "archived"
+        else:
+            raise ValueError("Invalid workflow transition")
+        await db.flush()
+        return page
+
+    @staticmethod
+    async def list_council_members(
+        db: AsyncSession,
+        public_only: bool = False,
+        workflow_status: str | None = None,
+        active_only: bool = False,
+    ) -> list[StaffAssignment]:
+        return await GovernanceService.list_board_members(
+            db,
+            _COUNCIL_SLUG,
+            public_only=public_only,
+            workflow_status=workflow_status,
+            active_only=active_only,
+        )
+
+    @staticmethod
+    async def list_board_members(
+        db: AsyncSession,
+        board_slug: str,
+        public_only: bool = False,
+        workflow_status: str | None = None,
+        active_only: bool = False,
+    ) -> list[StaffAssignment]:
+        board = await GovernanceService.get_board_by_slug(db, board_slug)
+        if board is None:
+            raise ValueError("Governance board not found")
+        query = (
+            select(StaffAssignment)
+            .join(StaffAssignment.person)
+            .options(
+                selectinload(StaffAssignment.person).selectinload(Person.photo),
+                selectinload(StaffAssignment.portrait_media),
+                selectinload(StaffAssignment.governance_role),
+                selectinload(StaffAssignment.reports_to).selectinload(StaffAssignment.person),
+            )
+            .where(
+                StaffAssignment.entity_type == "board",
+                StaffAssignment.entity_id == board.id,
+                StaffAssignment.deleted_at.is_(None),
+            )
+            .order_by(StaffAssignment.hierarchy_level.asc(), StaffAssignment.display_order.asc(), Person.full_name.asc())
+        )
+        if public_only:
+            query = query.where(
+                StaffAssignment.status == "active",
+                StaffAssignment.is_public.is_(True),
+                StaffAssignment.workflow_status == "published",
+                StaffAssignment.appointment_status == "published",
+            )
+        elif active_only:
+            query = query.where(StaffAssignment.status == "active")
+        if workflow_status is not None:
+            query = query.where(StaffAssignment.workflow_status == workflow_status)
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def get_council_member(db: AsyncSession, assignment_id: uuid.UUID) -> StaffAssignment | None:
+        return await GovernanceService.get_board_member(db, _COUNCIL_SLUG, assignment_id)
+
+    @staticmethod
+    async def get_board_member(db: AsyncSession, board_slug: str, assignment_id: uuid.UUID) -> StaffAssignment | None:
+        board = await GovernanceService.get_board_by_slug(db, board_slug)
+        if board is None:
+            return None
+        result = await db.execute(
+            select(StaffAssignment)
+            .options(
+                selectinload(StaffAssignment.person).selectinload(Person.photo),
+                selectinload(StaffAssignment.portrait_media),
+                selectinload(StaffAssignment.governance_role),
+                selectinload(StaffAssignment.reports_to).selectinload(StaffAssignment.person),
+            )
+            .where(
+                StaffAssignment.id == assignment_id,
+                StaffAssignment.entity_type == "board",
+                StaffAssignment.entity_id == board.id,
+                StaffAssignment.deleted_at.is_(None),
+            )
+        )
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def create_council_member(db: AsyncSession, data: dict, user_id: uuid.UUID) -> StaffAssignment:
+        board = await GovernanceService.get_university_council_board(db)
+        if board is None:
+            raise ValueError("University Council not found")
+        return await GovernanceService._create_board_member_for_board(db, board, data, user_id)
+
+    @staticmethod
+    async def create_board_member(
+        db: AsyncSession, board_slug: str, data: dict, user_id: uuid.UUID
+    ) -> StaffAssignment:
+        board = await GovernanceService.get_board_by_slug(db, board_slug)
+        if board is None:
+            raise ValueError("Governance board not found")
+        return await GovernanceService._create_board_member_for_board(db, board, data, user_id)
+
+    @staticmethod
+    async def _create_board_member_for_board(
+        db: AsyncSession, board: Board, data: dict, user_id: uuid.UUID
+    ) -> StaffAssignment:
+        payload = dict(data)
+        role_id = payload.pop("governance_role_id")
+        for field in ("appointment_status", "workflow_status", "reports_to_id", "hierarchy_level", "display_order"):
+            payload.pop(field, None)
+        role = await GovernanceService.get_governance_role(db, role_id)
+        if role is None:
+            raise ValueError("Governance role not found")
+        payload.setdefault("role", role.slug.replace("-", "_"))
+        payload.setdefault("appointment_category", role.category)
+        payload.setdefault("hierarchy_level", role.default_hierarchy_level)
+        payload.setdefault("display_order", role.default_display_order)
+        payload["appointment_status"] = "draft"
+        payload["workflow_status"] = "draft"
+        assignment = StaffAssignment(
+            entity_type="board",
+            entity_id=board.id,
+            governance_role_id=role.id,
+            status="active",
+            **payload,
+        )
+        db.add(assignment)
+        await db.flush()
+        await db.refresh(assignment)
+        return assignment
+
+    @staticmethod
+    async def update_council_member(
+        db: AsyncSession, assignment: StaffAssignment, data: dict, user_id: uuid.UUID
+    ) -> StaffAssignment:
+        payload = dict(data)
+        protected_fields = {"appointment_status", "workflow_status"}
+        if protected_fields.intersection(payload):
+            raise ValueError("Council member workflow state can only be changed through workflow transitions")
+        order_fields = {"reports_to_id", "hierarchy_level", "display_order"}
+        if order_fields.intersection(payload):
+            raise ValueError("Council member hierarchy and order can only be changed through the order endpoint")
+        role_id = payload.get("governance_role_id")
+        if role_id is not None:
+            role = await GovernanceService.get_governance_role(db, role_id)
+            if role is None:
+                raise ValueError("Governance role not found")
+            assignment.role = role.slug.replace("-", "_")
+        for key, value in payload.items():
+            if hasattr(assignment, key):
+                setattr(assignment, key, value)
+        if payload and assignment.workflow_status == "published":
+            assignment.workflow_status = "draft"
+            assignment.appointment_status = "draft"
+            assignment.published_at = None
+        await db.flush()
+        await db.refresh(assignment)
+        return assignment
+
+    @staticmethod
+    async def validate_council_order_nodes(nodes, assignments_by_id: dict[uuid.UUID, StaffAssignment]) -> None:
+        def field(node, name):
+            return node[name] if isinstance(node, dict) else getattr(node, name)
+
+        seen_assignment_ids: set[uuid.UUID] = set()
+        for node in nodes:
+            assignment_id = field(node, "assignment_id")
+            if assignment_id in seen_assignment_ids:
+                raise ValueError("Duplicate assignment ID in Council order")
+            seen_assignment_ids.add(assignment_id)
+            if assignment_id not in assignments_by_id:
+                raise ValueError("Council order references a member outside this board")
+
+        seen_orders: set[tuple[str, int]] = set()
+        for node in nodes:
+            assignment_id = field(node, "assignment_id")
+            key = (GovernanceService._role_group(assignments_by_id[assignment_id]), field(node, "display_order"))
+            if key in seen_orders:
+                raise ValueError("Duplicate display order within a display group")
+            seen_orders.add(key)
+
+        parents = {assignment_id: assignment.reports_to_id for assignment_id, assignment in assignments_by_id.items()}
+        parents.update({field(node, "assignment_id"): field(node, "reports_to_id") for node in nodes})
+        for assignment_id, reports_to_id in parents.items():
+            if reports_to_id is not None and reports_to_id not in assignments_by_id:
+                raise ValueError("Council order references a member outside this board")
+            visited: set[uuid.UUID] = set()
+            current = assignment_id
+            while current is not None:
+                if current in visited:
+                    raise ValueError("Council reporting relationships contain a cycle")
+                visited.add(current)
+                current = parents.get(current)
+
+    @staticmethod
+    async def update_council_order(db: AsyncSession, nodes, user_id: uuid.UUID) -> list[StaffAssignment]:
+        members = await GovernanceService.list_council_members(db, active_only=True)
+        assignments_by_id = {member.id: member for member in members}
+        await GovernanceService.validate_council_order_nodes(nodes, assignments_by_id)
+        for node in nodes:
+            value = node if isinstance(node, dict) else node.model_dump()
+            assignment = assignments_by_id[value["assignment_id"]]
+            assignment.display_order = value["display_order"]
+            assignment.hierarchy_level = value["hierarchy_level"]
+            assignment.reports_to_id = value["reports_to_id"]
+        await db.flush()
+        return [assignments_by_id[node["assignment_id"] if isinstance(node, dict) else node.assignment_id] for node in nodes]
+
+    @staticmethod
+    async def update_board_order(
+        db: AsyncSession, board_slug: str, nodes, user_id: uuid.UUID
+    ) -> list[StaffAssignment]:
+        members = await GovernanceService.list_board_members(db, board_slug, active_only=True)
+        assignments_by_id = {member.id: member for member in members}
+        await GovernanceService.validate_council_order_nodes(nodes, assignments_by_id)
+        for node in nodes:
+            value = node if isinstance(node, dict) else node.model_dump()
+            assignment = assignments_by_id[value["assignment_id"]]
+            assignment.display_order = value["display_order"]
+            assignment.hierarchy_level = value["hierarchy_level"]
+            assignment.reports_to_id = value["reports_to_id"]
+        await db.flush()
+        return [assignments_by_id[node["assignment_id"] if isinstance(node, dict) else node.assignment_id] for node in nodes]
+
+    @staticmethod
+    async def transition_council_member(
+        db: AsyncSession,
+        assignment: StaffAssignment,
+        action: str,
+        user_id: uuid.UUID,
+        comment: str | None = None,
+    ) -> StaffAssignment:
+        now = datetime.now(timezone.utc)
+        current = assignment.workflow_status
+        if action == "submit-review" and current == "draft":
+            assignment.workflow_status = "submitted"
+            assignment.submitted_by_id = user_id
+            assignment.submitted_at = now
+        elif action == "approve" and current == "submitted":
+            assignment.workflow_status = "approved"
+            assignment.approved_by_id = user_id
+            assignment.approved_at = now
+        elif action == "publish" and current == "approved":
+            assignment.workflow_status = "published"
+            assignment.appointment_status = "published"
+            assignment.published_by_id = user_id
+            assignment.published_at = now
+        elif action == "unpublish" and current == "published":
+            assignment.workflow_status = "approved"
+            assignment.appointment_status = "approved"
+            assignment.unpublished_at = now
+        elif action == "archive" and current != "published":
+            assignment.workflow_status = "archived"
+            assignment.appointment_status = "archived"
+            assignment.archived_at = now
+            assignment.status = "ended"
+        else:
+            raise ValueError("Invalid workflow transition")
+        if comment is not None:
+            assignment.publication_notes = comment
+        flush = getattr(db, "flush", None)
+        if flush is not None:
+            await flush()
+        return assignment
+
+    @staticmethod
+    def _role_group(assignment: StaffAssignment) -> str:
+        governance_role = getattr(assignment, "governance_role", None)
+        group = getattr(governance_role, "display_group", None)
+        if group:
+            return group
+        role_name = " ".join(
+            str(value or "") for value in (getattr(assignment, "role", None), getattr(assignment, "title", None))
+        ).lower()
+        if "chair" in role_name:
+            return "chairperson"
+        if "secretary" in role_name:
+            return "secretary"
+        return "member"
+
+    @staticmethod
+    def _member_card(assignment: StaffAssignment) -> dict:
+        person = assignment.person
+        portrait_media = getattr(assignment, "portrait_media", None)
+        photo = getattr(person, "photo", None)
+        photo_url = (
+            getattr(portrait_media, "url", None)
+            or getattr(person, "photo_url", None)
+            or getattr(photo, "url", None)
+        )
+        role = getattr(assignment, "public_role_label", None) or getattr(assignment.governance_role, "public_label", None) or assignment.title or StaffService.role_label(assignment.role)
+        portrait_alt = getattr(portrait_media, "alt_text", None) or f"{person.display_name}, {role}"
+        return {
+            "id": assignment.id,
+            "person_id": person.id,
+            "name": person.display_name,
+            "role": role,
+            "slug": assignment.profile_slug,
+            "portrait": (
+                {"url": photo_url, "alt": portrait_alt}
+                if photo_url
+                else None
+            ),
+            "display_order": assignment.display_order,
+            "is_acting": assignment.is_acting,
+            "profile_summary": assignment.profile_summary,
+        }
+
+    @staticmethod
+    def council_member_reports_to_summary(assignment: StaffAssignment) -> dict | None:
+        reports_to = getattr(assignment, "reports_to", None)
+        if reports_to is None:
+            return None
+        role = (
+            getattr(reports_to, "public_role_label", None)
+            or getattr(getattr(reports_to, "governance_role", None), "public_label", None)
+            or getattr(reports_to, "title", None)
+            or StaffService.role_label(reports_to.role)
+        )
+        return {
+            "id": reports_to.id,
+            "display_label": reports_to.person.display_name,
+            "role_label": role,
+        }
+
+    @staticmethod
+    async def public_university_council(db: AsyncSession) -> dict:
+        board = await GovernanceService.get_university_council_board(db)
+        if board is None:
+            raise ValueError("University Council not found")
+        page = await GovernanceService.get_council_page_content(db, board.id, published_only=True)
+        members = await GovernanceService.list_council_members(db, public_only=True)
+        grouped = {"chairperson": [], "member": [], "secretary": []}
+        for member in members:
+            grouped[GovernanceService._role_group(member)].append(GovernanceService._member_card(member))
+        hero_image = getattr(page, "hero_image", None) if page else None
+        hero_url = getattr(hero_image, "url", None)
+        return {
+            "page": {
+                "title": getattr(page, "title", None) or board.name,
+                "description": getattr(page, "intro", None) or board.description,
+                "hero_image": {"url": hero_url, "alt": getattr(hero_image, "alt_text", None) or board.name} if hero_url else None,
+                "breadcrumb": ["Home", "About KSU", getattr(page, "title", None) or board.name],
+            },
+            "mandate": {
+                "label": getattr(page, "mandate_label", None) or "Our Mandate",
+                "heading": getattr(page, "mandate_heading", None) or "Our Mandate",
+                "description": getattr(page, "mandate_body", None) or board.description,
+                "document_cta": {
+                    "label": getattr(page, "document_cta_label", None),
+                    "href": getattr(page, "document_cta_url", None),
+                },
+            },
+            "chairperson": grouped["chairperson"][0] if grouped["chairperson"] else None,
+            "members": grouped["member"],
+            "secretary": grouped["secretary"][0] if grouped["secretary"] else None,
+        }
+
+    @staticmethod
+    async def preview_university_council(db: AsyncSession) -> dict:
+        return await GovernanceService.preview_board(db, _COUNCIL_SLUG)
+
+    @staticmethod
+    async def preview_board(db: AsyncSession, board_slug: str) -> dict:
+        board = await GovernanceService.get_board_by_slug(db, board_slug)
+        if board is None:
+            raise ValueError("Governance board not found")
+        page = await GovernanceService.get_council_page_content(db, board.id)
+        members = await GovernanceService.list_board_members(db, board_slug, active_only=True)
+        grouped = {"chairperson": [], "member": [], "secretary": []}
+        for member in members:
+            grouped[GovernanceService._role_group(member)].append(GovernanceService._member_card(member))
+        hero_image = getattr(page, "hero_image", None) if page else None
+        hero_url = getattr(hero_image, "url", None)
+        return {
+            "page": {
+                "title": getattr(page, "title", None) or board.name,
+                "description": getattr(page, "intro", None) or board.description,
+                "hero_image": {"url": hero_url, "alt": getattr(hero_image, "alt_text", None) or board.name} if hero_url else None,
+                "breadcrumb": ["Home", "About KSU", getattr(page, "title", None) or board.name],
+            },
+            "mandate": {
+                "label": getattr(page, "mandate_label", None) or "Our Mandate",
+                "heading": getattr(page, "mandate_heading", None) or "Our Mandate",
+                "description": getattr(page, "mandate_body", None) or board.description,
+                "document_cta": {
+                    "label": getattr(page, "document_cta_label", None),
+                    "href": getattr(page, "document_cta_url", None),
+                },
+            },
+            "chairperson": grouped["chairperson"][0] if grouped["chairperson"] else None,
+            "members": grouped["member"],
+            "secretary": grouped["secretary"][0] if grouped["secretary"] else None,
+        }
+
+    @staticmethod
+    async def public_university_council_profile(db: AsyncSession, slug: str) -> dict | None:
+        members = await GovernanceService.list_council_members(db, public_only=True)
+        assignment = next((member for member in members if member.profile_slug == slug), None)
+        if assignment is None:
+            return None
+        profile = GovernanceService._member_card(assignment)
+        profile.update(
+            {
+                "official_designation": assignment.official_designation,
+                "represented_institution": assignment.represented_institution,
+                "current_office": assignment.current_office,
+                "appointment_category": assignment.appointment_category,
+                "is_ex_officio": assignment.is_ex_officio,
+                "is_voting_member": assignment.is_voting_member,
+            }
+        )
+        return profile

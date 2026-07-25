@@ -37,47 +37,47 @@ export function ListPagination({
     <nav
       aria-label="Pagination"
       className={cn(
-        "flex flex-col items-center gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:justify-between",
+        "flex flex-col items-center gap-3 border-t border-border pt-6 sm:flex-row sm:justify-between",
         className,
       )}
     >
-      <p className="text-sm text-slate-600">
-        Showing <span className="font-semibold text-slate-950">{from}</span>
+      <p className="text-sm text-muted-foreground">
+        Showing <span className="font-semibold text-foreground">{from}</span>
         {" – "}
-        <span className="font-semibold text-slate-950">{to}</span> of{" "}
-        <span className="font-semibold text-slate-950">{total}</span> records
+        <span className="font-semibold text-foreground">{to}</span> of{" "}
+        <span className="font-semibold text-foreground">{total}</span> records
       </p>
 
       <div className="flex items-center gap-2">
         {hasPrev ? (
           <Link
             href={pageHref(page - 1)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-white px-3 text-sm font-semibold text-muted-foreground transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
           >
             <ChevronLeft aria-hidden className="h-4 w-4" />
             Previous
           </Link>
         ) : (
-          <span className="inline-flex h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-400">
+          <span className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-white px-3 text-sm font-medium text-muted-foreground/70">
             <ChevronLeft aria-hidden className="h-4 w-4" />
             Previous
           </span>
         )}
 
-        <span className="px-2 text-sm font-medium text-slate-600">
+        <span className="px-2 text-sm font-medium text-muted-foreground">
           Page {page} of {totalPages}
         </span>
 
         {hasNext ? (
           <Link
             href={pageHref(page + 1)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-white px-3 text-sm font-semibold text-muted-foreground transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
           >
             Next
             <ChevronRight aria-hidden className="h-4 w-4" />
           </Link>
         ) : (
-          <span className="inline-flex h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-400">
+          <span className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-white px-3 text-sm font-medium text-muted-foreground/70">
             Next
             <ChevronRight aria-hidden className="h-4 w-4" />
           </span>

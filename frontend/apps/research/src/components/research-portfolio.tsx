@@ -33,11 +33,11 @@ export function ResearchPortfolioHero({
   illustration?: PortfolioHeroIllustration;
 }) {
   return (
-    <section className="relative isolate overflow-hidden bg-[#061A36] px-4 py-7 text-white sm:px-6 lg:px-8 lg:py-8 xl:px-10 2xl:px-12">
-      <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_78%_18%,rgba(13,148,136,0.38),transparent_28%),radial-gradient(circle_at_50%_90%,rgba(245,158,11,0.24),transparent_24%),linear-gradient(120deg,#061A36_0%,#082B57_52%,#064E3B_100%)]" />
+    <section className="relative isolate overflow-hidden bg-[hsl(var(--brand-overlay))] px-4 py-7 text-white sm:px-6 lg:px-8 lg:py-8 xl:px-10 2xl:px-12">
+      <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_78%_18%,rgba(13,148,136,0.38),transparent_28%),radial-gradient(circle_at_50%_90%,rgba(245,158,11,0.24),transparent_24%),linear-gradient(120deg,hsl(var(--brand-overlay))_0%,#082B57_52%,hsl(var(--primary)/.62)_100%)]" />
       <div aria-hidden className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.045)_1px,transparent_1px)] bg-[size:48px_48px] opacity-55" />
       <HeroIllustration variant={illustration} />
-      <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[#061A36]/92 via-[#061A36]/62 to-[#061A36]/10" />
+      <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--brand-overlay))]/92 via-[hsl(var(--brand-overlay))]/62 to-[hsl(var(--brand-overlay))]/10" />
       <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-white/20" />
       <div className="relative mx-auto max-w-[1680px] py-2">
         <span className="inline-flex rounded-md border border-white/25 bg-primary/80 px-3 py-1 text-xs font-semibold text-white shadow-sm backdrop-blur">
@@ -90,7 +90,7 @@ function HeroIllustration({ variant }: { variant: PortfolioHeroIllustration }) {
       />
       {nodes.map((node) => (
         <g key={`${variant}-${node.x}-${node.y}`}>
-          <circle cx={node.x} cy={node.y} r="24" fill="#061A36" fillOpacity="0.72" stroke="white" strokeOpacity="0.22" />
+          <circle cx={node.x} cy={node.y} r="24" fill="hsl(var(--brand-overlay))" fillOpacity="0.72" stroke="white" strokeOpacity="0.22" />
           <circle cx={node.x} cy={node.y} r="6" fill={node.hot ? accent : secondary} />
         </g>
       ))}
@@ -111,7 +111,7 @@ function HeroVariantGlyph({
   if (variant === "projects") {
     return (
       <g>
-        <rect x="520" y="174" width="250" height="104" rx="14" fill="#061A36" fillOpacity="0.68" stroke="white" strokeOpacity="0.22" />
+        <rect x="520" y="174" width="250" height="104" rx="14" fill="hsl(var(--brand-overlay))" fillOpacity="0.68" stroke="white" strokeOpacity="0.22" />
         <path d="M552 242h54l34-44 38 24 42-54" stroke={accent} strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M552 204h56M552 222h36" stroke="white" strokeOpacity="0.44" strokeWidth="6" strokeLinecap="round" />
       </g>
@@ -120,7 +120,7 @@ function HeroVariantGlyph({
   if (variant === "centers") {
     return (
       <g>
-        <circle cx="650" cy="216" r="82" fill="#061A36" fillOpacity="0.68" stroke="white" strokeOpacity="0.22" />
+        <circle cx="650" cy="216" r="82" fill="hsl(var(--brand-overlay))" fillOpacity="0.68" stroke="white" strokeOpacity="0.22" />
         <circle cx="650" cy="216" r="22" fill={accent} fillOpacity="0.9" />
         {[0, 60, 120, 180, 240, 300].map((angle) => {
           const rad = (angle * Math.PI) / 180;
@@ -139,7 +139,7 @@ function HeroVariantGlyph({
   if (variant === "facilities") {
     return (
       <g>
-        <path d="M512 264h258v-78l-66-48-64 48-58-36-70 52v62Z" fill="#061A36" fillOpacity="0.7" stroke="white" strokeOpacity="0.22" />
+        <path d="M512 264h258v-78l-66-48-64 48-58-36-70 52v62Z" fill="hsl(var(--brand-overlay))" fillOpacity="0.7" stroke="white" strokeOpacity="0.22" />
         <path d="M544 264v-42h52v42M642 264v-62h62v62" stroke={accent} strokeWidth="8" strokeLinejoin="round" />
         <path d="M514 292c66-30 143-30 232 0" stroke={secondary} strokeWidth="8" strokeLinecap="round" />
       </g>
@@ -148,7 +148,7 @@ function HeroVariantGlyph({
   if (variant === "outputs") {
     return (
       <g>
-        <rect x="528" y="144" width="230" height="150" rx="16" fill="#061A36" fillOpacity="0.7" stroke="white" strokeOpacity="0.22" />
+        <rect x="528" y="144" width="230" height="150" rx="16" fill="hsl(var(--brand-overlay))" fillOpacity="0.7" stroke="white" strokeOpacity="0.22" />
         <path d="M568 184h150M568 218h104M568 252h132" stroke="white" strokeOpacity="0.5" strokeWidth="8" strokeLinecap="round" />
         <path d="M716 244l28 28 54-70" stroke={accent} strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
       </g>
@@ -157,7 +157,7 @@ function HeroVariantGlyph({
   if (variant === "publications") {
     return (
       <g>
-        <rect x="520" y="126" width="212" height="164" rx="16" fill="#061A36" fillOpacity="0.72" stroke="white" strokeOpacity="0.22" />
+        <rect x="520" y="126" width="212" height="164" rx="16" fill="hsl(var(--brand-overlay))" fillOpacity="0.72" stroke="white" strokeOpacity="0.22" />
         <path d="M560 166h126M560 198h146M560 230h104" stroke="white" strokeOpacity="0.52" strokeWidth="8" strokeLinecap="round" />
         <path d="M704 246l26 24 48-64" stroke={accent} strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
         <rect x="568" y="274" width="96" height="10" rx="5" fill={secondary} fillOpacity="0.85" />
@@ -167,13 +167,13 @@ function HeroVariantGlyph({
   if (variant === "expertise") {
     return (
       <g>
-        <circle cx="628" cy="204" r="46" fill="#061A36" fillOpacity="0.74" stroke="white" strokeOpacity="0.22" />
+        <circle cx="628" cy="204" r="46" fill="hsl(var(--brand-overlay))" fillOpacity="0.74" stroke="white" strokeOpacity="0.22" />
         <circle cx="628" cy="188" r="16" fill={accent} />
         <path d="M588 238c12-24 66-24 80 0" stroke={secondary} strokeWidth="10" strokeLinecap="round" />
         {[540, 716, 650].map((x, index) => (
           <g key={x}>
             <path d={`M628 204L${x} ${index === 2 ? 116 : 254}`} stroke="white" strokeOpacity="0.28" strokeWidth="3" />
-            <circle cx={x} cy={index === 2 ? 116 : 254} r="22" fill="#061A36" fillOpacity="0.7" stroke="white" strokeOpacity="0.22" />
+            <circle cx={x} cy={index === 2 ? 116 : 254} r="22" fill="hsl(var(--brand-overlay))" fillOpacity="0.7" stroke="white" strokeOpacity="0.22" />
             <circle cx={x} cy={index === 2 ? 116 : 254} r="7" fill={index === 1 ? secondary : accent} />
           </g>
         ))}
@@ -182,7 +182,7 @@ function HeroVariantGlyph({
   }
   return (
     <g>
-      <rect x="522" y="154" width="250" height="124" rx="18" fill="#061A36" fillOpacity="0.7" stroke="white" strokeOpacity="0.22" />
+      <rect x="522" y="154" width="250" height="124" rx="18" fill="hsl(var(--brand-overlay))" fillOpacity="0.7" stroke="white" strokeOpacity="0.22" />
       <path d="M560 238c34-48 67-70 100-66 44 6 54 57 102 24" stroke={accent} strokeWidth="8" strokeLinecap="round" />
       <path d="M572 198h56M572 218h34M690 244h48" stroke="white" strokeOpacity="0.45" strokeWidth="7" strokeLinecap="round" />
       <circle cx="738" cy="182" r="20" fill={secondary} />
@@ -230,10 +230,10 @@ export function ResearchPortfolioShell({
         <div className="min-w-0">
           <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
             <div className="pt-1">
-              <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 lg:whitespace-nowrap">
+              <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground lg:whitespace-nowrap">
                 {title}
               </h2>
-              <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">{body}</p>
+              <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">{body}</p>
             </div>
             <div className="w-full">{controls}</div>
           </div>
@@ -248,7 +248,7 @@ export function ResearchPortfolioShell({
 
 export function ResearchPortfolioQuickLinks({ links }: { links: PortfolioQuickLink[] }) {
   return (
-    <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm xl:sticky xl:top-24">
+    <aside className="rounded-lg border border-border bg-white p-4 shadow-sm xl:sticky xl:top-24">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
         Quick links
       </p>
@@ -264,12 +264,12 @@ export function ResearchPortfolioQuickLinks({ links }: { links: PortfolioQuickLi
                 {link.label}
               </span>
               {link.body ? (
-                <span className="mt-1 block text-xs leading-5 text-slate-500">{link.body}</span>
+                <span className="mt-1 block text-xs leading-5 text-muted-foreground">{link.body}</span>
               ) : null}
             </span>
             <ArrowRight
               aria-hidden
-              className="mt-1 h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-1 group-hover:text-secondary"
+              className="mt-1 h-4 w-4 shrink-0 text-muted-foreground/70 transition group-hover:translate-x-1 group-hover:text-secondary"
             />
           </Link>
         ))}

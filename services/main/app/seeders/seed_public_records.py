@@ -14,10 +14,21 @@ from app.models import AdmissionInfo, Announcement, Club, ContactDirectory, Docu
 from app.schemas.base import slugify
 
 from ._shared import SeedContext
+from .live_site_snapshot import LIVE_SITE_DOCUMENTS
 
 
 EAT = ZoneInfo("Africa/Nairobi")
 PUBLIC_SOURCE = "https://kisiiuniversity.ac.ke"
+SEO_DESCRIPTION_MAX_LENGTH = 500
+
+
+def _seo_description(value: object) -> str | None:
+    if value is None:
+        return None
+    description = str(value).strip()
+    if len(description) <= SEO_DESCRIPTION_MAX_LENGTH:
+        return description
+    return description[:SEO_DESCRIPTION_MAX_LENGTH].rstrip()
 
 
 DOWNLOAD_SPECS = [
@@ -187,7 +198,7 @@ DOWNLOAD_SPECS = [
         "url": f"{PUBLIC_SOURCE}/storage/public/downloads//Kisii%20University%20Revised%20Handbook%202019.pdf",
         "document_type": "handbook",
         "category": "Student Life",
-        "description": "Student handbook listed on the Dean of Students downloads page.",
+        "description": "Dean of Students' Office student handbook source for Kisii University history, governance, student affairs, schools, conduct, and examination regulations.",
         "mime_type": "application/pdf",
         "display_order": 95,
     },
@@ -292,6 +303,33 @@ DOWNLOAD_SPECS = [
         "display_order": 125,
     },
 ]
+
+
+def _live_document_spec(spec: dict[str, object]) -> dict[str, object]:
+    return {
+        "slug": spec["slug"],
+        "title": spec["title"],
+        "url": spec["url"],
+        "document_type": spec.get("document_type", "document"),
+        "category": spec.get("category", "Official Website"),
+        "description": f"Official Kisii University document linked from {spec['source_page_title']}.",
+        "mime_type": spec["mime_type"],
+        "display_order": spec["display_order"],
+        "source_page_url": spec["source_page_url"],
+        "source_page_title": spec["source_page_title"],
+    }
+
+
+def _merged_download_specs() -> list[dict[str, object]]:
+    merged: list[dict[str, object]] = []
+    seen_urls: set[str] = set()
+    for spec in [*DOWNLOAD_SPECS, *(_live_document_spec(spec) for spec in LIVE_SITE_DOCUMENTS)]:
+        url = str(spec["url"])
+        if url in seen_urls:
+            continue
+        seen_urls.add(url)
+        merged.append(spec)
+    return merged
 
 
 FAQ_SPECS = [
@@ -660,7 +698,12 @@ async def _upsert_external_media(db: AsyncSession, spec: dict[str, object]) -> M
         "media_type": "document",
         "is_public": True,
         "is_processed": True,
-        "extra_metadata": {"source": "kisiiuniversity.ac.ke", "seed_asset": True},
+        "extra_metadata": {
+            "source": "kisiiuniversity.ac.ke",
+            "seed_asset": True,
+            "source_page_url": spec.get("source_page_url"),
+            "source_page_title": spec.get("source_page_title"),
+        },
     }
     if media is None:
         media = Media(id=uuid.uuid4(), **payload)
@@ -801,7 +844,7 @@ async def _upsert_announcement(db: AsyncSession, spec: dict[str, object]) -> Non
         "featured_media_id": None,
         "author_user_id": None,
         "meta_title": spec["title"],
-        "meta_description": spec["summary"],
+        "meta_description": _seo_description(spec["summary"]),
         "keywords": {"tags": ["kisii university", str(spec["category"]).lower()]},
         "scope_type": "university",
         "scope_id": None,
@@ -842,7 +885,7 @@ async def seed_public_records(db: AsyncSession, ctx: SeedContext) -> None:
     del ctx
 
     media_by_slug: dict[str, Media] = {}
-    for spec in DOWNLOAD_SPECS:
+    for spec in _merged_download_specs():
         media = await _upsert_external_media(db, spec)
         media_by_slug[str(spec["slug"])] = media
         await _upsert_document(db, spec, media)

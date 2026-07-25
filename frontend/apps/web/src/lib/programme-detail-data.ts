@@ -35,9 +35,14 @@ const programmeRelationInclude = [
   "department:id,name,slug,code",
   "tutors:id,role,is_lead,person_id,person(id,slug,title,first_name,middle_name,last_name,full_name,academic_rank,institutional_role,email)",
   "intakes:id,slots_available,application_deadline,is_active,intake(id,name,slug,application_start,application_end,is_open)",
+  "admission_requirements:id,title,applicant_type,level,minimum_grade,subject_requirements,alternative_qualifications,documents_required,notes,effective_from,effective_to,is_active,display_order",
+  "admission_documents:id,title,slug,document_type,applicant_type,summary,external_url,media_id,is_published,display_order",
+  "fee_structures:id,title,applicant_type,fee_category,currency,tuition_amount,statutory_amount,other_amount,total_amount,payment_schedule,notes,effective_from,effective_to,is_active,display_order,attachment_media_id",
 ].join(";");
 
-async function getProgramme(slug: string): Promise<ProgrammeWithRelations | null> {
+async function getProgramme(
+  slug: string,
+): Promise<ProgrammeWithRelations | null> {
   try {
     const response = await programmesApi.getBySlug(slug, {
       fields: programmeFields,

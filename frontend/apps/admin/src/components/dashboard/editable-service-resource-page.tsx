@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useState, type Dispatch, type KeyboardEvent,
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpDown, ChevronDown, Edit, Eye, FilterX, HelpCircle, MoreHorizontal, Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
+import { ArrowUpDown, ChevronDown, Database, Edit, Eye, FilterX, HelpCircle, MoreHorizontal, Plus, Search, ShieldCheck, SlidersHorizontal, Sparkles, Trash2 } from "lucide-react";
 
 const RESEARCH_FRONTEND = process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL;
 
@@ -20,7 +20,8 @@ async function revalidateResearch(resource: string) {
 }
 
 import { PageHeader } from "@/components/layout";
-import { MediaPicker } from "@/components/media/media-picker";
+import { DateTimePicker } from "@/components/shared/date-time-picker";
+import { AttachmentManager, MediaPicker, getMediaLabel, getMediaUrl, isImageMedia, useCommitPendingAttachments, type AttachmentRoleOption, type PendingMediaAttachment } from "@/components/media";
 import { EntityPicker, EntityTypeRecordPicker, MultiEntityPicker } from "@/components/relationships/entity-picker";
 import { relationshipAdapters, type RelationshipFilters } from "@/components/relationships/relationship-adapters";
 import {
@@ -69,6 +70,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  ImageRenderer,
   richTextToPlainText,
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
@@ -101,12 +103,15 @@ type FieldType =
   | "entity-multi"
   | "entity-record"
   | "media"
+  | "attachments"
   | "boolean";
 
 export interface EditableField {
   name: string;
   label: string;
   type?: FieldType;
+  sourceNames?: string[];
+  defaultValue?: any;
   required?: boolean;
   helpText?: string;
   placeholder?: string;
@@ -138,8 +143,19 @@ export interface EditableField {
     helperText?: string;
     accept?: string;
     uploadEntityType?: string;
+    uploadEntityIdField?: string;
     uploadRole?: string;
+    isPublic?: boolean;
     allowUpload?: boolean;
+  };
+  attachments?: {
+    entityType: string;
+    roles?: AttachmentRoleOption[];
+    defaultRole?: string;
+    isPublic?: boolean;
+    allowVisibilityChange?: boolean;
+    uploadEntityType?: string;
+    uploadEntityIdField?: string;
   };
 }
 
@@ -166,6 +182,7 @@ export interface EditableRecordWorkflowAction<
   TPayload extends RecordShape,
 > {
   label: string;
+  scopes?: string[];
   successMessage?: string;
   variant?: "default" | "outline" | "secondary" | "destructive" | "ghost";
   className?: string;
@@ -212,6 +229,7 @@ interface EditableServiceResourcePageProps<
   getRecordMeta?: (record: TRecord) => string;
   getRecordDetailHref?: (record: TRecord) => string | null | undefined;
   getRecordWorkflowActions?: (record: TRecord) => Array<EditableRecordWorkflowAction<TRecord, TPayload>>;
+  hasAnyWorkflowScope?: (scopes: string[]) => boolean;
   recordColumns?: Array<EditableRecordColumn<TRecord>>;
   emptyMessage: string;
   buildPayload?: (
@@ -226,10 +244,16 @@ interface EditableServiceResourcePageProps<
   canEdit?: boolean;
   canDelete?: boolean;
   readOnlyMessage?: string;
+  primaryActionLabel?: string;
   resourceKey?: string;
   toolbarSlot?: ReactNode;
   summarySlot?: ReactNode;
   editorMode?: "dialog" | "sheet" | "auto";
+  /**
+   * Opens record details in the editor dialog before editing. This is opt-in so
+   * resources with dedicated detail routes keep their existing navigation.
+   */
+  viewInEditor?: boolean;
   renderMobileRecord?: (record: TRecord, actions: ReactNode, detailHref?: string | null) => ReactNode;
   hideHeader?: boolean;
   tableLayout?: "default" | "compact";
@@ -245,8 +269,10 @@ interface EditableServiceResourcePageProps<
 }
 
 function defaultValue(field: EditableField) {
+  if (field.defaultValue !== undefined) return field.defaultValue;
   if (field.type === "boolean") return true;
   if (field.type === "entity-multi") return [];
+  if (field.type === "attachments") return [];
   if (field.type === "number") return "";
   return "";
 }
@@ -254,6 +280,7 @@ function defaultValue(field: EditableField) {
 function recordToValues(fields: EditableField[], record?: RecordShape | null) {
   const values: RecordShape = {};
   for (const field of fields) {
+    if (field.type === "attachments") continue;
     if (field.type === "entity-record" && field.entityRecord) {
       values[field.entityRecord.typeName] =
         record?.[field.entityRecord.typeName] ?? "";
@@ -262,7 +289,10 @@ function recordToValues(fields: EditableField[], record?: RecordShape | null) {
       continue;
     }
 
-    const value = record?.[field.name];
+    const sourceNames = [field.name, ...(field.sourceNames ?? [])];
+    const value = sourceNames
+      .map((name) => record?.[name])
+      .find((candidate) => candidate !== undefined && candidate !== null);
     if (field.type === "boolean") {
       values[field.name] = Boolean(value);
     } else if (field.type === "date" && typeof value === "string") {
@@ -279,6 +309,7 @@ function recordToValues(fields: EditableField[], record?: RecordShape | null) {
 function normalizePayload(fields: EditableField[], values: RecordShape) {
   const payload: RecordShape = {};
   for (const field of fields) {
+    if (field.type === "attachments") continue;
     if (field.type === "entity-record" && field.entityRecord) {
       payload[field.entityRecord.typeName] =
         values[field.entityRecord.typeName] || null;
@@ -393,6 +424,7 @@ export function EditableServiceResourcePage<
   getRecordMeta,
   getRecordDetailHref,
   getRecordWorkflowActions,
+  hasAnyWorkflowScope,
   recordColumns = [],
   emptyMessage,
   buildPayload,
@@ -401,10 +433,12 @@ export function EditableServiceResourcePage<
   canEdit = true,
   canDelete = true,
   readOnlyMessage = "You can view these records, but your current permissions do not allow changes.",
+  primaryActionLabel,
   resourceKey,
   toolbarSlot,
   summarySlot,
   editorMode = "auto",
+  viewInEditor = false,
   renderMobileRecord,
   hideHeader = false,
   tableLayout = "default",
@@ -417,7 +451,9 @@ export function EditableServiceResourcePage<
   const queryClient = useQueryClient();
   const formId = useId();
   const workflowFormId = useId();
+  const commitPendingAttachments = useCommitPendingAttachments();
   const [editorOpen, setEditorOpen] = useState(false);
+  const [editorIntent, setEditorIntent] = useState<"create" | "view" | "edit">("create");
   const [editingRecord, setEditingRecord] = useState<TRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TRecord | null>(null);
   const [workflowTarget, setWorkflowTarget] = useState<{
@@ -474,7 +510,9 @@ export function EditableServiceResourcePage<
     const start = (page - 1) * perPage;
     return allRecords.slice(start, start + perPage);
   }, [allRecords, page, perPage, recordsQuery.data?.meta?.total]);
-  const resolvedEditorMode = editorMode === "auto" ? (fields.length > 10 ? "sheet" : "dialog") : editorMode;
+  const resolvedEditorMode = viewInEditor ? "dialog" : editorMode === "auto" ? (fields.length > 10 ? "sheet" : "dialog") : editorMode;
+  const visibleFrom = totalRecords === 0 ? 0 : (page - 1) * perPage + 1;
+  const visibleTo = Math.min(page * perPage, totalRecords);
 
   useEffect(() => {
     setPage(1);
@@ -496,6 +534,16 @@ export function EditableServiceResourcePage<
 
   const startEdit = (record: TRecord) => {
     if (!canEdit) return;
+    setEditorIntent("edit");
+    setEditingRecord(record);
+    setValues(recordToValues(fields, record));
+    setFieldErrors({});
+    setEditorOpen(true);
+  };
+
+  const startView = (record: TRecord) => {
+    if (!viewInEditor) return;
+    setEditorIntent("view");
     setEditingRecord(record);
     setValues(recordToValues(fields, record));
     setFieldErrors({});
@@ -504,6 +552,7 @@ export function EditableServiceResourcePage<
 
   const startCreate = () => {
     if (!canCreate) return;
+    setEditorIntent("create");
     setEditingRecord(null);
     setValues(recordToValues(fields));
     setFieldErrors({});
@@ -511,6 +560,7 @@ export function EditableServiceResourcePage<
   };
 
   const resetForm = () => {
+    setEditorIntent("create");
     setEditingRecord(null);
     setValues(recordToValues(fields));
     setFieldErrors({});
@@ -572,7 +622,20 @@ export function EditableServiceResourcePage<
         await updateMutation.mutateAsync({ id: editingRecord.id, payload });
         toast.success(`${title} updated successfully`);
       } else {
-        await createMutation.mutateAsync(payload);
+        const created = await createMutation.mutateAsync(payload);
+        const createdId = (created as { data?: { id?: string }; id?: string } | null)?.data?.id
+          ?? (created as { id?: string } | null)?.id;
+        for (const field of fields) {
+          if (field.type !== "attachments" || !field.attachments) continue;
+          const attachments = values[field.name] as PendingMediaAttachment[] | undefined;
+          if (!attachments?.length) continue;
+          if (!createdId) throw new Error("Created record did not return an ID for attachment linking");
+          await commitPendingAttachments({
+            entityType: field.attachments.entityType,
+            entityId: createdId,
+            attachments,
+          });
+        }
         toast.success(`${title} created successfully`);
       }
       resetForm();
@@ -657,6 +720,10 @@ export function EditableServiceResourcePage<
   };
 
   const openRecordDetail = (record: TRecord) => {
+    if (viewInEditor) {
+      startView(record);
+      return;
+    }
     const detailHref = getRecordDetailHref?.(record);
     if (detailHref) router.push(detailHref);
   };
@@ -698,9 +765,12 @@ export function EditableServiceResourcePage<
 
   const renderRecordActions = (record: TRecord) => {
     const detailHref = getRecordDetailHref?.(record);
-    const workflowActions = getRecordWorkflowActions?.(record) ?? [];
+    const workflowActions = (getRecordWorkflowActions?.(record) ?? []).filter(
+      (action) => !action.scopes?.length || hasAnyWorkflowScope?.(action.scopes) === true,
+    );
     const canShowMenu =
       workflowActions.length > 0 ||
+      viewInEditor ||
       Boolean(detailHref) ||
       canEdit ||
       Boolean(deleteRecord && canDelete);
@@ -728,7 +798,18 @@ export function EditableServiceResourcePage<
                 {action.label}
               </Button>
             ))}
-            {detailHref ? (
+            {viewInEditor ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="min-w-[118px] justify-start"
+                onClick={() => startView(record)}
+              >
+                <Eye data-icon="inline-start" />
+                View Record
+              </Button>
+            ) : detailHref ? (
               <Button asChild type="button" variant="outline" size="sm" className="min-w-[118px] justify-start">
                 <Link href={detailHref}>
                   <Eye data-icon="inline-start" />
@@ -772,10 +853,15 @@ export function EditableServiceResourcePage<
                 {action.label}
               </DropdownMenuItem>
             ))}
-            {workflowActions.length > 0 && (detailHref || canEdit || (deleteRecord && canDelete)) ? (
+            {workflowActions.length > 0 && (viewInEditor || detailHref || canEdit || (deleteRecord && canDelete)) ? (
               <DropdownMenuSeparator />
             ) : null}
-            {detailHref ? (
+            {viewInEditor ? (
+              <DropdownMenuItem onClick={() => startView(record)}>
+                <Eye data-icon="inline-start" />
+                View record
+              </DropdownMenuItem>
+            ) : detailHref ? (
               <DropdownMenuItem asChild>
                 <Link href={detailHref}>
                   <Eye data-icon="inline-start" />
@@ -820,13 +906,13 @@ export function EditableServiceResourcePage<
     <div
       className={cn(
         "flex flex-col gap-2 sm:flex-row sm:items-end",
-        tableLayout === "compact" && "flex-wrap rounded-lg border bg-background p-3 sm:items-center",
+        tableLayout === "compact" && "flex-wrap sm:items-center sm:justify-end",
       )}
     >
       {canCreate ? (
-        <Button type="button" size="sm" onClick={startCreate}>
+        <Button type="button" size="sm" className="shadow-sm" onClick={startCreate}>
           <Plus data-icon="inline-start" />
-          Create Record
+          {primaryActionLabel ?? "Create Record"}
         </Button>
       ) : null}
       {toolbarSlot}
@@ -890,10 +976,10 @@ export function EditableServiceResourcePage<
           onChange={(event) => updateFilter(filter.name, event.target.value || null)}
         />
       ) : filter.type === "date" ? (
-        <Input
-          type="date"
+        <DateTimePicker
           value={filterValues[filter.name] ?? ""}
-          onChange={(event) => updateFilter(filter.name, event.target.value || null)}
+          onChange={(nextValue) => updateFilter(filter.name, nextValue || null)}
+          placeholder={filter.placeholder ?? filter.label}
         />
       ) : (
         <Select
@@ -923,30 +1009,58 @@ export function EditableServiceResourcePage<
   return (
     <div>
       {!hideHeader ? <PageHeader title={title} description={description} backHref={backHref} /> : null}
-      <div className={cn("space-y-4 p-4 sm:p-6", hideHeader && "pt-3")}>
-        {tableLayout === "compact" ? actionToolbar : null}
+      <div className={cn("space-y-5 p-4 sm:p-6", hideHeader && "pt-3")}>
+        <ResourceCommandPanel
+          title={title}
+          description={description}
+          totalRecords={totalRecords}
+          visibleFrom={visibleFrom}
+          visibleTo={visibleTo}
+          canCreate={canCreate}
+          canEdit={canEdit}
+          canDelete={Boolean(deleteRecord && canDelete)}
+          hasActiveFilters={hasActiveFilters}
+          isFetching={recordsQuery.isFetching}
+          actions={actionToolbar}
+          compact={tableLayout === "compact"}
+        />
         {summarySlot}
-        <Card>
+        <Card className="overflow-hidden border-white/70 bg-white/90 shadow-sm backdrop-blur dark:border-white/10 dark:bg-background/90">
           {tableLayout !== "compact" ? (
-            <CardHeader>
+            <CardHeader className="border-b bg-gradient-to-r from-muted/40 via-background to-muted/20">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <CardTitle>Records</CardTitle>
-                {actionToolbar}
+                <div>
+                  <CardTitle className="text-base">Records</CardTitle>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Backend-backed list with scoped filters and permission-aware actions.
+                  </p>
+                </div>
               </div>
             </CardHeader>
           ) : null}
-          <CardContent>
+          <CardContent className="p-4 sm:p-5">
             {tableLayout === "compact" ? (
-              <div className="mb-4 flex flex-col gap-3 rounded-lg border bg-background p-3 lg:flex-row lg:items-center lg:justify-between">
-                <div className="relative min-w-0 flex-1">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={searchFilter ? filterValues[searchFilter.name] ?? "" : ""}
-                    placeholder={searchFilter?.placeholder ?? "Search records"}
-                    className="pl-9"
-                    onChange={(event) => searchFilter ? updateFilter(searchFilter.name, event.target.value || null) : undefined}
-                  />
-                </div>
+              <div className="mb-4 flex flex-col gap-3 rounded-2xl border bg-muted/20 p-3 lg:flex-row lg:items-center lg:justify-between">
+                {searchFilter ? (
+                  <div className="relative min-w-0 flex-1">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={filterValues[searchFilter.name] ?? ""}
+                      placeholder={searchFilter.placeholder ?? "Search records"}
+                      className="pl-9"
+                      onChange={(event) => updateFilter(searchFilter.name, event.target.value || null)}
+                    />
+                  </div>
+                ) : (
+                  <div className="min-w-0 flex-1 rounded-xl border bg-background/70 px-3 py-2">
+                    <p className="text-sm font-semibold">{title} records</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {hasActiveFilters
+                        ? `${Object.keys(activeFilters).length} filter${Object.keys(activeFilters).length === 1 ? "" : "s"} active`
+                        : "Use filters, sorting, and row actions to manage this workspace."}
+                    </p>
+                  </div>
+                )}
                 <div className="flex flex-wrap items-center gap-2">
                   {hasMenuFilters ? (
                     <Popover>
@@ -1022,14 +1136,14 @@ export function EditableServiceResourcePage<
                 </div>
               </div>
             ) : listFilters.length > 0 ? (
-              <div className="mb-4 grid gap-3 rounded-lg border bg-muted/20 p-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="mb-4 grid gap-3 rounded-2xl border bg-muted/20 p-3 sm:grid-cols-2 xl:grid-cols-3">
                 {listFilters.map(renderFilterControl)}
               </div>
             ) : null}
             {recordsQuery.isLoading ? (
               <div className="flex flex-col gap-3">
                 {[1, 2, 3].map((item) => (
-                  <Skeleton key={item} className="h-16 rounded-lg" />
+                  <Skeleton key={item} className="h-20 rounded-2xl" />
                 ))}
               </div>
             ) : recordsQuery.isError ? (
@@ -1039,7 +1153,7 @@ export function EditableServiceResourcePage<
                 </AlertDescription>
               </Alert>
             ) : records.length === 0 ? (
-              <div className="rounded-lg border bg-background p-8">
+              <div className="rounded-2xl border bg-gradient-to-br from-background to-muted/25 p-8">
                 <EmptyState
                   title={emptyState?.title ?? "No records found"}
                   description={emptyState?.description ?? emptyMessage}
@@ -1049,7 +1163,7 @@ export function EditableServiceResourcePage<
                     {canCreate ? (
                       <Button type="button" size="sm" onClick={startCreate}>
                         <Plus data-icon="inline-start" />
-                        {emptyState?.primaryActionLabel ?? "Create Record"}
+                        {emptyState?.primaryActionLabel ?? primaryActionLabel ?? "Create Record"}
                       </Button>
                     ) : null}
                     {emptyState?.secondaryAction}
@@ -1059,9 +1173,9 @@ export function EditableServiceResourcePage<
             ) : (
               <div className="flex flex-col gap-4">
                 {recordColumns.length > 0 ? (
-                  <div className="overflow-x-auto rounded-lg border">
+                  <div className="overflow-x-auto rounded-2xl border bg-background">
                     <table className="hidden w-full min-w-[960px] text-sm md:table">
-                      <thead className="border-b bg-muted/40 text-left text-xs uppercase text-muted-foreground">
+                      <thead className="border-b bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
                         <tr>
                           {recordColumns.map((column) => (
                             <th key={column.key} className={`px-4 py-3 font-semibold ${column.className ?? ""}`}>
@@ -1076,11 +1190,11 @@ export function EditableServiceResourcePage<
                           <tr
                             key={record.id}
                             className={cn(
-                              "align-top",
-                              getRecordDetailHref?.(record) && "cursor-pointer transition-colors hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                              "align-top transition-colors",
+                              (viewInEditor || getRecordDetailHref?.(record)) && "cursor-pointer hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                             )}
-                            role={getRecordDetailHref?.(record) ? "link" : undefined}
-                            tabIndex={getRecordDetailHref?.(record) ? 0 : undefined}
+                            role={viewInEditor ? "button" : getRecordDetailHref?.(record) ? "link" : undefined}
+                            tabIndex={viewInEditor || getRecordDetailHref?.(record) ? 0 : undefined}
                             onClick={() => openRecordDetail(record)}
                             onKeyDown={(event) => handleRecordKeyDown(event, record)}
                           >
@@ -1103,10 +1217,10 @@ export function EditableServiceResourcePage<
                             key={`mobile-${record.id}`}
                             className={cn(
                               "p-3",
-                              getRecordDetailHref?.(record) && "cursor-pointer transition-colors hover:bg-muted/35",
+                              (viewInEditor || getRecordDetailHref?.(record)) && "cursor-pointer transition-colors hover:bg-muted/35",
                             )}
-                            role={getRecordDetailHref?.(record) ? "link" : undefined}
-                            tabIndex={getRecordDetailHref?.(record) ? 0 : undefined}
+                            role={viewInEditor ? "button" : getRecordDetailHref?.(record) ? "link" : undefined}
+                            tabIndex={viewInEditor || getRecordDetailHref?.(record) ? 0 : undefined}
                             onClick={() => openRecordDetail(record)}
                             onKeyDown={(event) => handleRecordKeyDown(event, record)}
                           >
@@ -1120,6 +1234,7 @@ export function EditableServiceResourcePage<
                             getRecordMeta={getRecordMeta}
                             actions={renderRecordActions(record)}
                             detailHref={getRecordDetailHref?.(record)}
+                            openInEditor={viewInEditor}
                             onOpen={() => openRecordDetail(record)}
                           />
                         )
@@ -1127,17 +1242,17 @@ export function EditableServiceResourcePage<
                     </div>
                   </div>
                 ) : (
-                  <div className="divide-y rounded-lg border">
+                  <div className="divide-y rounded-2xl border bg-background">
                     {records.map((record) => (
                       renderMobileRecord ? (
                         <div
                           key={record.id}
                           className={cn(
                             "p-3",
-                            getRecordDetailHref?.(record) && "cursor-pointer transition-colors hover:bg-muted/35",
+                            (viewInEditor || getRecordDetailHref?.(record)) && "cursor-pointer transition-colors hover:bg-muted/35",
                           )}
-                          role={getRecordDetailHref?.(record) ? "link" : undefined}
-                          tabIndex={getRecordDetailHref?.(record) ? 0 : undefined}
+                          role={viewInEditor ? "button" : getRecordDetailHref?.(record) ? "link" : undefined}
+                          tabIndex={viewInEditor || getRecordDetailHref?.(record) ? 0 : undefined}
                           onClick={() => openRecordDetail(record)}
                           onKeyDown={(event) => handleRecordKeyDown(event, record)}
                         >
@@ -1151,21 +1266,22 @@ export function EditableServiceResourcePage<
                           getRecordMeta={getRecordMeta}
                           actions={renderRecordActions(record)}
                           detailHref={getRecordDetailHref?.(record)}
+                          openInEditor={viewInEditor}
                           onOpen={() => openRecordDetail(record)}
                         />
                       )
                     ))}
                   </div>
                 )}
-                <div className="flex flex-col gap-3 rounded-lg border bg-background px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3 rounded-2xl border bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-muted-foreground">
                     Showing{" "}
                     <span className="font-medium text-foreground">
-                      {totalRecords === 0 ? 0 : (page - 1) * perPage + 1}
+                      {visibleFrom}
                     </span>
                     {" - "}
                     <span className="font-medium text-foreground">
-                      {Math.min(page * perPage, totalRecords)}
+                      {visibleTo}
                     </span>{" "}
                     of <span className="font-medium text-foreground">{totalRecords}</span>
                   </p>
@@ -1225,8 +1341,8 @@ export function EditableServiceResourcePage<
         >
           <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-3xl">
             <SheetHeader>
-              <SheetTitle>{editingRecord ? "Edit Record" : "Create Record"}</SheetTitle>
-              <SheetDescription>{editorDescription(title, editingRecord, getRecordTitle)}</SheetDescription>
+              <SheetTitle>{editorTitle(title, editingRecord, editorIntent)}</SheetTitle>
+              <SheetDescription>{editorDescription(title, editingRecord, getRecordTitle, editorIntent)}</SheetDescription>
             </SheetHeader>
             <EditorFormBody
               formId={formId}
@@ -1239,6 +1355,7 @@ export function EditableServiceResourcePage<
               canCreate={canCreate}
               canEdit={canEdit}
               readOnlyMessage={readOnlyMessage}
+              readOnly={false}
             />
             <SheetFooter className="sticky bottom-0 mt-auto gap-2 border-t bg-background pt-4 sm:gap-0">
               <EditorFooter
@@ -1248,6 +1365,8 @@ export function EditableServiceResourcePage<
                 isSaving={createMutation.isPending || updateMutation.isPending}
                 onCancel={closeEditor}
                 onSubmit={submit}
+                editorIntent={editorIntent}
+                onEdit={() => setEditorIntent("edit")}
               />
             </SheetFooter>
           </SheetContent>
@@ -1259,10 +1378,10 @@ export function EditableServiceResourcePage<
             if (!open) closeEditor();
           }}
         >
-          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
             <DialogHeader>
-              <DialogTitle>{editingRecord ? "Edit Record" : "Create Record"}</DialogTitle>
-              <DialogDescription>{editorDescription(title, editingRecord, getRecordTitle)}</DialogDescription>
+              <DialogTitle>{editorTitle(title, editingRecord, editorIntent)}</DialogTitle>
+              <DialogDescription>{editorDescription(title, editingRecord, getRecordTitle, editorIntent)}</DialogDescription>
             </DialogHeader>
             <EditorFormBody
               formId={formId}
@@ -1275,6 +1394,7 @@ export function EditableServiceResourcePage<
               canCreate={canCreate}
               canEdit={canEdit}
               readOnlyMessage={readOnlyMessage}
+              readOnly={editorIntent === "view"}
             />
             <DialogFooter className="gap-2 sm:gap-0">
               <EditorFooter
@@ -1284,6 +1404,8 @@ export function EditableServiceResourcePage<
                 isSaving={createMutation.isPending || updateMutation.isPending}
                 onCancel={closeEditor}
                 onSubmit={submit}
+                editorIntent={editorIntent}
+                onEdit={() => setEditorIntent("edit")}
               />
             </DialogFooter>
           </DialogContent>
@@ -1378,12 +1500,112 @@ export function EditableServiceResourcePage<
   );
 }
 
+function ResourceCommandPanel({
+  title,
+  description,
+  totalRecords,
+  visibleFrom,
+  visibleTo,
+  canCreate,
+  canEdit,
+  canDelete,
+  hasActiveFilters,
+  isFetching,
+  actions,
+  compact = false,
+}: {
+  title: string;
+  description: string;
+  totalRecords: number;
+  visibleFrom: number;
+  visibleTo: number;
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  hasActiveFilters: boolean;
+  isFetching: boolean;
+  actions: ReactNode;
+  compact?: boolean;
+}) {
+  return (
+    <section
+      className={cn(
+        "relative overflow-hidden border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.14),transparent_30%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.86))] shadow-sm backdrop-blur dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.14),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.86))]",
+        compact ? "rounded-2xl p-4" : "rounded-3xl p-5 sm:p-6",
+      )}
+    >
+      <div className={cn("pointer-events-none absolute right-0 top-0 rounded-full bg-primary/10 blur-3xl", compact ? "h-20 w-20" : "h-28 w-28")} />
+      <div className={cn("relative flex flex-col justify-between", compact ? "gap-3 lg:flex-row lg:items-center" : "gap-5 xl:flex-row xl:items-end")}>
+        <div className={cn("min-w-0", compact ? "max-w-2xl" : "max-w-3xl")}>
+          <div className={cn("inline-flex items-center gap-2 rounded-full border bg-background/80 text-xs font-medium text-muted-foreground shadow-sm", compact ? "mb-2 px-2.5 py-0.5" : "mb-3 px-3 py-1")}>
+            <Sparkles className="size-3.5 text-orange-600" />
+            Corporate Communication workspace
+          </div>
+          <h2 className={cn("font-semibold tracking-tight text-foreground", compact ? "text-xl md:text-2xl" : "text-2xl md:text-3xl")}>{title}</h2>
+          <p className={cn("max-w-2xl text-sm text-muted-foreground", compact ? "mt-1 line-clamp-2 leading-5" : "mt-2 leading-6")}>{description}</p>
+        </div>
+        <div className={cn("flex flex-col", compact ? "gap-2 lg:items-end" : "gap-3")}>
+          {!compact ? (
+            <div className="grid gap-2 sm:grid-cols-3">
+              <PremiumMetric icon={Database} label="Records" value={String(totalRecords)} />
+              <PremiumMetric icon={ShieldCheck} label="Actions" value={canEdit ? "Edit" : "View"} />
+              <PremiumMetric icon={SlidersHorizontal} label="Filters" value={hasActiveFilters ? "Active" : "Ready"} />
+            </div>
+          ) : null}
+          {actions ? <div className="flex justify-start lg:justify-end">{actions}</div> : null}
+        </div>
+      </div>
+      <div className={cn("relative flex flex-wrap items-center gap-2 text-xs text-muted-foreground", compact ? "mt-3" : "mt-5")}>
+        <Badge variant="secondary" className="rounded-full">
+          {compact ? `${visibleFrom}-${visibleTo} of ${totalRecords}` : `Showing ${visibleFrom}-${visibleTo}`}
+        </Badge>
+        <Badge variant="outline" className="rounded-full">
+          {canEdit ? "Editable" : "Read only"}
+        </Badge>
+        {!compact ? (
+          <>
+            <Badge variant={canCreate ? "default" : "outline"} className="rounded-full">
+              {canCreate ? "Create enabled" : "Create unavailable"}
+            </Badge>
+            <Badge variant={canDelete ? "destructive" : "outline"} className="rounded-full">
+              {canDelete ? "Delete enabled" : "Protected records"}
+            </Badge>
+          </>
+        ) : null}
+        {compact && hasActiveFilters ? <Badge variant="secondary" className="rounded-full">Filters active</Badge> : null}
+        {isFetching ? <Badge variant="outline" className="rounded-full">Refreshing</Badge> : null}
+      </div>
+    </section>
+  );
+}
+
+function PremiumMetric({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Database;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="min-w-[132px] rounded-2xl border bg-background/80 p-3 shadow-sm">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <Icon className="size-3.5 text-primary" />
+        {label}
+      </div>
+      <p className="mt-1 text-lg font-semibold tracking-tight">{value}</p>
+    </div>
+  );
+}
+
 function RecordListRow<TRecord extends RecordShape>({
   record,
   getRecordTitle,
   getRecordMeta,
   actions,
   detailHref,
+  openInEditor = false,
   onOpen,
 }: {
   record: TRecord;
@@ -1391,10 +1613,13 @@ function RecordListRow<TRecord extends RecordShape>({
   getRecordMeta?: (record: TRecord) => string;
   actions: ReactNode;
   detailHref?: string | null;
+  openInEditor?: boolean;
   onOpen?: () => void;
 }) {
+  const isInteractive = openInEditor || Boolean(detailHref);
+  const visualMedia = getRecordVisualMedia(record);
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (!detailHref || (event.key !== "Enter" && event.key !== " ")) return;
+    if (!isInteractive || (event.key !== "Enter" && event.key !== " ")) return;
     event.preventDefault();
     onOpen?.();
   };
@@ -1402,44 +1627,109 @@ function RecordListRow<TRecord extends RecordShape>({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between",
-        detailHref && "cursor-pointer transition-colors hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "group flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between",
+        isInteractive && "cursor-pointer transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
       )}
-      role={detailHref ? "link" : undefined}
-      tabIndex={detailHref ? 0 : undefined}
-      onClick={detailHref ? onOpen : undefined}
+      role={openInEditor ? "button" : detailHref ? "link" : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      onClick={isInteractive ? onOpen : undefined}
       onKeyDown={handleKeyDown}
     >
-      <div className="min-w-0">
+      <div className="flex min-w-0 flex-1 gap-4">
+        <RecordMediaPreview media={visualMedia} record={record} />
+        <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="break-words font-medium">{getRecordTitle(record)}</p>
+          <p className="break-words font-semibold tracking-tight">{getRecordTitle(record)}</p>
           {record.status ? <Badge variant="outline">{record.status}</Badge> : null}
+          {record.workflow_status ? <Badge variant="secondary">{String(record.workflow_status).replace(/_/g, " ")}</Badge> : null}
           {typeof record.is_active === "boolean" ? (
             <Badge variant={record.is_active ? "default" : "secondary"}>
               {record.is_active ? "Active" : "Inactive"}
             </Badge>
           ) : null}
         </div>
-        <p className="mt-1 break-words text-sm text-muted-foreground">
+        <p className="mt-1 break-words text-sm leading-6 text-muted-foreground">
           {getRecordMeta?.(record) ??
             record.updated_at ??
             record.created_at ??
             "No metadata"}
         </p>
+        </div>
       </div>
       {actions}
     </div>
   );
 }
 
+function RecordMediaPreview({
+  media,
+  record,
+}: {
+  media?: RecordShape | null;
+  record: RecordShape;
+}) {
+  const candidate = media ?? (isMediaLikeRecord(record) ? record : null);
+  if (!candidate) return null;
+  const url = getMediaUrl(candidate as any);
+  const image = isImageMedia(candidate as any);
+  const label = getMediaLabel(candidate as any);
+
+  return (
+    <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-muted shadow-sm transition-transform group-hover:scale-[1.02]">
+      {url && image ? (
+        <ImageRenderer src={url} alt={label} className="h-full border-0" imageClassName="h-full w-full" />
+      ) : (
+        <span className="px-2 text-center text-[11px] font-medium uppercase text-muted-foreground">
+          {image ? "Image" : String(candidate.media_type ?? "File")}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function getRecordVisualMedia(record: RecordShape): RecordShape | null {
+  const keys = [
+    "media",
+    "featured_media",
+    "featured_image",
+    "cover_image",
+    "image",
+    "logo",
+    "photo",
+    "thumbnail",
+  ];
+  for (const key of keys) {
+    const value = record[key];
+    if (value && typeof value === "object") return value as RecordShape;
+  }
+  return null;
+}
+
+function isMediaLikeRecord(record: RecordShape) {
+  return Boolean(record.media_type || record.mime_type || record.storage_path || record.public_url || record.cdn_url || record.thumbnail_url);
+}
+
 function editorDescription<TRecord extends RecordShape>(
   title: string,
   editingRecord: TRecord | null,
   getRecordTitle: (record: TRecord) => string,
+  editorIntent: "create" | "view" | "edit",
 ) {
+  if (editorIntent === "view" && editingRecord) {
+    return `View ${getRecordTitle(editingRecord)} without leaving this list.`;
+  }
   return editingRecord
     ? `Update ${getRecordTitle(editingRecord)} without leaving this list.`
     : `Create a ${title.toLowerCase()} record without leaving this list.`;
+}
+
+function editorTitle<TRecord extends RecordShape>(
+  title: string,
+  editingRecord: TRecord | null,
+  editorIntent: "create" | "view" | "edit",
+) {
+  if (editorIntent === "view") return `View ${title}`;
+  return editingRecord ? `Edit ${title}` : `Create ${title}`;
 }
 
 function EditorFormBody<TRecord extends RecordShape>({
@@ -1453,6 +1743,7 @@ function EditorFormBody<TRecord extends RecordShape>({
   canCreate,
   canEdit,
   readOnlyMessage,
+  readOnly = false,
 }: {
   formId: string;
   fields: EditableField[];
@@ -1464,8 +1755,10 @@ function EditorFormBody<TRecord extends RecordShape>({
   canCreate: boolean;
   canEdit: boolean;
   readOnlyMessage: string;
+  readOnly?: boolean;
 }) {
-  const isEditable = editingRecord ? canEdit : canCreate;
+  const canModify = editingRecord ? canEdit : canCreate;
+  const shouldShowFields = readOnly || canModify;
   const fieldGroups = useMemo(() => groupEditableFields(fields), [fields]);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(fieldGroups.map((group, index) => [group.title, index < 2])),
@@ -1477,17 +1770,17 @@ function EditorFormBody<TRecord extends RecordShape>({
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      {!editingRecord && !canCreate ? (
+      {!readOnly && !editingRecord && !canCreate ? (
         <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
           {readOnlyMessage}
         </p>
       ) : null}
-      {editingRecord && !canEdit ? (
+      {!readOnly && editingRecord && !canEdit ? (
         <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
           {readOnlyMessage}
         </p>
       ) : null}
-      {isEditable
+      {shouldShowFields
         ? fieldGroups.map((group) => (
             <section key={group.title} className="rounded-lg border bg-background">
               <button
@@ -1504,23 +1797,176 @@ function EditorFormBody<TRecord extends RecordShape>({
               </button>
               {openGroups[group.title] ? (
                 <div className="grid gap-4 border-t p-4 md:grid-cols-2">
-                  {group.fields.map((field) => (
-                    <EditableFieldControl
-                      key={field.name}
-                      field={field}
-                      id={`${formId}-${field.name}`}
-                      value={values[field.name]}
-                      values={values}
-                      error={fieldErrors[field.name]}
-                      setValues={setValues}
-                      setFieldErrors={setFieldErrors}
-                    />
-                  ))}
+                  {group.fields.map((field) =>
+                    readOnly ? (
+                      <ReadOnlyFieldControl
+                        key={field.name}
+                        field={field}
+                        value={values[field.name]}
+                        values={values}
+                        entityId={editingRecord?.id}
+                      />
+                    ) : (
+                      <EditableFieldControl
+                        key={field.name}
+                        field={field}
+                        id={`${formId}-${field.name}`}
+                        value={values[field.name]}
+                        values={values}
+                        error={fieldErrors[field.name]}
+                        setValues={setValues}
+                        setFieldErrors={setFieldErrors}
+                        entityId={editingRecord?.id}
+                      />
+                    ),
+                  )}
                 </div>
               ) : null}
             </section>
           ))
         : null}
+    </div>
+  );
+}
+
+function ReadOnlyFieldControl({
+  field,
+  value,
+  values,
+  entityId,
+}: {
+  field: EditableField;
+  value: unknown;
+  values: RecordShape;
+  entityId?: string | null;
+}) {
+  const wideField = field.type === "textarea" || field.type === "richtext" || field.type === "attachments" || field.type === "entity-record" || field.type === "entity-multi";
+
+  if (field.type === "media") {
+    return (
+      <div className="flex flex-col gap-2 md:col-span-2">
+        <p className="text-sm font-medium">{field.label}</p>
+        {value ? (
+          <MediaPicker
+            value={String(value)}
+            onChange={() => undefined}
+            label={field.label}
+            mediaType={field.media?.mediaType}
+            folderId={field.media?.folderId}
+            helperText={field.media?.helperText}
+            accept={field.media?.accept}
+            allowUpload={false}
+            allowClear={false}
+            disabled
+          />
+        ) : (
+          <ReadOnlyEmptyValue />
+        )}
+      </div>
+    );
+  }
+
+  if (field.type === "attachments" && field.attachments) {
+    return (
+      <div className="flex flex-col gap-2 md:col-span-2">
+        <p className="text-sm font-medium">{field.label}</p>
+        {entityId ? (
+          <AttachmentManager
+            entityType={field.attachments.entityType}
+            entityId={entityId}
+            roles={field.attachments.roles}
+            defaultRole={field.attachments.defaultRole}
+            disabled
+            isPublic={field.attachments.isPublic}
+            allowVisibilityChange={false}
+          />
+        ) : (
+          <ReadOnlyEmptyValue />
+        )}
+      </div>
+    );
+  }
+
+  if (field.type === "entity" && field.relation) {
+    return (
+      <div className={cn("flex flex-col gap-2", wideField && "md:col-span-2")}>
+        <p className="text-sm font-medium">{field.label}</p>
+        {value ? (
+          <EntityPicker
+            adapter={relationshipAdapters[field.relation.adapter] as any}
+            value={String(value)}
+            filters={field.relation.filters}
+            onChange={() => undefined}
+            disabled
+            allowClear={false}
+            placeholder={`Loading ${field.label.toLowerCase()}...`}
+          />
+        ) : (
+          <ReadOnlyEmptyValue />
+        )}
+      </div>
+    );
+  }
+
+  if (field.type === "entity-record" && field.entityRecord) {
+    const typeValue = String(values[field.entityRecord.typeName] ?? "");
+    const idValue = String(values[field.entityRecord.idName] ?? "");
+    const selectedConfig = field.entityRecord.configs.find((config) => config.value === typeValue);
+    return (
+      <div className="flex flex-col gap-2 md:col-span-2">
+        <p className="text-sm font-medium">{field.label}</p>
+        {!selectedConfig ? (
+          <ReadOnlyEmptyValue />
+        ) : selectedConfig.recordRequired === false ? (
+          <div className="min-h-10 rounded-md border bg-muted/30 px-3 py-2 text-sm text-foreground">
+            {selectedConfig.label}
+          </div>
+        ) : idValue ? (
+          <div className="flex flex-col gap-1.5">
+            <p className="text-xs text-muted-foreground">{selectedConfig.label}</p>
+            <EntityPicker
+              adapter={relationshipAdapters[selectedConfig.adapter] as any}
+              value={idValue}
+              filters={selectedConfig.filters}
+              onChange={() => undefined}
+              disabled
+              allowClear={false}
+              placeholder={`Loading ${selectedConfig.label.toLowerCase()}...`}
+            />
+          </div>
+        ) : (
+          <ReadOnlyEmptyValue />
+        )}
+      </div>
+    );
+  }
+
+  let displayValue: ReactNode = "—";
+
+  if (field.type === "boolean") {
+    displayValue = value ? "Yes" : "No";
+  } else if (Array.isArray(value)) {
+    displayValue = value.length ? value.join(", ") : "—";
+  } else if (field.type === "select") {
+    displayValue = field.options?.find((option) => option.value === String(value))?.label ?? String(value || "—");
+  } else if (value !== null && value !== undefined && value !== "") {
+    displayValue = String(value);
+  }
+
+  return (
+    <div className={cn("flex flex-col gap-2", wideField && "md:col-span-2")}>
+      <p className="text-sm font-medium">{field.label}</p>
+      <div className="min-h-10 whitespace-pre-wrap break-words rounded-md border bg-muted/30 px-3 py-2 text-sm text-foreground">
+        {displayValue}
+      </div>
+    </div>
+  );
+}
+
+function ReadOnlyEmptyValue() {
+  return (
+    <div className="min-h-10 rounded-md border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+      —
     </div>
   );
 }
@@ -1588,6 +2034,7 @@ function EditableFieldControl({
   error,
   setValues,
   setFieldErrors,
+  entityId,
 }: {
   field: EditableField;
   id: string;
@@ -1596,12 +2043,13 @@ function EditableFieldControl({
   error?: string;
   setValues: Dispatch<SetStateAction<RecordShape>>;
   setFieldErrors: Dispatch<SetStateAction<Record<string, string>>>;
+  entityId?: string | null;
 }) {
   const labelId = `${id}-label`;
   const describedBy = error ? `${id}-error` : undefined;
   const resolvedType = inputType(field);
   const stringValue = value === null || value === undefined ? "" : String(value);
-  const wideField = field.type === "textarea" || field.type === "richtext" || field.type === "media" || field.type === "entity-record" || field.type === "entity-multi";
+  const wideField = field.type === "textarea" || field.type === "richtext" || field.type === "media" || field.type === "attachments" || field.type === "entity-record" || field.type === "entity-multi";
   const clearError = () => {
     if (!error) return;
     setFieldErrors((current) => {
@@ -1657,10 +2105,33 @@ function EditableFieldControl({
           helperText={field.media?.helperText}
           placeholder={field.placeholder}
           accept={field.media?.accept}
+          isPublic={field.media?.isPublic}
           uploadEntityType={field.media?.uploadEntityType}
+          uploadEntityId={
+            field.media?.uploadEntityIdField && typeof values[field.media.uploadEntityIdField] === "string"
+              ? values[field.media.uploadEntityIdField]
+              : undefined
+          }
           uploadRole={field.media?.uploadRole}
           allowUpload={field.media?.allowUpload}
           allowClear={!field.required}
+        />
+      ) : field.type === "attachments" && field.attachments ? (
+        <AttachmentManager
+          entityType={field.attachments.entityType}
+          entityId={entityId}
+          roles={field.attachments.roles}
+          defaultRole={field.attachments.defaultRole}
+          pendingAttachments={Array.isArray(value) ? value as PendingMediaAttachment[] : []}
+          onPendingAttachmentsChange={setFieldValue}
+          isPublic={field.attachments.isPublic ?? (typeof values.is_public === "boolean" ? values.is_public : true)}
+          allowVisibilityChange={field.attachments.allowVisibilityChange}
+          uploadEntityType={field.attachments.uploadEntityType}
+          uploadEntityId={
+            field.attachments.uploadEntityIdField && typeof values[field.attachments.uploadEntityIdField] === "string"
+              ? values[field.attachments.uploadEntityIdField]
+              : undefined
+          }
         />
       ) : field.type === "entity" && field.relation ? (
         <EntityPicker
@@ -1737,17 +2208,24 @@ function EditableFieldControl({
             onCheckedChange={setFieldValue}
           />
         </div>
+      ) : field.type === "date" || field.type === "datetime-local" ? (
+        <DateTimePicker
+          id={id}
+          mode={field.type}
+          value={stringValue}
+          onChange={setFieldValue}
+          placeholder={field.placeholder ?? field.label}
+          required={field.required}
+          ariaInvalid={Boolean(error)}
+          ariaDescribedby={describedBy}
+        />
       ) : (
         <Input
           id={id}
           type={
             resolvedType === "number"
               ? "number"
-              : resolvedType === "date"
-                ? "date"
-                : resolvedType === "datetime-local"
-                  ? "datetime-local"
-                  : resolvedType === "email"
+              : resolvedType === "email"
                     ? "email"
                     : resolvedType === "url"
                       ? "url"
@@ -1802,6 +2280,8 @@ function EditorFooter<TRecord extends RecordShape>({
   isSaving,
   onCancel,
   onSubmit,
+  editorIntent,
+  onEdit,
 }: {
   editingRecord: TRecord | null;
   canCreate: boolean;
@@ -1809,13 +2289,20 @@ function EditorFooter<TRecord extends RecordShape>({
   isSaving: boolean;
   onCancel: () => void;
   onSubmit: () => void;
+  editorIntent: "create" | "view" | "edit";
+  onEdit: () => void;
 }) {
   return (
     <>
       <Button type="button" variant="outline" onClick={onCancel}>
-        Cancel
+        {editorIntent === "view" ? "Close" : "Cancel"}
       </Button>
-      {(editingRecord ? canEdit : canCreate) ? (
+      {editorIntent === "view" && canEdit ? (
+        <Button type="button" onClick={onEdit}>
+          <Edit data-icon="inline-start" />
+          Edit Record
+        </Button>
+      ) : (editingRecord ? canEdit : canCreate) ? (
         <Button type="button" onClick={onSubmit} disabled={isSaving}>
           {isSaving ? "Saving..." : editingRecord ? "Save Changes" : "Create"}
         </Button>

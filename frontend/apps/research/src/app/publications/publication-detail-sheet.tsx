@@ -40,7 +40,7 @@ export function PublicationDetailSheet({
         side="right"
         className="top-[92px] h-[calc(100dvh-92px)] w-full overflow-y-auto bg-white p-0 sm:max-w-2xl xl:top-[128px] xl:h-[calc(100dvh-128px)]"
       >
-        <SheetHeader className="border-b border-slate-200 px-6 py-5 text-left">
+        <SheetHeader className="border-b border-border px-6 py-5 text-left">
           <div className="mb-2 flex flex-wrap gap-2">
             {publication.publication_type ? <Badge>{formatLabel(publication.publication_type)}</Badge> : null}
             {publication.access_type ? <Badge>{formatLabel(publication.access_type)}</Badge> : null}
@@ -50,18 +50,18 @@ export function PublicationDetailSheet({
               </span>
             ) : null}
           </div>
-          <SheetTitle className="text-2xl font-semibold leading-tight text-slate-950">
+          <SheetTitle className="text-2xl font-semibold leading-tight text-foreground">
             {title}
           </SheetTitle>
           {summary ? (
-            <SheetDescription className="text-sm leading-6 text-slate-600">
+            <SheetDescription className="text-sm leading-6 text-muted-foreground">
               {summary}
             </SheetDescription>
           ) : null}
         </SheetHeader>
 
         <div className="grid gap-5 px-6 py-5">
-          <dl className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm">
+          <dl className="grid gap-3 rounded-lg border border-border bg-surface-subtle p-4 text-sm">
             <MetaRow icon={CalendarDays} label="Published" value={formatDate(publication.publication_date) || compactText(publication.year)} />
             <MetaRow icon={FileText} label="Venue" value={[publication.journal_name, publication.publisher, publication.conference_name].map(compactText).filter(Boolean).join(" / ")} />
             <MetaRow icon={Link2} label="DOI" value={compactText(publication.doi)} />
@@ -70,8 +70,8 @@ export function PublicationDetailSheet({
 
           {summary ? (
             <section>
-              <h3 className="text-sm font-semibold text-slate-950">Abstract</h3>
-              <ResearchRichText content={summary} className="mt-2 text-sm leading-7 text-slate-700" />
+              <h3 className="text-sm font-semibold text-foreground">Abstract</h3>
+              <ResearchRichText content={summary} className="mt-2 text-sm leading-7 text-muted-foreground" />
             </section>
           ) : null}
 
@@ -80,8 +80,8 @@ export function PublicationDetailSheet({
             <ContextCard title="Center" record={center} hrefBase="/centers" />
           </section>
 
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <h3 className="text-sm font-semibold text-slate-950">Citation and access</h3>
+          <section className="rounded-lg border border-border bg-white p-4">
+            <h3 className="text-sm font-semibold text-foreground">Citation and access</h3>
             <dl className="mt-3 grid gap-2 text-sm">
               <CompactFact label="ISSN / ISBN" value={[publication.issn, publication.isbn].map(compactText).filter(Boolean).join(" / ")} />
               <CompactFact label="Volume / Issue" value={[publication.volume, publication.issue].map(compactText).filter(Boolean).join(" / ")} />
@@ -123,18 +123,18 @@ function ContextCard({
   const href = record?.slug ? `${hrefBase}/${record.slug}` : null;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
-      <p className="text-xs font-semibold uppercase text-slate-500">{title}</p>
+    <div className="rounded-lg border border-border bg-white p-4">
+      <p className="text-xs font-semibold uppercase text-muted-foreground">{title}</p>
       {recordTitle ? (
         href ? (
           <Link href={href} className="mt-2 block text-sm font-semibold leading-6 text-primary hover:text-secondary">
             {recordTitle}
           </Link>
         ) : (
-          <p className="mt-2 text-sm font-semibold leading-6 text-slate-950">{recordTitle}</p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-foreground">{recordTitle}</p>
         )
       ) : (
-        <p className="mt-2 text-sm leading-6 text-slate-500">Not linked</p>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">Not linked</p>
       )}
     </div>
   );
@@ -144,8 +144,8 @@ function CompactFact({ label, value }: { label: string; value: string }) {
   if (!value) return null;
   return (
     <div className="grid grid-cols-[120px_minmax(0,1fr)] gap-3">
-      <dt className="font-semibold text-slate-500">{label}</dt>
-      <dd className="min-w-0 break-words text-slate-900 [overflow-wrap:anywhere]">{value}</dd>
+      <dt className="font-semibold text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 break-words text-foreground [overflow-wrap:anywhere]">{value}</dd>
     </div>
   );
 }
@@ -163,8 +163,8 @@ function MetaRow({
   return (
     <div className="grid grid-cols-[20px_92px_minmax(0,1fr)] gap-2">
       <Icon aria-hidden className="mt-0.5 h-4 w-4 text-primary" />
-      <dt className="font-semibold text-slate-600">{label}</dt>
-      <dd className="min-w-0 break-words text-slate-900 [overflow-wrap:anywhere]">{value}</dd>
+      <dt className="font-semibold text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 break-words text-foreground [overflow-wrap:anywhere]">{value}</dd>
     </div>
   );
 }

@@ -69,7 +69,7 @@ export default async function AskLibrarianPage() {
 
           <aside className="flex flex-col gap-5">
             <SidePanel title="Good questions include">
-              <ul className="flex flex-col gap-3 text-sm leading-6 text-slate-600">
+              <ul className="flex flex-col gap-3 text-sm leading-6 text-muted-foreground">
                 <li>Resource title, database name, ISBN, or call number.</li>
                 <li>The branch or service desk you already contacted.</li>
                 <li>Any deadline, access error, or course context.</li>
@@ -77,7 +77,7 @@ export default async function AskLibrarianPage() {
             </SidePanel>
 
             <SidePanel title="Response route">
-              <p className="text-sm leading-7 text-slate-600">
+              <p className="text-sm leading-7 text-muted-foreground">
                 The library team replies using the email address you submit.
                 Urgent branch-specific requests should also use the published
                 branch contacts below.
@@ -135,15 +135,15 @@ export default async function AskLibrarianPage() {
             {contactBranches.map((branch) => (
               <article
                 key={branch.id}
-                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                className="rounded-lg border border-border bg-white p-5 shadow-sm"
               >
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
                   {formatLabel(branch.library_type ?? "library")}
                 </p>
-                <h2 className="mt-3 text-xl font-semibold text-slate-950">
+                <h2 className="mt-3 text-xl font-semibold text-foreground">
                   {branch.name}
                 </h2>
-                <dl className="mt-5 grid gap-3 text-sm text-slate-600">
+                <dl className="mt-5 grid gap-3 text-sm text-muted-foreground">
                   <Meta label="Phone" value={branch.phone} />
                   <Meta label="Email" value={branch.email} />
                   <Meta label="Location" value={branch.address} />
@@ -167,7 +167,7 @@ function Meta({
   if (!compactText(value)) return null;
   return (
     <div>
-      <dt className="font-semibold text-slate-950">{label}</dt>
+      <dt className="font-semibold text-foreground">{label}</dt>
       <dd className="mt-1">{value}</dd>
     </div>
   );

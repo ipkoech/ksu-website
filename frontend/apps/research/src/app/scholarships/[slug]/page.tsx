@@ -116,8 +116,8 @@ function ScholarshipDeadlinePanel({ scholarship }: { scholarship: ResearchGeneri
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Application deadline</p>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">{deadline.label}</h2>
-          <p className="mt-2 text-lg font-semibold text-slate-800">{deadline.value}</p>
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">{deadline.label}</h2>
+          <p className="mt-2 text-lg font-semibold text-foreground">{deadline.value}</p>
         </div>
         <DeadlineStatusBadge deadline={deadline} large />
       </div>
@@ -137,10 +137,10 @@ function CoveragePanel({ scholarship }: { scholarship: ResearchGenericRecord }) 
   if (items.length === 0) return null;
 
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">Coverage</h2>
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">Coverage</h2>
       <dl className="mt-4 grid gap-3 text-sm">
-        {items.map(([label, value]) => <div key={label} className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 font-semibold text-slate-950">{value}</dd></div>)}
+        {items.map(([label, value]) => <div key={label} className="rounded-md bg-surface-subtle p-3"><dt className="text-xs font-semibold uppercase text-muted-foreground">{label}</dt><dd className="mt-1 font-semibold text-foreground">{value}</dd></div>)}
       </dl>
     </section>
   );
@@ -157,10 +157,10 @@ function ContactPanel({ scholarship, applicationCount }: { scholarship: Research
   if (items.length === 0) return null;
 
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">Contact</h2>
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">Contact</h2>
       <dl className="mt-4 grid gap-3 text-sm">
-        {items.map(([label, value]) => <div key={label} className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 break-words font-semibold text-slate-950">{value}</dd></div>)}
+        {items.map(([label, value]) => <div key={label} className="rounded-md bg-surface-subtle p-3"><dt className="text-xs font-semibold uppercase text-muted-foreground">{label}</dt><dd className="mt-1 break-words font-semibold text-foreground">{value}</dd></div>)}
       </dl>
     </section>
   );

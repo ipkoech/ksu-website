@@ -54,7 +54,7 @@ export function FundingIllustratedHero({
   const visibleFacts = facts.filter((fact) => compactText(fact.value));
 
   return (
-    <section className="relative isolate overflow-hidden border-b border-slate-200 bg-[#061a36] px-4 py-6 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <section className="relative isolate overflow-hidden border-b border-border bg-[hsl(var(--brand-overlay))] px-4 py-6 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <FundingHeroArtwork tone={tone} />
       <div className="relative mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] lg:items-end">
         <div>
@@ -110,7 +110,7 @@ export function FundingIllustratedHero({
 }
 
 export function FundingHeroArtwork({ tone }: { tone: "grant" | "scholarship" | "endowment" | "donate" }) {
-  const accent = tone === "scholarship" ? "#0f56b3" : tone === "endowment" ? "#b77900" : tone === "donate" ? "#0f766e" : "#00583d";
+  const accent = tone === "scholarship" ? "#0f56b3" : tone === "endowment" ? "#b77900" : tone === "donate" ? "#0f766e" : "hsl(var(--primary)/.62)";
   return (
     <div aria-hidden className="absolute inset-0 overflow-hidden">
       <div className="absolute inset-0 bg-[linear-gradient(105deg,rgba(6,26,54,0.98)_0%,rgba(6,26,54,0.88)_48%,rgba(0,88,61,0.5)_100%)]" />
@@ -157,16 +157,16 @@ export function FundingToolbar({
   children?: ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="rounded-lg border border-border bg-white p-3 shadow-sm">
       <form action={action} className="flex flex-col gap-2 lg:flex-row">
         <label className="relative min-w-0 flex-1">
           <span className="sr-only">Search</span>
-          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
           <input
             name="q"
             defaultValue={searchValue}
             placeholder={placeholder}
-            className="h-11 w-full rounded-md border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
+            className="h-11 w-full rounded-md border border-border bg-white pl-10 pr-3 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
           />
         </label>
         <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
@@ -175,7 +175,7 @@ export function FundingToolbar({
         {children}
         <Link
           href={resetHref}
-          className="inline-flex h-11 items-center justify-center rounded-md border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          className="inline-flex h-11 items-center justify-center rounded-md border border-border px-4 text-sm font-semibold text-muted-foreground transition hover:bg-surface-subtle"
         >
           Reset
         </Link>
@@ -187,7 +187,7 @@ export function FundingToolbar({
 export function DeadlineStatusBadge({ deadline, large = false }: { deadline: DeadlineState; large?: boolean }) {
   const toneClass =
     deadline.tone === "closed"
-      ? "border-slate-300 bg-slate-100 text-slate-700"
+      ? "border-border bg-surface-muted text-muted-foreground"
       : deadline.tone === "urgent"
         ? "border-red-300 bg-red-50 text-red-700"
         : deadline.tone === "soon"
@@ -228,12 +228,12 @@ export function CompactFactGrid({ facts }: { facts: FundingFact[] }) {
       {visibleFacts.map((fact) => {
         const Icon = fact.icon ?? FileText;
         return (
-          <div key={fact.label} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+          <div key={fact.label} className="rounded-lg border border-border bg-white p-4 shadow-sm">
+            <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               <Icon aria-hidden className="h-4 w-4 text-primary" />
               {fact.label}
             </dt>
-            <dd className="mt-2 text-sm font-semibold text-slate-950">{compactText(fact.value)}</dd>
+            <dd className="mt-2 text-sm font-semibold text-foreground">{compactText(fact.value)}</dd>
           </div>
         );
       })}
@@ -253,13 +253,13 @@ export function FundingInfoSection({
     .filter((entry) => entry.value);
   if (entries.length === 0) return null;
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">{title}</h2>
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{title}</h2>
       <div className="mt-4 divide-y divide-slate-200">
         {entries.map((entry) => (
           <div key={entry.label} className="py-4 first:pt-0 last:pb-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{entry.label}</p>
-            <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-600">{entry.value}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{entry.label}</p>
+            <p className="mt-2 whitespace-pre-line text-sm leading-7 text-muted-foreground">{entry.value}</p>
           </div>
         ))}
       </div>
@@ -277,17 +277,17 @@ export function DocumentListPanel({
   const visibleRecords = records.filter((record) => textValue(record.title) || textValue(record.name) || textValue(record.document_name));
   if (visibleRecords.length === 0) return null;
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">{title}</h2>
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{title}</h2>
       <div className="mt-4 divide-y divide-slate-200">
         {visibleRecords.map((record, index) => {
           const href = getResearchRecordDownloadHref(record);
           return (
             <article key={textValue(record.id) || `${title}-${index}`} className="py-4 first:pt-0 last:pb-0">
-              <p className="text-sm font-semibold text-slate-950">
+              <p className="text-sm font-semibold text-foreground">
                 {textValue(record.title) || textValue(record.document_name) || textValue(record.name)}
               </p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                 {formatLabel(textValue(record.guideline_type) || textValue(record.type) || textValue(record.category) || "document")}
               </p>
               {href ? (
@@ -321,8 +321,8 @@ export function FundingSidebar({
   if (visibleLabels.length === 0 && visibleFacts.length === 0 && actions.length === 0 && !children) return null;
 
   return (
-    <aside className="h-fit rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-24">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">{title}</h2>
+    <aside className="h-fit rounded-lg border border-border bg-white p-5 shadow-sm lg:sticky lg:top-24">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{title}</h2>
       {visibleLabels.length > 0 ? (
         <div className="mt-4 flex flex-wrap gap-2">
           {visibleLabels.map((label) => (
@@ -336,8 +336,8 @@ export function FundingSidebar({
         <dl className="mt-5 divide-y divide-slate-200">
           {visibleFacts.map((fact) => (
             <div key={fact.label} className="py-3 first:pt-0 last:pb-0">
-              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{fact.label}</dt>
-              <dd className="mt-1 break-words text-sm font-semibold text-slate-950">{compactText(fact.value)}</dd>
+              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{fact.label}</dt>
+              <dd className="mt-1 break-words text-sm font-semibold text-foreground">{compactText(fact.value)}</dd>
             </div>
           ))}
         </dl>

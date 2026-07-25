@@ -112,7 +112,7 @@ export default async function SustainabilityPage({ searchParams }: { searchParam
           months={months}
         />
         {visibleInitiatives.length > 0 ? (
-          <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-border bg-white shadow-sm">
             {visibleInitiatives.map((initiative) => (
               <InitiativeRow key={initiative.id} initiative={initiative} />
             ))}
@@ -175,17 +175,17 @@ function SustainabilityHero({
   ];
 
   return (
-    <section className="border-b border-slate-200 bg-white">
+    <section className="border-b border-border bg-white">
       <div className="mx-auto grid min-h-[560px] max-w-[1680px] lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,0.75fr)]">
         <div className="flex flex-col justify-center px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+          <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
             <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">Sustainability</span>
+            <span className="text-muted-foreground/60">/</span>
+            <span className="text-foreground">Sustainability</span>
           </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Sustainability</p>
-          <h1 className="mt-4 max-w-5xl text-balance font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950 sm:text-5xl lg:text-6xl">Sustainability at Kisii University Research</h1>
-          <p className="mt-5 max-w-3xl text-pretty text-base leading-8 text-slate-700 sm:text-lg">Climate, conservation, water, food systems, and measurable public impact brought together through published university research records.</p>
+          <h1 className="mt-4 max-w-5xl text-balance font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground sm:text-5xl lg:text-6xl">Sustainability at Kisii University Research</h1>
+          <p className="mt-5 max-w-3xl text-pretty text-base leading-8 text-muted-foreground sm:text-lg">Climate, conservation, water, food systems, and measurable public impact brought together through published university research records.</p>
           <div className="mt-7 flex flex-wrap gap-3">
             <PrimaryLink href="#initiatives">Explore initiatives</PrimaryLink>
             <SecondaryLink href="#outcomes">View impact metrics</SecondaryLink>
@@ -193,14 +193,14 @@ function SustainabilityHero({
           </div>
           <dl className="mt-8 grid gap-2 sm:grid-cols-4">
             {stats.map((stat) => (
-              <div key={stat.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3">
-                <dt className="text-[11px] font-semibold uppercase text-slate-500">{stat.label}</dt>
-                <dd className="mt-1 text-xl font-semibold text-slate-950">{stat.value}</dd>
+              <div key={stat.label} className="rounded-md border border-border bg-surface-subtle px-3 py-3">
+                <dt className="text-[11px] font-semibold uppercase text-muted-foreground">{stat.label}</dt>
+                <dd className="mt-1 text-xl font-semibold text-foreground">{stat.value}</dd>
               </div>
             ))}
           </dl>
         </div>
-        <div className="relative min-h-[320px] overflow-hidden border-t border-slate-200 lg:min-h-full lg:border-l lg:border-t-0">
+        <div className="relative min-h-[320px] overflow-hidden border-t border-border lg:min-h-full lg:border-l lg:border-t-0">
           <Image
             src="/images/research/sustainability-hero-imagegen.webp"
             alt="Sustainability research landscape with conservation and food systems work"
@@ -221,10 +221,10 @@ function SustainabilityHero({
 
 function LandingTabs({ items }: { items: { href: string; label: string }[] }) {
   return (
-    <nav className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-8 xl:px-10 2xl:px-12" aria-label="Sustainability sections">
+    <nav className="sticky top-0 z-20 border-b border-border bg-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-8 xl:px-10 2xl:px-12" aria-label="Sustainability sections">
       <div className="mx-auto flex max-w-[1680px] gap-2 overflow-x-auto">
         {items.map((item) => (
-          <a key={item.href} href={item.href} className="shrink-0 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/30 hover:text-primary">
+          <a key={item.href} href={item.href} className="shrink-0 rounded-md border border-border bg-white px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:border-primary/30 hover:text-primary">
             {item.label}
           </a>
         ))}
@@ -244,15 +244,15 @@ function FeaturedInitiatives({ records }: { records: ResearchGenericRecord[] }) 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       {displayRecords.map((record) => (
-        <article key={record.id} className="flex min-h-[250px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <article key={record.id} className="flex min-h-[250px] flex-col rounded-lg border border-border bg-white p-5 shadow-sm">
           <div className="flex flex-wrap gap-2">
             <Badge>{formatLabel(record.initiative_type ?? "sustainability")}</Badge>
             {record.status ? <Badge>{formatLabel(record.status)}</Badge> : null}
           </div>
-          <h2 className="mt-5 text-xl font-semibold leading-7 text-slate-950">
+          <h2 className="mt-5 text-xl font-semibold leading-7 text-foreground">
             {record.slug ? <Link href={`/sustainability/${record.slug}`} className="transition hover:text-primary">{getRecordTitle(record, "Sustainability initiative")}</Link> : getRecordTitle(record, "Sustainability initiative")}
           </h2>
-          <p className="mt-3 text-sm leading-7 text-slate-600">{getRecordSummary(record) || compactText(record.objectives) || compactText(record.impact) || "Published details will appear when the research office updates this record."}</p>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">{getRecordSummary(record) || compactText(record.objectives) || compactText(record.impact) || "Published details will appear when the research office updates this record."}</p>
           <div className="mt-auto pt-5 text-sm font-semibold text-primary">
             {record.slug ? <Link href={`/sustainability/${record.slug}`}>Open initiative</Link> : null}
           </div>
@@ -317,20 +317,20 @@ function getActiveFlags(value?: string) {
 
 function MetricPanel({ records }: { records: ResearchGenericRecord[] }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">Metrics</h2>
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">Metrics</h2>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {records.map((record) => (
-          <div key={record.id} className="rounded-md bg-slate-50 p-4">
+          <div key={record.id} className="rounded-md bg-surface-subtle p-4">
             <p className="text-2xl font-bold text-primary">
               {compactText(record.value)}
               {record.unit ? <span className="text-base"> {compactText(record.unit)}</span> : null}
             </p>
-            <p className="mt-2 text-sm font-semibold leading-6 text-slate-950">
+            <p className="mt-2 text-sm font-semibold leading-6 text-foreground">
               {compactText(record.name) || compactText(record.title)}
             </p>
             {record.reporting_year ? (
-              <p className="mt-1 text-xs font-semibold uppercase text-slate-500">
+              <p className="mt-1 text-xs font-semibold uppercase text-muted-foreground">
                 {compactText(record.reporting_year)}
               </p>
             ) : null}
@@ -343,16 +343,16 @@ function MetricPanel({ records }: { records: ResearchGenericRecord[] }) {
 
 function StoryPanel({ records }: { records: ResearchGenericRecord[] }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">Stories</h2>
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">Stories</h2>
       <div className="mt-4 divide-y divide-slate-200">
         {records.slice(0, 5).map((record) => (
           <article key={record.id} className="py-4 first:pt-0 last:pb-0">
-            <h3 className="text-base font-semibold leading-6 text-slate-950">
+            <h3 className="text-base font-semibold leading-6 text-foreground">
               {compactText(record.title) || compactText(record.name)}
             </h3>
             {compactText(record.summary) || compactText(record.impact) ? (
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {compactText(record.summary) || compactText(record.impact)}
               </p>
             ) : null}
@@ -373,8 +373,8 @@ function RecordListPanel({
   dateField?: string;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
       <div className="mt-4 divide-y divide-slate-200">
         {records.slice(0, 8).map((record) => (
           <article key={record.id} className="py-4 first:pt-0 last:pb-0">
@@ -383,16 +383,16 @@ function RecordListPanel({
               {record.event_type ? <Badge>{formatLabel(record.event_type)}</Badge> : null}
               {record.status ? <Badge>{formatLabel(record.status)}</Badge> : null}
             </div>
-            <h3 className="mt-3 text-base font-semibold leading-6 text-slate-950">
+            <h3 className="mt-3 text-base font-semibold leading-6 text-foreground">
               {compactText(record.name) || compactText(record.title)}
             </h3>
             {compactText(record.about) || compactText(record.summary) ? (
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {compactText(record.about) || compactText(record.summary)}
               </p>
             ) : null}
             {dateField && record[dateField] ? (
-              <p className="mt-2 text-xs font-semibold uppercase text-slate-500">
+              <p className="mt-2 text-xs font-semibold uppercase text-muted-foreground">
                 {formatDate(record[dateField] as string)}
               </p>
             ) : null}

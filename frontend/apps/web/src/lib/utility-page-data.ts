@@ -1,14 +1,18 @@
 import {
   announcementsApi,
-  contactsApi,
+  contactDirectoryApi,
   documentsApi,
   eventsApi,
   faqsApi,
   type Announcement,
-  type ContactDirectory,
+  type Campus,
   type Document,
   type Event,
   type FAQ,
+  type PublicContactDirectory,
+  type PublicContactDirectoryEntry,
+  type PublicContactFAQ,
+  type PublicUniversityContactSummary,
 } from "@ksu/api-client";
 import type {
   PublicCard,
@@ -17,6 +21,7 @@ import type {
   PublicPageSection,
 } from "@/components/public/section-page";
 import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
+import { publicFileUrl } from "@/lib/public-media";
 
 type ListEnvelope<T> = { data?: T[] };
 
@@ -187,6 +192,113 @@ async function safeList<T>(request: Promise<ListEnvelope<T>>): Promise<T[]> {
   }
 }
 
+export type ContactPageFilters = {
+  q?: string;
+  contactType?: string;
+  scopeType?: string;
+  page: number;
+};
+
+export type ContactSocialLink = {
+  platform: string;
+  label: string;
+  href: string;
+};
+
+export type ContactServiceChannel = {
+  title: string;
+  body: string;
+  href: string;
+  icon: "ticket" | "complaint" | "compliment" | "suggestion" | "information";
+};
+
+export type ContactPageConfig = {
+  breadcrumb: { label: string; href?: string }[];
+  title: string;
+  body: string;
+  heroImageUrl: string;
+  institution: PublicUniversityContactSummary | null;
+  email: string;
+  phone: string;
+  alternatePhone: string | null;
+  postalAddress: string;
+  physicalAddress: string | null;
+  mainContacts: PublicContactDirectoryEntry[];
+  contacts: PublicContactDirectoryEntry[];
+  contactsMeta: PublicContactDirectory["contacts"]["meta"];
+  campuses: Campus[];
+  faqs: PublicContactFAQ[];
+  socialLinks: ContactSocialLink[];
+  serviceChannels: ContactServiceChannel[];
+  filters: ContactPageFilters;
+};
+
+const socialPlatformAliases: Record<string, { platform: string; label: string }> = {
+  facebook: { platform: "facebook", label: "Facebook" },
+  fb: { platform: "facebook", label: "Facebook" },
+  twitter: { platform: "x", label: "X / Twitter" },
+  x: { platform: "x", label: "X / Twitter" },
+  instagram: { platform: "instagram", label: "Instagram" },
+  ig: { platform: "instagram", label: "Instagram" },
+  linkedin: { platform: "linkedin", label: "LinkedIn" },
+  youtube: { platform: "youtube", label: "YouTube" },
+  tiktok: { platform: "tiktok", label: "TikTok" },
+  website: { platform: "website", label: "Website" },
+};
+
+function socialLinkValue(value: unknown) {
+  if (typeof value === "string") return value;
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  return typeof record.url === "string"
+    ? record.url
+    : typeof record.href === "string"
+      ? record.href
+      : null;
+}
+
+function normalizeSocialLinks(value?: Record<string, unknown> | null) {
+  const links: ContactSocialLink[] = [];
+  const seen = new Set<string>();
+
+  for (const [rawPlatform, rawValue] of Object.entries(value ?? {})) {
+    const href = socialLinkValue(rawValue)?.trim();
+    const alias = socialPlatformAliases[rawPlatform.trim().toLowerCase()];
+    if (!href || !alias) continue;
+
+    try {
+      const url = new URL(href);
+      if (url.protocol !== "https:" && url.protocol !== "http:") continue;
+      const normalizedHref = url.toString();
+      if (seen.has(normalizedHref)) continue;
+      seen.add(normalizedHref);
+      links.push({ ...alias, href: normalizedHref });
+    } catch {
+      // Managed social links are optional; malformed values are not rendered.
+    }
+  }
+
+  return links;
+}
+
+async function getPublicContactDirectory(
+  filters: ContactPageFilters,
+): Promise<PublicContactDirectory | null> {
+  try {
+    const response = await contactDirectoryApi.get({
+      q: filters.q,
+      contact_type: filters.contactType,
+      scope_type: filters.scopeType,
+      page: filters.page,
+      per_page: 12,
+    });
+    return response.data ?? null;
+  } catch (error) {
+    console.error("Failed to fetch public contact directory:", error);
+    return null;
+  }
+}
+
 function utilityConfig({
   currentHref,
   eyebrow,
@@ -252,23 +364,6 @@ function utilityConfig({
   };
 }
 
-function contactCard(contact: ContactDirectory): PublicCard {
-  const parts = [
-    contact.email,
-    contact.phone?.join(", "),
-    contact.physical_address,
-    contact.building,
-    contact.room_number,
-  ].filter(Boolean);
-
-  return infoCard(
-    contact.name,
-    parts.join(" · ") || "Published contact record.",
-    "handshake",
-    contact.contact_type ?? "Contact",
-  );
-}
-
 function faqCard(faq: FAQ): PublicCard {
   return infoCard(
     faq.question,
@@ -317,91 +412,73 @@ function eventCard(item: Event): PublicCard {
   );
 }
 
-export async function getContactPageConfig(): Promise<PublicPageConfig> {
-  const contacts = await safeList(
-    contactsApi.list({
-      is_main: true,
-      per_page: 12,
-      fields:
-        "id,name,contact_type,email,phone,physical_address,building,room_number,is_main,is_public,status",
-    }),
-  );
+export async function getContactPageConfig(
+  filters: ContactPageFilters,
+): Promise<ContactPageConfig> {
+  const directory = await getPublicContactDirectory(filters);
+  const institution = directory?.institution;
+  const email = institution?.email ?? officialLinks.email;
+  const phone = institution?.phone ?? officialLinks.phone;
+  const postalAddress = institution?.postal_address ?? officialLinks.address;
 
-  return utilityConfig({
-    currentHref: "/contact",
-    eyebrow: "Contact",
+  return {
+    breadcrumb: [{ label: "Home", href: "/" }, { label: "Contact" }],
     title: "Contact Kisii University",
     body: "Find the main university contact channels and official service pathways for enquiries, support requests, feedback, and information requests.",
-    primaryAction: {
-      label: "Email the university",
-      href: `mailto:${officialLinks.email}`,
-      external: true,
+    heroImageUrl:
+      publicFileUrl(institution?.cover_image_id) ??
+      "/images/about/about-overview.webp",
+    institution: institution ?? null,
+    email,
+    phone,
+    alternatePhone: institution?.alternate_phone ?? null,
+    postalAddress,
+    physicalAddress: institution?.physical_address ?? null,
+    mainContacts: directory?.main_contacts ?? [],
+    contacts: directory?.contacts.items ?? [],
+    contactsMeta: directory?.contacts.meta ?? {
+      page: filters.page,
+      per_page: 12,
+      total: 0,
+      pages: 0,
     },
-    secondaryActions: [
+    campuses: directory?.campuses ?? [],
+    faqs: directory?.faqs ?? [],
+    socialLinks: normalizeSocialLinks(institution?.social_links),
+    filters,
+    serviceChannels: [
       {
-        label: "Customer care centre",
-        href: officialLinks.customerCare,
-        external: true,
+        title: "Raise a support ticket",
+        body: "Get technical or service support from the customer care team.",
+        href: officialLinks.createTicket,
+        icon: "ticket",
       },
       {
-        label: "Request information",
+        title: "Submit a complaint",
+        body: "Report a service issue through the official feedback channel.",
+        href: officialLinks.complaint,
+        icon: "complaint",
+      },
+      {
+        title: "Send a compliment",
+        body: "Recognise a team or member of staff for excellent service.",
+        href: officialLinks.compliment,
+        icon: "compliment",
+      },
+      {
+        title: "Make a suggestion",
+        body: "Share an idea that can help improve university services.",
+        href: officialLinks.suggestion,
+        icon: "suggestion",
+      },
+      {
+        title: "Request public information",
+        body: "Submit an official request under the Access to Information process.",
         href: officialLinks.informationRequest,
-        external: true,
+        icon: "information",
       },
     ],
-    sections: [
-      {
-        eyebrow: "Main channels",
-        title: "University contact points",
-        body: "Use the published contacts below for general enquiries, telephone support, postal correspondence, and service-specific follow-up.",
-        columns: 3,
-        cards: contacts.length
-          ? contacts.map(contactCard)
-          : [
-              infoCard(
-                "General enquiries",
-                officialLinks.email,
-                "handshake",
-                "Email",
-              ),
-              infoCard("Telephone", officialLinks.phone, "handshake", "Phone"),
-              infoCard(
-                "Postal address",
-                officialLinks.address,
-                "home",
-                "Address",
-              ),
-            ],
-      },
-      {
-        eyebrow: "Service requests",
-        title: "Use the right service channel",
-        body: "The digital customer-care channels support tickets, complaints, compliments, suggestions, and information requests.",
-        tone: "dark",
-        columns: 3,
-        cards: [
-          externalCard(
-            "Raise a ticket",
-            officialLinks.createTicket,
-            "Open a support request through the official digital portal.",
-            "clipboard",
-          ),
-          externalCard(
-            "Raise a complaint",
-            officialLinks.complaint,
-            "Submit a complaint through the official feedback channel.",
-            "megaphone",
-          ),
-          externalCard(
-            "Request information",
-            officialLinks.informationRequest,
-            "Ask for public information through the official request workflow.",
-            "file",
-          ),
-        ],
-      },
-    ],
-  });
+  };
 }
 
 export async function getFaqPageConfig(): Promise<PublicPageConfig> {

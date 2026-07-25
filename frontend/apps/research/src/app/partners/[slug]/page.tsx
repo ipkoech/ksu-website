@@ -44,7 +44,7 @@ export default async function PartnerDetailPage({
   const errors = error ? [error] : [];
 
   return (
-    <main id="research-main" className="min-h-screen bg-white text-slate-950">
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
       <PartnerDetailHero partner={partner} title={title} bundle={bundle} />
 
       {errors.length > 0 ? (
@@ -59,13 +59,13 @@ export default async function PartnerDetailPage({
         </section>
       ) : null}
 
-      <section className="bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_48%,#ffffff_100%)] px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <section className="bg-[linear-gradient(180deg,#ffffff_0%,hsl(var(--surface-subtle))_48%,#ffffff_100%)] px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mx-auto grid max-w-[1680px] gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0">
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
               <div className="mb-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Partnership story</p>
-                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">Collaboration profile</h2>
+                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">Collaboration profile</h2>
               </div>
               <ResearchStoryAccordion
                 sections={storySections}
@@ -73,10 +73,10 @@ export default async function PartnerDetailPage({
               />
             </section>
 
-            <section className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <section className="mt-5 rounded-lg border border-border bg-white p-5 shadow-sm">
               <div className="mb-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Linked work</p>
-                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">Work with Kisii University</h2>
+                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">Work with Kisii University</h2>
               </div>
               <div className="grid gap-4 lg:grid-cols-2">
                 <RelationshipPanel title="Projects" hrefBase="/projects" records={bundle.projects.data} />
@@ -121,10 +121,10 @@ function PartnerDetailHero({
 
   return (
     <>
-      <section className="relative isolate overflow-hidden bg-[#061A36] px-4 py-7 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div aria-hidden className="absolute inset-0 bg-[linear-gradient(115deg,#061A36_0%,#07315f_48%,#07543f_100%)]" />
+      <section className="relative isolate overflow-hidden bg-[hsl(var(--brand-overlay))] px-4 py-7 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div aria-hidden className="absolute inset-0 bg-[linear-gradient(115deg,hsl(var(--brand-overlay))_0%,hsl(var(--primary)/.82)_48%,hsl(var(--primary)/.62)_100%)]" />
         <div aria-hidden className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:42px_42px] opacity-60" />
-        <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[#061A36]/95 via-[#061A36]/70 to-[#061A36]/20" />
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--brand-overlay))]/95 via-[hsl(var(--brand-overlay))]/70 to-[hsl(var(--brand-overlay))]/20" />
         <div className="relative mx-auto grid min-h-[230px] max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
           <div className="min-w-0">
             <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-white/70">
@@ -160,11 +160,11 @@ function PartnerDetailHero({
         </div>
       </section>
       {facts.length > 0 ? (
-        <section className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <section className="border-b border-border bg-white px-4 py-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <dl className="mx-auto grid max-w-[1680px] gap-2 sm:grid-cols-2 lg:grid-cols-5">
             {facts.map((fact) => (
-              <div key={fact.label} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-                <dt className="text-[11px] font-semibold uppercase text-slate-500">{fact.label}</dt>
+              <div key={fact.label} className="rounded-md border border-border bg-surface-subtle px-3 py-2">
+                <dt className="text-[11px] font-semibold uppercase text-muted-foreground">{fact.label}</dt>
                 <dd className="mt-1 text-lg font-semibold text-primary">{fact.value}</dd>
               </div>
             ))}
@@ -202,19 +202,19 @@ function RelationshipPanel({
 }) {
   if (!records.length) return null;
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-slate-50 p-4">
+    <section className="min-w-0 rounded-lg border border-border bg-surface-subtle p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h3 className="font-semibold text-primary">{title}</h3>
-        <span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-slate-600">{records.length}</span>
+        <span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-muted-foreground">{records.length}</span>
       </div>
-      <div className="divide-y divide-slate-200 rounded-md border border-slate-200 bg-white">
+      <div className="divide-y divide-slate-200 rounded-md border border-border bg-white">
         {records.slice(0, 5).map((record) => (
           <Link key={String(record.id)} href={recordHref(hrefBase, record)} className="group flex items-start justify-between gap-3 px-3 py-3">
             <span className="min-w-0">
-              <span className="line-clamp-2 text-sm font-semibold leading-5 text-slate-950">{getRecordTitle(record, title)}</span>
-              <span className="mt-1 line-clamp-1 text-xs text-slate-500">{relationshipMeta(record)}</span>
+              <span className="line-clamp-2 text-sm font-semibold leading-5 text-foreground">{getRecordTitle(record, title)}</span>
+              <span className="mt-1 line-clamp-1 text-xs text-muted-foreground">{relationshipMeta(record)}</span>
             </span>
-            <ArrowRight aria-hidden className="mt-1 h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-1 group-hover:text-primary" />
+            <ArrowRight aria-hidden className="mt-1 h-4 w-4 shrink-0 text-muted-foreground/70 transition group-hover:translate-x-1 group-hover:text-primary" />
           </Link>
         ))}
       </div>
@@ -250,23 +250,23 @@ function PartnerFactsSidebar({ partner }: { partner: ResearchGenericRecord }) {
 
   return (
     <aside className="grid gap-4 xl:sticky xl:top-24">
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-primary">Partner facts</h2>
         {facts.length > 0 ? (
           <dl className="mt-3 divide-y divide-slate-200">
             {facts.map((fact) => (
               <div key={fact.label} className="grid grid-cols-[112px_minmax(0,1fr)] gap-3 py-3 text-sm">
-                <dt className="font-semibold text-slate-500">{fact.label}</dt>
-                <dd className="break-words font-semibold text-slate-950 [overflow-wrap:anywhere]">{fact.value}</dd>
+                <dt className="font-semibold text-muted-foreground">{fact.label}</dt>
+                <dd className="break-words font-semibold text-foreground [overflow-wrap:anywhere]">{fact.value}</dd>
               </div>
             ))}
           </dl>
         ) : (
-          <p className="mt-3 text-sm leading-6 text-slate-600">Public partner facts are not published yet.</p>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">Public partner facts are not published yet.</p>
         )}
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-primary">Quick paths</h2>
         <div className="mt-2 divide-y divide-slate-200">
           {[
@@ -282,7 +282,7 @@ function PartnerFactsSidebar({ partner }: { partner: ResearchGenericRecord }) {
         </div>
       </section>
 
-      <section className="rounded-lg border border-primary/20 bg-emerald-50/70 p-5 shadow-sm">
+      <section className="rounded-lg border border-primary/20 bg-accent/70 p-5 shadow-sm">
         <Handshake aria-hidden className="h-7 w-7 text-primary" />
         <h2 className="mt-3 font-semibold text-primary">Engage this partner pathway</h2>
         <div className="mt-3 grid gap-2 text-sm font-semibold text-primary">

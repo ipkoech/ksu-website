@@ -1,5 +1,5 @@
-import { PortalDashboard } from "@/components/portals/portal-dashboard";
+import { CorporateCommunicationDashboard } from "@/components/analytics/corporate-communication-dashboard";
 
 export default function CorporateCommunicationPage() {
-  return <PortalDashboard portalKey="corporate-communication" />;
+  return <CorporateCommunicationDashboard />;
 }

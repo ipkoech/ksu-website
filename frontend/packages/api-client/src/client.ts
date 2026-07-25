@@ -71,7 +71,7 @@ export class ApiClient {
       "Content-Type": "application/json",
       ...config.headers,
     };
-    this.timeoutMs = config.timeoutMs ?? 8000;
+    this.timeoutMs = config.timeoutMs ?? resolveApiTimeoutMs();
   }
 
   async request<T>(
@@ -267,6 +267,11 @@ function validationIssuesToMessage(detail?: ApiError["detail"]) {
 
 function stringValue(value: unknown) {
   return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function resolveApiTimeoutMs() {
+  const configured = Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS);
+  return Number.isFinite(configured) && configured > 0 ? configured : 15000;
 }
 
 // Service-specific clients

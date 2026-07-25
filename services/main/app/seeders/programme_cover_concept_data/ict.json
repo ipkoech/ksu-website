@@ -1,0 +1,178 @@
+[
+  {
+    "programme_name": "PhD in Information Systems",
+    "department_code": "CS",
+    "visual_family": "information systems",
+    "subject": "a layered enterprise data network connecting databases, cloud services, analytics panels, and governance nodes",
+    "alt_text": "Illustration of an interconnected enterprise information system",
+    "distinctiveness": "Doctoral information systems research represented by governed enterprise architecture and analytical connections"
+  },
+  {
+    "programme_name": "Master of Information Systems",
+    "department_code": "CS",
+    "visual_family": "information systems",
+    "subject": "a central database connected to cloud services, business applications, and a structured decision dashboard",
+    "alt_text": "Illustration of a database connecting business applications and cloud services",
+    "distinctiveness": "Advanced information systems practice represented by integrated business applications and decision support"
+  },
+  {
+    "programme_name": "Bachelor of Science in Applied Computer Science",
+    "department_code": "CS",
+    "visual_family": "computer science",
+    "subject": "a laptop with code blocks connected to a sensor, a small robot arm, and practical data-processing modules",
+    "alt_text": "Illustration of computing code applied to sensors and automation",
+    "distinctiveness": "Applied computing represented by software controlling physical sensors and automation"
+  },
+  {
+    "programme_name": "Bachelor of Science in Computer Science",
+    "department_code": "CS",
+    "visual_family": "computer science",
+    "subject": "a computer processor framed by binary pathways, an algorithm flow, and connected data nodes",
+    "alt_text": "Illustration of a processor, algorithms, and connected data nodes",
+    "distinctiveness": "Core computer science represented by computation, algorithms, and structured data"
+  },
+  {
+    "programme_name": "Bachelor of Science in Software Engineering",
+    "department_code": "CS",
+    "visual_family": "software engineering",
+    "subject": "modular software blocks moving through design, testing, version control, and deployment stages",
+    "alt_text": "Illustration of a structured software design and deployment workflow",
+    "distinctiveness": "Software engineering represented by an end-to-end tested development lifecycle"
+  },
+  {
+    "programme_name": "Bachelor of Science in Information Technology",
+    "department_code": "CS",
+    "visual_family": "information technology",
+    "subject": "a laptop connected to a secure server, cloud platform, network router, and support tools",
+    "alt_text": "Illustration of connected information technology infrastructure",
+    "distinctiveness": "Degree-level information technology represented by secure connected infrastructure and services"
+  },
+  {
+    "programme_name": "Diploma in Information Technology",
+    "department_code": "CS",
+    "visual_family": "information technology",
+    "subject": "a workstation connected to a server rack, network switch, cloud service, and maintenance tools",
+    "alt_text": "Illustration of practical information technology systems and support tools",
+    "distinctiveness": "Practical information technology training represented by installation, networking, and maintenance"
+  },
+  {
+    "programme_name": "Diploma in Computer Science",
+    "department_code": "CS",
+    "visual_family": "computer science",
+    "subject": "a laptop displaying a simple algorithm flow beside a processor, database cylinder, and programming brackets",
+    "alt_text": "Illustration of foundational programming, algorithms, and computer systems",
+    "distinctiveness": "Diploma-level computer science represented by programming, algorithms, and system foundations"
+  },
+  {
+    "programme_name": "Certificate in Information Technology",
+    "department_code": "CS",
+    "visual_family": "information technology",
+    "subject": "a desktop workstation with a network router, cloud connection, shield, and basic troubleshooting tools",
+    "alt_text": "Illustration of foundational information technology and user support",
+    "distinctiveness": "Entry-level information technology represented by user support and basic troubleshooting"
+  },
+  {
+    "programme_name": "PhD in Information Science",
+    "department_code": "COMLIS",
+    "visual_family": "information science",
+    "subject": "a research knowledge graph linking archives, digital records, scholarly documents, and discovery pathways",
+    "alt_text": "Illustration of a research knowledge graph connecting archives and digital information",
+    "distinctiveness": "Doctoral information science represented by research-led organization and discovery of knowledge"
+  },
+  {
+    "programme_name": "PhD in Knowledge Management",
+    "department_code": "COMLIS",
+    "visual_family": "knowledge management",
+    "subject": "an advanced knowledge network transforming documents and expert insights into an organized institutional memory",
+    "alt_text": "Illustration of institutional knowledge being organized into a connected network",
+    "distinctiveness": "Doctoral knowledge management represented by institutional memory and expert knowledge networks"
+  },
+  {
+    "programme_name": "PhD in Media and Communication Studies",
+    "department_code": "COMLIS",
+    "visual_family": "media and communication",
+    "subject": "a research lens examining broadcast waves, digital media channels, audience networks, and public discourse",
+    "alt_text": "Illustration of research across media channels and audience networks",
+    "distinctiveness": "Doctoral media research represented by critical study of channels, audiences, and discourse"
+  },
+  {
+    "programme_name": "Master of Information Science",
+    "department_code": "COMLIS",
+    "visual_family": "information science",
+    "subject": "a digital catalogue linking books, archival boxes, metadata records, and a search interface",
+    "alt_text": "Illustration of a digital catalogue connecting books, archives, and metadata",
+    "distinctiveness": "Advanced information science represented by metadata-rich cataloguing and discovery"
+  },
+  {
+    "programme_name": "Master of Knowledge Management",
+    "department_code": "COMLIS",
+    "visual_family": "knowledge management",
+    "subject": "documents, team insights, and data flowing into a structured knowledge repository with connected categories",
+    "alt_text": "Illustration of organizational knowledge flowing into a structured repository",
+    "distinctiveness": "Advanced knowledge management represented by capturing expertise in an organized repository"
+  },
+  {
+    "programme_name": "Master of Journalism",
+    "department_code": "COMLIS",
+    "visual_family": "journalism",
+    "subject": "a reporter notebook, microphone, camera, and verified news document arranged around a public-interest story",
+    "alt_text": "Illustration of journalism tools surrounding a verified news story",
+    "distinctiveness": "Advanced journalism represented by verification, public-interest reporting, and multimedia evidence"
+  },
+  {
+    "programme_name": "Master of Communication Studies",
+    "department_code": "COMLIS",
+    "visual_family": "media and communication",
+    "subject": "interconnected speech forms, audience groups, broadcast signals, and a strategic communication plan",
+    "alt_text": "Illustration of strategic messages connecting media channels and audiences",
+    "distinctiveness": "Advanced communication studies represented by strategy across messages, media, and audiences"
+  },
+  {
+    "programme_name": "Bachelor of Information Science",
+    "department_code": "COMLIS",
+    "visual_family": "information science",
+    "subject": "an open book transitioning into searchable digital records, metadata tags, and an organized archive",
+    "alt_text": "Illustration of books and archives becoming searchable digital information",
+    "distinctiveness": "Degree-level information science represented by transforming collections into discoverable records"
+  },
+  {
+    "programme_name": "Bachelor of Arts (Communication and Media)",
+    "department_code": "COMLIS",
+    "visual_family": "media and communication",
+    "subject": "a camera, microphone, mobile screen, and broadcast waves composing one balanced multimedia story",
+    "alt_text": "Illustration of camera, audio, mobile, and broadcast media storytelling",
+    "distinctiveness": "Communication and media represented by integrated visual, audio, mobile, and broadcast storytelling"
+  },
+  {
+    "programme_name": "Diploma in Library and Information Science",
+    "department_code": "COMLIS",
+    "visual_family": "library science",
+    "subject": "organized bookshelves connected to a digital catalogue, archive box, barcode, and search symbol",
+    "alt_text": "Illustration of library collections connected to a digital catalogue",
+    "distinctiveness": "Practical library science represented by collection organization, cataloguing, and access"
+  },
+  {
+    "programme_name": "Diploma in Journalism and Mass Communication",
+    "department_code": "COMLIS",
+    "visual_family": "journalism",
+    "subject": "a microphone, camera, newspaper layout, and broadcast signal arranged as a practical newsroom toolkit",
+    "alt_text": "Illustration of a practical newsroom and mass communication toolkit",
+    "distinctiveness": "Practical journalism represented by reporting tools for print, broadcast, and visual media"
+  },
+  {
+    "programme_name": "Certificate in Library and Information Science",
+    "department_code": "COMLIS",
+    "visual_family": "library science",
+    "subject": "an open book beside a labelled archive box, catalogue cards, and a simple search interface",
+    "alt_text": "Illustration of foundational library organization and information search",
+    "distinctiveness": "Foundational library science represented by organizing physical collections and finding information"
+  },
+  {
+    "programme_name": "Certificate in Journalism and Mass Communication",
+    "department_code": "COMLIS",
+    "visual_family": "journalism",
+    "subject": "a microphone, compact camera, notebook, and radio waves forming an introductory reporting toolkit",
+    "alt_text": "Illustration of foundational reporting and mass communication tools",
+    "distinctiveness": "Foundational journalism represented by introductory reporting, recording, and broadcast tools"
+  }
+]

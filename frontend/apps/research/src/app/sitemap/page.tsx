@@ -100,21 +100,21 @@ const groupedSections = [
 
 export default function SitemapPage() {
   return (
-    <main id="research-main" className="min-h-screen bg-[#f4f6f4]">
-      <section className="border-b border-slate-200 bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-10 xl:px-10 2xl:px-12">
+    <main id="research-main" className="min-h-screen bg-[hsl(var(--surface-muted))]">
+      <section className="border-b border-border bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-10 xl:px-10 2xl:px-12">
         <ScrollReveal className="mx-auto max-w-[1680px]">
-          <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500" aria-label="Breadcrumb">
+          <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
             <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">Sitemap</span>
+            <span className="text-muted-foreground/60">/</span>
+            <span className="text-foreground">Sitemap</span>
           </nav>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
             Sitemap
           </p>
-          <h1 className="mt-3 max-w-5xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
+          <h1 className="mt-3 max-w-5xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
             Research portal sitemap
           </h1>
-          <p className="mt-4 max-w-4xl text-base leading-8 text-slate-600">
+          <p className="mt-4 max-w-4xl text-base leading-8 text-muted-foreground">
             Browse the main public areas of the Kisii University REIRM Portal.
           </p>
         </ScrollReveal>
@@ -129,8 +129,8 @@ export default function SitemapPage() {
 
         <ScrollRevealGroup className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3" staggerDelay={85}>
           {groupedSections.map((section) => (
-            <section key={section.title} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">
+            <section key={section.title} className="rounded-lg border border-border bg-white p-5 shadow-sm">
+              <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">
                 {section.title}
               </h2>
               <div className="mt-4 grid gap-2">
@@ -140,7 +140,7 @@ export default function SitemapPage() {
                     href={item.href}
                     target={item.external ? "_blank" : undefined}
                     rel={item.external ? "noopener noreferrer" : undefined}
-                    className="group flex min-h-11 items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/30 hover:bg-white hover:text-primary"
+                    className="group flex min-h-11 items-center justify-between gap-3 rounded-md border border-border bg-surface-subtle px-3 py-2 text-sm font-semibold text-muted-foreground transition hover:border-primary/30 hover:bg-white hover:text-primary"
                   >
                     <span>{item.label}</span>
                     <ArrowRight aria-hidden className="h-4 w-4 shrink-0 text-primary/70 transition group-hover:translate-x-1" />
@@ -164,7 +164,7 @@ function SitemapPrimaryLink({
   return (
     <Link
       href={item.href}
-      className="group flex min-h-24 items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary hover:shadow-md"
+      className="group flex min-h-24 items-center gap-4 rounded-lg border border-border bg-white p-4 text-sm font-semibold text-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary hover:shadow-md"
     >
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
         <Icon aria-hidden className="h-5 w-5" />

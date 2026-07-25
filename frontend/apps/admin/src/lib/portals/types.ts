@@ -8,14 +8,15 @@ import type {
 } from "@/components/dashboard/editable-service-resource-page";
 
 export type PortalKey =
-  | "institutional-administration"
-  | "governance"
+  | "super-admin"
+  | "admin"
+  | "staff-profile"
   | "schools"
   | "departments"
   | "corporate-communication"
+  | "story-contributor"
   | "research"
-  | "library"
-  | "publications";
+  | "library";
 
 export type PortalRecord = Record<string, any> & { id: string };
 export type PortalPayload = Record<string, any>;
@@ -26,6 +27,7 @@ export interface PortalNavItem {
   icon: LucideIcon;
   scope?: string | string[];
   group?: string;
+  children?: PortalNavItem[];
 }
 
 export interface PortalDashboardStat {
@@ -35,7 +37,7 @@ export interface PortalDashboardStat {
   icon: LucideIcon;
   scopes?: string[];
   queryKey: readonly unknown[];
-  query: () => Promise<unknown>;
+  query: () => Promise<number>;
 }
 
 export interface PortalDashboardPanel {
@@ -51,6 +53,7 @@ export interface PortalResourceConfig<
   TPayload extends PortalPayload = PortalPayload,
 > {
   key: string;
+  href?: string;
   title: string;
   description: string;
   backHref: string;
@@ -77,6 +80,7 @@ export interface PortalResourceConfig<
   canCreate?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
+  viewInEditor?: boolean;
   portalScope?: {
     typeField?: string;
     idField?: string;

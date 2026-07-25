@@ -6,6 +6,7 @@ import {
 } from "@/components/public/department-detail-section";
 import { ProgrammeDetailPage } from "@/components/public/programme-detail-page";
 import { PublicSectionPage } from "@/components/public/section-page";
+import { AcademicRecordsPage } from "@/components/public/academic-records-page";
 import { SchoolDetailOverview } from "@/components/public/school-detail-overview";
 import {
   SchoolDetailSection,
@@ -15,6 +16,7 @@ import { getAcademicsEntityHeader } from "@/lib/entity-header-data";
 import { getDepartmentDetailData } from "@/lib/department-detail-data";
 import { getProgrammeDetailData } from "@/lib/programme-detail-data";
 import { getAcademicsPageConfig } from "@/lib/public-record-page-data";
+import { getAcademicOrganization } from "@/lib/public-team-data";
 import { getSchoolDetailOverviewData } from "@/lib/school-detail-data";
 import type { EntityMediaType } from "@/lib/entity-media-data";
 
@@ -57,14 +59,21 @@ export default async function AcademicsRoutePage({
     q?: string;
     school_id?: string;
     sort?: string;
+    page?: string;
   }>;
 }) {
   const { segments = [] } = await params;
   const filters = await searchParams;
-  const [area, schoolSlug, child, childSlug, departmentChild, mediaChild] = segments;
+  const academicPage = filters.page
+    ? Math.max(1, Number(filters.page) || 1)
+    : 1;
+  const [area, schoolSlug, child, childSlug, departmentChild, mediaChild] =
+    segments;
 
   if (area === "programmes" && schoolSlug && !child) {
-    return <ProgrammeDetailPage data={await getProgrammeDetailData(schoolSlug)} />;
+    return (
+      <ProgrammeDetailPage data={await getProgrammeDetailData(schoolSlug)} />
+    );
   }
 
   if (area === "schools" && schoolSlug && !child) {
@@ -94,11 +103,21 @@ export default async function AcademicsRoutePage({
     redirect(`/academics/schools/${schoolSlug}/media/news`);
   }
 
-  if (area === "schools" && schoolSlug && child === "departments" && !childSlug) {
+  if (
+    area === "schools" &&
+    schoolSlug &&
+    child === "departments" &&
+    !childSlug
+  ) {
     redirect(`/academics/schools/${schoolSlug}`);
   }
 
-  if (area === "schools" && schoolSlug && child === "departments" && childSlug) {
+  if (
+    area === "schools" &&
+    schoolSlug &&
+    child === "departments" &&
+    childSlug
+  ) {
     const baseHref = `/academics/schools/${schoolSlug}/departments/${childSlug}`;
 
     if (departmentChild === "staff") {
@@ -115,7 +134,10 @@ export default async function AcademicsRoutePage({
 
     const section = (departmentChild ?? "about") as DepartmentDetailSectionKey;
     const mediaType = mediaChild as EntityMediaType | undefined;
-    if (mediaChild && (section !== "media" || !entityMediaTypes.has(mediaType!))) {
+    if (
+      mediaChild &&
+      (section !== "media" || !entityMediaTypes.has(mediaType!))
+    ) {
       notFound();
     }
 
@@ -155,7 +177,10 @@ export default async function AcademicsRoutePage({
 
     const section = (child ?? "about") as DepartmentDetailSectionKey;
     const mediaType = childSlug as EntityMediaType | undefined;
-    if (childSlug && (section !== "media" || !entityMediaTypes.has(mediaType!))) {
+    if (
+      childSlug &&
+      (section !== "media" || !entityMediaTypes.has(mediaType!))
+    ) {
       notFound();
     }
 
@@ -185,7 +210,10 @@ export default async function AcademicsRoutePage({
   ) {
     const section = child as SchoolDetailSectionKey;
     const mediaType = childSlug as EntityMediaType | undefined;
-    if (childSlug && (section !== "media" || !entityMediaTypes.has(mediaType!))) {
+    if (
+      childSlug &&
+      (section !== "media" || !entityMediaTypes.has(mediaType!))
+    ) {
       notFound();
     }
 
@@ -206,12 +234,35 @@ export default async function AcademicsRoutePage({
   }
 
   const headerConfig = await getAcademicsEntityHeader(segments);
+  const [config, academicLeadership] = await Promise.all([
+    getAcademicsPageConfig(segments, { ...filters, page: academicPage }),
+    segments.length === 0 ? getAcademicOrganization() : Promise.resolve(null),
+  ]);
+
+  const academicRecordKind =
+    area === "schools" ||
+    area === "programmes" ||
+    area === "calendar" ||
+    area === "examinations"
+      ? area
+      : null;
+
+  if (academicRecordKind) {
+    return (
+      <AcademicRecordsPage
+        config={config}
+        kind={academicRecordKind}
+        page={academicPage}
+      />
+    );
+  }
 
   return (
     <PublicSectionPage
-      config={await getAcademicsPageConfig(segments, filters)}
+      config={config}
       header={headerConfig ? <EntityHeader {...headerConfig} /> : undefined}
       heroSize="compact"
+      academicLeadership={academicLeadership}
     />
   );
 }

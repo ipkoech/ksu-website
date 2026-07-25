@@ -91,13 +91,13 @@ export default async function ResearchSearchPage({
   const errors = groupResponses.map((group) => group.error).filter(Boolean);
 
   return (
-    <main id="research-main" className="min-h-screen bg-white text-slate-950">
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
       <SearchHero query={query} />
 
       {!query ? (
         <EmptySearchStart />
       ) : (
-        <section className="border-t border-slate-200 bg-slate-50 px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <section className="border-t border-border bg-surface-subtle px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mx-auto max-w-[1680px]">
             <ResultsToolbar
               query={query}
@@ -137,7 +137,7 @@ export default async function ResearchSearchPage({
                     className={
                       view === "grid"
                         ? "mt-5 grid gap-4 lg:grid-cols-2"
-                        : "mt-5 overflow-hidden rounded-lg border border-slate-200 bg-white"
+                        : "mt-5 overflow-hidden rounded-lg border border-border bg-white"
                     }
                   >
                     {visibleResults.map((result) =>
@@ -180,27 +180,27 @@ function SearchHero({ query }: { query: string }) {
       <div className="mx-auto grid max-w-[1920px] lg:grid-cols-[minmax(0,0.92fr)_minmax(520px,1.08fr)]">
         <div className="flex min-h-[460px] flex-col justify-center px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <p className="text-sm font-semibold text-primary">Research Search</p>
-          <h1 className="mt-4 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950 sm:text-5xl">
+          <h1 className="mt-4 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground sm:text-5xl">
             Find research records across Kisii University.
           </h1>
-          <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+          <p className="mt-5 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
             Search projects, publications, grants, innovations, partners,
             centers, facilities, outputs, resources, training, news, and events
             from the REIRM public portfolio.
           </p>
 
           <form action="/search" className="mt-7 max-w-3xl">
-            <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-2 shadow-sm sm:flex-row">
+            <div className="flex flex-col gap-3 rounded-lg border border-border bg-white p-2 shadow-sm sm:flex-row">
               <label className="relative min-w-0 flex-1">
                 <span className="sr-only">Search research records</span>
-                <Search aria-hidden className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <Search aria-hidden className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground/70" />
                 <input
                   type="search"
                   name="q"
                   defaultValue={query}
                   placeholder="Search climate, agriculture, public health, innovation..."
                   autoComplete="off"
-                  className="h-12 w-full rounded-md border border-transparent bg-white pl-12 pr-4 text-base text-slate-950 outline-none ring-primary/20 placeholder:text-slate-400 focus:border-primary focus:ring-4"
+                  className="h-12 w-full rounded-md border border-transparent bg-white pl-12 pr-4 text-base text-foreground outline-none ring-primary/20 placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4"
                 />
               </label>
               <button className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-semibold text-white transition hover:bg-primary/90">
@@ -211,25 +211,25 @@ function SearchHero({ query }: { query: string }) {
           </form>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold uppercase text-slate-500">Suggested:</span>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Suggested:</span>
             {suggestedSearches.map((term) => (
               <Link
                 key={term}
                 href={`/search?q=${encodeURIComponent(term)}`}
-                className="rounded-md border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 transition hover:border-primary/30 hover:text-primary"
+                className="rounded-md border border-border bg-white px-3 py-1 text-xs font-semibold text-muted-foreground transition hover:border-primary/30 hover:text-primary"
               >
                 {term}
               </Link>
             ))}
           </div>
 
-          <p className="mt-4 inline-flex items-center gap-2 text-sm text-slate-600">
+          <p className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground">
             <Info aria-hidden className="h-4 w-4 text-primary" />
             Research-only results from published public records.
           </p>
         </div>
 
-        <div className="relative min-h-[320px] bg-slate-100 lg:min-h-[460px]">
+        <div className="relative min-h-[320px] bg-surface-muted lg:min-h-[460px]">
           <div className="absolute inset-0 bg-[url('/images/research/research-demo-imagegen.webp')] bg-cover bg-center" />
           <div className="absolute inset-y-0 left-0 hidden w-40 bg-gradient-to-r from-white to-transparent lg:block" />
           <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent" />
@@ -241,7 +241,7 @@ function SearchHero({ query }: { query: string }) {
 
 function EmptySearchStart() {
   return (
-    <section className="border-t border-slate-200 bg-slate-50 px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <section className="border-t border-border bg-surface-subtle px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-3">
         <IntroPanel
           title="Search the research portfolio"
@@ -280,24 +280,24 @@ function ResultsToolbar({
   return (
     <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
       <div>
-        <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+        <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
           {total} research results for <span className="text-primary">"{query}"</span>
         </h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Results are grouped from public REIRM records only.
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <form action="/search" className="flex items-center gap-2">
           <HiddenParams params={params} omit={["sort"]} />
-          <label className="text-sm font-semibold text-slate-600" htmlFor="sort">
+          <label className="text-sm font-semibold text-muted-foreground" htmlFor="sort">
             Sort by
           </label>
           <select
             id="sort"
             name="sort"
             defaultValue={sort}
-            className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-950"
+            className="h-10 rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground"
           >
             <option value="relevance">Relevance</option>
             <option value="newest">Newest</option>
@@ -305,7 +305,7 @@ function ResultsToolbar({
           </select>
           <button className="sr-only">Apply sort</button>
         </form>
-        <div className="flex rounded-md border border-slate-200 bg-white p-1">
+        <div className="flex rounded-md border border-border bg-white p-1">
           <ViewToggle href={buildSearchHref(params, { view: "grid" })} active={view === "grid"} label="Grid view" icon={Grid2X2} />
           <ViewToggle href={buildSearchHref(params, { view: "list" })} active={view !== "grid"} label="List view" icon={List} />
         </div>
@@ -326,9 +326,9 @@ function SearchFilters({
   const selectedTypes = new Set(arrayParam(params.type));
 
   return (
-    <aside className="h-fit rounded-lg border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-28">
+    <aside className="h-fit rounded-lg border border-border bg-white p-5 shadow-sm xl:sticky xl:top-28">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-slate-950">Filter results</h2>
+        <h2 className="text-sm font-semibold text-foreground">Filter results</h2>
         <Link href="/search" className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
           <RotateCcw aria-hidden className="h-3.5 w-3.5" />
           Reset
@@ -338,19 +338,19 @@ function SearchFilters({
         {params.q ? <input type="hidden" name="q" value={params.q} /> : null}
 
         <fieldset>
-          <legend className="text-xs font-semibold uppercase text-slate-500">Record type</legend>
+          <legend className="text-xs font-semibold uppercase text-muted-foreground">Record type</legend>
           <div className="mt-3 space-y-2">
             {RESEARCH_SEARCH_GROUPS.map((group) => (
-              <label key={group.key} className="flex items-center gap-2 text-sm text-slate-700">
+              <label key={group.key} className="flex items-center gap-2 text-sm text-muted-foreground">
                 <input
                   type="checkbox"
                   name="type"
                   value={group.key}
                   defaultChecked={selectedTypes.size === 0 || selectedTypes.has(group.key)}
-                  className="h-4 w-4 rounded border-slate-300 text-primary"
+                  className="h-4 w-4 rounded border-border text-primary"
                 />
                 <span className="min-w-0 flex-1">{group.label}</span>
-                <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                <span className="rounded bg-surface-muted px-2 py-0.5 text-xs text-muted-foreground">
                   {counts[group.key] ?? 0}
                 </span>
               </label>
@@ -366,29 +366,29 @@ function SearchFilters({
         />
 
         <div>
-          <p className="text-xs font-semibold uppercase text-slate-500">Year</p>
+          <p className="text-xs font-semibold uppercase text-muted-foreground">Year</p>
           <div className="mt-2 grid grid-cols-2 gap-2">
             <input
               name="yearFrom"
               defaultValue={params.yearFrom ?? ""}
               placeholder="From"
-              className="h-10 rounded-md border border-slate-200 px-3 text-sm"
+              className="h-10 rounded-md border border-border px-3 text-sm"
             />
             <input
               name="yearTo"
               defaultValue={params.yearTo ?? ""}
               placeholder="To"
-              className="h-10 rounded-md border border-slate-200 px-3 text-sm"
+              className="h-10 rounded-md border border-border px-3 text-sm"
             />
           </div>
         </div>
 
         <label className="block">
-          <span className="text-xs font-semibold uppercase text-slate-500">Center / Unit</span>
+          <span className="text-xs font-semibold uppercase text-muted-foreground">Center / Unit</span>
           <select
             name="center"
             defaultValue={params.center ?? ""}
-            className="mt-2 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+            className="mt-2 h-10 w-full rounded-md border border-border bg-white px-3 text-sm"
           >
             <option value="">All centers</option>
             {centers.map((center) => (
@@ -420,7 +420,7 @@ function ResultTabs({
   params: SearchParams;
 }) {
   return (
-    <nav aria-label="Search result groups" className="overflow-x-auto rounded-lg border border-slate-200 bg-white p-2">
+    <nav aria-label="Search result groups" className="overflow-x-auto rounded-lg border border-border bg-white p-2">
       <div className="flex min-w-max gap-1">
         {SEARCH_TABS.map((tab) => {
           const count = filterResultsByTab(results, tab.key).length;
@@ -432,11 +432,11 @@ function ResultTabs({
               className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
                 active
                   ? "bg-primary text-white"
-                  : "text-slate-600 hover:bg-primary/5 hover:text-primary"
+                  : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
               }`}
             >
               {tab.label}
-              <span className={active ? "ml-2 text-white/75" : "ml-2 text-slate-400"}>{count}</span>
+              <span className={active ? "ml-2 text-white/75" : "ml-2 text-muted-foreground/70"}>{count}</span>
             </Link>
           );
         })}
@@ -454,7 +454,7 @@ function TopMatchCard({
 }) {
   return (
     <article className="mt-5 overflow-hidden rounded-lg border border-primary/20 bg-white shadow-sm">
-      <div className="border-b border-slate-200 bg-primary px-4 py-2 text-xs font-semibold uppercase text-white">
+      <div className="border-b border-border bg-primary px-4 py-2 text-xs font-semibold uppercase text-white">
         Top match
       </div>
       <Link href={result.href} className="grid gap-5 p-5 transition hover:bg-primary/5 md:grid-cols-[260px_minmax(0,1fr)_auto]">
@@ -464,10 +464,10 @@ function TopMatchCard({
             <ResultBadge result={result} />
             {result.isFeatured ? <span className="rounded-md bg-secondary px-2 py-1 text-xs font-semibold text-white">Featured</span> : null}
           </div>
-          <h3 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
+          <h3 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
             {result.title}
           </h3>
-          <HighlightedText query={query} text={result.description} className="mt-3 line-clamp-3 text-sm leading-7 text-slate-600" />
+          <HighlightedText query={query} text={result.description} className="mt-3 line-clamp-3 text-sm leading-7 text-muted-foreground" />
           <ResultMeta result={result} />
         </div>
         <ArrowRight aria-hidden className="mt-2 h-5 w-5 text-primary" />
@@ -478,17 +478,17 @@ function TopMatchCard({
 
 function ResultRow({ query, result }: { query: string; result: ResearchSearchResult }) {
   return (
-    <Link href={result.href} className="grid gap-4 border-b border-slate-200 p-4 transition last:border-b-0 hover:bg-primary/5 md:grid-cols-[170px_minmax(0,1fr)_auto]">
+    <Link href={result.href} className="grid gap-4 border-b border-border p-4 transition last:border-b-0 hover:bg-primary/5 md:grid-cols-[170px_minmax(0,1fr)_auto]">
       <ResultThumb result={result} />
       <div className="min-w-0">
         <div className="flex flex-wrap gap-2">
           <ResultBadge result={result} />
           {result.isOpenAccess ? <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">Open access</span> : null}
         </div>
-        <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold leading-7 text-slate-950">
+        <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold leading-7 text-foreground">
           {result.title}
         </h3>
-        <HighlightedText query={query} text={result.description} className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600" />
+        <HighlightedText query={query} text={result.description} className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground" />
         <ResultMeta result={result} />
       </div>
       <ArrowRight aria-hidden className="mt-2 h-5 w-5 text-primary" />
@@ -498,17 +498,17 @@ function ResultRow({ query, result }: { query: string; result: ResearchSearchRes
 
 function GridResultCard({ query, result }: { query: string; result: ResearchSearchResult }) {
   return (
-    <Link href={result.href} className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md">
+    <Link href={result.href} className="group overflow-hidden rounded-lg border border-border bg-white shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md">
       <ResultThumb result={result} large />
       <div className="p-5">
         <div className="flex flex-wrap gap-2">
           <ResultBadge result={result} />
           {result.isFeatured ? <span className="rounded-md bg-secondary px-2 py-1 text-xs font-semibold text-white">Featured</span> : null}
         </div>
-        <h3 className="mt-3 font-[family-name:var(--font-display)] text-xl font-semibold leading-7 text-slate-950">
+        <h3 className="mt-3 font-[family-name:var(--font-display)] text-xl font-semibold leading-7 text-foreground">
           {result.title}
         </h3>
-        <HighlightedText query={query} text={result.description} className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600" />
+        <HighlightedText query={query} text={result.description} className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground" />
         <ResultMeta result={result} />
       </div>
     </Link>
@@ -527,7 +527,7 @@ function SearchSupportRail({
       <RailPanel title="Explore related research areas" icon={Leaf}>
         <div className="space-y-2">
           {relatedAreas.slice(0, 6).map((area) => (
-            <Link key={area} href={`/search?q=${encodeURIComponent(area)}`} className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-primary/30 hover:text-primary">
+            <Link key={area} href={`/search?q=${encodeURIComponent(area)}`} className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition hover:border-primary/30 hover:text-primary">
               {area}
               <ArrowRight aria-hidden className="h-4 w-4" />
             </Link>
@@ -538,16 +538,16 @@ function SearchSupportRail({
       <RailPanel title="Popular searches" icon={TrendingUp}>
         <div className="space-y-2">
           {popularSearches.map((term) => (
-            <Link key={term} href={`/search?q=${encodeURIComponent(term)}`} className="flex items-center justify-between text-sm text-slate-600 transition hover:text-primary">
+            <Link key={term} href={`/search?q=${encodeURIComponent(term)}`} className="flex items-center justify-between text-sm text-muted-foreground transition hover:text-primary">
               {term}
-              <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">Search</span>
+              <span className="rounded bg-surface-muted px-2 py-0.5 text-xs text-muted-foreground">Search</span>
             </Link>
           ))}
         </div>
       </RailPanel>
 
       <RailPanel title="Need help?" icon={HelpCircle}>
-        <p className="text-sm leading-6 text-slate-600">
+        <p className="text-sm leading-6 text-muted-foreground">
           Can't find what you're looking for? Our research team can help you
           find the right information.
         </p>
@@ -555,14 +555,14 @@ function SearchSupportRail({
           Contact REIRM
           <ArrowRight aria-hidden className="h-4 w-4" />
         </Link>
-        <p className="mt-4 flex items-center gap-2 text-xs text-slate-500">
+        <p className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
           <Mail aria-hidden className="h-4 w-4 text-primary" />
           research@kisiiuniversity.ac.ke
         </p>
       </RailPanel>
 
       <RailPanel title="Search tips" icon={Info}>
-        <ul className="space-y-2 text-sm leading-6 text-slate-600">
+        <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
           <li>Use specific keywords for better results.</li>
           <li>Try synonyms or related research themes.</li>
           <li>Use filters to narrow your search.</li>
@@ -581,12 +581,12 @@ function SearchSupportRail({
 
 function NoResults({ query }: { query: string }) {
   return (
-    <div className="mt-5 rounded-lg border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
-      <Search aria-hidden className="mx-auto h-10 w-10 text-slate-300" />
-      <h3 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+    <div className="mt-5 rounded-lg border border-dashed border-border bg-white px-6 py-14 text-center">
+      <Search aria-hidden className="mx-auto h-10 w-10 text-muted-foreground/60" />
+      <h3 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
         No public research records matched your search.
       </h3>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
         No records matched "{query}". Try a broader term, remove filters, or
         search by project, publication, center, or partner name.
       </p>
@@ -610,12 +610,12 @@ function IntroPanel({
   href?: string;
 }) {
   const content = (
-    <article className="h-full rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <article className="h-full rounded-lg border border-border bg-white p-6 shadow-sm">
       <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
         <Icon aria-hidden className="h-5 w-5" />
       </span>
-      <h2 className="mt-5 font-[family-name:var(--font-display)] text-xl font-semibold text-slate-950">{title}</h2>
-      <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
+      <h2 className="mt-5 font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{title}</h2>
+      <p className="mt-3 text-sm leading-7 text-muted-foreground">{body}</p>
     </article>
   );
   return href ? <Link href={href}>{content}</Link> : content;
@@ -787,11 +787,11 @@ function SelectField({
 }) {
   return (
     <label className="block">
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
+      <span className="text-xs font-semibold uppercase text-muted-foreground">{label}</span>
       <select
         name={name}
         defaultValue={value ?? ""}
-        className="mt-2 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+        className="mt-2 h-10 w-full rounded-md border border-border bg-white px-3 text-sm"
       >
         {options.map((option) => (
           <option key={option || "all"} value={option}>
@@ -813,7 +813,7 @@ function ToggleField({
   checked: boolean;
 }) {
   return (
-    <label className="flex items-center justify-between gap-3 text-sm text-slate-700">
+    <label className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
       <span>{label}</span>
       <span className="relative inline-flex items-center">
         <input
@@ -823,7 +823,7 @@ function ToggleField({
           defaultChecked={checked}
           className="peer sr-only"
         />
-        <span className="h-6 w-11 rounded-full bg-slate-200 transition peer-checked:bg-primary" />
+        <span className="h-6 w-11 rounded-full bg-surface-muted transition peer-checked:bg-primary" />
         <span className="absolute left-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5" />
       </span>
     </label>
@@ -846,7 +846,7 @@ function ViewToggle({
       href={href}
       aria-label={label}
       className={`inline-flex h-8 w-8 items-center justify-center rounded ${
-        active ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
+        active ? "bg-primary text-white" : "text-muted-foreground hover:bg-surface-muted"
       }`}
     >
       <Icon aria-hidden className="h-4 w-4" />
@@ -863,7 +863,7 @@ function ResultThumb({
 }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-md bg-slate-100 ${
+      className={`relative overflow-hidden rounded-md bg-surface-muted ${
         large ? "aspect-[16/9]" : "min-h-28"
       }`}
     >
@@ -896,7 +896,7 @@ function ResultMeta({ result }: { result: ResearchSearchResult }) {
 
 function MetaChip({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600">
+    <span className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-subtle px-2 py-1 text-xs font-medium text-muted-foreground">
       <Check aria-hidden className="h-3 w-3 text-primary" />
       {children}
     </span>
@@ -917,7 +917,7 @@ function HighlightedText({
     <p className={className}>
       {fragments.map((fragment, index) =>
         fragment.match ? (
-          <mark key={`${fragment.text}-${index}`} className="rounded bg-secondary/15 px-1 text-slate-950">
+          <mark key={`${fragment.text}-${index}`} className="rounded bg-secondary/15 px-1 text-foreground">
             {fragment.text}
           </mark>
         ) : (
@@ -938,8 +938,8 @@ function RailPanel({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
         <Icon aria-hidden className="h-4 w-4 text-primary" />
         {title}
       </h2>

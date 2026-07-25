@@ -20,7 +20,7 @@ export default async function ResourcesToolsPage({
 }) {
   const model = await getResourcesWorkspacePageModel((await searchParams) ?? {});
   return (
-    <main id="research-main" className="min-h-screen bg-white text-slate-950">
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
       <ResourcesWorkspace {...model} />
     </main>
   );

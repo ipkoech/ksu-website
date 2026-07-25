@@ -1,4 +1,4 @@
-import { PortalResourcePage } from "@/components/portals/portal-resource-page";
+import { redirect } from "next/navigation";
 
 export function generateStaticParams() {
   return [
@@ -17,5 +17,6 @@ export default async function PublicationsResourcePage({
   params: Promise<{ resource: string }>;
 }) {
   const { resource } = await params;
-  return <PortalResourcePage portalKey="publications" resourceKey={resource} />;
+  const mappedResource = resource === "journals" ? "publications/journals" : "publications";
+  redirect(`/research/${mappedResource}`);
 }

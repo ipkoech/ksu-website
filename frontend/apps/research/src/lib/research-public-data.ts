@@ -83,6 +83,7 @@ export type GenericListFilters = {
   search?: string;
   status?: string;
   category?: string;
+  metricType?: string;
   grantType?: string;
   centerType?: string;
   farmType?: string;
@@ -181,6 +182,8 @@ const researchMainContentFields =
   "id,title,slug,summary,excerpt,plain_text,rich_text,content,body,category,status,scope_type,scope_id,is_featured,is_main,is_public,is_published,published_at,valid_from,valid_to,start_date,end_date,location,venue,event_type,priority,display_order,featured_media,cover_image,cover_image_url,created_at,updated_at";
 const researchHeroSliderFields =
   "id,title,subtitle,plain_text,rich_text,structured_content,desktop_media,mobile_media,external_url,link_text,open_in_new_tab,scope_type,scope_id,is_main,is_public,is_active,display_order,start_datetime,end_datetime,created_at,updated_at";
+const researchImpactMetricListFields =
+  "id,name,title,slug,code,summary,description,metric_type,category,value,unit,target_value,baseline_value,methodology,data_source,period_start,period_end,reporting_year,project_id,center_id,program_id,icon,color,is_active,is_featured,display_order,created_at,updated_at";
 
 async function safeList<T>(
   load: () => Promise<{
@@ -1201,11 +1204,33 @@ export function getGrantGuidelineBySlug(slug: string) {
 export function getImpactMetrics() {
   return safeList<ResearchGenericRecord>(() =>
     researchServiceApi.impactMetrics.list({
-      fields: researchPublicListFields,
+      fields: researchImpactMetricListFields,
       is_active: true,
       is_public: true,
       page: 1,
       per_page: 100,
+    }),
+  );
+}
+
+export function getImpactMetricsFiltered(filters: GenericListFilters = {}) {
+  return safeList<ResearchGenericRecord>(() =>
+    researchServiceApi.impactMetrics.list({
+      fields: researchImpactMetricListFields,
+      search: filters.search?.trim() || undefined,
+      metric_type: filters.metricType || undefined,
+      category: filters.category || undefined,
+      center_id: filters.centerId || undefined,
+      project_id: filters.projectId || undefined,
+      program_id: filters.programId || undefined,
+      year: parseYear(filters.year),
+      sort: filters.sort || undefined,
+      order: filters.order,
+      is_active: filters.isActive ?? true,
+      is_featured: filters.isFeatured,
+      is_public: true,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 100,
     }),
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { File, ImageIcon, Loader2, Search, UploadCloud, X } from "lucide-react";
+import { CheckCircle2, File, ImageIcon, Loader2, Search, UploadCloud, X } from "lucide-react";
 import { toast } from "@ksu/ui";
 import {
   Button,
@@ -19,7 +19,7 @@ import { formatFileSize, getMediaLabel, getMediaUrl, isImageMedia, mediaAcceptsF
 
 export type MediaPickerProps = {
   value?: string | null;
-  onChange: (value: string, media?: Media | null) => void;
+  onChange: (value: string, media?: Media | null, source?: "upload" | "selection") => void;
   mediaType?: string;
   folderId?: string;
   label?: string;
@@ -65,7 +65,7 @@ export function MediaPicker({
   placeholder,
   accept,
   maxSize = 20 * 1024 * 1024,
-  isPublic = true,
+  isPublic = false,
   uploadEntityType,
   uploadEntityId,
   uploadRole,
@@ -79,6 +79,7 @@ export function MediaPicker({
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
+  const [dragging, setDragging] = React.useState(false);
   const mediaId = value ?? "";
   const selectedQuery = useMediaItem(mediaId, { enabled: Boolean(mediaId) });
   const mediaQuery = useMedia({ media_type: mediaType, folder_id: folderId, per_page: 80 });
@@ -109,7 +110,8 @@ export function MediaPicker({
         entityId: uploadEntityId,
         role: uploadRole,
       });
-      onChange(response.data.id, response.data);
+      onChange(response.data.id, response.data, "upload");
+      await mediaQuery.refetch();
       toast.success("Media uploaded");
       setOpen(false);
     } catch {
@@ -117,6 +119,13 @@ export function MediaPicker({
     } finally {
       if (inputRef.current) inputRef.current.value = "";
     }
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setDragging(false);
+    if (disabled || !allowUpload || uploadMedia.isPending) return;
+    void uploadFile(event.dataTransfer.files?.[0]);
   };
 
   return (
@@ -130,7 +139,7 @@ export function MediaPicker({
         onChange={(event) => void uploadFile(event.target.files?.[0])}
       />
 
-      <div className="flex gap-3 rounded-lg border p-3">
+      <div className="flex gap-3 rounded-lg border bg-background p-3 shadow-sm">
         <MediaPreview media={selectedMedia} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">
@@ -169,6 +178,35 @@ export function MediaPicker({
           </DialogHeader>
 
           <div className="space-y-4">
+            {allowUpload ? (
+              <div
+                className={`rounded-lg border border-dashed p-4 transition-colors ${dragging ? "border-primary bg-primary/5" : "bg-muted/20"}`}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  if (!disabled && allowUpload) setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={handleDrop}
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-10 items-center justify-center rounded-md border bg-background">
+                      {uploadMedia.isPending ? <Loader2 className="size-5 animate-spin text-muted-foreground" /> : <UploadCloud className="size-5 text-muted-foreground" />}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Drop media here to upload</p>
+                      <p className="text-xs text-muted-foreground">
+                        {accept ? `Accepted: ${accept}` : "Images, documents, videos, and audio are supported by the media library."}
+                      </p>
+                    </div>
+                  </div>
+                  <Button type="button" variant="outline" disabled={disabled || uploadMedia.isPending} onClick={() => inputRef.current?.click()}>
+                    {uploadMedia.isPending ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <UploadCloud data-icon="inline-start" />}
+                    {uploadLabel}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
             <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -199,12 +237,15 @@ export function MediaPicker({
                       type="button"
                       className={`rounded-lg border p-2 text-left transition hover:border-primary ${selected ? "border-primary ring-2 ring-primary/20" : ""}`}
                       onClick={() => {
-                        onChange(media.id, media);
+                        onChange(media.id, media, "selection");
                         setOpen(false);
                       }}
                     >
                       <MediaPreview media={media} className="h-32 w-full" />
-                      <p className="mt-2 truncate text-sm font-medium">{getMediaLabel(media)}</p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <p className="min-w-0 flex-1 truncate text-sm font-medium">{getMediaLabel(media)}</p>
+                        {selected ? <CheckCircle2 className="size-4 shrink-0 text-primary" /> : null}
+                      </div>
                       <p className="truncate text-xs text-muted-foreground">
                         {[media.mime_type, formatFileSize(media.file_size ?? media.size)].filter(Boolean).join(" · ")}
                       </p>

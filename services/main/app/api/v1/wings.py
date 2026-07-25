@@ -53,7 +53,7 @@ async def _require_wing_scope(
 
 
 @router.get("/division/{division_id}")
-@cached_public(timeout=300, vary_on=("is_active", "fields", "include"))
+@cached_public(timeout=300, vary_on=("division_id", "is_active", "fields", "include"))
 async def list_wings_by_division(division_id: uuid.UUID, db: DbSession, is_active: bool | None = True, fields: FieldSelection = FieldsDep):
     selector = build_selector(Wing, fields)
     items = await WingService.list_by_division(db, division_id, is_active=is_active, load_options=selector.load_options)

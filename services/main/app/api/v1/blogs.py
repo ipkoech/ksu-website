@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -10,10 +11,11 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
-from ...deps import CurrentUser, DbSession, require_scope
+from ...deps import CurrentUser, DbSession, permissions_for_user, require_scope
 from ...models import Blog
 from ...schemas import BlogCreate, BlogUpdate
-from ...services import BlogService
+from ...services import BlogService, ContentWorkflowService
+from .content_workflow import authorize_content_workflow_action
 
 router = APIRouter()
 
@@ -57,6 +59,12 @@ async def list_admin_blogs(
     is_main: bool | None = None,
     is_published: bool | None = None,
     status: str | None = None,
+    workflow_status: str | None = None,
+    owner_portal: str | None = None,
+    owner_scope_type: str | None = None,
+    owner_scope_id: uuid.UUID | None = None,
+    scheduled_from: datetime | None = None,
+    scheduled_to: datetime | None = None,
     search: str | None = None,
     fields: FieldSelection = FieldsDep,
 ):
@@ -70,6 +78,12 @@ async def list_admin_blogs(
         is_main=is_main,
         is_published=is_published,
         status=status,
+        workflow_status=workflow_status,
+        owner_portal=owner_portal,
+        owner_scope_type=owner_scope_type,
+        owner_scope_id=owner_scope_id,
+        scheduled_from=scheduled_from,
+        scheduled_to=scheduled_to,
         search=search,
         load_options=selector.load_options,
     )
@@ -97,36 +111,75 @@ async def get_blog(slug: str, db: DbSession, fields: FieldSelection = FieldsDep)
 
 @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("content.manage_news"))])
 async def create_blog(data: BlogCreate, db: DbSession, user: CurrentUser):
-    payload = data.model_dump()
-    payload["author_user_id"] = user.id
+    payload = ContentWorkflowService.authoring_create_payload(
+        data.model_dump(), actor_id=user.id,
+        **ContentWorkflowService.owner_metadata_for_scope(
+            data.scope_type, data.scope_id, is_main=data.is_main,
+        ),
+    )
     item = await BlogService.create(db, **payload)
     return success(data=item, message="Blog created")
 
 
 @router.patch("/id/{blog_id}", dependencies=[Depends(require_scope("content.manage_news"))])
-async def update_blog(blog_id: uuid.UUID, data: BlogUpdate, db: DbSession, _: CurrentUser):
+async def update_blog(blog_id: uuid.UUID, data: BlogUpdate, db: DbSession, user: CurrentUser):
     item = await BlogService.get_by_id(db, blog_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Blog not found")
-    item = await BlogService.update(db, item, **data.model_dump(exclude_unset=True))
+    payload = data.model_dump(exclude_unset=True)
+    current_status = item.workflow_status or item.status
+    permissions = permissions_for_user(user)
+    if current_status in {"submitted", "in_review", "approved", "scheduled"}:
+        authorize_content_workflow_action(user, item, "edit", permissions)
+    try:
+        await ContentWorkflowService.apply_edit_policy(
+            db,
+            item,
+            "blogs",
+            user.id,
+            actor_kind=(
+                "reviewer"
+                if current_status == "in_review"
+                and {"content.review", "content.manage"}.intersection(permissions)
+                else "author"
+            ),
+            changed_fields=payload,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    item = await BlogService.update(db, item, **payload)
     return success(data=item, message="Blog updated")
 
 
 @router.post("/id/{blog_id}/publish", dependencies=[Depends(require_scope("content.manage_news"))])
-async def publish_blog(blog_id: uuid.UUID, db: DbSession, _: CurrentUser):
+async def publish_blog(blog_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await BlogService.get_by_id(db, blog_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Blog not found")
-    item = await BlogService.publish(db, item)
+    permissions = permissions_for_user(user)
+    authorize_content_workflow_action(user, item, "publish", permissions)
+    try:
+        item = await ContentWorkflowService.publish_content(db, item, "blogs", user.id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    await db.flush()
+    await db.refresh(item)
     return success(data=item, message="Blog published")
 
 
 @router.post("/id/{blog_id}/unpublish", dependencies=[Depends(require_scope("content.manage_news"))])
-async def unpublish_blog(blog_id: uuid.UUID, db: DbSession, _: CurrentUser):
+async def unpublish_blog(blog_id: uuid.UUID, db: DbSession, user: CurrentUser):
     item = await BlogService.get_by_id(db, blog_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Blog not found")
-    item = await BlogService.unpublish(db, item)
+    permissions = permissions_for_user(user)
+    authorize_content_workflow_action(user, item, "unpublish", permissions)
+    try:
+        item = await ContentWorkflowService.unpublish_content(db, item, "blogs", user.id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    await db.flush()
+    await db.refresh(item)
     return success(data=item, message="Blog unpublished")
 
 

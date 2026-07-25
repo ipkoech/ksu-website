@@ -38,7 +38,7 @@ const collaborationRoutes = [
 
 export default function HowToPartnerPage() {
   return (
-    <main id="research-main" className="min-h-screen bg-white text-slate-950">
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
       <section className="relative isolate overflow-hidden bg-primary px-4 py-7 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div aria-hidden className="absolute inset-0 bg-[linear-gradient(115deg,hsl(var(--primary))_0%,hsl(var(--primary)/0.86)_52%,hsl(var(--secondary)/0.58)_100%)]" />
         <div aria-hidden className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:42px_42px] opacity-60" />
@@ -73,18 +73,18 @@ export default function HowToPartnerPage() {
 
       <section className="px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mx-auto grid max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-lg border border-border bg-white p-5 shadow-sm">
             <div className="mb-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Partnership process</p>
-              <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">From first contact to published impact</h2>
+              <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">From first contact to published impact</h2>
             </div>
             <div className="grid gap-3">
               {processSteps.map((step, index) => (
-                <div key={step.title} className="grid grid-cols-[42px_minmax(0,1fr)] gap-4 rounded-md border border-slate-200 bg-slate-50 p-3">
+                <div key={step.title} className="grid grid-cols-[42px_minmax(0,1fr)] gap-4 rounded-md border border-border bg-surface-subtle p-3">
                   <span className="grid h-10 w-10 place-items-center rounded-full bg-primary text-sm font-semibold text-white">{index + 1}</span>
                   <span>
                     <span className="block font-semibold text-primary">{step.title}</span>
-                    <span className="mt-1 block text-sm leading-6 text-slate-600">{step.body}</span>
+                    <span className="mt-1 block text-sm leading-6 text-muted-foreground">{step.body}</span>
                   </span>
                 </div>
               ))}
@@ -95,14 +95,14 @@ export default function HowToPartnerPage() {
             <section className="rounded-lg border border-primary/20 bg-primary/5 p-5 shadow-sm">
               <Handshake aria-hidden className="h-8 w-8 text-primary" />
               <h2 className="mt-3 text-lg font-semibold text-primary">Before you contact us</h2>
-              <ul className="mt-3 grid gap-2 text-sm leading-6 text-slate-700">
+              <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted-foreground">
                 <li>Define the research, innovation, community, or industry challenge.</li>
                 <li>Identify the partnership route that fits the intended work.</li>
                 <li>Prepare timelines, expected outputs, and responsible contacts.</li>
                 <li>State whether funding, data, facilities, field sites, or expertise are involved.</li>
               </ul>
             </section>
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
               <h2 className="text-lg font-semibold text-primary">Quick paths</h2>
               <div className="mt-3 divide-y divide-slate-200">
                 {[
@@ -121,20 +121,20 @@ export default function HowToPartnerPage() {
         </div>
       </section>
 
-      <section className="border-y border-slate-200 bg-slate-50 px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <section className="border-y border-border bg-surface-subtle px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mx-auto max-w-[1680px]">
           <div className="mb-5 max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Ways to collaborate</p>
-            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">Choose the route that matches the work</h2>
+            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">Choose the route that matches the work</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {collaborationRoutes.map((route) => {
               const Icon = route.icon;
               return (
-                <Link key={route.href} href={route.href} className="group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md">
+                <Link key={route.href} href={route.href} className="group rounded-lg border border-border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md">
                   <span className="grid h-11 w-11 place-items-center rounded-md bg-primary/10 text-primary"><Icon aria-hidden className="h-5 w-5" /></span>
                   <h3 className="mt-4 text-lg font-semibold text-primary">{route.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{route.body}</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{route.body}</p>
                   <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
                     Explore
                     <ArrowRight aria-hidden className="h-4 w-4 transition group-hover:translate-x-1" />
@@ -147,11 +147,11 @@ export default function HowToPartnerPage() {
       </section>
 
       <section className="px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="mx-auto grid max-w-[1680px] gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+        <div className="mx-auto grid max-w-[1680px] gap-4 rounded-lg border border-border bg-white p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Ready to engage</p>
-            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">Start with the research office</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">The research office can route the request to the right center, programme, researcher, innovation pathway, or administrative process.</p>
+            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">Start with the research office</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">The research office can route the request to the right center, programme, researcher, innovation pathway, or administrative process.</p>
           </div>
           <Link href="/connect#partnership" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90">
             Contact us

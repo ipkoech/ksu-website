@@ -178,8 +178,8 @@ function CenterStory({ sections }: { sections: Array<{ title: string; body: stri
 
 function ProjectPanel({ records }: { records: ResearchProject[] }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">Research projects</h2>
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">Research projects</h2>
       <div className="mt-4 divide-y divide-slate-200">
         {records.slice(0, 6).map((record) => (
           <article key={record.id} className="py-4 first:pt-0 last:pb-0">
@@ -187,18 +187,18 @@ function ProjectPanel({ records }: { records: ResearchProject[] }) {
               <Badge>{formatLabel(record.project_type ?? "research")}</Badge>
               <Badge>{formatLabel(record.status ?? "ongoing")}</Badge>
             </div>
-            <h3 className="mt-3 text-base font-semibold text-slate-950">
+            <h3 className="mt-3 text-base font-semibold text-foreground">
               <Link href={record.slug ? `/projects/${record.slug}` : "/projects"} className="transition hover:text-primary">
                 {record.title}
               </Link>
             </h3>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
               {compactText(record.summary) || compactText(record.abstract) || `${record.progress_percentage ?? 0}% complete`}
             </p>
           </article>
         ))}
         {records.length === 0 ? (
-          <p className="py-4 text-sm text-slate-600">
+          <p className="py-4 text-sm text-muted-foreground">
             No public projects are currently linked to this center.
           </p>
         ) : null}
@@ -209,17 +209,17 @@ function ProjectPanel({ records }: { records: ResearchProject[] }) {
 
 function PublicationPanel({ records }: { records: ResearchPublication[] }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">Publications</h2>
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">Publications</h2>
       <div className="mt-4 divide-y divide-slate-200">
         {records.slice(0, 6).map((record) => (
           <article key={record.id} className="py-4 first:pt-0 last:pb-0">
-            <h3 className="text-base font-semibold text-slate-950">
+            <h3 className="text-base font-semibold text-foreground">
               <Link href={record.slug ? `/publications/${record.slug}` : "/publications"} className="transition hover:text-primary">
                 {record.title}
               </Link>
             </h3>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-muted-foreground">
               {[record.journal_name, record.year, formatDate(record.publication_date)]
                 .map(compactText)
                 .filter(Boolean)
@@ -228,7 +228,7 @@ function PublicationPanel({ records }: { records: ResearchPublication[] }) {
           </article>
         ))}
         {records.length === 0 ? (
-          <p className="py-4 text-sm text-slate-600">
+          <p className="py-4 text-sm text-muted-foreground">
             No public publications are currently linked to this center.
           </p>
         ) : null}
@@ -246,14 +246,14 @@ function ExploreCenter({ center }: { center: ResearchGenericRecord }) {
   ];
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">Explore next</h2>
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-semibold text-foreground">Explore next</h2>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {links.map((link) => (
           <Link
             key={link.href}
             href={link.href}
-            className="rounded-md border border-slate-200 p-3 text-sm font-semibold text-primary transition hover:border-primary/30 hover:bg-primary/5"
+            className="rounded-md border border-border p-3 text-sm font-semibold text-primary transition hover:border-primary/30 hover:bg-primary/5"
           >
             {link.label}
           </Link>

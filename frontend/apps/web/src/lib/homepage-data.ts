@@ -12,6 +12,7 @@ import {
   researchServiceApi,
   schoolsApi,
   statsApi,
+  storiesApi,
   universityInfoApi,
   type Blog,
   type ContactDirectory,
@@ -22,6 +23,7 @@ import {
   type Programme,
   type PublicStatsResponse,
   type School,
+  type Story,
   type UniversityInfo,
 } from "@ksu/api-client";
 import {
@@ -70,6 +72,15 @@ export type HomeCard = {
   external?: boolean;
   imageUrl?: string | null;
   meta?: string | null;
+};
+
+export type HomeProgrammeCard = HomeCard & {
+  schoolId?: string | null;
+  schoolName?: string | null;
+};
+
+export type HomeSchoolCard = HomeCard & {
+  programmes: HomeProgrammeCard[];
 };
 
 export type HomeLink = {
@@ -124,13 +135,14 @@ export type HomepageData = {
   researchStats: HomeMetric[];
   libraryStats: HomeMetric[];
   priorityActions: HomeCard[];
-  schools: HomeCard[];
+  schools: HomeSchoolCard[];
   viceChancellor: HomeLeader | null;
-  featuredProgrammes: HomeCard[];
+  featuredProgrammes: HomeProgrammeCard[];
   programmesSummary: HomeMetric[];
   activeIntakes: HomeIntake[];
   admissionsActions: HomeCard[];
   latestNews: HomeCard[];
+  featuredStories: HomeCard[];
   upcomingEvents: HomeCard[];
   latestBlog: HomeCard | null;
   serviceLinks: HomeLink[];
@@ -157,35 +169,30 @@ const researchApiBaseUrl = getResearchApiBaseUrl();
 
 const stablePortalLinks: HomeLink[] = [
   {
-    label: "Conferences",
-    href: "https://digital.kisiiuniversity.ac.ke/conferences",
+    label: "HERI",
+    href: "https://kisiiuniversity.ac.ke/event/heri-africa-launch",
     external: true,
   },
   {
-    label: "Tenders",
-    href: "https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders",
+    label: "HUDUMA BORA",
+    href: "https://digital.kisiiuniversity.ac.ke/",
     external: true,
   },
   {
-    label: "Careers",
+    label: "STUDENT PORTAL",
+    href: "https://portal.kisiiuniversity.ac.ke",
+    external: true,
+  },
+  {
+    label: "CAREERS",
     href: "https://digital.kisiiuniversity.ac.ke/job_portal/open_adverts",
     external: true,
   },
   {
-    label: "Help Desk",
-    href: "https://digital.kisiiuniversity.ac.ke/ksu_customer_care_center",
+    label: "CONFERENCES",
+    href: "https://digital.kisiiuniversity.ac.ke/conferences",
     external: true,
   },
-  {
-    label: "Visitors",
-    href: "https://kisiiuniversity.ac.ke/visit_home",
-    external: true,
-  },
-  {
-    label: "Downloads",
-    href: "/downloads",
-  },
-  { label: "FAQ", href: "https://kisiiuniversity.ac.ke/faq", external: true },
 ];
 
 const serviceLinks: HomeLink[] = [
@@ -254,6 +261,10 @@ function firstPhone(contact?: ContactDirectory | null) {
   return phone ?? null;
 }
 
+function isAbortError(error: unknown) {
+  return error instanceof Error && error.name === "AbortError";
+}
+
 async function safe<T>(
   task: Promise<T>,
   fallback: T,
@@ -263,7 +274,7 @@ async function safe<T>(
   try {
     return await task;
   } catch (error) {
-    if (logFailure) {
+    if (logFailure && !isAbortError(error)) {
       console.warn(`Failed to load ${label}:`, error);
     }
     return fallback;
@@ -303,11 +314,30 @@ async function getProgrammesList() {
   const response = await programmesApi.list({
     per_page: 100,
     fields:
-      "id,name,slug,level,mode_of_study,duration,department_name,cover_image_id,display_order",
+      "id,name,slug,level,mode_of_study,duration,department_id,department_name,cover_image_id,display_order",
     include:
-      "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
+      "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title),department(id,name,school_id,school_name,school(id,name,code,slug))",
   });
   return (response.data ?? []) as ProgrammeWithMedia[];
+}
+
+async function getProgrammesBySchool(schools: SchoolWithMedia[]) {
+  const entries = await Promise.all(
+    schools.map(async (school) => {
+      const response = await programmesApi.list({
+        school_id: school.id,
+        per_page: 3,
+        fields:
+          "id,name,slug,level,mode_of_study,duration,department_id,department_name,cover_image_id,display_order",
+        include:
+          "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title),department(id,name,school_id,school_name,school(id,name,code,slug))",
+      });
+
+      return [school.id, normalizeFeaturedProgrammes(response.data ?? [])] as const;
+    }),
+  );
+
+  return new Map(entries);
 }
 
 async function getLatestNews() {
@@ -337,6 +367,17 @@ async function getLatestBlogs() {
     per_page: 1,
     fields:
       "id,title,slug,summary,excerpt,plain_text,category,published_at,author_name,cover_image_id,featured_media_id,created_at",
+  });
+  return response.data ?? [];
+}
+
+async function getFeaturedStories() {
+  const response = await storiesApi.list({
+    is_featured: true,
+    per_page: 4,
+    fields:
+      "id,title,slug,summary,plain_text,story_type,category,published_at,featured_media_id,featured_media,contributor_name_snapshot,created_at",
+    include: "featured_media(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
   });
   return response.data ?? [];
 }
@@ -466,7 +507,10 @@ function schoolBody(school: School) {
   );
 }
 
-function normalizeSchools(schools: SchoolWithMedia[]): HomeCard[] {
+function normalizeSchools(
+  schools: SchoolWithMedia[],
+  programmesBySchool: Map<string, HomeProgrammeCard[]>,
+): HomeSchoolCard[] {
   return schools.map((school) => ({
     id: school.id,
     title: school.name,
@@ -477,12 +521,13 @@ function normalizeSchools(schools: SchoolWithMedia[]): HomeCard[] {
     imageUrl:
       publicMediaUrl(school.cover_image) ??
       publicFileUrl(school.cover_image_id),
+    programmes: programmesBySchool.get(school.id) ?? [],
   }));
 }
 
 function normalizeFeaturedProgrammes(
   programmes: ProgrammeWithMedia[],
-): HomeCard[] {
+): HomeProgrammeCard[] {
   return programmes.slice(0, 24).map((programme) => ({
     id: programme.id,
     title: programme.name,
@@ -501,6 +546,10 @@ function normalizeFeaturedProgrammes(
       publicMediaUrl(programme.cover_image) ??
       publicFileUrl(programme.cover_image_id),
     meta: programme.level,
+    schoolId: present(programme.department?.school_id),
+    schoolName:
+      present(programme.department?.school?.name) ??
+      present(programme.department?.school_name),
   }));
 }
 
@@ -599,6 +648,31 @@ function normalizeBlog(item?: Blog): HomeCard | null {
   };
 }
 
+function normalizeStories(stories: Story[]): HomeCard[] {
+  return stories.map((item) => ({
+    id: item.id,
+    title: item.title,
+    eyebrow: item.category || item.story_type || "Story",
+    body: truncate(
+      plainText(item.summary) ||
+        plainText(item.plain_text) ||
+        "Read a featured story from the Kisii University community.",
+      132,
+    ),
+    href: `/stories/${item.slug}`,
+    action: "Read story",
+    imageUrl:
+      publicMediaUrl(item.featured_media as Partial<Media> | null) ??
+      publicFileUrl(item.featured_media_id),
+    meta: [
+      formatDisplayDate(item.published_at ?? item.created_at),
+      present(item.contributor_name_snapshot),
+    ]
+      .filter(Boolean)
+      .join(" · "),
+  }));
+}
+
 function normalizeIntakes(intakes: Intake[]): HomeIntake[] {
   return intakes
     .filter((item) => item.is_active || item.is_open)
@@ -682,6 +756,7 @@ export async function getHomepageData(): Promise<HomepageData> {
     latestNews,
     upcomingEvents,
     latestBlogs,
+    featuredStories,
     activeIntakes,
     partners,
     homepageStats,
@@ -698,6 +773,7 @@ export async function getHomepageData(): Promise<HomepageData> {
     safe(getLatestNews(), [], "latest news"),
     safe(getUpcomingEvents(), [], "events"),
     safe(getLatestBlogs(), [], "blogs"),
+    safe(getFeaturedStories(), [], "featured stories"),
     safe(getActiveIntakes(), [], "intakes"),
     safe(getResearchPartners(), [], "research partners", false),
     safe(getHomepageStats(), null, "homepage stats", false),
@@ -709,6 +785,13 @@ export async function getHomepageData(): Promise<HomepageData> {
   const contactInfo = buildContactInfo(university, contact);
   const viceChancellorMessage =
     plainText(university?.vc_message) || viceChancellor?.message || null;
+  const featuredProgrammes = normalizeFeaturedProgrammes(programmes);
+  const programmesBySchool = await safe(
+    getProgrammesBySchool(schools),
+    new Map<string, HomeProgrammeCard[]>(),
+    "school programmes",
+    false,
+  );
 
   return {
     hero,
@@ -744,7 +827,7 @@ export async function getHomepageData(): Promise<HomepageData> {
         external: true,
       },
     ],
-    schools: normalizeSchools(schools),
+    schools: normalizeSchools(schools, programmesBySchool),
     viceChancellor: viceChancellor
       ? {
           name: viceChancellor.name,
@@ -752,11 +835,11 @@ export async function getHomepageData(): Promise<HomepageData> {
           image: viceChancellor.image,
           message: viceChancellorMessage,
           href: viceChancellor.slug
-            ? `/people/${viceChancellor.slug}`
+            ? `/staff/${viceChancellor.slug}`
             : "/about/university-management",
         }
       : null,
-    featuredProgrammes: normalizeFeaturedProgrammes(programmes),
+    featuredProgrammes,
     programmesSummary: buildProgrammeSummary(programmes),
     activeIntakes: normalizeIntakes(activeIntakes),
     admissionsActions: [
@@ -780,6 +863,7 @@ export async function getHomepageData(): Promise<HomepageData> {
       },
     ],
     latestNews: normalizeNews(latestNews),
+    featuredStories: normalizeStories(featuredStories),
     upcomingEvents: normalizeEvents(upcomingEvents),
     latestBlog: normalizeBlog(latestBlogs[0]),
     serviceLinks,

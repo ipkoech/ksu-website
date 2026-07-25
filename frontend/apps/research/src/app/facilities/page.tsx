@@ -103,7 +103,7 @@ export default async function FacilitiesPage({
   );
 
   return (
-    <main id="research-main" className="min-h-screen bg-white text-slate-950">
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
       <ResearchPortfolioHero
         eyebrow="Research infrastructure"
         title="Facilities & Labs"
@@ -142,8 +142,8 @@ export default async function FacilitiesPage({
 
         {visibleFacilities.length > 0 ? (
           <>
-            <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-              <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 md:grid">
+            <div className="mt-6 overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+              <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-border bg-surface-subtle px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground md:grid">
                 <span>Facility</span>
                 <span>Type</span>
                 <span>Status</span>
@@ -173,19 +173,19 @@ export default async function FacilitiesPage({
             <Link
               key={service.id}
               href={service.slug ? `/services/${service.slug}` : "/services"}
-              className="block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30"
+              className="block rounded-lg border border-border bg-white p-5 shadow-sm transition hover:border-primary/30"
             >
               <Badge>{formatLabel(service.service_type ?? service.type ?? "service")}</Badge>
-              <h3 className="mt-4 text-xl font-semibold text-slate-950">
+              <h3 className="mt-4 text-xl font-semibold text-foreground">
                 {service.name ?? service.title}
               </h3>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">
                 {compactText(service.summary) ||
                   compactText(service.description) ||
                   compactText(service.how_to_access) ||
                   "Service details will appear when published."}
               </p>
-              <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
+              <p className="mt-5 rounded-md bg-surface-subtle p-3 text-sm font-semibold text-muted-foreground">
                 {compactText(service.turnaround_time) ||
                   compactText(service.contact_email) ||
                   "Access details not published"}
@@ -241,17 +241,17 @@ function FacilityRow({ facility }: { facility: ResearchGenericRecord }) {
   return (
     <Link
       href={href}
-      className="group grid gap-2 px-4 py-3 transition hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
+      className="group grid gap-2 px-4 py-3 transition hover:bg-surface-subtle/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
     >
       <div className="min-w-0">
-        <h2 className="truncate text-sm font-semibold leading-6 text-slate-950 transition group-hover:text-primary">
+        <h2 className="truncate text-sm font-semibold leading-6 text-foreground transition group-hover:text-primary">
           {title}
         </h2>
         {facility.code ? (
-          <p className="mt-0.5 truncate text-xs font-medium text-slate-500">{compactText(facility.code)}</p>
+          <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">{compactText(facility.code)}</p>
         ) : null}
       </div>
-      <div className="text-xs font-medium text-slate-600 md:text-sm">{type}</div>
+      <div className="text-xs font-medium text-muted-foreground md:text-sm">{type}</div>
       <div className="flex flex-wrap items-center gap-2">
         <Badge>{status}</Badge>
         {facility.is_featured ? <FilledBadge>Featured</FilledBadge> : null}

@@ -95,7 +95,7 @@ export default async function LibraryRepositoriesPage() {
                 ]}
               />
               <SidePanel title="Repository access" eyebrow="Integration">
-                <p className="text-sm leading-7 text-slate-600">
+                <p className="text-sm leading-7 text-muted-foreground">
                   The portal currently links to verified repository and research platforms.
                   A deeper repository model can later mirror collections and submissions.
                 </p>

@@ -66,10 +66,10 @@ export default async function ExpertisePage({
           <div className="min-w-0">
             <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
               <div className="pt-1">
-                <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
+                <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground">
                   Expertise Directory
                 </h2>
-                <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
+                <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
                   Search researchers by name, role, department, specialization, or research interests.
                 </p>
               </div>
@@ -116,7 +116,7 @@ export default async function ExpertisePage({
                 { label: "Consultancies", href: "/consultancies", body: "Professional research services" },
               ]}
             />
-            <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <aside className="rounded-lg border border-border bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Work with our experts</p>
               <div className="mt-3 divide-y divide-slate-200">
                 {[
@@ -129,19 +129,19 @@ export default async function ExpertisePage({
                       {index + 1}
                     </span>
                     <div>
-                      <p className="text-sm font-semibold text-slate-950">{title}</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">{body}</p>
+                      <p className="text-sm font-semibold text-foreground">{title}</p>
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground">{body}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </aside>
             {themes.length ? (
-              <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <aside className="rounded-lg border border-border bg-white p-4 shadow-sm">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Expertise themes</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {themes.slice(0, 12).map((theme) => (
-                    <span key={theme} className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                    <span key={theme} className="rounded-md border border-border bg-surface-subtle px-2.5 py-1 text-xs font-semibold text-muted-foreground">
                       {theme}
                     </span>
                   ))}
@@ -226,7 +226,7 @@ function ExpertiseCard({ person }: { person: Person }) {
     <ExpertiseDetailSheet person={person}>
       <button
         type="button"
-        className="group flex min-h-[230px] w-full flex-col rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+        className="group flex min-h-[230px] w-full flex-col rounded-lg border border-border bg-white p-4 text-left shadow-sm transition hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
       >
         <div className="flex items-start gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">
@@ -238,17 +238,17 @@ function ExpertiseCard({ person }: { person: Person }) {
             )}
           </div>
           <div className="min-w-0">
-            <h3 className="line-clamp-2 text-base font-semibold leading-6 text-slate-950 group-hover:text-primary">
+            <h3 className="line-clamp-2 text-base font-semibold leading-6 text-foreground group-hover:text-primary">
               {name}
             </h3>
             {role ? <p className="mt-1 line-clamp-1 text-xs font-semibold text-primary">{role}</p> : null}
           </div>
         </div>
         {department ? (
-          <p className="mt-3 line-clamp-1 text-xs font-medium text-slate-500">{department}</p>
+          <p className="mt-3 line-clamp-1 text-xs font-medium text-muted-foreground">{department}</p>
         ) : null}
         {person.specialization || person.bio ? (
-          <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">
+          <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">
             {compactText(person.specialization) || compactText(person.bio)}
           </p>
         ) : null}
@@ -259,7 +259,7 @@ function ExpertiseCard({ person }: { person: Person }) {
             ))}
           </div>
         ) : null}
-        <div className="mt-auto flex items-center justify-between gap-3 pt-4 text-xs text-slate-500">
+        <div className="mt-auto flex items-center justify-between gap-3 pt-4 text-xs text-muted-foreground">
           <span>{person.publications_count ? `${person.publications_count} publications` : "Research profile"}</span>
           <span className="inline-flex items-center gap-1 font-semibold text-primary">
             View profile

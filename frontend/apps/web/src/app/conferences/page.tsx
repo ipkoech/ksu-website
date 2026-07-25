@@ -44,7 +44,7 @@ export default async function ConferencesPage() {
 
   return (
     <PageShell>
-      <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_70%,#f6f8fc_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <section className="w-full bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_70%,hsl(var(--surface-muted))_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mx-auto max-w-4xl">
           <BreadcrumbTrail
             items={[
@@ -57,10 +57,10 @@ export default async function ConferencesPage() {
             <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
               Conferences
             </p>
-            <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-slate-950 sm:text-5xl">
+            <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-foreground sm:text-5xl">
               Conferences and calls
             </h1>
-            <p className="mt-5 max-w-3xl text-base leading-7 text-slate-600 sm:text-lg">
+            <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">
               Find conference events, calls for papers, registration links, and
               multidisciplinary engagement opportunities.
             </p>
@@ -70,10 +70,10 @@ export default async function ConferencesPage() {
             <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
               Conference records
             </p>
-            <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl text-slate-950 sm:text-4xl">
+            <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl text-foreground sm:text-4xl">
               Published conference events
             </h2>
-            <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
+            <p className="mt-4 text-base leading-7 text-muted-foreground sm:text-lg">
               {hasEvents
                 ? "These records are loaded from published event data."
                 : "No conference events were returned. Use the official conference portal for current calls and registration."}
@@ -86,17 +86,17 @@ export default async function ConferencesPage() {
                 <Link
                   key={event.id}
                   href={`/media/events/${event.slug}`}
-                  className="group block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md"
+                  className="group block rounded-lg border border-border bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md"
                 >
-                  <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold text-slate-950 group-hover:text-primary">
+                  <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold text-foreground group-hover:text-primary">
                     {event.title}
                   </h3>
                   {event.summary && (
-                    <p className="mt-2 text-sm leading-6 text-slate-600 line-clamp-2">
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground line-clamp-2">
                       {event.summary}
                     </p>
                   )}
-                  <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-500">
+                  <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1.5">
                       <CalendarDays
                         className="h-3.5 w-3.5 text-primary"
@@ -120,10 +120,10 @@ export default async function ConferencesPage() {
           )}
 
           <div className="mt-14 rounded-lg border border-primary/20 bg-primary/5 p-6 sm:p-8">
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Open conference portal
             </h2>
-            <p className="mt-3 text-base leading-7 text-slate-600">
+            <p className="mt-3 text-base leading-7 text-muted-foreground">
               Visit the official Kisii University digital conference portal for
               current calls for papers, registration, and ongoing conference
               activities.

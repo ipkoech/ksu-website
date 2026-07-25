@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   BadgeCheck,
   Bell,
   BookOpen,
@@ -16,15 +17,18 @@ import {
   Leaf,
   Library,
   LinkIcon,
+  Mail,
   Megaphone,
   MessageSquare,
   Newspaper,
   PanelsTopLeft,
+  PenLine,
   Rocket,
   ScrollText,
   Settings,
   ShieldCheck,
   Sprout,
+  Target,
   Trophy,
   UserCheck,
   Users,
@@ -35,6 +39,7 @@ import {
   blogsApi,
   academicCalendarsApi,
   contactsApi,
+  clubsApi,
   departmentServicesApi,
   departmentsApi,
   divisionsApi,
@@ -46,12 +51,14 @@ import {
   libraryServiceApi,
   mediaApi,
   newsApi,
+  newslettersApi,
   personsApi,
   programmesApi,
   researchServiceApi,
-  schoolsApi,
   slidersApi,
+  statsApi,
   staffApi,
+  storiesApi,
   testimonialsApi,
   usersApi,
   wingsApi,
@@ -59,6 +66,7 @@ import {
   type Announcement,
   type Blog,
   type Board,
+  type Club,
   type ContactDirectory,
   type Department,
   type DepartmentService,
@@ -87,6 +95,8 @@ import {
   type Media,
   type MediaFolder,
   type News,
+  type Newsletter,
+  type NewsletterSubscriber,
   type Person,
   type Programme,
   type ResearchGenericPayload,
@@ -97,10 +107,10 @@ import {
   type ResearchProjectPayload,
   type ResearchPublication,
   type ResearchPublicationPayload,
-  type School,
   type Slider,
   type SliderGroup,
   type StaffAssignment,
+  type Story,
   type Testimonial,
   type User,
   type Wing,
@@ -115,6 +125,7 @@ import type {
   EditableField,
   EditableListFilter,
 } from "@/components/dashboard/editable-service-resource-page";
+import { contentAttachmentRoles } from "@/components/content/content-attachment-roles";
 
 const pageParams = { page: 1, per_page: 50 };
 const countParams = { page: 1, per_page: 1, fields: "id" };
@@ -123,15 +134,41 @@ function statCount(value?: number) {
   return { data: [], meta: { total: Number(value ?? 0) } };
 }
 
+async function mainPortalCount(
+  portal: "admin" | "corporate-communication" | "schools" | "departments",
+  key: string,
+) {
+  const response = await statsApi.portal(portal);
+  const value = response.data.stats[key];
+  if (typeof value !== "number") {
+    throw new Error(`Missing ${key} portal statistic`);
+  }
+  return statCount(value);
+}
+
 async function researchAdminCount(key: string) {
   const response = await researchServiceApi.adminStats();
-  const item = response.data.stats.find((stat) => stat.key === key);
+  const remoteKeys: Record<string, string> = {
+    active_projects_count: "active_projects",
+    grants_count: "grants",
+    centres_count: "centres",
+    outputs_count: "outputs",
+  };
+  const item = response.data.stats.find((stat) => stat.key === remoteKeys[key]);
+  if (!item) throw new Error(`Missing ${key} research statistic`);
   return statCount(Number(item?.value ?? 0));
 }
 
 async function libraryAdminCount(key: string) {
   const response = await libraryServiceApi.adminStats();
-  const item = response.data.stats.find((stat) => stat.key === key);
+  const remoteKeys: Record<string, string> = {
+    active_branches_count: "active_branches",
+    catalogue_resources_count: "catalogue_resources",
+    active_regulations_count: "active_regulations",
+    loans_count: "loans",
+  };
+  const item = response.data.stats.find((stat) => stat.key === remoteKeys[key]);
+  if (!item) throw new Error(`Missing ${key} library statistic`);
   return statCount(Number(item?.value ?? 0));
 }
 
@@ -147,8 +184,17 @@ const statusOptions = [
 const contentStatusOptions = [
   { label: "Draft", value: "draft" },
   { label: "Under Review", value: "under_review" },
+  { label: "Scheduled", value: "scheduled" },
   { label: "Published", value: "published" },
   { label: "Archived", value: "archived" },
+];
+
+const newsletterSendStatusOptions = [
+  { label: "Draft", value: "draft" },
+  { label: "Scheduled", value: "scheduled" },
+  { label: "Sending", value: "sending" },
+  { label: "Sent", value: "sent" },
+  { label: "Failed", value: "failed" },
 ];
 
 const contactStatusOptions = [
@@ -198,7 +244,8 @@ type PortalEntityScope =
   | "wing"
   | "division"
   | "university"
-  | "administration";
+  | "administration"
+  | "contact-directory";
 
 const portalScopeConfigs = [
   {
@@ -228,6 +275,61 @@ const portalScopeConfigs = [
   },
 ];
 
+const contactOwnerConfigs = [
+  {
+    value: "university",
+    label: "University",
+    adapter: "staffEntity" as const,
+    filters: { entity_type: "university" },
+    recordRequired: false,
+  },
+  {
+    value: "division",
+    label: "Division",
+    adapter: "contactOwner" as const,
+    filters: { entity_type: "division" },
+  },
+  {
+    value: "directorate",
+    label: "Directorate",
+    adapter: "contactOwner" as const,
+    filters: { entity_type: "directorate" },
+  },
+  {
+    value: "wing",
+    label: "Office / Wing",
+    adapter: "contactOwner" as const,
+    filters: { entity_type: "wing" },
+  },
+  {
+    value: "school",
+    label: "School / Faculty",
+    adapter: "contactOwner" as const,
+    filters: { entity_type: "school" },
+  },
+  {
+    value: "department",
+    label: "Department",
+    adapter: "contactOwner" as const,
+    filters: { entity_type: "department" },
+  },
+];
+
+const contactTypeOptions = [
+  { label: "Main Office", value: "main" },
+  { label: "Admissions", value: "admissions" },
+  { label: "Academic Affairs", value: "academic_affairs" },
+  { label: "Finance", value: "finance" },
+  { label: "Examinations", value: "examinations" },
+  { label: "Student Support", value: "support" },
+  { label: "Student Affairs / Life", value: "student_life" },
+  { label: "ICT", value: "ict" },
+  { label: "Library", value: "library" },
+  { label: "Research", value: "research" },
+  { label: "Security / Emergency", value: "security" },
+  { label: "General", value: "general" },
+];
+
 function normalizeScopePayload(
   values: PortalPayload,
   fallbackScopeType?: string,
@@ -252,7 +354,55 @@ function validateScopeValues(values: PortalPayload) {
   return errors;
 }
 
+function validateContactOwnerValues(values: PortalPayload) {
+  const errors: Record<string, string> = {};
+  const ownerTypes = new Set(contactOwnerConfigs.map((config) => config.value));
+  if (!ownerTypes.has(String(values.scope_type ?? ""))) {
+    errors.scope = "Choose the university, office, school, or department that owns this contact.";
+  } else if (values.scope_type !== "university" && !values.scope_id) {
+    errors.scope = "Choose the specific organizational owner for this contact.";
+  }
+  return errors;
+}
+
+function normalizeContactPayload(values: PortalPayload) {
+  const { scope: _scope, search: _search, ...payload } = values;
+  const normalizedPhone = splitList(values.phone);
+  const phone = Array.isArray(normalizedPhone)
+    ? normalizedPhone.map((item) => String(item).trim()).filter(Boolean)
+    : normalizedPhone;
+
+  return {
+    ...payload,
+    ...normalizeScopePayload(values),
+    phone: Array.isArray(phone) && phone.length === 0 ? null : phone,
+    contact_person_id: normalizeText(values.contact_person_id),
+    is_main: values.is_main ?? false,
+    is_public: values.is_public ?? true,
+    status: values.status || "active",
+  };
+}
+
 function scopeEntityFields(scopeType?: PortalEntityScope): EditableField[] {
+  if (scopeType === "contact-directory") {
+    return [
+      {
+        name: "scope",
+        label: "Organizational Owner",
+        type: "entity-record",
+        entityRecord: {
+          typeName: "scope_type",
+          idName: "scope_id",
+          configs: contactOwnerConfigs,
+          description:
+            "Attach this contact to the university, a division or directorate, an office or wing, a school, or a department.",
+          typePlaceholder: "Select owner type",
+          recordPlaceholder: "Select organizational owner",
+          allowNone: false,
+        },
+      },
+    ];
+  }
   if (scopeType === "administration") {
     return [
       {
@@ -413,7 +563,7 @@ function scopeEntityFilters(scopeType?: PortalEntityScope): EditableListFilter[]
 function faqFields(scopeType?: PortalEntityScope): EditableField[] {
   return [
   { name: "question", label: "Question", required: true },
-  { name: "answer", label: "Answer", type: "textarea" as const },
+  { name: "answer_rich_text", label: "Answer", type: "richtext" as const, sourceNames: ["answer_rich_text", "answer_plain_text", "answer"] },
   { name: "category", label: "Category" },
   ...scopeEntityFields(scopeType),
   {
@@ -426,6 +576,13 @@ function faqFields(scopeType?: PortalEntityScope): EditableField[] {
   { name: "is_main", label: "Main Site", type: "boolean" as const },
   { name: "is_public", label: "Public", type: "boolean" as const },
   ];
+}
+
+function faqPayload(values: PortalPayload) {
+  return {
+    ...values,
+    answer_plain_text: plainTextFromRichText(values.answer_rich_text),
+  };
 }
 
 function contactFields(scopeType?: PortalEntityScope): EditableField[] {
@@ -677,14 +834,33 @@ function splitList(value: unknown) {
   return items.length ? items : null;
 }
 
+function plainTextFromRichText(value: unknown) {
+  if (typeof value !== "string") return value;
+  const withoutBlocks = value
+    .replace(/<\/(p|div|li|h[1-6]|blockquote)>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n");
+  return (
+    withoutBlocks
+      .replace(/<[^>]*>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/[ \t]+\n/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim() || null
+  );
+}
+
 function commonContentPayload(values: PortalPayload, scopeType?: string) {
   return {
     title: values.title,
     slug: values.slug,
-    excerpt: values.excerpt,
-    content: values.content,
-    status: values.status || "draft",
-    is_published: values.is_published,
+    summary: values.excerpt,
+    plain_text: plainTextFromRichText(values.content),
+    rich_text: values.content,
     is_featured: values.is_featured,
     is_main: values.is_main ?? !scopeType,
     scope_type: scopeType ?? values.scope_type,
@@ -704,14 +880,8 @@ function contentFields(
       placeholder: "Public title",
     },
     { name: "slug", label: "Slug", placeholder: "public-title" },
-    { name: "excerpt", label: "Excerpt", type: "textarea" as const },
-    { name: "content", label: "Content", type: "textarea" as const },
-    {
-      name: "status",
-      label: "Status",
-      type: "select" as const,
-      options: contentStatusOptions,
-    },
+    { name: "excerpt", label: "Excerpt", type: "textarea" as const, sourceNames: ["summary"] },
+    { name: "content", label: "Content", type: "richtext" as const, sourceNames: ["rich_text", "plain_text"] },
     ...(scopeType === "school"
       ? [
           {
@@ -741,16 +911,40 @@ function contentFields(
     {
       name: "featured_media_id",
       label: "Featured Image",
-      type: "entity" as const,
-      relation: {
-        adapter: "media" as const,
-        filters: { media_type: "image" },
-        allowClear: true,
+      type: "media" as const,
+      media: {
+        mediaType: "image",
+        accept: "image/*",
+        helperText: "Choose or upload a public image for cards, previews, and featured placements.",
+        isPublic: true,
       },
     },
-    { name: "is_published", label: "Published", type: "boolean" as const },
-    { name: "is_featured", label: "Featured", type: "boolean" as const },
+    { name: "is_featured", label: "Featured", type: "boolean" as const, defaultValue: false },
   ];
+}
+
+function eventFields(
+  scopeType?: "school" | "department" | "research" | "corporate",
+) {
+  return [
+    ...contentFields(scopeType),
+    { name: "start_date", label: "Start Date", type: "datetime-local" as const, required: true },
+    { name: "end_date", label: "End Date", type: "datetime-local" as const },
+    { name: "location", label: "Location" },
+    { name: "is_virtual", label: "Virtual Event", type: "boolean" as const, defaultValue: false },
+    { name: "meeting_link", label: "Meeting Link", type: "url" as const },
+  ];
+}
+
+function commonEventPayload(values: PortalPayload, scopeType?: string) {
+  return {
+    ...commonContentPayload(values, scopeType),
+    start_date: values.start_date,
+    end_date: values.end_date,
+    location: normalizeText(values.location),
+    is_virtual: values.is_virtual ?? false,
+    meeting_link: normalizeText(values.meeting_link),
+  };
 }
 
 function contentResource<TRecord extends PortalRecord>({
@@ -766,6 +960,8 @@ function contentResource<TRecord extends PortalRecord>({
   unpublish,
   scopeType,
   manageScopes,
+  fields,
+  buildPayload,
 }: {
   key: string;
   title: string;
@@ -779,6 +975,8 @@ function contentResource<TRecord extends PortalRecord>({
   unpublish?: (id: string) => Promise<unknown>;
   scopeType?: "school" | "department" | "research" | "corporate";
   manageScopes: string[];
+  fields?: EditableField[];
+  buildPayload?: (values: PortalPayload) => PortalPayload;
 }): PortalResourceConfig<TRecord, PortalPayload> {
   return {
     key,
@@ -794,7 +992,7 @@ function contentResource<TRecord extends PortalRecord>({
             allowedScopeTypes: [scopeType],
           }
         : undefined,
-    fields: contentFields(scopeType),
+    fields: fields ?? contentFields(scopeType),
     listFilters: [
       {
         name: "status",
@@ -840,7 +1038,7 @@ function contentResource<TRecord extends PortalRecord>({
             {
               label: "Publish",
               successMessage: `${title} published`,
-              payload: () => ({ is_published: true, status: "published" }),
+              payload: {},
               run: () => publish(record.id),
               confirmTitle: `Publish ${title.toLowerCase()}?`,
               confirmDescription: `This will publish "${titleOf(record)}" to its public-facing portal surface.`,
@@ -849,7 +1047,7 @@ function contentResource<TRecord extends PortalRecord>({
               label: "Unpublish",
               variant: "outline",
               successMessage: `${title} unpublished`,
-              payload: () => ({ is_published: false, status: "draft" }),
+              payload: {},
               run: () => unpublish(record.id),
               confirmTitle: `Unpublish ${title.toLowerCase()}?`,
               confirmDescription: `This will remove "${titleOf(record)}" from public visibility.`,
@@ -860,11 +1058,13 @@ function contentResource<TRecord extends PortalRecord>({
     getRecordMeta: (record) =>
       metaOf(record, ["status", "published_at", "updated_at"]),
     emptyMessage: `No ${title.toLowerCase()} records were returned.`,
-    buildPayload: (values) =>
-      commonContentPayload(
-        values,
-        scopeType === "corporate" ? undefined : scopeType,
-      ),
+    buildPayload:
+      buildPayload ??
+      ((values) =>
+        commonContentPayload(
+          values,
+          scopeType === "corporate" ? undefined : scopeType,
+        )),
     viewScopes: ["content.view", ...manageScopes],
     manageScopes,
     deleteScopes: ["content.publish", ...manageScopes],
@@ -877,6 +1077,8 @@ function administrationContentResource<TRecord extends PortalRecord>({
   description,
   api,
   manageScopes,
+  fields,
+  buildPayload,
 }: {
   key: string;
   title: string;
@@ -890,6 +1092,8 @@ function administrationContentResource<TRecord extends PortalRecord>({
     unpublish: (id: string) => Promise<unknown>;
   };
   manageScopes: string[];
+  fields?: EditableField[];
+  buildPayload?: (values: PortalPayload) => PortalPayload;
 }): PortalResourceConfig<TRecord, PortalPayload> {
   return {
     key,
@@ -902,7 +1106,7 @@ function administrationContentResource<TRecord extends PortalRecord>({
       idField: "scope_id",
       allowedScopeTypes: ["university", "division", "wing", "department"],
     },
-    fields: [...contentFields(), ...scopeEntityFields("administration")],
+    fields: fields ?? [...contentFields(), ...scopeEntityFields("administration")],
     listFilters: [
       {
         name: "status",
@@ -922,7 +1126,7 @@ function administrationContentResource<TRecord extends PortalRecord>({
         label: record.is_published ? "Unpublish" : "Publish",
         variant: record.is_published ? "outline" : undefined,
         successMessage: record.is_published ? "Unpublished" : "Published",
-        payload: { is_published: !record.is_published },
+        payload: {},
         run: record.is_published
           ? (item) => api.unpublish(item.id)
           : (item) => api.publish(item.id),
@@ -936,11 +1140,13 @@ function administrationContentResource<TRecord extends PortalRecord>({
     getRecordMeta: (record) =>
       metaOf(record, ["scope_type", "status", "is_published", "updated_at"]),
     emptyMessage: `No ${title.toLowerCase()} records were returned.`,
-    buildPayload: (values) => ({
-      ...commonContentPayload(values),
-      ...normalizeScopePayload(values),
-      is_main: values.is_main ?? values.scope_type === "university",
-    }),
+    buildPayload:
+      buildPayload ??
+      ((values) => ({
+        ...commonContentPayload(values),
+        ...normalizeScopePayload(values),
+        is_main: values.is_main ?? values.scope_type === "university",
+      })),
     validate: validateScopeValues,
     viewScopes: ["administration.view", "office.view", "content.view"],
     manageScopes,
@@ -1345,6 +1551,12 @@ const administrationResources: Record<string, PortalResourceConfig<any, any>> = 
       "Manage events, deadlines, and public calendars for administrative offices.",
     api: eventsApi,
     manageScopes: ["office.manage_content", "administration.manage_content", "content.manage_events"],
+    fields: [...eventFields(), ...scopeEntityFields("administration")],
+    buildPayload: (values) => ({
+      ...commonEventPayload(values),
+      ...normalizeScopePayload(values),
+      is_main: values.is_main ?? values.scope_type === "university",
+    }),
   }),
   documents: {
     ...governanceResources.documents,
@@ -1412,7 +1624,7 @@ const administrationResources: Record<string, PortalResourceConfig<any, any>> = 
       metaOf(record, ["scope_type", "category", "status", "updated_at"]),
     emptyMessage: "No office FAQs were returned.",
     buildPayload: (values) => ({
-      ...values,
+      ...faqPayload(values),
       ...normalizeScopePayload(values),
       status: values.status || "published",
     }),
@@ -1458,41 +1670,6 @@ const administrationResources: Record<string, PortalResourceConfig<any, any>> = 
 };
 
 const schoolResources: Record<string, PortalResourceConfig<any, any>> = {
-  profiles: {
-    key: "profiles",
-    title: "School Profiles",
-    description:
-      "Manage school mini-site profiles, codes, descriptions, and publication state.",
-    backHref: "/schools",
-    queryKey: ["schools", "profiles"],
-    portalScope: {
-      allowedScopeTypes: ["school"],
-      stampPayload: false,
-      lockedCanCreate: false,
-    },
-    fields: [
-      { name: "name", label: "School Name", required: true },
-      { name: "slug", label: "Slug" },
-      { name: "code", label: "Code" },
-      { name: "description", label: "Description", type: "textarea" },
-      { name: "school_type", label: "School Type" },
-      { name: "email", label: "Email", type: "email" },
-      { name: "phone", label: "Phone" },
-      { name: "is_active", label: "Active", type: "boolean" },
-      { name: "is_public", label: "Public", type: "boolean" },
-    ],
-    listFilters: yesNoFilters,
-    list: (filters) => schoolsApi.listAdmin({ ...pageParams, ...filters }),
-    create: (payload) => schoolsApi.create(payload),
-    update: (id, payload) => schoolsApi.update(id, payload),
-    delete: (id) => schoolsApi.delete(id),
-    getRecordTitle: (record) => record.name,
-    getRecordMeta: (record) =>
-      metaOf(record, ["code", "school_type", "updated_at"]),
-    emptyMessage: "No schools were returned.",
-    viewScopes: ["academic.view", "academic.manage_schools"],
-    manageScopes: ["academic.manage_schools"],
-  } as PortalResourceConfig<School>,
   departments: {
     key: "departments",
     title: "School Departments",
@@ -1759,6 +1936,8 @@ const schoolResources: Record<string, PortalResourceConfig<any, any>> = {
     publish: (id) => eventsApi.publish(id),
     unpublish: (id) => eventsApi.unpublish(id),
     manageScopes: ["content.manage_events", "academic.manage_schools"],
+    fields: eventFields("school"),
+    buildPayload: (values) => commonEventPayload(values, "school"),
   }),
   validation: {
     key: "validation",
@@ -2127,6 +2306,8 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
     publish: (id) => eventsApi.publish(id),
     unpublish: (id) => eventsApi.unpublish(id),
     manageScopes: ["content.manage_events", "academic.manage_departments"],
+    fields: eventFields("department"),
+    buildPayload: (values) => commonEventPayload(values, "department"),
   }),
   resources: {
     ...governanceResources.documents,
@@ -2232,7 +2413,7 @@ const departmentalResources: Record<string, PortalResourceConfig<any, any>> = {
       metaOf(record, ["category", "status", "updated_at"]),
     emptyMessage: "No department FAQs were returned.",
     buildPayload: (values) => ({
-      ...values,
+      ...faqPayload(values),
       scope_type: "department",
       status: values.status || "published",
     }),
@@ -2305,6 +2486,54 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     publish: (id) => blogsApi.publish(id),
     unpublish: (id) => blogsApi.unpublish(id),
     manageScopes: ["content.manage_blogs", "content.publish"],
+    buildPayload: (values) => ({
+      ...commonContentPayload(values),
+      excerpt: values.excerpt,
+    }),
+  }),
+  stories: contentResource<Story>({
+    key: "stories",
+    title: "Stories",
+    description:
+      "Manage public stories and reviewed community submissions.",
+    backHref: "/corporate-communication",
+    scopeType: "corporate",
+    list: (filters) =>
+      storiesApi.listAdmin({ ...pageParams, is_main: true, ...filters }),
+    create: (payload) => storiesApi.create(payload),
+    update: (id, payload) => storiesApi.update(id, payload),
+    remove: (id) => storiesApi.delete(id),
+    manageScopes: ["content.manage_stories", "content.publish"],
+    fields: [
+      ...contentFields("corporate"),
+      {
+        name: "story_type",
+        label: "Story Type",
+        type: "select",
+        options: [
+          { label: "Article", value: "article" },
+          { label: "Student Story", value: "student_story" },
+          { label: "Staff Story", value: "staff_story" },
+          { label: "Partner Story", value: "partner_story" },
+          { label: "Community Impact", value: "community_impact" },
+        ],
+        defaultValue: "article",
+      },
+      { name: "category", label: "Category" },
+      { name: "is_featured", label: "Featured", type: "boolean" },
+      { name: "featured_until", label: "Featured Until", type: "datetime-local" },
+      { name: "homepage_priority", label: "Homepage Priority", type: "number" },
+    ],
+    buildPayload: (values) => ({
+      ...commonContentPayload(values),
+      story_type: values.story_type || "article",
+      category: values.category,
+      is_featured: Boolean(values.is_featured),
+      featured_until: values.featured_until || null,
+      homepage_priority: Number(values.homepage_priority || 100),
+      source_type: "internal",
+      consent_to_publish: true,
+    }),
   }),
   notices: contentResource<Announcement>({
     key: "notices",
@@ -2335,6 +2564,8 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     publish: (id) => eventsApi.publish(id),
     unpublish: (id) => eventsApi.unpublish(id),
     manageScopes: ["content.manage_events", "content.publish"],
+    fields: eventFields("corporate"),
+    buildPayload: (values) => commonEventPayload(values),
   }),
   "homepage-features": {
     key: "homepage-features",
@@ -2346,9 +2577,15 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       { name: "name", label: "Name", required: true },
       { name: "slug", label: "Slug" },
       { name: "location", label: "Location" },
-      { name: "description", label: "Description", type: "textarea" },
-      { name: "is_main", label: "Main", type: "boolean" },
-      { name: "is_active", label: "Active", type: "boolean" },
+      { name: "is_main", label: "Main", type: "boolean", defaultValue: true },
+      { name: "is_public", label: "Public", type: "boolean", defaultValue: true },
+      { name: "is_active", label: "Active", type: "boolean", defaultValue: true },
+      { name: "max_slides", label: "Maximum Slides", type: "number" },
+      { name: "auto_play", label: "Auto Play", type: "boolean", defaultValue: false },
+      { name: "auto_play_duration", label: "Auto Play Duration (ms)", type: "number" },
+      { name: "show_navigation_dots", label: "Navigation Dots", type: "boolean", defaultValue: true },
+      { name: "show_arrows", label: "Arrows", type: "boolean", defaultValue: true },
+      { name: "transition_effect", label: "Transition Effect" },
     ],
     listFilters: [
       { name: "is_main", label: "Main", type: "boolean" },
@@ -2386,18 +2623,37 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       },
       { name: "title", label: "Title", required: true },
       { name: "subtitle", label: "Subtitle" },
-      { name: "description", label: "Description", type: "textarea" },
-      { name: "button_text", label: "Button Text" },
-      { name: "button_url", label: "Button URL", type: "url" },
-      { name: "link_url", label: "Link URL", type: "url" },
+      { name: "rich_text", label: "Slide Copy", type: "richtext", sourceNames: ["rich_text", "plain_text"] },
       {
-        name: "status",
-        label: "Status",
-        type: "select",
-        options: contentStatusOptions,
+        name: "desktop_media_id",
+        label: "Desktop Image",
+        type: "media",
+        media: {
+          mediaType: "image",
+          accept: "image/*",
+          helperText: "Choose or upload the main desktop slide image.",
+          isPublic: true,
+        },
       },
+      {
+        name: "mobile_media_id",
+        label: "Mobile Image",
+        type: "media",
+        media: {
+          mediaType: "image",
+          accept: "image/*",
+          helperText: "Optional mobile-specific slide image.",
+          isPublic: true,
+        },
+      },
+      { name: "link_text", label: "Link Text" },
+      { name: "external_url", label: "External Link", type: "url" },
+      { name: "open_in_new_tab", label: "Open Link in New Tab", type: "boolean", defaultValue: false },
+      { name: "start_datetime", label: "Start Date", type: "datetime-local" },
+      { name: "end_datetime", label: "End Date", type: "datetime-local" },
       { name: "display_order", label: "Display Order", type: "number" },
-      { name: "is_active", label: "Active", type: "boolean" },
+      { name: "is_main", label: "Main Site", type: "boolean", defaultValue: true },
+      { name: "is_active", label: "Active", type: "boolean", defaultValue: true },
     ],
     listFilters: [
       {
@@ -2428,24 +2684,12 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     delete: (id) => slidersApi.deleteSlider(id),
     getRecordTitle: titleOf,
     getRecordMeta: (record) =>
-      metaOf(record, ["status", "display_order", "updated_at"]),
-    getRecordWorkflowActions: () => [
-      {
-        label: "Publish",
-        successMessage: "Slider item published",
-        payload: { status: "published", is_active: true },
-      },
-      {
-        label: "Archive",
-        variant: "outline",
-        successMessage: "Slider item archived",
-        payload: { status: "archived", is_active: false },
-      },
-    ],
+      metaOf(record, ["workflow_status", "display_order", "updated_at"]),
     emptyMessage: "No homepage slider items were returned.",
     buildPayload: (values) => ({
       ...values,
-      status: values.status || "draft",
+      plain_text: plainTextFromRichText(values.rich_text),
+      is_main: values.is_main ?? true,
       display_order: values.display_order ?? 0,
     }),
     viewScopes: ["marketing.view", "marketing.manage_sliders"],
@@ -2556,7 +2800,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       metaOf(record, ["category", "status", "updated_at"]),
     emptyMessage: "No public FAQs were returned.",
     buildPayload: (values) => ({
-      ...values,
+      ...faqPayload(values),
       is_main: values.is_main ?? true,
       status: values.status || "published",
     }),
@@ -2570,29 +2814,208 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       "Manage public contact directory entries for corporate communication.",
     backHref: "/corporate-communication",
     queryKey: ["corporate", "contacts"],
-    fields: contactFields(),
+    fields: contactFields("contact-directory"),
     listFilters: [
+      {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search contacts, email, location, or extension",
+      },
+      {
+        name: "scope_type",
+        label: "Owner Type",
+        type: "select",
+        options: contactOwnerConfigs.map((config) => ({
+          label: config.label,
+          value: config.value,
+        })),
+      },
+      {
+        name: "contact_type",
+        label: "Contact Type",
+        type: "select",
+        options: contactTypeOptions,
+      },
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        options: contactStatusOptions,
+      },
       { name: "is_public", label: "Public", type: "boolean" },
       { name: "is_main", label: "Main Site", type: "boolean" },
     ],
-    list: (filters) =>
-      contactsApi.listAdmin({ ...pageParams, is_main: true, ...filters }),
+    list: (filters) => {
+      const { search: _search, ...params } = filters ?? {};
+      return contactsApi.listAdmin({
+        ...pageParams,
+        ...params,
+        q: typeof filters?.search === "string" ? filters.search : undefined,
+      });
+    },
     create: (payload) => contactsApi.create(payload),
     update: (id, payload) => contactsApi.update(id, payload),
+    viewInEditor: true,
     getRecordTitle: (record) => record.name,
     getRecordMeta: (record) =>
-      metaOf(record, ["contact_type", "email", "status"]),
+      metaOf(record, [
+        "scope_type",
+        "contact_type",
+        "email",
+        "building",
+        "status",
+      ]),
     emptyMessage: "No contact entries were returned.",
-    buildPayload: (values) => ({
-      ...values,
-      phone: splitList(values.phone),
-      is_main: values.is_main ?? true,
-      status: values.status || "active",
-    }),
+    buildPayload: (values) => normalizeContactPayload(values),
+    validate: validateContactOwnerValues,
     viewScopes: ["content.view"],
     manageScopes: ["support.manage_contacts", "content.manage_pages", "content.publish"],
     canDelete: false,
   } as PortalResourceConfig<ContactDirectory>,
+  newsletters: {
+    key: "newsletters",
+    title: "Newsletters",
+    description:
+      "Create newsletter editions, keep drafts, publish them publicly, and schedule subscriber sends.",
+    backHref: "/corporate-communication",
+    queryKey: ["corporate", "newsletters"],
+    fields: [
+      { name: "title", label: "Title", required: true },
+      { name: "slug", label: "Slug" },
+      { name: "edition", label: "Edition" },
+      { name: "summary", label: "Summary", type: "textarea" },
+      { name: "content", label: "Newsletter Body", type: "richtext" },
+      {
+        name: "cover_image_id",
+        label: "Cover Image",
+        type: "media",
+        media: {
+          mediaType: "image",
+          accept: "image/*",
+          helperText: "Optional public cover image for the newsletter edition.",
+          isPublic: true,
+        },
+      },
+      {
+        name: "pdf_file_id",
+        label: "PDF File",
+        type: "media",
+        media: {
+          mediaType: "document",
+          accept: "application/pdf",
+          helperText: "Optional downloadable PDF edition.",
+          isPublic: true,
+        },
+      },
+      {
+        name: "status",
+        label: "Public Status",
+        type: "select",
+        options: contentStatusOptions,
+        defaultValue: "draft",
+      },
+      {
+        name: "published_at",
+        label: "Publish Date",
+        type: "datetime-local",
+      },
+      {
+        name: "scheduled_send_at",
+        label: "Scheduled Send Time",
+        type: "datetime-local",
+        helpText: "Used by newsletter delivery automation when dispatch is enabled.",
+      },
+      {
+        name: "send_status",
+        label: "Send Status",
+        type: "select",
+        options: newsletterSendStatusOptions,
+        defaultValue: "draft",
+      },
+      { name: "is_public", label: "Public", type: "boolean", defaultValue: true },
+    ],
+    listFilters: [
+      { name: "status", label: "Public Status", type: "select", options: contentStatusOptions },
+    ],
+    list: (filters) =>
+      newslettersApi.listAdmin({
+        ...pageParams,
+        fields:
+          "id,title,slug,edition,summary,status,is_public,published_at,scheduled_send_at,sent_at,send_status,send_error,cover_image_id,pdf_file_id,created_at,updated_at",
+        include: "cover_image:id,title,public_url,thumbnail_url,media_type,mime_type;pdf_file:id,title,public_url,media_type,mime_type",
+        ...filters,
+      }),
+    create: (payload) => newslettersApi.create(payload),
+    update: (id, payload) => newslettersApi.update(id, payload),
+    delete: (id) => newslettersApi.delete(id),
+    getRecordTitle: (record) => record.title,
+    getRecordMeta: (record) =>
+      [
+        record.edition,
+        record.status,
+        record.scheduled_send_at
+          ? `Scheduled ${new Date(record.scheduled_send_at).toLocaleString()}`
+          : null,
+        record.sent_at ? `Sent ${new Date(record.sent_at).toLocaleString()}` : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    emptyMessage: "No newsletter editions were returned.",
+    buildPayload: (values) => {
+      const hasSchedule = Boolean(values.scheduled_send_at);
+      return {
+        ...values,
+        status: values.status || (hasSchedule ? "scheduled" : "draft"),
+        send_status: values.send_status || (hasSchedule ? "scheduled" : "draft"),
+        is_public: values.is_public ?? true,
+      };
+    },
+    viewScopes: ["marketing.view", "marketing.manage_newsletters"],
+    manageScopes: ["marketing.manage_newsletters"],
+  } as PortalResourceConfig<Newsletter>,
+  "newsletter-subscribers": {
+    key: "newsletter-subscribers",
+    title: "Newsletter Subscribers",
+    description:
+      "View the public website audience subscribed to university updates.",
+    backHref: "/corporate-communication",
+    queryKey: ["corporate", "newsletter-subscribers"],
+    fields: [],
+    listFilters: [
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        options: [
+          { label: "Active", value: "active" },
+          { label: "Unsubscribed", value: "unsubscribed" },
+        ],
+      },
+    ],
+    list: (filters) => newslettersApi.listSubscribers({ ...pageParams, ...filters }),
+    create: async () => undefined,
+    update: async () => undefined,
+    getRecordTitle: (record) => record.email,
+    getRecordMeta: (record) =>
+      [
+        record.name,
+        record.frequency,
+        record.categories?.join(", "),
+        record.subscribed_at
+          ? `Subscribed ${new Date(record.subscribed_at).toLocaleDateString()}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    emptyMessage: "No newsletter subscribers were returned.",
+    viewScopes: ["marketing.view", "marketing.manage_newsletters"],
+    manageScopes: ["marketing.manage_newsletters"],
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    readOnlyMessage: "Subscribers are created from the public website subscription form.",
+  } as PortalResourceConfig<NewsletterSubscriber>,
   testimonials: {
     key: "testimonials",
     title: "Testimonials",
@@ -2633,6 +3056,606 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     viewScopes: ["content.view"],
     manageScopes: ["content.manage", "content.publish"],
   } as PortalResourceConfig<Testimonial>,
+};
+
+const adminResources: Record<string, PortalResourceConfig<any, any>> = {
+  council: {
+    ...governanceResources.council,
+    backHref: "/admin",
+    queryKey: ["admin", "council"],
+  },
+  divisions: {
+    ...administrationResources.divisions,
+    backHref: "/admin",
+    queryKey: ["admin", "divisions"],
+  },
+  offices: {
+    ...administrationResources.offices,
+    backHref: "/admin",
+    queryKey: ["admin", "offices"],
+  },
+  "staff-assignments": {
+    ...administrationResources["staff-assignments"],
+    backHref: "/admin",
+    queryKey: ["admin", "staff-assignments"],
+  },
+  news: {
+    ...administrationResources.news,
+    backHref: "/admin",
+    queryKey: ["admin", "news"],
+  },
+  notices: {
+    ...administrationResources.notices,
+    backHref: "/admin",
+    queryKey: ["admin", "notices"],
+  },
+  events: {
+    ...administrationResources.events,
+    backHref: "/admin",
+    queryKey: ["admin", "events"],
+  },
+  documents: {
+    ...administrationResources.documents,
+    backHref: "/admin",
+    queryKey: ["admin", "documents"],
+  },
+  faqs: {
+    ...administrationResources.faqs,
+    backHref: "/admin",
+    queryKey: ["admin", "faqs"],
+  },
+  contacts: {
+    ...administrationResources.contacts,
+    backHref: "/admin",
+    queryKey: ["admin", "contacts"],
+  },
+};
+
+const _cocmsResources: Record<string, PortalResourceConfig<any, any>> =
+  Object.fromEntries(
+    Object.entries(corporateResources).map(([key, resource]) => [
+      key,
+      {
+        ...resource,
+        backHref: "/cocms",
+        queryKey: ["cocms", key],
+      },
+    ]),
+  );
+
+function requiredClubId(values?: PortalPayload) {
+  if (typeof values?.club_id === "string" && values.club_id) return values.club_id;
+  if (typeof values?.entity_id === "string" && values.entity_id) return values.entity_id;
+  throw new Error("Select a club scope before managing this resource.");
+}
+
+function withoutClubId(values: PortalPayload) {
+  const { club_id: _clubId, ...payload } = values;
+  return payload;
+}
+
+function clubDraftSubmitAction(
+  label: string,
+  submit: (id: string) => Promise<unknown>,
+) {
+  return (record: PortalRecord) =>
+    record.workflow_status === "draft" || record.workflow_status === "changes_requested"
+      ? [
+          {
+            label: "Submit for CoCMS Review",
+            successMessage: `Club ${label} submitted for CoCMS review`,
+            payload: {},
+            run: (item: PortalRecord) => submit(item.id),
+            confirmTitle: `Submit club ${label} for review?`,
+            confirmDescription: `CoCMS approval is required before "${titleOf(record)}" can be public.`,
+          },
+        ]
+      : [];
+}
+
+const studentClubResources: Record<string, PortalResourceConfig<any, any>> = {
+  profiles: {
+    key: "profiles",
+    title: "Club Profiles",
+    description:
+      "Manage student club identity, officers, contacts, meeting details, and public profile status.",
+    backHref: "/student-clubs",
+    queryKey: ["student-clubs", "profiles"],
+    fields: [
+      { name: "name", label: "Club Name", required: true },
+      { name: "slug", label: "Slug" },
+      {
+        name: "club_type",
+        label: "Club Type",
+        type: "select",
+        options: [
+          { label: "Academic", value: "academic" },
+          { label: "Professional", value: "professional" },
+          { label: "Sports", value: "sports" },
+          { label: "Culture", value: "culture" },
+          { label: "Faith", value: "faith" },
+          { label: "Service", value: "service" },
+          { label: "Other", value: "other" },
+        ],
+      },
+      { name: "about", label: "About", type: "textarea" },
+      { name: "mission", label: "Mission", type: "textarea" },
+      { name: "objectives", label: "Objectives", type: "textarea" },
+      { name: "email", label: "Email", type: "email" },
+      { name: "phone", label: "Phone" },
+      { name: "meeting_schedule", label: "Meeting Schedule" },
+      { name: "membership_fee", label: "Membership Fee", type: "number" },
+      {
+        name: "logo_id",
+        label: "Logo",
+        type: "entity",
+        relation: {
+          adapter: "media",
+          filters: { media_type: "image" },
+          allowClear: true,
+        },
+      },
+      {
+        name: "cover_image_id",
+        label: "Cover Image",
+        type: "entity",
+        relation: {
+          adapter: "media",
+          filters: { media_type: "image" },
+          allowClear: true,
+        },
+      },
+    ],
+    listFilters: [
+      {
+        name: "club_type",
+        label: "Club Type",
+        type: "select",
+        options: [
+          { label: "Academic", value: "academic" },
+          { label: "Professional", value: "professional" },
+          { label: "Sports", value: "sports" },
+          { label: "Culture", value: "culture" },
+          { label: "Faith", value: "faith" },
+          { label: "Service", value: "service" },
+          { label: "Other", value: "other" },
+        ],
+      },
+      { name: "is_active", label: "Active", type: "boolean" },
+    ],
+    list: (filters) =>
+      clubsApi.listManaged({
+        ...pageParams,
+        club_id: typeof filters?.club_id === "string" ? filters.club_id : undefined,
+      }),
+    create: (payload) => clubsApi.create(payload),
+    update: (id, payload) => {
+      const { club_id: _clubId, ...data } = payload;
+      return clubsApi.update(id, data);
+    },
+    getRecordTitle: (record) => record.name,
+    getRecordMeta: (record) =>
+      metaOf(record, ["club_type", "membership_count", "is_public"]),
+    emptyMessage: "No student clubs were returned.",
+    buildPayload: (values) => ({
+      ...values,
+      club_type: values.club_type || "other",
+    }),
+    viewScopes: ["clubs.view", "clubs.manage_own", "admin:*"],
+    manageScopes: ["clubs.manage_own", "admin:*"],
+    deleteScopes: ["admin:*"],
+    canCreate: false,
+    canDelete: false,
+    portalScope: {
+      idField: "club_id",
+      allowedScopeTypes: ["club"],
+    },
+  } as PortalResourceConfig<Club>,
+  events: {
+    key: "events",
+    title: "Club Events",
+    description: "Create club events as drafts and submit them to CoCMS for publication review.",
+    backHref: "/student-clubs",
+    queryKey: ["student-clubs", "events"],
+    fields: [
+      { name: "title", label: "Title", required: true },
+      { name: "slug", label: "Slug" },
+      { name: "activity_type", label: "Event Type", required: true },
+      { name: "description", label: "Description", type: "textarea" },
+      { name: "start_datetime", label: "Starts", type: "datetime-local", required: true },
+      { name: "end_datetime", label: "Ends", type: "datetime-local" },
+      { name: "location", label: "Location" },
+      { name: "is_virtual", label: "Virtual Event", type: "boolean" },
+      { name: "meeting_link", label: "Meeting Link", type: "url" },
+      {
+        name: "cover_image_id",
+        label: "Cover Image",
+        type: "entity",
+        relation: { adapter: "media", filters: { media_type: "image" }, allowClear: true },
+      },
+      {
+        name: "attachments",
+        label: "Attachments",
+        type: "attachments",
+        attachments: {
+          entityType: "club_activity",
+          roles: contentAttachmentRoles,
+          isPublic: false,
+          allowVisibilityChange: false,
+          uploadEntityType: "club",
+          uploadEntityIdField: "club_id",
+        },
+      },
+    ],
+    list: (filters) => clubsApi.listManagedActivities(requiredClubId(filters)),
+    create: (payload) => clubsApi.createActivity(requiredClubId(payload), withoutClubId(payload)),
+    update: (id, payload) => clubsApi.updateActivity(id, withoutClubId(payload)),
+    delete: (id) => clubsApi.deleteActivity(id),
+    getRecordWorkflowActions: (record) =>
+      record.workflow_status === "draft" || record.workflow_status === "changes_requested"
+        ? [
+            {
+              label: "Submit for CoCMS Review",
+              successMessage: "Club event submitted for CoCMS review",
+              payload: {},
+              run: (item) => clubsApi.submitActivity(item.id),
+              confirmTitle: "Submit club event for review?",
+              confirmDescription: `CoCMS approval is required before "${titleOf(record)}" can be public.`,
+            },
+          ]
+        : [],
+    getRecordTitle: titleOf,
+    getRecordMeta: (record) => metaOf(record, ["activity_type", "workflow_status", "start_datetime"]),
+    emptyMessage: "No club events are available for this club.",
+    buildPayload: (values) => ({ ...values, activity_type: values.activity_type || "event" }),
+    viewScopes: ["clubs.view", "clubs.manage_own", "admin:*"],
+    manageScopes: ["clubs.events_manage", "clubs.manage_own", "admin:*"],
+    portalScope: { idField: "club_id", allowedScopeTypes: ["club"] },
+  },
+  stories: {
+    key: "stories",
+    title: "Club Stories",
+    description: "Draft club stories and submit them to CoCMS before public visibility.",
+    backHref: "/student-clubs",
+    queryKey: ["student-clubs", "stories"],
+    fields: [
+      { name: "title", label: "Title", required: true },
+      { name: "slug", label: "Slug", required: true },
+      { name: "excerpt", label: "Excerpt", type: "textarea" },
+      { name: "summary", label: "Summary", type: "textarea" },
+      { name: "plain_text", label: "Story", type: "richtext" },
+      {
+        name: "featured_media_id",
+        label: "Featured Media",
+        type: "entity",
+        relation: { adapter: "media", allowClear: true },
+      },
+      {
+        name: "attachments",
+        label: "Attachments",
+        type: "attachments",
+        attachments: {
+          entityType: "blog",
+          roles: contentAttachmentRoles,
+          isPublic: false,
+          allowVisibilityChange: false,
+          uploadEntityType: "club",
+          uploadEntityIdField: "club_id",
+        },
+      },
+    ],
+    list: (filters) => clubsApi.listStories(requiredClubId(filters)),
+    create: (payload) => clubsApi.createStory(requiredClubId(payload), withoutClubId(payload)),
+    update: (id, payload) => clubsApi.updateStory(id, withoutClubId(payload)),
+    delete: (id) => clubsApi.deleteStory(id),
+    getRecordWorkflowActions: clubDraftSubmitAction("story", (id) => clubsApi.submitStory(id)),
+    getRecordTitle: titleOf,
+    getRecordMeta: (record) => metaOf(record, ["workflow_status", "updated_at"]),
+    emptyMessage: "No club stories are available for this club.",
+    viewScopes: ["clubs.view", "clubs.manage_own", "admin:*"],
+    manageScopes: ["clubs.stories_manage", "clubs.manage_own", "admin:*"],
+    portalScope: { idField: "club_id", allowedScopeTypes: ["club"] },
+  },
+  announcements: {
+    key: "announcements",
+    title: "Club Announcements",
+    description: "Prepare club announcements for CoCMS approval before public publication.",
+    backHref: "/student-clubs",
+    queryKey: ["student-clubs", "announcements"],
+    fields: [
+      { name: "title", label: "Title", required: true },
+      { name: "slug", label: "Slug", required: true },
+      { name: "summary", label: "Summary", type: "textarea" },
+      { name: "plain_text", label: "Announcement", type: "richtext" },
+      {
+        name: "priority",
+        label: "Priority",
+        type: "select",
+        options: [
+          { label: "Low", value: "low" },
+          { label: "Normal", value: "normal" },
+          { label: "High", value: "high" },
+        ],
+      },
+      { name: "audience", label: "Audience" },
+      {
+        name: "attachments",
+        label: "Attachments",
+        type: "attachments",
+        attachments: {
+          entityType: "announcement",
+          roles: contentAttachmentRoles,
+          isPublic: false,
+          allowVisibilityChange: false,
+          uploadEntityType: "club",
+          uploadEntityIdField: "club_id",
+        },
+      },
+    ],
+    list: (filters) => clubsApi.listAnnouncements(requiredClubId(filters)),
+    create: (payload) => clubsApi.createAnnouncement(requiredClubId(payload), withoutClubId(payload)),
+    update: (id, payload) => clubsApi.updateAnnouncement(id, withoutClubId(payload)),
+    delete: (id) => clubsApi.deleteAnnouncement(id),
+    getRecordWorkflowActions: clubDraftSubmitAction("announcement", (id) => clubsApi.submitAnnouncement(id)),
+    getRecordTitle: titleOf,
+    getRecordMeta: (record) => metaOf(record, ["priority", "workflow_status", "updated_at"]),
+    emptyMessage: "No club announcements are available for this club.",
+    buildPayload: (values) => ({ ...values, priority: values.priority || "normal", audience: values.audience || "all" }),
+    viewScopes: ["clubs.view", "clubs.manage_own", "admin:*"],
+    manageScopes: ["clubs.stories_manage", "clubs.manage_own", "admin:*"],
+    portalScope: { idField: "club_id", allowedScopeTypes: ["club"] },
+  },
+  gallery: {
+    key: "gallery",
+    title: "Club Gallery",
+    description: "Attach club images and videos for internal review and managed publication.",
+    backHref: "/student-clubs",
+    queryKey: ["student-clubs", "gallery"],
+    fields: [
+      {
+        name: "media_id",
+        label: "Media",
+        type: "media",
+        required: true,
+        media: {
+          uploadEntityType: "club",
+          uploadEntityIdField: "club_id",
+          uploadRole: "gallery",
+          isPublic: false,
+          allowUpload: true,
+          helperText: "Club gallery uploads remain private until CoCMS publishes them.",
+        },
+      },
+      {
+        name: "role",
+        label: "Role",
+        type: "select",
+        options: [
+          { label: "Gallery Image", value: "gallery" },
+          { label: "Video", value: "video" },
+          { label: "Cover", value: "cover" },
+        ],
+      },
+      { name: "display_order", label: "Display Order", type: "number" },
+    ],
+    list: (filters) => clubsApi.listMedia(requiredClubId(filters)),
+    create: (payload) => clubsApi.attachMedia(requiredClubId(payload), withoutClubId(payload)),
+    update: (id, payload) => clubsApi.updateMedia(requiredClubId(payload), id, withoutClubId(payload)),
+    getRecordWorkflowActions: (record) => {
+      const mediaTitle = record.media?.title || record.media?.filename || "club media";
+      const status = record.workflow_status || record.status || "draft";
+      const actions: ReturnType<NonNullable<PortalResourceConfig["getRecordWorkflowActions"]>> = [];
+      if (status === "draft" || status === "changes_requested" || status === "rejected" || status === "unpublished") {
+        actions.push({
+          label: "Submit Media",
+          scopes: ["clubs.content_submit", "clubs.manage_own"],
+          successMessage: "Club media submitted for CoCMS review",
+          payload: {},
+          run: (item: PortalRecord) => clubsApi.transitionMedia(requiredClubId(item), item.id, "submit"),
+          confirmTitle: "Submit club media?",
+          confirmDescription: `CoCMS approval is required before "${mediaTitle}" can be public.`,
+        });
+      }
+      if (status === "submitted") {
+        actions.push({
+          label: "Start Review",
+          scopes: ["content.review", "content.manage"],
+          successMessage: "Club media review started",
+          payload: {},
+          run: (item: PortalRecord) => clubsApi.transitionMedia(requiredClubId(item), item.id, "start_review"),
+          confirmTitle: "Start club media review?",
+          confirmDescription: `Begin CoCMS review for "${mediaTitle}".`,
+        });
+      }
+      if (status === "in_review") {
+        actions.push({
+          label: "Approve Media",
+          scopes: ["content.review", "content.manage"],
+          successMessage: "Club media approved",
+          payload: {},
+          run: (item: PortalRecord) => clubsApi.transitionMedia(requiredClubId(item), item.id, "approve"),
+          confirmTitle: "Approve club media?",
+          confirmDescription: `"${mediaTitle}" can be published after approval.`,
+        });
+        actions.push({
+          label: "Request Changes",
+          scopes: ["content.review", "content.manage"],
+          variant: "outline" as const,
+          successMessage: "Changes requested for club media",
+          payload: {},
+          run: (item: PortalRecord) => clubsApi.transitionMedia(requiredClubId(item), item.id, "request_changes"),
+          confirmTitle: "Request changes?",
+          confirmDescription: `Return "${mediaTitle}" to the club for revision.`,
+        });
+        actions.push({
+          label: "Reject Media",
+          scopes: ["content.review", "content.manage"],
+          variant: "destructive" as const,
+          successMessage: "Club media rejected",
+          payload: {},
+          run: (item: PortalRecord) => clubsApi.transitionMedia(requiredClubId(item), item.id, "reject"),
+          confirmTitle: "Reject club media?",
+          confirmDescription: `"${mediaTitle}" will not be published.`,
+        });
+      }
+      if (status === "approved" || status === "scheduled") {
+        if (status === "approved") {
+          actions.push({
+            label: "Schedule Media",
+            scopes: ["content.publish", "content.manage"],
+            variant: "outline" as const,
+            successMessage: "Club media scheduled",
+            mode: "sheet" as const,
+            fields: [{ name: "scheduled_for", label: "Publish At", type: "datetime-local", required: true }],
+            payload: {},
+            buildPayload: (values) => ({ scheduled_for: values.scheduled_for }),
+            run: (item: PortalRecord, payload) => clubsApi.transitionMedia(requiredClubId(item), item.id, "schedule", payload ?? {}),
+            confirmTitle: "Schedule club media?",
+            confirmDescription: `Set a publication time for "${mediaTitle}".`,
+          });
+        }
+        actions.push({
+          label: "Publish Media",
+          scopes: ["content.publish", "content.manage"],
+          successMessage: "Club media published",
+          payload: {},
+          run: (item: PortalRecord) => clubsApi.transitionMedia(requiredClubId(item), item.id, "publish"),
+          confirmTitle: "Publish club media?",
+          confirmDescription: `This makes "${mediaTitle}" available for public gallery use.`,
+        });
+      }
+      if (status === "published") {
+        actions.push({
+          label: "Unpublish Media",
+          scopes: ["content.publish", "content.manage"],
+          variant: "outline" as const,
+          successMessage: "Club media unpublished",
+          payload: {},
+          run: (item: PortalRecord) => clubsApi.transitionMedia(requiredClubId(item), item.id, "unpublish"),
+          confirmTitle: "Unpublish club media?",
+          confirmDescription: `This removes "${mediaTitle}" from public visibility.`,
+        });
+      }
+      if (status !== "archived") {
+        actions.push({
+          label: "Archive Media",
+          scopes: ["content.review", "content.publish", "content.manage"],
+          variant: "outline" as const,
+          successMessage: "Club media archived",
+          payload: {},
+          run: (item: PortalRecord) => clubsApi.transitionMedia(requiredClubId(item), item.id, "archive"),
+          confirmTitle: "Archive club media?",
+          confirmDescription: `"${mediaTitle}" will be removed from the active review workflow.`,
+        });
+      }
+      return actions;
+    },
+    getRecordTitle: (record) => record.media?.title || record.media?.filename || "Club media",
+    getRecordMeta: (record) => metaOf(record, ["role", "workflow_status", "is_public", "display_order"]),
+    emptyMessage: "No images or videos are attached to this club.",
+    buildPayload: (values) => ({ ...values, role: values.role || "gallery", display_order: values.display_order ?? 100 }),
+    viewScopes: ["clubs.view", "clubs.manage_own", "admin:*"],
+    manageScopes: ["clubs.manage_own", "admin:*"],
+    canDelete: false,
+    portalScope: { idField: "club_id", allowedScopeTypes: ["club"] },
+  },
+  leaders: {
+    key: "leaders",
+    title: "Club Leaders",
+    description: "View the active club officers recorded through person assignments.",
+    backHref: "/student-clubs",
+    queryKey: ["student-clubs", "leaders"],
+    fields: [],
+    list: (filters) => clubsApi.listLeaders(requiredClubId(filters)),
+    create: async () => undefined,
+    update: async () => undefined,
+    getRecordTitle: (record) => record.name || "Club leader",
+    getRecordMeta: (record) => metaOf(record, ["role", "title"]),
+    emptyMessage: "No active leaders are assigned to this club.",
+    viewScopes: ["clubs.view", "clubs.manage_own", "admin:*"],
+    manageScopes: ["clubs.manage_own", "admin:*"],
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    portalScope: { idField: "club_id", allowedScopeTypes: ["club"] },
+  },
+};
+
+const corporateCommunicationResources: Record<string, PortalResourceConfig<any, any>> = {
+  ...corporateResources,
+  ["student-clubs"]: {
+    ...studentClubResources.profiles,
+    key: "student-clubs",
+    title: "Student Club Submissions",
+    description:
+      "Review student club profiles and scoped content submitted for Corporate Communication approval.",
+    backHref: "/corporate-communication",
+    queryKey: ["corporate-communication", "student-clubs"],
+    viewScopes: ["content.review", "clubs.view", "clubs.manage_own", "admin:*"],
+    manageScopes: ["content.review", "content.manage", "admin:*"],
+    canCreate: false,
+    canDelete: false,
+  },
+};
+
+const corporateResourceHrefs: Record<string, string> = {
+  news: "/corporate-communication/newsroom/news",
+  "press-releases": "/corporate-communication/newsroom/press-releases",
+  stories: "/corporate-communication/stories",
+  notices: "/corporate-communication/newsroom/notices",
+  events: "/corporate-communication/newsroom/events",
+  "homepage-features": "/corporate-communication/website/homepage-features",
+  sliders: "/corporate-communication/media/sliders",
+  "media-folders": "/corporate-communication/media/folders",
+  "media-assets": "/corporate-communication/media/assets",
+  faqs: "/corporate-communication/engagement/faqs",
+  contacts: "/corporate-communication/engagement/contacts",
+  newsletters: "/corporate-communication/engagement/newsletters",
+  "newsletter-subscribers": "/corporate-communication/engagement/newsletter-subscribers",
+  testimonials: "/corporate-communication/engagement/testimonials",
+  "student-clubs": "/corporate-communication/student-life/club-submissions",
+};
+
+for (const [key, href] of Object.entries(corporateResourceHrefs)) {
+  if (corporateCommunicationResources[key]) {
+    corporateCommunicationResources[key] = {
+      ...corporateCommunicationResources[key],
+      href,
+      viewInEditor: true,
+    };
+  }
+}
+
+const corporateResourceRouteAliases: Record<string, string> = {
+  newsroom: "news",
+  news: "news",
+  "press-releases": "press-releases",
+  notices: "notices",
+  events: "events",
+  "homepage-features": "homepage-features",
+  sliders: "sliders",
+  "media-folders": "media-folders",
+  "media-assets": "media-assets",
+  faqs: "faqs",
+  contacts: "contacts",
+  newsletters: "newsletters",
+  "newsletter-subscribers": "newsletter-subscribers",
+  testimonials: "testimonials",
+  "student-clubs": "student-clubs",
+  "newsroom/news": "news",
+  "newsroom/press-releases": "press-releases",
+  "newsroom/notices": "notices",
+  "newsroom/events": "events",
+  "website/homepage-features": "homepage-features",
+  "media/sliders": "sliders",
+  "media/folders": "media-folders",
+  "media/assets": "media-assets",
+  "engagement/faqs": "faqs",
+  "engagement/contacts": "contacts",
+  "engagement/newsletters": "newsletters",
+  "engagement/newsletter-subscribers": "newsletter-subscribers",
+  "engagement/testimonials": "testimonials",
+  "student-life/club-submissions": "student-clubs",
 };
 
 async function firstSliderGroupId() {
@@ -5177,7 +6200,7 @@ function libraryGenericResource<
   };
 }
 
-const publicationResources: Record<string, PortalResourceConfig<any, any>> = {
+const _publicationResources: Record<string, PortalResourceConfig<any, any>> = {
   submissions: publicationResource(
     "submissions",
     "My Submissions",
@@ -5479,266 +6502,163 @@ function publicationResource(
 }
 
 export const portalConfigs: Record<string, PortalConfig> = {
-  "institutional-administration": {
-    key: "institutional-administration",
-    title: "Institutional Administration Portal",
-    shortTitle: "Administration",
+  admin: {
+    key: "admin",
+    title: "Admin Portal",
+    shortTitle: "Admin",
     description:
-      "VC office, DVC divisions, registrar offices, directorates, administrative wings, documents, services, contacts, and staff assignments.",
+      "Governance, institutional administration, offices, policies, staff assignments, and academic administration coordination.",
     service: "main",
-    baseHref: "/institutional-administration",
-    icon: Building2,
+    baseHref: "/admin",
+    icon: Landmark,
     accentClassName: "text-sky-700 bg-sky-50 border-sky-100",
     nav: [
       {
         title: "Dashboard",
-        href: "/institutional-administration",
+        href: "/admin",
         icon: PanelsTopLeft,
-        scope: "administration.view",
+        scope: ["governance.view", "administration.view", "office.view"],
+      },
+      {
+        title: "University Council",
+        href: "/admin/university-council",
+        icon: Landmark,
+        scope: "governance.manage_boards",
+      },
+      {
+        title: "University Management",
+        href: "/admin/university-management",
+        icon: Landmark,
+        scope: "governance.manage_boards",
       },
       {
         title: "DVC Divisions",
-        href: "/institutional-administration/divisions",
+        href: "/admin/divisions",
         icon: Building2,
-        scope: "administration.manage_units",
+        scope: ["administration.manage_units", "governance.manage_divisions"],
       },
       {
         title: "Registrar Offices",
-        href: "/institutional-administration/offices",
-        icon: Landmark,
+        href: "/admin/offices",
+        icon: Building2,
         scope: ["office.view", "office.manage_content"],
       },
       {
         title: "Staff Assignments",
-        href: "/institutional-administration/staff-assignments",
+        href: "/admin/staff-assignments",
         icon: UserCheck,
-        scope: ["office.manage_staff", "staff.view_assignments"],
+        scope: ["staff.view_assignments", "staff.manage_assignments", "office.manage_staff"],
       },
       {
         title: "Office News",
-        href: "/institutional-administration/news",
+        href: "/admin/news",
         icon: Newspaper,
         scope: ["office.manage_content", "content.manage_news"],
       },
       {
         title: "Office Notices",
-        href: "/institutional-administration/notices",
+        href: "/admin/notices",
         icon: Megaphone,
         scope: ["office.manage_content", "content.manage_announcements"],
       },
       {
         title: "Office Events",
-        href: "/institutional-administration/events",
+        href: "/admin/events",
         icon: CalendarDays,
         scope: ["office.manage_content", "content.manage_events"],
       },
       {
-        title: "Documents & Media",
-        href: "/institutional-administration/documents",
+        title: "Documents & Policies",
+        href: "/admin/documents",
         icon: ScrollText,
-        scope: ["office.manage_content", "administration.manage_content", "policy.view"],
+        scope: ["policy.view", "policy.manage", "office.manage_content"],
       },
       {
         title: "Office FAQs",
-        href: "/institutional-administration/faqs",
+        href: "/admin/faqs",
         icon: ClipboardCheck,
         scope: ["office.manage_content", "support.manage_faqs"],
       },
       {
         title: "Office Contacts",
-        href: "/institutional-administration/contacts",
+        href: "/admin/contacts",
         icon: Users,
         scope: ["office.manage_content", "support.manage_contacts"],
       },
-    ],
-    dashboard: dashboard(
-      "Institutional Administration",
-      "Manage administrative offices with scoped ownership instead of one shared governance workspace.",
-      [
-        stat(
-          "DVC Divisions",
-          "Divisions and directorates",
-          "/institutional-administration/divisions",
-          Building2,
-          ["administration.view"],
-          ["institutional-administration", "divisions"],
-          () => divisionsApi.listAdmin(countParams),
-        ),
-        stat(
-          "Registrar Offices",
-          "Wings and offices",
-          "/institutional-administration/offices",
-          Landmark,
-          ["office.view"],
-          ["institutional-administration", "offices"],
-          () => wingsApi.listAdmin(countParams),
-        ),
-        stat(
-          "Assignments",
-          "Office staff roles",
-          "/institutional-administration/staff-assignments",
-          UserCheck,
-          ["staff.view_assignments"],
-          ["institutional-administration", "staff"],
-          () => staffApi.listAssignments({ entity_type: "division" }),
-        ),
-        stat(
-          "Office News",
-          "Scoped updates",
-          "/institutional-administration/news",
-          Newspaper,
-          ["office.view"],
-          ["institutional-administration", "news"],
-          () => newsApi.listAdmin({ ...countParams }),
-        ),
-        stat(
-          "Office Notices",
-          "Scoped announcements",
-          "/institutional-administration/notices",
-          Megaphone,
-          ["office.view"],
-          ["institutional-administration", "notices"],
-          () => announcementsApi.listAdmin({ ...countParams }),
-        ),
-        stat(
-          "Office Events",
-          "Scoped calendar",
-          "/institutional-administration/events",
-          CalendarDays,
-          ["office.view"],
-          ["institutional-administration", "events"],
-          () => eventsApi.listAdmin({ ...countParams }),
-        ),
-        stat(
-          "Documents",
-          "Office files",
-          "/institutional-administration/documents",
-          ScrollText,
-          ["office.view"],
-          ["institutional-administration", "documents"],
-          () => documentsApi.listAdmin({ ...countParams }),
-        ),
-        stat(
-          "Office FAQs",
-          "Public help content",
-          "/institutional-administration/faqs",
-          ClipboardCheck,
-          ["office.view"],
-          ["institutional-administration", "faqs"],
-          () => faqsApi.listAdmin({ ...countParams }),
-        ),
-        stat(
-          "Office Contacts",
-          "Public contact entries",
-          "/institutional-administration/contacts",
-          Users,
-          ["office.view"],
-          ["institutional-administration", "contacts"],
-          () => contactsApi.listAdmin({ ...countParams }),
-        ),
-      ],
-      administrationResources,
-      [
-        "administration.manage_units",
-        "office.manage_content",
-        "office.manage_staff",
-      ],
-    ),
-    resources: administrationResources,
-  },
-  governance: {
-    key: "governance",
-    title: "Governance Portal",
-    shortTitle: "Governance",
-    description:
-      "Council, UMB, DVCs, registrars, deputy registrars, policies, and governance approvals.",
-    service: "main",
-    baseHref: "/governance",
-    icon: Landmark,
-    accentClassName: "text-blue-700 bg-blue-50 border-blue-100",
-    nav: [
       {
-        title: "Dashboard",
-        href: "/governance",
-        icon: PanelsTopLeft,
-        scope: "governance.view",
-      },
-      {
-        title: "Council & Boards",
-        href: "/governance/council",
-        icon: Landmark,
-        scope: "governance.manage_boards",
-      },
-      {
-        title: "Divisions",
-        href: "/governance/divisions",
-        icon: Building2,
-        scope: ["governance.manage_divisions", "organization.manage_divisions"],
-      },
-      {
-        title: "Division Wings",
-        href: "/governance/wings",
-        icon: Building2,
-        scope: ["governance.manage_divisions", "organization.manage_divisions"],
-      },
-      {
-        title: "Staff Assignments",
-        href: "/governance/staff-assignments",
-        icon: UserCheck,
-        scope: "staff.manage_assignments",
-      },
-      {
-        title: "Policies & Documents",
-        href: "/governance/documents",
-        icon: ScrollText,
-        scope: ["policy.manage", "policy.view"],
+        title: "Public Inquiries",
+        href: "/admin/inquiries",
+        icon: MessageSquare,
+        scope: "admin:*",
       },
     ],
     dashboard: dashboard(
-      "Governance Dashboard",
-      "Manage leadership structures, governance documents, and approval state.",
+      "Admin Dashboard",
+      "Manage university governance and institutional administration from one workspace.",
       [
         stat(
-          "Council & Boards",
-          "Governance bodies",
-          "/governance/council",
+          "University Council",
+          "Council workspace",
+          "/admin/university-council",
           Landmark,
-          ["governance.view"],
-          ["governance", "boards"],
-          () => governanceApi.listBoards(),
+          ["governance.view", "administration.view"],
+          ["admin", "portal-stats", "boards_count"],
+          () => mainPortalCount("admin", "boards_count"),
+        ),
+        stat(
+          "University Management",
+          "Management workspace",
+          "/admin/university-management",
+          Landmark,
+          ["governance.view", "administration.view"],
+          ["admin", "portal-stats", "boards_count"],
+          () => mainPortalCount("admin", "boards_count"),
         ),
         stat(
           "Divisions",
           "Administrative divisions",
-          "/governance/divisions",
+          "/admin/divisions",
           Building2,
-          ["governance.view"],
-          ["governance", "divisions"],
-          () => divisionsApi.listAdmin(countParams),
+          ["administration.view", "governance.view"],
+          ["admin", "portal-stats", "divisions_count"],
+          () => mainPortalCount("admin", "divisions_count"),
         ),
         stat(
-          "Documents",
-          "Policies and charters",
-          "/governance/documents",
-          ScrollText,
-          ["policy.view"],
-          ["governance", "documents"],
-          () => documentsApi.listAdmin({ ...countParams, scope_type: "governance" }),
+          "Offices",
+          "Registrar and service offices",
+          "/admin/offices",
+          Building2,
+          ["office.view", "administration.view"],
+          ["admin", "portal-stats", "offices_count"],
+          () => mainPortalCount("admin", "offices_count"),
         ),
         stat(
           "Assignments",
-          "Leadership assignments",
-          "/governance/staff-assignments",
+          "Leadership and office roles",
+          "/admin/staff-assignments",
           UserCheck,
           ["staff.view_assignments"],
-          ["governance", "staff"],
-          () => staffApi.listAssignments({ entity_type: "board" }),
+          ["admin", "portal-stats", "staff_assignments_count"],
+          () => mainPortalCount("admin", "staff_assignments_count"),
+        ),
+        stat(
+          "Documents",
+          "Policies and office files",
+          "/admin/documents",
+          ScrollText,
+          ["policy.view", "office.view"],
+          ["admin", "portal-stats", "documents_count"],
+          () => mainPortalCount("admin", "documents_count"),
         ),
       ],
-      governanceResources,
-      ["governance.manage_boards", "policy.publish", "workflow.approve"],
+      adminResources,
+      [
+        "governance.manage_boards",
+        "administration.manage_units",
+        "office.manage_content",
+      ],
     ),
-    resources: governanceResources,
+    resources: adminResources,
   },
   schools: {
     key: "schools",
@@ -5758,10 +6678,16 @@ export const portalConfigs: Record<string, PortalConfig> = {
         scope: "academic.view",
       },
       {
-        title: "School Profiles",
-        href: "/schools/profiles",
+        title: "School Profile",
+        href: "/schools/profile",
         icon: GraduationCap,
         scope: "academic.manage_schools",
+      },
+      {
+        title: "Team",
+        href: "/schools/team",
+        icon: Users,
+        scope: "staff.view_assignments",
       },
       {
         title: "Departments",
@@ -5776,40 +6702,22 @@ export const portalConfigs: Record<string, PortalConfig> = {
         scope: "academic.manage_programmes",
       },
       {
-        title: "Calendars",
-        href: "/schools/calendars",
-        icon: CalendarDays,
-        scope: "academic.manage_calendars",
-      },
-      {
-        title: "Intakes",
-        href: "/schools/intakes",
-        icon: ClipboardCheck,
-        scope: "academic.manage_intakes",
-      },
-      {
-        title: "Staff",
-        href: "/schools/staff",
-        icon: Users,
-        scope: "staff.view_assignments",
-      },
-      {
-        title: "News",
-        href: "/schools/news",
+        title: "Content Studio",
+        href: "/schools/content",
         icon: Newspaper,
         scope: "content.manage_news",
       },
       {
-        title: "Events",
-        href: "/schools/events",
-        icon: CalendarDays,
-        scope: "content.manage_events",
+        title: "Media",
+        href: "/schools/media",
+        icon: ImageIcon,
+        scope: "media.view",
       },
       {
-        title: "School Validation",
-        href: "/schools/validation",
-        icon: ClipboardCheck,
-        scope: "publications.review",
+        title: "Publications",
+        href: "/schools/publications",
+        icon: FileText,
+        scope: "publications.view",
       },
     ],
     dashboard: dashboard(
@@ -5822,8 +6730,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/schools/profiles",
           GraduationCap,
           ["academic.view"],
-          ["schools", "profiles"],
-          () => schoolsApi.listAdmin(countParams),
+          ["schools", "portal-stats", "schools_count"],
+          () => mainPortalCount("schools", "schools_count"),
         ),
         stat(
           "Programmes",
@@ -5831,8 +6739,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/schools/programmes",
           BookOpen,
           ["academic.view"],
-          ["schools", "programmes"],
-          () => programmesApi.listAdmin(countParams),
+          ["schools", "portal-stats", "programmes_count"],
+          () => mainPortalCount("schools", "programmes_count"),
         ),
         stat(
           "Departments",
@@ -5840,8 +6748,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/schools/departments",
           Building2,
           ["academic.view"],
-          ["schools", "departments"],
-          () => departmentsApi.listAdmin(countParams),
+          ["schools", "portal-stats", "departments_count"],
+          () => mainPortalCount("schools", "departments_count"),
         ),
         stat(
           "Validation Queue",
@@ -5960,8 +6868,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/departments/profiles",
           Building2,
           ["academic.view"],
-          ["departments", "profiles"],
-          () => departmentsApi.listAdmin(countParams),
+          ["departments", "portal-stats", "departments_count"],
+          () => mainPortalCount("departments", "departments_count"),
         ),
         stat(
           "Programmes",
@@ -5969,27 +6877,17 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/departments/programmes",
           BookOpen,
           ["academic.view"],
-          ["departments", "programmes"],
-          () => programmesApi.listAdmin(countParams),
+          ["departments", "portal-stats", "programmes_count"],
+          () => mainPortalCount("departments", "programmes_count"),
         ),
         stat(
-          "Notices",
-          "Department notices",
+          "Unpublished Content",
+          "Department notices and events not yet public",
           "/departments/notices",
           Megaphone,
           ["content.view"],
-          ["departments", "notices"],
-          () =>
-            announcementsApi.listAdmin({ ...countParams, scope_type: "department" }),
-        ),
-        stat(
-          "Events",
-          "Department events",
-          "/departments/events",
-          CalendarDays,
-          ["content.view"],
-          ["departments", "events"],
-          () => eventsApi.listAdmin({ ...countParams, scope_type: "department" }),
+          ["departments", "portal-stats", "unpublished_count"],
+          () => mainPortalCount("departments", "unpublished_count"),
         ),
       ],
       departmentalResources,
@@ -6019,70 +6917,218 @@ export const portalConfigs: Record<string, PortalConfig> = {
         scope: "content.view",
       },
       {
+        title: "Workflow",
+        href: "/corporate-communication/review-queue",
+        icon: ClipboardCheck,
+        scope: ["content.review", "content.publish"],
+        children: [
+          {
+            title: "Review Queue",
+            href: "/corporate-communication/review-queue",
+            icon: ClipboardCheck,
+            scope: ["content.review", "content.publish"],
+          },
+        ],
+      },
+      {
+        title: "Website Content",
+        href: "/corporate-communication/page-cms",
+        icon: PanelsTopLeft,
+        scope: [
+          "page_sections.view",
+          "page_sections.manage",
+          "homepage.view",
+          "homepage.manage",
+          "partnership_spotlights.manage",
+          "vc_hub.view",
+          "vc_hub.manage",
+          "vc_hub.review",
+          "vc_hub.publish",
+          "admin:*",
+        ],
+        children: [
+          {
+            title: "Meet the VC",
+            href: "/corporate-communication/meet-the-vc",
+            icon: Landmark,
+            scope: ["vc_hub.view", "vc_hub.manage", "vc_hub.review", "vc_hub.publish", "admin:*"],
+          },
+          {
+            title: "Page CMS",
+            href: "/corporate-communication/page-cms",
+            icon: PanelsTopLeft,
+            scope: [
+              "page_sections.view",
+              "page_sections.manage",
+              "homepage.view",
+              "homepage.manage",
+              "partnership_spotlights.manage",
+            ],
+          },
+          {
+            title: "Page Sections",
+            href: "/corporate-communication/page-cms/sections",
+            icon: PanelsTopLeft,
+            scope: [
+              "page_sections.view",
+              "page_sections.manage",
+              "homepage.view",
+              "homepage.manage",
+            ],
+          },
+          {
+            title: "Partnership Spotlights",
+            href: "/corporate-communication/page-cms/spotlights",
+            icon: ImageIcon,
+            scope: ["partnership_spotlights.manage", "homepage.manage"],
+          },
+          {
+            title: "About KSU",
+            href: "/corporate-communication/page-cms/about",
+            icon: Landmark,
+            scope: ["about.manage", "admin:*"],
+          },
+          {
+            title: "Numbers & Facts",
+            href: "/corporate-communication/page-cms/numbers-facts",
+            icon: BarChart3,
+            scope: ["about.manage", "admin:*"],
+          },
+          {
+            title: "University Service Charter",
+            href: "/corporate-communication/page-cms/service-charter",
+            icon: FileText,
+            scope: ["about.manage", "admin:*"],
+          },
+          {
+            title: "Strategic Plan",
+            href: "/corporate-communication/page-cms/strategic-plan",
+            icon: Target,
+            scope: ["about.manage", "admin:*"],
+          },
+          {
+            title: "Homepage Features",
+            href: "/corporate-communication/website/homepage-features",
+            icon: PanelsTopLeft,
+            scope: "marketing.manage_sliders",
+          },
+        ],
+      },
+      {
         title: "Newsroom",
-        href: "/corporate-communication/news",
+        href: "/corporate-communication/newsroom/news",
         icon: Newspaper,
-        scope: "content.manage_news",
+        scope: ["content.manage_news", "content.manage_blogs", "content.manage_stories", "content.manage_announcements", "content.manage_events"],
+        children: [
+          {
+            title: "News",
+            href: "/corporate-communication/newsroom/news",
+            icon: Newspaper,
+            scope: "content.manage_news",
+          },
+          {
+            title: "Press Releases",
+            href: "/corporate-communication/newsroom/press-releases",
+            icon: FileText,
+            scope: "content.manage_blogs",
+          },
+          {
+            title: "Stories",
+            href: "/corporate-communication/stories",
+            icon: ScrollText,
+            scope: "content.manage_stories",
+          },
+          {
+            title: "Public Notices",
+            href: "/corporate-communication/newsroom/notices",
+            icon: Megaphone,
+            scope: "content.manage_announcements",
+          },
+          {
+            title: "Events",
+            href: "/corporate-communication/newsroom/events",
+            icon: CalendarDays,
+            scope: "content.manage_events",
+          },
+        ],
       },
       {
-        title: "Press Releases",
-        href: "/corporate-communication/press-releases",
-        icon: FileText,
-        scope: "content.manage_blogs",
-      },
-      {
-        title: "Public Notices",
-        href: "/corporate-communication/notices",
-        icon: Megaphone,
-        scope: "content.manage_announcements",
-      },
-      {
-        title: "Events",
-        href: "/corporate-communication/events",
-        icon: CalendarDays,
-        scope: "content.manage_events",
-      },
-      {
-        title: "Homepage Features",
-        href: "/corporate-communication/homepage-features",
-        icon: PanelsTopLeft,
-        scope: "marketing.manage_sliders",
-      },
-      {
-        title: "Slider Items",
-        href: "/corporate-communication/sliders",
-        icon: PanelsTopLeft,
-        scope: "marketing.manage_sliders",
-      },
-      {
-        title: "Media Folders",
-        href: "/corporate-communication/media-folders",
+        title: "Media Library",
+        href: "/corporate-communication/media/assets",
         icon: ImageIcon,
-        scope: "media.manage",
+        scope: ["media.view", "media.manage", "marketing.manage_sliders"],
+        children: [
+          {
+            title: "Media Assets",
+            href: "/corporate-communication/media/assets",
+            icon: ImageIcon,
+            scope: "media.view",
+          },
+          {
+            title: "Media Folders",
+            href: "/corporate-communication/media/folders",
+            icon: ImageIcon,
+            scope: "media.manage",
+          },
+          {
+            title: "Slider Items",
+            href: "/corporate-communication/media/sliders",
+            icon: PanelsTopLeft,
+            scope: "marketing.manage_sliders",
+          },
+        ],
       },
       {
-        title: "Media Assets",
-        href: "/corporate-communication/media-assets",
-        icon: ImageIcon,
-        scope: "media.view",
-      },
-      {
-        title: "FAQs",
-        href: "/corporate-communication/faqs",
+        title: "Engagement",
+        href: "/corporate-communication/engagement/faqs",
         icon: ScrollText,
-        scope: "content.manage",
+        scope: ["content.manage", "marketing.manage_newsletters"],
+        children: [
+          {
+            title: "FAQs",
+            href: "/corporate-communication/engagement/faqs",
+            icon: ScrollText,
+            scope: "content.manage",
+          },
+          {
+            title: "Contacts",
+            href: "/corporate-communication/engagement/contacts",
+            icon: Users,
+            scope: "content.manage",
+          },
+          {
+            title: "Newsletters",
+            href: "/corporate-communication/engagement/newsletters",
+            icon: Mail,
+            scope: "marketing.manage_newsletters",
+          },
+          {
+            title: "Subscribers",
+            href: "/corporate-communication/engagement/newsletter-subscribers",
+            icon: Users,
+            scope: "marketing.manage_newsletters",
+          },
+          {
+            title: "Testimonials",
+            href: "/corporate-communication/engagement/testimonials",
+            icon: BadgeCheck,
+            scope: "content.manage",
+          },
+        ],
       },
       {
-        title: "Contacts",
-        href: "/corporate-communication/contacts",
-        icon: Users,
-        scope: "content.manage",
-      },
-      {
-        title: "Testimonials",
-        href: "/corporate-communication/testimonials",
-        icon: BadgeCheck,
-        scope: "content.manage",
+        title: "Student Life",
+        href: "/corporate-communication/student-life/club-submissions",
+        icon: Trophy,
+        scope: ["content.review", "clubs.view", "clubs.manage_own"],
+        children: [
+          {
+            title: "Club Submissions",
+            href: "/corporate-communication/student-life/club-submissions",
+            icon: Trophy,
+            scope: ["content.review", "clubs.view", "clubs.manage_own"],
+          },
+        ],
       },
     ],
     dashboard: dashboard(
@@ -6090,18 +7136,27 @@ export const portalConfigs: Record<string, PortalConfig> = {
       "Coordinate public publishing, homepage features, and media assets.",
       [
         stat(
+          "Review Queue",
+          "Content awaiting editorial review",
+          "/corporate-communication/review-queue",
+          ClipboardCheck,
+          ["content.view"],
+          ["corporate-communication", "portal-stats", "pending_review_count"],
+          () => mainPortalCount("corporate-communication", "pending_review_count"),
+        ),
+        stat(
           "News",
           "Newsroom records",
-          "/corporate-communication/news",
+          "/corporate-communication/newsroom/news",
           Newspaper,
           ["content.view"],
-          ["corporate", "news"],
-          () => newsApi.listAdmin({ ...countParams, is_main: true }),
+          ["corporate-communication", "portal-stats", "published_count"],
+          () => mainPortalCount("corporate-communication", "published_count"),
         ),
         stat(
           "Public Notices",
           "Announcements",
-          "/corporate-communication/notices",
+          "/corporate-communication/newsroom/notices",
           Megaphone,
           ["content.view"],
           ["corporate", "notices"],
@@ -6110,26 +7165,111 @@ export const portalConfigs: Record<string, PortalConfig> = {
         stat(
           "Events",
           "Public calendar",
-          "/corporate-communication/events",
+          "/corporate-communication/newsroom/events",
           CalendarDays,
           ["content.view"],
-          ["corporate", "events"],
-          () => eventsApi.listAdmin({ ...countParams, is_main: true }),
+          ["corporate-communication", "portal-stats", "scheduled_count"],
+          () => mainPortalCount("corporate-communication", "scheduled_count"),
         ),
         stat(
           "Media",
           "Media assets",
-          "/corporate-communication/media-assets",
+          "/corporate-communication/media/assets",
           ImageIcon,
           ["media.view"],
-          ["corporate", "media"],
-          () => mediaApi.list(countParams),
+          ["corporate-communication", "portal-stats", "media_count"],
+          () => mainPortalCount("corporate-communication", "media_count"),
+        ),
+        stat(
+          "Newsletters",
+          "Newsletter editions",
+          "/corporate-communication/engagement/newsletters",
+          Mail,
+          ["marketing.manage_newsletters"],
+          ["corporate", "newsletters"],
+          () => newslettersApi.listAdmin({ ...countParams }),
+        ),
+        stat(
+          "Subscribers",
+          "Newsletter audience",
+          "/corporate-communication/engagement/newsletter-subscribers",
+          Users,
+          ["marketing.manage_newsletters"],
+          ["corporate", "newsletter-subscribers"],
+          () => newslettersApi.listSubscribers({ ...countParams, status: "active" }),
         ),
       ],
-      corporateResources,
+      corporateCommunicationResources,
       ["content.publish", "media.manage", "marketing.manage_sliders"],
     ),
-    resources: corporateResources,
+    resources: corporateCommunicationResources,
+  },
+  "story-contributor": {
+    key: "story-contributor",
+    title: "Story Contributor Portal",
+    shortTitle: "Stories",
+    description:
+      "Draft, submit, and track Kisii University stories for Corporate Communication review.",
+    service: "main",
+    baseHref: "/story-contributor",
+    icon: PenLine,
+    accentClassName: "text-cyan-700 bg-cyan-50 border-cyan-100",
+    nav: [
+      {
+        title: "Dashboard",
+        href: "/story-contributor",
+        icon: PanelsTopLeft,
+        scope: ["stories.view_own", "stories.submit", "content.submit"],
+      },
+      {
+        title: "My Stories",
+        href: "/story-contributor/stories",
+        icon: ScrollText,
+        scope: ["stories.view_own", "stories.submit", "content.submit"],
+      },
+      {
+        title: "Submit Story",
+        href: "/story-contributor/stories/new",
+        icon: PenLine,
+        scope: ["stories.submit", "content.submit"],
+      },
+    ],
+    dashboard: {
+      title: "Story Contributor Dashboard",
+      description:
+        "Track your story drafts, review status, publication decisions, and requested revisions.",
+      scopeBadges: ["stories.submit", "stories.view_own", "stories.update_own"],
+      stats: [
+        stat(
+          "My Stories",
+          "Submitted and draft stories",
+          "/story-contributor/stories",
+          ScrollText,
+          ["stories.view_own", "stories.submit", "content.submit"],
+          ["story-contributor", "stories", "mine"],
+          () => storiesApi.listMine({ ...countParams }),
+        ),
+      ],
+      panels: [
+        {
+          title: "Start a story",
+          description:
+            "Create a draft and submit it to Corporate Communication for review.",
+          href: "/story-contributor/stories/new",
+          icon: PenLine,
+          scopes: ["stories.submit", "content.submit"],
+        },
+        {
+          title: "Track review",
+          description:
+            "See whether a story is draft, submitted, in review, changes requested, approved, or published.",
+          href: "/story-contributor/stories",
+          icon: ClipboardCheck,
+          scopes: ["stories.view_own", "stories.submit"],
+        },
+      ],
+    },
+    resources: {},
   },
   research: {
     key: "research",
@@ -6252,6 +7392,13 @@ export const portalConfigs: Record<string, PortalConfig> = {
         href: "/research/innovations?tab=transfers",
         icon: BadgeCheck,
         scope: "innovation.manage_transfers",
+        group: "Innovation & Output",
+      },
+      {
+        title: "Publications",
+        href: "/research/publications",
+        icon: FileText,
+        scope: ["publications.view", "publications.manage", "research.manage_publications"],
         group: "Innovation & Output",
       },
       {
@@ -6468,8 +7615,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/research/projects",
           FlaskConical,
           ["research.view"],
-          ["research", "admin-stats", "active_projects"],
-          () => researchAdminCount("active_projects"),
+          ["research", "admin-stats", "active_projects_count"],
+          () => researchAdminCount("active_projects_count"),
         ),
         stat(
           "Grants",
@@ -6477,8 +7624,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/research/grants",
           BadgeCheck,
           ["research.view"],
-          ["research", "admin-stats", "grants"],
-          () => researchAdminCount("grants"),
+          ["research", "admin-stats", "grants_count"],
+          () => researchAdminCount("grants_count"),
         ),
         stat(
           "Centers",
@@ -6486,8 +7633,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/research/centers",
           Building2,
           ["research.view"],
-          ["research", "admin-stats", "centres"],
-          () => researchAdminCount("centres"),
+          ["research", "admin-stats", "centres_count"],
+          () => researchAdminCount("centres_count"),
         ),
         stat(
           "Outputs",
@@ -6495,8 +7642,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/research/outputs",
           FileText,
           ["research.view"],
-          ["research", "admin-stats", "outputs"],
-          () => researchAdminCount("outputs"),
+          ["research", "admin-stats", "outputs_count"],
+          () => researchAdminCount("outputs_count"),
         ),
       ],
       researchResources,
@@ -6628,8 +7775,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/library/branches",
           Building2,
           ["library.view"],
-          ["library", "admin-stats", "active_branches"],
-          () => libraryAdminCount("active_branches"),
+          ["library", "admin-stats", "active_branches_count"],
+          () => libraryAdminCount("active_branches_count"),
         ),
         stat(
           "Catalog",
@@ -6637,8 +7784,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/library/catalog",
           Library,
           ["library.view"],
-          ["library", "admin-stats", "catalogue_resources"],
-          () => libraryAdminCount("catalogue_resources"),
+          ["library", "admin-stats", "catalogue_resources_count"],
+          () => libraryAdminCount("catalogue_resources_count"),
         ),
         stat(
           "Regulations",
@@ -6646,8 +7793,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/library/regulations",
           ScrollText,
           ["library.view"],
-          ["library", "admin-stats", "active_regulations"],
-          () => libraryAdminCount("active_regulations"),
+          ["library", "admin-stats", "active_regulations_count"],
+          () => libraryAdminCount("active_regulations_count"),
         ),
         stat(
           "Loans",
@@ -6655,8 +7802,8 @@ export const portalConfigs: Record<string, PortalConfig> = {
           "/library/loans",
           BookOpen,
           ["library.view"],
-          ["library", "admin-stats", "loans"],
-          () => libraryAdminCount("loans"),
+          ["library", "admin-stats", "loans_count"],
+          () => libraryAdminCount("loans_count"),
         ),
       ],
       libraryResources,
@@ -6668,122 +7815,6 @@ export const portalConfigs: Record<string, PortalConfig> = {
     ),
     resources: libraryResources,
   },
-  publications: {
-    key: "publications",
-    title: "Publications Portal",
-    shortTitle: "Publications",
-    description:
-      "Researcher submissions, school validation, research office approval, and public publication records.",
-    service: "research",
-    baseHref: "/publications",
-    icon: BookOpen,
-    accentClassName: "text-blue-700 bg-blue-50 border-blue-100",
-    nav: [
-      {
-        title: "Dashboard",
-        href: "/publications",
-        icon: PanelsTopLeft,
-        scope: "publications.view",
-      },
-      {
-        title: "My Submissions",
-        href: "/publications/submissions",
-        icon: FileText,
-        scope: "publications.submit",
-      },
-      {
-        title: "School Review",
-        href: "/publications/school-review",
-        icon: ClipboardCheck,
-        scope: "publications.review",
-      },
-      {
-        title: "Office Review",
-        href: "/publications/office-review",
-        icon: ShieldCheck,
-        scope: "publications.approve",
-      },
-      {
-        title: "Published Records",
-        href: "/publications/published",
-        icon: BookOpen,
-        scope: "publications.manage",
-      },
-      {
-        title: "Journals",
-        href: "/publications/journals",
-        icon: Library,
-        scope: "research.manage_journals",
-      },
-      {
-        title: "Authors",
-        href: "/publications/authors",
-        icon: Users,
-        scope: "persons.view",
-      },
-    ],
-    dashboard: dashboard(
-      "Publication Pipeline",
-      "Run submission, school validation, research office approval, and publishing as its own portal.",
-      [
-        stat(
-          "Submissions",
-          "Draft and submitted papers",
-          "/publications/submissions",
-          FileText,
-          ["publications.submit"],
-          ["publications", "submissions"],
-          () =>
-            researchServiceApi.publications.list({
-              ...countParams,
-              status: "draft",
-            }),
-        ),
-        stat(
-          "School Review",
-          "School validation",
-          "/publications/school-review",
-          ClipboardCheck,
-          ["publications.review"],
-          ["publications", "school-review"],
-          () =>
-            researchServiceApi.publications.list({
-              ...countParams,
-              status: "submitted",
-            }),
-        ),
-        stat(
-          "Office Review",
-          "Research office approval",
-          "/publications/office-review",
-          ShieldCheck,
-          ["publications.approve"],
-          ["publications", "office-review"],
-          () =>
-            researchServiceApi.publications.list({
-              ...countParams,
-              status: "school_approved",
-            }),
-        ),
-        stat(
-          "Published",
-          "Publications page records",
-          "/publications/published",
-          BookOpen,
-          ["publications.view"],
-          ["publications", "published"],
-          () =>
-            researchServiceApi.publications.list({
-              ...countParams,
-              status: "published",
-            }),
-        ),
-      ],
-      publicationResources,
-      ["publications.submit", "publications.review", "publications.approve"],
-    ),
-    resources: publicationResources,
-  },
 };
 
 function stat(
@@ -6793,9 +7824,22 @@ function stat(
   icon: PortalConfig["icon"],
   scopes: string[],
   queryKey: readonly unknown[],
-  query: () => Promise<unknown>,
+  query: () => Promise<{ data?: unknown[]; meta?: { total?: number } }>,
 ) {
-  return { title, description, href, icon, scopes, queryKey, query };
+  return {
+    title,
+    description,
+    href,
+    icon,
+    scopes,
+    queryKey,
+    query: async () => {
+      const response = await query();
+      if (typeof response.meta?.total === "number") return response.meta.total;
+      if (Array.isArray(response.data)) return response.data.length;
+      throw new Error(`The ${title.toLowerCase()} counter did not return a count.`);
+    },
+  };
 }
 
 function dashboard(
@@ -6804,19 +7848,23 @@ function dashboard(
   stats: PortalConfig["dashboard"]["stats"],
   resources: Record<string, PortalResourceConfig<any, any>>,
   scopeBadges: string[],
+  extraPanels: PortalConfig["dashboard"]["panels"] = [],
 ) {
   return {
     title,
     description,
     stats,
     scopeBadges,
-    panels: Object.values(resources).map((resource) => ({
-      title: resource.title,
-      description: resource.description,
-      href: `${resource.backHref}/${resource.key}`,
-      icon: FileText,
-      scopes: resource.viewScopes,
-    })),
+    panels: [
+      ...extraPanels,
+      ...Object.values(resources).map((resource) => ({
+        title: resource.title,
+        description: resource.description,
+        href: resource.href ?? `${resource.backHref}/${resource.key}`,
+        icon: FileText,
+        scopes: resource.viewScopes,
+      })),
+    ],
   };
 }
 
@@ -6825,5 +7873,20 @@ export function getPortalConfig(key: string) {
 }
 
 export function getPortalResource(portalKey: string, resourceKey: string) {
-  return portalConfigs[portalKey]?.resources[resourceKey];
+  return portalConfigs[portalKey]?.resources[resolvePortalResourceKey(portalKey, resourceKey)];
+}
+
+export function resolvePortalResourceKey(portalKey: string, resourcePath: string | string[]) {
+  const normalized = Array.isArray(resourcePath)
+    ? resourcePath.filter(Boolean).join("/")
+    : resourcePath;
+  if (portalKey === "corporate-communication") {
+    return corporateResourceRouteAliases[normalized] ?? normalized;
+  }
+  return normalized;
+}
+
+export function getCanonicalPortalResourceHref(portalKey: string, resourcePath: string | string[]) {
+  const resourceKey = resolvePortalResourceKey(portalKey, resourcePath);
+  return portalConfigs[portalKey]?.resources[resourceKey]?.href ?? `/${portalKey}/${resourceKey}`;
 }
