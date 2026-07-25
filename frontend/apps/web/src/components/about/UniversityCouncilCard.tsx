@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PublicImage } from "@/components/public/public-image";
 import type { UniversityCouncilMemberCard as UniversityCouncilMemberCardData } from "@/lib/about-data";
+import { ImageCurtainReveal } from "./image-curtain-reveal";
 
 function profileHref(member: UniversityCouncilMemberCardData) {
   if (member.person_id) return `/staff/${member.person_id}`;
@@ -26,14 +27,16 @@ export function UniversityCouncilCard({
       }`}
     >
       <div className={secretary ? "grid gap-0 sm:grid-cols-[8.5rem_minmax(0,1fr)]" : ""}>
-        <PublicImage
-          src={member.portrait?.url}
-          alt={member.portrait?.alt || `${member.name}, ${member.role}`}
-          ratio="profile"
-          className={secretary ? "h-full min-h-36" : featured ? "aspect-[4/3]" : "aspect-[4/3]"}
-          sizes={secretary ? "136px" : featured ? "310px" : "200px"}
-          imageClassName="object-cover object-top transition duration-500 group-hover:scale-[1.025]"
-        />
+        <ImageCurtainReveal className={secretary ? "h-full min-h-36" : "aspect-[4/3]"} direction={featured ? "right" : "left"}>
+          <PublicImage
+            src={member.portrait?.url}
+            alt={member.portrait?.alt || `${member.name}, ${member.role}`}
+            ratio="profile"
+            className="h-full w-full"
+            sizes={secretary ? "136px" : featured ? "310px" : "200px"}
+            imageClassName="object-cover object-top transition duration-500 group-hover:scale-[1.025]"
+          />
+        </ImageCurtainReveal>
         <div className={featured ? "p-5 text-center" : "p-3 text-center"}>
           <h3 className={`font-[family-name:var(--font-display)] font-semibold leading-tight text-foreground ${featured ? "text-xl" : "text-sm"}`}>
             {member.name}

@@ -4,6 +4,7 @@ import { ArrowRight, BookOpen, CheckCircle2, GraduationCap, Microscope } from "l
 import { RichTextRenderer } from "@ksu/ui/rich-text-renderer";
 import type { PublicFactItem, PublicFactsData } from "@/lib/public-about-data";
 import { AboutReveal } from "./about-reveal";
+import { ImageCurtainReveal } from "./image-curtain-reveal";
 
 function factValue(item: PublicFactItem) {
   return `${item.prefix || ""}${item.display_value}${item.suffix || ""}${item.unit ? ` ${item.unit}` : ""}`;
@@ -45,7 +46,7 @@ export function NumbersFactsPage({ data }: { data: PublicFactsData }) {
   return (
     <main className="bg-white">
       <header className="border-b border-border bg-[#f6f4ef] px-5 py-5 sm:px-8 lg:px-10">
-        <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
+        <nav aria-label="Breadcrumb" className="mx-auto max-w-7xl text-sm text-muted-foreground">
           <Link href="/" className="font-semibold text-primary underline-offset-4 hover:underline">Home</Link>
           <span className="mx-3 text-muted-foreground/70" aria-hidden>/</span>
           <Link href="/about" className="font-semibold text-primary underline-offset-4 hover:underline">About KSU</Link>
@@ -55,7 +56,7 @@ export function NumbersFactsPage({ data }: { data: PublicFactsData }) {
       </header>
 
       <section className="px-5 py-12 sm:px-8 lg:px-10 lg:py-16" aria-labelledby="facts-heading">
-        <div className="mb-12 grid gap-7 pb-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+        <div className="mx-auto mb-12 grid max-w-7xl gap-7 pb-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <div>
             <h1 id="facts-heading" className="max-w-5xl font-[family-name:var(--font-display)] text-4xl font-medium leading-[1.08] text-primary sm:text-5xl lg:text-[4rem]">
               {edition.title}
@@ -96,11 +97,11 @@ export function NumbersFactsPage({ data }: { data: PublicFactsData }) {
           </div>
         </div>
 
-        <div className="grid gap-x-6 gap-y-14 md:grid-cols-2 xl:grid-cols-3 xl:gap-y-16">
+        <div className="mx-auto grid max-w-7xl gap-x-6 gap-y-14 md:grid-cols-2 xl:grid-cols-3 xl:gap-y-16">
           {data.groups.map((group) => (
             <AboutReveal key={group.id} className="[content-visibility:auto] [contain-intrinsic-size:auto_34rem]">
               <article>
-              <div className="relative aspect-[16/10] overflow-hidden bg-surface-muted">
+              <ImageCurtainReveal className="aspect-[16/10]" direction={data.groups.indexOf(group) % 2 === 0 ? "right" : "left"}>
                 <Image
                   src={group.image?.url || factImageFallbacks[group.slug] || "/images/backgrounds/about-hero.jpg"}
                   alt={group.image?.alt_text || group.image?.alt || group.image_alt_text || `${group.heading} at Kisii University`}
@@ -109,7 +110,7 @@ export function NumbersFactsPage({ data }: { data: PublicFactsData }) {
                   className="object-cover transition duration-700 motion-safe:hover:scale-[1.025] motion-reduce:transition-none"
                 />
                 <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-primary/35 to-transparent" aria-hidden />
-              </div>
+              </ImageCurtainReveal>
               <h2 className="mt-5 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-primary">
                 {group.heading}
               </h2>
@@ -126,7 +127,7 @@ export function NumbersFactsPage({ data }: { data: PublicFactsData }) {
       </section>
 
       <section className="bg-primary px-5 py-14 text-white sm:px-8 lg:px-10 lg:py-16" aria-labelledby="facts-next-heading">
-        <AboutReveal>
+        <AboutReveal className="mx-auto max-w-7xl" variant="scale">
           <h2 id="facts-next-heading" className="mx-auto max-w-4xl text-center font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight sm:text-4xl">Discover what these numbers make possible.</h2>
           <div className="mx-auto mt-4 h-1 w-20 bg-secondary" aria-hidden />
           <nav className="mt-10 grid gap-6 sm:grid-cols-3 sm:gap-0" aria-label="Continue exploring Kisii University">

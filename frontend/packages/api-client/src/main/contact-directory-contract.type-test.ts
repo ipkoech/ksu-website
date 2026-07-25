@@ -50,6 +50,7 @@ const institution: PublicUniversityContactSummary = {
   county: null,
   country: null,
   social_links: null,
+  cover_image_id: null,
   created_at: "2026-07-13T00:00:00Z",
   updated_at: "2026-07-13T00:00:00Z",
 };

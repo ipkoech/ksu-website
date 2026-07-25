@@ -24,6 +24,7 @@ class PublicUniversityContactSummary(BaseReadSchema):
     county: str | None = None
     country: str | None = None
     social_links: dict | None = None
+    cover_image_id: uuid.UUID | None = None
 
 
 class PublicContactDirectoryEntry(BaseReadSchema):

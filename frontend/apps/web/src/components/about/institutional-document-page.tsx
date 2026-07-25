@@ -13,6 +13,7 @@ import type {
   PublicInstitutionalSection,
 } from "@/lib/public-about-data";
 import { AboutReveal } from "./about-reveal";
+import { ImageCurtainReveal } from "./image-curtain-reveal";
 import { InstitutionalIcon } from "./institutional-icon";
 
 const heroFallbacks = {
@@ -93,7 +94,8 @@ function NarrativeSection({
 }) {
   return (
     <section className="overflow-hidden bg-[#faf8f3]">
-      <AboutReveal className="grid lg:grid-cols-2 lg:items-stretch">
+      <div className="mx-auto grid max-w-7xl lg:grid-cols-2 lg:items-stretch">
+        <AboutReveal variant="left" className="flex items-center">
         <div className="flex items-center px-5 py-14 sm:px-8 lg:px-10 lg:py-20 xl:px-16">
           <div>
             <SectionHeading section={section} />
@@ -104,7 +106,8 @@ function NarrativeSection({
             ) : null}
           </div>
         </div>
-        <div className="relative min-h-[320px] overflow-hidden lg:min-h-[470px]">
+        </AboutReveal>
+        <ImageCurtainReveal className="min-h-[320px] lg:min-h-[470px]" direction="right">
           <Image
             src={sectionImage(section, narrativeFallbacks[type])}
             alt={section.media_alt_text || section.primary_media?.alt_text || section.heading}
@@ -113,8 +116,8 @@ function NarrativeSection({
             className="object-cover transition duration-1000 motion-safe:hover:scale-[1.03] motion-reduce:transition-none"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-primary/45 via-transparent to-transparent" />
-        </div>
-      </AboutReveal>
+        </ImageCurtainReveal>
+      </div>
     </section>
   );
 }
@@ -122,7 +125,7 @@ function NarrativeSection({
 function CommitmentsSection({ section }: { section: PublicInstitutionalSection }) {
   return (
     <section className="bg-white px-5 py-14 sm:px-8 lg:px-10 lg:py-20">
-      <AboutReveal>
+      <AboutReveal className="mx-auto max-w-7xl">
         <SectionHeading section={section} centered />
         <div className="relative mt-11 grid gap-8 md:grid-cols-2 lg:grid-cols-4 lg:gap-4">
           <div className="absolute left-[12.5%] right-[12.5%] top-8 hidden h-px bg-primary/55 lg:block" aria-hidden />
@@ -155,7 +158,7 @@ function ProcessSection({ section }: { section: PublicInstitutionalSection }) {
 
   return (
     <section className={`${inverse ? "bg-primary text-white" : "bg-[#f5f2ea] text-foreground"} px-5 py-14 sm:px-8 lg:px-10 lg:py-20`}>
-      <AboutReveal>
+      <AboutReveal className="mx-auto max-w-7xl">
         <SectionHeading section={section} centered inverse={inverse} />
         <ol className="relative mt-12 grid gap-9 md:grid-cols-2 lg:grid-cols-4 lg:gap-6">
           <div className={`absolute left-[12.5%] right-[12.5%] top-7 hidden border-t border-dashed lg:block ${inverse ? "border-white/35" : "border-primary/35"}`} aria-hidden />
@@ -184,7 +187,7 @@ function ProcessSection({ section }: { section: PublicInstitutionalSection }) {
 function PrioritiesSection({ section }: { section: PublicInstitutionalSection }) {
   return (
     <section className="overflow-hidden bg-white px-5 py-14 sm:px-8 lg:px-10 lg:py-20">
-      <AboutReveal>
+      <AboutReveal className="mx-auto max-w-7xl">
         <SectionHeading section={section} centered />
         <div className="relative mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-5 lg:gap-0">
           <div className="absolute left-0 right-0 top-9 hidden h-1 bg-secondary lg:block" aria-hidden />
@@ -205,9 +208,9 @@ function PrioritiesSection({ section }: { section: PublicInstitutionalSection })
                   {item.description}
                 </p>
               ) : null}
-              <div className="relative mt-5 aspect-[4/3] overflow-hidden rounded-sm bg-surface-muted">
+              <ImageCurtainReveal className="mt-5 aspect-[4/3] rounded-sm" direction={index % 2 === 0 ? "right" : "left"}>
                 <Image src={item.image?.url || priorityFallbacks[index] || priorityFallbacks[0]} alt={item.image_alt_text || item.image?.alt_text || item.title} fill sizes="(min-width:1024px) 20vw, 50vw" className="object-cover transition duration-700 group-hover:scale-[1.04] motion-reduce:transition-none" />
-              </div>
+              </ImageCurtainReveal>
             </article>
           ))}
         </div>
@@ -219,17 +222,17 @@ function PrioritiesSection({ section }: { section: PublicInstitutionalSection })
 function OutcomesSection({ section }: { section: PublicInstitutionalSection }) {
   return (
     <section className="overflow-hidden bg-[#f5f2ea]">
-      <AboutReveal className="grid lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
-        <div className="relative min-h-[340px] lg:min-h-[500px]"><Image src={section.primary_media?.url || "/images/HERIAfricaLaunch.jpg"} alt={section.media_alt_text || section.primary_media?.alt_text || section.heading} fill sizes="(min-width:1024px) 48vw, 100vw" className="object-cover" /></div>
-        <div className="px-5 py-14 sm:px-8 lg:px-12 lg:py-16"><SectionHeading section={section} />
+      <div className="mx-auto grid max-w-7xl lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
+        <ImageCurtainReveal className="min-h-[340px] lg:min-h-[500px]" direction="left"><Image src={section.primary_media?.url || "/images/HERIAfricaLaunch.jpg"} alt={section.media_alt_text || section.primary_media?.alt_text || section.heading} fill sizes="(min-width:1024px) 48vw, 100vw" className="object-cover" /></ImageCurtainReveal>
+        <AboutReveal variant="right" className="px-5 py-14 sm:px-8 lg:px-12 lg:py-16"><SectionHeading section={section} />
         <div className="mt-8 grid gap-6">
           {section.items.map((item, index) => (
             <article key={item.id} className="group flex gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/20 text-primary"><InstitutionalIcon name={item.icon_key} className="h-5 w-5" /></span><div><p className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-secondary">Action {String(index + 1).padStart(2, "0")}</p><h3 className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold text-primary">{item.title}</h3>{item.description ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.description}</p> : null}</div>
             </article>
           ))}
         </div>
-        </div>
-      </AboutReveal>
+        </AboutReveal>
+      </div>
     </section>
   );
 }
@@ -242,8 +245,9 @@ function QuoteSection({
   type: PageType;
 }) {
   return (
-    <section className="grid bg-primary text-white lg:grid-cols-[0.85fr_1.15fr]">
-      <div className="relative min-h-[300px] overflow-hidden lg:min-h-[430px]">
+    <section className="bg-primary text-white">
+      <div className="mx-auto grid max-w-7xl lg:grid-cols-[0.85fr_1.15fr]">
+      <ImageCurtainReveal className="min-h-[300px] lg:min-h-[430px]" direction="right">
         <Image
           src={sectionImage(section, quoteFallbacks[type])}
           alt={section.media_alt_text || section.primary_media?.alt_text || "Kisii University community"}
@@ -252,8 +256,8 @@ function QuoteSection({
           className="object-cover transition duration-1000 motion-safe:hover:scale-[1.03] motion-reduce:transition-none"
         />
         <div className="absolute inset-0 bg-primary/20" />
-      </div>
-      <AboutReveal className="flex items-center px-5 py-14 sm:px-8 lg:px-12 xl:px-16">
+      </ImageCurtainReveal>
+      <AboutReveal variant="right" className="flex items-center px-5 py-14 sm:px-8 lg:px-12 xl:px-16">
         <div>
           <Quote className="h-11 w-11 text-secondary" aria-hidden />
           <blockquote className="mt-6 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight sm:text-4xl">
@@ -266,6 +270,7 @@ function QuoteSection({
           ) : null}
         </div>
       </AboutReveal>
+      </div>
     </section>
   );
 }
@@ -284,7 +289,7 @@ function DocumentsSection({
 
   return (
     <section className="bg-white px-5 py-14 sm:px-8 lg:px-10 lg:py-20">
-      <AboutReveal>
+      <AboutReveal className="mx-auto max-w-7xl">
         <SectionHeading section={section} centered />
         <div className="mx-auto mt-10 grid max-w-5xl gap-4 md:grid-cols-2">
           {documents.map((document) => (
@@ -343,7 +348,7 @@ function DocumentSummary({ page, promise }: { page: PublicInstitutionalPage; pro
 
   return (
     <section className="relative z-10 bg-[#fffaf0] px-5 py-6 sm:px-8 lg:px-10">
-      <AboutReveal className="grid overflow-hidden md:grid-cols-[auto_1fr_auto] md:items-center">
+      <AboutReveal className="mx-auto grid max-w-7xl overflow-hidden md:grid-cols-[auto_1fr_auto] md:items-center" variant="scale">
         <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-double border-primary/50 bg-white px-7 text-primary">
           {charter ? <Check className="h-11 w-11" aria-hidden /> : <CalendarDays className="h-10 w-10" aria-hidden />}
         </div>
@@ -398,7 +403,7 @@ function ClosingCta({ type }: { type: PageType }) {
     <section className="relative overflow-hidden bg-primary px-5 py-14 text-white sm:px-8 lg:px-10 lg:py-16">
       <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full border border-white/10" aria-hidden />
       <div className="absolute -bottom-20 right-24 h-48 w-48 rounded-full border border-secondary/20" aria-hidden />
-      <AboutReveal className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+      <AboutReveal className="relative mx-auto flex max-w-7xl flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-secondary">Continue the journey</p>
           <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight sm:text-4xl">
@@ -436,7 +441,7 @@ export function InstitutionalDocumentPage({ page }: { page: PublicInstitutionalP
           className="object-cover motion-safe:animate-[kenburns_28s_ease-in-out_infinite_alternate]"
         />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,28,68,.97)_0%,rgba(4,38,83,.84)_44%,rgba(4,38,83,.18)_82%)]" />
-        <div className="relative flex min-h-[430px] flex-col justify-center px-5 py-8 sm:px-8 lg:px-10">
+        <div className="relative mx-auto flex min-h-[430px] max-w-7xl flex-col justify-center px-5 py-8 sm:px-8 lg:px-10">
           <nav aria-label="Breadcrumb" className="text-xs font-semibold text-white/72">
             <Link href="/" className="hover:text-white">Home</Link>
             <span className="mx-2" aria-hidden>/</span>

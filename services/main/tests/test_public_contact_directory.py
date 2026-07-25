@@ -36,6 +36,7 @@ def anyio_backend():
 @pytest.mark.anyio
 async def test_contact_directory_composes_only_public_records(db):
     scope_id = uuid.uuid4()
+    institution_cover_image_id = uuid.uuid4()
     institution = _record(
         name="Kisii State University",
         short_name="KSU",
@@ -50,6 +51,8 @@ async def test_contact_directory_composes_only_public_records(db):
         county="Kisii",
         country="Kenya",
         social_links={"x": "https://x.com/ksu"},
+        cover_image_id=institution_cover_image_id,
+        cover_image=object(),
         internal_notes="must not be exposed",
     )
     main_contact = _record(
@@ -151,6 +154,8 @@ async def test_contact_directory_composes_only_public_records(db):
         )
 
     assert result.institution is not None
+    assert result.institution.cover_image_id == institution_cover_image_id
+    assert "cover_image" not in result.institution.model_dump()
     assert all(item.is_public and item.status == "active" for item in result.contacts.items)
     assert all(item.is_main for item in result.main_contacts)
     assert all(item.is_public and item.status == "published" for item in result.faqs)

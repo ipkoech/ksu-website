@@ -33,8 +33,8 @@ function MemberGroup({
   children: React.ReactNode;
 }) {
   return (
-    <section className="bg-white px-4 py-5 sm:px-6 lg:px-8" aria-label={title}>
-      <AboutReveal className="mx-auto w-full">
+    <section className="bg-white px-5 py-8 sm:px-8 lg:px-10" aria-label={title}>
+      <AboutReveal className="mx-auto w-full max-w-7xl" variant={title === "Council Members" ? "up" : "scale"}>
         <div className="mb-4 text-center">
           <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold uppercase text-primary">
             {title}
@@ -61,7 +61,7 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
 
   return (
     <div className="bg-white">
-      <section className="relative overflow-hidden bg-brand-overlay text-white">
+      <section className="relative overflow-hidden bg-[#062d62] text-white">
         <PublicImage
           src={data.page.hero_image?.url || "/images/backgrounds/KSUB-RollPhotos2025-122.jpg"}
           alt={data.page.hero_image?.alt || title}
@@ -70,8 +70,8 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
           className="absolute inset-0 h-full min-h-[340px] w-full opacity-75"
           imageClassName="object-cover"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,51,35,0.92),rgba(0,51,35,0.58),rgba(0,0,0,0.18))]" />
-        <div className="relative mx-auto min-h-[340px] w-full px-4 py-7 sm:px-6 lg:px-8">
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,28,68,.97),rgba(4,38,83,.8),rgba(4,38,83,.16))]" />
+        <div className="relative mx-auto min-h-[380px] w-full max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
           <nav aria-label="Breadcrumb" className="text-xs font-semibold text-white/75">
             <Link href="/" className="hover:text-white">Home</Link>
             <span className="mx-2">/</span>
@@ -79,11 +79,11 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
             <span className="mx-2">/</span>
             <span>{title}</span>
           </nav>
-          <div className="mt-8 max-w-xl">
+          <div className="mt-10 max-w-2xl">
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-secondary">
               Governance
             </p>
-            <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight">
+            <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-medium leading-tight sm:text-5xl lg:text-6xl">
               {title}
             </h1>
             <p className="mt-4 max-w-lg text-sm leading-7 text-white/90">
@@ -94,8 +94,8 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
       </section>
 
       {mandate ? (
-        <section className="relative z-10 -mt-8 px-4 pb-5 sm:px-6 lg:px-8">
-          <AboutReveal className="mx-auto grid w-full gap-4 rounded-xl border border-border bg-white p-5 shadow-md lg:grid-cols-[3.5rem_minmax(0,1fr)_auto] lg:items-center">
+        <section className="relative z-10 -mt-8 px-5 pb-5 sm:px-8 lg:px-10">
+          <AboutReveal className="mx-auto grid w-full max-w-7xl gap-4 border border-border bg-white p-6 shadow-xl lg:grid-cols-[3.5rem_minmax(0,1fr)_auto] lg:items-center" variant="scale">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-secondary">
               <Landmark aria-hidden className="h-6 w-6" />
             </div>
