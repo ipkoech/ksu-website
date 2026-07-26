@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AccessibilityInitScript, AccessibilityShell } from "@ksu/ui";
 import { PublicFooter } from "@ksu/ui/layout/public";
 import { Announcements } from "@ksu/ui/components";
 import { announcementsApi } from "@ksu/api-client";
@@ -128,26 +129,26 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased" suppressHydrationWarning>
-        <div className="min-h-screen bg-background text-foreground">
-          <a href="#research-main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-md focus:ring-2 focus:ring-ring">
-            Skip to research content
-          </a>
-          <Announcements
-            announcements={announcements}
-            rotating={announcements.length > 1}
-            intervalMs={6500}
-            background="secondary"
-          />
-          <ResearchHeader />
-          {children}
-          <PublicFooter
-            columns={researchFooterColumns}
-            contactInfo={resolvedContactInfo}
-            socialLinks={socialLinks}
-            legalLinks={researchLegalLinks}
-            className="bg-brand-overlay"
-          />
-        </div>
+        <AccessibilityInitScript />
+        <AccessibilityShell mainContentId="research-main">
+          <div className="min-h-screen bg-background text-foreground">
+            <Announcements
+              announcements={announcements}
+              rotating={announcements.length > 1}
+              intervalMs={6500}
+              background="secondary"
+            />
+            <ResearchHeader />
+            {children}
+            <PublicFooter
+              columns={researchFooterColumns}
+              contactInfo={resolvedContactInfo}
+              socialLinks={socialLinks}
+              legalLinks={researchLegalLinks}
+              className="bg-brand-overlay"
+            />
+          </div>
+        </AccessibilityShell>
       </body>
     </html>
   );

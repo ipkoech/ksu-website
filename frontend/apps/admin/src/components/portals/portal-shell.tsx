@@ -86,6 +86,8 @@ function PortalChrome({ portal, children }: { portal: PortalConfig; children: Re
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Toolbar portal={portal} />
         <motion.main
+          id="admin-main"
+          tabIndex={-1}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2, ease: "easeOut" }}

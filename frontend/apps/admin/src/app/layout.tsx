@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Providers } from "./providers";
-import { Toaster } from "@ksu/ui";
+import {
+  AccessibilityInitScript,
+  AccessibilityShell,
+  Toaster,
+} from "@ksu/ui";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -30,8 +34,11 @@ export default function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body className="font-sans antialiased">
+        <AccessibilityInitScript />
         <Providers>
-          {children}
+          <AccessibilityShell mainContentId="admin-main">
+            {children}
+          </AccessibilityShell>
           <Toaster position="top-right" />
         </Providers>
       </body>
