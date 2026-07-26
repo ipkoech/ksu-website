@@ -9,6 +9,7 @@ import {
   AccessibilityProvider,
   useAccessibility,
 } from "./accessibility-provider";
+import { AccessibilityShell } from "./accessibility-shell";
 import { ACCESSIBILITY_STORAGE_KEY } from "./preferences";
 
 function Harness() {
@@ -75,6 +76,33 @@ describe("AccessibilityProvider", () => {
     expect(screen.getByLabelText("Text scale")).toHaveTextContent("default");
     expect(document.documentElement).not.toHaveAttribute(
       "data-a11y-text-scale",
+    );
+  });
+
+  it("opens a labelled panel and applies the reading preset", async () => {
+    render(
+      <AccessibilityShell mainContentId="main">
+        <main id="main">Page</main>
+      </AccessibilityShell>,
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Accessibility" }),
+    );
+
+    expect(
+      screen.getByRole("dialog", {
+        name: "Accessibility preferences",
+      }),
+    ).toBeVisible();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Reading support" }),
+    );
+
+    expect(document.documentElement).toHaveAttribute(
+      "data-a11y-readable-font",
+      "true",
     );
   });
 });
