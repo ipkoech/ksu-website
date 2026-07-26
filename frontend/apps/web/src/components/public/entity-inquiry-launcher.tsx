@@ -19,6 +19,10 @@ import {
   SheetHeader,
   SheetTitle,
   Textarea,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@ksu/ui/components";
 import { KSU_CONTEXTUAL_ACTION_SLOT_ID } from "@ksu/ui";
 import { CheckCircle2, Loader2, MessageCircle, Send } from "lucide-react";
@@ -58,8 +62,11 @@ const initialDraft: InquiryDraft = {
   website: "",
 };
 
+const INQUIRY_PANEL_ID = "ksu-entity-inquiry-panel";
+
 export function EntityInquiryLauncher({
   target,
+  aboveMobileNavigation = false,
 }: {
   target: PublicInquiryTarget;
   aboveMobileNavigation?: boolean;
@@ -72,10 +79,31 @@ export function EntityInquiryLauncher({
   const [reference, setReference] = useState("");
 
   useEffect(() => {
-    setActionSlot(
-      document.getElementById(KSU_CONTEXTUAL_ACTION_SLOT_ID),
+    const slot = document.getElementById(KSU_CONTEXTUAL_ACTION_SLOT_ID);
+    setActionSlot(slot);
+
+    const dock = slot?.closest<HTMLElement>(".ksu-floating-action-dock");
+    if (!dock || !aboveMobileNavigation) return;
+
+    const previousOffset = dock.style.getPropertyValue(
+      "--ksu-floating-bottom-offset",
     );
-  }, []);
+    dock.style.setProperty(
+      "--ksu-floating-bottom-offset",
+      "calc(4.75rem + env(safe-area-inset-bottom))",
+    );
+
+    return () => {
+      if (previousOffset) {
+        dock.style.setProperty(
+          "--ksu-floating-bottom-offset",
+          previousOffset,
+        );
+      } else {
+        dock.style.removeProperty("--ksu-floating-bottom-offset");
+      }
+    };
+  }, [aboveMobileNavigation]);
 
   function updateDraft(
     field: keyof InquiryDraft,
@@ -92,6 +120,17 @@ export function EntityInquiryLauncher({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = event.currentTarget;
+    if (!form.checkValidity() || !draft.consentToContact) {
+      const invalidControl =
+        form.querySelector<HTMLElement>(":invalid") ??
+        form.querySelector<HTMLElement>(
+          '[name="consent_to_contact"]',
+        );
+      invalidControl?.focus();
+      return;
+    }
+
     setSubmitting(true);
     setError("");
 
@@ -110,6 +149,7 @@ export function EntityInquiryLauncher({
           source_page_url: window.location.pathname,
         },
       );
+      setDraft(initialDraft);
       setReference(response.data.reference_number);
     } catch (caught) {
       setError(
@@ -129,23 +169,33 @@ export function EntityInquiryLauncher({
   }
 
   const launcher = (
-    <button
-      type="button"
-      onClick={() => setOpen(true)}
-      className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-[0_16px_40px_-14px_rgba(15,48,120,0.7)] transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25"
-      aria-label={`Send a message to ${target.name}`}
-      title="Send a message"
-    >
-      <MessageCircle aria-hidden className="h-5 w-5" />
-    </button>
+    <TooltipProvider delayDuration={250}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="ksu-floating-action"
+            aria-label={`Send a message to ${target.name}`}
+            aria-expanded={open}
+            aria-controls={INQUIRY_PANEL_ID}
+            title="Send a message"
+          >
+            <MessageCircle aria-hidden className="h-5 w-5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="left">Send a message</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 
   return (
     <>
-      {actionSlot ? createPortal(launcher, actionSlot) : launcher}
+      {actionSlot ? createPortal(launcher, actionSlot) : null}
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
+          id={INQUIRY_PANEL_ID}
           side="right"
           className="flex h-dvh w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-xl"
         >
@@ -158,11 +208,16 @@ export function EntityInquiryLauncher({
               {target.type}.
             </SheetDescription>
           </SheetHeader>
+          <p role="status" aria-live="polite" className="sr-only">
+            {submitting
+              ? "Sending message…"
+              : reference
+                ? `Message sent. Reference number ${reference}.`
+                : ""}
+          </p>
 
           {reference ? (
             <div
-              role="status"
-              aria-live="polite"
               className="overflow-y-auto px-6 py-10 text-center sm:px-8"
             >
               <CheckCircle2
@@ -175,7 +230,10 @@ export function EntityInquiryLauncher({
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 Keep this reference number for follow-up:
               </p>
-              <p className="mt-3 rounded-xl bg-primary/[0.07] px-4 py-3 font-mono text-lg font-bold text-primary">
+              <p
+                aria-label={`Reference number ${reference}`}
+                className="mt-3 select-text rounded-xl bg-primary/[0.07] px-4 py-3 font-mono text-lg font-bold text-primary"
+              >
                 {reference}
               </p>
               <div className="mt-6 flex flex-wrap justify-center gap-3">
