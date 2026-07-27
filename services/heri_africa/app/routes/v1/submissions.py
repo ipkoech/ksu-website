@@ -11,8 +11,19 @@ from ...schemas.submissions import (
     NetworkSubmission,
     PartnershipSubmission,
 )
+from ...models.content import Event
+from pydantic import BaseModel, EmailStr, Field
 
 router = APIRouter(tags=["HERI Submissions"])
+
+
+class EventRegistration(BaseModel):
+    name: str = Field(min_length=2, max_length=255)
+    email: EmailStr
+    organisation: str | None = None
+    country: str | None = None
+    accessibility_requirements: str | None = None
+    consent: bool
 
 
 async def _save_submission(kind: str, payload: object, db: AsyncSession, request: Request) -> dict[str, str]:
@@ -52,3 +63,10 @@ async def network(payload: NetworkSubmission, request: Request, db: AsyncSession
 @router.post("/newsletter/subscribe", status_code=status.HTTP_202_ACCEPTED)
 async def newsletter(payload: NewsletterSubmission, request: Request, db: AsyncSession = Depends(get_db)):
     return await _save_submission("newsletter", payload, db, request)
+
+
+@router.post("/events/{event_id}/register", status_code=status.HTTP_202_ACCEPTED)
+async def register_event(event_id: str, payload: EventRegistration, request: Request, db: AsyncSession = Depends(get_db)):
+    if await db.get(Event, event_id) is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return await _save_submission("event_registration", payload, db, request)

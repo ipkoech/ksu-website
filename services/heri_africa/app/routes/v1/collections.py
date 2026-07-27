@@ -4,10 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.database import get_db
-from ...models.content import ResearchProject, ResearchPublication, ResearchTheme
+from ...models.content import Event, Opportunity, ResearchProject, ResearchPublication, ResearchTheme
 from ...models.people import TeamMember
 from ...models.partners import Partner
-from ...schemas.collections import PartnerSummary, ResearchSummary, TeamSummary
+from ...schemas.collections import EventSummary, OpportunitySummary, PartnerSummary, ResearchSummary, TeamSummary
 from ...services.public import PublicService
 
 router = APIRouter(tags=["HERI Collections"])
@@ -40,3 +40,13 @@ async def projects(limit: int = Query(20, ge=1, le=100), db: AsyncSession = Depe
 async def publications(limit: int = Query(20, ge=1, le=100), db: AsyncSession = Depends(get_db)):
     records = await PublicService().list(db, ResearchPublication, limit=limit)
     return [ResearchSummary(id=item.id, slug=item.slug, title=item.title, summary=item.abstract or "") for item in records]
+
+
+@router.get("/events", response_model=list[EventSummary])
+async def events(limit: int = Query(20, ge=1, le=100), db: AsyncSession = Depends(get_db)):
+    return [EventSummary.model_validate(item) for item in await PublicService().list(db, Event, limit=limit)]
+
+
+@router.get("/opportunities", response_model=list[OpportunitySummary])
+async def opportunities(limit: int = Query(20, ge=1, le=100), db: AsyncSession = Depends(get_db)):
+    return [OpportunitySummary.model_validate(item) for item in await PublicService().list(db, Opportunity, limit=limit)]
