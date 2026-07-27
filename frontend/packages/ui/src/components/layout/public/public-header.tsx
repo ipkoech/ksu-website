@@ -181,7 +181,7 @@ export function PublicHeader({
         )}
       >
         <nav className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="flex h-[107px] items-center justify-between lg:h-[98px]">
+          <div className="flex h-[128px] items-center justify-between lg:h-[118px]">
             {/* Logo */}
             <Link
               href="/"
@@ -193,13 +193,13 @@ export function PublicHeader({
                 alt="Kisii University"
                 width={56}
                 height={56}
-                className="h-12 w-auto sm:h-14 lg:h-12"
+                className="h-[58px] w-auto sm:h-[67px] lg:h-[58px]"
                 priority
               />
               <span className="min-w-0">
                 <span
                   className={cn(
-                    "block font-[family-name:var(--font-display)] text-lg font-bold uppercase leading-none text-primary transition-colors motion-reduce:transition-none sm:text-2xl lg:text-xl",
+                    "block font-[family-name:var(--font-display)] text-xl font-bold uppercase leading-none text-primary transition-colors motion-reduce:transition-none sm:text-3xl lg:text-2xl",
                     isTransparent ? "text-white" : "text-primary",
                   )}
                 >
@@ -207,7 +207,7 @@ export function PublicHeader({
                 </span>
                 <span
                   className={cn(
-                    "mt-1 block text-xs font-semibold leading-none transition-colors motion-reduce:transition-none sm:text-sm lg:text-xs",
+                    "mt-1 block text-sm font-semibold leading-none transition-colors motion-reduce:transition-none sm:text-base lg:text-sm",
                     isTransparent ? "text-white/80" : "text-muted-foreground",
                   )}
                 >
