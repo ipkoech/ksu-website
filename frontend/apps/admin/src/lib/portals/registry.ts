@@ -11,6 +11,7 @@ import {
   FileText,
   FlaskConical,
   GraduationCap,
+  Globe2,
   HandCoins,
   ImageIcon,
   Landmark,
