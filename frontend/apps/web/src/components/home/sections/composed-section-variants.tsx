@@ -225,7 +225,7 @@ export function HeroAdmissionsSection({
     section.subtitle ??
     section.description ??
     "Advancing inclusive education, research, innovation and community impact.";
-  const actions = heroActions(content?.actions, section.items, admissions);
+  const actions = heroActions(content?.actions, section.items, admissions ?? undefined);
 
   return (
     <section className="relative isolate min-h-[clamp(390px,calc(100svh-13rem),580px)] overflow-hidden bg-primary text-white">
@@ -856,7 +856,7 @@ export function ProgrammeFinderSection({
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[linear-gradient(180deg,hsl(var(--accent)/.55),transparent)]" />
       <div className="relative mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="programme-mosaic-grid grid overflow-hidden border border-primary/10 bg-white/[0.95] shadow-[0_24px_70px_-48px_hsl(var(--primary)/.45)] lg:grid-cols-12">
+        <div className="programme-mosaic-grid grid overflow-hidden rounded-2xl bg-white/[0.95] shadow-[0_24px_70px_-48px_hsl(var(--primary)/.45)] lg:grid-cols-12">
           <header className="programme-mosaic-intro relative flex flex-col justify-between overflow-hidden bg-primary p-5 text-white sm:p-7 lg:col-span-4 lg:row-start-1">
             <div
               className="absolute -right-20 -top-24 h-52 w-52 rounded-full border border-white/10"

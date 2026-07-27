@@ -315,7 +315,7 @@ async function getMainContact() {
 
 async function getSchoolsList() {
   const response = await schoolsApi.list({
-    per_page: 100,
+    per_page: 8,
     fields:
       "id,name,code,slug,description,about,cover_image_id,departments_count",
     include:
@@ -541,7 +541,7 @@ function normalizeSchools(
 function normalizeFeaturedProgrammes(
   programmes: ProgrammeWithMedia[],
 ): HomeProgrammeCard[] {
-  return programmes.slice(0, 100).map((programme) => ({
+  return programmes.slice(0, 24).map((programme) => ({
     id: programme.id,
     title: programme.name,
     eyebrow: programme.level || "Programme",

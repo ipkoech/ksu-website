@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { ArrowRight, Search } from "lucide-react";
+import { getMainApiBaseUrl } from "@ksu/api-client";
 import type { HomeProgrammeCard, HomeSchoolCard } from "@/lib/homepage-data";
 
 type ProgrammeFinderInteractiveProps = {
@@ -20,7 +21,15 @@ export function ProgrammeFinderInteractive({
   const [schoolId, setSchoolId] = useState(allValue);
   const [level, setLevel] = useState(allValue);
   const [mode, setMode] = useState(allValue);
+  const [remoteResults, setRemoteResults] = useState<HomeProgrammeCard[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const deferredQuery = useDeferredValue(query);
+
+  const hasActiveFilters =
+    Boolean(query.trim()) ||
+    schoolId !== allValue ||
+    level !== allValue ||
+    mode !== allValue;
 
   const levels = useMemo(
     () => uniqueValues(programmes.map((programme) => programme.meta)),
@@ -35,7 +44,7 @@ export function ProgrammeFinderInteractive({
       ),
     [programmes],
   );
-  const matchingProgrammes = useMemo(() => {
+  const localMatches = useMemo(() => {
     const normalizedQuery = deferredQuery.trim().toLowerCase();
     return programmes.filter((programme) => {
       const matchesQuery =
@@ -55,13 +64,56 @@ export function ProgrammeFinderInteractive({
     });
   }, [deferredQuery, level, mode, programmes, schoolId]);
 
+  useEffect(() => {
+    if (!hasActiveFilters) {
+      setRemoteResults(null);
+      setIsSearching(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setIsSearching(true);
+      const params = new URLSearchParams({
+        per_page: "24",
+        fields:
+          "id,name,slug,level,mode_of_study,duration,department_name,department",
+      });
+      if (deferredQuery.trim()) params.set("q", deferredQuery.trim());
+      if (schoolId !== allValue) params.set("school_id", schoolId);
+      if (level !== allValue) params.set("level", level);
+      if (mode !== allValue) params.set("mode_of_study", mode);
+
+      try {
+        const response = await fetch(
+          `${getMainApiBaseUrl()}/api/v1/programmes?${params.toString()}`,
+          {
+          signal: controller.signal,
+          headers: { Accept: "application/json" },
+          },
+        );
+        if (!response.ok) throw new Error(`Programme search failed: ${response.status}`);
+        const payload = (await response.json()) as {
+          data?: Array<Record<string, unknown>>;
+        };
+        setRemoteResults((payload.data ?? []).map(normalizeSearchProgramme));
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") setRemoteResults(null);
+      } finally {
+        if (!controller.signal.aborted) setIsSearching(false);
+      }
+    }, 260);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [deferredQuery, hasActiveFilters, level, mode, schoolId]);
+
+  const matchingProgrammes = remoteResults ?? localMatches;
+
   const actionHref = programmeSearchHref({ query, schoolId, level, mode });
   const resultSetKey = [deferredQuery, schoolId, level, mode].join(":");
-  const hasActiveFilters =
-    query.trim() ||
-    schoolId !== allValue ||
-    level !== allValue ||
-    mode !== allValue;
   const previewItems = (
     hasActiveFilters ? matchingProgrammes : programmes
   ).slice(0, 3);
@@ -85,9 +137,9 @@ export function ProgrammeFinderInteractive({
 
         <form
           action="/academics/programmes"
-          className="border border-primary/15 bg-white shadow-sm shadow-primary/5"
+          className="overflow-hidden rounded-xl bg-white/90 shadow-[0_18px_45px_-35px_hsl(var(--primary)/.65)]"
         >
-          <div className="flex min-h-16 items-center gap-3 border-b border-primary/10 px-4 sm:px-5">
+          <div className="flex min-h-16 items-center gap-3 bg-white px-4 sm:px-5">
             <Search className="h-6 w-6 text-primary" aria-hidden />
             <input
               name="q"
@@ -148,6 +200,7 @@ export function ProgrammeFinderInteractive({
             aria-live="polite"
             className="shrink-0 text-sm text-muted-foreground"
           >
+            {isSearching ? <span className="mr-2 text-xs text-secondary">Searching…</span> : null}
             <strong className="text-xl text-primary">
               {matchingProgrammes.length}
             </strong>{" "}
@@ -241,6 +294,28 @@ function uniqueValues(values: Array<string | null | undefined>) {
   return Array.from(
     new Set(values.map((value) => value?.trim()).filter(Boolean) as string[]),
   ).slice(0, 8);
+}
+
+function normalizeSearchProgramme(record: Record<string, unknown>): HomeProgrammeCard {
+  const department = (record.department as Record<string, unknown> | undefined) ?? {};
+  const school = (department.school as Record<string, unknown> | undefined) ?? {};
+  const name = String(record.name ?? "Programme");
+  const slug = String(record.slug ?? record.id ?? "");
+  const departmentName = String(record.department_name ?? department.name ?? "");
+  const duration = String(record.duration ?? "");
+  const mode = String(record.mode_of_study ?? "");
+
+  return {
+    id: String(record.id ?? slug),
+    title: name,
+    eyebrow: String(record.level ?? "Programme"),
+    body: [departmentName, duration, mode].filter(Boolean).join(" · "),
+    href: `/academics/programmes/${slug}`,
+    action: "View programme",
+    meta: String(record.level ?? ""),
+    schoolId: String(department.school_id ?? school.id ?? "") || null,
+    schoolName: String(department.school_name ?? school.name ?? "") || null,
+  };
 }
 
 function programmeSearchHref({
