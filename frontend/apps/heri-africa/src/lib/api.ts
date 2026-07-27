@@ -14,6 +14,9 @@ export type NewsSummary = {
   published_at: string | null;
 };
 
+export type TeamSummary = { id: string; slug: string; name: string; role: string; biography: string; photo_url: string | null };
+export type ResearchSummary = { id: string; slug: string; title: string; summary: string };
+
 const apiBase = process.env.NEXT_PUBLIC_HERI_API_URL ?? "http://localhost:8003/api/v1/heri";
 
 async function get<T>(path: string): Promise<T> {
@@ -29,6 +32,10 @@ export async function getSite(): Promise<SiteSettings> {
 export async function getNews(): Promise<NewsSummary[]> {
   return get<NewsSummary[]>("/news?limit=6");
 }
+
+export async function getTeam(): Promise<TeamSummary[]> { return get<TeamSummary[]>("/team?limit=24"); }
+export async function getProjects(): Promise<ResearchSummary[]> { return get<ResearchSummary[]>("/research/projects?limit=24"); }
+export async function getPublications(): Promise<ResearchSummary[]> { return get<ResearchSummary[]>("/research/publications?limit=24"); }
 
 export async function submitContact(payload: Record<string, unknown>): Promise<{ status: string; message: string }> {
   const response = await fetch(`${apiBase}/contact`, {
