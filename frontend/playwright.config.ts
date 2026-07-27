@@ -50,5 +50,13 @@ export default defineConfig({
           process.env.RESEARCH_E2E_BASE_URL ?? "http://localhost:3002",
       },
     },
+    {
+      name: "heri",
+      testDir: "./apps/heri-africa/e2e",
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: process.env.HERI_E2E_BASE_URL ?? "http://localhost:3004",
+      },
+    },
   ],
 });

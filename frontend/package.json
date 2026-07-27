@@ -19,6 +19,7 @@
     "test:accessibility:unit": "pnpm --filter @ksu/ui test",
     "test:e2e:accessibility": "playwright test --grep @accessibility",
     "test:e2e:school-portal": "playwright test school-portal.spec.ts --project=admin",
+    "test:e2e:heri": "playwright test --project=heri",
     "clean": "turbo clean && rm -rf node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },

@@ -8,13 +8,14 @@ export function ContactForm() {
   const [message, setMessage] = useState("");
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = event.currentTarget;
     setState("pending");
-    const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+    const values = Object.fromEntries(new FormData(form).entries());
     try {
       const result = await submitContact({ ...values, consent: values.consent === "on" });
       setMessage(result.message);
       setState("success");
-      event.currentTarget.reset();
+      form.reset();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to submit enquiry");
       setState("error");
