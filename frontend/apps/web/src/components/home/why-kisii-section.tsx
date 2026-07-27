@@ -44,6 +44,15 @@ const statIcons = [
   Sparkles,
 ] satisfies LucideIcon[];
 
+const statTones = [
+  "text-primary",
+  "text-secondary",
+  "text-cyan-600",
+  "text-emerald-600",
+  "text-violet-600",
+  "text-amber-600",
+] as const;
+
 const whyKisiiImages = [
   "/images/landing-page/why-kisii/sakgwa-academic-block.jpg",
   "/images/landing-page/why-kisii/pathway-2.jpg",
@@ -238,13 +247,15 @@ export function WhyKisiiSection({
         </div>
 
         {facts.length ? (
-          <aside className="-mx-4 mt-6 overflow-hidden bg-primary px-4 py-6 text-white shadow-[0_20px_55px_-35px_hsl(var(--primary)/.9)] sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
-            <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(150px,1.1fr)_repeat(6,minmax(0,1fr))_auto] lg:items-center">
-              <div className="shrink-0 border-b border-white/20 pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-5">
+          <aside className="relative -mx-4 mt-6 overflow-hidden border-y border-primary/10 bg-[radial-gradient(circle_at_12%_8%,hsl(var(--primary)/.11),transparent_30%),radial-gradient(circle_at_86%_94%,hsl(var(--secondary)/.13),transparent_30%),linear-gradient(120deg,#fff,hsl(var(--accent)/.45))] px-4 py-8 text-primary sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
+            <span className="pointer-events-none absolute -left-16 top-8 h-36 w-36 rounded-full border border-primary/10 motion-safe:animate-[spin_22s_linear_infinite]" aria-hidden />
+            <span className="pointer-events-none absolute -right-12 bottom-[-5rem] h-48 w-48 rounded-full border-[18px] border-secondary/10 motion-safe:animate-[pulse_8s_ease-in-out_infinite]" aria-hidden />
+            <div className="relative flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(150px,1.1fr)_repeat(6,minmax(0,1fr))_auto] lg:items-center">
+              <div className="shrink-0 border-b border-primary/15 pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-5">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
                 {factsSection?.title ?? "KSU at a glance"}
                 </p>
-                <p className="mt-2 max-w-[13rem] font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-white">
+                <p className="mt-2 max-w-[13rem] font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-primary">
                   The scale behind the experience.
                 </p>
               </div>
@@ -254,20 +265,21 @@ export function WhyKisiiSection({
                   return (
                     <div
                       key={fact.id}
-                      className="group flex min-w-[10.5rem] snap-start items-center gap-3 border-r border-white/15 px-4 first:pl-0 last:border-r-0 lg:min-w-0 lg:px-4 lg:first:pl-5"
+                      className={`group flex min-w-[11rem] snap-start flex-col items-start gap-2 border-r border-primary/10 px-5 transition duration-700 first:pl-0 last:border-r-0 motion-safe:animate-[fade-slide-up_700ms_ease-out_both] lg:min-w-0 lg:px-4 lg:first:pl-5 ${index % 2 ? "lg:translate-y-4" : "lg:-translate-y-1"}`}
+                      style={{ animationDelay: `${index * 90}ms` }}
                     >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-secondary ring-1 ring-white/20 transition group-hover:bg-secondary group-hover:text-white">
-                        <Icon className="h-5 w-5" aria-hidden />
+                      <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-primary/10 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-md ${statTones[index % statTones.length]}`}>
+                        <Icon className="h-6 w-6 motion-safe:animate-[ksu-ambient-float_5s_ease-in-out_infinite]" style={{ animationDelay: `${index * 180}ms` }} aria-hidden />
                       </span>
                       <span className="min-w-0">
-                        <span className="block font-[family-name:var(--font-display)] text-2xl font-semibold leading-none text-white lg:text-[1.75rem]">
+                        <span className="block font-[family-name:var(--font-display)] text-2xl font-semibold leading-none text-primary lg:text-[1.8rem]">
                           <CountUpValue
                             value={fact.title ?? ""}
                             active={isVisible.visible}
                             delay={index * 90}
                           />
                         </span>
-                        <span className="mt-1 line-clamp-2 block text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-white/70">
+                        <span className="mt-1 line-clamp-2 block text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-primary/65">
                           {factSubtitle(fact)}
                         </span>
                       </span>
@@ -277,7 +289,7 @@ export function WhyKisiiSection({
               </div>
               <Link
                 href="/about/numbers-and-facts"
-                className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 self-start border border-secondary/70 px-4 text-sm font-semibold text-white transition hover:bg-secondary hover:text-white lg:self-auto"
+                className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 self-start border border-primary/25 bg-white/60 px-4 text-sm font-semibold text-primary transition hover:border-secondary hover:bg-secondary hover:text-white lg:self-auto"
               >
                 Explore facts
                 <ArrowRight className="h-4 w-4" aria-hidden />
