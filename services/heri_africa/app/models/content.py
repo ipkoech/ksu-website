@@ -105,3 +105,55 @@ class ResearchPublication(UUIDMixin, Base):
     status: Mapped[PublicationStatus] = mapped_column(Enum(PublicationStatus), default=PublicationStatus.DRAFT, index=True)
     scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     resource_url: Mapped[str | None] = mapped_column(String(500))
+
+
+class Event(UUIDMixin, Base):
+    __tablename__ = "events"
+    slug: Mapped[str] = mapped_column(String(180), unique=True, index=True)
+    title: Mapped[str] = mapped_column(String(255))
+    summary: Mapped[str] = mapped_column(Text, default="")
+    description: Mapped[str] = mapped_column(Text, default="")
+    starts_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    location: Mapped[str | None] = mapped_column(String(255))
+    registration_url: Mapped[str | None] = mapped_column(String(500))
+    status: Mapped[PublicationStatus] = mapped_column(Enum(PublicationStatus), default=PublicationStatus.DRAFT, index=True)
+    scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class Opportunity(UUIDMixin, Base):
+    __tablename__ = "opportunities"
+    slug: Mapped[str] = mapped_column(String(180), unique=True, index=True)
+    title: Mapped[str] = mapped_column(String(255))
+    summary: Mapped[str] = mapped_column(Text, default="")
+    application_url: Mapped[str | None] = mapped_column(String(500))
+    closing_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    status: Mapped[PublicationStatus] = mapped_column(Enum(PublicationStatus), default=PublicationStatus.DRAFT, index=True)
+    scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class NavigationItem(UUIDMixin, Base):
+    __tablename__ = "navigation_items"
+    label: Mapped[str] = mapped_column(String(120))
+    href: Mapped[str] = mapped_column(String(500))
+    position: Mapped[int] = mapped_column(Integer, default=0, index=True)
+    is_visible: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class FooterLink(UUIDMixin, Base):
+    __tablename__ = "footer_links"
+    column: Mapped[str] = mapped_column(String(120), index=True)
+    label: Mapped[str] = mapped_column(String(120))
+    href: Mapped[str] = mapped_column(String(500))
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    is_visible: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class ContentRevision(UUIDMixin, Base):
+    __tablename__ = "content_revisions"
+    entity_type: Mapped[str] = mapped_column(String(120), index=True)
+    entity_id: Mapped[str] = mapped_column(String(80), index=True)
+    version: Mapped[int] = mapped_column(Integer)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    author_id: Mapped[str | None] = mapped_column(String(80))
+    note: Mapped[str | None] = mapped_column(Text)

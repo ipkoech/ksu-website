@@ -1,0 +1,74 @@
+from __future__ import annotations
+
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from ksu_common.auth import TokenPayload
+
+from ...core.auth import get_current_user, require_permission
+from ...core.database import get_db
+from ...models.content import Event, NewsArticle, PublicationStatus
+from ...schemas.admin_content import EventCreate, NewsAdminResponse, NewsCreate, NewsUpdate, TransitionRequest
+from ...services.audit import record_audit
+from ...services.workflow import WorkflowError, WorkflowService
+
+router = APIRouter(prefix="/admin", tags=["HERI Admin Content"])
+
+
+@router.get("/news", response_model=list[NewsAdminResponse])
+async def list_news(db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.content.read"))):
+    records = (await db.execute(select(NewsArticle).order_by(NewsArticle.created_at.desc()))).scalars().all()
+    return [NewsAdminResponse.model_validate(record) for record in records]
+
+
+@router.post("/news", response_model=NewsAdminResponse, status_code=status.HTTP_201_CREATED)
+async def create_news(payload: NewsCreate, request: Request, db: AsyncSession = Depends(get_db), user: TokenPayload = Depends(require_permission("heri.content.write"))):
+    existing = (await db.execute(select(NewsArticle).where(NewsArticle.slug == payload.slug))).scalar_one_or_none()
+    if existing:
+        raise HTTPException(status_code=409, detail="A news article with this slug already exists")
+    record = NewsArticle(**payload.model_dump())
+    db.add(record)
+    await record_audit(db, action="create", entity_type="news_article", entity_id=str(record.id), actor_id=str(user.sub), new_value=payload.model_dump(), ip_address=request.client.host if request.client else None)
+    return record
+
+
+@router.patch("/news/{article_id}", response_model=NewsAdminResponse)
+async def update_news(article_id: UUID, payload: NewsUpdate, request: Request, db: AsyncSession = Depends(get_db), user: TokenPayload = Depends(require_permission("heri.content.write"))):
+    record = await db.get(NewsArticle, article_id)
+    if record is None or record.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="News article not found")
+    before = {"title": record.title, "excerpt": record.excerpt, "body": record.body}
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(record, key, value)
+    await record_audit(db, action="update", entity_type="news_article", entity_id=str(record.id), actor_id=str(user.sub), previous_value=before, new_value=payload.model_dump(exclude_unset=True), ip_address=request.client.host if request.client else None)
+    return record
+
+
+@router.post("/news/{article_id}/transition", response_model=NewsAdminResponse)
+async def transition_news(article_id: UUID, payload: TransitionRequest, request: Request, db: AsyncSession = Depends(get_db), user: TokenPayload = Depends(get_current_user)):
+    record = await db.get(NewsArticle, article_id)
+    if record is None or record.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="News article not found")
+    role = "administrator" if "admin" in user.roles else ("publisher" if "publisher" in user.roles else "editor")
+    try:
+        target = WorkflowService().transition(record.status.value, payload.status, role)
+    except WorkflowError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    previous = record.status.value
+    record.status = PublicationStatus(target)
+    await record_audit(db, action="transition", entity_type="news_article", entity_id=str(record.id), actor_id=str(user.sub), previous_value={"status": previous}, new_value={"status": target, "note": payload.note}, ip_address=request.client.host if request.client else None)
+    return record
+
+
+@router.get("/events")
+async def list_events(db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.content.read"))):
+    return (await db.execute(select(Event).order_by(Event.starts_at.asc()))).scalars().all()
+
+
+@router.post("/events", status_code=status.HTTP_201_CREATED)
+async def create_event(payload: EventCreate, db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.content.write"))):
+    event = Event(**payload.model_dump())
+    db.add(event)
+    return event
