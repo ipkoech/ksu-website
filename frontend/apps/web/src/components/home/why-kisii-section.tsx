@@ -418,9 +418,10 @@ function CountUpValue({
       return;
     }
 
+    setCurrent(0);
     let frame = 0;
     let timeout = 0;
-    const duration = 950;
+    const duration = 1400;
 
     timeout = window.setTimeout(() => {
       const start = performance.now();
@@ -448,10 +449,10 @@ function CountUpValue({
   }
 
   return (
-    <>
+    <span aria-label={value}>
       {new Intl.NumberFormat("en-KE").format(current)}
       {parsed.suffix}
-    </>
+    </span>
   );
 }
 
