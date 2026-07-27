@@ -126,7 +126,7 @@ export function ProgrammeFinderInteractive({
 
   return (
     <>
-      <div className="programme-mosaic-search relative z-40 mx-auto -mt-20 max-w-5xl bg-transparent p-4 sm:-mt-24 sm:p-6 lg:p-0">
+      <div className="programme-mosaic-search relative z-40 mx-auto -mt-14 max-w-5xl bg-transparent p-4 sm:-mt-16 sm:p-6 lg:p-0">
         <form
           action="/academics/programmes"
           className="relative rounded-2xl bg-white/95 shadow-[0_18px_45px_-35px_hsl(var(--primary)/.65)]"

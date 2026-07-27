@@ -867,7 +867,7 @@ export function ProgrammeFinderSection({
       <div className="relative mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="programme-mosaic-grid relative isolate grid overflow-visible lg:grid-cols-[minmax(0,1fr)_330px]">
           <div className="relative lg:col-start-1 lg:row-span-2">
-          <header className="programme-mosaic-intro relative flex min-h-[clamp(620px,48vw,760px)] flex-col justify-start overflow-hidden p-5 pt-[18%] text-white sm:p-8 sm:pt-[14%] lg:p-12 lg:pt-[13%]">
+          <header className="programme-mosaic-intro relative flex min-h-[clamp(440px,34vw,530px)] flex-col justify-start overflow-hidden p-5 pt-[14%] text-white sm:p-8 sm:pt-[11%] lg:p-12 lg:pt-[10%]">
             <div className="relative">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-white">
                 {section.subtitle ?? "Programmes and academic pathways"}
