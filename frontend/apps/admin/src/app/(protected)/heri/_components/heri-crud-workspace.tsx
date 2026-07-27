@@ -6,7 +6,7 @@ import { getStoredAccessToken } from "@ksu/auth";
 import { History, Loader2, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { toast } from "@ksu/ui";
 import { RichTextEditor } from "@ksu/ui/components";
-import { useHeriResourceQuery } from "@/lib/api/heri";
+import { useHeriResourceMutation, useHeriResourceQuery } from "@/lib/api/heri";
 
 type RecordValue = string | number | boolean | null | undefined | Record<string, unknown>;
 type HeriRecord = { id: string; [key: string]: RecordValue };
@@ -51,6 +51,7 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
   const [error, setError] = useState<string | null>(null);
   const pageSize = 8;
   const resourceQuery = useHeriResourceQuery<HeriRecord>(config.resource, { page, per_page: pageSize, search: query || undefined, status: status === "all" ? undefined : status });
+  const resourceMutation = useHeriResourceMutation(config.resource);
   const loading = resourceQuery.isPending || resourceQuery.isFetching;
 
   const load = useCallback(async () => {
@@ -74,7 +75,7 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
     const form = new FormData(event.currentTarget); const payload: Record<string, unknown> = {};
     try { config.fields.forEach((field) => { const value = form.get(field.name); if (field.type === "richtext") payload[field.name] = editorValues[field.name] ?? ""; else if (field.type === "boolean") payload[field.name] = value === "on"; else if (value !== null && value !== "") payload[field.name] = ["contact", "social_links", "seo_defaults", "payload"].includes(field.name) ? JSON.parse(String(value)) : field.type === "number" ? Number(value) : value; }); }
     catch { setError("JSON fields must contain valid JSON."); setSaving(false); return; }
-    try { await request(`/admin/${config.resource}${selected.id ? `/${selected.id}` : ""}`, { method: selected.id ? "PATCH" : "POST", body: JSON.stringify(payload) }); setSelected(null); setIsDirty(false); toast.success(selected.id ? "Record updated" : "Record created"); await load(); }
+    try { await resourceMutation.mutateAsync({ id: selected.id || undefined, payload }); setSelected(null); setIsDirty(false); toast.success(selected.id ? "Record updated" : "Record created"); await load(); }
     catch (reason) { const message = reason instanceof Error ? reason.message : "Unable to save record"; setError(message); toast.error(message); }
     finally { setSaving(false); }
   };
