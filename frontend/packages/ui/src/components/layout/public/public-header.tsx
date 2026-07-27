@@ -532,6 +532,7 @@ function MegaMenuDropdown({
     top: number;
     width: number;
   } | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const children = item.children || [];
   const hasChildren = children.length > 0;
 
@@ -572,7 +573,12 @@ function MegaMenuDropdown({
       ?.getBoundingClientRect();
     const gutter = 16;
     const availableWidth = Math.max(260, window.innerWidth - gutter * 2);
-    const targetWidth = item.label === "ABOUT US" ? 360 : 288;
+    const targetWidth =
+      item.label === "ABOUT US"
+        ? 360
+        : item.label === "PROGRAMMES"
+          ? 520
+          : 288;
     const width = Math.min(targetWidth, availableWidth);
     const maxLeft = Math.max(gutter, window.innerWidth - width - gutter);
     const preferredLeft =
@@ -632,6 +638,7 @@ function MegaMenuDropdown({
   useEffect(() => {
     if (!isOpen || !hasChildren) {
       setDropdownFrame(null);
+      setActiveSubmenu(null);
       return;
     }
 
@@ -773,9 +780,11 @@ function MegaMenuDropdown({
                   </div>
                 </div>
               ) : (
-                <div className="max-h-[calc(100vh-6rem)] overflow-y-auto py-2">
-                  <NestedFlyoutMenu items={children} />
-                </div>
+                <CompactNestedMenu
+                  items={children}
+                  activeSubmenu={activeSubmenu}
+                  onActivate={setActiveSubmenu}
+                />
               )}
 
               {isMegaMenu && (
@@ -815,19 +824,23 @@ function MenuSection({
   );
 }
 
-function NestedFlyoutMenu({
+function CompactNestedMenu({
   items,
-  nested = false,
+  activeSubmenu,
+  onActivate,
 }: {
   items: NavItem[];
-  nested?: boolean;
+  activeSubmenu: string | null;
+  onActivate: (href: string | null) => void;
 }) {
-  return (
-    <div className={nested ? "min-w-[12rem]" : "min-w-[16rem]"}>
-      {items.map((item) => {
-        const hasChildren = Boolean(item.children?.length);
+  const activeItem = items.find((item) => item.href === activeSubmenu);
 
-        if (!hasChildren) {
+  return (
+    <div className="flex min-h-[12rem] w-full">
+      <div className="max-h-[calc(100vh-6rem)] w-[17rem] shrink-0 overflow-y-auto py-2">
+        {items.map((item) => {
+          const hasChildren = Boolean(item.children?.length);
+
           return (
             <Link
               key={item.href}
@@ -835,34 +848,43 @@ function NestedFlyoutMenu({
               target={item.external ? "_blank" : undefined}
               rel={item.external ? "noopener noreferrer" : undefined}
               role="menuitem"
-              className="flex min-h-11 items-center justify-between gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-gray-800 transition-colors hover:bg-primary/5 hover:text-primary"
+              aria-haspopup={hasChildren ? "menu" : undefined}
+              onMouseEnter={() => onActivate(hasChildren ? item.href : null)}
+              onFocus={() => onActivate(hasChildren ? item.href : null)}
+              className={cn(
+                "flex min-h-11 items-center justify-between gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                activeSubmenu === item.href
+                  ? "bg-primary/5 text-primary"
+                  : "text-gray-800 hover:bg-primary/5 hover:text-primary",
+              )}
             >
               <span>{item.label}</span>
-              {item.external ? <ExternalLink className="h-3.5 w-3.5" aria-hidden /> : null}
+              {hasChildren ? (
+                <ChevronDown className="h-4 w-4 -rotate-90 text-gray-400" aria-hidden />
+              ) : item.external ? (
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              ) : null}
             </Link>
           );
-        }
+        })}
+      </div>
 
-        return (
-          <div key={item.href} className="group relative">
+      {activeItem?.children?.length ? (
+        <div className="max-h-[calc(100vh-6rem)] min-w-0 flex-1 overflow-y-auto border-l border-primary/10 py-2 pl-2">
+          {activeItem.children.map((child) => (
             <Link
-              href={item.href}
+              key={child.href}
+              href={child.href}
+              target={child.external ? "_blank" : undefined}
+              rel={child.external ? "noopener noreferrer" : undefined}
               role="menuitem"
-              aria-haspopup="menu"
-              className="flex min-h-11 items-center justify-between gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-gray-800 transition-colors hover:bg-primary/5 hover:text-primary group-hover:bg-primary/5 group-hover:text-primary"
+              className="flex min-h-11 items-center rounded-md px-3 py-2.5 text-sm font-medium text-gray-800 transition-colors hover:bg-primary/5 hover:text-primary"
             >
-              <span>{item.label}</span>
-              <ChevronDown className="h-4 w-4 -rotate-90 text-gray-400" aria-hidden />
+              {child.label}
             </Link>
-            <div
-              role="menu"
-              className="invisible absolute left-[calc(100%-0.25rem)] top-0 z-50 max-h-[calc(100vh-8rem)] min-w-[12rem] max-w-[14rem] overflow-y-auto rounded-lg border border-primary/10 bg-white p-2 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
-            >
-              <NestedFlyoutMenu items={item.children ?? []} nested />
-            </div>
-          </div>
-        );
-      })}
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
