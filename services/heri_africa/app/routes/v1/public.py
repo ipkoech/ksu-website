@@ -5,8 +5,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.database import get_db
-from ...models.content import NewsArticle, SiteSettings
+from ...models.content import FooterLink, NavigationItem, NewsArticle, SiteSettings
 from ...schemas.public import NewsSummary, SiteResponse
+from ...schemas.site import FooterLinkResponse, NavigationItemResponse
 from ...services.public import PublicService
 
 router = APIRouter(tags=["HERI Public"])
@@ -18,6 +19,18 @@ async def site(db: AsyncSession = Depends(get_db)) -> SiteResponse:
     if settings is None:
         return SiteResponse(name="HERI Africa", tagline=None, contact={}, social_links={}, seo_defaults={})
     return SiteResponse.model_validate(settings)
+
+
+@router.get("/navigation", response_model=list[NavigationItemResponse])
+async def navigation(db: AsyncSession = Depends(get_db)):
+    records = (await db.execute(select(NavigationItem).where(NavigationItem.is_visible.is_(True)).order_by(NavigationItem.position.asc()))).scalars().all()
+    return [NavigationItemResponse.model_validate(item) for item in records]
+
+
+@router.get("/footer", response_model=list[FooterLinkResponse])
+async def footer(db: AsyncSession = Depends(get_db)):
+    records = (await db.execute(select(FooterLink).where(FooterLink.is_visible.is_(True)).order_by(FooterLink.column.asc(), FooterLink.position.asc()))).scalars().all()
+    return [FooterLinkResponse.model_validate(item) for item in records]
 
 
 @router.get("/news", response_model=list[NewsSummary])
