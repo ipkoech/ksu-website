@@ -45,9 +45,9 @@ const statIcons = [
 ] satisfies LucideIcon[];
 
 const whyKisiiImages = [
-  "/images/Home/KSUGreenLandscaping.jpg",
-  "/images/Home/OurKSU-82.jpg",
-  "/images/Home/um-hero.jpg",
+  "/images/landing-page/why-kisii/sakgwa-academic-block.jpg",
+  "/images/landing-page/why-kisii/pathway-2.jpg",
+  "/images/landing-page/why-kisii/bg-3.jpg",
 ] as const;
 
 const institutionalReasonCopy: Record<
@@ -66,16 +66,16 @@ const institutionalReasonCopy: Record<
     icon: "academic",
   },
   "research & innovation": {
-    title: "Research shaped by community priorities",
-    body: "From agriculture and health to digital transformation, KSU turns research into practical regional impact.",
+    title: "Community-rooted impact",
+    body: "KSU connects learning and innovation to the needs of communities in Kenya and beyond.",
     href: "/research",
     icon: "research",
   },
   "global partnerships": {
-    title: "Partnerships that open opportunity",
-    body: "Strategic collaborations connect students, researchers and communities to wider networks across Africa and beyond.",
-    href: "/research/partnerships",
-    icon: "partnership",
+    title: "Future-ready pathways",
+    body: "Build practical skills through applied learning, enterprise, leadership and opportunities to progress.",
+    href: "/academics",
+    icon: "innovation",
   },
   "student experience": {
     title: "An inclusive student experience",
@@ -101,10 +101,9 @@ const fallbackWhyReasons: HomepageSectionItem[] = [
     },
   },
   {
-    id: "why-ksu-community-research",
-    title: "Research shaped by community priorities",
-    body_text:
-      "From agriculture and health to digital transformation, KSU turns research into practical regional impact.",
+    id: "why-ksu-community-impact",
+    title: "Community-rooted impact",
+    body_text: "KSU connects learning and innovation to the needs of communities in Kenya and beyond.",
     cta_label: "Explore research",
     cta_url: "/research",
     display_order: 20,
@@ -115,17 +114,16 @@ const fallbackWhyReasons: HomepageSectionItem[] = [
     },
   },
   {
-    id: "why-ksu-partnerships",
-    title: "Partnerships that open opportunity",
-    body_text:
-      "Strategic collaborations connect students, researchers and communities to wider networks across Africa and beyond.",
-    cta_label: "View partnerships",
-    cta_url: "/research/partnerships",
+    id: "why-ksu-future-pathways",
+    title: "Future-ready pathways",
+    body_text: "Build practical skills through applied learning, enterprise, leadership and opportunities to progress.",
+    cta_label: "Explore academics",
+    cta_url: "/academics",
     display_order: 30,
     content: {
-      icon: "partnership",
-      imageUrl: "/images/HERIAfricaLaunch.jpg",
-      imageAlt: "Kisii University partnership launch",
+      icon: "innovation",
+      imageUrl: "/images/landing-page/why-kisii/pathway-2.jpg",
+      imageAlt: "Kisii University learning pathways",
     },
   },
   {
