@@ -19,6 +19,7 @@ import { getAcademicsPageConfig } from "@/lib/public-record-page-data";
 import { getAcademicOrganization } from "@/lib/public-team-data";
 import { getSchoolDetailOverviewData } from "@/lib/school-detail-data";
 import type { EntityMediaType } from "@/lib/entity-media-data";
+import { FlowingAcademicsLanding } from "@/components/public/flowing-academics-landing";
 
 const schoolDetailSections = new Set<SchoolDetailSectionKey>([
   "team",
@@ -253,6 +254,15 @@ export default async function AcademicsRoutePage({
         config={config}
         kind={academicRecordKind}
         page={academicPage}
+      />
+    );
+  }
+
+  if (segments.length === 0) {
+    return (
+      <FlowingAcademicsLanding
+        config={config}
+        academicLeadership={academicLeadership}
       />
     );
   }
