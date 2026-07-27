@@ -143,7 +143,7 @@ export function ProgrammeFinderInteractive({
 
         <form
           action="/academics/programmes"
-          className="relative rounded-xl bg-white/90 shadow-[0_18px_45px_-35px_hsl(var(--primary)/.65)]"
+          className="relative rounded-2xl bg-white/95 shadow-[0_18px_45px_-35px_hsl(var(--primary)/.65)]"
         >
           <div className="flex min-h-16 items-center gap-3 bg-white px-4 sm:px-5">
             <Search className="h-6 w-6 text-primary" aria-hidden />
@@ -158,7 +158,7 @@ export function ProgrammeFinderInteractive({
             />
             <button
               type="submit"
-              className="hidden min-h-10 items-center justify-center bg-secondary px-5 text-xs font-bold text-white transition hover:bg-secondary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:inline-flex"
+              className="hidden min-h-10 items-center justify-center rounded-full bg-secondary px-5 text-xs font-bold text-white transition hover:bg-secondary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:inline-flex"
             >
               Search
             </button>
@@ -167,7 +167,7 @@ export function ProgrammeFinderInteractive({
               onClick={() => setFiltersOpen((current) => !current)}
               aria-expanded={filtersOpen}
               aria-controls="programme-filters"
-              className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-md border border-primary/15 px-3 text-xs font-bold text-primary transition hover:border-secondary hover:text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-primary/15 px-4 text-xs font-bold text-primary transition hover:border-secondary hover:text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               <SlidersHorizontal className="h-4 w-4" aria-hidden />
               <span className="hidden sm:inline">Filters</span>
