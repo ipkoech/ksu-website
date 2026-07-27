@@ -96,7 +96,7 @@ async def seed_programmes(db: AsyncSession, ctx: SeedContext) -> None:
             late_application_end=date(2026, 4, 30),
             max_students=3000,
             is_active=True,
-            is_open=True,
+            is_open=False,
         ),
         "September": await upsert_intake(
             db,
