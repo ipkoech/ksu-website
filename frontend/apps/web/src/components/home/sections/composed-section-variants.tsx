@@ -600,9 +600,6 @@ export function PulseStripSection({ section }: SectionVariantProps) {
             <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-tight text-white">
               {section.title ?? "University pulse"}
             </h2>
-            <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
-              Latest official updates
-            </p>
           </div>
         </div>
 
