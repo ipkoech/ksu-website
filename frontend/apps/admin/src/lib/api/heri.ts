@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getStoredAccessToken } from "@ksu/auth";
 
-export type HeriRecord = { id: string; [key: string]: unknown };
+export type HeriRecord = { id: string; status?: string; [key: string]: unknown };
 export type HeriListParams = { page?: number; per_page?: number; search?: string; status?: string };
 export type HeriListResponse<T extends HeriRecord = HeriRecord> = { data: T[]; meta: { page: number; per_page: number; total: number; pages: number } };
 
@@ -20,6 +20,10 @@ export const heriQueryKeys = { resource: (resource: string, params: HeriListPara
 
 export function useHeriResourceQuery<T extends HeriRecord = HeriRecord>(resource: string, params: HeriListParams) {
   return useQuery({ queryKey: heriQueryKeys.resource(resource, params), queryFn: () => { const query = new URLSearchParams(); Object.entries(params).forEach(([key, value]) => value && query.set(key, String(value))); return heriRequest<HeriListResponse<T>>(`/admin/${resource}?${query.toString()}`); }, placeholderData: (previous) => previous, staleTime: 30_000 });
+}
+
+export function useHeriRecordQuery<T extends HeriRecord = HeriRecord>(resource: string, id: string) {
+  return useQuery({ queryKey: ["heri", resource, id], queryFn: () => heriRequest<T>(`/admin/${resource}/${id}`), enabled: Boolean(resource && id), staleTime: 30_000 });
 }
 
 export function useHeriResourceMutation(resource: string) {

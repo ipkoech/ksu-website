@@ -16,6 +16,18 @@ from ...models.audit import AuditLog
 router = APIRouter(prefix="/admin", tags=["HERI Admin CRUD"])
 
 
+@router.get("/{resource}/{record_id}")
+async def get_resource(resource: str, record_id: UUID, db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.content.read"))):
+    try:
+        model = model_for_resource(resource)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    record = await db.get(model, record_id)
+    if record is None or record.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Record not found")
+    return record
+
+
 @router.get("/{resource}/{record_id}/audit")
 async def list_resource_audit(resource: str, record_id: UUID, db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.content.read"))):
     """Return the immutable change history used by the HERI revision panel."""
