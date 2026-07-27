@@ -852,7 +852,7 @@ export function ProgrammeFinderSection({
   return (
     <section
       id={section.section_key}
-      className="programme-discovery-mosaic relative isolate overflow-hidden border-b border-primary/20 bg-primary py-0 text-white sm:py-0"
+      className="programme-discovery-mosaic relative isolate overflow-hidden border-b border-primary/20 bg-primary py-4 text-white sm:py-6 lg:py-8"
     >
       <PublicImage
         src="/images/landing-page/tc-fore.png"
@@ -864,13 +864,13 @@ export function ProgrammeFinderSection({
         sizes="100vw"
       />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(2,13,47,.80)_0%,rgba(2,13,47,.68)_42%,rgba(2,13,47,.42)_72%,rgba(2,13,47,.88)_100%)]" aria-hidden />
-      <div className="relative mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="programme-mosaic-grid relative isolate grid overflow-visible lg:grid-cols-[minmax(0,1fr)_330px]">
-          <div className="relative lg:col-start-1 lg:row-span-2">
-          <header className="programme-mosaic-intro relative flex min-h-[clamp(440px,34vw,530px)] flex-col justify-start overflow-hidden p-5 pt-[14%] text-white sm:p-8 sm:pt-[11%] lg:p-12 lg:pt-[10%]">
+      <div className="relative mx-auto max-w-[1680px] px-3 sm:px-5 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="programme-mosaic-grid relative isolate grid overflow-hidden rounded-[1.75rem] bg-[#03133f]/80 shadow-[0_24px_80px_-40px_rgba(0,0,0,.75)] lg:grid-cols-[minmax(0,1fr)_330px]">
+          <div className="relative min-w-0 lg:col-start-1 lg:row-span-2">
+          <header className="programme-mosaic-intro relative flex min-h-[clamp(360px,31vw,470px)] flex-col justify-start overflow-hidden rounded-t-[1.75rem] p-5 pt-12 text-white sm:p-8 sm:pt-16 lg:rounded-tl-[1.75rem] lg:rounded-tr-none lg:p-12 lg:pt-20">
             <div className="relative">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-white">
-                {section.subtitle ?? "Programmes and academic pathways"}
+                Programme finder
               </p>
               <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.98] text-white sm:text-5xl lg:text-6xl">
                 Find your path
@@ -896,7 +896,7 @@ export function ProgrammeFinderSection({
           </div>
 
           {hasAdmissionDates ? (
-          <aside className="programme-mosaic-dates relative z-10 mx-auto mt-8 max-w-5xl overflow-hidden bg-[#03133f]/95 p-5 text-white sm:p-6 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:mt-0 lg:max-w-none lg:px-7 lg:py-8">
+          <aside className="programme-mosaic-dates relative z-10 mx-auto mt-5 w-full max-w-5xl overflow-hidden bg-[#03133f]/95 p-5 text-white sm:p-6 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:mt-0 lg:max-w-none lg:px-7 lg:py-8">
               <div className="absolute inset-x-0 top-0 h-1 bg-secondary" />
               <SectionEyebrow
                 value="Admissions"
@@ -926,7 +926,7 @@ export function ProgrammeFinderSection({
             <div className="hidden bg-primary" />
           )}
 
-          <div className="programme-mosaic-journey mt-8 border-t border-white/15 bg-primary/80 p-5 sm:p-6 lg:col-span-2 lg:row-start-3 lg:mt-0 lg:px-7 lg:py-5">
+          <div className="programme-mosaic-journey border-t border-white/15 bg-primary/90 p-5 sm:p-6 lg:col-span-2 lg:row-start-3 lg:px-7 lg:py-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <SectionEyebrow value="Your journey to Kisii University" light />

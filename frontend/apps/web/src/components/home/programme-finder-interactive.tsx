@@ -126,19 +126,19 @@ export function ProgrammeFinderInteractive({
 
   return (
     <>
-      <div className="programme-mosaic-search relative z-40 mx-auto -mt-14 max-w-5xl bg-transparent p-4 sm:-mt-16 sm:p-6 lg:p-0">
+      <div className="programme-mosaic-search relative z-40 mx-auto mt-0 max-w-5xl bg-transparent px-5 pb-8 sm:px-8 sm:pb-10 lg:px-12 lg:pb-12">
         <form
           action="/academics/programmes"
-          className="relative rounded-2xl bg-white/95 shadow-[0_18px_45px_-35px_hsl(var(--primary)/.65)]"
+          className="relative rounded-[1.25rem] bg-white/95 shadow-[0_18px_45px_-35px_hsl(var(--primary)/.65)] ring-1 ring-white/20"
         >
-          <div className="flex min-h-16 items-center gap-3 bg-white px-4 sm:px-5">
+          <div className="flex min-h-16 items-center gap-3 rounded-[1.25rem] bg-white px-4 sm:px-5">
             <Search className="h-6 w-6 text-primary" aria-hidden />
             <input
               ref={searchInputRef}
               name="q"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by programme, school, or keyword"
+              placeholder="What would you like to study?"
               className="min-w-0 flex-1 bg-transparent text-base font-medium text-foreground outline-none placeholder:text-muted-foreground/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
               autoComplete="off"
             />
@@ -196,7 +196,7 @@ export function ProgrammeFinderInteractive({
         {!hasActiveFilters ? <PopularSearches schools={schools} onSelect={setQuery} /> : null}
       </div>
 
-      {hasActiveFilters ? <div className="programme-mosaic-results mx-auto max-w-5xl px-4 py-7 sm:px-6 lg:py-9">
+      {hasActiveFilters ? <div className="programme-mosaic-results mx-auto max-w-5xl rounded-t-[1.25rem] px-5 py-7 sm:px-8 lg:px-12 lg:py-9">
         <div className="flex items-end justify-between gap-4 border-b border-white/15 pb-3">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
