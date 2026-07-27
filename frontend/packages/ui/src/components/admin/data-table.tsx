@@ -76,7 +76,7 @@ export function DataTable<T extends { id?: string }>({
   bulkActions = [],
   isLoading = false,
   emptyMessage = "No results found.",
-  searchPlaceholder = "Search records...",
+  searchPlaceholder = "Search records…",
   onSearch,
   getRowLabel,
 }: DataTableProps<T>) {
@@ -120,15 +120,27 @@ export function DataTable<T extends { id?: string }>({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-busy={isLoading}>
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {isLoading
+          ? "Loading records…"
+          : `${pagination.total} ${pagination.total === 1 ? "record" : "records"} available.`}
+      </p>
       <div className="flex flex-col gap-3 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          />
           <Input
+            name="table-search"
+            type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder={searchPlaceholder}
             aria-label={searchPlaceholder}
+            autoComplete="off"
+            spellCheck={false}
             className="pl-9"
           />
         </div>
@@ -138,7 +150,7 @@ export function DataTable<T extends { id?: string }>({
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" disabled={selectedIds.length === 0}>
                   Bulk actions
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown aria-hidden="true" className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -155,17 +167,22 @@ export function DataTable<T extends { id?: string }>({
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground" aria-hidden="true">
             {pagination.total} total
           </div>
         </div>
       </div>
 
-      <div className="hidden rounded-lg border md:block">
+      <div
+        className="hidden overflow-x-auto rounded-lg border md:block"
+        role="region"
+        aria-label="Records table"
+        tabIndex={0}
+      >
         <Table className="min-w-[720px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12">
+              <TableHead className={onRowClick ? "w-24" : "w-12"}>
                 <Checkbox
                   checked={allSelected ? true : someSelected ? "indeterminate" : false}
                   onCheckedChange={(checked) => toggleAll(Boolean(checked))}
@@ -196,7 +213,10 @@ export function DataTable<T extends { id?: string }>({
                         aria-label={`Sort by ${typeof column.header === "string" ? column.header : column.key}`}
                       >
                         {typeof column.header === "function" ? column.header(direction) : column.header}
-                        <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                        <ArrowUpDown
+                          aria-hidden="true"
+                          className="h-4 w-4 text-muted-foreground"
+                        />
                       </button>
                     ) : (
                       typeof column.header === "function" ? column.header(direction) : column.header
@@ -228,6 +248,8 @@ export function DataTable<T extends { id?: string }>({
               data.map((row, index) => {
                 const rowId = getRowId(row, index);
                 const selected = selectedIds.includes(rowId);
+                const label =
+                  getRowLabel?.(row, index) ?? `Record ${index + 1}`;
                 return (
                   <TableRow
                     key={rowId}
@@ -236,11 +258,29 @@ export function DataTable<T extends { id?: string }>({
                     onClick={() => onRowClick?.(row)}
                   >
                     <TableCell onClick={(event) => event.stopPropagation()}>
-                      <Checkbox
-                        checked={selected}
-                        onCheckedChange={(checked) => toggleRow(row, index, Boolean(checked))}
-                        aria-label={`Select row ${index + 1}`}
-                      />
+                      <div className="flex items-center gap-1">
+                        <Checkbox
+                          checked={selected}
+                          onCheckedChange={(checked) =>
+                            toggleRow(row, index, Boolean(checked))
+                          }
+                          aria-label={`Select ${label}`}
+                        />
+                        {onRowClick ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => onRowClick(row)}
+                            aria-label={`Open ${label}`}
+                          >
+                            <ChevronRight
+                              aria-hidden="true"
+                              className="h-4 w-4"
+                            />
+                          </Button>
+                        ) : null}
+                      </div>
                     </TableCell>
                     {columns.map((column) => (
                       <TableCell key={`${rowId}-${column.key}`} className={column.cellClassName}>
@@ -281,13 +321,22 @@ export function DataTable<T extends { id?: string }>({
             return (
               <article key={rowId} className="rounded-lg border bg-card p-4">
                 <div className="flex items-start justify-between gap-3">
-                  <button
-                    type="button"
-                    className={cn("min-w-0 flex-1 text-left", onRowClick && "cursor-pointer")}
-                    onClick={() => onRowClick?.(row)}
-                  >
-                    <h3 className="truncate text-sm font-semibold">{label}</h3>
-                  </button>
+                  {onRowClick ? (
+                    <button
+                      type="button"
+                      className="min-h-11 min-w-0 flex-1 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      onClick={() => onRowClick(row)}
+                      aria-label={`Open ${label}`}
+                    >
+                      <span className="block truncate text-sm font-semibold">
+                        {label}
+                      </span>
+                    </button>
+                  ) : (
+                    <h3 className="min-w-0 flex-1 truncate text-sm font-semibold">
+                      {label}
+                    </h3>
+                  )}
                   <Checkbox
                     checked={selected}
                     onCheckedChange={(checked) => toggleRow(row, index, Boolean(checked))}
@@ -332,16 +381,16 @@ export function DataTable<T extends { id?: string }>({
             ))}
           </select>
           <Button variant="outline" size="icon-sm" onClick={() => onPaginationChange(1, pagination.limit)} disabled={pagination.page <= 1} aria-label="First page">
-            <ChevronsLeft className="h-4 w-4" />
+            <ChevronsLeft aria-hidden="true" className="h-4 w-4" />
           </Button>
           <Button variant="outline" size="icon-sm" onClick={() => onPaginationChange(pagination.page - 1, pagination.limit)} disabled={pagination.page <= 1} aria-label="Previous page">
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft aria-hidden="true" className="h-4 w-4" />
           </Button>
           <Button variant="outline" size="icon-sm" onClick={() => onPaginationChange(pagination.page + 1, pagination.limit)} disabled={pagination.page >= pagination.totalPages} aria-label="Next page">
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight aria-hidden="true" className="h-4 w-4" />
           </Button>
           <Button variant="outline" size="icon-sm" onClick={() => onPaginationChange(pagination.totalPages, pagination.limit)} disabled={pagination.page >= pagination.totalPages} aria-label="Last page">
-            <ChevronsRight className="h-4 w-4" />
+            <ChevronsRight aria-hidden="true" className="h-4 w-4" />
           </Button>
         </div>
       </div>
