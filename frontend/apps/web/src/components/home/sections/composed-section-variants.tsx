@@ -856,7 +856,7 @@ export function ProgrammeFinderSection({
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[linear-gradient(180deg,hsl(var(--accent)/.55),transparent)]" />
       <div className="relative mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="programme-mosaic-grid grid overflow-hidden rounded-2xl bg-white/[0.95] shadow-[0_24px_70px_-48px_hsl(var(--primary)/.45)] lg:grid-cols-12">
+        <div className="programme-mosaic-grid relative isolate grid overflow-visible rounded-2xl bg-white/[0.95] shadow-[0_24px_70px_-48px_hsl(var(--primary)/.45)] lg:grid-cols-12">
           <header className="programme-mosaic-intro relative flex flex-col justify-between overflow-hidden bg-primary p-5 text-white sm:p-7 lg:col-span-4 lg:row-start-1">
             <div
               className="absolute -right-20 -top-24 h-52 w-52 rounded-full border border-white/10"
@@ -901,7 +901,7 @@ export function ProgrammeFinderSection({
           </figure>
 
           {hasAdmissionDates ? (
-            <aside className="programme-mosaic-dates relative overflow-hidden bg-primary p-5 text-white sm:p-6 lg:col-start-10 lg:col-end-13 lg:row-start-2">
+          <aside className="programme-mosaic-dates relative z-10 overflow-hidden bg-primary p-5 text-white sm:p-6 lg:col-start-10 lg:col-end-13 lg:row-start-2">
               <div className="absolute inset-x-0 top-0 h-1 bg-secondary" />
               <SectionEyebrow
                 value={
