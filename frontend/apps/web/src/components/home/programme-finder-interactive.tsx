@@ -182,8 +182,8 @@ export function ProgrammeFinderInteractive({
             ))
           ) : (
             <div className="border-b border-primary/10 py-5 text-sm leading-6 text-muted-foreground">
-              No quick matches in the homepage preview. Open full programme
-              search to see all records and filters.
+              No programmes match these search criteria. Try a broader keyword
+              or choose “All” in one of the filters.
             </div>
           )}
         </div>
