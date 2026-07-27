@@ -738,12 +738,14 @@ export function FeaturedPartnershipSection({
     : heroImage(section);
   const title = spotlight?.headline ?? section.title;
   const summary = spotlight?.summary ?? section.description;
-  const cta = spotlight?.primary_cta?.href
+  const partnershipHref =
+    spotlight?.primary_cta?.href ?? spotlight?.primary_cta_url;
+  const cta = partnershipHref
     ? {
         id: spotlight.id,
-        title: spotlight.primary_cta.label ?? "Explore partnership",
-        cta_label: spotlight.primary_cta.label ?? "Explore partnership",
-        cta_url: spotlight.primary_cta.href,
+        title: "Read more",
+        cta_label: "Read more",
+        cta_url: partnershipHref,
       }
     : {
         title: "Read more",
