@@ -11,8 +11,19 @@ from ...core.auth import require_permission
 from ...core.database import get_db
 from ...services.admin_resources import READ_ONLY_RESOURCES, model_for_resource, writable_fields
 from ...services.audit import record_audit
+from ...models.audit import AuditLog
 
 router = APIRouter(prefix="/admin", tags=["HERI Admin CRUD"])
+
+
+@router.get("/{resource}/{record_id}/audit")
+async def list_resource_audit(resource: str, record_id: UUID, db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.content.read"))):
+    """Return the immutable change history used by the HERI revision panel."""
+    try:
+        model_for_resource(resource)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return (await db.execute(select(AuditLog).where(AuditLog.entity_type == resource, AuditLog.entity_id == str(record_id)).order_by(AuditLog.created_at.desc()))).scalars().all()
 
 
 @router.get("/{resource}")
