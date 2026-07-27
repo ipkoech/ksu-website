@@ -15,8 +15,14 @@ export type AccessibilityPreferences = {
   lineHeight: "default" | "relaxed";
   letterSpacing: "default" | "increased";
   wordSpacing: "default" | "increased";
+  textAlign: "default" | "left";
   emphasizeLinks: boolean;
+  grayscale: boolean;
+  hideImages: boolean;
+  readingGuide: boolean;
   largeTargets: boolean;
+  largeCursor: boolean;
+  strongFocus: boolean;
   reduceMotion: boolean;
   pauseMotion: boolean;
 };
@@ -30,8 +36,14 @@ export const DEFAULT_ACCESSIBILITY_PREFERENCES: AccessibilityPreferences = {
   lineHeight: "default",
   letterSpacing: "default",
   wordSpacing: "default",
+  textAlign: "default",
   emphasizeLinks: false,
+  grayscale: false,
+  hideImages: false,
+  readingGuide: false,
   largeTargets: false,
+  largeCursor: false,
+  strongFocus: false,
   reduceMotion: false,
   pauseMotion: false,
 };
@@ -39,18 +51,21 @@ export const DEFAULT_ACCESSIBILITY_PREFERENCES: AccessibilityPreferences = {
 export const ACCESSIBILITY_PRESETS = {
   low_vision: {
     label: "Low vision",
-    description: "Larger text, stronger contrast, emphasized links, and larger controls.",
+    description:
+      "Larger text, stronger contrast, emphasized links, and larger controls.",
     preferences: {
       preset: "low_vision",
       textScale: "larger",
       contrast: "increased",
       emphasizeLinks: true,
       largeTargets: true,
+      strongFocus: true,
     },
   },
   reduced_motion: {
     label: "Reduced motion",
-    description: "Stops non-essential animation and automatically moving content.",
+    description:
+      "Stops non-essential animation and automatically moving content.",
     preferences: {
       preset: "reduced_motion",
       reduceMotion: true,
@@ -59,21 +74,26 @@ export const ACCESSIBILITY_PRESETS = {
   },
   reading_support: {
     label: "Reading support",
-    description: "Uses a readable font with more line, letter, and word spacing.",
+    description:
+      "Uses a readable font with more line, letter, and word spacing.",
     preferences: {
       preset: "reading_support",
       readableFont: true,
       lineHeight: "relaxed",
       letterSpacing: "increased",
       wordSpacing: "increased",
+      textAlign: "left",
     },
   },
   motor_assistance: {
     label: "Motor assistance",
-    description: "Provides larger controls and pauses automatically moving content.",
+    description:
+      "Provides larger controls and pauses automatically moving content.",
     preferences: {
       preset: "motor_assistance",
       largeTargets: true,
+      largeCursor: true,
+      strongFocus: true,
       pauseMotion: true,
     },
   },
@@ -114,6 +134,10 @@ const LETTER_SPACINGS: readonly AccessibilityPreferences["letterSpacing"][] = [
 const WORD_SPACINGS: readonly AccessibilityPreferences["wordSpacing"][] = [
   "default",
   "increased",
+];
+const TEXT_ALIGNS: readonly AccessibilityPreferences["textAlign"][] = [
+  "default",
+  "left",
 ];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -164,8 +188,16 @@ export function parseStoredPreferences(
       wordSpacing: includesValue(WORD_SPACINGS, stored.wordSpacing)
         ? stored.wordSpacing
         : "default",
+      textAlign: includesValue(TEXT_ALIGNS, stored.textAlign)
+        ? stored.textAlign
+        : "default",
       emphasizeLinks: booleanOrDefault(stored.emphasizeLinks, false),
+      grayscale: booleanOrDefault(stored.grayscale, false),
+      hideImages: booleanOrDefault(stored.hideImages, false),
+      readingGuide: booleanOrDefault(stored.readingGuide, false),
       largeTargets: booleanOrDefault(stored.largeTargets, false),
+      largeCursor: booleanOrDefault(stored.largeCursor, false),
+      strongFocus: booleanOrDefault(stored.strongFocus, false),
       reduceMotion: booleanOrDefault(stored.reduceMotion, false),
       pauseMotion: booleanOrDefault(stored.pauseMotion, false),
     };

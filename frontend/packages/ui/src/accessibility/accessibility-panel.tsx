@@ -1,10 +1,30 @@
 "use client";
 
 import * as React from "react";
-import { Accessibility, RotateCcw } from "lucide-react";
+import {
+  Accessibility,
+  Activity,
+  AlignLeft,
+  Blend,
+  BookOpen,
+  Contrast,
+  Eye,
+  Focus,
+  Hand,
+  ImageOff,
+  Link2,
+  Maximize2,
+  Minus,
+  MousePointer2,
+  Pause,
+  Plus,
+  RotateCcw,
+  ScanLine,
+  Type,
+  type LucideIcon,
+} from "lucide-react";
 
 import { Button } from "../components/ui/button";
-import { Label } from "../components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -13,7 +33,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "../components/ui/sheet";
-import { Switch } from "../components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
@@ -30,132 +49,247 @@ import {
 
 const PANEL_ID = "ksu-accessibility-panel";
 
-type BooleanPreference = {
-  key:
-    | "readableFont"
-    | "emphasizeLinks"
-    | "largeTargets"
-    | "reduceMotion"
-    | "pauseMotion";
+const TEXT_SCALES: ReadonlyArray<{
+  value: AccessibilityPreferences["textScale"];
   label: string;
-  description: string;
+}> = [
+  { value: "default", label: "100%" },
+  { value: "large", label: "112%" },
+  { value: "larger", label: "125%" },
+  { value: "largest", label: "150%" },
+];
+
+const CONTRAST_OPTIONS: ReadonlyArray<{
+  value: AccessibilityPreferences["contrast"];
+  label: string;
+}> = [
+  { value: "default", label: "Default" },
+  { value: "increased", label: "More" },
+  { value: "high", label: "High" },
+];
+
+const PRESET_ICONS: Record<AccessibilityPreset, LucideIcon> = {
+  low_vision: Eye,
+  reduced_motion: Activity,
+  reading_support: BookOpen,
+  motor_assistance: Hand,
 };
 
-const BOOLEAN_PREFERENCES: readonly BooleanPreference[] = [
+type BooleanPreferenceKey =
+  | "readableFont"
+  | "emphasizeLinks"
+  | "grayscale"
+  | "hideImages"
+  | "readingGuide"
+  | "largeTargets"
+  | "largeCursor"
+  | "strongFocus"
+  | "reduceMotion"
+  | "pauseMotion";
+
+type DirectControl = {
+  key: BooleanPreferenceKey;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+};
+
+type CompositeControl = {
+  key: "textSpacing" | "leftAlign";
+  label: string;
+  description: string;
+  icon: LucideIcon;
+};
+
+type ControlDefinition = DirectControl | CompositeControl;
+
+const CONTROL_GROUPS: ReadonlyArray<{
+  title: string;
+  controls: readonly ControlDefinition[];
+}> = [
   {
-    key: "readableFont",
-    label: "Readable font",
-    description: "Use a clear system sans-serif typeface.",
+    title: "Vision",
+    controls: [
+      {
+        key: "emphasizeLinks",
+        label: "Underline links",
+        description: "Underline links so colour is not the only cue.",
+        icon: Link2,
+      },
+      {
+        key: "grayscale",
+        label: "Grayscale",
+        description: "Remove colour from the interface.",
+        icon: Blend,
+      },
+      {
+        key: "hideImages",
+        label: "Hide images",
+        description: "Hide photographs while preserving their layout.",
+        icon: ImageOff,
+      },
+      {
+        key: "strongFocus",
+        label: "Strong focus",
+        description: "Make the keyboard focus indicator more prominent.",
+        icon: Focus,
+      },
+    ],
   },
   {
-    key: "emphasizeLinks",
-    label: "Emphasize links",
-    description: "Underline links so they do not depend on colour alone.",
+    title: "Reading",
+    controls: [
+      {
+        key: "readableFont",
+        label: "Clear font",
+        description: "Use a clear system sans-serif typeface.",
+        icon: Type,
+      },
+      {
+        key: "textSpacing",
+        label: "Text spacing",
+        description: "Increase line, letter, and word spacing together.",
+        icon: Maximize2,
+      },
+      {
+        key: "leftAlign",
+        label: "Align left",
+        description: "Left-align headings and reading text.",
+        icon: AlignLeft,
+      },
+      {
+        key: "readingGuide",
+        label: "Reading guide",
+        description: "Keep a clear horizontal reading band on screen.",
+        icon: ScanLine,
+      },
+    ],
   },
   {
-    key: "largeTargets",
-    label: "Larger controls",
-    description: "Increase the size and spacing of interactive controls.",
-  },
-  {
-    key: "reduceMotion",
-    label: "Reduce motion",
-    description: "Turn off non-essential animation and smooth scrolling.",
-  },
-  {
-    key: "pauseMotion",
-    label: "Pause moving content",
-    description: "Stop carousels, marquees, and rotating announcements.",
+    title: "Motion & control",
+    controls: [
+      {
+        key: "largeTargets",
+        label: "Larger controls",
+        description: "Increase the size of interactive controls.",
+        icon: Hand,
+      },
+      {
+        key: "largeCursor",
+        label: "Larger cursor",
+        description: "Use a larger, high-visibility pointer.",
+        icon: MousePointer2,
+      },
+      {
+        key: "reduceMotion",
+        label: "Less motion",
+        description: "Turn off non-essential animation and smooth scrolling.",
+        icon: Activity,
+      },
+      {
+        key: "pauseMotion",
+        label: "Pause movement",
+        description: "Stop carousels and rotating announcements.",
+        icon: Pause,
+      },
+    ],
   },
 ];
 
-function PreferenceSwitch({
-  preference,
-  checked,
-  onCheckedChange,
-}: {
-  preference: BooleanPreference;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-}) {
-  const id = `a11y-${preference.key}`;
-  const descriptionId = `${id}-description`;
-
-  return (
-    <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
-      <div className="min-w-0">
-        <Label htmlFor={id} className="font-semibold">
-          {preference.label}
-        </Label>
-        <p
-          id={descriptionId}
-          className="mt-1 text-xs leading-5 text-muted-foreground"
-        >
-          {preference.description}
-        </p>
-      </div>
-      <Switch
-        id={id}
-        checked={checked}
-        onCheckedChange={onCheckedChange}
-        aria-describedby={descriptionId}
-        className="mt-1 shrink-0"
-      />
-    </div>
-  );
-}
-
-function SelectPreference<K extends "textScale" | "contrast">({
-  id,
+function IconToggle({
+  icon: Icon,
   label,
-  value,
-  options,
-  onChange,
+  description,
+  pressed,
+  onClick,
 }: {
-  id: string;
+  icon: LucideIcon;
   label: string;
-  value: AccessibilityPreferences[K];
-  options: ReadonlyArray<{
-    value: AccessibilityPreferences[K];
-    label: string;
-  }>;
-  onChange: (value: AccessibilityPreferences[K]) => void;
+  description: string;
+  pressed: boolean;
+  onClick: () => void;
 }) {
   return (
-    <div className="grid gap-2">
-      <Label htmlFor={id}>{label}</Label>
-      <select
-        id={id}
-        value={value}
-        onChange={(event) =>
-          onChange(event.currentTarget.value as AccessibilityPreferences[K])
-        }
-        className="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-pressed={pressed}
+          onClick={onClick}
+          className={cn(
+            "flex min-h-[4.5rem] items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            pressed
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border bg-background text-foreground hover:bg-muted",
+          )}
+        >
+          <span
+            className={cn(
+              "flex h-9 w-9 shrink-0 items-center justify-center rounded-md",
+              pressed ? "bg-primary text-primary-foreground" : "bg-muted",
+            )}
+          >
+            <Icon aria-hidden className="h-[18px] w-[18px]" />
+          </span>
+          <span className="min-w-0 text-sm font-semibold leading-5">
+            {label}
+          </span>
+        </button>
+      </TooltipTrigger>
+      <TooltipContent
+        side="bottom"
+        collisionPadding={12}
+        className="max-w-[calc(100vw-2rem)]"
       >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </div>
+        {description}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
 export function AccessibilityPanel() {
   const [open, setOpen] = React.useState(false);
-  const { preferences, setPreference, applyPreset, reset } =
-    useAccessibility();
+  const { preferences, setPreference, applyPreset, reset } = useAccessibility();
+
+  const currentScaleIndex = TEXT_SCALES.findIndex(
+    (item) => item.value === preferences.textScale,
+  );
+  const increasedSpacing =
+    preferences.lineHeight === "relaxed" ||
+    preferences.letterSpacing === "increased" ||
+    preferences.wordSpacing === "increased";
+
+  const setScaleIndex = (nextIndex: number) => {
+    const option = TEXT_SCALES[nextIndex];
+    if (option) setPreference("textScale", option.value);
+  };
 
   const applySpacing = (checked: boolean) => {
     setPreference("lineHeight", checked ? "relaxed" : "default");
     setPreference("letterSpacing", checked ? "increased" : "default");
     setPreference("wordSpacing", checked ? "increased" : "default");
   };
-  const increasedSpacing =
-    preferences.lineHeight === "relaxed" ||
-    preferences.letterSpacing === "increased" ||
-    preferences.wordSpacing === "increased";
+
+  const controlPressed = (control: ControlDefinition) => {
+    if (control.key === "textSpacing") return increasedSpacing;
+    if (control.key === "leftAlign") {
+      return preferences.textAlign === "left";
+    }
+    return preferences[control.key];
+  };
+
+  const toggleControl = (control: ControlDefinition) => {
+    const pressed = controlPressed(control);
+    if (control.key === "textSpacing") {
+      applySpacing(!pressed);
+      return;
+    }
+    if (control.key === "leftAlign") {
+      setPreference("textAlign", pressed ? "default" : "left");
+      return;
+    }
+    setPreference(control.key, !pressed);
+  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -176,149 +310,195 @@ export function AccessibilityPanel() {
           </TooltipTrigger>
           <TooltipContent side="left">Accessibility</TooltipContent>
         </Tooltip>
-      </TooltipProvider>
 
-      <SheetContent
-        id={PANEL_ID}
-        side="right"
-        className="flex h-dvh w-full flex-col gap-0 overflow-hidden bg-background p-0 sm:max-w-md"
-      >
-        <SheetHeader className="border-b border-border px-5 pb-5 pt-6 pr-14 text-left">
-          <SheetTitle className="text-xl">
-            Accessibility preferences
-          </SheetTitle>
-          <SheetDescription className="leading-6">
-            Adjust how this website looks and moves. Settings take effect
-            immediately and are saved only in this browser.
-          </SheetDescription>
-        </SheetHeader>
+        <SheetContent
+          id={PANEL_ID}
+          side="right"
+          className="flex h-dvh w-full flex-col gap-0 overflow-hidden bg-background p-0 sm:max-w-md"
+        >
+          <SheetHeader className="border-b border-border px-5 pb-4 pt-5 pr-14 text-left">
+            <SheetTitle className="flex items-center gap-2 text-xl">
+              <Accessibility aria-hidden className="h-5 w-5 text-primary" />
+              Accessibility
+            </SheetTitle>
+            <SheetDescription className="sr-only">
+              Change display, reading, motion, and interaction settings.
+            </SheetDescription>
+          </SheetHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-          <section aria-labelledby="a11y-presets-heading">
-            <h2
-              id="a11y-presets-heading"
-              className="text-sm font-bold text-foreground"
-            >
-              Quick presets
-            </h2>
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">
-              Choose a starting point, then change any setting below.
-            </p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {(
-                Object.entries(ACCESSIBILITY_PRESETS) as Array<
-                  [
-                    AccessibilityPreset,
-                    (typeof ACCESSIBILITY_PRESETS)[AccessibilityPreset],
-                  ]
-                >
-              ).map(([key, preset]) => (
-                <button
-                  key={key}
-                  type="button"
-                  aria-label={preset.label}
-                  aria-pressed={preferences.preset === key}
-                  onClick={() => applyPreset(key)}
-                  className={cn(
-                    "rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                    preferences.preset === key
-                      ? "border-primary bg-primary/10"
-                      : "border-border bg-background hover:bg-muted",
-                  )}
-                >
-                  <span className="block text-sm font-semibold text-foreground">
-                    {preset.label}
-                  </span>
-                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                    {preset.description}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section
-            aria-labelledby="a11y-display-heading"
-            className="mt-7 space-y-4"
-          >
-            <h2
-              id="a11y-display-heading"
-              className="text-sm font-bold text-foreground"
-            >
-              Display and interaction
-            </h2>
-
-            <SelectPreference<"textScale">
-              id="a11y-text-size"
-              label="Text size"
-              value={preferences.textScale}
-              onChange={(value) => setPreference("textScale", value)}
-              options={[
-                { value: "default", label: "Default (100%)" },
-                { value: "large", label: "Large (112.5%)" },
-                { value: "larger", label: "Larger (125%)" },
-                { value: "largest", label: "Largest (150%)" },
-              ]}
-            />
-
-            <SelectPreference<"contrast">
-              id="a11y-contrast"
-              label="Contrast"
-              value={preferences.contrast}
-              onChange={(value) => setPreference("contrast", value)}
-              options={[
-                { value: "default", label: "Default" },
-                { value: "increased", label: "Increased" },
-                { value: "high", label: "High contrast" },
-              ]}
-            />
-
-            <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
-              <div className="min-w-0">
-                <Label htmlFor="a11y-text-spacing" className="font-semibold">
-                  Comfortable text spacing
-                </Label>
-                <p
-                  id="a11y-text-spacing-description"
-                  className="mt-1 text-xs leading-5 text-muted-foreground"
-                >
-                  Increase line, letter, and word spacing together.
-                </p>
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+            <section aria-labelledby="a11y-presets-heading">
+              <h2
+                id="a11y-presets-heading"
+                className="text-xs font-bold uppercase tracking-wide text-muted-foreground"
+              >
+                Presets
+              </h2>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {(
+                  Object.entries(ACCESSIBILITY_PRESETS) as Array<
+                    [
+                      AccessibilityPreset,
+                      (typeof ACCESSIBILITY_PRESETS)[AccessibilityPreset],
+                    ]
+                  >
+                ).map(([key, preset]) => {
+                  const Icon = PRESET_ICONS[key];
+                  const pressed = preferences.preset === key;
+                  return (
+                    <Tooltip key={key}>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          aria-pressed={pressed}
+                          onClick={() => applyPreset(key)}
+                          className={cn(
+                            "flex min-h-16 items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                            pressed
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border bg-background text-foreground hover:bg-muted",
+                          )}
+                        >
+                          <Icon aria-hidden className="h-5 w-5 shrink-0" />
+                          <span className="text-sm font-semibold leading-5">
+                            {preset.label}
+                          </span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="bottom"
+                        collisionPadding={12}
+                        className="max-w-[calc(100vw-2rem)]"
+                      >
+                        {preset.description}
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
               </div>
-              <Switch
-                id="a11y-text-spacing"
-                checked={increasedSpacing}
-                onCheckedChange={applySpacing}
-                aria-describedby="a11y-text-spacing-description"
-                className="mt-1 shrink-0"
-              />
-            </div>
+            </section>
 
-            {BOOLEAN_PREFERENCES.map((preference) => (
-              <PreferenceSwitch
-                key={preference.key}
-                preference={preference}
-                checked={preferences[preference.key]}
-                onCheckedChange={(checked) =>
-                  setPreference(preference.key, checked)
-                }
-              />
+            <section aria-labelledby="a11y-display-heading" className="mt-5">
+              <h2
+                id="a11y-display-heading"
+                className="text-xs font-bold uppercase tracking-wide text-muted-foreground"
+              >
+                Display
+              </h2>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                <div className="flex min-h-16 items-center justify-between gap-2 rounded-lg border border-border px-3 py-2">
+                  <span className="flex items-center gap-2 text-sm font-semibold">
+                    <Type aria-hidden className="h-4 w-4 text-primary" />
+                    Text
+                  </span>
+                  <div
+                    className="flex items-center rounded-md border border-border"
+                    role="group"
+                    aria-label="Text size"
+                  >
+                    <button
+                      type="button"
+                      aria-label="Decrease text size"
+                      disabled={currentScaleIndex <= 0}
+                      onClick={() => setScaleIndex(currentScaleIndex - 1)}
+                      className="flex h-9 w-9 items-center justify-center rounded-l-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <Minus aria-hidden className="h-4 w-4" />
+                    </button>
+                    <output
+                      aria-live="polite"
+                      className="min-w-12 text-center text-xs font-bold"
+                    >
+                      {TEXT_SCALES[currentScaleIndex]?.label ?? "100%"}
+                    </output>
+                    <button
+                      type="button"
+                      aria-label="Increase text size"
+                      disabled={currentScaleIndex >= TEXT_SCALES.length - 1}
+                      onClick={() => setScaleIndex(currentScaleIndex + 1)}
+                      className="flex h-9 w-9 items-center justify-center rounded-r-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <Plus aria-hidden className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex min-h-16 items-center gap-2 rounded-lg border border-border px-3 py-2">
+                  <Contrast
+                    aria-hidden
+                    className="h-4 w-4 shrink-0 text-primary"
+                  />
+                  <div
+                    className="grid flex-1 grid-cols-3 gap-1"
+                    role="group"
+                    aria-label="Contrast"
+                  >
+                    {CONTRAST_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        aria-pressed={preferences.contrast === option.value}
+                        onClick={() => setPreference("contrast", option.value)}
+                        className={cn(
+                          "min-h-9 rounded-md px-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          preferences.contrast === option.value
+                            ? "bg-primary text-primary-foreground"
+                            : "hover:bg-muted",
+                        )}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {CONTROL_GROUPS.map((group) => (
+              <section
+                key={group.title}
+                aria-labelledby={`a11y-${group.title
+                  .toLowerCase()
+                  .replaceAll(/[^a-z]+/g, "-")}-heading`}
+                className="mt-5"
+              >
+                <h2
+                  id={`a11y-${group.title
+                    .toLowerCase()
+                    .replaceAll(/[^a-z]+/g, "-")}-heading`}
+                  className="text-xs font-bold uppercase tracking-wide text-muted-foreground"
+                >
+                  {group.title}
+                </h2>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {group.controls.map((control) => (
+                    <IconToggle
+                      key={control.key}
+                      icon={control.icon}
+                      label={control.label}
+                      description={control.description}
+                      pressed={controlPressed(control)}
+                      onClick={() => toggleControl(control)}
+                    />
+                  ))}
+                </div>
+              </section>
             ))}
-          </section>
-        </div>
+          </div>
 
-        <div className="border-t border-border bg-background px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <Button
-            type="button"
-            variant="outline"
-            className="min-h-11 w-full gap-2"
-            onClick={reset}
-          >
-            <RotateCcw aria-hidden className="h-4 w-4" />
-            Reset accessibility settings
-          </Button>
-        </div>
-      </SheetContent>
+          <div className="border-t border-border bg-background px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 w-full gap-2"
+              onClick={reset}
+            >
+              <RotateCcw aria-hidden className="h-4 w-4" />
+              Reset all
+            </Button>
+          </div>
+        </SheetContent>
+      </TooltipProvider>
     </Sheet>
   );
 }
