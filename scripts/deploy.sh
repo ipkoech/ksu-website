@@ -356,6 +356,12 @@ if ! "\${DOCKER[@]}" compose version >/dev/null 2>&1; then
   exit 1
 fi
 
+section "Validate production configuration"
+for service_env in services/main/.env services/research/.env services/library/.env; do
+  service_name="\$(basename "\$(dirname "\${service_env}")")"
+  python3 scripts/validate_production_env.py --env "\${ENV_NAME}" --service "\${service_name}" --file "\${service_env}"
+done
+
 ensure_swap() {
   local min_swap_mb=4096
   local swap_file="/swapfile"
@@ -629,8 +635,8 @@ backup_database() {
   if "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps --status running postgres --format '{{.Service}}' | grep -qx postgres; then
     "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T postgres pg_dump -U ksu -d ksu | gzip -9 > "\${output}"
   else
-    echo "warning: postgres container is not running; skipping database backup" >&2
-    return 0
+    echo "error: postgres container is not running; refusing to deploy without a backup" >&2
+    return 1
   fi
 
   chmod 600 "\${output}"
@@ -738,6 +744,17 @@ fi
 echo
 "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${core_services[@]}"
 
+section "Run reviewed migrations"
+if [[ "\${ENV_NAME}" != "dev" || "\${RUN_MIGRATIONS}" -eq 1 ]]; then
+  for service in "\${backend_services[@]}"; do
+    step "Running committed migrations for \${service}"
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T "\${service}" alembic upgrade head
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T "\${service}" alembic current --check-heads
+  done
+else
+  step "Development deployment: migrations were not requested"
+fi
+
 wait_for_backend_health() {
   local timeout_seconds="\${1:-420}"
   local deadline=\$((SECONDS + timeout_seconds))
@@ -774,14 +791,6 @@ wait_for_backend_health() {
 }
 
 wait_for_backend_health 420
-
-if [[ "\${RUN_MIGRATIONS}" -eq 1 ]]; then
-  section "Run backend migrations"
-  for service in "\${backend_services[@]}"; do
-    step "Running migrations for \${service}"
-    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T "\${service}" alembic upgrade head
-  done
-fi
 
 restart_existing_proxy_services() {
   local services=(gateway research-gateway edge research-edge)

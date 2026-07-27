@@ -10,7 +10,12 @@ RUN pip install --no-cache-dir -e /common
 COPY main/ .
 RUN pip install --no-cache-dir -e . && chmod +x scripts/*.sh
 
-RUN mkdir -p /app/uploads
+RUN groupadd --system --gid 10001 ksu \
+  && useradd --system --uid 10001 --gid 10001 --home-dir /app --shell /usr/sbin/nologin ksu \
+  && mkdir -p /app/uploads /app/logs \
+  && chown -R ksu:ksu /app
+
+USER ksu
 
 EXPOSE 8000
 
