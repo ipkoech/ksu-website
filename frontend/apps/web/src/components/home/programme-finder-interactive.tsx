@@ -127,20 +127,6 @@ export function ProgrammeFinderInteractive({
   return (
     <>
       <div className="programme-mosaic-search relative z-40 mx-auto -mt-20 max-w-5xl bg-transparent p-4 sm:-mt-24 sm:p-6 lg:p-0">
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/75">
-              Search the academic catalogue
-            </p>
-            <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold text-white">
-              Find your programme.
-            </h3>
-          </div>
-          <p className="max-w-xs text-sm leading-6 text-white/70">
-            Search by ambition, subject, school, or qualification.
-          </p>
-        </div>
-
         <form
           action="/academics/programmes"
           className="relative rounded-2xl bg-white/95 shadow-[0_18px_45px_-35px_hsl(var(--primary)/.65)]"
@@ -158,7 +144,7 @@ export function ProgrammeFinderInteractive({
             />
             <button
               type="submit"
-              className="hidden min-h-10 items-center justify-center rounded-full bg-secondary px-5 text-xs font-bold text-white transition hover:bg-secondary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:inline-flex"
+              className="hidden min-h-10 items-center justify-center rounded-full bg-[#0aa9e8] px-5 text-xs font-bold text-white transition hover:bg-[#0799d4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:inline-flex"
             >
               Search
             </button>
@@ -167,7 +153,7 @@ export function ProgrammeFinderInteractive({
               onClick={() => setFiltersOpen((current) => !current)}
               aria-expanded={filtersOpen}
               aria-controls="programme-filters"
-              className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-primary/15 px-4 text-xs font-bold text-primary transition hover:border-secondary hover:text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-[#0b2e64] bg-[#062353] px-4 text-xs font-bold text-white transition hover:bg-[#0b2e64] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               <SlidersHorizontal className="h-4 w-4" aria-hidden />
               <span className="hidden sm:inline">Filters</span>

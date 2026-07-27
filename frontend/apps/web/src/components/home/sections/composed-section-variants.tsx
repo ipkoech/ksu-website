@@ -863,22 +863,24 @@ export function ProgrammeFinderSection({
         imageClassName="object-cover object-center"
         sizes="100vw"
       />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(2,13,47,.96)_0%,rgba(2,13,47,.84)_42%,rgba(2,13,47,.58)_72%,rgba(2,13,47,.86)_100%)]" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(2,13,47,.80)_0%,rgba(2,13,47,.68)_42%,rgba(2,13,47,.42)_72%,rgba(2,13,47,.88)_100%)]" aria-hidden />
       <div className="relative mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="programme-mosaic-grid relative isolate grid overflow-visible lg:grid-cols-[minmax(0,1fr)_330px]">
           <div className="relative lg:col-start-1 lg:row-span-2">
-          <header className="programme-mosaic-intro relative flex min-h-[clamp(620px,48vw,760px)] flex-col justify-end overflow-hidden p-5 text-white sm:p-8 lg:p-12">
+          <header className="programme-mosaic-intro relative flex min-h-[clamp(620px,48vw,760px)] flex-col justify-start overflow-hidden p-5 pt-[18%] text-white sm:p-8 sm:pt-[14%] lg:p-12 lg:pt-[13%]">
             <div className="relative">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-white">
                 {section.subtitle ?? "Programmes and academic pathways"}
               </p>
               <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.98] text-white sm:text-5xl lg:text-6xl">
                 Find your path
-                <span className="block text-secondary">at Kisii University</span>
+                <span className="block text-[#39c8ff]">at Kisii University</span>
               </h2>
               <p className="mt-3 max-w-md text-sm leading-6 text-white">
-                {section.description ??
-                  "Search programmes built around your interests, ambitions and future."}
+                {/Search programmes and follow five steps/i.test(section.description ?? "")
+                  ? "Explore our diverse range of undergraduate and postgraduate programmes and take the next step towards your future."
+                  : (section.description ??
+                    "Explore our diverse range of undergraduate and postgraduate programmes and take the next step towards your future.")}
               </p>
             </div>
             <div className="relative mt-6 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.16em] text-white/90">
@@ -894,7 +896,7 @@ export function ProgrammeFinderSection({
           </div>
 
           {hasAdmissionDates ? (
-          <aside className="programme-mosaic-dates relative z-10 mx-auto mt-8 max-w-5xl overflow-hidden bg-primary/90 p-5 text-white sm:p-6 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:mt-0 lg:max-w-none lg:px-7 lg:py-8">
+          <aside className="programme-mosaic-dates relative z-10 mx-auto mt-8 max-w-5xl overflow-hidden bg-[#03133f]/95 p-5 text-white sm:p-6 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:mt-0 lg:max-w-none lg:px-7 lg:py-8">
               <div className="absolute inset-x-0 top-0 h-1 bg-secondary" />
               <SectionEyebrow
                 value="Admissions"
