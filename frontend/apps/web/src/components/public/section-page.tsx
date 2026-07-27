@@ -275,6 +275,7 @@ export function PublicSectionPage({
   heroSize = "default",
   academicLeadership,
   landingContent,
+  hideScopeCards = false,
 }: {
   config: PublicPageConfig;
   header?: ReactNode;
@@ -283,6 +284,7 @@ export function PublicSectionPage({
   heroSize?: "default" | "compact";
   academicLeadership?: AcademicOrganization | null;
   landingContent?: ReactNode;
+  hideScopeCards?: boolean;
 }) {
   const continueItems = config.continueItems ?? config.navItems;
   const compactHero = heroSize === "compact";
@@ -385,7 +387,7 @@ export function PublicSectionPage({
                   ) : null}
                   {heroContent}
 
-                  {config.scopeCards?.length ? (
+                  {!hideScopeCards && config.scopeCards?.length ? (
                     <div
                       className={
                         compactHero

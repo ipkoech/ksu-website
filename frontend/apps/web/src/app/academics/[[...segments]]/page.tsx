@@ -267,6 +267,7 @@ export default async function AcademicsRoutePage({
         header={headerConfig ? <EntityHeader {...headerConfig} /> : undefined}
         heroSize="compact"
         academicLeadership={null}
+        hideScopeCards
         landingContent={
           <FlowingAcademicsLanding
             config={config}
