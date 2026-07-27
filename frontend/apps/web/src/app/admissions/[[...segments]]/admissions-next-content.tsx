@@ -426,7 +426,8 @@ function PathwaySelector({
               <Link
                 key={pathway.id}
                 href={`/admissions/${pathway.slug}`}
-                className={`group relative flex min-h-24 flex-col items-center justify-center gap-2 overflow-hidden px-3 text-center text-sm font-semibold transition ${
+                aria-current={active ? "page" : undefined}
+                className={`group relative flex min-h-24 flex-col items-center justify-center gap-2 overflow-hidden px-3 text-center text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-secondary ${
                   active
                     ? "bg-white text-primary"
                     : "bg-primary text-white hover:bg-white/10"
@@ -468,7 +469,7 @@ function AdmissionsLanding({
   selectedPathway?: AdmissionPathway;
 }) {
   return (
-    <main className="bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <div className="bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto grid max-w-[1680px] gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.42fr)]">
         <div className="min-w-0">
           <PathwayFeature pathway={selectedPathway ?? pathways[0]} />
@@ -483,7 +484,7 @@ function AdmissionsLanding({
           <FaqPanel faqs={data.faqs} />
         </aside>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -543,7 +544,7 @@ function PathwayFeature({ pathway }: { pathway: AdmissionPathway }) {
 
 function RequirementsPage({ data }: { data: AdmissionsPageData }) {
   return (
-    <main className="bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <div className="bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.4fr)] lg:items-end">
           <SectionHeader
@@ -567,13 +568,13 @@ function RequirementsPage({ data }: { data: AdmissionsPageData }) {
           full
         />
       </div>
-    </main>
+    </div>
   );
 }
 
 function FeesPage({ data }: { data: AdmissionsPageData }) {
   return (
-    <main className="bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <div className="bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.4fr)] lg:items-end">
           <SectionHeader
@@ -593,13 +594,13 @@ function FeesPage({ data }: { data: AdmissionsPageData }) {
         </div>
         <FeesGrid fees={data.feeStructures} programmes={data.programmes} />
       </div>
-    </main>
+    </div>
   );
 }
 
 function DocumentsPage({ documents }: { documents: AdmissionDocument[] }) {
   return (
-    <main className="bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <div className="bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.4fr)] lg:items-end">
           <SectionHeader
@@ -619,13 +620,13 @@ function DocumentsPage({ documents }: { documents: AdmissionDocument[] }) {
         </div>
         <DocumentGrid documents={documents} />
       </div>
-    </main>
+    </div>
   );
 }
 
 function IntakesPage({ intakes }: { intakes: AdmissionsIntakeSummary[] }) {
   return (
-    <main className="bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <div className="bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
         <SectionHeader
           eyebrow="Current intakes"
@@ -656,7 +657,7 @@ function IntakesPage({ intakes }: { intakes: AdmissionsIntakeSummary[] }) {
           ))}
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -668,7 +669,7 @@ function HowToApplyPage({
   documents: AdmissionDocument[];
 }) {
   return (
-    <main className="bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <div className="bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.4fr)] lg:items-end">
           <SectionHeader
@@ -717,7 +718,7 @@ function HowToApplyPage({
           ))}
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -764,7 +765,12 @@ function RequirementsTable({
           Applicant type
         </div>
       </div>
-      <div className="overflow-x-auto border border-border bg-white shadow-sm">
+      <div
+        className="overflow-x-auto border border-border bg-white shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25"
+        role="region"
+        aria-label="Admission requirements comparison table"
+        tabIndex={0}
+      >
         <table className="w-full min-w-[860px] border-collapse text-left text-sm">
           <thead className="bg-primary text-white">
             <tr>
