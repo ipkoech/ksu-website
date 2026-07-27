@@ -852,22 +852,21 @@ export function ProgrammeFinderSection({
   return (
     <section
       id={section.section_key}
-      className="programme-discovery-mosaic relative isolate overflow-hidden border-b border-border bg-white/[0.82] py-7 backdrop-blur-[1px] sm:py-9 lg:py-10"
+      className="programme-discovery-mosaic relative isolate overflow-hidden border-b border-primary/20 bg-primary py-0 text-white sm:py-0"
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[linear-gradient(180deg,hsl(var(--accent)/.55),transparent)]" />
+      <PublicImage
+        src="/images/landing-page/tc-fore.png"
+        alt="Kisii University tuition complex and landscaped campus"
+        ratio="fill"
+        priority
+        className="pointer-events-none absolute inset-0 h-full w-full"
+        imageClassName="object-cover object-center"
+        sizes="100vw"
+      />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(2,13,47,.96)_0%,rgba(2,13,47,.84)_42%,rgba(2,13,47,.58)_72%,rgba(2,13,47,.86)_100%)]" aria-hidden />
       <div className="relative mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="programme-mosaic-grid relative isolate overflow-visible bg-transparent">
-          <header className="programme-mosaic-intro relative flex min-h-[clamp(360px,48vw,540px)] flex-col justify-end overflow-hidden bg-primary p-5 text-white sm:p-8 lg:p-12">
-            <PublicImage
-              src="/images/landing-page/tc-fore.png"
-              alt="Kisii University tuition complex and landscaped campus"
-              ratio="fill"
-              priority
-              className="absolute inset-0 h-full w-full"
-              imageClassName="object-cover object-center transition duration-700 hover:scale-[1.03]"
-              sizes="(min-width: 1024px) 42vw, 100vw"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/65 to-primary/10" aria-hidden />
+        <div className="programme-mosaic-grid relative isolate grid overflow-visible lg:grid-cols-[minmax(0,1fr)_330px]">
+          <header className="programme-mosaic-intro relative flex min-h-[clamp(360px,48vw,540px)] flex-col justify-end overflow-hidden p-5 text-white sm:p-8 lg:col-start-1 lg:row-start-1 lg:p-12">
             <div className="relative">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-white">
                 {section.subtitle ?? "Programmes and academic pathways"}
@@ -892,7 +891,7 @@ export function ProgrammeFinderSection({
           />
 
           {hasAdmissionDates ? (
-          <aside className="programme-mosaic-dates relative z-10 mx-auto mt-8 max-w-5xl overflow-hidden bg-primary p-5 text-white sm:p-6 lg:px-7 lg:py-5">
+          <aside className="programme-mosaic-dates relative z-10 mx-auto mt-8 max-w-5xl overflow-hidden bg-primary/90 p-5 text-white sm:p-6 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:mt-0 lg:max-w-none lg:px-7 lg:py-8">
               <div className="absolute inset-x-0 top-0 h-1 bg-secondary" />
               <SectionEyebrow
                 value={
@@ -952,17 +951,17 @@ export function ProgrammeFinderSection({
             <div className="hidden bg-primary" />
           )}
 
-          <div className="programme-mosaic-journey mt-8 border-y border-primary/10 bg-transparent p-5 sm:p-6 lg:px-7 lg:py-5">
+          <div className="programme-mosaic-journey mt-8 border-t border-white/15 bg-primary/80 p-5 sm:p-6 lg:col-span-2 lg:row-start-3 lg:mt-0 lg:px-7 lg:py-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <SectionEyebrow value="Your journey to Kisii University" />
-                <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-primary">
+                <SectionEyebrow value="Your journey to Kisii University" light />
+                <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white">
                   Five clear steps. One destination.
                 </h3>
               </div>
               <LinkWrapper
                 href="/admissions/how-to-apply"
-                className="inline-flex min-h-10 w-fit shrink-0 items-center justify-center gap-2 text-sm font-bold text-primary transition hover:text-secondary"
+                className="inline-flex min-h-10 w-fit shrink-0 items-center justify-center gap-2 text-sm font-bold text-white transition hover:text-secondary"
               >
                 Application guide
                 <ArrowRight className="h-4 w-4" aria-hidden />
@@ -971,23 +970,23 @@ export function ProgrammeFinderSection({
 
             <div className="relative mt-5 grid gap-1 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
               <span
-                className="programme-journey-line absolute left-[10%] right-[10%] top-5 hidden h-px origin-left bg-primary/20 lg:block"
+                className="programme-journey-line absolute left-[10%] right-[10%] top-5 hidden h-px origin-left bg-white/25 lg:block"
                 aria-hidden
               />
               {journey.slice(0, 5).map((item, index) => (
                 <div
                   key={item.id}
-                  className="programme-journey-step group relative flex gap-4 border-b border-primary/10 py-3 last:border-b-0 sm:border-b-0 sm:px-2 lg:block lg:px-3 lg:py-0 lg:text-center"
+                  className="programme-journey-step group relative flex gap-4 border-b border-white/10 py-3 last:border-b-0 sm:border-b-0 sm:px-2 lg:block lg:px-3 lg:py-0 lg:text-center"
                   style={{ animationDelay: `${index * 70}ms` }}
                 >
-                  <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-white ring-8 ring-accent transition group-hover:bg-secondary lg:mx-auto">
+                  <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary font-semibold text-white ring-8 ring-primary transition group-hover:bg-white group-hover:text-primary lg:mx-auto">
                     {itemContentNumber(item, "step") ?? index + 1}
                   </span>
                   <div className="min-w-0 lg:mt-4">
-                    <h4 className="text-sm font-bold text-foreground">
+                    <h4 className="text-sm font-bold text-white">
                       {item.title}
                     </h4>
-                    <p className="mt-1 line-clamp-1 text-xs leading-5 text-muted-foreground lg:line-clamp-2">
+                    <p className="mt-1 line-clamp-1 text-xs leading-5 text-white/70 lg:line-clamp-2">
                       {item.body_text}
                     </p>
                   </div>
