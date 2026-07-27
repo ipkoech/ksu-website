@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Search, SlidersHorizontal, X } from "lucide-react";
 import { getMainApiBaseUrl } from "@ksu/api-client";
 import type { HomeProgrammeCard, HomeSchoolCard } from "@/lib/homepage-data";
@@ -25,6 +25,11 @@ export function ProgrammeFinderInteractive({
   const [remoteResults, setRemoteResults] = useState<HomeProgrammeCard[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const deferredQuery = useDeferredValue(query);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    searchInputRef.current?.focus();
+  }, []);
 
   const hasActiveFilters =
     Boolean(query.trim()) ||
@@ -138,11 +143,12 @@ export function ProgrammeFinderInteractive({
 
         <form
           action="/academics/programmes"
-          className="overflow-hidden rounded-xl bg-white/90 shadow-[0_18px_45px_-35px_hsl(var(--primary)/.65)]"
+          className="relative rounded-xl bg-white/90 shadow-[0_18px_45px_-35px_hsl(var(--primary)/.65)]"
         >
           <div className="flex min-h-16 items-center gap-3 bg-white px-4 sm:px-5">
             <Search className="h-6 w-6 text-primary" aria-hidden />
             <input
+              ref={searchInputRef}
               name="q"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -174,7 +180,7 @@ export function ProgrammeFinderInteractive({
             </button>
           </div>
 
-          {filtersOpen ? <div id="programme-filters" className="grid gap-3 bg-accent/35 px-4 py-4 sm:px-5 md:grid-cols-3">
+          {filtersOpen ? <div id="programme-filters" role="dialog" aria-label="Programme filters" className="absolute inset-x-0 top-full z-30 mt-2 grid gap-4 rounded-xl bg-white p-4 shadow-[0_24px_60px_-30px_hsl(var(--primary)/.55)] ring-1 ring-primary/10 sm:p-5 md:grid-cols-3">
             <FilterSelect
               label="School"
               name="school_id"
