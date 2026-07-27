@@ -7,6 +7,9 @@
    ============================================ */
 :root {
   --a11y-text-scale: 1;
+  --a11y-grayscale: 0;
+  --a11y-saturation: 1;
+  --a11y-text-alignment: start;
   --ksu-floating-bottom-offset: calc(1rem + env(safe-area-inset-bottom));
 }
 
@@ -86,10 +89,22 @@ html[data-a11y-word-spacing="increased"] body {
   word-spacing: 0.12em;
 }
 
-html[data-a11y-text-align="left"]
+html[data-a11y-text-align="left"] {
+  --a11y-text-alignment: left;
+}
+
+html[data-a11y-text-align="center"] {
+  --a11y-text-alignment: center;
+}
+
+html[data-a11y-text-align="right"] {
+  --a11y-text-alignment: right;
+}
+
+html[data-a11y-text-align]
   body
   :is(h1, h2, h3, h4, h5, h6, p, li, dd, blockquote, figcaption) {
-  text-align: left !important;
+  text-align: var(--a11y-text-alignment) !important;
 }
 
 html[data-a11y-contrast="increased"] {
@@ -127,8 +142,21 @@ html[data-a11y-emphasize-links="true"]
   text-underline-offset: 0.18em;
 }
 
+html[data-a11y-saturation="low"] {
+  --a11y-saturation: 0.5;
+}
+
+html[data-a11y-saturation="high"] {
+  --a11y-saturation: 1.5;
+}
+
 html[data-a11y-grayscale="true"] {
-  filter: grayscale(100%);
+  --a11y-grayscale: 1;
+}
+
+html[data-a11y-saturation],
+html[data-a11y-grayscale="true"] {
+  filter: grayscale(var(--a11y-grayscale)) saturate(var(--a11y-saturation));
 }
 
 html[data-a11y-hide-images="true"]
@@ -205,6 +233,11 @@ html[data-a11y-pause-motion="true"] [data-rotating="true"] {
   gap: 0.75rem;
 }
 
+html[data-a11y-widget-position="left"] .ksu-floating-action-dock {
+  right: auto;
+  left: max(1rem, env(safe-area-inset-left));
+}
+
 .ksu-floating-action {
   display: inline-flex;
   width: 48px;
@@ -217,6 +250,17 @@ html[data-a11y-pause-motion="true"] [data-rotating="true"] {
   background: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
   box-shadow: 0 12px 30px -12px rgb(15 48 120 / 0.75);
+}
+
+html[data-a11y-widget-size="oversized"] .ksu-floating-action {
+  width: 64px;
+  height: 64px;
+  flex-basis: 64px;
+}
+
+html[data-a11y-widget-size="oversized"] .ksu-floating-action svg {
+  width: 30px;
+  height: 30px;
 }
 
 .ksu-floating-action:hover {

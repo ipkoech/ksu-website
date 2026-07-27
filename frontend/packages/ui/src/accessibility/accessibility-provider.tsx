@@ -27,6 +27,7 @@ type AccessibilityContextValue = {
 type AttributeDefinition = {
   attribute: string;
   kind: "boolean" | "enum";
+  defaultValue?: string;
 };
 
 export const ROOT_ATTRIBUTE_MAP = {
@@ -36,6 +37,10 @@ export const ROOT_ATTRIBUTE_MAP = {
   },
   contrast: {
     attribute: "data-a11y-contrast",
+    kind: "enum",
+  },
+  saturation: {
+    attribute: "data-a11y-saturation",
     kind: "enum",
   },
   readableFont: {
@@ -94,6 +99,16 @@ export const ROOT_ATTRIBUTE_MAP = {
     attribute: "data-a11y-pause-motion",
     kind: "boolean",
   },
+  widgetSize: {
+    attribute: "data-a11y-widget-size",
+    kind: "enum",
+    defaultValue: "standard",
+  },
+  widgetPosition: {
+    attribute: "data-a11y-widget-position",
+    kind: "enum",
+    defaultValue: "right",
+  },
 } as const satisfies Partial<
   Record<keyof AccessibilityPreferences, AttributeDefinition>
 >;
@@ -105,10 +120,7 @@ function applyRootAttributes(preferences: AccessibilityPreferences) {
   const root = document.documentElement;
 
   for (const [key, definition] of Object.entries(ROOT_ATTRIBUTE_MAP) as Array<
-    [
-      keyof typeof ROOT_ATTRIBUTE_MAP,
-      (typeof ROOT_ATTRIBUTE_MAP)[keyof typeof ROOT_ATTRIBUTE_MAP],
-    ]
+    [keyof typeof ROOT_ATTRIBUTE_MAP, AttributeDefinition]
   >) {
     const value = preferences[key];
     if (definition.kind === "boolean") {
@@ -120,7 +132,7 @@ function applyRootAttributes(preferences: AccessibilityPreferences) {
       continue;
     }
 
-    if (value === "default") {
+    if (value === (definition.defaultValue ?? "default")) {
       root.removeAttribute(definition.attribute);
     } else {
       root.setAttribute(definition.attribute, String(value));
