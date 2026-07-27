@@ -25,6 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AdmissionsCountdown } from "@/components/home/admissions-countdown";
+import { AdmissionsPopover } from "@/components/home/admissions-popover";
 import { ImageCurtainReveal } from "@/components/about/image-curtain-reveal";
 import { CampusLifeHorizontalScroller } from "@/components/home/campus-life-horizontal-scroller";
 import { NewsletterSubscribeForm } from "@/components/home/newsletter-subscribe-form";
@@ -272,9 +273,7 @@ export function HeroAdmissionsSection({
 
       <div
         className={`relative z-10 mx-auto grid min-h-[clamp(390px,calc(100svh-13rem),580px)] max-w-[1680px] items-center gap-8 px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16 xl:px-10 2xl:px-12 ${
-          showAdmissions
-            ? "lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]"
-            : "lg:grid-cols-1"
+          "lg:grid-cols-1"
         }`}
       >
         <div className="max-w-2xl self-end [text-shadow:0_2px_14px_rgba(0,0,0,.55)]">
@@ -302,9 +301,7 @@ export function HeroAdmissionsSection({
           ) : null}
         </div>
 
-        {showAdmissions && admissions ? (
-          <AdmissionsPanel admissions={admissions} />
-        ) : null}
+        {showAdmissions && admissions ? <AdmissionsPopover admissions={admissions} /> : null}
       </div>
     </section>
   );
@@ -367,7 +364,7 @@ function homepageAdmissionsFromIntakes(
   };
 }
 
-function AdmissionsPanel({
+export function AdmissionsPanel({
   admissions,
 }: {
   admissions: HomepageResolvedHero["admissions"];
