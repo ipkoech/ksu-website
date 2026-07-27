@@ -47,6 +47,7 @@ import {
   poster,
   video,
   type HomepageHeroAction,
+  type HomepageHeroAdmissions,
   type HomepagePartnershipSpotlight,
   type HomepageResolvedHero,
   type HomepageSection,
@@ -190,9 +191,15 @@ const campusHeroImage = "/images/homepage/kisii-administration-campus.jpg";
 const heriAfricaLaunchImage = "/images/HERIAfricaLaunch.jpg";
 const researchImpactBackground = "/images/research/research-impact-bg.png";
 
-export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
+export function HeroAdmissionsSection({
+  section,
+  hero,
+  programmeFinderData,
+}: SectionVariantProps) {
   const content = hero?.content;
-  const admissions = hero?.admissions;
+  const admissions =
+    hero?.admissions ??
+    homepageAdmissionsFromIntakes(programmeFinderData?.intakes);
   const showAdmissions = Boolean(
     admissions?.visible &&
     (admissions.state === "applications_open" ||
@@ -301,6 +308,63 @@ export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
       </div>
     </section>
   );
+}
+
+function homepageAdmissionsFromIntakes(
+  intakes: ProgrammeFinderData["intakes"] | undefined,
+): HomepageHeroAdmissions | null {
+  const current = intakes?.find((intake) => intake.isOpen);
+  if (!current) return null;
+
+  const today = new Date();
+  const standardEnd = new Date(`${current.applicationEnd}T23:59:59+03:00`);
+  const lateEnd = current.lateApplicationEnd
+    ? new Date(`${current.lateApplicationEnd}T23:59:59+03:00`)
+    : null;
+  const isLate = standardEnd.getTime() < today.getTime() && Boolean(lateEnd);
+  const closingAt = isLate ? lateEnd : standardEnd;
+  const nextIntake = intakes?.find(
+    (intake) =>
+      !intake.isOpen &&
+      new Date(`${intake.applicationStart}T00:00:00+03:00`).getTime() >
+        today.getTime(),
+  );
+
+  return {
+    visible: true,
+    state: "applications_open",
+    application_phase: isLate ? "late" : "standard",
+    intake: {
+      name: current.name,
+      slug: current.slug,
+    },
+    closing_at: closingAt?.toISOString() ?? null,
+    countdown_target: closingAt?.toISOString() ?? null,
+    primary_action: {
+      key: "current-intake",
+      label: "Apply now",
+      href: current.href,
+      style: "primary",
+    },
+    secondary_actions: [
+      ...(nextIntake
+        ? [
+            {
+              key: "next-intake",
+              label: `Admissions open ${formatPublicDate(nextIntake.applicationStart)}`,
+              href: nextIntake.href,
+              style: "secondary" as const,
+            },
+          ]
+        : []),
+      {
+        key: "requirements",
+        label: "Check requirements",
+        href: "/admissions/requirements",
+        style: "secondary" as const,
+      },
+    ],
+  };
 }
 
 function AdmissionsPanel({

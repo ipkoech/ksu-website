@@ -384,7 +384,6 @@ async function getFeaturedStories() {
 
 async function getActiveIntakes() {
   const response = await intakesApi.list({
-    is_open: true,
     per_page: 4,
     fields:
       "id,name,code,slug,application_start,application_end,late_application_end,is_active,is_open,cover_image_id,created_at,updated_at",
@@ -687,7 +686,13 @@ function normalizeIntakes(intakes: Intake[]): HomeIntake[] {
       isOpen: item.is_open,
       isActive: item.is_active,
       href: `/admissions/intakes/${item.slug}`,
-    }));
+    }))
+    .sort(
+      (first, second) =>
+        Number(second.isOpen) - Number(first.isOpen) ||
+        new Date(first.applicationStart).getTime() -
+          new Date(second.applicationStart).getTime(),
+    );
 }
 
 function formatDisplayDate(value?: string | null) {

@@ -206,6 +206,11 @@ export default async function HomePage() {
               <HeroAdmissionsSection
                 section={fallbackHomeHeroSection}
                 hero={composedHomepage.data?.hero}
+                programmeFinderData={{
+                  schools: homepage.schools,
+                  programmes: homepage.featuredProgrammes,
+                  intakes: homepage.activeIntakes,
+                }}
               />
             )}
             <HomepageSections
@@ -229,6 +234,11 @@ export default async function HomePage() {
             <HeroAdmissionsSection
               section={fallbackHomeHeroSection}
               hero={composedHomepage.data?.hero}
+              programmeFinderData={{
+                schools: homepage.schools,
+                programmes: homepage.featuredProgrammes,
+                intakes: homepage.activeIntakes,
+              }}
             />
 
             {/* Hero value proposition + secondary CTAs */}
