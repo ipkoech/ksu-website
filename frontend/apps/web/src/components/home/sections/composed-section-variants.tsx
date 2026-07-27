@@ -189,6 +189,7 @@ export function FeaturedStoriesSection({ stories }: { stories?: HomeCard[] }) {
 }
 
 const campusHeroImage = "/images/homepage/kisii-administration-campus.jpg";
+const uploadedHeroVideo = "/videos/hero-video.mp4";
 const heriAfricaLaunchImage = "/images/HERIAfricaLaunch.jpg";
 const researchImpactBackground = "/images/research/research-impact-bg.png";
 
@@ -210,7 +211,7 @@ export function HeroAdmissionsSection({
   const mobileMedia = hero?.media?.mobile;
   const videoMedia = hero?.media?.video;
   const posterMedia = hero?.media?.poster ?? desktopMedia;
-  const videoSrc = mediaUrl(videoMedia);
+  const videoSrc = mediaUrl(videoMedia) ?? uploadedHeroVideo;
   const desktopImageSrc = mediaUrl(desktopMedia) ?? campusHeroImage;
   const mobileImageSrc = mediaUrl(mobileMedia);
   const mediaAltText = mediaAlt(
@@ -235,6 +236,7 @@ export function HeroAdmissionsSection({
           muted
           loop
           playsInline
+          preload="metadata"
           poster={mediaUrl(posterMedia) ?? desktopImageSrc}
           aria-hidden="true"
         >
