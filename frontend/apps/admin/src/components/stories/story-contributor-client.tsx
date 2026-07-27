@@ -109,6 +109,7 @@ export function StoryContributorClient({
             category: payload.category,
             contributor_affiliation_snapshot:
               payload.contributor_affiliation_snapshot,
+            reading_minutes: payload.reading_minutes,
             show_contributor_name: payload.show_contributor_name,
             consent_to_publish: payload.consent_to_publish,
           })
@@ -458,6 +459,14 @@ function StoryEditor({
             placeholder="One short paragraph summarizing the story."
           />
         </label>
+        <Field
+          label="Reading time in minutes (optional)"
+          name="reading_minutes"
+          defaultValue={story?.reading_minutes?.toString()}
+          readOnly={readOnly}
+          type="number"
+          placeholder="Auto-calculated if blank"
+        />
         <label className="grid gap-2 text-sm font-semibold text-slate-800">
           Story body
           <textarea
@@ -545,21 +554,27 @@ function Field({
   defaultValue,
   required,
   readOnly,
+  type = "text",
+  placeholder,
 }: {
   label: string;
   name: string;
   defaultValue?: string | null;
   required?: boolean;
   readOnly?: boolean;
+  type?: "text" | "number";
+  placeholder?: string;
 }) {
   return (
     <label className="grid gap-2 text-sm font-semibold text-slate-800">
       {label}
       <input
         name={name}
+        type={type}
         required={required}
         defaultValue={defaultValue ?? ""}
         readOnly={readOnly}
+        placeholder={placeholder}
         className="min-h-12 rounded-xl border px-3 text-sm"
       />
     </label>
@@ -568,6 +583,7 @@ function Field({
 
 function formPayload(form: FormData): StorySubmissionPayload {
   const text = (key: string) => String(form.get(key) ?? "").trim();
+  const readingMinutes = Number(text("reading_minutes"));
   return {
     title: text("title"),
     summary: text("summary") || null,
@@ -578,6 +594,7 @@ function formPayload(form: FormData): StorySubmissionPayload {
     featured_media_id: text("featured_media_id") || null,
     story_type: text("story_type") || "article",
     category: text("category") || null,
+    reading_minutes: readingMinutes > 0 ? readingMinutes : null,
     contributor_affiliation_snapshot:
       text("contributor_affiliation_snapshot") || null,
     show_contributor_name: form.get("show_contributor_name") === "on",

@@ -2276,6 +2276,7 @@ export interface StorySubmissionPayload {
   featured_media_id?: string | null;
   story_type?: string;
   category?: string | null;
+  reading_minutes?: number | null;
   contributor_affiliation_snapshot?: string | null;
   show_contributor_name?: boolean;
   consent_to_publish: boolean;

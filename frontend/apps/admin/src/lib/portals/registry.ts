@@ -2531,6 +2531,12 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
         defaultValue: "article",
       },
       { name: "category", label: "Category" },
+      {
+        name: "reading_minutes",
+        label: "Reading time (minutes)",
+        type: "number",
+        placeholder: "Auto-calculated if blank",
+      },
       { name: "is_featured", label: "Featured", type: "boolean" },
       { name: "featured_until", label: "Featured Until", type: "datetime-local" },
       { name: "homepage_priority", label: "Homepage Priority", type: "number" },
@@ -2542,6 +2548,9 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       is_featured: Boolean(values.is_featured),
       featured_until: values.featured_until || null,
       homepage_priority: Number(values.homepage_priority || 100),
+      reading_minutes: values.reading_minutes
+        ? Number(values.reading_minutes)
+        : null,
       source_type: "internal",
       consent_to_publish: true,
     }),

@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CalendarDays,
+  Clock3,
   ExternalLink,
   ImageIcon,
   Newspaper,
@@ -104,6 +105,9 @@ export default async function StoryDetailPage({
     .filter((item) => item.id !== story.id)
     .slice(0, 4);
   const ctas = normalizeCtas(story.related_links);
+  const readingMinutes =
+    story.reading_minutes ??
+    estimateReadingMinutes(story.rich_text || story.plain_text);
 
   return (
     <div className="min-h-screen text-foreground">
@@ -141,6 +145,12 @@ export default async function StoryDetailPage({
                 <CalendarDays className="h-4 w-4" />
                 {formatDate(story.published_at ?? story.created_at)}
               </span>
+              {readingMinutes ? (
+                <span className="inline-flex items-center gap-2">
+                  <Clock3 className="h-4 w-4" />
+                  {readingMinutes} min read
+                </span>
+              ) : null}
               {story.show_contributor_name &&
               story.contributor_name_snapshot ? (
                 <span className="inline-flex items-center gap-2">
@@ -364,4 +374,13 @@ function normalizeCtas(value?: Array<Record<string, unknown>> | null) {
       ): item is { label: string; href: string; description: string | null } =>
         item !== null,
     );
+}
+
+function estimateReadingMinutes(content?: string | null) {
+  const wordCount = (content ?? "")
+    .replace(/<[^>]+>/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+  return Math.max(1, Math.ceil(wordCount / 200));
 }
