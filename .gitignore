@@ -85,6 +85,10 @@ tmp/
 designs/
 design/
 docs/
+!docs/
+docs/*
+!docs/accessibility/
+!docs/accessibility/*.md
 deploy/**/*.md
 ADMIN_PORTAL_*.md
 frontend/apps/library/.chrome-visual-profile/
