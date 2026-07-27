@@ -856,8 +856,8 @@ export function ProgrammeFinderSection({
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[linear-gradient(180deg,hsl(var(--accent)/.55),transparent)]" />
       <div className="relative mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="programme-mosaic-grid relative isolate grid overflow-visible rounded-2xl bg-white/[0.95] shadow-[0_24px_70px_-48px_hsl(var(--primary)/.45)] lg:grid-cols-12">
-          <header className="programme-mosaic-intro relative row-span-2 flex min-h-[22rem] flex-col justify-end overflow-hidden bg-primary p-5 text-white sm:p-7 lg:col-span-5 lg:row-start-1">
+        <div className="programme-mosaic-grid relative isolate overflow-visible bg-transparent">
+          <header className="programme-mosaic-intro relative flex min-h-[clamp(360px,48vw,540px)] flex-col justify-end overflow-hidden bg-primary p-5 text-white sm:p-8 lg:p-12">
             <PublicImage
               src="/images/landing-page/tc-fore.png"
               alt="Kisii University tuition complex and landscaped campus"
@@ -892,7 +892,7 @@ export function ProgrammeFinderSection({
           />
 
           {hasAdmissionDates ? (
-          <aside className="programme-mosaic-dates relative z-10 overflow-hidden bg-primary p-5 text-white sm:p-6 lg:col-span-12 lg:row-start-3 lg:px-7 lg:py-5">
+          <aside className="programme-mosaic-dates relative z-10 mx-auto mt-8 max-w-5xl overflow-hidden bg-primary p-5 text-white sm:p-6 lg:px-7 lg:py-5">
               <div className="absolute inset-x-0 top-0 h-1 bg-secondary" />
               <SectionEyebrow
                 value={
@@ -949,10 +949,10 @@ export function ProgrammeFinderSection({
               </LinkWrapper>
             </aside>
           ) : (
-            <div className="hidden bg-primary lg:col-span-12 lg:row-start-3 lg:block" />
+            <div className="hidden bg-primary" />
           )}
 
-          <div className="programme-mosaic-journey border-t border-primary/10 bg-accent/35 p-5 sm:p-6 lg:col-span-12 lg:row-start-4 lg:px-7 lg:py-5">
+          <div className="programme-mosaic-journey mt-8 border-y border-primary/10 bg-transparent p-5 sm:p-6 lg:px-7 lg:py-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <SectionEyebrow value="Your journey to Kisii University" />
