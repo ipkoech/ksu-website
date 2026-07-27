@@ -92,6 +92,7 @@ class ResearchProject(UUIDMixin, Base):
     title: Mapped[str] = mapped_column(String(255))
     summary: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[PublicationStatus] = mapped_column(Enum(PublicationStatus), default=PublicationStatus.DRAFT, index=True)
+    scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     theme_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("heri.research_themes.id"))
 
 
@@ -102,4 +103,5 @@ class ResearchPublication(UUIDMixin, Base):
     abstract: Mapped[str | None] = mapped_column(Text)
     citation: Mapped[str | None] = mapped_column(Text)
     status: Mapped[PublicationStatus] = mapped_column(Enum(PublicationStatus), default=PublicationStatus.DRAFT, index=True)
+    scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     resource_url: Mapped[str | None] = mapped_column(String(500))

@@ -21,14 +21,13 @@ def is_public_record(record: Any, now: datetime | None = None) -> bool:
 class PublicService:
     @staticmethod
     def public_query(model: type[Any]) -> Select:
-        now = datetime.now(timezone.utc)
-        return select(model).where(
-            model.deleted_at.is_(None),
-            or_(
-                model.status == PublicationStatus.PUBLISHED,
-                (model.status == PublicationStatus.SCHEDULED) & (model.scheduled_at <= now),
-            ),
-        )
+        conditions = [model.deleted_at.is_(None)]
+        if hasattr(model, "status"):
+            now = datetime.now(timezone.utc)
+            conditions.append(or_(model.status == PublicationStatus.PUBLISHED, (model.status == PublicationStatus.SCHEDULED) & (model.scheduled_at <= now)))
+        if hasattr(model, "is_active"):
+            conditions.append(model.is_active.is_(True))
+        return select(model).where(*conditions)
 
     async def list(self, db: AsyncSession, model: type[Any], *, limit: int = 20, offset: int = 0) -> list[Any]:
         result = await db.execute(self.public_query(model).order_by(model.created_at.desc()).limit(limit).offset(offset))
