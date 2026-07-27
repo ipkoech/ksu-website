@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useRef,
   useState,
   type ChangeEvent,
   type FormEvent,
@@ -72,6 +73,7 @@ export function EntityInquiryLauncher({
   aboveMobileNavigation?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const launcherRef = useRef<HTMLButtonElement>(null);
   const [actionSlot, setActionSlot] = useState<HTMLElement | null>(null);
   const [draft, setDraft] = useState<InquiryDraft>(initialDraft);
   const [submitting, setSubmitting] = useState(false);
@@ -104,6 +106,14 @@ export function EntityInquiryLauncher({
       }
     };
   }, [aboveMobileNavigation]);
+
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (wasOpen.current && !open) {
+      launcherRef.current?.focus();
+    }
+    wasOpen.current = open;
+  }, [open]);
 
   function updateDraft(
     field: keyof InquiryDraft,
@@ -173,6 +183,7 @@ export function EntityInquiryLauncher({
       <Tooltip>
         <TooltipTrigger asChild>
           <button
+            ref={launcherRef}
             type="button"
             onClick={() => setOpen(true)}
             className="ksu-floating-action"
@@ -197,6 +208,10 @@ export function EntityInquiryLauncher({
         <SheetContent
           id={INQUIRY_PANEL_ID}
           side="right"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            launcherRef.current?.focus();
+          }}
           className="flex h-dvh w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-xl"
         >
           <SheetHeader className="border-b border-border bg-primary/[0.04] px-5 py-5 pr-12 text-left sm:px-7">

@@ -127,7 +127,11 @@ export function AccessibilityProvider({
       setPreferences(DEFAULT_ACCESSIBILITY_PREFERENCES);
     } finally {
       setReady(true);
+      document.documentElement.setAttribute("data-a11y-ready", "true");
     }
+    return () => {
+      document.documentElement.removeAttribute("data-a11y-ready");
+    };
   }, []);
 
   React.useEffect(() => {

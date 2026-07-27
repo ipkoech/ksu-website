@@ -69,9 +69,6 @@ export async function PageShell({
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_38%,hsl(var(--surface-muted))_100%)] text-foreground">
-      <a href="#main-content" className="skip-link">
-        Skip to main content
-      </a>
       <MiniHeader
         contactInfo={contactInfo}
         quickLinks={miniQuickLinks}

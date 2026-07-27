@@ -53,7 +53,7 @@ describe("EntityInquiryLauncher", () => {
     );
   });
 
-  it("opens a side panel and preserves the draft when reopened", () => {
+  it("opens a side panel and preserves the draft when reopened", async () => {
     render(<EntityInquiryLauncher target={target} />);
 
     const launcher = screen.getByRole("button", {
@@ -74,6 +74,7 @@ describe("EntityInquiryLauncher", () => {
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    await waitFor(() => expect(launcher).toHaveFocus());
     fireEvent.click(
       screen.getByRole("button", {
         name: "Send a message to Kisii University",

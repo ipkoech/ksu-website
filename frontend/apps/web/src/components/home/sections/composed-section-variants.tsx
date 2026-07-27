@@ -536,7 +536,7 @@ export function PulseStripSection({ section }: SectionVariantProps) {
             <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-tight text-white">
               {section.title ?? "University pulse"}
             </h2>
-            <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/55">
+            <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
               Live updates
             </p>
           </div>
@@ -784,18 +784,18 @@ export function ProgrammeFinderSection({
               aria-hidden
             />
             <div className="relative">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-white">
                 {section.subtitle ?? "Programmes and academic pathways"}
               </p>
               <h2 className="mt-3 max-w-sm font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.04] text-white sm:text-4xl">
                 What will you become?
               </h2>
-              <p className="mt-3 max-w-md text-sm leading-6 text-white/75">
+              <p className="mt-3 max-w-md text-sm leading-6 text-white">
                 {section.description ??
                   "Search programmes built around your interests, ambitions and future."}
               </p>
             </div>
-            <div className="relative mt-6 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.16em] text-white/65">
+            <div className="relative mt-6 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.16em] text-white">
               <span className="h-px w-12 bg-secondary" />
               Search. Discover. Apply.
             </div>
@@ -843,7 +843,7 @@ export function ProgrammeFinderSection({
                   href={intake.href}
                   className="mt-4 block border-y border-white/20 py-3 transition hover:border-secondary/70"
                 >
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-secondary">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white">
                     {intake.isOpen ? "Open intake" : "Intake"}
                   </p>
                   <h4 className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold text-white">
@@ -1899,15 +1899,15 @@ function ComposedEventAgendaItem({
         </span>
       </div>
       <div className="min-w-0">
-        <h3 className="font-[family-name:var(--font-display)] text-xl font-bold leading-tight text-secondary">
+        <h3 className="font-[family-name:var(--font-display)] text-xl font-bold leading-tight text-orange-200">
           {item.title}
         </h3>
-        <p className="mt-3 flex items-center gap-2 text-sm text-white/85">
+        <p className="mt-3 flex items-center gap-2 text-sm text-white">
           <CalendarDays className="h-4 w-4" aria-hidden />
           {dateParts.time}
         </p>
         {dateParts.location ? (
-          <p className="mt-2 flex items-center gap-2 text-sm text-white/85">
+          <p className="mt-2 flex items-center gap-2 text-sm text-white">
             <MapPin className="h-4 w-4" aria-hidden />
             {dateParts.location}
           </p>
@@ -2389,11 +2389,11 @@ function AdmissionDateLine({
 }) {
   const body = (
     <article className="group grid grid-cols-[auto_minmax(0,1fr)] gap-3 py-3 transition">
-      <span className="pt-0.5 font-[family-name:var(--font-display)] text-sm font-semibold text-secondary">
+      <span className="pt-0.5 font-[family-name:var(--font-display)] text-sm font-semibold text-white">
         {String(index + 1).padStart(2, "0")}
       </span>
       <div className="min-w-0">
-        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/60">
+        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-white">
           {itemContentText(item, "date") ?? item.subtitle ?? "Important date"}
         </p>
         <h4 className="mt-1 text-sm font-semibold leading-5 text-white transition group-hover:text-secondary">
@@ -2591,7 +2591,7 @@ function PulseItem({
         <p className="line-clamp-1 text-sm font-semibold text-white">
           {item.title}
         </p>
-        <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/65">
+        <p className="mt-1 line-clamp-2 text-xs leading-5 text-white">
           {item.body_text ?? item.subtitle}
         </p>
       </div>
@@ -2662,7 +2662,7 @@ function SectionEyebrow({
     <p
       className={
         light
-          ? "text-xs font-bold uppercase tracking-[0.16em] text-white/75"
+          ? "text-xs font-bold uppercase tracking-[0.16em] text-white"
           : "text-xs font-bold uppercase tracking-[0.16em] text-secondary"
       }
     >

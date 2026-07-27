@@ -27,6 +27,15 @@ describe("frontend accessibility shells", () => {
     ).not.toContain("Skip to research content");
   });
 
+  it("uses one public-web skip-link source", () => {
+    expect(read("apps/web/src/app/page.tsx")).not.toContain(
+      "Skip to main content",
+    );
+    expect(
+      read("apps/web/src/components/site-shell.tsx"),
+    ).not.toContain("Skip to main content");
+  });
+
   it("provides stable admin main targets", () => {
     expect(
       read("apps/admin/src/components/layout/dashboard-shell.tsx"),

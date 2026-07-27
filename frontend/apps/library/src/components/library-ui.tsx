@@ -170,7 +170,9 @@ export function LibrarySection({
             {title}
           </h2>
           {body ? (
-            <p className="mt-4 text-pretty text-base leading-7 text-muted-foreground">{body}</p>
+            <p className="mt-4 text-pretty text-base leading-7 text-foreground">
+              {body}
+            </p>
           ) : null}
         </div>
         {children}

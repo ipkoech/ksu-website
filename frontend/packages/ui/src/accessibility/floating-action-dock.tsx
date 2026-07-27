@@ -16,6 +16,7 @@ export function FloatingActionDock({
     <div
       className={`ksu-floating-action-dock ${className ?? ""}`.trim()}
       data-testid="floating-action-dock"
+      role="group"
       aria-label="Page tools"
     >
       <AccessibilityPanel />

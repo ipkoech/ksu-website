@@ -181,9 +181,6 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen text-foreground">
-      <a href="#main-content" className="skip-link">
-        Skip to main content
-      </a>
       <MiniHeader
         contactInfo={homepage.contactInfo}
         quickLinks={homepage.miniQuickLinks}

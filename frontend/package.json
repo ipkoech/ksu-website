@@ -15,11 +15,13 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test:accessibility:unit": "pnpm --filter @ksu/ui test",
-    "test:e2e:school-portal": "playwright test apps/admin/e2e/school-portal.spec.ts",
+    "test:e2e:accessibility": "playwright test --grep @accessibility",
+    "test:e2e:school-portal": "playwright test school-portal.spec.ts --project=admin",
     "clean": "turbo clean && rm -rf node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
     "@changesets/cli": "^2.29.5",
     "@eslint/eslintrc": "^3.3.5",
     "@playwright/test": "^1.55.0",

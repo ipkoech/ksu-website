@@ -105,4 +105,19 @@ describe("AccessibilityProvider", () => {
       "true",
     );
   });
+
+  it("moves focus to a non-focusable main landmark", async () => {
+    render(
+      <AccessibilityShell mainContentId="main">
+        <main id="main">Page</main>
+      </AccessibilityShell>,
+    );
+
+    await userEvent.click(
+      screen.getByRole("link", { name: "Skip to main content" }),
+    );
+
+    expect(screen.getByRole("main")).toHaveAttribute("tabindex", "-1");
+    expect(screen.getByRole("main")).toHaveFocus();
+  });
 });
