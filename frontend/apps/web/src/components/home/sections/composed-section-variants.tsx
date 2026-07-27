@@ -857,11 +857,17 @@ export function ProgrammeFinderSection({
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[linear-gradient(180deg,hsl(var(--accent)/.55),transparent)]" />
       <div className="relative mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="programme-mosaic-grid relative isolate grid overflow-visible rounded-2xl bg-white/[0.95] shadow-[0_24px_70px_-48px_hsl(var(--primary)/.45)] lg:grid-cols-12">
-          <header className="programme-mosaic-intro relative flex flex-col justify-between overflow-hidden bg-primary p-5 text-white sm:p-7 lg:col-span-4 lg:row-start-1">
-            <div
-              className="absolute -right-20 -top-24 h-52 w-52 rounded-full border border-white/10"
-              aria-hidden
+          <header className="programme-mosaic-intro relative row-span-2 flex min-h-[22rem] flex-col justify-end overflow-hidden bg-primary p-5 text-white sm:p-7 lg:col-span-5 lg:row-start-1">
+            <PublicImage
+              src="/images/landing-page/tc-fore.png"
+              alt="Kisii University tuition complex and landscaped campus"
+              ratio="fill"
+              priority
+              className="absolute inset-0 h-full w-full"
+              imageClassName="object-cover object-center transition duration-700 hover:scale-[1.03]"
+              sizes="(min-width: 1024px) 42vw, 100vw"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/65 to-primary/10" aria-hidden />
             <div className="relative">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-white">
                 {section.subtitle ?? "Programmes and academic pathways"}
@@ -874,7 +880,7 @@ export function ProgrammeFinderSection({
                   "Search programmes built around your interests, ambitions and future."}
               </p>
             </div>
-            <div className="relative mt-6 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.16em] text-white">
+            <div className="relative mt-6 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.16em] text-white/90">
               <span className="h-px w-12 bg-secondary" />
               Search. Discover. Apply.
             </div>
@@ -885,23 +891,8 @@ export function ProgrammeFinderSection({
             schools={schools}
           />
 
-          <figure className="programme-mosaic-image relative hidden min-h-48 overflow-hidden bg-primary sm:block lg:col-start-1 lg:col-end-4 lg:row-start-2 lg:min-h-0">
-            <PublicImage
-              src="/images/Home/OurKSU-82.jpg"
-              alt="Kisii University students exploring their academic future"
-              ratio="fill"
-              className="absolute inset-0 h-full w-full rounded-none"
-              imageClassName="object-cover object-center transition duration-700 hover:scale-[1.03]"
-              sizes="(min-width: 1024px) 25vw, 100vw"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/75 via-transparent to-transparent" />
-            <figcaption className="absolute inset-x-0 bottom-0 p-5 text-sm font-semibold text-white">
-              Learn in a community built for discovery.
-            </figcaption>
-          </figure>
-
           {hasAdmissionDates ? (
-          <aside className="programme-mosaic-dates relative z-10 overflow-hidden bg-primary p-5 text-white sm:p-6 lg:col-start-10 lg:col-end-13 lg:row-start-2">
+          <aside className="programme-mosaic-dates relative z-10 overflow-hidden bg-primary p-5 text-white sm:p-6 lg:col-span-12 lg:row-start-3 lg:px-7 lg:py-5">
               <div className="absolute inset-x-0 top-0 h-1 bg-secondary" />
               <SectionEyebrow
                 value={
@@ -958,10 +949,10 @@ export function ProgrammeFinderSection({
               </LinkWrapper>
             </aside>
           ) : (
-            <div className="hidden bg-primary lg:col-start-10 lg:col-end-13 lg:row-start-2 lg:block" />
+            <div className="hidden bg-primary lg:col-span-12 lg:row-start-3 lg:block" />
           )}
 
-          <div className="programme-mosaic-journey border-t border-primary/10 bg-accent/35 p-5 sm:p-6 lg:col-span-12 lg:row-start-3 lg:px-7 lg:py-5">
+          <div className="programme-mosaic-journey border-t border-primary/10 bg-accent/35 p-5 sm:p-6 lg:col-span-12 lg:row-start-4 lg:px-7 lg:py-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <SectionEyebrow value="Your journey to Kisii University" />

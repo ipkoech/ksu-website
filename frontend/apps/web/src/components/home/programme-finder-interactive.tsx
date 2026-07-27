@@ -126,7 +126,7 @@ export function ProgrammeFinderInteractive({
 
   return (
     <>
-      <div className="programme-mosaic-search relative z-40 bg-accent/45 p-5 sm:p-6 lg:col-start-5 lg:col-end-13 lg:row-start-1 lg:p-6">
+      <div className="programme-mosaic-search relative z-40 bg-accent/45 p-5 sm:p-6 lg:col-start-6 lg:col-end-13 lg:row-start-1 lg:p-6">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-secondary">
@@ -209,7 +209,7 @@ export function ProgrammeFinderInteractive({
         </form>
       </div>
 
-      <div className="programme-mosaic-results p-5 sm:p-6 lg:col-start-4 lg:col-end-10 lg:row-start-2 lg:p-6">
+      <div className="programme-mosaic-results p-5 sm:p-6 lg:col-start-6 lg:col-end-13 lg:row-start-2 lg:p-6">
         <div className="flex items-end justify-between gap-4 border-b border-primary/15 pb-3">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-secondary">
