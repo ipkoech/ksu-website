@@ -89,8 +89,8 @@ export function ResearchDetailHero({
                     href={action.href}
                     className={
                       action.variant === "secondary"
-                        ? "inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
-                        : "inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
+                        ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                        : "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
                     }
                   >
                     {action.label}
@@ -268,9 +268,18 @@ function DetailBreadcrumbs({
                 {item.label}
               </Link>
             ) : (
-              <span className={isLast ? "text-foreground" : undefined}>{item.label}</span>
+              <span
+                className={isLast ? "text-foreground" : undefined}
+                aria-current={isLast ? "page" : undefined}
+              >
+                {item.label}
+              </span>
             )}
-            {!isLast ? <span className="text-muted-foreground/60">/</span> : null}
+            {!isLast ? (
+              <span className="text-muted-foreground/60" aria-hidden="true">
+                /
+              </span>
+            ) : null}
           </span>
         );
       })}

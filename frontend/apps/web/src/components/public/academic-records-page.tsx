@@ -512,7 +512,7 @@ export function AcademicRecordsPage({
   return (
     <PageShell>
       <BreadcrumbTrail items={config.breadcrumb} />
-      <main>
+      <div>
         <AcademicPageIntro config={config} kind={kind} />
         {kind === "schools" ? <SchoolsEditorial section={section} /> : null}
         {kind === "programmes" ? (
@@ -525,7 +525,7 @@ export function AcademicRecordsPage({
             <Search className="h-5 w-5" aria-hidden /> No published records are available yet.
           </div>
         ) : null}
-      </main>
+      </div>
     </PageShell>
   );
 }

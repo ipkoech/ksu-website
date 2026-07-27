@@ -704,13 +704,24 @@ function MediaDeskListingPage({ data }: { data: ContentListingData }) {
             />
             <MediaDeskNav activeSection={data.mediaDeskSection} />
             <div className="min-w-0">
-              <main className="min-w-0">
+              <div className="min-w-0">
                 {data.mediaDeskSection === "overview" ? (
-                  <MediaDeskSections records={data.records} />
+                  <div className="grid gap-5">
+                    <header className="rounded-lg border border-border bg-white p-5 shadow-sm lg:p-6">
+                      <SectionKicker>University communications</SectionKicker>
+                      <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+                        {data.title}
+                      </h1>
+                      <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
+                        {data.body}
+                      </p>
+                    </header>
+                    <MediaDeskSections records={data.records} />
+                  </div>
                 ) : (
                   <MediaDeskStack data={data} records={records} />
                 )}
-              </main>
+              </div>
             </div>
             </div>
           </section>
@@ -1241,13 +1252,13 @@ export function ContentDetailPage({ data }: { data: ContentDetailData }) {
 
               <div className="grid min-w-0 gap-5">
                 <DetailHero data={data} />
-                <main className="grid min-w-0 gap-5">
+                <div className="grid min-w-0 gap-5">
                   <DetailBody data={data} />
                   <GallerySection data={data} />
                   <SupportingMediaSection data={data} />
                   <StructuredContentSection data={data} />
                   <RelatedContentSection data={data} />
-                </main>
+                </div>
               </div>
 
               <DetailSidebar data={data} />

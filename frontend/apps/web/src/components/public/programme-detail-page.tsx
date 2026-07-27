@@ -703,7 +703,7 @@ export function ProgrammeDetailPage({ data }: { data: ProgrammeDetailData }) {
           </div>
 
           <div className="mt-4 grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_20rem] xl:items-start">
-            <main className="grid min-w-0 gap-4">
+            <div className="grid min-w-0 gap-4">
               <ContentCard
                 title="About the programme"
                 icon={BookOpenCheck}
@@ -725,7 +725,7 @@ export function ProgrammeDetailPage({ data }: { data: ProgrammeDetailData }) {
               />
               <FeesTable rows={feeRows} />
               <AdmissionDocuments documents={admissionDocuments} />
-            </main>
+            </div>
 
             <aside className="grid gap-4 xl:sticky xl:top-28">
               <ProgrammeDetails

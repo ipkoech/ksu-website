@@ -602,7 +602,7 @@ export function PillNav({
   items: Array<{ label: string; href: string }>;
 }) {
   return (
-    <nav className="flex max-w-full gap-2 overflow-x-auto pb-2" aria-label="Library page sections">
+    <nav className="flex max-w-full flex-wrap gap-2 pb-2" aria-label="Library page sections">
       {items.map((item) => (
         <Link
           key={item.href}
