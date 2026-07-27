@@ -26,6 +26,8 @@ class HeriSettings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: Literal["json", "text"] = "json"
     LOG_DIR: str = "/app/logs"
+    UPLOAD_DIR: str = "/app/uploads"
+    MEDIA_URL: str = "/media"
     CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:3001", "http://localhost:3004"]
 
     @field_validator("DATABASE_URL")

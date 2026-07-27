@@ -12,6 +12,7 @@ class MediaAsset(UUIDMixin, Base):
     file_name: Mapped[str] = mapped_column(String(255))
     mime_type: Mapped[str] = mapped_column(String(120))
     file_size: Mapped[int] = mapped_column(Integer)
+    file_hash: Mapped[str | None] = mapped_column(String(64))
     storage_path: Mapped[str] = mapped_column(String(500))
     public_url: Mapped[str | None] = mapped_column(String(500))
     alt_text: Mapped[str] = mapped_column(String(500), default="")
