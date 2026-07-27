@@ -866,13 +866,15 @@ export function ProgrammeFinderSection({
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(2,13,47,.96)_0%,rgba(2,13,47,.84)_42%,rgba(2,13,47,.58)_72%,rgba(2,13,47,.86)_100%)]" aria-hidden />
       <div className="relative mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="programme-mosaic-grid relative isolate grid overflow-visible lg:grid-cols-[minmax(0,1fr)_330px]">
-          <header className="programme-mosaic-intro relative flex min-h-[clamp(360px,48vw,540px)] flex-col justify-end overflow-hidden p-5 text-white sm:p-8 lg:col-start-1 lg:row-start-1 lg:p-12">
+          <div className="relative lg:col-start-1 lg:row-span-2">
+          <header className="programme-mosaic-intro relative flex min-h-[clamp(620px,48vw,760px)] flex-col justify-end overflow-hidden p-5 text-white sm:p-8 lg:p-12">
             <div className="relative">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-white">
                 {section.subtitle ?? "Programmes and academic pathways"}
               </p>
-              <h2 className="mt-3 max-w-sm font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.04] text-white sm:text-4xl">
-                What will you become?
+              <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.98] text-white sm:text-5xl lg:text-6xl">
+                Find your path
+                <span className="block text-secondary">at Kisii University</span>
               </h2>
               <p className="mt-3 max-w-md text-sm leading-6 text-white">
                 {section.description ??
@@ -889,63 +891,34 @@ export function ProgrammeFinderSection({
             programmes={programmes}
             schools={schools}
           />
+          </div>
 
           {hasAdmissionDates ? (
           <aside className="programme-mosaic-dates relative z-10 mx-auto mt-8 max-w-5xl overflow-hidden bg-primary/90 p-5 text-white sm:p-6 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:mt-0 lg:max-w-none lg:px-7 lg:py-8">
               <div className="absolute inset-x-0 top-0 h-1 bg-secondary" />
               <SectionEyebrow
-                value={
-                  academicDatesSection?.subtitle ?? "Admissions and reporting"
-                }
+                value="Admissions"
                 light
               />
               <div className="mt-2 flex items-center justify-between gap-4">
                 <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white">
-                  Key dates
+                  Your journey starts here
                 </h3>
                 <CalendarDays className="h-6 w-6 text-secondary" aria-hidden />
               </div>
-
-              {intakes.slice(0, 1).map((intake) => (
-                <LinkWrapper
-                  key={intake.id}
-                  href={intake.href}
-                  className="mt-4 block border-y border-white/20 py-3 transition hover:border-secondary/70"
-                >
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white">
-                    {intake.isOpen ? "Open intake" : "Intake"}
-                  </p>
-                  <h4 className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold text-white">
-                    {intake.name}
-                  </h4>
-                  <p className="mt-1 text-xs leading-5 text-white/72">
-                    {formatDateRange(
-                      intake.applicationStart,
-                      intake.applicationEnd ?? intake.lateApplicationEnd,
-                    )}
-                  </p>
-                </LinkWrapper>
-              ))}
-
-              <div className="mt-1 divide-y divide-white/15">
-                {dateItems
-                  .slice(0, intakes.length ? 2 : 3)
-                  .map((item, index) => (
-                    <AdmissionDateLine
-                      key={item.id}
-                      item={item}
-                      index={index}
-                    />
-                  ))}
+              <div className="mt-7 space-y-5">
+                {[
+                  ["1", "Explore Programmes", "Search and filter programmes that match your interests and goals.", "/academics/programmes"],
+                  ["2", "Check Requirements", "Review entry requirements and prepare your application.", "/admissions/requirements"],
+                  ["3", "Apply Online", "Complete your application and take the first step towards your future.", intakes[0]?.href ?? "/admissions/how-to-apply"],
+                ].map(([number, label, body, href]) => (
+                  <LinkWrapper key={number} href={href} className="group flex gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/35 text-sm font-semibold transition group-hover:border-secondary group-hover:bg-secondary">{number}</span>
+                    <span><strong className="block text-sm text-white">{label}</strong><span className="mt-1 block text-xs leading-5 text-white/70">{body}</span></span>
+                  </LinkWrapper>
+                ))}
               </div>
-
-              <LinkWrapper
-                href="/admissions"
-                className="mt-4 inline-flex min-h-10 w-fit items-center justify-center gap-2 border-b border-secondary pb-1 text-sm font-bold text-white transition hover:text-secondary"
-              >
-                Explore admissions
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </LinkWrapper>
+              <LinkWrapper href="/admissions" className="mt-7 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-white/50 text-sm font-bold text-white transition hover:border-secondary hover:bg-secondary">Learn more <ArrowRight className="h-4 w-4" aria-hidden /></LinkWrapper>
             </aside>
           ) : (
             <div className="hidden bg-primary" />
@@ -956,7 +929,7 @@ export function ProgrammeFinderSection({
               <div>
                 <SectionEyebrow value="Your journey to Kisii University" light />
                 <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white">
-                  Five clear steps. One destination.
+                  Three clear steps. One destination.
                 </h3>
               </div>
               <LinkWrapper
@@ -968,12 +941,12 @@ export function ProgrammeFinderSection({
               </LinkWrapper>
             </div>
 
-            <div className="relative mt-5 grid gap-1 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
+            <div className="relative mt-5 grid gap-1 sm:grid-cols-2 lg:grid-cols-3 lg:gap-0">
               <span
                 className="programme-journey-line absolute left-[10%] right-[10%] top-5 hidden h-px origin-left bg-white/25 lg:block"
                 aria-hidden
               />
-              {journey.slice(0, 5).map((item, index) => (
+              {journey.slice(0, 3).map((item, index) => (
                 <div
                   key={item.id}
                   className="programme-journey-step group relative flex gap-4 border-b border-white/10 py-3 last:border-b-0 sm:border-b-0 sm:px-2 lg:block lg:px-3 lg:py-0 lg:text-center"

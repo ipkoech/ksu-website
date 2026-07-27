@@ -126,17 +126,17 @@ export function ProgrammeFinderInteractive({
 
   return (
     <>
-      <div className="programme-mosaic-search relative z-40 mx-auto -mt-16 max-w-5xl bg-transparent p-4 sm:-mt-20 sm:p-6 lg:col-start-1 lg:row-start-1 lg:max-w-none lg:p-0">
+      <div className="programme-mosaic-search relative z-40 mx-auto -mt-20 max-w-5xl bg-transparent p-4 sm:-mt-24 sm:p-6 lg:p-0">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-secondary">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/75">
               Search the academic catalogue
             </p>
-            <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold text-primary">
+            <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold text-white">
               Find your programme.
             </h3>
           </div>
-          <p className="max-w-xs text-sm leading-6 text-muted-foreground">
+          <p className="max-w-xs text-sm leading-6 text-white/70">
             Search by ambition, subject, school, or qualification.
           </p>
         </div>
@@ -207,47 +207,48 @@ export function ProgrammeFinderInteractive({
             />
           </div> : null}
         </form>
+        {!hasActiveFilters ? <PopularSearches schools={schools} onSelect={setQuery} /> : null}
       </div>
 
-      <div className="programme-mosaic-results mx-auto max-w-5xl px-4 py-7 sm:px-6 lg:col-start-1 lg:row-start-2 lg:max-w-none lg:py-9">
-        <div className="flex items-end justify-between gap-4 border-b border-primary/15 pb-3">
+      {hasActiveFilters ? <div className="programme-mosaic-results mx-auto max-w-5xl px-4 py-7 sm:px-6 lg:py-9">
+        <div className="flex items-end justify-between gap-4 border-b border-white/15 pb-3">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-secondary">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
               Programme directory
             </p>
-            <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-primary">
+            <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-white">
               {hasActiveFilters ? "Your matches" : "Explore programmes"}
             </h3>
           </div>
           <p
             aria-live="polite"
-            className="shrink-0 text-sm text-muted-foreground"
+            className="shrink-0 text-sm text-white/70"
           >
             {isSearching ? <span className="mr-2 text-xs text-secondary">Searching…</span> : null}
-            <strong className="text-xl text-primary">
+            <strong className="text-xl text-secondary">
               {matchingProgrammes.length}
             </strong>{" "}
             {matchingProgrammes.length === 1 ? "programme" : "programmes"}
           </p>
         </div>
 
-        <div aria-live="polite" className="divide-y divide-primary/10">
+        <div aria-live="polite" className="divide-y divide-white/10">
           {previewItems.length ? (
             previewItems.map((programme, index) => (
               <Link
                 key={`${resultSetKey}-${programme.id ?? programme.href}`}
                 href={programme.href}
-                className="programme-result group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3 transition duration-300 hover:bg-accent/45 focus-visible:bg-accent/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:gap-4 sm:px-2"
+                className="programme-result group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3 transition duration-300 hover:bg-white/10 focus-visible:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary sm:gap-4 sm:px-2"
                 style={{ transitionDelay: `${index * 35}ms` }}
               >
                 <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-secondary">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="line-clamp-1 block font-[family-name:var(--font-display)] text-base font-semibold text-primary transition group-hover:text-secondary">
+                  <span className="line-clamp-1 block font-[family-name:var(--font-display)] text-base font-semibold text-white transition group-hover:text-secondary">
                     {programme.title}
                   </span>
-                  <span className="mt-1 line-clamp-1 block text-xs text-muted-foreground">
+                  <span className="mt-1 line-clamp-1 block text-xs text-white/65">
                     {[programme.schoolName, programme.body]
                       .filter(Boolean)
                       .join(" · ")}
@@ -257,7 +258,7 @@ export function ProgrammeFinderInteractive({
               </Link>
             ))
           ) : (
-            <div className="border-b border-primary/10 py-5 text-sm leading-6 text-muted-foreground">
+            <div className="border-b border-white/10 py-5 text-sm leading-6 text-white/70">
               No programmes match these search criteria. Try a broader keyword
               or choose “All” in one of the filters.
             </div>
@@ -266,13 +267,43 @@ export function ProgrammeFinderInteractive({
 
         <Link
           href={actionHref}
-          className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 border-b border-secondary pb-1 text-sm font-bold text-primary transition hover:text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+          className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 border-b border-secondary pb-1 text-sm font-bold text-white transition hover:text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-secondary"
         >
           View matching programmes
           <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
-      </div>
+      </div> : null}
     </>
+  );
+}
+
+function PopularSearches({
+  schools,
+  onSelect,
+}: {
+  schools: HomeSchoolCard[];
+  onSelect: (value: string) => void;
+}) {
+  const searches = schools.slice(0, 6).map((school) => school.title).filter(Boolean);
+  if (!searches.length) return null;
+
+  return (
+    <div className="mt-6 text-white">
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">Popular searches</p>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+        {searches.map((search, index) => (
+          <button
+            key={search}
+            type="button"
+            onClick={() => onSelect(search)}
+            className="text-sm font-medium text-white/90 underline decoration-white/35 underline-offset-4 transition hover:text-secondary hover:decoration-secondary"
+          >
+            {search}
+            {index < searches.length - 1 ? <span className="ml-4 text-white/35" aria-hidden>│</span> : null}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
