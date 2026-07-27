@@ -54,12 +54,36 @@ export const ROOT_ATTRIBUTE_MAP = {
     attribute: "data-a11y-word-spacing",
     kind: "enum",
   },
+  textAlign: {
+    attribute: "data-a11y-text-align",
+    kind: "enum",
+  },
   emphasizeLinks: {
     attribute: "data-a11y-emphasize-links",
     kind: "boolean",
   },
+  grayscale: {
+    attribute: "data-a11y-grayscale",
+    kind: "boolean",
+  },
+  hideImages: {
+    attribute: "data-a11y-hide-images",
+    kind: "boolean",
+  },
+  readingGuide: {
+    attribute: "data-a11y-reading-guide",
+    kind: "boolean",
+  },
   largeTargets: {
     attribute: "data-a11y-large-targets",
+    kind: "boolean",
+  },
+  largeCursor: {
+    attribute: "data-a11y-large-cursor",
+    kind: "boolean",
+  },
+  strongFocus: {
+    attribute: "data-a11y-strong-focus",
     kind: "boolean",
   },
   reduceMotion: {
@@ -110,9 +134,7 @@ export function AccessibilityProvider({
   children: React.ReactNode;
 }) {
   const [preferences, setPreferences] =
-    React.useState<AccessibilityPreferences>(
-      DEFAULT_ACCESSIBILITY_PREFERENCES,
-    );
+    React.useState<AccessibilityPreferences>(DEFAULT_ACCESSIBILITY_PREFERENCES);
   const [ready, setReady] = React.useState(false);
   const [systemReduceMotion, setSystemReduceMotion] = React.useState(false);
 
@@ -194,19 +216,12 @@ export function AccessibilityProvider({
     () => ({
       preferences,
       systemReduceMotion,
-      effectiveReduceMotion:
-        preferences.reduceMotion || systemReduceMotion,
+      effectiveReduceMotion: preferences.reduceMotion || systemReduceMotion,
       setPreference,
       applyPreset,
       reset,
     }),
-    [
-      applyPreset,
-      preferences,
-      reset,
-      setPreference,
-      systemReduceMotion,
-    ],
+    [applyPreset, preferences, reset, setPreference, systemReduceMotion],
   );
 
   return (

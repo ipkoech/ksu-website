@@ -11,7 +11,8 @@ const ACCESSIBILITY_INIT_SOURCE = String.raw`
       contrast: ["increased", "high"],
       lineHeight: ["relaxed"],
       letterSpacing: ["increased"],
-      wordSpacing: ["increased"]
+      wordSpacing: ["increased"],
+      textAlign: ["left"]
     };
     const attributes = {
       textScale: "data-a11y-text-scale",
@@ -20,8 +21,14 @@ const ACCESSIBILITY_INIT_SOURCE = String.raw`
       lineHeight: "data-a11y-line-height",
       letterSpacing: "data-a11y-letter-spacing",
       wordSpacing: "data-a11y-word-spacing",
+      textAlign: "data-a11y-text-align",
       emphasizeLinks: "data-a11y-emphasize-links",
+      grayscale: "data-a11y-grayscale",
+      hideImages: "data-a11y-hide-images",
+      readingGuide: "data-a11y-reading-guide",
       largeTargets: "data-a11y-large-targets",
+      largeCursor: "data-a11y-large-cursor",
+      strongFocus: "data-a11y-strong-focus",
       reduceMotion: "data-a11y-reduce-motion",
       pauseMotion: "data-a11y-pause-motion"
     };
