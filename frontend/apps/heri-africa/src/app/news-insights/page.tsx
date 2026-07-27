@@ -1,0 +1,5 @@
+import Link from "next/link";
+import { SiteShell } from "../../components/site-shell";
+import { getNews } from "../../lib/api";
+
+export default async function NewsInsightsPage() { const news = await getNews().catch(() => []); return <SiteShell><main className="mx-auto max-w-7xl px-6 py-20"><p className="text-sm font-semibold uppercase tracking-[0.16em] text-heri-teal">News & insights</p><h1 className="mt-4 max-w-3xl text-5xl font-semibold text-heri-blue">Research, events, and stories shaping language education.</h1><div className="mt-12 grid gap-5 md:grid-cols-3">{news.map((item) => <article className="rounded-3xl bg-white p-7 ring-1 ring-heri-teal/10" key={item.id}><p className="text-xs font-semibold uppercase tracking-[0.14em] text-heri-teal">News</p><h2 className="mt-3 text-2xl font-semibold text-heri-blue">{item.title}</h2><p className="mt-3 text-sm leading-7 text-heri-ink/70">{item.excerpt}</p><Link className="mt-6 inline-block text-sm font-semibold text-heri-teal" href={`/news-insights/${item.slug}`}>Read more <span aria-hidden="true">→</span></Link></article>)}</div></main></SiteShell>; }
