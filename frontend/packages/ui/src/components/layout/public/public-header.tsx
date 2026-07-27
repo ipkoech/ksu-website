@@ -739,7 +739,7 @@ function MegaMenuDropdown({
               aria-label={`${item.label} navigation`}
               role="menu"
               className={cn(
-                "fixed z-50 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-lg border border-primary/10 bg-white shadow-[0_24px_80px_-48px_rgba(30,64,175,0.6)]",
+                "fixed z-50 rounded-lg border border-primary/10 bg-white shadow-[0_24px_80px_-48px_rgba(30,64,175,0.6)]",
                 isMegaMenu ? "p-4" : "py-2",
               )}
               onMouseEnter={onOpen}
@@ -773,7 +773,7 @@ function MegaMenuDropdown({
                   </div>
                 </div>
               ) : (
-                <div className="space-y-1">
+                <div className="max-h-[calc(100vh-6rem)] overflow-y-auto py-2">
                   <NestedFlyoutMenu items={children} />
                 </div>
               )}
@@ -815,9 +815,15 @@ function MenuSection({
   );
 }
 
-function NestedFlyoutMenu({ items }: { items: NavItem[] }) {
+function NestedFlyoutMenu({
+  items,
+  nested = false,
+}: {
+  items: NavItem[];
+  nested?: boolean;
+}) {
   return (
-    <div className="min-w-[16rem]">
+    <div className={nested ? "min-w-[12rem]" : "min-w-[16rem]"}>
       {items.map((item) => {
         const hasChildren = Boolean(item.children?.length);
 
@@ -848,8 +854,11 @@ function NestedFlyoutMenu({ items }: { items: NavItem[] }) {
               <span>{item.label}</span>
               <ChevronDown className="h-4 w-4 -rotate-90 text-gray-400" aria-hidden />
             </Link>
-            <div className="invisible absolute left-full top-0 z-50 ml-1 min-w-[15rem] rounded-lg border border-primary/10 bg-white p-2 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-              <NestedFlyoutMenu items={item.children ?? []} />
+            <div
+              role="menu"
+              className="invisible absolute left-[calc(100%-0.25rem)] top-0 z-50 max-h-[calc(100vh-8rem)] min-w-[12rem] max-w-[14rem] overflow-y-auto rounded-lg border border-primary/10 bg-white p-2 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+            >
+              <NestedFlyoutMenu items={item.children ?? []} nested />
             </div>
           </div>
         );
