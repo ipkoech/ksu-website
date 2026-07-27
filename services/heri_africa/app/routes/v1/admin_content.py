@@ -51,7 +51,8 @@ async def transition_news(article_id: UUID, payload: TransitionRequest, request:
     record = await db.get(NewsArticle, article_id)
     if record is None or record.deleted_at is not None:
         raise HTTPException(status_code=404, detail="News article not found")
-    role = "administrator" if "admin" in user.roles else ("publisher" if "publisher" in user.roles else "editor")
+    normalized_roles = {str(item).lower() for item in user.roles}
+    role = "administrator" if normalized_roles & {"admin", "administrator", "heri-admin"} else ("publisher" if normalized_roles & {"publisher", "heri-publisher"} else "editor")
     try:
         target = WorkflowService().transition(record.status.value, payload.status, role)
     except WorkflowError as exc:
