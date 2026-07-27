@@ -16,7 +16,8 @@ export type PortalKey =
   | "corporate-communication"
   | "story-contributor"
   | "research"
-  | "library";
+  | "library"
+  | "heri";
 
 export type PortalRecord = Record<string, any> & { id: string };
 export type PortalPayload = Record<string, any>;

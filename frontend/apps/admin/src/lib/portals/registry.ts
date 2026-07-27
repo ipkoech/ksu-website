@@ -6502,6 +6502,41 @@ function publicationResource(
 }
 
 export const portalConfigs: Record<string, PortalConfig> = {
+  heri: {
+    key: "heri",
+    title: "HERI Africa Portal",
+    shortTitle: "HERI Africa",
+    description: "Research communication, publishing, partnerships, media, and enquiries for the HERI Africa Language Education Research Chair.",
+    service: "main",
+    baseHref: "/heri",
+    icon: Globe2,
+    accentClassName: "text-emerald-700 bg-emerald-50 border-emerald-100",
+    nav: [
+      { title: "Dashboard", href: "/heri", icon: PanelsTopLeft, scope: "admin:*" },
+      { title: "Content & pages", href: "/heri/content", icon: Newspaper, scope: "admin:*", group: "Publishing" },
+      { title: "Research", href: "/heri/research", icon: FlaskConical, scope: "admin:*", group: "Publishing" },
+      { title: "Team & partners", href: "/heri/people", icon: Users, scope: "admin:*", group: "People" },
+      { title: "Submissions", href: "/heri/submissions", icon: Mail, scope: "admin:*", group: "Operations" },
+      { title: "Media library", href: "/heri/media", icon: ImageIcon, scope: "admin:*", group: "Operations" },
+      { title: "Analytics", href: "/heri/analytics", icon: BarChart3, scope: "admin:*", group: "Operations" },
+      { title: "Site settings", href: "/heri/settings", icon: Settings, scope: "admin:*", group: "Operations" },
+    ],
+    dashboard: dashboard(
+      "HERI Africa Dashboard",
+      "Operate research publishing, public content, partnerships, and enquiries from one scoped workspace.",
+      [],
+      {},
+      ["admin:*"],
+      [
+        { title: "Content & pages", description: "Draft, review, schedule, and publish HERI stories.", href: "/heri/content", icon: Newspaper, scopes: ["admin:*"] },
+        { title: "Research portfolio", description: "Manage themes, projects, and publications.", href: "/heri/research", icon: FlaskConical, scopes: ["admin:*"] },
+        { title: "People & partners", description: "Keep team and partner records current.", href: "/heri/people", icon: Users, scopes: ["admin:*"] },
+        { title: "Submissions inbox", description: "Review enquiries and partnership applications.", href: "/heri/submissions", icon: Mail, scopes: ["admin:*"] },
+      ],
+    ),
+    resources: {},
+    publicPortal: { label: "Open public HERI site", href: "http://localhost:3004", icon: Globe2 },
+  },
   admin: {
     key: "admin",
     title: "Admin Portal",
