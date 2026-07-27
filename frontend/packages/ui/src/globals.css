@@ -594,12 +594,23 @@ html[data-a11y-pause-motion="true"] [data-rotating="true"] {
 
   /* Card Hover States */
   .card-interactive {
-    @apply transition-all duration-200;
+    transition-duration: 200ms;
+    transition-property: border-color, box-shadow, transform;
   }
 
   .card-interactive:hover {
     @apply border-primary/50 shadow-md;
     transform: translateY(-2px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-interactive {
+      transition: none;
+    }
+
+    .card-interactive:hover {
+      transform: none;
+    }
   }
 
   /* Link Styles */
