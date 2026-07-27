@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePermissions } from "@/hooks/use-permissions";
+import { getStoredAccessToken } from "@ksu/auth";
 
 type RecordValue = string | number | boolean | null | undefined | Record<string, unknown>;
 type HeriRecord = { id: string; [key: string]: RecordValue };
@@ -13,7 +14,8 @@ const API = process.env.NEXT_PUBLIC_HERI_API_URL ?? "http://localhost:8003/api/v
 const statuses = ["draft", "in_review", "approved", "scheduled", "published", "archived"];
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API}${path}`, { ...init, credentials: "include", headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) } });
+  const token = getStoredAccessToken();
+  const response = await fetch(`${API}${path}`, { ...init, credentials: "include", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers ?? {}) } });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     throw new Error(body.detail ?? `Request failed (${response.status})`);
