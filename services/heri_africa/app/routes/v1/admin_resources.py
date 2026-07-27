@@ -38,6 +38,36 @@ async def list_resource_audit(resource: str, record_id: UUID, db: AsyncSession =
     return (await db.execute(select(AuditLog).where(AuditLog.entity_type == resource, AuditLog.entity_id == str(record_id)).order_by(AuditLog.created_at.desc()))).scalars().all()
 
 
+@router.post("/{resource}/{record_id}/restore")
+async def restore_resource(resource: str, record_id: UUID, payload: dict[str, object], request: Request, db: AsyncSession = Depends(get_db), user: TokenPayload = Depends(require_permission("heri.content.write"))):
+    """Restore the changed fields captured by an audit entry and record the restore itself."""
+    try:
+        model = model_for_resource(resource)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    record = await db.get(model, record_id)
+    audit_id = payload.get("audit_id")
+    direction = str(payload.get("direction", "previous"))
+    if record is None or record.deleted_at is not None or not audit_id or direction not in {"previous", "new"}:
+        raise HTTPException(status_code=422, detail="A valid record, audit entry, and restore direction are required")
+    try:
+        audit_uuid = UUID(str(audit_id))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="audit_id must be a UUID") from exc
+    audit = await db.get(AuditLog, audit_uuid)
+    if audit is None or audit.entity_type != resource or audit.entity_id != str(record_id):
+        raise HTTPException(status_code=404, detail="Audit entry not found")
+    snapshot = audit.previous_value if direction == "previous" else audit.new_value
+    values = {key: value for key, value in (snapshot or {}).items() if key in writable_fields(model)}
+    before = {key: getattr(record, key, None) for key in values}
+    if "status" in values and hasattr(model, "status"):
+        values["status"] = model.status.type.enum_class(values["status"])
+    for key, value in values.items():
+        setattr(record, key, value)
+    await record_audit(db, action="restore", entity_type=resource, entity_id=str(record.id), actor_id=str(user.sub), previous_value=before, new_value={**values, "source_audit_id": str(audit.id), "direction": direction}, ip_address=request.client.host if request.client else None)
+    return record
+
+
 @router.get("/{resource}")
 async def list_resource(resource: str, page: int = Query(1, ge=1), per_page: int = Query(25, ge=1, le=100), search: str | None = Query(None, min_length=1, max_length=120), status_filter: str | None = Query(None, alias="status"), db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.content.read"))):
     try:
