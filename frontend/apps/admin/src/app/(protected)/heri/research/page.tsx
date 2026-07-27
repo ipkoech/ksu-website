@@ -1,0 +1,1 @@
+export default function HeriResearchPage() { return <main className="p-6 md:p-10"><h1 className="text-2xl font-semibold text-slate-900">HERI research</h1><p className="mt-3 text-sm text-slate-600">Research themes, projects, publications, and resources.</p></main>; }

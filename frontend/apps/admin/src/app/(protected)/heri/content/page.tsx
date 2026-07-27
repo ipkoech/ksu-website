@@ -1,0 +1,1 @@
+export default function HeriContentPage() { return <main className="p-6 md:p-10"><h1 className="text-2xl font-semibold text-slate-900">HERI content</h1><p className="mt-3 text-sm text-slate-600">Content records and page composition will load from the HERI API.</p></main>; }

@@ -1,0 +1,1 @@
+export default function HeriSettingsPage() { return <main className="p-6 md:p-10"><h1 className="text-2xl font-semibold text-slate-900">HERI site settings</h1><p className="mt-3 text-sm text-slate-600">Navigation, footer, SEO defaults, contact details, and feature flags.</p></main>; }

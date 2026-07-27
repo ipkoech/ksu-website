@@ -1,0 +1,1 @@
+export default function HeriSubmissionsPage() { return <main className="p-6 md:p-10"><h1 className="text-2xl font-semibold text-slate-900">HERI submissions</h1><p className="mt-3 text-sm text-slate-600">Contact, partnership, network, newsletter, and event submissions.</p></main>; }
