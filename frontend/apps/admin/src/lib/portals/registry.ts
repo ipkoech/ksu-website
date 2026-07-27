@@ -2508,6 +2508,16 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     fields: [
       ...contentFields("corporate"),
       {
+        name: "media_attachments",
+        label: "Story Media",
+        type: "attachments",
+        attachments: {
+          entityType: "story",
+          roles: contentAttachmentRoles,
+          isPublic: true,
+        },
+      },
+      {
         name: "story_type",
         label: "Story Type",
         type: "select",
