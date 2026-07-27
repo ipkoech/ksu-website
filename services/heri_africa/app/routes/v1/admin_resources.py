@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from ksu_common.auth import TokenPayload
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.auth import require_permission
@@ -27,12 +27,21 @@ async def list_resource_audit(resource: str, record_id: UUID, db: AsyncSession =
 
 
 @router.get("/{resource}")
-async def list_resource(resource: str, db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.content.read"))):
+async def list_resource(resource: str, page: int = Query(1, ge=1), per_page: int = Query(25, ge=1, le=100), search: str | None = Query(None, min_length=1, max_length=120), status_filter: str | None = Query(None, alias="status"), db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.content.read"))):
     try:
         model = model_for_resource(resource)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return (await db.execute(select(model).where(model.deleted_at.is_(None)).order_by(model.created_at.desc()))).scalars().all()
+    filters = [model.deleted_at.is_(None)]
+    if status_filter and hasattr(model, "status"):
+        filters.append(model.status == status_filter)
+    if search:
+        searchable = [getattr(model, field) for field in ("title", "name", "slug", "email", "file_name") if hasattr(model, field)]
+        if searchable:
+            filters.append(or_(*(column.ilike(f"%{search}%") for column in searchable)))
+    total = int((await db.execute(select(func.count()).select_from(model).where(*filters))).scalar_one())
+    records = (await db.execute(select(model).where(*filters).order_by(model.created_at.desc()).offset((page - 1) * per_page).limit(per_page))).scalars().all()
+    return {"data": records, "meta": {"page": page, "per_page": per_page, "total": total, "pages": max(1, (total + per_page - 1) // per_page)}}
 
 
 @router.post("/{resource}", status_code=status.HTTP_201_CREATED)

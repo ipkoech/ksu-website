@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePermissions } from "@/hooks/use-permissions";
 import { getStoredAccessToken } from "@ksu/auth";
 import { History, Loader2, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { toast } from "@ksu/ui";
 import { RichTextEditor } from "@ksu/ui/components";
+import { useHeriResourceQuery } from "@/lib/api/heri";
 
 type RecordValue = string | number | boolean | null | undefined | Record<string, unknown>;
 type HeriRecord = { id: string; [key: string]: RecordValue };
@@ -46,26 +47,24 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pageSize = 8;
+  const resourceQuery = useHeriResourceQuery<HeriRecord>(config.resource, { page, per_page: pageSize, search: query || undefined, status: status === "all" ? undefined : status });
+  const loading = resourceQuery.isPending || resourceQuery.isFetching;
 
   const load = useCallback(async () => {
-    setLoading(true); setError(null);
-    try { setRecords(await request<HeriRecord[]>(`/admin/${config.resource}`)); setSelectedIds(new Set()); }
+    setError(null); setSelectedIds(new Set());
+    try { await resourceQuery.refetch(); }
     catch (reason) { const message = reason instanceof Error ? reason.message : "Unable to load records"; setError(message); toast.error(message); }
-    finally { setLoading(false); }
-  }, [config.resource]);
-  useEffect(() => { void load(); }, [load]);
+  }, [resourceQuery]);
+  useEffect(() => { if (resourceQuery.data) setRecords(resourceQuery.data.data); }, [resourceQuery.data]);
+  useEffect(() => { if (resourceQuery.error) { const message = resourceQuery.error instanceof Error ? resourceQuery.error.message : "Unable to load records"; setError(message); } }, [resourceQuery.error]);
   useEffect(() => { const guard = (event: BeforeUnloadEvent) => { if (!isDirty) return; event.preventDefault(); event.returnValue = ""; }; window.addEventListener("beforeunload", guard); return () => window.removeEventListener("beforeunload", guard); }, [isDirty]);
 
-  const filtered = useMemo(() => records.filter((record) => {
-    const haystack = Object.values(record).map(display).join(" ").toLowerCase();
-    return (!query || haystack.includes(query.toLowerCase())) && (status === "all" || String(record.status ?? "") === status);
-  }), [records, query, status]);
-  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const visible = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const pages = resourceQuery.data?.meta.pages ?? 1;
+  const filtered = records;
+  const visible = records;
   const columns = config.fields.slice(0, 4);
   const openEditor = (record: HeriRecord) => { setSelected(record); setHistory(null); setIsDirty(false); setEditorValues(Object.fromEntries(config.fields.filter((field) => field.type === "richtext").map((field) => [field.name, String(record[field.name] ?? "")]))); };
 
