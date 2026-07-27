@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { ArrowRight, Search } from "lucide-react";
+import { ArrowRight, Search, SlidersHorizontal, X } from "lucide-react";
 import { getMainApiBaseUrl } from "@ksu/api-client";
 import type { HomeProgrammeCard, HomeSchoolCard } from "@/lib/homepage-data";
 
@@ -21,6 +21,7 @@ export function ProgrammeFinderInteractive({
   const [schoolId, setSchoolId] = useState(allValue);
   const [level, setLevel] = useState(allValue);
   const [mode, setMode] = useState(allValue);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [remoteResults, setRemoteResults] = useState<HomeProgrammeCard[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const deferredQuery = useDeferredValue(query);
@@ -155,9 +156,25 @@ export function ProgrammeFinderInteractive({
             >
               Search
             </button>
+            <button
+              type="button"
+              onClick={() => setFiltersOpen((current) => !current)}
+              aria-expanded={filtersOpen}
+              aria-controls="programme-filters"
+              className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-md border border-primary/15 px-3 text-xs font-bold text-primary transition hover:border-secondary hover:text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <SlidersHorizontal className="h-4 w-4" aria-hidden />
+              <span className="hidden sm:inline">Filters</span>
+              {hasActiveFilters && !query.trim() ? (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary px-1 text-[10px] text-white">
+                  {[schoolId, level, mode].filter((value) => value !== allValue).length}
+                </span>
+              ) : null}
+              {filtersOpen ? <X className="h-4 w-4 sm:hidden" aria-hidden /> : null}
+            </button>
           </div>
 
-          <div className="grid gap-3 px-4 py-3 sm:px-5 md:grid-cols-3">
+          {filtersOpen ? <div id="programme-filters" className="grid gap-3 bg-accent/35 px-4 py-4 sm:px-5 md:grid-cols-3">
             <FilterSelect
               label="School"
               name="school_id"
@@ -182,7 +199,7 @@ export function ProgrammeFinderInteractive({
               onChange={setMode}
               options={modes.map((item) => ({ label: item, value: item }))}
             />
-          </div>
+          </div> : null}
         </form>
       </div>
 
