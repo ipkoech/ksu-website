@@ -238,31 +238,36 @@ export function WhyKisiiSection({
         </div>
 
         {facts.length ? (
-          <aside className="mt-5 border-y border-border py-4">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-              <p className="shrink-0 text-xs font-bold uppercase tracking-[0.16em] text-secondary lg:max-w-32">
+          <aside className="-mx-4 mt-6 overflow-hidden bg-primary px-4 py-6 text-white shadow-[0_20px_55px_-35px_hsl(var(--primary)/.9)] sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
+            <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(150px,1.1fr)_repeat(6,minmax(0,1fr))_auto] lg:items-center">
+              <div className="shrink-0 border-b border-white/20 pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-5">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
                 {factsSection?.title ?? "KSU at a glance"}
-              </p>
-              <div className="flex flex-1 snap-x gap-3 overflow-x-auto lg:grid lg:grid-cols-7 lg:overflow-visible">
-                {facts.slice(0, 7).map((fact, index) => {
+                </p>
+                <p className="mt-2 max-w-[13rem] font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-white">
+                  The scale behind the experience.
+                </p>
+              </div>
+              <div className="-mx-1 flex snap-x gap-0 overflow-x-auto px-1 lg:contents">
+                {facts.slice(0, 6).map((fact, index) => {
                   const Icon = statIcons[index % statIcons.length];
                   return (
                     <div
                       key={fact.id}
-                      className="group flex min-w-40 snap-start items-center gap-2.5 text-primary transition duration-300 hover:-translate-y-0.5 lg:min-w-0"
+                      className="group flex min-w-[10.5rem] snap-start items-center gap-3 border-r border-white/15 px-4 first:pl-0 last:border-r-0 lg:min-w-0 lg:px-4 lg:first:pl-5"
                     >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent ring-1 ring-border">
-                        <Icon className="h-[18px] w-[18px]" aria-hidden />
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-secondary ring-1 ring-white/20 transition group-hover:bg-secondary group-hover:text-white">
+                        <Icon className="h-5 w-5" aria-hidden />
                       </span>
                       <span className="min-w-0">
-                        <span className="block font-[family-name:var(--font-display)] text-xl font-semibold leading-none lg:text-2xl">
+                        <span className="block font-[family-name:var(--font-display)] text-2xl font-semibold leading-none text-white lg:text-[1.75rem]">
                           <CountUpValue
                             value={fact.title ?? ""}
                             active={isVisible.visible}
                             delay={index * 90}
                           />
                         </span>
-                        <span className="mt-1 line-clamp-2 block text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-muted-foreground">
+                        <span className="mt-1 line-clamp-2 block text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-white/70">
                           {factSubtitle(fact)}
                         </span>
                       </span>
@@ -271,8 +276,8 @@ export function WhyKisiiSection({
                 })}
               </div>
               <Link
-                href="/about"
-                className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 bg-primary px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
+                href="/about/numbers-and-facts"
+                className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 self-start border border-secondary/70 px-4 text-sm font-semibold text-white transition hover:bg-secondary hover:text-white lg:self-auto"
               >
                 Explore facts
                 <ArrowRight className="h-4 w-4" aria-hidden />
