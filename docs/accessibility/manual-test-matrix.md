@@ -14,14 +14,17 @@ conformance.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Public web | Homepage, navigation, announcements, and accessibility panel | Automated baseline passed; manual pending | Pending | Pending | Automated preference passed; manual pending | Pending | Pending | Pending | None recorded |
 | Public web | Entity inquiry: open, validation, submit status, Escape, and focus return | Automated Escape/focus return passed; manual pending | Pending | Pending | Pending | Pending | Pending | Pending | None recorded |
+| Public web | Contact directory search, filters, results, and pagination | Code remediation completed 2026-07-27; manual pending | Pending | Pending | Pending | Pending | Pending | Pending | Search landmark, focus visibility, and search-field metadata remediated |
 | Public web | Programmes and admissions discovery | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Manual coverage required |
 | Admin | Sign-in, repeated navigation bypass, and accessibility panel | Automated baseline passed; manual pending | Pending | Pending | Automated preference passed; manual pending | Pending | Pending | Pending | Authenticated journey coverage required |
+| Admin | Data tables: search, sort, select, open record, and paginate | Code remediation completed 2026-07-27; manual pending | Pending | Pending | Pending | Pending | Pending | Pending | Shared explicit keyboard row action and result announcements added; authenticated verification required |
 | Admin | Dashboard navigation and a representative create/edit form | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Authenticated test account required |
 | Research | Homepage, primary navigation, and accessibility panel | Automated baseline passed; manual pending | Pending | Pending | Automated preference passed; manual pending | Pending | Pending | Pending | None recorded |
 | Research | Research discovery, filters, and detail content | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Manual coverage required |
+| Research | Donation amount, gift type, donor details, and submission | Code remediation completed 2026-07-27; manual pending | Pending | Pending | Pending | Pending | Pending | Pending | Custom radio focus and donor input semantics remediated |
 | Library | Homepage, primary navigation, announcements, and accessibility panel | Automated baseline passed; manual pending | Pending | Pending | Automated preference passed; manual pending | Pending | Pending | Pending | None recorded |
 | Library | Catalogue/search filters, results, empty states, and details | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Backend-backed journey coverage required |
-| Library | Ask/support form and submission status | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Manual coverage required |
+| Library | Ask/support form and submission status | Code remediation completed 2026-07-27; manual pending | Pending | Pending | Pending | Pending | Pending | Pending | First invalid field focus, busy state, and status association remediated |
 
 ## Session procedure
 
