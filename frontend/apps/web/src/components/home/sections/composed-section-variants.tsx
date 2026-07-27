@@ -746,8 +746,8 @@ export function FeaturedPartnershipSection({
         cta_url: spotlight.primary_cta.href,
       }
     : {
-        title: "Read More",
-        cta_label: "Read More",
+        title: "Read more",
+        cta_label: "Read more",
         cta_url: "/research/partnerships",
       };
 
@@ -783,23 +783,26 @@ export function FeaturedPartnershipSection({
                 imageClassName="object-cover object-[50%_38%]"
               />
             </ImageCurtainReveal>
-            <div className="absolute bottom-0 left-0 right-0 bg-primary/88 p-4 text-white backdrop-blur-sm sm:left-auto sm:right-5 sm:w-[min(360px,calc(100%-2.5rem))]">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-l-2 border-secondary pl-4">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
                 Strategic partnership
               </p>
-              <p className="mt-1 text-sm leading-6 text-white/78">
-                Building Africa together through research, enterprise and
-                community impact.
+              <p className="text-sm text-muted-foreground">
+                Building Africa together through research, enterprise and community impact.
               </p>
             </div>
           </div>
 
           <div className="max-w-3xl">
             <SectionEyebrow
-              value={section.subtitle ?? "Featured partnership"}
+              value={
+                spotlight
+                  ? "Kisii University × HERI Africa"
+                  : (section.subtitle ?? "Featured partnership")
+              }
             />
             <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl lg:text-5xl">
-              {title ?? "Partnership spotlight"}
+              {title ?? "Building Africa together"}
             </h2>
             <SectionBody
               value={summary}
