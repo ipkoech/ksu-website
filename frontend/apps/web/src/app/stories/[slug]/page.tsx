@@ -188,8 +188,9 @@ export default async function StoryDetailPage({
               content={story.rich_text || story.plain_text}
               className="prose-lg prose-headings:font-[family-name:var(--font-display)] prose-headings:text-primary prose-a:text-secondary"
               emptyFallback={
-                <p className="text-lg leading-9 text-muted-foreground">
-                  This story has no published body yet.
+                <p className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-base leading-7 text-amber-900">
+                  Story content is temporarily unavailable. Please check back
+                  later or contact Corporate Communication.
                 </p>
               }
             />
@@ -382,5 +383,5 @@ function estimateReadingMinutes(content?: string | null) {
     .trim()
     .split(/\s+/)
     .filter(Boolean).length;
-  return Math.max(1, Math.ceil(wordCount / 200));
+  return wordCount ? Math.max(1, Math.ceil(wordCount / 200)) : null;
 }
