@@ -524,16 +524,25 @@ function heroActions(
         style: "primary" as const,
       }
     : null;
+  const hasApplicationAction =
+    Boolean(admissionAction) ||
+    [...actions, ...sectionActions].some((action) =>
+      /apply|application|admission/i.test(action.label),
+    );
   const merged = [
     ...(admissionAction ? [admissionAction] : []),
     ...actions,
     ...sectionActions,
-    {
-      key: "fallback-apply",
-      label: "Apply Now",
-      href: "/admissions/how-to-apply",
-      style: "primary" as const,
-    },
+    ...(hasApplicationAction
+      ? []
+      : [
+          {
+            key: "fallback-study",
+            label: "Study at KSU",
+            href: "/academics/programmes",
+            style: "primary" as const,
+          },
+        ]),
     {
       key: "fallback-programmes",
       label: "Explore Programmes",
@@ -542,9 +551,13 @@ function heroActions(
     },
   ];
   const seen = new Set<string>();
+  let applicationActionSeen = false;
   return merged.filter((action) => {
     const identity = normalizeHeroHref(action.href);
     if (!action.label || !identity || seen.has(identity)) return false;
+    const isApplicationAction = /apply|application|admission/i.test(action.label);
+    if (isApplicationAction && applicationActionSeen) return false;
+    if (isApplicationAction) applicationActionSeen = true;
     seen.add(identity);
     return true;
   });
