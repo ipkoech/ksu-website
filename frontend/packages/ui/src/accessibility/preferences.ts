@@ -11,20 +11,24 @@ export type AccessibilityPreferences = {
   preset: AccessibilityPreset | null;
   textScale: "default" | "large" | "larger" | "largest";
   contrast: "default" | "increased" | "high";
+  saturation: "default" | "low" | "high";
   readableFont: boolean;
   lineHeight: "default" | "relaxed";
   letterSpacing: "default" | "increased";
   wordSpacing: "default" | "increased";
-  textAlign: "default" | "left";
+  textAlign: "default" | "left" | "center" | "right";
   emphasizeLinks: boolean;
   grayscale: boolean;
   hideImages: boolean;
   readingGuide: boolean;
+  showTooltips: boolean;
   largeTargets: boolean;
   largeCursor: boolean;
   strongFocus: boolean;
   reduceMotion: boolean;
   pauseMotion: boolean;
+  widgetSize: "standard" | "oversized";
+  widgetPosition: "right" | "left";
 };
 
 export const DEFAULT_ACCESSIBILITY_PREFERENCES: AccessibilityPreferences = {
@@ -32,6 +36,7 @@ export const DEFAULT_ACCESSIBILITY_PREFERENCES: AccessibilityPreferences = {
   preset: null,
   textScale: "default",
   contrast: "default",
+  saturation: "default",
   readableFont: false,
   lineHeight: "default",
   letterSpacing: "default",
@@ -41,11 +46,14 @@ export const DEFAULT_ACCESSIBILITY_PREFERENCES: AccessibilityPreferences = {
   grayscale: false,
   hideImages: false,
   readingGuide: false,
+  showTooltips: true,
   largeTargets: false,
   largeCursor: false,
   strongFocus: false,
   reduceMotion: false,
   pauseMotion: false,
+  widgetSize: "standard",
+  widgetPosition: "right",
 };
 
 export const ACCESSIBILITY_PRESETS = {
@@ -60,6 +68,8 @@ export const ACCESSIBILITY_PRESETS = {
       emphasizeLinks: true,
       largeTargets: true,
       strongFocus: true,
+      largeCursor: true,
+      widgetSize: "oversized",
     },
   },
   reduced_motion: {
@@ -123,6 +133,11 @@ const CONTRASTS: readonly AccessibilityPreferences["contrast"][] = [
   "increased",
   "high",
 ];
+const SATURATIONS: readonly AccessibilityPreferences["saturation"][] = [
+  "default",
+  "low",
+  "high",
+];
 const LINE_HEIGHTS: readonly AccessibilityPreferences["lineHeight"][] = [
   "default",
   "relaxed",
@@ -138,7 +153,15 @@ const WORD_SPACINGS: readonly AccessibilityPreferences["wordSpacing"][] = [
 const TEXT_ALIGNS: readonly AccessibilityPreferences["textAlign"][] = [
   "default",
   "left",
+  "center",
+  "right",
 ];
+const WIDGET_SIZES: readonly AccessibilityPreferences["widgetSize"][] = [
+  "standard",
+  "oversized",
+];
+const WIDGET_POSITIONS: readonly AccessibilityPreferences["widgetPosition"][] =
+  ["right", "left"];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -178,6 +201,9 @@ export function parseStoredPreferences(
       contrast: includesValue(CONTRASTS, stored.contrast)
         ? stored.contrast
         : "default",
+      saturation: includesValue(SATURATIONS, stored.saturation)
+        ? stored.saturation
+        : "default",
       readableFont: booleanOrDefault(stored.readableFont, false),
       lineHeight: includesValue(LINE_HEIGHTS, stored.lineHeight)
         ? stored.lineHeight
@@ -195,11 +221,18 @@ export function parseStoredPreferences(
       grayscale: booleanOrDefault(stored.grayscale, false),
       hideImages: booleanOrDefault(stored.hideImages, false),
       readingGuide: booleanOrDefault(stored.readingGuide, false),
+      showTooltips: booleanOrDefault(stored.showTooltips, true),
       largeTargets: booleanOrDefault(stored.largeTargets, false),
       largeCursor: booleanOrDefault(stored.largeCursor, false),
       strongFocus: booleanOrDefault(stored.strongFocus, false),
       reduceMotion: booleanOrDefault(stored.reduceMotion, false),
       pauseMotion: booleanOrDefault(stored.pauseMotion, false),
+      widgetSize: includesValue(WIDGET_SIZES, stored.widgetSize)
+        ? stored.widgetSize
+        : "standard",
+      widgetPosition: includesValue(WIDGET_POSITIONS, stored.widgetPosition)
+        ? stored.widgetPosition
+        : "right",
     };
   } catch {
     return { ...DEFAULT_ACCESSIBILITY_PREFERENCES };

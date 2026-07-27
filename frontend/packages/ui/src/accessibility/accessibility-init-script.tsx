@@ -9,14 +9,18 @@ const ACCESSIBILITY_INIT_SOURCE = String.raw`
     const enums = {
       textScale: ["large", "larger", "largest"],
       contrast: ["increased", "high"],
+      saturation: ["low", "high"],
       lineHeight: ["relaxed"],
       letterSpacing: ["increased"],
       wordSpacing: ["increased"],
-      textAlign: ["left"]
+      textAlign: ["left", "center", "right"],
+      widgetSize: ["oversized"],
+      widgetPosition: ["left"]
     };
     const attributes = {
       textScale: "data-a11y-text-scale",
       contrast: "data-a11y-contrast",
+      saturation: "data-a11y-saturation",
       readableFont: "data-a11y-readable-font",
       lineHeight: "data-a11y-line-height",
       letterSpacing: "data-a11y-letter-spacing",
@@ -30,7 +34,9 @@ const ACCESSIBILITY_INIT_SOURCE = String.raw`
       largeCursor: "data-a11y-large-cursor",
       strongFocus: "data-a11y-strong-focus",
       reduceMotion: "data-a11y-reduce-motion",
-      pauseMotion: "data-a11y-pause-motion"
+      pauseMotion: "data-a11y-pause-motion",
+      widgetSize: "data-a11y-widget-size",
+      widgetPosition: "data-a11y-widget-position"
     };
     for (const [key, attribute] of Object.entries(attributes)) {
       if (Object.prototype.hasOwnProperty.call(enums, key)) {
