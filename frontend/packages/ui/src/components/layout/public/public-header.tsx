@@ -574,11 +574,7 @@ function MegaMenuDropdown({
     const gutter = 16;
     const availableWidth = Math.max(260, window.innerWidth - gutter * 2);
     const targetWidth =
-      item.label === "ABOUT US"
-        ? 360
-        : item.label === "PROGRAMMES"
-          ? 520
-          : 288;
+      item.label === "ABOUT US" || item.label === "PROGRAMMES" ? 520 : 288;
     const width = Math.min(targetWidth, availableWidth);
     const maxLeft = Math.max(gutter, window.innerWidth - width - gutter);
     const preferredLeft =
@@ -787,7 +783,7 @@ function MegaMenuDropdown({
                 />
               )}
 
-              {isMegaMenu && (
+              {isMegaMenu && item.label !== "ABOUT US" && (
                 <div className="mt-4 shrink-0 border-t border-primary/10 pt-4">
                   <Link
                     href={item.href}
