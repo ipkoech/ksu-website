@@ -56,7 +56,11 @@ import {
 } from "@/lib/homepage-sections";
 import { getNavData } from "@/lib/nav-data";
 import { getPublicVcHub } from "@/lib/vice-chancellor-data";
-import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
+import {
+  heriAfricaFrontendUrl,
+  libraryFrontendUrl,
+  researchFrontendUrl,
+} from "@/lib/service-urls";
 
 export const revalidate = 300;
 
@@ -190,6 +194,7 @@ export default async function HomePage() {
         megaMenuData={megaMenuData}
         researchHref={researchFrontendUrl}
         libraryHref={libraryFrontendUrl}
+        heriHref={heriAfricaFrontendUrl}
       />
 
       <AmbientPageBackground

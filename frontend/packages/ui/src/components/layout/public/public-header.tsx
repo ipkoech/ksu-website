@@ -83,6 +83,7 @@ interface PublicHeaderProps {
   className?: string;
   researchHref?: string;
   libraryHref?: string;
+  heriHref?: string;
   supportHref?: string;
 }
 
@@ -92,6 +93,9 @@ const defaultResearchHref =
 const defaultLibraryHref =
   process.env.NEXT_PUBLIC_LIBRARY_FRONTEND_URL ||
   "https://library.kisiiuniversity.ac.ke";
+const defaultHeriHref =
+  process.env.NEXT_PUBLIC_HERI_AFRICA_FRONTEND_URL ||
+  "https://heri-africa.kisiiuniversity.ac.ke";
 const defaultSupportHref =
   process.env.NEXT_PUBLIC_SUPPORT_KSU_URL ||
   `${defaultResearchHref.replace(/\/$/, "")}/donate`;
@@ -102,6 +106,7 @@ export function PublicHeader({
   className,
   researchHref = defaultResearchHref,
   libraryHref = defaultLibraryHref,
+  heriHref = defaultHeriHref,
   supportHref = defaultSupportHref,
 }: PublicHeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -113,7 +118,11 @@ export function PublicHeader({
   const pathname = usePathname();
 
   // Build navigation with dynamic data
-  const navigation = buildNavigation(megaMenuData, { researchHref, libraryHref });
+  const navigation = buildNavigation(megaMenuData, {
+    researchHref,
+    libraryHref,
+    heriHref,
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -307,15 +316,15 @@ export function PublicHeader({
   );
 }
 
-function buildNavigation(
+export function buildNavigation(
   megaMenuData?: MegaMenuData,
   serviceLinks: {
     researchHref?: string;
     libraryHref?: string;
+    heriHref?: string;
   } = {},
 ): NavItem[] {
   const schools = megaMenuData?.schools || [];
-  const clubs = megaMenuData?.clubs || [];
 
   // About menu
   const aboutItem: NavItem = {
@@ -351,6 +360,17 @@ function buildNavigation(
         label: "KSU NUMBERS & FACTS",
         href: "/about/numbers-and-facts",
         description: "Verified institutional facts by reporting year",
+      },
+      {
+        label: "HERI AFRICA",
+        href: serviceLinks.heriHref || "https://heri-africa.kisiiuniversity.ac.ke",
+        external: true,
+        group: "QUICK LINKS",
+      },
+      {
+        label: "NYANGWETA FARM",
+        href: "#",
+        group: "QUICK LINKS",
       },
     ],
   };
@@ -388,38 +408,40 @@ function buildNavigation(
     },
   ];
 
-  const programmeQuickLinks: NavItem[] = [
-    {
-      label: "ALL PROGRAMMES",
-      href: "/academics/programmes",
-      description: "Browse academic programmes by level and school",
-    },
-    {
-      label: "ACADEMIC CALENDAR",
-      href: "/academics/calendar",
-      description: "Term dates, intakes, and academic timelines",
-    },
-    {
-      label: "EXAMINATIONS",
-      href: "/academics/examinations",
-      description: "Assessment and examination information",
-    },
-  ];
-
   const programmesItem: NavItem = {
     label: "PROGRAMMES",
     href: "/academics/programmes",
     children: [
-      ...programmeQuickLinks,
-      ...schools.map((school) => ({
-        label: school.name
-          .replace("School of ", "")
-          .replace("Faculty of ", "")
-          .toUpperCase(),
-        href: `/academics/schools/${school.slug}`,
-        group: "SCHOOLS",
-      })),
-      ...admissionsLinks,
+      {
+        label: "ALL PROGRAMMES",
+        href: "/academics/programmes",
+        description: "Browse academic programmes by level and school",
+      },
+      {
+        label: "ADMISSIONS",
+        href: "/admissions",
+        children: admissionsLinks.map(({ group: _group, ...item }) => item),
+      },
+      {
+        label: "SCHOOLS",
+        href: "/academics/schools",
+        children: schools.map((school) => ({
+          label: school.name
+            .replace("School of ", "")
+            .replace("Faculty of ", "")
+            .toUpperCase(),
+          href: `/academics/schools/${school.slug}`,
+        })),
+      },
+      {
+        label: "ACADEMIC DIVISION",
+        href: "/academics",
+        children: [
+          { label: "ORGANIZATION", href: "/administration/organization" },
+          { label: "CALENDAR", href: "/academics/calendar" },
+          { label: "EXAMINATIONS", href: "/academics/examinations" },
+        ],
+      },
     ],
   };
 
@@ -453,43 +475,16 @@ function buildNavigation(
         href: "/campus-life/support",
         description: "Student welfare",
       },
-      ...clubs.map((club) => ({
-        label: club.name.toUpperCase(),
-        href: `/campus-life/clubs/${club.slug}`,
-        group: "CLUBS & SOCIETIES",
-      })),
     ],
   };
 
   const mediaDeskItem: NavItem = {
-    label: "MEDIA DESK",
+    label: "NEWS & EVENTS",
     href: "/media",
-    children: [
-      {
-        label: "NEWS",
-        href: "/media/news",
-        description: "Latest university news",
-      },
-      {
-        label: "ARTICLES",
-        href: "/media/articles",
-        description: "Stories and feature articles",
-      },
-      {
-        label: "EVENTS",
-        href: "/media/events",
-        description: "Upcoming and recent events",
-      },
-      {
-        label: "GALLERY",
-        href: "/media/gallery",
-        description: "Published photos and media",
-      },
-    ],
   };
 
   const contactItem: NavItem = {
-    label: "CONTACT US",
+    label: "CONTACT",
     href: "/contact",
   };
 
@@ -554,10 +549,7 @@ function MegaMenuDropdown({
       ? [{ title: "More", items: looseDynamicItems }]
       : []),
   ];
-  const isStructuredMegaMenu =
-    item.label === "PROGRAMMES" ||
-    item.label === "CAMPUS LIFE" ||
-    item.label === "MEDIA DESK";
+  const isStructuredMegaMenu = item.label === "PROGRAMMES";
   const isProgrammesMenu = item.label === "PROGRAMMES";
   const isMegaMenu =
     isStructuredMegaMenu ||
@@ -779,10 +771,7 @@ function MegaMenuDropdown({
                     </div>
 
                     <div className="min-w-0 border-t border-primary/10 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                      <GroupedMenuGrid
-                        sections={rightSections}
-                        variant="two-column"
-                      />
+                      <NestedMenuGrid items={children} />
                     </div>
                   </div>
                 ) : (
@@ -857,6 +846,23 @@ function MenuSection({
         {title}
       </h3>
       <div className="space-y-1">{children}</div>
+    </div>
+  );
+}
+
+function NestedMenuGrid({ items }: { items: NavItem[] }) {
+  const sections = items.filter((item) => item.children?.length);
+
+  return (
+    <div className="grid gap-6 md:grid-cols-3">
+      {sections.map((section) => (
+        <MenuLinkGrid
+          key={section.href}
+          title={section.label}
+          items={section.children ?? []}
+          headingStyle="bold"
+        />
+      ))}
     </div>
   );
 }
@@ -1110,12 +1116,15 @@ function MobileNav({
         </p>
         <div className="space-y-2">
           <a
-            href="https://kisiiuniversity.ac.ke/event/heri-africa-launch"
+            href={
+              process.env.NEXT_PUBLIC_HERI_AFRICA_FRONTEND_URL ||
+              "https://heri-africa.kisiiuniversity.ac.ke"
+            }
             className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
             target="_blank"
             rel="noopener noreferrer"
           >
-            HERI
+            HERI AFRICA
           </a>
           <a
             href="https://digital.kisiiuniversity.ac.ke/"
@@ -1148,6 +1157,22 @@ function MobileNav({
             rel="noopener noreferrer"
           >
             CONFERENCES
+          </a>
+          <a
+            href="https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders"
+            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            TENDERS
+          </a>
+          <a
+            href="https://digital.kisiiuniversity.ac.ke/ksu_customer_care_centerr"
+            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            HELP DESK
           </a>
         </div>
       </div>

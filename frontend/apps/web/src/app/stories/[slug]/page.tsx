@@ -7,7 +7,11 @@ import { storiesApi, type Media } from "@ksu/api-client";
 import { PublicImage } from "@/components/public/public-image";
 import { getHomepageData } from "@/lib/homepage-data";
 import { getNavData } from "@/lib/nav-data";
-import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
+import {
+  heriAfricaFrontendUrl,
+  libraryFrontendUrl,
+  researchFrontendUrl,
+} from "@/lib/service-urls";
 import { publicFileUrl, publicMediaUrl } from "@/lib/public-media";
 
 export const revalidate = 300;
@@ -46,6 +50,7 @@ export default async function StoryDetailPage({
         megaMenuData={megaMenuData}
         researchHref={researchFrontendUrl}
         libraryHref={libraryFrontendUrl}
+        heriHref={heriAfricaFrontendUrl}
       />
       <AmbientPageBackground
         as="main"

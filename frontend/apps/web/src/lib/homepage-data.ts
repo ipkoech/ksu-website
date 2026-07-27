@@ -34,7 +34,11 @@ import {
 } from "@/lib/landing-data";
 import { getViceChancellor } from "@/lib/get-leadership";
 import { publicFileUrl, publicMediaUrl } from "@/lib/public-media";
-import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
+import {
+  heriAfricaFrontendUrl,
+  libraryFrontendUrl,
+  researchFrontendUrl,
+} from "@/lib/service-urls";
 
 export type HomeContactInfo = {
   address: string;
@@ -169,8 +173,8 @@ const researchApiBaseUrl = getResearchApiBaseUrl();
 
 const stablePortalLinks: HomeLink[] = [
   {
-    label: "HERI",
-    href: "https://kisiiuniversity.ac.ke/event/heri-africa-launch",
+    label: "HERI AFRICA",
+    href: heriAfricaFrontendUrl,
     external: true,
   },
   {
@@ -191,6 +195,16 @@ const stablePortalLinks: HomeLink[] = [
   {
     label: "CONFERENCES",
     href: "https://digital.kisiiuniversity.ac.ke/conferences",
+    external: true,
+  },
+  {
+    label: "TENDERS",
+    href: "https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders",
+    external: true,
+  },
+  {
+    label: "HELP DESK",
+    href: "https://digital.kisiiuniversity.ac.ke/ksu_customer_care_centerr",
     external: true,
   },
 ];
