@@ -122,8 +122,8 @@ export function PublicActionLink({
   const isDirectProtocol =
     action.href.startsWith("mailto:") || action.href.startsWith("tel:");
   const className = primary
-    ? "inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-    : "inline-flex items-center justify-center gap-2 rounded-full border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5";
+    ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+    : "inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
 
   if (action.external) {
     return (
@@ -193,12 +193,12 @@ export function PublicCardSurface({
 }) {
   const linked = Boolean(card.href);
   const className = dark
-    ? `group flex min-h-[220px] flex-col rounded-lg border border-white/10 bg-white/[0.04] p-5 transition ${
-        linked ? "hover:-translate-y-1 hover:bg-white/[0.08]" : ""
+    ? `group flex min-h-[220px] flex-col rounded-lg border border-white/10 bg-white/[0.04] p-5 transition-[background-color,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-primary motion-reduce:transition-none ${
+        linked ? "hover:-translate-y-1 hover:bg-white/[0.08] motion-reduce:transform-none" : ""
       }`
-    : `group flex min-h-[220px] flex-col rounded-lg border border-border bg-surface-subtle p-5 shadow-sm transition ${
+    : `group flex min-h-[220px] flex-col rounded-lg border border-border bg-surface-subtle p-5 shadow-sm transition-[background-color,border-color,box-shadow,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none ${
         linked
-          ? "hover:-translate-y-1 hover:border-primary/30 hover:bg-white hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
+          ? "hover:-translate-y-1 hover:border-primary/30 hover:bg-white hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)] motion-reduce:transform-none"
           : ""
       }`;
 
@@ -250,7 +250,7 @@ export function PublicCardSurface({
           ) : (
             <ArrowRight
               aria-hidden
-              className="h-4 w-4 transition group-hover:translate-x-1"
+              className="h-4 w-4 transition-transform group-hover:translate-x-1 motion-reduce:transform-none motion-reduce:transition-none"
             />
           )}
         </span>
@@ -301,6 +301,8 @@ export function PublicFilterTextInput({
           name={name}
           defaultValue={value?.trim() ?? ""}
           placeholder={placeholder}
+          autoComplete="off"
+          spellCheck={false}
           className={
             dark
               ? "h-11 w-full rounded-md border border-white/10 bg-brand-overlay/60 pl-9 pr-3 text-sm font-medium text-white outline-none transition placeholder:text-white/40 focus:border-secondary focus:ring-2 focus:ring-secondary/20"
@@ -372,8 +374,8 @@ export function PublicFilterButton({
       type="submit"
       className={
         dark
-          ? "inline-flex h-11 items-center justify-center rounded-md bg-secondary px-4 text-sm font-semibold text-foreground transition hover:bg-secondary/90"
-          : "inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
+          ? "inline-flex h-11 items-center justify-center rounded-md bg-secondary px-4 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+          : "inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
       }
     >
       {children}
@@ -393,8 +395,8 @@ export function PublicFilterClearLink({
       href={href}
       className={
         dark
-          ? "inline-flex h-11 items-center justify-center rounded-md border border-white/10 px-4 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
-          : "inline-flex h-11 items-center justify-center rounded-md border border-border px-4 text-sm font-semibold text-muted-foreground transition hover:border-primary/25 hover:bg-primary/5 hover:text-primary"
+          ? "inline-flex h-11 items-center justify-center rounded-md border border-white/10 px-4 text-sm font-semibold text-white/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+          : "inline-flex h-11 items-center justify-center rounded-md border border-border px-4 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/25 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
       }
     >
       Clear

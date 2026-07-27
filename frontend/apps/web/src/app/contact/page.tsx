@@ -405,11 +405,25 @@ export default async function ContactPage({
             title="Find the right office"
             body="Search published university contacts and narrow the directory by service or organizational owner."
           />
-          <form method="get" action="/contact" className="mt-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[minmax(260px,1fr)_220px_220px_auto]">
+          <form
+            method="get"
+            action="/contact"
+            role="search"
+            aria-label="Contact directory"
+            className="mt-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[minmax(260px,1fr)_220px_220px_auto]"
+          >
             <label className="relative block">
               <span className="sr-only">Search contacts</span>
               <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input type="search" name="q" defaultValue={filters.q} placeholder="Search office, service, email, or location" className="h-11 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10" />
+              <input
+                type="search"
+                name="q"
+                defaultValue={filters.q}
+                placeholder="Search office, service, email, or location"
+                autoComplete="off"
+                spellCheck={false}
+                className="h-11 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+              />
             </label>
             <label>
               <span className="sr-only">Contact type</span>
@@ -425,7 +439,7 @@ export default async function ContactPage({
                 {scopeTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
             </label>
-            <button type="submit" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
+            <button type="submit" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
               <Search aria-hidden className="h-4 w-4" /> Search
             </button>
           </form>
