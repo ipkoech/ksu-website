@@ -579,10 +579,11 @@ function formatPublicDate(value?: string | null) {
 
 export function PulseStripSection({ section }: SectionVariantProps) {
   const items = officialPulseItems(section);
-  const maxItems =
+  const configuredMaxItems =
     typeof section.settings?.maxItems === "number"
       ? section.settings.maxItems
       : 5;
+  const maxItems = Math.min(Math.max(configuredMaxItems, 1), 5);
 
   return (
     <section
@@ -600,7 +601,7 @@ export function PulseStripSection({ section }: SectionVariantProps) {
               {section.title ?? "University pulse"}
             </h2>
             <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
-              Live updates
+              Latest official updates
             </p>
           </div>
         </div>

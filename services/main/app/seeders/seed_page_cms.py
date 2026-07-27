@@ -61,11 +61,11 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
         "layout_variant": "pulse_strip",
         "display_order": 20,
         "title": "University pulse",
-        "subtitle": "Official public updates from Kisii University.",
-        "description": "A compact feed for admissions, graduation, research, partnerships and university events.",
+        "subtitle": "Latest official updates from Kisii University.",
+        "description": "A compact, high-signal feed for admissions, graduation, research, partnerships and university events.",
         "settings": {
             "feeds": ["news", "events", "announcements"],
-            "maxItems": 6,
+            "maxItems": 5,
             "cta": {"label": "View all updates", "href": "/news"},
         },
         "items": (
