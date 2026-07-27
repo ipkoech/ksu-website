@@ -549,8 +549,7 @@ function MegaMenuDropdown({
       ? [{ title: "More", items: looseDynamicItems }]
       : []),
   ];
-  const isStructuredMegaMenu = item.label === "PROGRAMMES";
-  const isProgrammesMenu = item.label === "PROGRAMMES";
+  const isStructuredMegaMenu = item.label === "ABOUT US";
   const isMegaMenu =
     isStructuredMegaMenu ||
     rightSections.length > 0 ||
@@ -573,7 +572,7 @@ function MegaMenuDropdown({
       ?.getBoundingClientRect();
     const gutter = 16;
     const availableWidth = Math.max(260, window.innerWidth - gutter * 2);
-    const targetWidth = isMegaMenu ? 1500 : item.label === "ABOUT US" ? 360 : 288;
+    const targetWidth = item.label === "ABOUT US" ? 360 : 288;
     const width = Math.min(targetWidth, availableWidth);
     const maxLeft = Math.max(gutter, window.innerWidth - width - gutter);
     const preferredLeft =
@@ -758,58 +757,24 @@ function MegaMenuDropdown({
               }}
             >
               {isMegaMenu ? (
-                isProgrammesMenu ? (
-                  <div className="grid gap-5 lg:grid-cols-[minmax(13rem,16rem)_minmax(0,1fr)]">
-                    <div>
-                      {quickLinks.length ? (
-                        <MenuSection title="QUICK LINKS">
-                          {quickLinks.map((child) => (
-                            <MenuCardLink key={child.href} item={child} />
-                          ))}
-                        </MenuSection>
-                      ) : null}
-                    </div>
-
-                    <div className="min-w-0 border-t border-primary/10 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                      <NestedMenuGrid items={children} />
-                    </div>
+                <div className="grid gap-5 lg:grid-cols-[minmax(13rem,16rem)_minmax(0,1fr)]">
+                  <div>
+                    {quickLinks.length ? (
+                      <MenuSection title="QUICK LINKS">
+                        {quickLinks.map((child) => (
+                          <MenuCardLink key={child.href} item={child} />
+                        ))}
+                      </MenuSection>
+                    ) : null}
                   </div>
-                ) : (
-                  <div className="grid gap-5 lg:grid-cols-[minmax(13rem,16rem)_minmax(0,1fr)]">
-                    <div>
-                      {quickLinks.length ? (
-                        <MenuSection title="QUICK LINKS">
-                          {quickLinks.map((child) => (
-                            <MenuCardLink key={child.href} item={child} />
-                          ))}
-                        </MenuSection>
-                      ) : null}
-                    </div>
 
-                    <div className="min-w-0 border-t border-primary/10 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                      <GroupedMenuGrid sections={rightSections} />
-                    </div>
+                  <div className="min-w-0 border-t border-primary/10 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                    <GroupedMenuGrid sections={rightSections} />
                   </div>
-                )
+                </div>
               ) : (
                 <div className="space-y-1">
-                  {children.map((child) => (
-                    <Link
-                      key={child.href}
-                      href={child.href}
-                      role="menuitem"
-                      className="block min-h-12 px-4 py-2.5 transition-colors motion-reduce:transition-none hover:bg-primary/5 group"
-                    >
-                      <div className="font-medium text-gray-900 group-hover:text-primary transition-colors text-sm">
-                        {child.label}
-                      </div>
-                      {child.description && (
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          {child.description}
-                        </div>
-                      )}
-                    </Link>
-                  ))}
+                  <NestedFlyoutMenu items={children} />
                 </div>
               )}
 
@@ -850,19 +815,45 @@ function MenuSection({
   );
 }
 
-function NestedMenuGrid({ items }: { items: NavItem[] }) {
-  const sections = items.filter((item) => item.children?.length);
-
+function NestedFlyoutMenu({ items }: { items: NavItem[] }) {
   return (
-    <div className="grid gap-6 md:grid-cols-3">
-      {sections.map((section) => (
-        <MenuLinkGrid
-          key={section.href}
-          title={section.label}
-          items={section.children ?? []}
-          headingStyle="bold"
-        />
-      ))}
+    <div className="min-w-[16rem]">
+      {items.map((item) => {
+        const hasChildren = Boolean(item.children?.length);
+
+        if (!hasChildren) {
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              target={item.external ? "_blank" : undefined}
+              rel={item.external ? "noopener noreferrer" : undefined}
+              role="menuitem"
+              className="flex min-h-11 items-center justify-between gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-gray-800 transition-colors hover:bg-primary/5 hover:text-primary"
+            >
+              <span>{item.label}</span>
+              {item.external ? <ExternalLink className="h-3.5 w-3.5" aria-hidden /> : null}
+            </Link>
+          );
+        }
+
+        return (
+          <div key={item.href} className="group relative">
+            <Link
+              href={item.href}
+              role="menuitem"
+              aria-haspopup="menu"
+              className="flex min-h-11 items-center justify-between gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-gray-800 transition-colors hover:bg-primary/5 hover:text-primary group-hover:bg-primary/5 group-hover:text-primary"
+            >
+              <span>{item.label}</span>
+              <ChevronDown className="h-4 w-4 -rotate-90 text-gray-400" aria-hidden />
+            </Link>
+            <div className="invisible absolute left-full top-0 z-50 ml-1 min-w-[15rem] rounded-lg border border-primary/10 bg-white p-2 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+              <NestedFlyoutMenu items={item.children ?? []} />
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
