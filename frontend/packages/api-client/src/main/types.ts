@@ -3350,6 +3350,9 @@ export interface VcPublicItem {
   embed_url?: string | null;
   thumbnail_url?: string | null;
   cover?: VcPublicMedia | null;
+  duration_seconds?: number | null;
+  recorded_at?: string | null;
+  category?: string | null;
 }
 
 export interface VcPublicHub {

@@ -427,7 +427,7 @@ def _serialize_video(video: VcVideo) -> dict[str, Any]:
         "summary": video.summary, "provider": video.provider, "source_url": video.source_url,
         "embed_url": video.embed_url, "thumbnail_url": video.thumbnail_url,
         "duration_seconds": video.duration_seconds, "recorded_at": video.recorded_at,
-        "category": video.category,
+        "category": video.category, "cover": serialize_public_media(video.poster_media),
     }
 
 
@@ -437,6 +437,7 @@ def _serialize_speech(speech: VcSpeech) -> dict[str, Any]:
         "summary": speech.summary, "plain_text": speech.plain_text, "rich_text": speech.rich_text,
         "speech_type": speech.speech_type, "delivered_at": speech.delivered_at,
         "venue": speech.venue, "occasion": speech.occasion, "audience": speech.audience,
+        "cover": serialize_public_media(speech.featured_media),
     }
 
 
@@ -457,12 +458,13 @@ class ViceChancellorPublicService:
             .options(
                 selectinload(VcHub.hero_media),
                 selectinload(VcHub.portraits).selectinload(VcPortrait.media),
-                selectinload(VcHub.welcome_video),
+                selectinload(VcHub.welcome_video).selectinload(VcVideo.poster_media),
                 selectinload(VcHub.staff_assignment),
-                selectinload(VcHub.placements).selectinload(VcHubPlacement.news),
-                selectinload(VcHub.placements).selectinload(VcHubPlacement.event),
-                selectinload(VcHub.placements).selectinload(VcHubPlacement.speech),
-                selectinload(VcHub.placements).selectinload(VcHubPlacement.video),
+                selectinload(VcHub.placements).selectinload(VcHubPlacement.poster_media),
+                selectinload(VcHub.placements).selectinload(VcHubPlacement.news).selectinload(News.featured_media),
+                selectinload(VcHub.placements).selectinload(VcHubPlacement.event).selectinload(Event.featured_media),
+                selectinload(VcHub.placements).selectinload(VcHubPlacement.speech).selectinload(VcSpeech.featured_media),
+                selectinload(VcHub.placements).selectinload(VcHubPlacement.video).selectinload(VcVideo.poster_media),
                 selectinload(VcHub.placements).selectinload(VcHubPlacement.gallery_album).selectinload(VcGalleryAlbum.cover_media),
             )
             .where(*_visibility(VcHub, now))
@@ -492,7 +494,13 @@ class ViceChancellorPublicService:
                     "id": str(source.id), "title": source.title, "slug": source.slug,
                     "summary": getattr(source, "summary", None),
                     "start_date": getattr(source, "start_date", None),
+                    "location": getattr(source, "location", None),
+                    "cover": serialize_public_media(
+                        placement.poster_media or getattr(source, "featured_media", None)
+                    ),
                 }
+            if placement.poster_media is not None:
+                item["cover"] = serialize_public_media(placement.poster_media)
             item.update(
                 editorial_label=placement.editorial_label,
                 title=placement.title_override or item.get("title"),
@@ -526,7 +534,12 @@ class ViceChancellorPublicService:
         now = now or datetime.now(timezone.utc)
         speech = (await db.execute(
             select(VcSpeech)
-            .options(selectinload(VcSpeech.video_links).selectinload(VcSpeechVideo.video))
+            .options(
+                selectinload(VcSpeech.featured_media),
+                selectinload(VcSpeech.video_links)
+                .selectinload(VcSpeechVideo.video)
+                .selectinload(VcVideo.poster_media),
+            )
             .where(VcSpeech.slug == slug, *_visibility(VcSpeech, now))
         )).scalar_one_or_none()
         if speech is None:
