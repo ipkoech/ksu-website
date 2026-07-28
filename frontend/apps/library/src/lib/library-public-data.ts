@@ -15,6 +15,7 @@ import {
   type LibraryServiceRecord,
   type LibraryStaff,
   type LibrarySearchResponse,
+  type LibraryAssistantContext,
   type LibraryTodayHours,
   type News,
 } from "@ksu/api-client";
@@ -334,6 +335,12 @@ export function getPublicBranches() {
       per_page: 100,
     }),
   ).then((result) => normalizeList(result, normalizeBranch));
+}
+
+export function getPublicAssistantContexts() {
+  return safeList<LibraryAssistantContext>(() =>
+    libraryServiceApi.assistantContexts.publicList(),
+  );
 }
 
 export async function getCatalogSearchData(
