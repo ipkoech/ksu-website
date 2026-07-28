@@ -7189,7 +7189,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
             title: "Life Around Studies",
             href: "/corporate-communication/student-life/life-around-studies",
             icon: Sparkles,
-            scope: ["content.review", "homepage.manage", "section_items.manage", "admin:*"],
+            scope: ["life_around_studies.view", "life_around_studies.manage", "life_around_studies.review", "life_around_studies.publish", "content.review", "homepage.manage", "section_items.manage", "admin:*"],
           },
         ],
       },

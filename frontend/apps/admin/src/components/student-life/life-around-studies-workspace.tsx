@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Eye, Film, Plus, Save, Sparkles, Trash2 } from "lucide-react";
+import { CheckCircle2, Eye, Film, Plus, Save, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "@ksu/ui";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Textarea } from "@ksu/ui/components";
 import { PageTransition } from "@/lib/animations";
+import { usePermissions } from "@/hooks/use-permissions";
 import {
   LIFE_AROUND_STUDIES_AUDIENCES,
   LIFE_AROUND_STUDIES_SOURCE_TYPES,
@@ -49,6 +50,7 @@ function draftFromItem(item?: SectionItem): Draft {
 }
 
 export function LifeAroundStudiesWorkspace() {
+  const { hasAnyPermission } = usePermissions();
   const [section, setSection] = useState<PageSection | null>(null);
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [originalItemIds, setOriginalItemIds] = useState<string[]>([]);
@@ -119,6 +121,30 @@ export function LifeAroundStudiesWorkspace() {
 
   const enabledCount = useMemo(() => drafts.filter((draft) => draft.is_enabled).length, [drafts]);
   const featuredCount = useMemo(() => drafts.filter((draft) => draft.is_featured).length, [drafts]);
+  const canManage = hasAnyPermission(["life_around_studies.manage", "homepage.manage", "section_items.manage", "admin:*"]);
+  const canReview = hasAnyPermission(["life_around_studies.review", "page_sections.review", "content.review", "admin:*"]);
+  const canPublish = hasAnyPermission(["life_around_studies.publish", "homepage.publish", "page_sections.publish", "content.publish", "admin:*"]);
+
+  const runWorkflow = async (action: "submit" | "approve" | "request_changes" | "publish" | "unpublish" | "archive") => {
+    if (!section) return;
+    try {
+      const response = await pageSectionsApi.workflow(section.id, action);
+      setSection(response.data ?? section);
+      toast.success(`Section ${action.replace(/_/g, " ")} complete.`);
+      await load();
+    } catch {
+      toast.error(`Unable to ${action.replace(/_/g, " ")} this section.`);
+    }
+  };
+
+  const workflowActions = section ? {
+    submit: section.status === "draft" || section.status === "changes_requested",
+    approve: section.status === "in_review",
+    request_changes: section.status === "in_review",
+    publish: section.status === "approved",
+    unpublish: section.status === "published",
+    archive: !["archived"].includes(section.status),
+  } : { submit: false, approve: false, request_changes: false, publish: false, unpublish: false, archive: false };
 
   return (
     <PageTransition>
@@ -153,7 +179,15 @@ export function LifeAroundStudiesWorkspace() {
                   <CardTitle>{section.title || "Life Around Studies"}</CardTitle>
                   <p className="mt-1 text-sm text-muted-foreground">Homepage section · {section.status.replace(/_/g, " ")}</p>
                 </div>
-                <Button onClick={addDraft} variant="outline"><Plus data-icon="inline-start" /> Add item</Button>
+                <div className="flex flex-wrap justify-end gap-2">
+                  {workflowActions.submit && canManage ? <Button size="sm" variant="outline" onClick={() => void runWorkflow("submit")}>Submit for review</Button> : null}
+                  {workflowActions.approve && canReview ? <Button size="sm" onClick={() => void runWorkflow("approve")}><CheckCircle2 data-icon="inline-start" /> Approve</Button> : null}
+                  {workflowActions.request_changes && canReview ? <Button size="sm" variant="outline" onClick={() => void runWorkflow("request_changes")}>Request changes</Button> : null}
+                  {workflowActions.publish && canPublish ? <Button size="sm" onClick={() => void runWorkflow("publish")}>Publish</Button> : null}
+                  {workflowActions.unpublish && canPublish ? <Button size="sm" variant="outline" onClick={() => void runWorkflow("unpublish")}>Unpublish</Button> : null}
+                  {workflowActions.archive && canManage ? <Button size="sm" variant="ghost" onClick={() => void runWorkflow("archive")}>Archive</Button> : null}
+                  {canManage ? <Button onClick={addDraft} variant="outline"><Plus data-icon="inline-start" /> Add item</Button> : null}
+                </div>
               </CardHeader>
               <CardContent className="space-y-5">
                 {drafts.length === 0 ? <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">Add the first editorial item.</p> : null}
@@ -187,7 +221,7 @@ export function LifeAroundStudiesWorkspace() {
               </CardContent>
             </Card>
             <div className="flex justify-end">
-              <Button size="lg" onClick={() => void save()} disabled={saving}><Save data-icon="inline-start" /> {saving ? "Saving…" : "Save Life Around Studies"}</Button>
+              {canManage ? <Button size="lg" onClick={() => void save()} disabled={saving}><Save data-icon="inline-start" /> {saving ? "Saving…" : "Save Life Around Studies"}</Button> : <p className="text-sm text-muted-foreground">You have view-only access to this workspace.</p>}
             </div>
           </>
         ) : null}
