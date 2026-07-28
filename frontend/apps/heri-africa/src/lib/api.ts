@@ -13,6 +13,10 @@ export type NewsSummary = {
   excerpt: string | null;
   published_at: string | null;
 };
+export type NewsDetail = NewsSummary & {
+  body: string;
+  featured_image_url: string | null;
+};
 
 export type TeamSummary = {
   id: string;
@@ -76,7 +80,10 @@ export async function getSite(): Promise<SiteSettings> {
 }
 
 export async function getNews(): Promise<NewsSummary[]> {
-  return get<NewsSummary[]>("/news?limit=6");
+  return get<NewsSummary[]>("/news?limit=24");
+}
+export async function getNewsDetail(slug: string): Promise<NewsDetail> {
+  return get<NewsDetail>(`/news/${encodeURIComponent(slug)}`);
 }
 
 export async function getTeam(): Promise<TeamSummary[]> {
@@ -96,6 +103,17 @@ export async function getPartners(): Promise<PartnerSummary[]> {
 }
 export async function getEvents(): Promise<EventSummary[]> {
   return get<EventSummary[]>("/events?limit=24");
+}
+export type OpportunitySummary = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  application_url: string | null;
+  closing_at: string | null;
+};
+export async function getOpportunities(): Promise<OpportunitySummary[]> {
+  return get<OpportunitySummary[]>("/opportunities?limit=24");
 }
 export async function getHeroSlides(): Promise<HeroSlide[]> {
   return get<HeroSlide[]>("/hero-slides");

@@ -16,6 +16,11 @@ class NewsSummary(BaseModel):
     published_at: datetime | None
 
 
+class NewsDetail(NewsSummary):
+    body: str
+    featured_image_url: str | None
+
+
 class SiteResponse(BaseModel):
     name: str
     tagline: str | None

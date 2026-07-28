@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.database import get_db
 from ...models.content import FooterLink, HeroSlide, NavigationItem, NewsArticle, SiteSettings
-from ...schemas.public import NewsSummary, SiteResponse
+from ...schemas.public import NewsDetail, NewsSummary, SiteResponse
 from ...schemas.site import FooterLinkResponse, NavigationItemResponse
 from ...services.public import PublicService
 
@@ -49,11 +49,11 @@ async def news(
     return [NewsSummary.model_validate(record) for record in records]
 
 
-@router.get("/news/{slug}", response_model=NewsSummary)
-async def news_detail(slug: str, db: AsyncSession = Depends(get_db)) -> NewsSummary:
+@router.get("/news/{slug}", response_model=NewsDetail)
+async def news_detail(slug: str, db: AsyncSession = Depends(get_db)) -> NewsDetail:
     from fastapi import HTTPException
 
     record = await PublicService().by_slug(db, NewsArticle, slug)
     if record is None:
         raise HTTPException(status_code=404, detail="News article not found")
-    return NewsSummary.model_validate(record)
+    return NewsDetail.model_validate(record)
