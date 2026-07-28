@@ -1868,6 +1868,11 @@ export interface Intake {
   is_open: boolean;
   created_at: string;
   updated_at: string;
+  programmes?: Array<{
+    programme_id: string;
+    programme?: Partial<Programme> | null;
+    is_active: boolean;
+  }>;
 }
 
 export type IntakeApplicationOverride =

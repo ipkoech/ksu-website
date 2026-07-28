@@ -145,6 +145,7 @@ export type HomepageData = {
   featuredProgrammes: HomeProgrammeCard[];
   programmesSummary: HomeMetric[];
   activeIntakes: HomeIntake[];
+  activeIntakeProgrammes: HomeProgrammeCard[];
   admissionsActions: HomeCard[];
   latestNews: HomeCard[];
   featuredStories: HomeCard[];
@@ -403,7 +404,22 @@ async function getActiveIntakes() {
     fields:
       "id,name,code,slug,application_start,application_end,late_application_end,is_active,is_open,cover_image_id,created_at,updated_at",
   });
-  return response.data ?? [];
+  const records = response.data ?? [];
+  return Promise.all(
+    records.map(async (record) => {
+      try {
+        const detail = await intakesApi.getBySlug(record.slug, {
+          fields:
+            "id,name,code,slug,application_start,application_end,late_application_end,is_active,is_open",
+          include:
+            "programmes:programme(id,name,slug,level,mode_of_study,duration,department_id,department_name)",
+        });
+        return detail.data ?? record;
+      } catch {
+        return record;
+      }
+    }),
+  );
 }
 
 const getResearchPartners = cache(async () => {
@@ -807,6 +823,12 @@ export async function getHomepageData(): Promise<HomepageData> {
   const viceChancellorMessage =
     plainText(university?.vc_message) || viceChancellor?.message || null;
   const featuredProgrammes = normalizeFeaturedProgrammes(programmes);
+  const activeIntakeRecord = activeIntakes.find((intake) => intake.is_open) ?? activeIntakes[0];
+  const activeIntakeProgrammes = normalizeFeaturedProgrammes(
+    (activeIntakeRecord?.programmes ?? [])
+      .filter((item) => item.is_active && item.programme)
+      .map((item) => item.programme) as ProgrammeWithMedia[],
+  ).slice(0, 6);
   const programmesBySchool = await safe(
     getProgrammesBySchool(schools),
     new Map<string, HomeProgrammeCard[]>(),
@@ -863,6 +885,7 @@ export async function getHomepageData(): Promise<HomepageData> {
     featuredProgrammes,
     programmesSummary: buildProgrammeSummary(programmes),
     activeIntakes: normalizeIntakes(activeIntakes),
+    activeIntakeProgrammes,
     admissionsActions: [
       {
         title: "Explore programmes",

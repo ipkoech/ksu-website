@@ -215,6 +215,7 @@ export default async function HomePage() {
                   schools: homepage.schools,
                   programmes: homepage.featuredProgrammes,
                   intakes: homepage.activeIntakes,
+                  activeIntakeProgrammes: homepage.activeIntakeProgrammes,
                 }}
               />
             )}
@@ -229,6 +230,7 @@ export default async function HomePage() {
                 schools: homepage.schools,
                 programmes: homepage.featuredProgrammes,
                 intakes: homepage.activeIntakes,
+                activeIntakeProgrammes: homepage.activeIntakeProgrammes,
               }}
               featuredStories={homepage.featuredStories}
               vcHub={vcHub}
@@ -243,6 +245,7 @@ export default async function HomePage() {
                 schools: homepage.schools,
                 programmes: homepage.featuredProgrammes,
                 intakes: homepage.activeIntakes,
+                activeIntakeProgrammes: homepage.activeIntakeProgrammes,
               }}
             />
 

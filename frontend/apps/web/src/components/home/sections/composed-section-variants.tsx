@@ -73,6 +73,7 @@ export type ProgrammeFinderData = {
   schools: HomeSchoolCard[];
   programmes: HomeProgrammeCard[];
   intakes: HomeIntake[];
+  activeIntakeProgrammes?: HomeProgrammeCard[];
 };
 
 export function FeaturedStoriesSection({ stories }: { stories?: HomeCard[] }) {
@@ -848,9 +849,11 @@ export function ProgrammeFinderSection({
   const programmes = programmeFinderData?.programmes ?? [];
   const schools = programmeFinderData?.schools ?? [];
   const activeIntake = intakes.find((intake) => intake.isOpen) ?? intakes[0] ?? null;
-  const intakeProgrammes = activeIntake
-    ? programmes.filter((programme) => programme.intakeIds?.includes(activeIntake.id)).slice(0, 6)
-    : [];
+  const intakeProgrammes = programmeFinderData?.activeIntakeProgrammes?.length
+    ? programmeFinderData.activeIntakeProgrammes
+    : activeIntake
+      ? programmes.filter((programme) => programme.intakeIds?.includes(activeIntake.id)).slice(0, 6)
+      : [];
   const hasAdmissionDates = dateItems.length > 0 || intakes.length > 0;
 
   return (
