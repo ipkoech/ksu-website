@@ -382,6 +382,14 @@ export interface LibraryAssistantVerificationResponse {
   message: string;
 }
 
+export interface LibraryAssistantStaffReplyPayload {
+  content: string;
+}
+
+export interface LibraryAssistantStaffStatusPayload {
+  status: string;
+}
+
 export interface LibraryServiceRecord {
   id: string;
   library_id: string;
@@ -847,6 +855,12 @@ export const libraryServiceApi = {
           data,
         ),
     },
+    recovery: {
+      confirm: (token: string) =>
+        libraryApi.get<{ data: { conversation: LibraryAssistantConversation } }>(
+          `/api/v1/library/assistant/recovery/confirm?token=${encodeURIComponent(token)}`,
+        ),
+    },
     conversations: {
       list: () =>
         libraryApi.get<{ data: LibraryAssistantConversation[] }>(
@@ -864,7 +878,35 @@ export const libraryServiceApi = {
         libraryApi.post<{ data: LibraryAssistantAnswer }>(
           `/api/v1/library/assistant/conversations/${id}/continue`,
           data,
-        ),
+      ),
+    },
+    staff: {
+      conversations: {
+        list: (params?: ListParams<{ status?: string; context_id?: string; assigned_to?: string }>) =>
+          libraryApi.get<{ data: LibraryAssistantConversation[] }>(
+            "/api/v1/library/assistant/staff/conversations",
+            params,
+          ),
+        get: (id: string) =>
+          libraryApi.get<{ data: LibraryAssistantConversation }>(
+            `/api/v1/library/assistant/staff/conversations/${id}`,
+          ),
+        assign: (id: string, assigned_to_person_id: string | null) =>
+          libraryApi.post<{ data: LibraryAssistantConversation }>(
+            `/api/v1/library/assistant/staff/conversations/${id}/assign`,
+            { assigned_to_person_id },
+          ),
+        status: (id: string, data: LibraryAssistantStaffStatusPayload) =>
+          libraryApi.patch<{ data: LibraryAssistantConversation }>(
+            `/api/v1/library/assistant/staff/conversations/${id}/status`,
+            data,
+          ),
+        reply: (id: string, data: LibraryAssistantStaffReplyPayload) =>
+          libraryApi.post<{ data: LibraryAssistantConversation }>(
+            `/api/v1/library/assistant/staff/conversations/${id}/reply`,
+            data,
+          ),
+      },
     },
   },
   resources: {

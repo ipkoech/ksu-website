@@ -14,6 +14,8 @@ from .engagement import router as engagement_router
 from .assistant_contexts import router as assistant_contexts_router
 from .assistant_verification import router as assistant_verification_router
 from .assistant_chat import router as assistant_chat_router
+from .assistant_staff import router as assistant_staff_router
+from .assistant_recovery import router as assistant_recovery_router
 
 router = APIRouter()
 router.include_router(health_router)
@@ -28,3 +30,5 @@ router.include_router(engagement_router)
 router.include_router(assistant_contexts_router)
 router.include_router(assistant_verification_router)
 router.include_router(assistant_chat_router)
+router.include_router(assistant_staff_router)
+router.include_router(assistant_recovery_router)

@@ -92,6 +92,9 @@ from .assistant import (
     LibraryAssistantContextUpdate,
     LibraryAssistantSourceCreate,
     LibraryAssistantSourceOut,
+    LibraryAssistantStaffAssignmentUpdate,
+    LibraryAssistantStaffReplyCreate,
+    LibraryAssistantStaffStatusUpdate,
 )
 from .assistant_chat import (
     LibraryAssistantAnswer,
@@ -199,6 +202,9 @@ __all__ = [
     "LibraryAssistantContextPublicOut",
     "LibraryAssistantSourceCreate",
     "LibraryAssistantSourceOut",
+    "LibraryAssistantStaffAssignmentUpdate",
+    "LibraryAssistantStaffReplyCreate",
+    "LibraryAssistantStaffStatusUpdate",
     "LibraryAssistantAnswer",
     "LibraryAssistantAnswerDraft",
     "LibraryAssistantAnswerRequest",

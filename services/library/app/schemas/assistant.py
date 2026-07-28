@@ -126,3 +126,22 @@ class LibraryAssistantContextPublicOut(BaseModel):
     suggested_prompts: list[dict]
     escalation_guidance: str | None = None
     sources: list[LibraryAssistantSourceOut] = Field(default_factory=list)
+
+
+class LibraryAssistantStaffReplyCreate(BaseModel):
+    content: str = Field(min_length=1, max_length=10000)
+
+
+class LibraryAssistantStaffAssignmentUpdate(BaseModel):
+    assigned_to_person_id: uuid.UUID | None = None
+
+
+class LibraryAssistantStaffStatusUpdate(BaseModel):
+    status: Literal[
+        "active",
+        "awaiting_librarian",
+        "assigned",
+        "librarian_replied",
+        "resolved",
+        "closed",
+    ]
