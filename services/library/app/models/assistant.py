@@ -155,6 +155,12 @@ class LibraryConversation(Base):
     last_message_at: Mapped[Optional[datetime]] = mapped_column(
         sa.DateTime(timezone=True), nullable=True, index=True
     )
+    continuation_token_hash: Mapped[Optional[str]] = mapped_column(
+        sa.String(128), nullable=True, index=True
+    )
+    continuation_expires_at: Mapped[Optional[datetime]] = mapped_column(
+        sa.DateTime(timezone=True), nullable=True
+    )
 
     context: Mapped[Optional[LibraryAssistantContext]] = relationship(
         "LibraryAssistantContext", back_populates="conversations"

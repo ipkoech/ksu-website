@@ -100,6 +100,11 @@ from .assistant_chat import (
     LibraryAssistantCitation,
     LibraryAssistantPageContext,
 )
+from .assistant_identity import (
+    LibraryAssistantVerificationConfirm,
+    LibraryAssistantVerificationRequest,
+    LibraryAssistantVerificationResponse,
+)
 
 __all__ = [
     # library
@@ -197,4 +202,7 @@ __all__ = [
     "LibraryAssistantAnswerRequest",
     "LibraryAssistantCitation",
     "LibraryAssistantPageContext",
+    "LibraryAssistantVerificationConfirm",
+    "LibraryAssistantVerificationRequest",
+    "LibraryAssistantVerificationResponse",
 ]
