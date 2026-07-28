@@ -82,6 +82,9 @@ export async function getNews(): Promise<NewsSummary[]> {
 export async function getTeam(): Promise<TeamSummary[]> {
   return get<TeamSummary[]>("/team?limit=24");
 }
+export async function getTeamMember(slug: string): Promise<TeamSummary> {
+  return get<TeamSummary>(`/team/${encodeURIComponent(slug)}`);
+}
 export async function getProjects(): Promise<ResearchSummary[]> {
   return get<ResearchSummary[]>("/research/projects?limit=24");
 }
