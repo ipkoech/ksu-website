@@ -26,6 +26,14 @@ from .engagement import (
     SavedPublication,
     SupportTicket,
 )
+from .assistant import (
+    LibraryAssistantContext,
+    LibraryAssistantContextSource,
+    LibraryConversation,
+    LibraryConversationMessage,
+    LibraryEmailVerification,
+    LibraryGuestSession,
+)
 
 __all__ = [
     "Base",
@@ -60,4 +68,11 @@ __all__ = [
     "LibraryWorkflow",
     "LibraryWorkflowStep",
     "LibraryPolicyPage",
+    # assistant
+    "LibraryAssistantContext",
+    "LibraryAssistantContextSource",
+    "LibraryConversation",
+    "LibraryConversationMessage",
+    "LibraryGuestSession",
+    "LibraryEmailVerification",
 ]
