@@ -58,10 +58,13 @@ export function AskLibraryClient({ contexts }: AskLibraryClientProps) {
             message: trimmed,
             conversation_id: conversationId,
           })
-        : await libraryServiceApi.assistant.answer({
+      : await libraryServiceApi.assistant.answer({
             message: trimmed,
             context_id: selectedContext?.id,
-            page_context: { url: "/ask", title: "Ask the Library" },
+            page_context: {
+              url: new URLSearchParams(window.location.search).get("source_url") ?? "/ask",
+              title: new URLSearchParams(window.location.search).get("source_title") ?? "Ask the Library",
+            },
           });
       appendAnswer(response.data);
     } catch (caught) {
