@@ -174,6 +174,11 @@ class LibraryConversation(Base):
     guest_session: Mapped[Optional["LibraryGuestSession"]] = relationship(
         "LibraryGuestSession", back_populates="conversation", foreign_keys=[guest_session_id]
     )
+    recovery_links: Mapped[list["LibraryConversationRecovery"]] = relationship(
+        "LibraryConversationRecovery",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+    )
 
 
 class LibraryConversationMessage(Base):
@@ -274,4 +279,29 @@ class LibraryEmailVerification(Base):
     )
     verified_at: Mapped[Optional[datetime]] = mapped_column(
         sa.DateTime(timezone=True), nullable=True
+    )
+
+
+class LibraryConversationRecovery(Base):
+    """Short-lived, single-use link for reopening a verified conversation."""
+
+    __tablename__ = "library_conversation_recoveries"
+    __table_args__ = (
+        sa.Index("ix_library_conversation_recoveries_token_hash", "token_hash"),
+        sa.Index("ix_library_conversation_recoveries_conversation_expires", "conversation_id", "expires_at"),
+        {"schema": "library"},
+    )
+
+    conversation_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        sa.ForeignKey("library.library_conversations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    token_hash: Mapped[str] = mapped_column(sa.String(128), nullable=False, unique=True)
+    expires_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True), nullable=False)
+    used_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+
+    conversation: Mapped[LibraryConversation] = relationship(
+        "LibraryConversation", back_populates="recovery_links"
     )

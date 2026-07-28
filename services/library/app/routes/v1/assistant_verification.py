@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, Depends, Query, Request, Response
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.schemas.responses import success
@@ -66,6 +66,15 @@ async def request_verification(
     guest_session = await identity.get_guest_session(db, guest_token)
     try:
         await identity.request_verification(db, guest_session, data)
+    except HTTPException as exc:
+        if exc.status_code == 429:
+            raise
+        return success(
+            data=LibraryAssistantVerificationResponse(
+                accepted=True,
+                message="If the address can receive Library messages, a link and code are on their way.",
+            ).model_dump()
+        )
     except Exception:
         # Keep the public response generic; rate limits and operational failures are
         # still recorded by the service logs and surfaced to retry-capable clients.

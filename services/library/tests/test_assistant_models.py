@@ -7,6 +7,7 @@ from app.models import (
     LibraryConversation,
     LibraryConversationMessage,
     LibraryEmailVerification,
+    LibraryConversationRecovery,
     LibraryGuestSession,
 )
 
@@ -19,6 +20,7 @@ def test_assistant_models_are_registered_with_library_metadata():
         "library_conversation_messages",
         "library_guest_sessions",
         "library_email_verifications",
+        "library_conversation_recoveries",
     }
 
     assert expected_tables.issubset(
@@ -48,6 +50,7 @@ def test_conversation_messages_and_guest_verification_have_required_boundaries()
     message_columns = LibraryConversationMessage.__table__.c
     guest_columns = LibraryGuestSession.__table__.c
     verification_columns = LibraryEmailVerification.__table__.c
+    recovery_columns = LibraryConversationRecovery.__table__.c
 
     assert {"context_id", "status", "verified_email", "guest_session_id"}.issubset(
         conversation_columns.keys()
@@ -66,6 +69,9 @@ def test_conversation_messages_and_guest_verification_have_required_boundaries()
         "attempt_count",
         "verified_at",
     }.issubset(verification_columns.keys())
+    assert {"conversation_id", "token_hash", "expires_at", "used_at"}.issubset(
+        recovery_columns.keys()
+    )
 
 
 def test_model_defaults_are_safe_for_new_records():

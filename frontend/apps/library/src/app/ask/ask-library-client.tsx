@@ -37,11 +37,31 @@ export function AskLibraryClient({ contexts }: AskLibraryClientProps) {
   );
 
   useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get("verification_token");
-    if (!token) return;
-    void confirmVerification({ token });
-    // The email link is intentionally consumed through the backend cookie flow.
+    const params = new URLSearchParams(window.location.search);
+    const verificationToken = params.get("verification_token");
+    const recoveryToken = params.get("recovery_token");
+    if (verificationToken) {
+      void confirmVerification({ token: verificationToken });
+    } else if (recoveryToken) {
+      void recoverConversation(recoveryToken);
+    }
   }, []);
+
+  async function recoverConversation(token: string) {
+    setIsBusy(true);
+    setError(null);
+    try {
+      const response = await libraryServiceApi.assistant.recovery.confirm(token);
+      const conversation = response.data.conversation;
+      setConversationId(conversation.id);
+      setMessages(conversation.messages ?? []);
+      setStatus("Your Library conversation is ready to continue.");
+    } catch (caught) {
+      setError(caught instanceof ApiClientError ? caught.message : "That recovery link is no longer valid.");
+    } finally {
+      setIsBusy(false);
+    }
+  }
 
   async function submitQuestion(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

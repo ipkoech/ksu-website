@@ -14,3 +14,4 @@ def test_chat_and_history_routes_are_registered():
     assert ("/library/assistant/conversations/{conversation_id}", "GET") in paths
     assert ("/library/assistant/conversations/{conversation_id}/messages", "GET") in paths
     assert ("/library/assistant/conversations/{conversation_id}/continue", "POST") in paths
+    assert ("/library/assistant/recovery/confirm", "GET") in paths

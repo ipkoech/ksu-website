@@ -32,6 +32,7 @@ from .assistant import (
     LibraryConversation,
     LibraryConversationMessage,
     LibraryEmailVerification,
+    LibraryConversationRecovery,
     LibraryGuestSession,
 )
 
@@ -75,4 +76,5 @@ __all__ = [
     "LibraryConversationMessage",
     "LibraryGuestSession",
     "LibraryEmailVerification",
+    "LibraryConversationRecovery",
 ]

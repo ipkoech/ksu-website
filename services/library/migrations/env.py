@@ -24,6 +24,7 @@ from app.models import (  # noqa: F401 — registers all mapped classes with Bas
     LibraryConversation,
     LibraryConversationMessage,
     LibraryEmailVerification,
+    LibraryConversationRecovery,
     LibraryGuestSession,
     LibraryLoan,
     LibraryRegulation,
