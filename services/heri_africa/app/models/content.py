@@ -140,6 +140,19 @@ class NavigationItem(UUIDMixin, Base):
     is_visible: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
+class HeroSlide(UUIDMixin, Base):
+    __tablename__ = "hero_slides"
+    eyebrow: Mapped[str] = mapped_column(String(160), default="")
+    title: Mapped[str] = mapped_column(String(255))
+    description: Mapped[str] = mapped_column(Text, default="")
+    image_url: Mapped[str] = mapped_column(String(500))
+    mobile_image_url: Mapped[str | None] = mapped_column(String(500))
+    button_label: Mapped[str] = mapped_column(String(120), default="Explore our work")
+    button_href: Mapped[str] = mapped_column(String(500), default="/our-work")
+    position: Mapped[int] = mapped_column(Integer, default=0, index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+
+
 class FooterLink(UUIDMixin, Base):
     __tablename__ = "footer_links"
     column: Mapped[str] = mapped_column(String(120), index=True)

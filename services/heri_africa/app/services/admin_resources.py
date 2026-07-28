@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..models.analytics import AnalyticsEvent
-from ..models.content import Event, FooterLink, NavigationItem, NewsArticle, Opportunity, Page, PageSection, ResearchPublication, ResearchProject, ResearchTheme, SiteSettings
+from ..models.content import Event, FooterLink, HeroSlide, NavigationItem, NewsArticle, Opportunity, Page, PageSection, ResearchPublication, ResearchProject, ResearchTheme, SiteSettings
 from ..models.media import MediaAsset
 from ..models.people import TeamMember
 from ..models.partners import Partner
@@ -24,6 +24,7 @@ RESOURCE_MODELS: dict[str, type[Any]] = {
     "submissions": Submission,
     "media": MediaAsset,
     "navigation": NavigationItem,
+    "hero-slides": HeroSlide,
     "footer": FooterLink,
     "site-settings": SiteSettings,
     "analytics": AnalyticsEvent,

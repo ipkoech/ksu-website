@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.database import get_db
-from ...models.content import FooterLink, NavigationItem, NewsArticle, SiteSettings
+from ...models.content import FooterLink, HeroSlide, NavigationItem, NewsArticle, SiteSettings
 from ...schemas.public import NewsSummary, SiteResponse
 from ...schemas.site import FooterLinkResponse, NavigationItemResponse
 from ...services.public import PublicService
@@ -25,6 +25,12 @@ async def site(db: AsyncSession = Depends(get_db)) -> SiteResponse:
 async def navigation(db: AsyncSession = Depends(get_db)):
     records = (await db.execute(select(NavigationItem).where(NavigationItem.is_visible.is_(True)).order_by(NavigationItem.position.asc()))).scalars().all()
     return [NavigationItemResponse.model_validate(item) for item in records]
+
+
+@router.get("/hero-slides")
+async def hero_slides(db: AsyncSession = Depends(get_db)):
+    records = (await db.execute(select(HeroSlide).where(HeroSlide.is_active.is_(True)).order_by(HeroSlide.position.asc(), HeroSlide.created_at.asc()))).scalars().all()
+    return records
 
 
 @router.get("/footer", response_model=list[FooterLinkResponse])

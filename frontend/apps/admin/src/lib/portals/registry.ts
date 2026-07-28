@@ -28,6 +28,7 @@ import {
   ScrollText,
   Settings,
   ShieldCheck,
+  Sparkles,
   Sprout,
   Target,
   Trophy,
@@ -6534,6 +6535,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
     nav: [
       { title: "Dashboard", href: "/heri", icon: PanelsTopLeft, scope: "admin:*" },
       { title: "Content & pages", href: "/heri/content", icon: Newspaper, scope: "admin:*", group: "Publishing" },
+      { title: "Homepage hero", href: "/heri/hero", icon: PanelsTopLeft, scope: "admin:*", group: "Publishing" },
       { title: "Research", href: "/heri/research", icon: FlaskConical, scope: "admin:*", group: "Publishing" },
       { title: "Team & partners", href: "/heri/people", icon: Users, scope: "admin:*", group: "People" },
       { title: "Submissions", href: "/heri/submissions", icon: Mail, scope: "admin:*", group: "Operations" },
@@ -7182,6 +7184,12 @@ export const portalConfigs: Record<string, PortalConfig> = {
             href: "/corporate-communication/student-life/club-submissions",
             icon: Trophy,
             scope: ["content.review", "clubs.view", "clubs.manage_own"],
+          },
+          {
+            title: "Life Around Studies",
+            href: "/corporate-communication/student-life/life-around-studies",
+            icon: Sparkles,
+            scope: ["content.review", "homepage.manage", "section_items.manage", "admin:*"],
           },
         ],
       },

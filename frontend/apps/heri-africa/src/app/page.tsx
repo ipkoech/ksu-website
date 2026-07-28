@@ -3,7 +3,14 @@ import Link from "next/link";
 import { ArrowRight, Eye, Goal, UsersRound } from "lucide-react";
 import { SiteShell } from "../components/site-shell";
 import { HeroCarousel } from "../components/home/hero-carousel";
-import { getEvents, getNews, getPartners, getSite, getTeam } from "../lib/api";
+import {
+  getEvents,
+  getHeroSlides,
+  getNews,
+  getPartners,
+  getSite,
+  getTeam,
+} from "../lib/api";
 
 const pillars = [
   [
@@ -101,13 +108,15 @@ const fallbackStories = [
 ] as const;
 
 export default async function HeriHomePage() {
-  const [site, news, team, partners, events] = await Promise.allSettled([
-    getSite(),
-    getNews(),
-    getTeam(),
-    getPartners(),
-    getEvents(),
-  ]);
+  const [site, news, team, partners, events, heroSlides] =
+    await Promise.allSettled([
+      getSite(),
+      getNews(),
+      getTeam(),
+      getPartners(),
+      getEvents(),
+      getHeroSlides(),
+    ]);
   const siteData = site.status === "fulfilled" ? site.value : null;
   const newsData =
     news.status === "fulfilled" && news.value.length
@@ -121,10 +130,26 @@ export default async function HeriHomePage() {
     partners.status === "fulfilled" ? partners.value.slice(0, 6) : [];
   const eventData =
     events.status === "fulfilled" ? events.value.slice(0, 1) : [];
+  const managedHeroSlides =
+    heroSlides.status === "fulfilled"
+      ? heroSlides.value
+          .filter((slide) => slide.is_active)
+          .sort((a, b) => a.position - b.position)
+          .map((slide) => ({
+            id: slide.id,
+            eyebrow: slide.eyebrow,
+            title: slide.title,
+            description: slide.description,
+            image: slide.image_url,
+            alt: slide.title,
+            buttonLabel: slide.button_label,
+            buttonHref: slide.button_href,
+          }))
+      : [];
   return (
     <SiteShell>
       <main className="min-h-screen bg-white">
-        <HeroCarousel />
+        <HeroCarousel slides={managedHeroSlides} />
         <section className="mx-auto grid max-w-7xl gap-6 px-6 py-8 sm:grid-cols-2 lg:grid-cols-4 lg:py-10">
           {pillars.map(([title, description, iconColor], index) => (
             <article

@@ -5,8 +5,20 @@ import Link from "next/link";
 import { ArrowRight, Pause, Play } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const slides = [
+export type HeroCarouselSlide = {
+  id: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  image: string;
+  alt: string;
+  buttonLabel?: string;
+  buttonHref?: string;
+};
+
+export const fallbackHeroSlides: HeroCarouselSlide[] = [
   {
+    id: "fallback-1",
     eyebrow: "HOSTED BY KISII UNIVERSITY",
     title: "Africa-Led Language Research for Transformative Education",
     description:
@@ -15,6 +27,7 @@ const slides = [
     alt: "HERI Africa researchers and education leaders at a launch event",
   },
   {
+    id: "fallback-2",
     eyebrow: "KISII UNIVERSITY × HERI AFRICA",
     title: "African Knowledge. Shared Purpose. Lasting Impact.",
     description:
@@ -23,6 +36,7 @@ const slides = [
     alt: "African education researchers collaborating around a table",
   },
   {
+    id: "fallback-3",
     eyebrow: "LANGUAGE EDUCATION RESEARCH CHAIR",
     title: "Evidence That Moves Language Education Forward",
     description:
@@ -32,25 +46,31 @@ const slides = [
   },
 ] as const;
 
-export function HeroCarousel() {
+export function HeroCarousel({
+  slides: providedSlides,
+}: {
+  slides?: HeroCarouselSlide[];
+}) {
+  const slides = providedSlides?.length ? providedSlides : fallbackHeroSlides;
+  const slideCount = slides.length;
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const goTo = useCallback(
-    (index: number) => setActive((index + slides.length) % slides.length),
-    [],
+    (index: number) => setActive((index + slideCount) % slideCount),
+    [slideCount],
   );
 
   useEffect(() => {
     if (paused) return;
     timer.current = setInterval(
-      () => setActive((current) => (current + 1) % slides.length),
+      () => setActive((current) => (current + 1) % slideCount),
       6500,
     );
     return () => {
       if (timer.current) clearInterval(timer.current);
     };
-  }, [paused]);
+  }, [paused, slideCount]);
 
   const slide = slides[active];
   return (
@@ -85,10 +105,11 @@ export function HeroCarousel() {
             {slide.description}
           </p>
           <Link
-            href="/our-work"
+            href={slide.buttonHref ?? "/our-work"}
             className="mt-8 inline-flex items-center gap-6 rounded-xl bg-heri-lime px-5 py-3 text-sm font-bold text-heri-ink transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-heri-teal"
           >
-            EXPLORE OUR WORK <ArrowRight className="size-4" />
+            {slide.buttonLabel ?? "EXPLORE OUR WORK"}{" "}
+            <ArrowRight className="size-4" />
           </Link>
           <div
             className="mt-8 flex items-center gap-3"

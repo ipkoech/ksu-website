@@ -7,6 +7,7 @@ from .content import (
     Opportunity,
     NavigationItem,
     FooterLink,
+    HeroSlide,
     ContentRevision,
     Page,
     PageSection,
@@ -24,7 +25,7 @@ from .social import SocialPublication
 from .submissions import Submission
 
 __all__ = [
-    "AnalyticsEvent", "AuditLog", "Base", "ContentRevision", "Event", "FooterLink", "MediaAsset", "NewsArticle", "NavigationItem", "Opportunity", "Page",
+    "AnalyticsEvent", "AuditLog", "Base", "ContentRevision", "Event", "FooterLink", "HeroSlide", "MediaAsset", "NewsArticle", "NavigationItem", "Opportunity", "Page",
     "PageSection", "Partner", "PublicationStatus", "ResearchPublication",
     "ResearchProject", "ResearchTheme", "SiteSettings", "SocialPublication",
     "Submission", "SubmissionStatus", "TeamMember",
