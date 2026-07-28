@@ -51,6 +51,7 @@ function draftFromItem(item?: SectionItem): Draft {
 export function LifeAroundStudiesWorkspace() {
   const [section, setSection] = useState<PageSection | null>(null);
   const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [originalItemIds, setOriginalItemIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +64,7 @@ export function LifeAroundStudiesWorkspace() {
       const found = (response.data ?? []).find((candidate) => candidate.section_key === "campus-life");
       setSection(found ?? null);
       setDrafts((found?.items ?? []).map(draftFromItem));
+      setOriginalItemIds((found?.items ?? []).map((item) => item.id));
     } catch {
       setError("Unable to load the Life Around Studies section.");
     } finally {
@@ -104,6 +106,8 @@ export function LifeAroundStudiesWorkspace() {
         if (draft.id) await sectionItemsApi.update(draft.id, payload);
         else await sectionItemsApi.create(section.id, payload);
       }));
+      const retainedIds = new Set(drafts.flatMap((draft) => draft.id ? [draft.id] : []));
+      await Promise.all(originalItemIds.filter((id) => !retainedIds.has(id)).map((id) => sectionItemsApi.disable(id)));
       toast.success("Life Around Studies content saved.");
       await load();
     } catch {
