@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { ArrowRight, Search, SlidersHorizontal, X } from "lucide-react";
 import { getMainApiBaseUrl } from "@ksu/api-client";
 import type { HomeProgrammeCard, HomeSchoolCard } from "@/lib/homepage-data";
@@ -17,6 +19,7 @@ export function ProgrammeFinderInteractive({
   programmes,
   schools,
 }: ProgrammeFinderInteractiveProps) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [schoolId, setSchoolId] = useState(allValue);
   const [level, setLevel] = useState(allValue);
@@ -24,6 +27,7 @@ export function ProgrammeFinderInteractive({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [remoteResults, setRemoteResults] = useState<HomeProgrammeCard[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
   const deferredQuery = useDeferredValue(query);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -122,10 +126,11 @@ export function ProgrammeFinderInteractive({
   const resultSetKey = [deferredQuery, schoolId, level, mode].join(":");
   const previewItems = (
     hasActiveFilters ? matchingProgrammes : programmes
-  ).slice(0, 3);
+  ).slice(0, 5);
 
   return (
     <>
+      {celebrating ? <CelebrationBurst /> : null}
       <div className="programme-mosaic-search relative z-40 mx-auto mt-0 max-w-5xl bg-transparent px-5 pb-8 sm:px-8 sm:pb-10 lg:px-12 lg:pb-12">
         <form
           action="/academics/programmes"
@@ -224,6 +229,12 @@ export function ProgrammeFinderInteractive({
               <Link
                 key={`${resultSetKey}-${programme.id ?? programme.href}`}
                 href={programme.href}
+                onClick={(event) => {
+                  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                  event.preventDefault();
+                  setCelebrating(true);
+                  window.setTimeout(() => router.push(programme.href), 620);
+                }}
                 className="programme-result group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3 transition duration-300 hover:bg-white/10 focus-visible:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary sm:gap-4 sm:px-2"
                 style={{ transitionDelay: `${index * 35}ms` }}
               >
@@ -289,6 +300,25 @@ function PopularSearches({
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+function CelebrationBurst() {
+  const colors = ["#39c8ff", "#f5b544", "#ef6b7a", "#8ce38a", "#ffffff"];
+  return (
+    <div className="programme-celebration" aria-live="polite" aria-label="Opening programme">
+      {Array.from({ length: 28 }, (_, index) => {
+        const angle = (index / 28) * Math.PI * 2;
+        const distance = 90 + (index % 5) * 22;
+        const style = {
+          "--particle-x": `${Math.cos(angle) * distance}px`,
+          "--particle-y": `${Math.sin(angle) * distance - 55}px`,
+          backgroundColor: colors[index % colors.length],
+          animationDelay: `${(index % 7) * 18}ms`,
+        } as CSSProperties;
+        return <span key={index} className="programme-celebration-particle" style={style} />;
+      })}
     </div>
   );
 }

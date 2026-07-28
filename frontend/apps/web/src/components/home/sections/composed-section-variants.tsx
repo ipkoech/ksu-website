@@ -852,7 +852,7 @@ export function ProgrammeFinderSection({
   return (
     <section
       id={section.section_key}
-      className="programme-discovery-mosaic relative isolate overflow-hidden border-b border-primary/20 bg-primary py-4 text-white sm:py-6 lg:py-8"
+      className="programme-discovery-mosaic relative isolate overflow-hidden bg-primary py-4 text-white sm:py-6 lg:py-8"
     >
       <PublicImage
         src="/images/landing-page/tc-fore.png"
@@ -863,11 +863,11 @@ export function ProgrammeFinderSection({
         imageClassName="object-cover object-center"
         sizes="100vw"
       />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(2,13,47,.80)_0%,rgba(2,13,47,.68)_42%,rgba(2,13,47,.42)_72%,rgba(2,13,47,.88)_100%)]" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(2,13,47,.80)_0%,rgba(2,13,47,.66)_34%,rgba(2,13,47,.38)_50%,rgba(2,13,47,.08)_72%,rgba(2,13,47,.34)_100%)]" aria-hidden />
       <div className="relative mx-auto max-w-[1680px] px-3 sm:px-5 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="programme-mosaic-grid relative isolate grid overflow-hidden rounded-[1.75rem] bg-[#03133f]/80 shadow-[0_24px_80px_-40px_rgba(0,0,0,.75)] lg:grid-cols-[minmax(0,1fr)_330px]">
+        <div className="programme-mosaic-grid relative isolate grid overflow-hidden rounded-[1.75rem] bg-[#03133f]/55 shadow-[0_24px_80px_-40px_rgba(0,0,0,.75)] lg:grid-cols-[minmax(0,1fr)_330px]">
           <div className="relative min-w-0 lg:col-start-1 lg:row-span-2">
-          <header className="programme-mosaic-intro relative flex min-h-[clamp(360px,31vw,470px)] flex-col justify-start overflow-hidden rounded-t-[1.75rem] p-5 pt-12 text-white sm:p-8 sm:pt-16 lg:rounded-tl-[1.75rem] lg:rounded-tr-none lg:p-12 lg:pt-20">
+          <header className="programme-mosaic-intro relative flex min-h-[clamp(330px,28vw,430px)] flex-col justify-start overflow-hidden rounded-t-[1.75rem] p-5 pt-10 text-white sm:p-8 sm:pt-14 lg:rounded-tl-[1.75rem] lg:rounded-tr-none lg:p-12 lg:pt-16">
             <div className="relative">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-white">
                 Programme finder
