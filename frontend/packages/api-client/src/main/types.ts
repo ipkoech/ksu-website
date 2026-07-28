@@ -1634,6 +1634,7 @@ export interface Programme {
   cluster_subjects?: ClusterSubject[] | null;
   fees_structure?: Record<string, unknown> | null;
   intake_months?: string[] | null;
+  intake_ids?: string[] | null;
   min_students?: number | null;
   max_students?: number | null;
   accreditation_status?: string | null;

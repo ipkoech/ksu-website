@@ -81,6 +81,7 @@ export type HomeCard = {
 export type HomeProgrammeCard = HomeCard & {
   schoolId?: string | null;
   schoolName?: string | null;
+  intakeIds?: string[] | null;
 };
 
 export type HomeSchoolCard = HomeCard & {
@@ -328,7 +329,7 @@ async function getProgrammesList() {
   const response = await programmesApi.list({
     per_page: 100,
     fields:
-      "id,name,slug,level,mode_of_study,duration,department_id,department_name,cover_image_id,display_order",
+      "id,name,slug,level,mode_of_study,duration,department_id,department_name,cover_image_id,display_order,intake_ids",
     include:
       "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title),department(id,name,school_id,school_name,school(id,name,code,slug))",
   });
@@ -563,6 +564,7 @@ function normalizeFeaturedProgrammes(
     schoolName:
       present(programme.department?.school?.name) ??
       present(programme.department?.school_name),
+    intakeIds: programme.intake_ids ?? null,
   }));
 }
 

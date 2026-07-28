@@ -11,6 +11,8 @@ import type { HomeProgrammeCard, HomeSchoolCard } from "@/lib/homepage-data";
 type ProgrammeFinderInteractiveProps = {
   programmes: HomeProgrammeCard[];
   schools: HomeSchoolCard[];
+  intakeProgrammes?: HomeProgrammeCard[];
+  intakeName?: string | null;
 };
 
 const allValue = "all";
@@ -18,6 +20,8 @@ const allValue = "all";
 export function ProgrammeFinderInteractive({
   programmes,
   schools,
+  intakeProgrammes = [],
+  intakeName,
 }: ProgrammeFinderInteractiveProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -134,6 +138,7 @@ export function ProgrammeFinderInteractive({
       <div className="programme-mosaic-search relative z-40 mx-auto mt-0 max-w-5xl bg-transparent px-5 pb-8 sm:px-8 sm:pb-10 lg:px-12 lg:pb-12">
         <form
           action="/academics/programmes"
+          onSubmit={(event) => event.preventDefault()}
           className="relative rounded-[1.25rem] bg-white/95 shadow-[0_18px_45px_-35px_hsl(var(--primary)/.65)] ring-1 ring-white/20"
         >
           <div className="flex min-h-16 items-center gap-3 rounded-[1.25rem] bg-white px-4 sm:px-5">
@@ -144,15 +149,9 @@ export function ProgrammeFinderInteractive({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="What would you like to study?"
-              className="min-w-0 flex-1 bg-transparent text-base font-medium text-foreground outline-none placeholder:text-muted-foreground/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+              className="min-w-0 flex-1 border-0 bg-transparent text-base font-medium text-foreground outline-none ring-0 placeholder:text-muted-foreground/70 focus:border-0 focus:outline-none focus:ring-0"
               autoComplete="off"
             />
-            <button
-              type="submit"
-              className="hidden min-h-10 items-center justify-center rounded-full bg-[#0aa9e8] px-5 text-xs font-bold text-white transition hover:bg-[#0799d4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:inline-flex"
-            >
-              Search
-            </button>
             <button
               type="button"
               onClick={() => setFiltersOpen((current) => !current)}
@@ -198,7 +197,11 @@ export function ProgrammeFinderInteractive({
             />
           </div> : null}
         </form>
-        {!hasActiveFilters ? <PopularSearches schools={schools} onSelect={setQuery} /> : null}
+        {!hasActiveFilters ? (
+          intakeProgrammes.length ? (
+            <IntakeProgrammes programmes={intakeProgrammes} intakeName={intakeName} />
+          ) : <PopularSearches schools={schools} onSelect={setQuery} />
+        ) : null}
       </div>
 
       {hasActiveFilters ? <div className="programme-mosaic-results mx-auto max-w-5xl rounded-t-[1.25rem] px-5 py-7 sm:px-8 lg:px-12 lg:py-9">
@@ -271,6 +274,36 @@ export function ProgrammeFinderInteractive({
         </Link>
       </div> : null}
     </>
+  );
+}
+
+function IntakeProgrammes({
+  programmes,
+  intakeName,
+}: {
+  programmes: HomeProgrammeCard[];
+  intakeName?: string | null;
+}) {
+  return (
+    <div className="mt-5 text-white">
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">
+        Top courses in {intakeName ?? "the active intake"}
+      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+        {programmes.slice(0, 6).map((programme, index) => (
+          <Link
+            key={programme.id ?? programme.href}
+            href={programme.href}
+            className="text-sm font-medium text-white/90 underline decoration-white/35 underline-offset-4 transition hover:text-secondary hover:decoration-secondary"
+          >
+            {programme.title}
+            {index < Math.min(programmes.length, 6) - 1 ? (
+              <span className="ml-4 text-white/35" aria-hidden>│</span>
+            ) : null}
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
 

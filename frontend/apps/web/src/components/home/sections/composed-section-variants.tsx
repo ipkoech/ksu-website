@@ -847,6 +847,10 @@ export function ProgrammeFinderSection({
   const intakes = programmeFinderData?.intakes ?? [];
   const programmes = programmeFinderData?.programmes ?? [];
   const schools = programmeFinderData?.schools ?? [];
+  const activeIntake = intakes.find((intake) => intake.isOpen) ?? intakes[0] ?? null;
+  const intakeProgrammes = activeIntake
+    ? programmes.filter((programme) => programme.intakeIds?.includes(activeIntake.id)).slice(0, 6)
+    : [];
   const hasAdmissionDates = dateItems.length > 0 || intakes.length > 0;
 
   return (
@@ -864,15 +868,12 @@ export function ProgrammeFinderSection({
         sizes="100vw"
       />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(2,13,47,.80)_0%,rgba(2,13,47,.66)_34%,rgba(2,13,47,.38)_50%,rgba(2,13,47,.08)_72%,rgba(2,13,47,.34)_100%)]" aria-hidden />
-      <div className="relative mx-auto max-w-[1680px] px-3 sm:px-5 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="programme-mosaic-grid relative isolate grid overflow-hidden rounded-[1.75rem] bg-[#03133f]/55 shadow-[0_24px_80px_-40px_rgba(0,0,0,.75)] lg:grid-cols-[minmax(0,1fr)_330px]">
+      <div className="relative w-full">
+        <div className="programme-mosaic-grid relative isolate grid overflow-hidden bg-[#03133f]/55 shadow-[0_24px_80px_-40px_rgba(0,0,0,.75)] lg:grid-cols-[minmax(0,1fr)_330px]">
           <div className="relative min-w-0 lg:col-start-1 lg:row-span-2">
-          <header className="programme-mosaic-intro relative flex min-h-[clamp(330px,28vw,430px)] flex-col justify-start overflow-hidden rounded-t-[1.75rem] p-5 pt-10 text-white sm:p-8 sm:pt-14 lg:rounded-tl-[1.75rem] lg:rounded-tr-none lg:p-12 lg:pt-16">
+          <header className="programme-mosaic-intro relative flex min-h-[clamp(330px,28vw,430px)] flex-col justify-start overflow-hidden p-5 pt-10 text-white sm:p-8 sm:pt-14 lg:p-12 lg:pt-16">
             <div className="relative">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-white">
-                Programme finder
-              </p>
-              <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.98] text-white sm:text-5xl lg:text-6xl">
+              <h2 className="mt-0 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.98] text-white sm:text-5xl lg:text-6xl">
                 Find your path
                 <span className="block text-[#39c8ff]">at Kisii University</span>
               </h2>
@@ -883,15 +884,13 @@ export function ProgrammeFinderSection({
                     "Explore our diverse range of undergraduate and postgraduate programmes and take the next step towards your future.")}
               </p>
             </div>
-            <div className="relative mt-6 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.16em] text-white/90">
-              <span className="h-px w-12 bg-secondary" />
-              Search. Discover. Apply.
-            </div>
           </header>
 
           <ProgrammeFinderInteractive
             programmes={programmes}
             schools={schools}
+            intakeProgrammes={intakeProgrammes}
+            intakeName={activeIntake?.name}
           />
           </div>
 
