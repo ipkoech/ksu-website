@@ -53,6 +53,18 @@ class ImportSummary:
     updated: int
 
 
+def bundled_programme_cover_source_dir(school_scope: SchoolCoverScope) -> Path:
+    """Return the repository-bundled approved asset directory for one school."""
+
+    return Path(__file__).with_name("assets") / "programme-covers" / school_scope.slug
+
+
+def bundled_programme_cover_manifest_path(school_scope: SchoolCoverScope) -> Path:
+    """Return the repository-bundled approval manifest for one school."""
+
+    return bundled_programme_cover_source_dir(school_scope) / "manifest.json"
+
+
 def _has_webp_signature(path: Path) -> bool:
     with path.open("rb") as handle:
         header = handle.read(12)
@@ -64,7 +76,15 @@ def validate_cover_assets(
     concepts: Sequence[ProgrammeCoverConcept],
 ) -> dict[str, Path]:
     expected = {concept.filename for concept in concepts}
-    actual = {path.name for path in source_dir.iterdir() if path.is_file()} if source_dir.is_dir() else set()
+    actual = (
+        {
+            path.name
+            for path in source_dir.iterdir()
+            if path.is_file() and path.name != "manifest.json"
+        }
+        if source_dir.is_dir()
+        else set()
+    )
     paths = {name: source_dir / name for name in expected & actual}
     invalid = tuple(name for name, path in paths.items() if not _has_webp_signature(path))
     missing = expected - actual
@@ -330,23 +350,58 @@ async def _run_cli(source_dir: Path, school_code: str, manifest_path: Path) -> I
             raise
 
 
+async def import_all_bundled_programme_covers(
+    school_codes: Sequence[str] | None = None,
+) -> ImportSummary:
+    codes = tuple(school_codes or sorted(SCHOOL_COVER_SCOPES))
+    imported = 0
+    updated = 0
+    for school_code in codes:
+        school_scope = SCHOOL_COVER_SCOPES[school_code]
+        summary = await _run_cli(
+            bundled_programme_cover_source_dir(school_scope),
+            school_code,
+            bundled_programme_cover_manifest_path(school_scope),
+        )
+        imported += summary.imported
+        updated += summary.updated
+    return ImportSummary(imported=imported, updated=updated)
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+    school_group = parser.add_mutually_exclusive_group(required=True)
+    school_group.add_argument(
         "--school",
         choices=tuple(sorted(SCHOOL_COVER_SCOPES)),
-        required=True,
+        help="Import one school. Uses bundled seed assets unless --source/--manifest are supplied.",
     )
-    parser.add_argument("--source", type=Path, required=True)
-    parser.add_argument("--manifest", type=Path, required=True)
+    school_group.add_argument(
+        "--all-schools",
+        action="store_true",
+        help="Import every bundled programme-cover school batch.",
+    )
+    parser.add_argument("--source", type=Path)
+    parser.add_argument("--manifest", type=Path)
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> None:
     args = _parser().parse_args(argv)
-    summary = asyncio.run(
-        _run_cli(args.source.resolve(), args.school, args.manifest.resolve())
-    )
+    if args.all_schools:
+        if args.source is not None or args.manifest is not None:
+            raise SystemExit("--source/--manifest are only valid with --school")
+        summary = asyncio.run(import_all_bundled_programme_covers())
+        print(
+            f"Imported {summary.imported} and updated {summary.updated} "
+            "programme covers across all schools."
+        )
+        return
+
+    school_scope = SCHOOL_COVER_SCOPES[args.school]
+    source_dir = args.source or bundled_programme_cover_source_dir(school_scope)
+    manifest_path = args.manifest or bundled_programme_cover_manifest_path(school_scope)
+    summary = asyncio.run(_run_cli(source_dir.resolve(), args.school, manifest_path.resolve()))
     print(
         f"Imported {summary.imported} and updated {summary.updated} "
         f"{args.school} programme covers."
