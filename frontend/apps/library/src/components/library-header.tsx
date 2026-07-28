@@ -64,6 +64,11 @@ const libraryNavGroups: LibraryNavGroup[] = [
         href: "/hours",
         description: "Opening hours and branch schedules.",
       },
+      {
+        label: "Contact the Library",
+        href: "/contact",
+        description: "Branch contacts and librarian inquiries.",
+      },
     ],
   },
   {
