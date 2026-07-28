@@ -14,6 +14,7 @@ export function PartnershipForm() {
   const [message, setMessage] = useState("");
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = event.currentTarget;
     setState("pending");
     const values = Object.fromEntries(
       new FormData(event.currentTarget).entries(),
@@ -29,7 +30,7 @@ export function PartnershipForm() {
         throw new Error(data.detail ?? "Unable to submit partnership enquiry");
       setMessage(data.message ?? "Thank you. We will be in touch soon.");
       setState("success");
-      event.currentTarget.reset();
+      form.reset();
     } catch (error) {
       setMessage(
         error instanceof Error

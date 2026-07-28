@@ -17,8 +17,7 @@ export default defineConfig({
       testDir: "./apps/web/e2e",
       use: {
         ...devices["Desktop Chrome"],
-        baseURL:
-          process.env.WEB_E2E_BASE_URL ?? "http://localhost:3000",
+        baseURL: process.env.WEB_E2E_BASE_URL ?? "http://localhost:3000",
       },
     },
     {
@@ -37,8 +36,7 @@ export default defineConfig({
       testDir: "./apps/library/e2e",
       use: {
         ...devices["Desktop Chrome"],
-        baseURL:
-          process.env.LIBRARY_E2E_BASE_URL ?? "http://localhost:3003",
+        baseURL: process.env.LIBRARY_E2E_BASE_URL ?? "http://localhost:3003",
       },
     },
     {
@@ -46,8 +44,7 @@ export default defineConfig({
       testDir: "./apps/research/e2e",
       use: {
         ...devices["Desktop Chrome"],
-        baseURL:
-          process.env.RESEARCH_E2E_BASE_URL ?? "http://localhost:3002",
+        baseURL: process.env.RESEARCH_E2E_BASE_URL ?? "http://localhost:3002",
       },
     },
     {
@@ -55,6 +52,14 @@ export default defineConfig({
       testDir: "./apps/heri-africa/e2e",
       use: {
         ...devices["Desktop Chrome"],
+        baseURL: process.env.HERI_E2E_BASE_URL ?? "http://localhost:3004",
+      },
+    },
+    {
+      name: "heri-mobile",
+      testDir: "./apps/heri-africa/e2e",
+      use: {
+        ...devices["Pixel 5"],
         baseURL: process.env.HERI_E2E_BASE_URL ?? "http://localhost:3004",
       },
     },

@@ -6,6 +6,15 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "../../../components/site-shell";
 import { getEvents, getNewsDetail, getOpportunities } from "../../../lib/api";
 
+const fallbackStories = [
+  {
+    slug: "reading-in-kisii",
+    title: "New study explores early grade reading",
+    excerpt: "Evidence for better classroom practice.",
+    body: "HERI Africa researchers are working with communities and schools to strengthen early grade reading.",
+  },
+];
+
 export const revalidate = 300;
 
 export default async function InsightDetailPage({
@@ -24,6 +33,18 @@ export default async function InsightDetailPage({
         image={news.featured_image_url}
         date={news.published_at}
         body={news.body}
+      />
+    );
+  }
+  const fallback = fallbackStories.find((item) => item.slug === slug);
+  if (fallback) {
+    return (
+      <InsightLayout
+        eyebrow="News & Insights"
+        title={fallback.title}
+        excerpt={fallback.excerpt}
+        body={fallback.body}
+        date={null}
       />
     );
   }
