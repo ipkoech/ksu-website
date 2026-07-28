@@ -221,6 +221,10 @@ class LibraryGuestSession(Base):
     )
 
     session_hash: Mapped[str] = mapped_column(sa.String(128), nullable=False)
+    context_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PGUUID(as_uuid=True), nullable=True, index=True
+    )
+    page_context: Mapped[Optional[dict]] = mapped_column(sa.JSON, nullable=True)
     preview_messages: Mapped[list[dict]] = mapped_column(
         sa.JSON, nullable=False, default=list
     )

@@ -83,6 +83,16 @@ async def request_verification(
     )
 
 
+@router.post("/verification/resend")
+async def resend_verification(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    data: LibraryAssistantVerificationRequest,
+    guest_token: str | None = Cookie(None, alias=identity.GUEST_SESSION_COOKIE),
+):
+    return await request_verification(request, db, data, guest_token)
+
+
 @router.post("/verification/confirm")
 async def confirm_verification(
     response: Response,

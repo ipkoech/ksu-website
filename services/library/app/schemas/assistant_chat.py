@@ -48,3 +48,27 @@ class LibraryAssistantAnswer(BaseModel):
     assistant_message_id: uuid.UUID | None = None
     provider: str
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class LibraryAssistantMessageOut(BaseModel):
+    id: uuid.UUID
+    conversation_id: uuid.UUID
+    sender_type: str
+    content: str
+    citations: list[LibraryAssistantCitation] = Field(default_factory=list)
+    metadata: dict[str, Any] | None = None
+    sender_person_id: uuid.UUID | None = None
+    created_at: Any
+
+
+class LibraryAssistantConversationOut(BaseModel):
+    id: uuid.UUID
+    context_id: uuid.UUID | None = None
+    verified_email: str
+    title: str | None = None
+    status: str
+    assigned_to_person_id: uuid.UUID | None = None
+    last_message_at: Any = None
+    created_at: Any
+    updated_at: Any
+    messages: list[LibraryAssistantMessageOut] = Field(default_factory=list)

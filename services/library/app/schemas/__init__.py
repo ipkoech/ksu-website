@@ -99,6 +99,8 @@ from .assistant_chat import (
     LibraryAssistantAnswerRequest,
     LibraryAssistantCitation,
     LibraryAssistantPageContext,
+    LibraryAssistantConversationOut,
+    LibraryAssistantMessageOut,
 )
 from .assistant_identity import (
     LibraryAssistantVerificationConfirm,
@@ -202,6 +204,8 @@ __all__ = [
     "LibraryAssistantAnswerRequest",
     "LibraryAssistantCitation",
     "LibraryAssistantPageContext",
+    "LibraryAssistantConversationOut",
+    "LibraryAssistantMessageOut",
     "LibraryAssistantVerificationConfirm",
     "LibraryAssistantVerificationRequest",
     "LibraryAssistantVerificationResponse",

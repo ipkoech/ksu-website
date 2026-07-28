@@ -317,6 +317,71 @@ export interface LibraryAssistantContextPayload {
   sources?: LibraryAssistantSourcePayload[];
 }
 
+export interface LibraryAssistantPageContext {
+  url?: string | null;
+  entity_type?: string | null;
+  entity_id?: string | null;
+  title?: string | null;
+}
+
+export interface LibraryAssistantAnswerRequest {
+  message: string;
+  context_id?: string | null;
+  conversation_id?: string | null;
+  page_context?: LibraryAssistantPageContext | null;
+}
+
+export interface LibraryAssistantCitation {
+  source_type: string;
+  source_id: string;
+  title: string;
+  url?: string | null;
+  snippet?: string | null;
+}
+
+export interface LibraryAssistantAnswer {
+  answer: string;
+  citations: LibraryAssistantCitation[];
+  suggested_questions: string[];
+  needs_verification: boolean;
+  should_escalate: boolean;
+  conversation_id?: string | null;
+  user_message_id?: string | null;
+  assistant_message_id?: string | null;
+  provider: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface LibraryAssistantMessage {
+  id: string;
+  conversation_id: string;
+  sender_type: "user" | "assistant" | "librarian" | "system" | string;
+  content: string;
+  citations: LibraryAssistantCitation[];
+  metadata?: Record<string, unknown> | null;
+  sender_person_id?: string | null;
+  created_at: string;
+}
+
+export interface LibraryAssistantConversation {
+  id: string;
+  context_id?: string | null;
+  verified_email: string;
+  title?: string | null;
+  status: string;
+  assigned_to_person_id?: string | null;
+  last_message_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  messages?: LibraryAssistantMessage[];
+}
+
+export interface LibraryAssistantVerificationResponse {
+  accepted: boolean;
+  conversation_id?: string | null;
+  message: string;
+}
+
 export interface LibraryServiceRecord {
   id: string;
   library_id: string;
@@ -752,7 +817,55 @@ export const libraryServiceApi = {
       libraryApi.post<{ data: LibraryAssistantContext }>(
         `/api/v1/library/assistant-contexts/${id}/archive`,
         {},
+    ),
+  },
+  assistant: {
+    createGuestSession: () =>
+      libraryApi.post<{ data: { guest_session_id: string; expires_at: string } }>(
+        "/api/v1/library/assistant/guest/session",
+        {},
       ),
+    answer: (data: LibraryAssistantAnswerRequest) =>
+      libraryApi.post<{ data: LibraryAssistantAnswer }>(
+        "/api/v1/library/assistant/answer",
+        data,
+      ),
+    verification: {
+      request: (email: string) =>
+        libraryApi.post<{ data: LibraryAssistantVerificationResponse }>(
+          "/api/v1/library/assistant/verification/request",
+          { email },
+        ),
+      resend: (email: string) =>
+        libraryApi.post<{ data: LibraryAssistantVerificationResponse }>(
+          "/api/v1/library/assistant/verification/resend",
+          { email },
+        ),
+      confirm: (data: { token?: string; code?: string }) =>
+        libraryApi.post<{ data: LibraryAssistantVerificationResponse }>(
+          "/api/v1/library/assistant/verification/confirm",
+          data,
+        ),
+    },
+    conversations: {
+      list: () =>
+        libraryApi.get<{ data: LibraryAssistantConversation[] }>(
+          "/api/v1/library/assistant/conversations",
+        ),
+      get: (id: string) =>
+        libraryApi.get<{ data: LibraryAssistantConversation }>(
+          `/api/v1/library/assistant/conversations/${id}`,
+        ),
+      messages: (id: string) =>
+        libraryApi.get<{ data: LibraryAssistantMessage[] }>(
+          `/api/v1/library/assistant/conversations/${id}/messages`,
+        ),
+      continue: (id: string, data: LibraryAssistantAnswerRequest) =>
+        libraryApi.post<{ data: LibraryAssistantAnswer }>(
+          `/api/v1/library/assistant/conversations/${id}/continue`,
+          data,
+        ),
+    },
   },
   resources: {
     list: (

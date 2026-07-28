@@ -203,6 +203,8 @@ async def confirm_verification(
 
     continuation_token = create_guest_token()
     conversation = LibraryConversation(
+        context_id=guest_session.context_id,
+        page_context=guest_session.page_context,
         guest_session_id=guest_session.id,
         verified_email=verification.email,
         status="active",
