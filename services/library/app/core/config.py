@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     LOG_FORMAT: Literal["json", "text"] = "json"
     LOG_DIR: str = "/app/logs"
 
+    ASK_AI_PROVIDER: Literal["deterministic", "gemini"] = "deterministic"
+    GEMINI_API_KEY: str | None = None
+    GOOGLE_API_KEY: str | None = None
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_TIMEOUT_SECONDS: float = 30.0
+
     CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
         "http://localhost:3001",

@@ -93,6 +93,13 @@ from .assistant import (
     LibraryAssistantSourceCreate,
     LibraryAssistantSourceOut,
 )
+from .assistant_chat import (
+    LibraryAssistantAnswer,
+    LibraryAssistantAnswerDraft,
+    LibraryAssistantAnswerRequest,
+    LibraryAssistantCitation,
+    LibraryAssistantPageContext,
+)
 
 __all__ = [
     # library
@@ -185,4 +192,9 @@ __all__ = [
     "LibraryAssistantContextPublicOut",
     "LibraryAssistantSourceCreate",
     "LibraryAssistantSourceOut",
+    "LibraryAssistantAnswer",
+    "LibraryAssistantAnswerDraft",
+    "LibraryAssistantAnswerRequest",
+    "LibraryAssistantCitation",
+    "LibraryAssistantPageContext",
 ]
