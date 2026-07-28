@@ -53,6 +53,52 @@ const ambition = [
     "Turn research into action for transformative change.",
   ],
 ] as const;
+const fallbackTeam = [
+  {
+    id: "chair",
+    name: "Prof. [Chair Holder Name]",
+    role: "Chair, Language Education Research Chair",
+    photo_url: "/images/backgrounds/about-hero.jpg",
+  },
+  {
+    id: "deputy-research",
+    name: "Dr. [Name]",
+    role: "Deputy Chair (Research)",
+    photo_url: "/images/HERIAfricaLaunch.jpg",
+  },
+  {
+    id: "deputy-policy",
+    name: "Dr. [Name]",
+    role: "Deputy Chair (Policy & Engagement)",
+    photo_url: "/images/landing-page/why-kisii/pathway-2.jpg",
+  },
+  {
+    id: "fellow",
+    name: "Dr. [Name]",
+    role: "Research Fellow",
+    photo_url: "/images/landing-page/why-kisii/bg-3.jpg",
+  },
+] as const;
+const fallbackStories = [
+  {
+    id: "story-1",
+    slug: "early-grade-reading",
+    title: "New Study Explores Early Grade Reading",
+    excerpt: "Evidence that informs language education practice.",
+  },
+  {
+    id: "story-2",
+    slug: "policy-roundtable",
+    title: "Policy Roundtable on Language-in-Education",
+    excerpt: "Researchers and policymakers shaping better systems.",
+  },
+  {
+    id: "story-3",
+    slug: "community-voices",
+    title: "Community Voices Shaping Literacy Solutions",
+    excerpt: "Local knowledge driving practical change.",
+  },
+] as const;
 
 export default async function HeriHomePage() {
   const [site, news, team, partners, events] = await Promise.allSettled([
@@ -63,8 +109,14 @@ export default async function HeriHomePage() {
     getEvents(),
   ]);
   const siteData = site.status === "fulfilled" ? site.value : null;
-  const newsData = news.status === "fulfilled" ? news.value.slice(0, 3) : [];
-  const teamData = team.status === "fulfilled" ? team.value.slice(0, 4) : [];
+  const newsData =
+    news.status === "fulfilled" && news.value.length
+      ? news.value.slice(0, 3)
+      : fallbackStories;
+  const teamData =
+    team.status === "fulfilled" && team.value.length
+      ? team.value.slice(0, 4)
+      : fallbackTeam;
   const partnerData =
     partners.status === "fulfilled" ? partners.value.slice(0, 6) : [];
   const eventData =
