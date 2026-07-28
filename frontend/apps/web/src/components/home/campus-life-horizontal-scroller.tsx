@@ -32,6 +32,8 @@ export function CampusLifeHorizontalScroller({
       ) as HTMLElement | null;
       if (!section || !desktopQuery.matches || reduceMotionQuery.matches) {
         currentRail.style.transform = "translate3d(0px, 0, 0)";
+        currentTrack.style.setProperty("--campus-progress", "0");
+        section?.style.setProperty("--campus-progress", "0");
         if (section) section.style.minHeight = "";
         return;
       }
@@ -59,6 +61,8 @@ export function CampusLifeHorizontalScroller({
       const translateX = -progress * maxTranslate;
 
       currentRail.style.transform = `translate3d(${translateX}px, 0, 0)`;
+      currentTrack.style.setProperty("--campus-progress", String(progress));
+      section.style.setProperty("--campus-progress", String(progress));
     }
 
     function requestUpdate() {

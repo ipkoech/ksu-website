@@ -1052,19 +1052,19 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="campus-life-scroll-scene relative isolate border-b border-border bg-[linear-gradient(180deg,rgba(255,255,255,.84),hsl(var(--surface-subtle)/.86))] py-10 backdrop-blur-[1px] lg:min-h-[150vh] lg:py-0"
+      className="campus-life-scroll-scene relative isolate overflow-hidden bg-[linear-gradient(180deg,#fff_0%,hsl(var(--surface-subtle)/.92)_100%)] py-12 lg:min-h-[150vh] lg:py-0"
     >
-      <div className="absolute inset-y-0 right-0 -z-10 hidden w-1/2 bg-[linear-gradient(90deg,transparent,hsl(var(--accent)/.82))] lg:block" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 -z-10 hidden w-[42%] bg-[radial-gradient(circle_at_65%_48%,hsl(var(--primary)/.12),transparent_68%)] lg:block" />
       <div className="campus-life-sticky-frame mx-auto max-w-[1680px] px-4 sm:px-6 lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px))] lg:max-w-none lg:items-center lg:px-0 xl:px-0 2xl:px-0">
         <CampusLifeHorizontalScroller>
-          <div className="lg:flex lg:w-max lg:items-stretch lg:gap-0 lg:pr-[8vw]">
-            <div className="campus-life-editorial lg:w-screen lg:shrink-0 lg:snap-start lg:px-8 xl:px-10 2xl:px-12">
+          <div className="lg:flex lg:w-max lg:items-stretch lg:gap-6 lg:pr-[10vw]">
+            <div className="campus-life-editorial lg:w-[min(100vw,1320px)] lg:shrink-0 lg:snap-start lg:px-8 xl:px-12">
               <div className="grid gap-7 lg:grid-cols-[minmax(0,0.58fr)_minmax(360px,0.42fr)] lg:items-stretch">
                 <div className="flex flex-col justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-6 motion-safe:delay-150">
                   <div className="max-w-xl">
-                    <SectionEyebrow value={section.subtitle ?? "Campus life"} />
+                    <div className="flex items-center gap-3"><SectionEyebrow value={section.subtitle ?? "Life around studies"} /><span className="hidden text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground sm:inline">Scroll to explore</span></div>
                     <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl lg:text-5xl">
-                      See the rhythm of student life at KSU.
+                      Find your people. Build your rhythm.
                     </h2>
                     <SectionBody
                       value={
@@ -1082,11 +1082,11 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
                       className="mt-7"
                     />
                   </div>
-                  <div className="student-life-rhythm mt-8 divide-y divide-primary/10 border-y border-primary/15">
+                  <div className="student-life-rhythm mt-8 space-y-1">
                     {rhythm.map((item, index) => (
                       <div
                         key={item.label}
-                        className="grid gap-3 py-4 sm:grid-cols-[86px_minmax(0,1fr)]"
+                        className="group grid gap-3 rounded-2xl px-3 py-4 transition hover:bg-white sm:grid-cols-[86px_minmax(0,1fr)]"
                       >
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-secondary">
@@ -1116,7 +1116,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
                 <CampusMosaicFeature item={feature} section={section} />
               </div>
             </div>
-            <div className="student-life-lanes mt-7 grid gap-4 sm:grid-cols-2 lg:mt-0 lg:flex lg:w-max lg:items-stretch lg:gap-0">
+            <div className="student-life-lanes mt-8 grid gap-4 sm:grid-cols-2 lg:mt-0 lg:flex lg:w-max lg:items-stretch lg:gap-5">
               {lanes.map((lane, index) => (
                 <CampusLifeLane key={lane.title} lane={lane} index={index} />
               ))}
@@ -1124,6 +1124,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
           </div>
         </CampusLifeHorizontalScroller>
       </div>
+      <div className="pointer-events-none absolute inset-x-6 bottom-5 hidden items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground lg:flex"><span>Scroll</span><span className="relative h-px flex-1 overflow-hidden bg-primary/15"><span className="absolute inset-y-0 left-0 w-[calc(var(--campus-progress,0)*100%)] bg-secondary transition-[width] duration-100" /></span><span>Explore life around studies</span></div>
     </section>
   );
 }
@@ -1136,7 +1137,7 @@ function CampusMosaicFeature({
   section: HomepageSection;
 }) {
   const body = (
-    <article className="group relative min-h-[340px] overflow-hidden bg-primary text-white shadow-2xl shadow-primary/15 sm:min-h-[430px] lg:min-h-[560px] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-6">
+    <article className="group relative min-h-[340px] overflow-hidden rounded-[1.75rem] bg-primary text-white shadow-2xl shadow-primary/15 sm:min-h-[430px] lg:min-h-[560px] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-6">
       <ImageCurtainReveal className="absolute inset-0 h-full" direction="down">
         <PublicImage
           src={itemImageUrl(item) ?? mediaUrl(heroImage(section))}
@@ -1190,7 +1191,7 @@ function CampusLifeLane({
   const Icon = lane.icon;
   const body = (
     <article
-      className="group relative min-h-[230px] overflow-hidden bg-primary text-white transition duration-300 hover:bg-primary/95 sm:min-h-[260px] lg:min-h-[560px] lg:w-[min(430px,58vw)] lg:snap-start lg:border-l lg:border-white/15 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
+      className="group relative min-h-[230px] overflow-hidden rounded-[1.75rem] bg-primary text-white transition duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/20 sm:min-h-[260px] lg:min-h-[560px] lg:w-[min(390px,34vw)] lg:snap-start motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
       style={{ animationDelay: `${Math.min(index, 5) * 80}ms` }}
     >
       <PublicImage
@@ -1307,6 +1308,16 @@ function campusLifeLanes(items: HomepageSectionItem[]): CampusLifeLaneData[] {
     const source = sourceItems[index];
     return {
       ...lane,
+      title: source?.title ?? lane.title,
+      body: source?.body_text ?? lane.body,
+      ctaLabel: source?.cta_label ?? lane.ctaLabel,
+      href: source?.cta_url ?? lane.href,
+      audience:
+        source?.audience === "prospective"
+          ? "For prospective students"
+          : source?.audience === "current_student"
+            ? "For current students"
+            : lane.audience,
       imageUrl:
         itemImageUrl(source) ?? fallbackImages[index % fallbackImages.length],
       imageAlt: itemContentText(source, "imageAlt"),

@@ -76,6 +76,12 @@ export type HomepageSectionItem = {
   video_provider?: string | null;
   video_url?: string | null;
   video_duration_seconds?: number | null;
+  audience?: "all" | "prospective" | "current_student" | "visitor_partner" | null;
+  source_type?: string | null;
+  source_id?: string | null;
+  is_featured?: boolean;
+  poster_media_id?: string | null;
+  transcript?: string | null;
   display_order?: number;
   is_enabled?: boolean;
   content_enriched?: {
