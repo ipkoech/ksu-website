@@ -258,6 +258,65 @@ export interface LibraryPolicyPage {
   updated_at?: string;
 }
 
+export type LibraryAssistantContextStatus = "draft" | "active" | "archived";
+
+export interface LibraryAssistantSource {
+  id: string;
+  context_id: string;
+  source_type: string;
+  source_id: string;
+  title: string;
+  public_url?: string | null;
+  sort_order?: number;
+  is_approved: boolean;
+  approved_by_person_id?: string | null;
+  approved_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LibraryAssistantContext {
+  id: string;
+  library_id?: string | null;
+  name: string;
+  slug: string;
+  description?: string | null;
+  audience?: string | null;
+  instructions?: string | null;
+  allowed_source_types?: string[];
+  suggested_prompts?: Array<Record<string, unknown>>;
+  escalation_guidance?: string | null;
+  status?: LibraryAssistantContextStatus;
+  is_public?: boolean;
+  published_at?: string | null;
+  sort_order?: number;
+  sources?: LibraryAssistantSource[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LibraryAssistantSourcePayload {
+  source_type: string;
+  source_id: string;
+  title: string;
+  public_url?: string | null;
+  sort_order?: number;
+}
+
+export interface LibraryAssistantContextPayload {
+  library_id?: string | null;
+  name: string;
+  slug: string;
+  description?: string | null;
+  audience?: string | null;
+  instructions: string;
+  allowed_source_types?: string[];
+  suggested_prompts?: Array<Record<string, unknown>>;
+  escalation_guidance?: string | null;
+  sort_order?: number;
+  sources?: LibraryAssistantSourcePayload[];
+}
+
 export interface LibraryServiceRecord {
   id: string;
   library_id: string;
@@ -659,6 +718,42 @@ export const libraryServiceApi = {
       "/api/v1/library/search",
       params,
     ),
+  assistantContexts: {
+    publicList: (params?: ListParams<{ library_id?: string }>) =>
+      libraryApi.get<{ data: LibraryAssistantContext[] }>(
+        "/api/v1/library/assistant-contexts/public",
+        params,
+      ),
+    list: (params?: ListParams<{ library_id?: string; status?: string }>) =>
+      libraryApi.get<{ data: LibraryAssistantContext[] }>(
+        "/api/v1/library/assistant-contexts/",
+        params,
+      ),
+    get: (id: string) =>
+      libraryApi.get<{ data: LibraryAssistantContext }>(
+        `/api/v1/library/assistant-contexts/${id}`,
+      ),
+    create: (data: LibraryAssistantContextPayload) =>
+      libraryApi.post<{ data: LibraryAssistantContext }>(
+        "/api/v1/library/assistant-contexts/",
+        data,
+      ),
+    update: (id: string, data: Partial<LibraryAssistantContextPayload>) =>
+      libraryApi.patch<{ data: LibraryAssistantContext }>(
+        `/api/v1/library/assistant-contexts/${id}`,
+        data,
+      ),
+    publish: (id: string) =>
+      libraryApi.post<{ data: LibraryAssistantContext }>(
+        `/api/v1/library/assistant-contexts/${id}/publish`,
+        {},
+      ),
+    archive: (id: string) =>
+      libraryApi.post<{ data: LibraryAssistantContext }>(
+        `/api/v1/library/assistant-contexts/${id}/archive`,
+        {},
+      ),
+  },
   resources: {
     list: (
       params: ListParams<{

@@ -11,6 +11,7 @@ from .staff import router as staff_router
 from .stats import router as stats_router
 from .electronic import router as electronic_router
 from .engagement import router as engagement_router
+from .assistant_contexts import router as assistant_contexts_router
 
 router = APIRouter()
 router.include_router(health_router)
@@ -22,3 +23,4 @@ router.include_router(search_router)
 router.include_router(staff_router)
 router.include_router(electronic_router)
 router.include_router(engagement_router)
+router.include_router(assistant_contexts_router)

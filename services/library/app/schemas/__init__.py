@@ -85,6 +85,14 @@ from .engagement import (
 )
 from .stats import PublicStatItem, PublicStatsResponse
 from .search import LibrarySearchResponse, LibrarySearchResult
+from .assistant import (
+    LibraryAssistantContextCreate,
+    LibraryAssistantContextOut,
+    LibraryAssistantContextPublicOut,
+    LibraryAssistantContextUpdate,
+    LibraryAssistantSourceCreate,
+    LibraryAssistantSourceOut,
+)
 
 __all__ = [
     # library
@@ -170,4 +178,11 @@ __all__ = [
     "PublicStatsResponse",
     "LibrarySearchResult",
     "LibrarySearchResponse",
+    # assistant
+    "LibraryAssistantContextCreate",
+    "LibraryAssistantContextUpdate",
+    "LibraryAssistantContextOut",
+    "LibraryAssistantContextPublicOut",
+    "LibraryAssistantSourceCreate",
+    "LibraryAssistantSourceOut",
 ]
