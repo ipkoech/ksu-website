@@ -26,6 +26,18 @@ export const PAGE_SECTION_LAYOUT_VARIANTS = [
   "facts_strip",
 ] as const;
 export const SECTION_ITEM_TYPES = ["text", "card", "stat", "cta", "media", "video"] as const;
+export const LIFE_AROUND_STUDIES_AUDIENCES = ["all", "prospective", "current_student", "visitor_partner"] as const;
+export const LIFE_AROUND_STUDIES_SOURCE_TYPES = [
+  "manual",
+  "club",
+  "club_activity",
+  "sport",
+  "accommodation",
+  "arts",
+  "governance",
+  "story",
+  "event",
+] as const;
 export const PARTNERSHIP_CTA_SOURCES = [
   "manual",
   "partner_website",
@@ -58,6 +70,8 @@ export type PartnershipCtaSource = (typeof PARTNERSHIP_CTA_SOURCES)[number];
 export type PageSectionWorkflowAction = (typeof PAGE_SECTION_WORKFLOW_ACTIONS)[number];
 export type PartnershipSpotlightWorkflowAction = PageSectionWorkflowAction;
 export type PageCmsMediaRole = (typeof PAGE_CMS_MEDIA_ROLES)[number];
+export type LifeAroundStudiesAudience = (typeof LIFE_AROUND_STUDIES_AUDIENCES)[number];
+export type LifeAroundStudiesSourceType = (typeof LIFE_AROUND_STUDIES_SOURCE_TYPES)[number];
 
 export interface SectionItem {
   id: string;
@@ -89,6 +103,12 @@ export interface SectionItem {
   video_provider?: string | null;
   video_url?: string | null;
   video_duration_seconds?: number | null;
+  audience?: LifeAroundStudiesAudience;
+  source_type?: LifeAroundStudiesSourceType | null;
+  source_id?: string | null;
+  is_featured?: boolean;
+  poster_media_id?: string | null;
+  transcript?: string | null;
   display_order: number;
   is_enabled: boolean;
   created_at?: string;
@@ -110,6 +130,12 @@ export interface SectionItemPayload {
   video_provider?: string | null;
   video_url?: string | null;
   video_duration_seconds?: number | null;
+  audience?: LifeAroundStudiesAudience;
+  source_type?: LifeAroundStudiesSourceType | null;
+  source_id?: string | null;
+  is_featured?: boolean;
+  poster_media_id?: string | null;
+  transcript?: string | null;
   display_order?: number;
   is_enabled?: boolean;
 }

@@ -36,6 +36,18 @@ PAGE_SECTION_LAYOUT_VARIANTS = (
     "facts_strip",
 )
 SECTION_ITEM_TYPES = ("text", "card", "stat", "cta", "media", "video")
+LIFE_AROUND_STUDIES_AUDIENCES = ("all", "prospective", "current_student", "visitor_partner")
+LIFE_AROUND_STUDIES_SOURCE_TYPES = (
+    "manual",
+    "club",
+    "club_activity",
+    "sport",
+    "accommodation",
+    "arts",
+    "governance",
+    "story",
+    "event",
+)
 PARTNERSHIP_CTA_SOURCES = ("manual", "partner_website", "generated_detail_page")
 
 
@@ -175,7 +187,17 @@ class SectionItem(Base):
             "item_type IN ('text', 'card', 'stat', 'cta', 'media', 'video')",
             name="ck_section_items_item_type",
         ),
+        sa.CheckConstraint(
+            "audience IN ('all', 'prospective', 'current_student', 'visitor_partner')",
+            name="ck_section_items_audience",
+        ),
+        sa.CheckConstraint(
+            "source_type IS NULL OR source_type IN ('manual', 'club', 'club_activity', 'sport', 'accommodation', 'arts', 'governance', 'story', 'event')",
+            name="ck_section_items_source_type",
+        ),
         sa.Index("ix_section_items_section_order", "page_section_id", "display_order"),
+        sa.Index("ix_section_items_source", "source_type", "source_id"),
+        sa.Index("ix_section_items_featured_audience", "is_featured", "audience", "is_enabled"),
     )
 
     page_section_id: Mapped[uuid.UUID] = mapped_column(
@@ -195,6 +217,14 @@ class SectionItem(Base):
     video_provider: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True)
     video_url: Mapped[Optional[str]] = mapped_column(sa.String(1024), nullable=True)
     video_duration_seconds: Mapped[Optional[int]] = mapped_column(sa.Integer, nullable=True)
+    audience: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="all", index=True)
+    source_type: Mapped[Optional[str]] = mapped_column(sa.String(32), nullable=True)
+    source_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True)
+    is_featured: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"), index=True)
+    poster_media_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    transcript: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
     display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
     is_enabled: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
 

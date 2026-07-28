@@ -198,8 +198,8 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
         "section_key": "campus-life",
         "layout_variant": "media_mosaic",
         "display_order": 90,
-        "title": "Experience More. Become More.",
-        "subtitle": "Campus life",
+        "title": "Life Around Studies",
+        "subtitle": "Life around studies",
         "description": "From sport to innovation, clubs and culture, campus life creates room to grow.",
         "settings": {"cta": {"label": "Explore campus life", "href": "/campus-life"}},
         "items": (
