@@ -69,6 +69,7 @@ const apiBase =
 async function get<T>(path: string): Promise<T> {
   const response = await fetch(`${apiBase}${path}`, {
     next: { revalidate: 300 },
+    signal: AbortSignal.timeout(5000),
   });
   if (!response.ok)
     throw new Error(`HERI API request failed: ${response.status}`);
