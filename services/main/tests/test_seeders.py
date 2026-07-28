@@ -30,6 +30,7 @@ from app.seeders.seed_portal_users import (
 )
 from app.seeders.seed_rbac import RECONCILED_ROLE_NAMES, ROLE_SPECS
 from app.seeders.seed_programmes import programme_code
+from app.seeders import seed_programmes as seed_programmes_module
 from app.seeders.seed_public_records import CLUB_SPECS, CONTACT_SPECS, DOWNLOAD_SPECS, FAQ_SPECS
 from app.seeders.seed_public_records import _merged_download_specs
 from app.seeders.seed_staff_profiles import LIVE_STAFF_PROFILE_SPECS, SCHOOL_DEAN_PROFILE_KEYS
@@ -57,6 +58,28 @@ class SeederDataTests(unittest.TestCase):
             self.assertIn("https://kisiiuniversity.ac.ke/blog/", spec["source_url"])
             self.assertIn("https://kisiiuniversity.ac.ke/storage/public/resources/", spec["source_image_url"])
             self.assertTrue((asset_root / spec["asset_filename"]).exists())
+
+    def test_bachelor_of_laws_catalogue_record_is_programme_detail_ready(self):
+        programme = next(
+            spec for spec in BROCHURE_PROGRAMMES if spec["name"] == "Bachelor of Laws"
+        )
+
+        self.assertEqual("LLB", programme["code"])
+        self.assertEqual("accredited", programme["accreditation_status"])
+        self.assertIn("Council of Legal Education", programme["accrediting_body"])
+        self.assertIn("https://cle.or.ke/", programme["accrediting_body"])
+        self.assertIn("constitutional", programme["about"].lower())
+        self.assertIn("legal research", programme["objectives"].lower())
+        self.assertIn("advocate", programme["career_prospects"].lower())
+        self.assertIn("contract", programme["curriculum_overview"].lower())
+        self.assertEqual(["September"], list(programme["intake_months"]))
+
+    def test_seed_programmes_prefers_catalogue_code_and_content_over_generic_copy(self):
+        source = inspect.getsource(seed_programmes_module.seed_programmes)
+
+        self.assertIn('code=str(spec.get("code") or programme_code', source)
+        self.assertIn('about=spec.get("about") or', source)
+        self.assertIn('curriculum_overview=spec.get("curriculum_overview") or', source)
 
     def test_live_site_publication_snapshot_contains_current_official_records(self):
         news_by_title = {spec["title"]: spec for spec in LIVE_SITE_NEWS_ITEMS}

@@ -213,6 +213,14 @@ function accreditationLabel(value?: string | null) {
   );
 }
 
+function parseLinkedLabel(value?: string | null) {
+  const text = present(value);
+  if (!text) return null;
+  const match = text.match(/^(.*?)\s*\((https?:\/\/[^)]+)\)\s*$/);
+  if (!match) return { label: text, href: null };
+  return { label: match[1].trim() || match[2], href: match[2] };
+}
+
 function SectionKicker({ children }: { children: string }) {
   return (
     <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
@@ -517,12 +525,15 @@ function ProgrammeDetails({
   departmentName,
   departmentHref,
   accreditation,
+  accreditingBody,
 }: {
   code: string;
   departmentName: string;
   departmentHref?: string;
   accreditation: string;
+  accreditingBody?: string | null;
 }) {
+  const body = parseLinkedLabel(accreditingBody);
   const badgeClass =
     accreditation === "Accredited"
       ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
@@ -552,6 +563,22 @@ function ProgrammeDetails({
             {accreditation}
           </span>
         </DetailRow>
+        {body ? (
+          <DetailRow label="Accrediting body">
+            {body.href ? (
+              <a
+                href={body.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                {body.label}
+              </a>
+            ) : (
+              body.label
+            )}
+          </DetailRow>
+        ) : null}
       </dl>
     </section>
   );
@@ -735,6 +762,7 @@ export function ProgrammeDetailPage({ data }: { data: ProgrammeDetailData }) {
                 accreditation={accreditationLabel(
                   programme?.accreditation_status,
                 )}
+                accreditingBody={programme?.accrediting_body}
               />
               <ApplicationSupport />
             </aside>
