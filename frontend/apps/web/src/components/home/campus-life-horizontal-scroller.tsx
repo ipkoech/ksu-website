@@ -99,7 +99,7 @@ export function CampusLifeHorizontalScroller({
       ref={trackRef}
       className="campus-life-horizontal-track overflow-visible lg:overflow-hidden"
       tabIndex={0}
-      aria-label="Campus life audience stories"
+      aria-label="Life around studies stories"
     >
       <div
         ref={railRef}

@@ -1055,17 +1055,17 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="campus-life-scroll-scene relative isolate overflow-hidden bg-[linear-gradient(180deg,#fff_0%,hsl(var(--surface-subtle)/.92)_100%)] py-12 lg:min-h-[150vh] lg:py-0"
+      className="campus-life-scroll-scene relative isolate overflow-hidden bg-[linear-gradient(180deg,#fff_0%,hsl(var(--surface-subtle)/.92)_100%)] py-10 lg:py-0"
     >
       <div className="pointer-events-none absolute inset-y-0 right-0 -z-10 hidden w-[42%] bg-[radial-gradient(circle_at_65%_48%,hsl(var(--primary)/.12),transparent_68%)] lg:block" />
       <div className="campus-life-sticky-frame mx-auto max-w-[1680px] px-4 sm:px-6 lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px))] lg:max-w-none lg:items-center lg:px-0 xl:px-0 2xl:px-0">
         <CampusLifeHorizontalScroller>
-          <div className="lg:flex lg:w-max lg:items-stretch lg:gap-6 lg:pr-[10vw]">
+          <div className="lg:flex lg:w-max lg:items-stretch lg:gap-6">
             <div className="campus-life-editorial lg:w-[min(100vw,1320px)] lg:shrink-0 lg:snap-start lg:px-8 xl:px-12">
               <div className="grid gap-7 lg:grid-cols-[minmax(0,0.58fr)_minmax(360px,0.42fr)] lg:items-stretch">
                 <div className="flex flex-col justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-6 motion-safe:delay-150">
                   <div className="max-w-xl">
-                    <div className="flex items-center gap-3"><SectionEyebrow value={section.subtitle ?? "Life around studies"} /><span className="hidden text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground sm:inline">Scroll to explore</span></div>
+                    <div className="flex items-center gap-3"><SectionEyebrow value="Life around studies" /><span className="hidden text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground sm:inline">Scroll to explore</span></div>
                     <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl lg:text-5xl">
                       Find your people. Build your rhythm.
                     </h2>
@@ -1159,7 +1159,7 @@ function CampusMosaicFeature({
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,23,57,.04),rgba(3,23,57,.22)_35%,rgba(3,23,57,.86))]" />
       <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7 lg:p-8">
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
-          {item?.subtitle ?? "Campus life"}
+          {item?.subtitle ?? "Life around studies"}
         </p>
         <h3 className="mt-2 max-w-2xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white sm:text-3xl">
           {item?.title ?? "A campus built for belonging"}
@@ -1203,7 +1203,7 @@ function CampusLifeLane({
           lane.imageAlt ??
           lane.source?.media_alt_text ??
           lane.source?.title ??
-          "Campus life"
+          "Life around studies"
         }
         ratio="fill"
         className="absolute inset-0 h-full rounded-none"
