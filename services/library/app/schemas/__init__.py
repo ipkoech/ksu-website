@@ -85,6 +85,31 @@ from .engagement import (
 )
 from .stats import PublicStatItem, PublicStatsResponse
 from .search import LibrarySearchResponse, LibrarySearchResult
+from .assistant import (
+    LibraryAssistantContextCreate,
+    LibraryAssistantContextOut,
+    LibraryAssistantContextPublicOut,
+    LibraryAssistantContextUpdate,
+    LibraryAssistantSourceCreate,
+    LibraryAssistantSourceOut,
+    LibraryAssistantStaffAssignmentUpdate,
+    LibraryAssistantStaffReplyCreate,
+    LibraryAssistantStaffStatusUpdate,
+)
+from .assistant_chat import (
+    LibraryAssistantAnswer,
+    LibraryAssistantAnswerDraft,
+    LibraryAssistantAnswerRequest,
+    LibraryAssistantCitation,
+    LibraryAssistantPageContext,
+    LibraryAssistantConversationOut,
+    LibraryAssistantMessageOut,
+)
+from .assistant_identity import (
+    LibraryAssistantVerificationConfirm,
+    LibraryAssistantVerificationRequest,
+    LibraryAssistantVerificationResponse,
+)
 
 __all__ = [
     # library
@@ -170,4 +195,24 @@ __all__ = [
     "PublicStatsResponse",
     "LibrarySearchResult",
     "LibrarySearchResponse",
+    # assistant
+    "LibraryAssistantContextCreate",
+    "LibraryAssistantContextUpdate",
+    "LibraryAssistantContextOut",
+    "LibraryAssistantContextPublicOut",
+    "LibraryAssistantSourceCreate",
+    "LibraryAssistantSourceOut",
+    "LibraryAssistantStaffAssignmentUpdate",
+    "LibraryAssistantStaffReplyCreate",
+    "LibraryAssistantStaffStatusUpdate",
+    "LibraryAssistantAnswer",
+    "LibraryAssistantAnswerDraft",
+    "LibraryAssistantAnswerRequest",
+    "LibraryAssistantCitation",
+    "LibraryAssistantPageContext",
+    "LibraryAssistantConversationOut",
+    "LibraryAssistantMessageOut",
+    "LibraryAssistantVerificationConfirm",
+    "LibraryAssistantVerificationRequest",
+    "LibraryAssistantVerificationResponse",
 ]

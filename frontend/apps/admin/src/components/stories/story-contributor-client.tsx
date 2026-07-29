@@ -13,6 +13,11 @@ import {
   type Story,
   type StorySubmissionPayload,
 } from "@ksu/api-client";
+import {
+  RichTextEditor,
+  richTextToPlainText,
+  sanitizeRichText,
+} from "@ksu/ui/components";
 
 type ViewMode = "dashboard" | "list" | "new" | "edit";
 type LoadState = "idle" | "loading" | "ready" | "error";
@@ -109,6 +114,7 @@ export function StoryContributorClient({
             category: payload.category,
             contributor_affiliation_snapshot:
               payload.contributor_affiliation_snapshot,
+            reading_minutes: payload.reading_minutes,
             show_contributor_name: payload.show_contributor_name,
             consent_to_publish: payload.consent_to_publish,
           })
@@ -394,6 +400,10 @@ function StoryEditor({
     intent: SubmitIntent,
   ) => Promise<void>;
 }) {
+  const [richText, setRichText] = useState(
+    story?.rich_text ?? story?.plain_text ?? "",
+  );
+
   return (
     <PageFrame>
       <ContributorHeader title={title} description={description} />
@@ -458,18 +468,26 @@ function StoryEditor({
             placeholder="One short paragraph summarizing the story."
           />
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
-          Story body
-          <textarea
-            name="plain_text"
-            rows={12}
-            required
-            defaultValue={story?.plain_text ?? ""}
-            readOnly={readOnly}
-            className="rounded-xl border px-3 py-3 text-sm leading-6"
+        <Field
+          label="Reading time in minutes (optional)"
+          name="reading_minutes"
+          defaultValue={story?.reading_minutes?.toString()}
+          readOnly={readOnly}
+          type="number"
+          placeholder="Auto-calculated if blank"
+        />
+        <div className="grid gap-2 text-sm font-semibold text-slate-800">
+          <label htmlFor="story-rich-text">Story body</label>
+          <RichTextEditor
+            editorId="story-rich-text"
+            value={richText}
+            onChange={setRichText}
+            disabled={readOnly}
+            minHeight="18rem"
             placeholder="Write the full story. Include who, what, where, why it matters, and any useful context."
           />
-        </label>
+          <input type="hidden" name="rich_text" value={richText} />
+        </div>
         <Field
           label="Featured media ID (optional)"
           name="featured_media_id"
@@ -545,21 +563,27 @@ function Field({
   defaultValue,
   required,
   readOnly,
+  type = "text",
+  placeholder,
 }: {
   label: string;
   name: string;
   defaultValue?: string | null;
   required?: boolean;
   readOnly?: boolean;
+  type?: "text" | "number";
+  placeholder?: string;
 }) {
   return (
     <label className="grid gap-2 text-sm font-semibold text-slate-800">
       {label}
       <input
         name={name}
+        type={type}
         required={required}
         defaultValue={defaultValue ?? ""}
         readOnly={readOnly}
+        placeholder={placeholder}
         className="min-h-12 rounded-xl border px-3 text-sm"
       />
     </label>
@@ -568,16 +592,19 @@ function Field({
 
 function formPayload(form: FormData): StorySubmissionPayload {
   const text = (key: string) => String(form.get(key) ?? "").trim();
+  const richText = sanitizeRichText(text("rich_text"));
+  const readingMinutes = Number(text("reading_minutes"));
   return {
     title: text("title"),
     summary: text("summary") || null,
-    plain_text: text("plain_text"),
-    rich_text: null,
+    plain_text: richTextToPlainText(richText) || null,
+    rich_text: richText || null,
     structured_content: null,
     related_links: [],
     featured_media_id: text("featured_media_id") || null,
     story_type: text("story_type") || "article",
     category: text("category") || null,
+    reading_minutes: readingMinutes > 0 ? readingMinutes : null,
     contributor_affiliation_snapshot:
       text("contributor_affiliation_snapshot") || null,
     show_contributor_name: form.get("show_contributor_name") === "on",

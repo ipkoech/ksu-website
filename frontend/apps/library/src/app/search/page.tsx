@@ -28,15 +28,17 @@ type SearchPageProps = {
   searchParams?: Promise<{
     q?: string;
     branch?: string;
+    type?: string;
   }>;
 };
 
 export default async function LibrarySearchPage({ searchParams }: SearchPageProps) {
   const params = (await searchParams) ?? {};
-  const { branches, catalog, electronic, selectedLibraryId, query, errors } =
+  const { branches, catalog, electronic, unified, selectedLibraryId, query, errors } =
     await getLibrarySearchData({
       libraryId: params.branch,
       query: params.q,
+      type: params.type,
     });
   const total = catalog.data.length + electronic.data.length;
 
@@ -103,6 +105,10 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
           body={`${total} combined result${total === 1 ? "" : "s"} returned.`}
         />
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+          {unified && query ? (
+            <UnifiedResults results={unified.results} />
+          ) : null}
+          {!unified && (
           <div className="grid gap-5 xl:grid-cols-2">
           <ResultPanel title="Catalog records" href={`/catalog?q=${encodeURIComponent(query)}`}>
             {catalog.data.slice(0, 8).map((item) => (
@@ -134,6 +140,7 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
             ))}
           </ResultPanel>
           </div>
+          )}
           <SidePanel title="Quick access" eyebrow="Search">
             <div className="grid gap-3 text-sm">
               <Link href="/catalog" className="font-semibold text-primary">Advanced catalog</Link>
@@ -144,6 +151,43 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
         </div>
       </LibraryContentBand>
     </main>
+  );
+}
+
+function UnifiedResults({
+  results,
+}: {
+  results: Array<{
+    id: string;
+    type: string;
+    title: string;
+    description?: string | null;
+    url?: string | null;
+    library_name?: string | null;
+  }>;
+}) {
+  return (
+    <section className="border-y border-border bg-white">
+      <div className="flex items-center justify-between gap-4 border-b border-border py-4">
+        <h2 className="text-lg font-semibold text-foreground">Unified library results</h2>
+        <span className="text-sm text-muted-foreground">{results.length} shown</span>
+      </div>
+      {results.length === 0 ? (
+        <p className="py-5 text-sm text-muted-foreground">No matching library records were found.</p>
+      ) : (
+        results.slice(0, 40).map((result) => (
+          <article key={`${result.type}-${result.id}`} className="flex flex-col gap-3 border-b border-border py-5 last:border-b-0 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-secondary">{formatLabel(result.type)}</p>
+              <h3 className="mt-2 text-base font-semibold text-foreground">{result.title}</h3>
+              {result.description ? <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">{result.description}</p> : null}
+              {result.library_name ? <p className="mt-2 text-xs text-muted-foreground">{result.library_name}</p> : null}
+            </div>
+            {result.url ? <a href={result.url} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center text-sm font-semibold text-primary hover:text-secondary">Open result</a> : null}
+          </article>
+        ))
+      )}
+    </section>
   );
 }
 

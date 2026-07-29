@@ -1634,6 +1634,7 @@ export interface Programme {
   cluster_subjects?: ClusterSubject[] | null;
   fees_structure?: Record<string, unknown> | null;
   intake_months?: string[] | null;
+  intake_ids?: string[] | null;
   min_students?: number | null;
   max_students?: number | null;
   accreditation_status?: string | null;
@@ -1867,6 +1868,11 @@ export interface Intake {
   is_open: boolean;
   created_at: string;
   updated_at: string;
+  programmes?: Array<{
+    programme_id: string;
+    programme?: Partial<Programme> | null;
+    is_active: boolean;
+  }>;
 }
 
 export type IntakeApplicationOverride =
@@ -2276,6 +2282,7 @@ export interface StorySubmissionPayload {
   featured_media_id?: string | null;
   story_type?: string;
   category?: string | null;
+  reading_minutes?: number | null;
   contributor_affiliation_snapshot?: string | null;
   show_contributor_name?: boolean;
   consent_to_publish: boolean;
@@ -3349,6 +3356,9 @@ export interface VcPublicItem {
   embed_url?: string | null;
   thumbnail_url?: string | null;
   cover?: VcPublicMedia | null;
+  duration_seconds?: number | null;
+  recorded_at?: string | null;
+  category?: string | null;
 }
 
 export interface VcPublicHub {

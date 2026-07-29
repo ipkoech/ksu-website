@@ -5,7 +5,11 @@ import { MiniHeader, PublicFooter, PublicHeader } from "@ksu/ui/layout/public";
 import { StoryAccountRequestForm } from "@/components/stories/story-account-request-form";
 import { getHomepageData } from "@/lib/homepage-data";
 import { getNavData } from "@/lib/nav-data";
-import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
+import {
+  heriAfricaFrontendUrl,
+  libraryFrontendUrl,
+  researchFrontendUrl,
+} from "@/lib/service-urls";
 
 export const revalidate = 300;
 
@@ -26,6 +30,7 @@ export default async function StoryContributorRequestPage() {
         megaMenuData={megaMenuData}
         researchHref={researchFrontendUrl}
         libraryHref={libraryFrontendUrl}
+        heriHref={heriAfricaFrontendUrl}
       />
       <AmbientPageBackground
         as="main"

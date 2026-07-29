@@ -515,100 +515,6 @@ function Section({
   );
 }
 
-function StatStrip({ data }: { data: CampusLifePageData }) {
-  const capacity = data.accommodations.reduce(
-    (sum, item) => sum + (item.capacity ?? 0),
-    0,
-  );
-  const contacts = data.contacts.length + data.faqs.length;
-
-  return (
-    <div className="grid border border-border bg-white md:grid-cols-4">
-      {[
-        ["Clubs", data.clubs.length || "Published records"],
-        ["Sports facilities", data.sports.length || "Campus activities"],
-        ["Housing capacity", capacity || "Portal verified"],
-        ["Support records", contacts || "Service channels"],
-      ].map(([label, value]) => (
-        <div
-          key={label}
-          className="border-b border-border p-5 md:border-b-0 md:border-r last:md:border-r-0"
-        >
-          <p className="text-xs font-semibold uppercase text-muted-foreground">
-            {label}
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function FeatureGrid({
-  items,
-  dark = false,
-}: {
-  items: NavItem[];
-  dark?: boolean;
-}) {
-  return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {items.map((item) => {
-        const Icon = item.icon;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={
-              dark
-                ? "group border border-white/10 bg-white/[0.04] p-5 transition hover:bg-white/[0.08]"
-                : "group border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
-            }
-          >
-            <span
-              className={
-                dark
-                  ? "flex h-11 w-11 items-center justify-center bg-white/10 text-secondary"
-                  : "flex h-11 w-11 items-center justify-center bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white"
-              }
-            >
-              <Icon aria-hidden className="h-5 w-5" />
-            </span>
-            <h3
-              className={
-                dark
-                  ? "mt-5 text-lg font-semibold text-white"
-                  : "mt-5 text-lg font-semibold text-foreground"
-              }
-            >
-              {item.title}
-            </h3>
-            <p
-              className={
-                dark
-                  ? "mt-2 text-sm leading-7 text-white/70"
-                  : "mt-2 text-sm leading-7 text-muted-foreground"
-              }
-            >
-              {item.description}
-            </p>
-            <span
-              className={
-                dark
-                  ? "mt-5 inline-flex items-center gap-2 text-sm font-semibold text-secondary"
-                  : "mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary"
-              }
-            >
-              Explore
-              <ArrowRight aria-hidden className="h-4 w-4" />
-            </span>
-          </Link>
-        );
-      })}
-    </div>
-  );
-}
-
 function RecordGrid<T>({
   items,
   emptyTitle,
@@ -793,99 +699,53 @@ function GovernanceCard({ item }: { item: StudentGovernance }) {
 }
 
 function Landing({ data }: { data: CampusLifePageData }) {
-  return (
-    <>
-      <Section
-        eyebrow="Campus Highlights"
-        title="The student experience at a glance"
-        body="Campus life brings together community, wellbeing, accommodation, sport, leadership, culture, and service pathways."
-      >
-        <StatStrip data={data} />
-      </Section>
-      <Section
-        eyebrow="Explore"
-        title="Choose what matters to your student experience"
-        body="Prospective and current students can move directly into the practical areas they need."
-        dark
-      >
-        <FeatureGrid dark items={navItems.slice(1)} />
-      </Section>
-      <Section
-        eyebrow="Clubs and Activities"
-        title="Find a community beyond the classroom"
-        body="Club records show student groups, membership context, meeting schedules, and public contact points when published."
-      >
-        <RecordGrid
-          items={data.clubs.slice(0, 6)}
-          emptyTitle="No clubs are currently published"
-          render={(club) => <ClubCard key={club.id} club={club} />}
-        />
-      </Section>
-      <Section
-        eyebrow="Living and Wellness"
-        title="Housing, sport, and support work together"
-        body="A good student experience depends on where students live, how they stay active, and how quickly they can find help."
-      >
-        <div className="grid gap-4 lg:grid-cols-3">
-          <ExperiencePanel
-            image={media.accommodation}
-            title="Accommodation"
-            body="Review housing options, capacity, amenities, rules, and application status."
-            href="/campus-life/accommodation"
-          />
-          <ExperiencePanel
-            image={media.sports}
-            title="Sports and recreation"
-            body="Find facilities, sports activities, operating context, and recreation opportunities."
-            href="/campus-life/sports"
-          />
-          <ExperiencePanel
-            image={media.support}
-            title="Student support"
-            body="Access wellbeing, health, accessibility, FAQs, and contact pathways."
-            href="/campus-life/support"
-          />
-        </div>
-      </Section>
-    </>
-  );
-}
+  const editorial = data.editorial;
+  const items = editorial?.section.items ?? [];
+  const featured = items.find((item) => item.is_featured) ?? items[0];
+  const supporting = items.filter((item) => item.id !== featured?.id).slice(0, 4);
+  const itemImage = (item: typeof featured) => {
+    const content = item?.content;
+    return content && typeof content.imageUrl === "string" ? content.imageUrl : "/images/Home/OurKSU-82.jpg";
+  };
 
-function ExperiencePanel({
-  image,
-  title,
-  body,
-  href,
-}: {
-  image: string;
-  title: string;
-  body: string;
-  href: string;
-}) {
   return (
-    <Link
-      href={href}
-      className="group overflow-hidden border border-border bg-white"
-    >
-      <div className="h-48 bg-surface-muted">
-        <PublicImage
-          src={image}
-          alt=""
-          ratio="news"
-          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-          className="h-full w-full"
-          imageClassName="transition group-hover:scale-[1.03]"
-        />
-      </div>
-      <div className="p-5">
-        <h3 className="text-lg font-semibold text-foreground">{title}</h3>
-        <p className="mt-2 text-sm leading-7 text-muted-foreground">{body}</p>
-        <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary">
-          Explore
-          <ArrowRight aria-hidden className="h-4 w-4" />
-        </span>
-      </div>
-    </Link>
+    <div className="space-y-0">
+      <section className="relative overflow-hidden rounded-[2rem] bg-primary px-5 py-12 text-white shadow-xl shadow-primary/15 sm:px-8 lg:px-14 lg:py-16">
+        <div className="absolute -right-24 -top-24 size-72 rounded-full bg-secondary/20 blur-3xl" />
+        <div className="relative grid gap-10 lg:grid-cols-[1.05fr_.95fr] lg:items-end">
+          <ScrollReveal variant="fade-up">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">{editorial?.section.subtitle ?? "Life around studies"}</p>
+            <h1 className="mt-4 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] sm:text-5xl lg:text-7xl">{editorial?.section.title ?? "A student experience with room to become."}</h1>
+            <p className="mt-6 max-w-2xl text-base leading-8 text-white/75">{editorial?.section.description ?? "Discover the communities, spaces, support and opportunities that shape everyday life at Kisii University."}</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <ActionLink href="/campus-life/clubs" primary>Find your community</ActionLink>
+              <ActionLink href="/campus-life/support">Student support</ActionLink>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal variant="zoom-in" className="relative min-h-[280px] overflow-hidden rounded-[1.5rem] bg-white/10 sm:min-h-[360px]">
+            <PublicImage src={itemImage(featured)} alt={featured?.title ?? "Students at Kisii University"} ratio="fill" className="absolute inset-0 h-full rounded-[1.5rem]" imageClassName="h-full object-cover" sizes="(min-width: 1024px) 45vw, 100vw" />
+            <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent" />
+            {featured ? <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7"><p className="text-xs uppercase tracking-[0.18em] text-secondary">{featured.subtitle ?? "Student experience"}</p><p className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold">{featured.title}</p></div> : null}
+          </ScrollReveal>
+        </div>
+      </section>
+
+      <section className="grid gap-5 py-12 sm:grid-cols-2 lg:grid-cols-4 lg:py-16">
+        {supporting.map((item, index) => (
+          <ScrollReveal key={item.id} variant="fade-up" delay={index * 70}>
+            <Link href={item.cta_url ?? "/campus-life"} className="group block overflow-hidden rounded-[1.35rem] bg-white shadow-sm ring-1 ring-black/5 transition hover:-translate-y-1 hover:shadow-xl">
+              <div className="relative aspect-[4/3] overflow-hidden"><PublicImage src={itemImage(item)} alt={item.title ?? "Life around studies"} ratio="fill" className="absolute inset-0 h-full rounded-none" imageClassName="h-full object-cover transition duration-700 group-hover:scale-105" sizes="(min-width: 1024px) 24vw, 50vw" /><div className="absolute inset-0 bg-gradient-to-t from-primary/55 to-transparent" /></div>
+              <div className="p-5"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">{item.audience === "prospective" ? "Before you arrive" : item.audience === "current_student" ? "For students" : "Campus life"}</p><h2 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{item.title}</h2><p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{item.body_text}</p><span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">{item.cta_label ?? "Explore"}<ArrowRight className="size-4 transition group-hover:translate-x-1" /></span></div>
+            </Link>
+          </ScrollReveal>
+        ))}
+      </section>
+
+      <section className="rounded-[2rem] bg-[linear-gradient(135deg,hsl(var(--surface-subtle)),#fff)] px-5 py-10 sm:px-8 lg:px-12 lg:py-14">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">The KSU rhythm</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground sm:text-4xl">Make space for the things that make university yours.</h2></div><Link href="/campus-life" className="inline-flex items-center gap-2 text-sm font-semibold text-primary">Explore all student life <ArrowRight className="size-4" /></Link></div>
+        <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{navItems.slice(1, 5).map((item, index) => <Link key={item.href} href={item.href} className="group rounded-2xl bg-white/75 p-5 ring-1 ring-black/5 transition hover:bg-white"><span className="text-3xl font-semibold text-primary/20">0{index + 1}</span><h3 className="mt-5 font-semibold text-foreground">{item.title}</h3><span className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground group-hover:text-primary">Open page <ArrowRight className="size-4" /></span></Link>)}</div>
+      </section>
+    </div>
   );
 }
 

@@ -6,7 +6,11 @@ import { storiesApi, type Media } from "@ksu/api-client";
 import { PublicImage } from "@/components/public/public-image";
 import { getHomepageData } from "@/lib/homepage-data";
 import { getNavData } from "@/lib/nav-data";
-import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
+import {
+  heriAfricaFrontendUrl,
+  libraryFrontendUrl,
+  researchFrontendUrl,
+} from "@/lib/service-urls";
 import { publicFileUrl, publicMediaUrl } from "@/lib/public-media";
 
 export const revalidate = 300;
@@ -18,7 +22,7 @@ export default async function StoriesPage() {
     storiesApi.list({
       per_page: 12,
       fields:
-        "id,title,slug,summary,plain_text,story_type,category,published_at,featured_media_id,featured_media,contributor_name_snapshot,created_at",
+        "id,title,slug,summary,plain_text,story_type,category,reading_minutes,published_at,featured_media_id,featured_media,contributor_name_snapshot,created_at",
       include:
         "featured_media(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
     }),
@@ -36,6 +40,7 @@ export default async function StoriesPage() {
         megaMenuData={megaMenuData}
         researchHref={researchFrontendUrl}
         libraryHref={libraryFrontendUrl}
+        heriHref={heriAfricaFrontendUrl}
       />
       <AmbientPageBackground
         as="main"
@@ -53,8 +58,8 @@ export default async function StoriesPage() {
                 Stories from our students, staff, partners and community.
               </h1>
               <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground">
-                Every published story is reviewed by Corporate Communication
-                for accuracy, relevance and institutional fit.
+                Every published story is reviewed by Corporate Communication for
+                accuracy, relevance and institutional fit.
               </p>
             </div>
             <Link
@@ -78,8 +83,9 @@ export default async function StoriesPage() {
                 <div className="relative h-56 overflow-hidden bg-primary/10">
                   <PublicImage
                     src={
-                      publicMediaUrl(story.featured_media as Partial<Media> | null) ??
-                      publicFileUrl(story.featured_media_id)
+                      publicMediaUrl(
+                        story.featured_media as Partial<Media> | null,
+                      ) ?? publicFileUrl(story.featured_media_id)
                     }
                     alt={story.title}
                     ratio="fill"
@@ -92,7 +98,12 @@ export default async function StoriesPage() {
                 <div className="p-5">
                   <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold uppercase tracking-[0.14em] text-primary/65">
                     <span>{story.category || story.story_type}</span>
-                    <span>{formatDate(story.published_at ?? story.created_at)}</span>
+                    <span>
+                      {formatDate(story.published_at ?? story.created_at)}
+                    </span>
+                    {story.reading_minutes ? (
+                      <span>{story.reading_minutes} min read</span>
+                    ) : null}
                   </div>
                   <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-bold leading-tight text-primary">
                     {story.title}

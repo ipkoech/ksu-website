@@ -9,14 +9,14 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import News, PageSection, PartnershipSpotlight, SectionItem
+from app.models import Accommodation, ArtsCulture, Club, News, PageSection, PartnershipSpotlight, SectionItem, SportsFacility, StudentGovernance
 from app.services.research_partners import ResearchPartnersProxyService
 
 from ._shared import SeedContext
 
 
 SEED_OWNER = "page-cms-homepage-v1"
-SEED_VERSION = 3
+SEED_VERSION = 4
 PENDING_HERI_AFRICA_SOURCE_ID = uuid.UUID("8d724ec7-3b5b-54f8-b3f3-8770f627dd6a")
 PENDING_HERI_AFRICA_HEADLINE = "Heri Africa partnership spotlight pending"
 
@@ -61,11 +61,10 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
         "layout_variant": "pulse_strip",
         "display_order": 20,
         "title": "University pulse",
-        "subtitle": "Official public updates from Kisii University.",
-        "description": "A compact feed for admissions, graduation, research, partnerships and university events.",
+        "description": "A compact, high-signal feed for admissions, graduation, research, partnerships and university events.",
         "settings": {
             "feeds": ["news", "events", "announcements"],
-            "maxItems": 6,
+            "maxItems": 5,
             "cta": {"label": "View all updates", "href": "/news"},
         },
         "items": (
@@ -126,8 +125,8 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
         "settings": {"presentation": "image_cards"},
         "items": (
             {"item_type": "card", "title": "A public university with academic depth", "body_text": "KSU combines accredited programmes, experienced faculty and practical learning for Kenya’s workforce needs.", "cta_label": "Explore academics", "cta_url": "/academics", "display_order": 10, "content": {"imageUrl": "/images/Home/OurKSU-82.jpg", "imageAlt": "Kisii University academic community", "icon": "academic"}},
-            {"item_type": "card", "title": "Research shaped by community priorities", "body_text": "From agriculture and health to digital transformation, KSU turns research into practical regional impact.", "cta_label": "Explore research", "cta_url": "/research", "display_order": 20, "content": {"imageUrl": "/images/about/about-quality-assurance-branded.webp", "imageAlt": "Research and innovation at Kisii University", "icon": "research"}},
-            {"item_type": "card", "title": "Partnerships that open opportunity", "body_text": "Strategic collaborations connect students, researchers and communities to wider networks across Africa and beyond.", "cta_label": "View partnerships", "cta_url": "/research/partnerships", "display_order": 30, "content": {"imageUrl": "/images/HERIAfricaLaunch.jpg", "imageAlt": "Kisii University partnership launch", "icon": "partnership"}},
+            {"item_type": "card", "title": "Community-rooted impact", "body_text": "KSU connects learning and innovation to the needs of communities in Kenya and beyond.", "cta_label": "Explore impact", "cta_url": "/research", "display_order": 20, "content": {"imageUrl": "/images/landing-page/why-kisii/bg-3.jpg", "imageAlt": "Kisii University community impact", "icon": "research"}},
+            {"item_type": "card", "title": "Future-ready pathways", "body_text": "Build practical skills through applied learning, enterprise, leadership and opportunities to progress.", "cta_label": "Explore academics", "cta_url": "/academics", "display_order": 30, "content": {"imageUrl": "/images/landing-page/why-kisii/pathway-2.jpg", "imageAlt": "Kisii University learning pathways", "icon": "innovation"}},
             {"item_type": "card", "title": "An inclusive student experience", "body_text": "Students find academic support, leadership, clubs, sports and campus services that help them belong and progress.", "cta_label": "Explore campus life", "cta_url": "/campus-life", "display_order": 40, "content": {"imageUrl": "/images/backgrounds/KSUB-RollPhotos2025-123.jpg", "imageAlt": "Kisii University students", "icon": "students"}},
         ),
     },
@@ -199,17 +198,18 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
         "section_key": "campus-life",
         "layout_variant": "media_mosaic",
         "display_order": 90,
-        "title": "Experience More. Become More.",
-        "subtitle": "Campus life",
+        "title": "Life Around Studies",
+        "subtitle": "Life around studies",
         "description": "From sport to innovation, clubs and culture, campus life creates room to grow.",
         "settings": {"cta": {"label": "Explore campus life", "href": "/campus-life"}},
         "items": (
-            {"item_type": "media", "title": "Student Clubs", "cta_url": "/campus-life/clubs", "display_order": 10, "content": {"imageUrl": "/images/backgrounds/KSUB-RollPhotos2025-123.jpg", "imageAlt": "Kisii University students"}},
-            {"item_type": "media", "title": "Sports & Recreation", "cta_url": "/campus-life/sports", "display_order": 20, "content": {"imageUrl": "/images/history/KSUGreenLandscapingMay2026-3810.jpg", "imageAlt": "Kisii University grounds"}},
-            {"item_type": "media", "title": "Innovation Hub", "cta_url": "/research/innovation", "display_order": 30, "content": {"imageUrl": "/images/about/about-quality-assurance-branded.webp", "imageAlt": "Innovation at Kisii University"}},
-            {"item_type": "media", "title": "Modern Hostels", "cta_url": "/campus-life/accommodation", "display_order": 40, "content": {"imageUrl": "/images/homepage/kisii-administration-campus.jpg", "imageAlt": "Kisii University campus"}},
-            {"item_type": "media", "title": "Culture & Arts", "cta_url": "/campus-life", "display_order": 50, "content": {"imageUrl": "/images/about/about-history-branded.webp", "imageAlt": "Culture at Kisii University"}},
-            {"item_type": "media", "title": "Health & Wellness", "cta_url": "/campus-life/health-services", "display_order": 60, "content": {"imageUrl": "/images/about/about-service-charter-branded.webp", "imageAlt": "Student support at Kisii University"}},
+            {"item_type": "media", "title": "Student Clubs", "body_text": "Find communities that turn interests into friendships, leadership and service.", "cta_label": "Explore clubs", "cta_url": "/campus-life/clubs", "display_order": 10, "source_type": "club", "is_featured": True, "content": {"imageUrl": "/images/backgrounds/KSUB-RollPhotos2025-123.jpg", "imageAlt": "Kisii University students"}},
+            {"item_type": "media", "title": "Sports & Recreation", "body_text": "Stay active through team sport, recreation and spaces designed for wellbeing.", "cta_label": "See sports", "cta_url": "/campus-life/sports", "display_order": 20, "source_type": "sport", "is_featured": True, "content": {"imageUrl": "/images/history/KSUGreenLandscapingMay2026-3810.jpg", "imageAlt": "Kisii University grounds"}},
+            {"item_type": "media", "title": "Innovation Hub", "body_text": "Build, test and collaborate beyond the classroom through innovation and enterprise.", "cta_label": "Explore innovation", "cta_url": "/research/innovation", "display_order": 30, "source_type": "manual", "is_featured": True, "content": {"imageUrl": "/images/about/about-quality-assurance-branded.webp", "imageAlt": "Innovation at Kisii University"}},
+            {"item_type": "media", "title": "Modern Hostels", "body_text": "Choose a supportive place to live, learn and build lasting campus connections.", "cta_label": "View accommodation", "cta_url": "/campus-life/accommodation", "display_order": 40, "source_type": "accommodation", "audience": "prospective", "content": {"imageUrl": "/images/homepage/kisii-administration-campus.jpg", "imageAlt": "Kisii University campus"}},
+            {"item_type": "media", "title": "Culture & Arts", "body_text": "Celebrate creativity, heritage and expression through music, performance and art.", "cta_label": "Discover culture", "cta_url": "/campus-life/gallery", "display_order": 50, "source_type": "arts", "is_featured": True, "content": {"imageUrl": "/images/about/about-history-branded.webp", "imageAlt": "Culture at Kisii University"}},
+            {"item_type": "media", "title": "Health & Wellness", "body_text": "Access the services, guidance and support that help students thrive.", "cta_label": "Find support", "cta_url": "/campus-life/health-services", "display_order": 60, "source_type": "manual", "audience": "current_student", "content": {"imageUrl": "/images/about/about-service-charter-branded.webp", "imageAlt": "Student support at Kisii University"}},
+            {"item_type": "media", "title": "Student Governance", "body_text": "Have a voice in campus life through representative student leadership and engagement.", "cta_label": "Meet student leaders", "cta_url": "/campus-life/student-life", "display_order": 70, "source_type": "governance", "audience": "current_student", "content": {"imageUrl": "/images/about/about-governance-branded.webp", "imageAlt": "Student governance at Kisii University"}},
         ),
     },
     {
@@ -368,6 +368,12 @@ def _replace_section_items(section: PageSection, item_specs: tuple[dict[str, Any
             cta_label=spec.get("cta_label"),
             cta_url=spec.get("cta_url"),
             cta_description=spec.get("cta_description"),
+            audience=spec.get("audience", "all"),
+            source_type=spec.get("source_type"),
+            source_id=spec.get("source_id"),
+            is_featured=spec.get("is_featured", False),
+            poster_media_id=spec.get("poster_media_id"),
+            transcript=spec.get("transcript"),
             display_order=spec["display_order"],
             is_enabled=True,
         )
@@ -466,6 +472,46 @@ async def _seed_homepage_sections(db: AsyncSession) -> None:
                 for item_spec in item_specs
             )
         _replace_section_items(section, item_specs)
+
+    await db.flush()
+
+
+async def _populate_life_around_studies_links(db: AsyncSession) -> None:
+    """Attach available live student-life records to the seeded editorial items."""
+    result = await db.execute(
+        select(PageSection).where(
+            PageSection.page_key == "homepage",
+            PageSection.scope_type == "university",
+            PageSection.section_key == "campus-life",
+            PageSection.deleted_at.is_(None),
+        )
+    )
+    section = result.scalar_one_or_none()
+    if section is None:
+        return
+
+    sources: dict[str, Any] = {}
+    for model, source_type, title_field in (
+        (Club, "club", Club.name),
+        (SportsFacility, "sport", SportsFacility.name),
+        (Accommodation, "accommodation", Accommodation.name),
+        (ArtsCulture, "arts", ArtsCulture.title),
+        (StudentGovernance, "governance", StudentGovernance.name),
+    ):
+        record = (
+            await db.execute(
+                select(model).where(model.is_active.is_(True)).order_by(title_field.asc()).limit(1)
+            )
+        ).scalar_one_or_none()
+        if record is not None:
+            sources[source_type] = record
+
+    for item in section.items:
+        source_type = item.source_type
+        source = sources.get(source_type) if source_type else None
+        if source is None or item.source_id is not None:
+            continue
+        item.source_id = source.id
 
     await db.flush()
 
@@ -590,6 +636,7 @@ async def seed_page_cms(db: AsyncSession, ctx: SeedContext) -> None:
     del ctx
 
     await _seed_homepage_sections(db)
+    await _populate_life_around_studies_links(db)
     await _seed_heri_africa_spotlight(db)
 
 

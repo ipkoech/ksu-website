@@ -83,6 +83,7 @@ interface PublicHeaderProps {
   className?: string;
   researchHref?: string;
   libraryHref?: string;
+  heriHref?: string;
   supportHref?: string;
 }
 
@@ -92,6 +93,9 @@ const defaultResearchHref =
 const defaultLibraryHref =
   process.env.NEXT_PUBLIC_LIBRARY_FRONTEND_URL ||
   "https://library.kisiiuniversity.ac.ke";
+const defaultHeriHref =
+  process.env.NEXT_PUBLIC_HERI_AFRICA_FRONTEND_URL ||
+  "https://heri-africa.kisiiuniversity.ac.ke";
 const defaultSupportHref =
   process.env.NEXT_PUBLIC_SUPPORT_KSU_URL ||
   `${defaultResearchHref.replace(/\/$/, "")}/donate`;
@@ -102,6 +106,7 @@ export function PublicHeader({
   className,
   researchHref = defaultResearchHref,
   libraryHref = defaultLibraryHref,
+  heriHref = defaultHeriHref,
   supportHref = defaultSupportHref,
 }: PublicHeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -113,7 +118,11 @@ export function PublicHeader({
   const pathname = usePathname();
 
   // Build navigation with dynamic data
-  const navigation = buildNavigation(megaMenuData, { researchHref, libraryHref });
+  const navigation = buildNavigation(megaMenuData, {
+    researchHref,
+    libraryHref,
+    heriHref,
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -172,7 +181,7 @@ export function PublicHeader({
         )}
       >
         <nav className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="flex h-[107px] items-center justify-between lg:h-[98px]">
+          <div className="flex h-[128px] items-center justify-between lg:h-[118px]">
             {/* Logo */}
             <Link
               href="/"
@@ -184,13 +193,13 @@ export function PublicHeader({
                 alt="Kisii University"
                 width={56}
                 height={56}
-                className="h-12 w-auto sm:h-14 lg:h-12"
+                className="h-[58px] w-auto sm:h-[67px] lg:h-[58px]"
                 priority
               />
               <span className="min-w-0">
                 <span
                   className={cn(
-                    "block font-[family-name:var(--font-display)] text-lg font-bold uppercase leading-none text-primary transition-colors motion-reduce:transition-none sm:text-2xl lg:text-xl",
+                    "block font-[family-name:var(--font-display)] text-xl font-bold uppercase leading-none text-primary transition-colors motion-reduce:transition-none sm:text-3xl lg:text-2xl",
                     isTransparent ? "text-white" : "text-primary",
                   )}
                 >
@@ -198,7 +207,7 @@ export function PublicHeader({
                 </span>
                 <span
                   className={cn(
-                    "mt-1 block text-xs font-semibold leading-none transition-colors motion-reduce:transition-none sm:text-sm lg:text-xs",
+                    "mt-1 block text-sm font-semibold leading-none transition-colors motion-reduce:transition-none sm:text-base lg:text-sm",
                     isTransparent ? "text-white/80" : "text-muted-foreground",
                   )}
                 >
@@ -307,15 +316,15 @@ export function PublicHeader({
   );
 }
 
-function buildNavigation(
+export function buildNavigation(
   megaMenuData?: MegaMenuData,
   serviceLinks: {
     researchHref?: string;
     libraryHref?: string;
+    heriHref?: string;
   } = {},
 ): NavItem[] {
   const schools = megaMenuData?.schools || [];
-  const clubs = megaMenuData?.clubs || [];
 
   // About menu
   const aboutItem: NavItem = {
@@ -351,6 +360,17 @@ function buildNavigation(
         label: "KSU NUMBERS & FACTS",
         href: "/about/numbers-and-facts",
         description: "Verified institutional facts by reporting year",
+      },
+      {
+        label: "HERI AFRICA",
+        href: serviceLinks.heriHref || "https://heri-africa.kisiiuniversity.ac.ke",
+        external: true,
+        group: "QUICK LINKS",
+      },
+      {
+        label: "NYANGWETA FARM",
+        href: "#",
+        group: "QUICK LINKS",
       },
     ],
   };
@@ -388,38 +408,40 @@ function buildNavigation(
     },
   ];
 
-  const programmeQuickLinks: NavItem[] = [
-    {
-      label: "ALL PROGRAMMES",
-      href: "/academics/programmes",
-      description: "Browse academic programmes by level and school",
-    },
-    {
-      label: "ACADEMIC CALENDAR",
-      href: "/academics/calendar",
-      description: "Term dates, intakes, and academic timelines",
-    },
-    {
-      label: "EXAMINATIONS",
-      href: "/academics/examinations",
-      description: "Assessment and examination information",
-    },
-  ];
-
   const programmesItem: NavItem = {
     label: "PROGRAMMES",
     href: "/academics/programmes",
     children: [
-      ...programmeQuickLinks,
-      ...schools.map((school) => ({
-        label: school.name
-          .replace("School of ", "")
-          .replace("Faculty of ", "")
-          .toUpperCase(),
-        href: `/academics/schools/${school.slug}`,
-        group: "SCHOOLS",
-      })),
-      ...admissionsLinks,
+      {
+        label: "ALL PROGRAMMES",
+        href: "/academics/programmes",
+        description: "Browse academic programmes by level and school",
+      },
+      {
+        label: "ADMISSIONS",
+        href: "/admissions",
+        children: admissionsLinks.map(({ group: _group, ...item }) => item),
+      },
+      {
+        label: "SCHOOLS",
+        href: "/academics/schools",
+        children: schools.map((school) => ({
+          label: school.name
+            .replace("School of ", "")
+            .replace("Faculty of ", "")
+            .toUpperCase(),
+          href: `/academics/schools/${school.slug}`,
+        })),
+      },
+      {
+        label: "ACADEMIC DIVISION",
+        href: "/academics",
+        children: [
+          { label: "ORGANIZATION", href: "/administration/organization" },
+          { label: "CALENDAR", href: "/academics/calendar" },
+          { label: "EXAMINATIONS", href: "/academics/examinations" },
+        ],
+      },
     ],
   };
 
@@ -453,43 +475,16 @@ function buildNavigation(
         href: "/campus-life/support",
         description: "Student welfare",
       },
-      ...clubs.map((club) => ({
-        label: club.name.toUpperCase(),
-        href: `/campus-life/clubs/${club.slug}`,
-        group: "CLUBS & SOCIETIES",
-      })),
     ],
   };
 
   const mediaDeskItem: NavItem = {
-    label: "MEDIA DESK",
+    label: "NEWS & EVENTS",
     href: "/media",
-    children: [
-      {
-        label: "NEWS",
-        href: "/media/news",
-        description: "Latest university news",
-      },
-      {
-        label: "ARTICLES",
-        href: "/media/articles",
-        description: "Stories and feature articles",
-      },
-      {
-        label: "EVENTS",
-        href: "/media/events",
-        description: "Upcoming and recent events",
-      },
-      {
-        label: "GALLERY",
-        href: "/media/gallery",
-        description: "Published photos and media",
-      },
-    ],
   };
 
   const contactItem: NavItem = {
-    label: "CONTACT US",
+    label: "CONTACT",
     href: "/contact",
   };
 
@@ -537,6 +532,7 @@ function MegaMenuDropdown({
     top: number;
     width: number;
   } | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const children = item.children || [];
   const hasChildren = children.length > 0;
 
@@ -554,11 +550,7 @@ function MegaMenuDropdown({
       ? [{ title: "More", items: looseDynamicItems }]
       : []),
   ];
-  const isStructuredMegaMenu =
-    item.label === "PROGRAMMES" ||
-    item.label === "CAMPUS LIFE" ||
-    item.label === "MEDIA DESK";
-  const isProgrammesMenu = item.label === "PROGRAMMES";
+  const isStructuredMegaMenu = item.label === "ABOUT US";
   const isMegaMenu =
     isStructuredMegaMenu ||
     rightSections.length > 0 ||
@@ -581,7 +573,8 @@ function MegaMenuDropdown({
       ?.getBoundingClientRect();
     const gutter = 16;
     const availableWidth = Math.max(260, window.innerWidth - gutter * 2);
-    const targetWidth = isMegaMenu ? 1500 : item.label === "ABOUT US" ? 360 : 288;
+    const targetWidth =
+      item.label === "ABOUT US" || item.label === "PROGRAMMES" ? 520 : 288;
     const width = Math.min(targetWidth, availableWidth);
     const maxLeft = Math.max(gutter, window.innerWidth - width - gutter);
     const preferredLeft =
@@ -641,6 +634,7 @@ function MegaMenuDropdown({
   useEffect(() => {
     if (!isOpen || !hasChildren) {
       setDropdownFrame(null);
+      setActiveSubmenu(null);
       return;
     }
 
@@ -748,7 +742,7 @@ function MegaMenuDropdown({
               aria-label={`${item.label} navigation`}
               role="menu"
               className={cn(
-                "fixed z-50 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-lg border border-primary/10 bg-white shadow-[0_24px_80px_-48px_rgba(30,64,175,0.6)]",
+                "fixed z-50 rounded-lg border border-primary/10 bg-white shadow-[0_24px_80px_-48px_rgba(30,64,175,0.6)]",
                 isMegaMenu ? "p-4" : "py-2",
               )}
               onMouseEnter={onOpen}
@@ -766,65 +760,30 @@ function MegaMenuDropdown({
               }}
             >
               {isMegaMenu ? (
-                isProgrammesMenu ? (
-                  <div className="grid gap-5 lg:grid-cols-[minmax(13rem,16rem)_minmax(0,1fr)]">
-                    <div>
-                      {quickLinks.length ? (
-                        <MenuSection title="QUICK LINKS">
-                          {quickLinks.map((child) => (
-                            <MenuCardLink key={child.href} item={child} />
-                          ))}
-                        </MenuSection>
-                      ) : null}
-                    </div>
-
-                    <div className="min-w-0 border-t border-primary/10 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                      <GroupedMenuGrid
-                        sections={rightSections}
-                        variant="two-column"
-                      />
-                    </div>
+                <div className="grid gap-5 lg:grid-cols-[minmax(13rem,16rem)_minmax(0,1fr)]">
+                  <div>
+                    {quickLinks.length ? (
+                      <MenuSection title="QUICK LINKS">
+                        {quickLinks.map((child) => (
+                          <MenuCardLink key={child.href} item={child} />
+                        ))}
+                      </MenuSection>
+                    ) : null}
                   </div>
-                ) : (
-                  <div className="grid gap-5 lg:grid-cols-[minmax(13rem,16rem)_minmax(0,1fr)]">
-                    <div>
-                      {quickLinks.length ? (
-                        <MenuSection title="QUICK LINKS">
-                          {quickLinks.map((child) => (
-                            <MenuCardLink key={child.href} item={child} />
-                          ))}
-                        </MenuSection>
-                      ) : null}
-                    </div>
 
-                    <div className="min-w-0 border-t border-primary/10 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                      <GroupedMenuGrid sections={rightSections} />
-                    </div>
+                  <div className="min-w-0 border-t border-primary/10 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                    <GroupedMenuGrid sections={rightSections} />
                   </div>
-                )
-              ) : (
-                <div className="space-y-1">
-                  {children.map((child) => (
-                    <Link
-                      key={child.href}
-                      href={child.href}
-                      role="menuitem"
-                      className="block min-h-12 px-4 py-2.5 transition-colors motion-reduce:transition-none hover:bg-primary/5 group"
-                    >
-                      <div className="font-medium text-gray-900 group-hover:text-primary transition-colors text-sm">
-                        {child.label}
-                      </div>
-                      {child.description && (
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          {child.description}
-                        </div>
-                      )}
-                    </Link>
-                  ))}
                 </div>
+              ) : (
+                <CompactNestedMenu
+                  items={children}
+                  activeSubmenu={activeSubmenu}
+                  onActivate={setActiveSubmenu}
+                />
               )}
 
-              {isMegaMenu && (
+              {isMegaMenu && item.label !== "ABOUT US" && (
                 <div className="mt-4 shrink-0 border-t border-primary/10 pt-4">
                   <Link
                     href={item.href}
@@ -857,6 +816,71 @@ function MenuSection({
         {title}
       </h3>
       <div className="space-y-1">{children}</div>
+    </div>
+  );
+}
+
+function CompactNestedMenu({
+  items,
+  activeSubmenu,
+  onActivate,
+}: {
+  items: NavItem[];
+  activeSubmenu: string | null;
+  onActivate: (href: string | null) => void;
+}) {
+  const activeItem = items.find((item) => item.href === activeSubmenu);
+
+  return (
+    <div className="flex min-h-[12rem] w-full">
+      <div className="max-h-[calc(100vh-6rem)] w-[17rem] shrink-0 overflow-y-auto py-2">
+        {items.map((item) => {
+          const hasChildren = Boolean(item.children?.length);
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              target={item.external ? "_blank" : undefined}
+              rel={item.external ? "noopener noreferrer" : undefined}
+              role="menuitem"
+              aria-haspopup={hasChildren ? "menu" : undefined}
+              onMouseEnter={() => onActivate(hasChildren ? item.href : null)}
+              onFocus={() => onActivate(hasChildren ? item.href : null)}
+              className={cn(
+                "flex min-h-11 items-center justify-between gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                activeSubmenu === item.href
+                  ? "bg-primary/5 text-primary"
+                  : "text-gray-800 hover:bg-primary/5 hover:text-primary",
+              )}
+            >
+              <span>{item.label}</span>
+              {hasChildren ? (
+                <ChevronDown className="h-4 w-4 -rotate-90 text-gray-400" aria-hidden />
+              ) : item.external ? (
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              ) : null}
+            </Link>
+          );
+        })}
+      </div>
+
+      {activeItem?.children?.length ? (
+        <div className="max-h-[calc(100vh-6rem)] min-w-0 flex-1 overflow-y-auto border-l border-primary/10 py-2 pl-2">
+          {activeItem.children.map((child) => (
+            <Link
+              key={child.href}
+              href={child.href}
+              target={child.external ? "_blank" : undefined}
+              rel={child.external ? "noopener noreferrer" : undefined}
+              role="menuitem"
+              className="flex min-h-11 items-center rounded-md px-3 py-2.5 text-sm font-medium text-gray-800 transition-colors hover:bg-primary/5 hover:text-primary"
+            >
+              {child.label}
+            </Link>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1110,12 +1134,15 @@ function MobileNav({
         </p>
         <div className="space-y-2">
           <a
-            href="https://kisiiuniversity.ac.ke/event/heri-africa-launch"
+            href={
+              process.env.NEXT_PUBLIC_HERI_AFRICA_FRONTEND_URL ||
+              "https://heri-africa.kisiiuniversity.ac.ke"
+            }
             className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
             target="_blank"
             rel="noopener noreferrer"
           >
-            HERI
+            HERI AFRICA
           </a>
           <a
             href="https://digital.kisiiuniversity.ac.ke/"
@@ -1148,6 +1175,22 @@ function MobileNav({
             rel="noopener noreferrer"
           >
             CONFERENCES
+          </a>
+          <a
+            href="https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders"
+            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            TENDERS
+          </a>
+          <a
+            href="https://digital.kisiiuniversity.ac.ke/ksu_customer_care_centerr"
+            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            HELP DESK
           </a>
         </div>
       </div>

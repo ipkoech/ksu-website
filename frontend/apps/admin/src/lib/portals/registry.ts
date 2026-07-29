@@ -11,6 +11,7 @@ import {
   FileText,
   FlaskConical,
   GraduationCap,
+  Globe2,
   HandCoins,
   ImageIcon,
   Landmark,
@@ -27,6 +28,7 @@ import {
   ScrollText,
   Settings,
   ShieldCheck,
+  Sparkles,
   Sprout,
   Target,
   Trophy,
@@ -2507,6 +2509,16 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     fields: [
       ...contentFields("corporate"),
       {
+        name: "media_attachments",
+        label: "Story Media",
+        type: "attachments",
+        attachments: {
+          entityType: "story",
+          roles: contentAttachmentRoles,
+          isPublic: true,
+        },
+      },
+      {
         name: "story_type",
         label: "Story Type",
         type: "select",
@@ -2520,6 +2532,12 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
         defaultValue: "article",
       },
       { name: "category", label: "Category" },
+      {
+        name: "reading_minutes",
+        label: "Reading time (minutes)",
+        type: "number",
+        placeholder: "Auto-calculated if blank",
+      },
       { name: "is_featured", label: "Featured", type: "boolean" },
       { name: "featured_until", label: "Featured Until", type: "datetime-local" },
       { name: "homepage_priority", label: "Homepage Priority", type: "number" },
@@ -2531,6 +2549,9 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       is_featured: Boolean(values.is_featured),
       featured_until: values.featured_until || null,
       homepage_priority: Number(values.homepage_priority || 100),
+      reading_minutes: values.reading_minutes
+        ? Number(values.reading_minutes)
+        : null,
       source_type: "internal",
       consent_to_publish: true,
     }),
@@ -6502,6 +6523,42 @@ function publicationResource(
 }
 
 export const portalConfigs: Record<string, PortalConfig> = {
+  heri: {
+    key: "heri",
+    title: "HERI Africa Portal",
+    shortTitle: "HERI Africa",
+    description: "Research communication, publishing, partnerships, media, and enquiries for the HERI Africa Language Education Research Chair.",
+    service: "main",
+    baseHref: "/heri",
+    icon: Globe2,
+    accentClassName: "text-emerald-700 bg-emerald-50 border-emerald-100",
+    nav: [
+      { title: "Dashboard", href: "/heri", icon: PanelsTopLeft, scope: "admin:*" },
+      { title: "Content & pages", href: "/heri/content", icon: Newspaper, scope: "admin:*", group: "Publishing" },
+      { title: "Homepage hero", href: "/heri/hero", icon: PanelsTopLeft, scope: "admin:*", group: "Publishing" },
+      { title: "Research", href: "/heri/research", icon: FlaskConical, scope: "admin:*", group: "Publishing" },
+      { title: "Team & partners", href: "/heri/people", icon: Users, scope: "admin:*", group: "People" },
+      { title: "Submissions", href: "/heri/submissions", icon: Mail, scope: "admin:*", group: "Operations" },
+      { title: "Media library", href: "/heri/media", icon: ImageIcon, scope: "admin:*", group: "Operations" },
+      { title: "Analytics", href: "/heri/analytics", icon: BarChart3, scope: "admin:*", group: "Operations" },
+      { title: "Site settings", href: "/heri/settings", icon: Settings, scope: "admin:*", group: "Operations" },
+    ],
+    dashboard: dashboard(
+      "HERI Africa Dashboard",
+      "Operate research publishing, public content, partnerships, and enquiries from one scoped workspace.",
+      [],
+      {},
+      ["admin:*"],
+      [
+        { title: "Content & pages", description: "Draft, review, schedule, and publish HERI stories.", href: "/heri/content", icon: Newspaper, scopes: ["admin:*"] },
+        { title: "Research portfolio", description: "Manage themes, projects, and publications.", href: "/heri/research", icon: FlaskConical, scopes: ["admin:*"] },
+        { title: "People & partners", description: "Keep team and partner records current.", href: "/heri/people", icon: Users, scopes: ["admin:*"] },
+        { title: "Submissions inbox", description: "Review enquiries and partnership applications.", href: "/heri/submissions", icon: Mail, scopes: ["admin:*"] },
+      ],
+    ),
+    resources: {},
+    publicPortal: { label: "Open public HERI site", href: "http://localhost:3004", icon: Globe2 },
+  },
   admin: {
     key: "admin",
     title: "Admin Portal",
@@ -7127,6 +7184,12 @@ export const portalConfigs: Record<string, PortalConfig> = {
             href: "/corporate-communication/student-life/club-submissions",
             icon: Trophy,
             scope: ["content.review", "clubs.view", "clubs.manage_own"],
+          },
+          {
+            title: "Life Around Studies",
+            href: "/corporate-communication/student-life/life-around-studies",
+            icon: Sparkles,
+            scope: ["life_around_studies.view", "life_around_studies.manage", "life_around_studies.review", "life_around_studies.publish", "content.review", "homepage.manage", "section_items.manage", "admin:*"],
           },
         ],
       },

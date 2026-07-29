@@ -44,10 +44,19 @@ const statIcons = [
   Sparkles,
 ] satisfies LucideIcon[];
 
+const statTones = [
+  "text-primary",
+  "text-secondary",
+  "text-cyan-600",
+  "text-emerald-600",
+  "text-violet-600",
+  "text-amber-600",
+] as const;
+
 const whyKisiiImages = [
-  "/images/Home/KSUGreenLandscaping.jpg",
-  "/images/Home/OurKSU-82.jpg",
-  "/images/Home/um-hero.jpg",
+  "/images/landing-page/why-kisii/sakgwa-academic-block.jpg",
+  "/images/landing-page/why-kisii/pathway-2.jpg",
+  "/images/landing-page/why-kisii/bg-3.jpg",
 ] as const;
 
 const institutionalReasonCopy: Record<
@@ -66,16 +75,16 @@ const institutionalReasonCopy: Record<
     icon: "academic",
   },
   "research & innovation": {
-    title: "Research shaped by community priorities",
-    body: "From agriculture and health to digital transformation, KSU turns research into practical regional impact.",
+    title: "Community-rooted impact",
+    body: "KSU connects learning and innovation to the needs of communities in Kenya and beyond.",
     href: "/research",
     icon: "research",
   },
   "global partnerships": {
-    title: "Partnerships that open opportunity",
-    body: "Strategic collaborations connect students, researchers and communities to wider networks across Africa and beyond.",
-    href: "/research/partnerships",
-    icon: "partnership",
+    title: "Future-ready pathways",
+    body: "Build practical skills through applied learning, enterprise, leadership and opportunities to progress.",
+    href: "/academics",
+    icon: "innovation",
   },
   "student experience": {
     title: "An inclusive student experience",
@@ -101,10 +110,9 @@ const fallbackWhyReasons: HomepageSectionItem[] = [
     },
   },
   {
-    id: "why-ksu-community-research",
-    title: "Research shaped by community priorities",
-    body_text:
-      "From agriculture and health to digital transformation, KSU turns research into practical regional impact.",
+    id: "why-ksu-community-impact",
+    title: "Community-rooted impact",
+    body_text: "KSU connects learning and innovation to the needs of communities in Kenya and beyond.",
     cta_label: "Explore research",
     cta_url: "/research",
     display_order: 20,
@@ -115,17 +123,16 @@ const fallbackWhyReasons: HomepageSectionItem[] = [
     },
   },
   {
-    id: "why-ksu-partnerships",
-    title: "Partnerships that open opportunity",
-    body_text:
-      "Strategic collaborations connect students, researchers and communities to wider networks across Africa and beyond.",
-    cta_label: "View partnerships",
-    cta_url: "/research/partnerships",
+    id: "why-ksu-future-pathways",
+    title: "Future-ready pathways",
+    body_text: "Build practical skills through applied learning, enterprise, leadership and opportunities to progress.",
+    cta_label: "Explore academics",
+    cta_url: "/academics",
     display_order: 30,
     content: {
-      icon: "partnership",
-      imageUrl: "/images/HERIAfricaLaunch.jpg",
-      imageAlt: "Kisii University partnership launch",
+      icon: "innovation",
+      imageUrl: "/images/landing-page/why-kisii/pathway-2.jpg",
+      imageAlt: "Kisii University learning pathways",
     },
   },
   {
@@ -240,31 +247,39 @@ export function WhyKisiiSection({
         </div>
 
         {facts.length ? (
-          <aside className="mt-5 border-y border-border py-4">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-              <p className="shrink-0 text-xs font-bold uppercase tracking-[0.16em] text-secondary lg:max-w-32">
+          <aside className="relative -mx-4 mt-6 overflow-hidden border-y border-primary/10 bg-[radial-gradient(circle_at_12%_8%,hsl(var(--primary)/.11),transparent_30%),radial-gradient(circle_at_86%_94%,hsl(var(--secondary)/.13),transparent_30%),linear-gradient(120deg,#fff,hsl(var(--accent)/.45))] px-4 py-8 text-primary sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10 2xl:-mx-12 2xl:px-12">
+            <span className="pointer-events-none absolute -left-16 top-8 h-36 w-36 rounded-full border border-primary/10 motion-safe:animate-[spin_22s_linear_infinite]" aria-hidden />
+            <span className="pointer-events-none absolute -right-12 bottom-[-5rem] h-48 w-48 rounded-full border-[18px] border-secondary/10 motion-safe:animate-[pulse_8s_ease-in-out_infinite]" aria-hidden />
+            <div className="relative flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(150px,1.1fr)_repeat(6,minmax(0,1fr))_auto] lg:items-center">
+              <div className="shrink-0 border-b border-primary/15 pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-5">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
                 {factsSection?.title ?? "KSU at a glance"}
-              </p>
-              <div className="flex flex-1 snap-x gap-3 overflow-x-auto lg:grid lg:grid-cols-7 lg:overflow-visible">
-                {facts.slice(0, 7).map((fact, index) => {
+                </p>
+                <p className="mt-2 max-w-[13rem] font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-primary">
+                  The scale behind the experience.
+                </p>
+              </div>
+              <div className="-mx-1 flex snap-x gap-0 overflow-x-auto px-1 lg:contents">
+                {facts.slice(0, 6).map((fact, index) => {
                   const Icon = statIcons[index % statIcons.length];
                   return (
                     <div
                       key={fact.id}
-                      className="group flex min-w-40 snap-start items-center gap-2.5 text-primary transition duration-300 hover:-translate-y-0.5 lg:min-w-0"
+                      className={`group flex min-w-[11rem] snap-start flex-col items-start gap-2 border-r border-primary/10 px-5 transition duration-700 first:pl-0 last:border-r-0 motion-safe:animate-[fade-slide-up_700ms_ease-out_both] lg:min-w-0 lg:px-4 lg:first:pl-5 ${index % 2 ? "lg:translate-y-4" : "lg:-translate-y-1"}`}
+                      style={{ animationDelay: `${index * 90}ms` }}
                     >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent ring-1 ring-border">
-                        <Icon className="h-[18px] w-[18px]" aria-hidden />
+                      <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-primary/10 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-md ${statTones[index % statTones.length]}`}>
+                        <Icon className="h-6 w-6 motion-safe:animate-[ksu-ambient-float_5s_ease-in-out_infinite]" style={{ animationDelay: `${index * 180}ms` }} aria-hidden />
                       </span>
                       <span className="min-w-0">
-                        <span className="block font-[family-name:var(--font-display)] text-xl font-semibold leading-none lg:text-2xl">
+                        <span className="block font-[family-name:var(--font-display)] text-2xl font-semibold leading-none text-primary lg:text-[1.8rem]">
                           <CountUpValue
                             value={fact.title ?? ""}
                             active={isVisible.visible}
                             delay={index * 90}
                           />
                         </span>
-                        <span className="mt-1 line-clamp-2 block text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-muted-foreground">
+                        <span className="mt-1 line-clamp-2 block text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-primary/65">
                           {factSubtitle(fact)}
                         </span>
                       </span>
@@ -273,8 +288,8 @@ export function WhyKisiiSection({
                 })}
               </div>
               <Link
-                href="/about"
-                className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 bg-primary px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
+                href="/about/numbers-and-facts"
+                className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 self-start border border-primary/25 bg-white/60 px-4 text-sm font-semibold text-primary transition hover:border-secondary hover:bg-secondary hover:text-white lg:self-auto"
               >
                 Explore facts
                 <ArrowRight className="h-4 w-4" aria-hidden />
@@ -403,9 +418,10 @@ function CountUpValue({
       return;
     }
 
+    setCurrent(0);
     let frame = 0;
     let timeout = 0;
-    const duration = 950;
+    const duration = 1400;
 
     timeout = window.setTimeout(() => {
       const start = performance.now();
@@ -433,10 +449,10 @@ function CountUpValue({
   }
 
   return (
-    <>
+    <span aria-label={value}>
       {new Intl.NumberFormat("en-KE").format(current)}
       {parsed.suffix}
-    </>
+    </span>
   );
 }
 

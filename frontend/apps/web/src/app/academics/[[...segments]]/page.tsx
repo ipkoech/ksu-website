@@ -19,6 +19,8 @@ import { getAcademicsPageConfig } from "@/lib/public-record-page-data";
 import { getAcademicOrganization } from "@/lib/public-team-data";
 import { getSchoolDetailOverviewData } from "@/lib/school-detail-data";
 import type { EntityMediaType } from "@/lib/entity-media-data";
+import { FlowingAcademicsLanding } from "@/components/public/flowing-academics-landing";
+import { getActiveIntake } from "@/lib/get-academics";
 
 const schoolDetailSections = new Set<SchoolDetailSectionKey>([
   "team",
@@ -234,9 +236,10 @@ export default async function AcademicsRoutePage({
   }
 
   const headerConfig = await getAcademicsEntityHeader(segments);
-  const [config, academicLeadership] = await Promise.all([
+  const [config, academicLeadership, activeIntake] = await Promise.all([
     getAcademicsPageConfig(segments, { ...filters, page: academicPage }),
     segments.length === 0 ? getAcademicOrganization() : Promise.resolve(null),
+    segments.length === 0 ? getActiveIntake() : Promise.resolve(null),
   ]);
 
   const academicRecordKind =
@@ -253,6 +256,25 @@ export default async function AcademicsRoutePage({
         config={config}
         kind={academicRecordKind}
         page={academicPage}
+      />
+    );
+  }
+
+  if (segments.length === 0) {
+    return (
+      <PublicSectionPage
+        config={config}
+        header={headerConfig ? <EntityHeader {...headerConfig} /> : undefined}
+        heroSize="compact"
+        academicLeadership={null}
+        hideScopeCards
+        landingContent={
+          <FlowingAcademicsLanding
+            config={config}
+            academicLeadership={academicLeadership}
+            activeIntake={activeIntake}
+          />
+        }
       />
     );
   }

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+import re
 import secrets
 import uuid
 from datetime import datetime, timezone
@@ -17,6 +19,13 @@ from ..helpers.slug import unique_slug
 from ..models import Announcement, Blog, Event, News, Role, Slider, SliderGroup, Story, StoryContributorAccountRequest, UserRole
 from ._base import apply_updates, ilike_any, paginate_query
 from .user import UserService
+
+
+def calculate_story_reading_minutes(content: str | None) -> int:
+    """Estimate story reading time using a 200-word-per-minute pace."""
+    text = re.sub(r"<[^>]+>", " ", content or "")
+    word_count = len(text.split())
+    return max(1, math.ceil(word_count / 200))
 
 
 def _apply_scope_filters(query, model, *, scope_type=None, scope_id=None, is_public=None, is_main=None):
@@ -261,6 +270,24 @@ class BlogService(_RichContentService):
 
 class StoryService(_RichContentService):
     model = Story
+
+    @classmethod
+    async def create(cls, db: AsyncSession, **data):
+        if data.get("reading_minutes") is None:
+            data["reading_minutes"] = calculate_story_reading_minutes(
+                data.get("rich_text") or data.get("plain_text")
+            )
+        return await super().create(db, **data)
+
+    @classmethod
+    async def update(cls, db: AsyncSession, instance, **data):
+        if "reading_minutes" not in data and (
+            "rich_text" in data or "plain_text" in data
+        ):
+            data["reading_minutes"] = calculate_story_reading_minutes(
+                data.get("rich_text") or data.get("plain_text")
+            )
+        return await super().update(db, instance, **data)
 
     @classmethod
     async def list(

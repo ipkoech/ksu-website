@@ -220,11 +220,26 @@ PAGE_SECTION_ADMIN_WORKFLOW_ROW_ACTIONS = {
 }
 
 
-def _page_specific_permissions(*, page_key: str, scope_type: str, action: str) -> list[str]:
+def _page_specific_permissions(*, page_key: str, scope_type: str, action: str, section_key: str | None = None) -> list[str]:
     if page_key != "homepage":
         return []
 
-    if action == "view":
+    if section_key == "campus-life":
+        life_permissions = {
+            "view": "life_around_studies.view",
+            "create": "life_around_studies.manage",
+            "update": "life_around_studies.manage",
+            "delete": "life_around_studies.manage",
+            "item_manage": "life_around_studies.manage",
+            "review": "life_around_studies.review",
+            "publish": "life_around_studies.publish",
+        }
+        dedicated = life_permissions.get(action)
+        if dedicated:
+            permissions = [dedicated]
+        else:
+            permissions = []
+    elif action == "view":
         permissions = ["homepage.view"]
     elif action in {"create", "update", "delete", "item_manage"}:
         permissions = ["homepage.manage"]
@@ -244,7 +259,7 @@ def _page_specific_permissions(*, page_key: str, scope_type: str, action: str) -
     return permissions
 
 
-def _page_section_permissions(*, page_key: str, scope_type: str, action: str) -> list[str]:
+def _page_section_permissions(*, page_key: str, scope_type: str, action: str, section_key: str | None = None) -> list[str]:
     permissions_by_action = {
         "view": ["page_sections.view", PAGE_SECTION_FALLBACK_MANAGE],
         "create": ["page_sections.create", PAGE_SECTION_FALLBACK_MANAGE],
@@ -255,7 +270,7 @@ def _page_section_permissions(*, page_key: str, scope_type: str, action: str) ->
         "item_manage": ["section_items.manage", PAGE_SECTION_FALLBACK_MANAGE],
     }
     permissions = list(permissions_by_action.get(action, [PAGE_SECTION_FALLBACK_MANAGE]))
-    permissions.extend(_page_specific_permissions(page_key=page_key, scope_type=scope_type, action=action))
+    permissions.extend(_page_specific_permissions(page_key=page_key, scope_type=scope_type, action=action, section_key=section_key))
     return permissions
 
 
@@ -276,11 +291,12 @@ async def _require_page_section_access(
     scope_type: str,
     scope_id: uuid.UUID | None,
     action: str,
+    section_key: str | None = None,
 ) -> None:
     await require_scoped_record(
         db,
         user,
-        _page_section_permissions(page_key=page_key, scope_type=scope_type, action=action),
+        _page_section_permissions(page_key=page_key, scope_type=scope_type, action=action, section_key=section_key),
         scope_type,
         scope_id,
         resource_name="page section",
@@ -296,6 +312,7 @@ async def _can_access_page_section_admin_row(db: DbSession, user: CurrentUser, s
                 page_key=section.page_key,
                 scope_type=section.scope_type,
                 action=action,
+                section_key=section.section_key,
             ),
             section.scope_type,
             section.scope_id,
@@ -310,6 +327,7 @@ async def _can_access_page_section_admin_row(db: DbSession, user: CurrentUser, s
                 page_key=section.page_key,
                 scope_type=section.scope_type,
                 action=action,
+                section_key=section.section_key,
             ),
             section.scope_type,
             section.scope_id,
@@ -422,6 +440,7 @@ async def create_page_section(data: PageSectionCreate, db: DbSession, user: Curr
         scope_type=payload["scope_type"],
         scope_id=payload.get("scope_id"),
         action="create",
+        section_key=payload.get("section_key"),
     )
     items = payload.pop("items", [])
     if payload.get("layout_variant") == "leadership_activity":
@@ -464,6 +483,7 @@ async def update_page_section(
         scope_type=item.scope_type,
         scope_id=item.scope_id,
         action="update",
+        section_key=item.section_key,
     )
     payload = data.model_dump(exclude_unset=True)
     payload.pop("items", None)
@@ -477,6 +497,7 @@ async def update_page_section(
         scope_type=payload.get("scope_type", item.scope_type),
         scope_id=payload.get("scope_id", item.scope_id),
         action="update",
+        section_key=payload.get("section_key", item.section_key),
     )
     payload["updated_by_id"] = user.id
     _require_page_authoring_edit(user, item)
@@ -504,6 +525,7 @@ async def create_section_item(
         scope_type=section.scope_type,
         scope_id=section.scope_id,
         action="item_manage",
+        section_key=section.section_key,
     )
     _require_page_authoring_edit(user, section)
     await ContentWorkflowService.reset_after_authoring_edit(
@@ -540,6 +562,7 @@ async def run_page_section_workflow_action(
         scope_type=item.scope_type,
         scope_id=item.scope_id,
         action=_workflow_action_scope(action),
+        section_key=item.section_key,
     )
     item = await PageSectionWorkflowService.transition(item, action, user.id, db=db)
     await db.flush()
@@ -563,6 +586,7 @@ async def update_section_item(
         scope_type=section.scope_type,
         scope_id=section.scope_id,
         action="item_manage",
+        section_key=section.section_key,
     )
     payload = data.model_dump(exclude_unset=True)
     await _validate_leadership_content_references(
@@ -581,6 +605,7 @@ async def update_section_item(
             scope_type=next_section.scope_type,
             scope_id=next_section.scope_id,
             action="item_manage",
+            section_key=next_section.section_key,
         )
         _require_page_authoring_edit(user, next_section)
         await ContentWorkflowService.reset_after_authoring_edit(

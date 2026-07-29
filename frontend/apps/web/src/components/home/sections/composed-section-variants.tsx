@@ -25,6 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AdmissionsCountdown } from "@/components/home/admissions-countdown";
+import { AdmissionsPopover } from "@/components/home/admissions-popover";
 import { ImageCurtainReveal } from "@/components/about/image-curtain-reveal";
 import { CampusLifeHorizontalScroller } from "@/components/home/campus-life-horizontal-scroller";
 import { NewsletterSubscribeForm } from "@/components/home/newsletter-subscribe-form";
@@ -47,6 +48,7 @@ import {
   poster,
   video,
   type HomepageHeroAction,
+  type HomepageHeroAdmissions,
   type HomepagePartnershipSpotlight,
   type HomepageResolvedHero,
   type HomepageSection,
@@ -71,6 +73,7 @@ export type ProgrammeFinderData = {
   schools: HomeSchoolCard[];
   programmes: HomeProgrammeCard[];
   intakes: HomeIntake[];
+  activeIntakeProgrammes?: HomeProgrammeCard[];
 };
 
 export function FeaturedStoriesSection({ stories }: { stories?: HomeCard[] }) {
@@ -187,12 +190,19 @@ export function FeaturedStoriesSection({ stories }: { stories?: HomeCard[] }) {
 }
 
 const campusHeroImage = "/images/homepage/kisii-administration-campus.jpg";
+const uploadedHeroVideo = "/videos/hero-video.mp4";
 const heriAfricaLaunchImage = "/images/HERIAfricaLaunch.jpg";
 const researchImpactBackground = "/images/research/research-impact-bg.png";
 
-export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
+export function HeroAdmissionsSection({
+  section,
+  hero,
+  programmeFinderData,
+}: SectionVariantProps) {
   const content = hero?.content;
-  const admissions = hero?.admissions;
+  const admissions =
+    hero?.admissions ??
+    homepageAdmissionsFromIntakes(programmeFinderData?.intakes);
   const showAdmissions = Boolean(
     admissions?.visible &&
     (admissions.state === "applications_open" ||
@@ -202,7 +212,7 @@ export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
   const mobileMedia = hero?.media?.mobile;
   const videoMedia = hero?.media?.video;
   const posterMedia = hero?.media?.poster ?? desktopMedia;
-  const videoSrc = mediaUrl(videoMedia);
+  const videoSrc = mediaUrl(videoMedia) ?? uploadedHeroVideo;
   const desktopImageSrc = mediaUrl(desktopMedia) ?? campusHeroImage;
   const mobileImageSrc = mediaUrl(mobileMedia);
   const mediaAltText = mediaAlt(
@@ -216,7 +226,7 @@ export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
     section.subtitle ??
     section.description ??
     "Advancing inclusive education, research, innovation and community impact.";
-  const actions = heroActions(content?.actions, section.items, admissions);
+  const actions = heroActions(content?.actions, section.items, admissions ?? undefined);
 
   return (
     <section className="relative isolate min-h-[clamp(390px,calc(100svh-13rem),580px)] overflow-hidden bg-primary text-white">
@@ -227,6 +237,7 @@ export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
           muted
           loop
           playsInline
+          preload="metadata"
           poster={mediaUrl(posterMedia) ?? desktopImageSrc}
           aria-hidden="true"
         >
@@ -265,9 +276,7 @@ export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
 
       <div
         className={`relative z-10 mx-auto grid min-h-[clamp(390px,calc(100svh-13rem),580px)] max-w-[1680px] items-center gap-8 px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16 xl:px-10 2xl:px-12 ${
-          showAdmissions
-            ? "lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]"
-            : "lg:grid-cols-1"
+          "lg:grid-cols-1"
         }`}
       >
         <div className="max-w-2xl self-end [text-shadow:0_2px_14px_rgba(0,0,0,.55)]">
@@ -295,15 +304,70 @@ export function HeroAdmissionsSection({ section, hero }: SectionVariantProps) {
           ) : null}
         </div>
 
-        {showAdmissions && admissions ? (
-          <AdmissionsPanel admissions={admissions} />
-        ) : null}
+        {showAdmissions && admissions ? <AdmissionsPopover admissions={admissions} /> : null}
       </div>
     </section>
   );
 }
 
-function AdmissionsPanel({
+function homepageAdmissionsFromIntakes(
+  intakes: ProgrammeFinderData["intakes"] | undefined,
+): HomepageHeroAdmissions | null {
+  const current = intakes?.find((intake) => intake.isOpen);
+  if (!current) return null;
+
+  const today = new Date();
+  const standardEnd = new Date(`${current.applicationEnd}T23:59:59+03:00`);
+  const lateEnd = current.lateApplicationEnd
+    ? new Date(`${current.lateApplicationEnd}T23:59:59+03:00`)
+    : null;
+  const isLate = standardEnd.getTime() < today.getTime() && Boolean(lateEnd);
+  const closingAt = isLate ? lateEnd : standardEnd;
+  const nextIntake = intakes?.find(
+    (intake) =>
+      !intake.isOpen &&
+      new Date(`${intake.applicationStart}T00:00:00+03:00`).getTime() >
+        today.getTime(),
+  );
+
+  return {
+    visible: true,
+    state: "applications_open",
+    application_phase: isLate ? "late" : "standard",
+    intake: {
+      name: current.name,
+      slug: current.slug,
+    },
+    closing_at: closingAt?.toISOString() ?? null,
+    countdown_target: closingAt?.toISOString() ?? null,
+    primary_action: {
+      key: "current-intake",
+      label: "Apply now",
+      href: current.href,
+      style: "primary",
+    },
+    secondary_actions: [
+      ...(nextIntake
+        ? [
+            {
+              key: "next-intake",
+              label: `Admissions open ${formatPublicDate(nextIntake.applicationStart)}`,
+              href: nextIntake.href,
+              style: "secondary" as const,
+            },
+          ]
+        : []),
+      {
+        key: "requirements",
+        label: "Check requirements",
+        href: "/admissions/requirements",
+        style: "secondary" as const,
+      },
+    ],
+  };
+}
+
+export function AdmissionsPanel({
   admissions,
 }: {
   admissions: HomepageResolvedHero["admissions"];
@@ -461,16 +525,25 @@ function heroActions(
         style: "primary" as const,
       }
     : null;
+  const hasApplicationAction =
+    Boolean(admissionAction) ||
+    [...actions, ...sectionActions].some((action) =>
+      /apply|application|admission/i.test(action.label),
+    );
   const merged = [
     ...(admissionAction ? [admissionAction] : []),
     ...actions,
     ...sectionActions,
-    {
-      key: "fallback-apply",
-      label: "Apply Now",
-      href: "/admissions/how-to-apply",
-      style: "primary" as const,
-    },
+    ...(hasApplicationAction
+      ? []
+      : [
+          {
+            key: "fallback-study",
+            label: "Study at KSU",
+            href: "/academics/programmes",
+            style: "primary" as const,
+          },
+        ]),
     {
       key: "fallback-programmes",
       label: "Explore Programmes",
@@ -479,9 +552,13 @@ function heroActions(
     },
   ];
   const seen = new Set<string>();
+  let applicationActionSeen = false;
   return merged.filter((action) => {
     const identity = normalizeHeroHref(action.href);
     if (!action.label || !identity || seen.has(identity)) return false;
+    const isApplicationAction = /apply|application|admission/i.test(action.label);
+    if (isApplicationAction && applicationActionSeen) return false;
+    if (isApplicationAction) applicationActionSeen = true;
     seen.add(identity);
     return true;
   });
@@ -516,10 +593,11 @@ function formatPublicDate(value?: string | null) {
 
 export function PulseStripSection({ section }: SectionVariantProps) {
   const items = officialPulseItems(section);
-  const maxItems =
+  const configuredMaxItems =
     typeof section.settings?.maxItems === "number"
       ? section.settings.maxItems
       : 5;
+  const maxItems = Math.min(Math.max(configuredMaxItems, 1), 5);
 
   return (
     <section
@@ -536,9 +614,6 @@ export function PulseStripSection({ section }: SectionVariantProps) {
             <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-tight text-white">
               {section.title ?? "University pulse"}
             </h2>
-            <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
-              Live updates
-            </p>
           </div>
         </div>
 
@@ -664,16 +739,18 @@ export function FeaturedPartnershipSection({
     : heroImage(section);
   const title = spotlight?.headline ?? section.title;
   const summary = spotlight?.summary ?? section.description;
-  const cta = spotlight?.primary_cta?.href
+  const partnershipHref =
+    spotlight?.primary_cta?.href ?? spotlight?.primary_cta_url;
+  const cta = partnershipHref
     ? {
         id: spotlight.id,
-        title: spotlight.primary_cta.label ?? "Explore partnership",
-        cta_label: spotlight.primary_cta.label ?? "Explore partnership",
-        cta_url: spotlight.primary_cta.href,
+        title: "Read more",
+        cta_label: "Read more",
+        cta_url: partnershipHref,
       }
     : {
-        title: "Read More",
-        cta_label: "Read More",
+        title: "Read more",
+        cta_label: "Read more",
         cta_url: "/research/partnerships",
       };
 
@@ -709,23 +786,26 @@ export function FeaturedPartnershipSection({
                 imageClassName="object-cover object-[50%_38%]"
               />
             </ImageCurtainReveal>
-            <div className="absolute bottom-0 left-0 right-0 bg-primary/88 p-4 text-white backdrop-blur-sm sm:left-auto sm:right-5 sm:w-[min(360px,calc(100%-2.5rem))]">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-l-2 border-secondary pl-4">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
                 Strategic partnership
               </p>
-              <p className="mt-1 text-sm leading-6 text-white/78">
-                Building Africa together through research, enterprise and
-                community impact.
+              <p className="text-sm text-muted-foreground">
+                Building Africa together through research, enterprise and community impact.
               </p>
             </div>
           </div>
 
           <div className="max-w-3xl">
             <SectionEyebrow
-              value={section.subtitle ?? "Featured partnership"}
+              value={
+                spotlight
+                  ? "Kisii University × HERI Africa"
+                  : (section.subtitle ?? "Featured partnership")
+              }
             />
             <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl lg:text-5xl">
-              {title ?? "Partnership spotlight"}
+              {title ?? "Building Africa together"}
             </h2>
             <SectionBody
               value={summary}
@@ -768,156 +848,122 @@ export function ProgrammeFinderSection({
   const intakes = programmeFinderData?.intakes ?? [];
   const programmes = programmeFinderData?.programmes ?? [];
   const schools = programmeFinderData?.schools ?? [];
+  const activeIntake = intakes.find((intake) => intake.isOpen) ?? intakes[0] ?? null;
+  const intakeProgrammes = programmeFinderData?.activeIntakeProgrammes?.length
+    ? programmeFinderData.activeIntakeProgrammes
+    : activeIntake
+      ? programmes.filter((programme) => programme.intakeIds?.includes(activeIntake.id)).slice(0, 6)
+      : [];
   const hasAdmissionDates = dateItems.length > 0 || intakes.length > 0;
 
   return (
     <section
       id={section.section_key}
-      className="programme-discovery-mosaic relative isolate overflow-hidden border-b border-border bg-white/[0.82] py-7 backdrop-blur-[1px] sm:py-9 lg:py-10"
+      className="programme-discovery-mosaic relative isolate overflow-hidden bg-primary py-4 text-white sm:py-6 lg:py-8"
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[linear-gradient(180deg,hsl(var(--accent)/.55),transparent)]" />
-      <div className="relative mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="programme-mosaic-grid grid overflow-hidden border border-primary/10 bg-white/[0.95] shadow-[0_24px_70px_-48px_hsl(var(--primary)/.45)] lg:grid-cols-12">
-          <header className="programme-mosaic-intro relative flex flex-col justify-between overflow-hidden bg-primary p-5 text-white sm:p-7 lg:col-span-4 lg:row-start-1">
-            <div
-              className="absolute -right-20 -top-24 h-52 w-52 rounded-full border border-white/10"
-              aria-hidden
-            />
+      <PublicImage
+        src="/images/landing-page/tc-fore.png"
+        alt="Kisii University tuition complex and landscaped campus"
+        ratio="fill"
+        priority
+        className="pointer-events-none absolute inset-0 h-full w-full"
+        imageClassName="object-cover object-center"
+        sizes="100vw"
+      />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(2,13,47,.80)_0%,rgba(2,13,47,.66)_34%,rgba(2,13,47,.38)_50%,rgba(2,13,47,.08)_72%,rgba(2,13,47,.34)_100%)]" aria-hidden />
+      <div className="relative w-full">
+        <div className="programme-mosaic-grid relative isolate grid overflow-hidden bg-[#03133f]/55 shadow-[0_24px_80px_-40px_rgba(0,0,0,.75)] lg:grid-cols-[minmax(0,1fr)_330px]">
+          <div className="relative min-w-0 lg:col-start-1 lg:row-span-2">
+          <header className="programme-mosaic-intro relative flex min-h-[clamp(330px,28vw,430px)] flex-col justify-start overflow-hidden p-5 pt-10 text-white sm:p-8 sm:pt-14 lg:p-12 lg:pt-16">
             <div className="relative">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-white">
-                {section.subtitle ?? "Programmes and academic pathways"}
-              </p>
-              <h2 className="mt-3 max-w-sm font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.04] text-white sm:text-4xl">
-                What will you become?
+              <h2 className="mt-0 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.98] text-white sm:text-5xl lg:text-6xl">
+                Find your path
+                <span className="block text-[#39c8ff]">at Kisii University</span>
               </h2>
               <p className="mt-3 max-w-md text-sm leading-6 text-white">
-                {section.description ??
-                  "Search programmes built around your interests, ambitions and future."}
+                {/Search programmes and follow five steps/i.test(section.description ?? "")
+                  ? "Explore our diverse range of undergraduate and postgraduate programmes and take the next step towards your future."
+                  : (section.description ??
+                    "Explore our diverse range of undergraduate and postgraduate programmes and take the next step towards your future.")}
               </p>
-            </div>
-            <div className="relative mt-6 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.16em] text-white">
-              <span className="h-px w-12 bg-secondary" />
-              Search. Discover. Apply.
             </div>
           </header>
 
           <ProgrammeFinderInteractive
             programmes={programmes}
             schools={schools}
+            intakeProgrammes={intakeProgrammes}
+            intakeName={activeIntake?.name}
           />
-
-          <figure className="programme-mosaic-image relative hidden min-h-48 overflow-hidden bg-primary sm:block lg:col-start-1 lg:col-end-4 lg:row-start-2 lg:min-h-0">
-            <PublicImage
-              src="/images/Home/OurKSU-82.jpg"
-              alt="Kisii University students exploring their academic future"
-              ratio="fill"
-              className="absolute inset-0 h-full w-full rounded-none"
-              imageClassName="object-cover object-center transition duration-700 hover:scale-[1.03]"
-              sizes="(min-width: 1024px) 25vw, 100vw"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/75 via-transparent to-transparent" />
-            <figcaption className="absolute inset-x-0 bottom-0 p-5 text-sm font-semibold text-white">
-              Learn in a community built for discovery.
-            </figcaption>
-          </figure>
+          </div>
 
           {hasAdmissionDates ? (
-            <aside className="programme-mosaic-dates relative overflow-hidden bg-primary p-5 text-white sm:p-6 lg:col-start-10 lg:col-end-13 lg:row-start-2">
+          <aside className="programme-mosaic-dates relative z-10 mx-auto mt-5 w-full max-w-5xl overflow-hidden bg-[#03133f]/95 p-5 text-white sm:p-6 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:mt-0 lg:max-w-none lg:px-7 lg:py-8">
               <div className="absolute inset-x-0 top-0 h-1 bg-secondary" />
               <SectionEyebrow
-                value={
-                  academicDatesSection?.subtitle ?? "Admissions and reporting"
-                }
+                value="Admissions"
                 light
               />
               <div className="mt-2 flex items-center justify-between gap-4">
                 <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white">
-                  Key dates
+                  Your journey starts here
                 </h3>
                 <CalendarDays className="h-6 w-6 text-secondary" aria-hidden />
               </div>
-
-              {intakes.slice(0, 1).map((intake) => (
-                <LinkWrapper
-                  key={intake.id}
-                  href={intake.href}
-                  className="mt-4 block border-y border-white/20 py-3 transition hover:border-secondary/70"
-                >
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white">
-                    {intake.isOpen ? "Open intake" : "Intake"}
-                  </p>
-                  <h4 className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold text-white">
-                    {intake.name}
-                  </h4>
-                  <p className="mt-1 text-xs leading-5 text-white/72">
-                    {formatDateRange(
-                      intake.applicationStart,
-                      intake.applicationEnd ?? intake.lateApplicationEnd,
-                    )}
-                  </p>
-                </LinkWrapper>
-              ))}
-
-              <div className="mt-1 divide-y divide-white/15">
-                {dateItems
-                  .slice(0, intakes.length ? 2 : 3)
-                  .map((item, index) => (
-                    <AdmissionDateLine
-                      key={item.id}
-                      item={item}
-                      index={index}
-                    />
-                  ))}
+              <div className="mt-7 space-y-5">
+                {[
+                  ["1", "Explore Programmes", "Search and filter programmes that match your interests and goals.", "/academics/programmes"],
+                  ["2", "Check Requirements", "Review entry requirements and prepare your application.", "/admissions/requirements"],
+                  ["3", "Apply Online", "Complete your application and take the first step towards your future.", intakes[0]?.href ?? "/admissions/how-to-apply"],
+                ].map(([number, label, body, href]) => (
+                  <LinkWrapper key={number} href={href} className="group flex gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/35 text-sm font-semibold transition group-hover:border-secondary group-hover:bg-secondary">{number}</span>
+                    <span><strong className="block text-sm text-white">{label}</strong><span className="mt-1 block text-xs leading-5 text-white/70">{body}</span></span>
+                  </LinkWrapper>
+                ))}
               </div>
-
-              <LinkWrapper
-                href="/admissions"
-                className="mt-4 inline-flex min-h-10 w-fit items-center justify-center gap-2 border-b border-secondary pb-1 text-sm font-bold text-white transition hover:text-secondary"
-              >
-                Explore admissions
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </LinkWrapper>
+              <LinkWrapper href="/admissions" className="mt-7 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-white/50 text-sm font-bold text-white transition hover:border-secondary hover:bg-secondary">Learn more <ArrowRight className="h-4 w-4" aria-hidden /></LinkWrapper>
             </aside>
           ) : (
-            <div className="hidden bg-primary lg:col-start-10 lg:col-end-13 lg:row-start-2 lg:block" />
+            <div className="hidden bg-primary" />
           )}
 
-          <div className="programme-mosaic-journey border-t border-primary/10 bg-accent/35 p-5 sm:p-6 lg:col-span-12 lg:row-start-3 lg:px-7 lg:py-5">
+          <div className="programme-mosaic-journey border-t border-white/15 bg-primary/90 p-5 sm:p-6 lg:col-span-2 lg:row-start-3 lg:px-7 lg:py-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <SectionEyebrow value="Your journey to Kisii University" />
-                <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-primary">
-                  Five clear steps. One destination.
+                <SectionEyebrow value="Your journey to Kisii University" light />
+                <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white">
+                  Three clear steps. One destination.
                 </h3>
               </div>
               <LinkWrapper
                 href="/admissions/how-to-apply"
-                className="inline-flex min-h-10 w-fit shrink-0 items-center justify-center gap-2 text-sm font-bold text-primary transition hover:text-secondary"
+                className="inline-flex min-h-10 w-fit shrink-0 items-center justify-center gap-2 text-sm font-bold text-white transition hover:text-secondary"
               >
                 Application guide
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </LinkWrapper>
             </div>
 
-            <div className="relative mt-5 grid gap-1 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
+            <div className="relative mt-5 grid gap-1 sm:grid-cols-2 lg:grid-cols-3 lg:gap-0">
               <span
-                className="programme-journey-line absolute left-[10%] right-[10%] top-5 hidden h-px origin-left bg-primary/20 lg:block"
+                className="programme-journey-line absolute left-[10%] right-[10%] top-5 hidden h-px origin-left bg-white/25 lg:block"
                 aria-hidden
               />
-              {journey.slice(0, 5).map((item, index) => (
+              {journey.slice(0, 3).map((item, index) => (
                 <div
                   key={item.id}
-                  className="programme-journey-step group relative flex gap-4 border-b border-primary/10 py-3 last:border-b-0 sm:border-b-0 sm:px-2 lg:block lg:px-3 lg:py-0 lg:text-center"
+                  className="programme-journey-step group relative flex gap-4 border-b border-white/10 py-3 last:border-b-0 sm:border-b-0 sm:px-2 lg:block lg:px-3 lg:py-0 lg:text-center"
                   style={{ animationDelay: `${index * 70}ms` }}
                 >
-                  <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-white ring-8 ring-accent transition group-hover:bg-secondary lg:mx-auto">
+                  <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary font-semibold text-white ring-8 ring-primary transition group-hover:bg-white group-hover:text-primary lg:mx-auto">
                     {itemContentNumber(item, "step") ?? index + 1}
                   </span>
                   <div className="min-w-0 lg:mt-4">
-                    <h4 className="text-sm font-bold text-foreground">
+                    <h4 className="text-sm font-bold text-white">
                       {item.title}
                     </h4>
-                    <p className="mt-1 line-clamp-1 text-xs leading-5 text-muted-foreground lg:line-clamp-2">
+                    <p className="mt-1 line-clamp-1 text-xs leading-5 text-white/70 lg:line-clamp-2">
                       {item.body_text}
                     </p>
                   </div>
@@ -1006,19 +1052,19 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="campus-life-scroll-scene relative isolate border-b border-border bg-[linear-gradient(180deg,rgba(255,255,255,.84),hsl(var(--surface-subtle)/.86))] py-10 backdrop-blur-[1px] lg:min-h-[150vh] lg:py-0"
+      className="campus-life-scroll-scene relative isolate overflow-hidden bg-[linear-gradient(180deg,#fff_0%,hsl(var(--surface-subtle)/.92)_100%)] py-12 lg:min-h-[150vh] lg:py-0"
     >
-      <div className="absolute inset-y-0 right-0 -z-10 hidden w-1/2 bg-[linear-gradient(90deg,transparent,hsl(var(--accent)/.82))] lg:block" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 -z-10 hidden w-[42%] bg-[radial-gradient(circle_at_65%_48%,hsl(var(--primary)/.12),transparent_68%)] lg:block" />
       <div className="campus-life-sticky-frame mx-auto max-w-[1680px] px-4 sm:px-6 lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px))] lg:max-w-none lg:items-center lg:px-0 xl:px-0 2xl:px-0">
         <CampusLifeHorizontalScroller>
-          <div className="lg:flex lg:w-max lg:items-stretch lg:gap-0 lg:pr-[8vw]">
-            <div className="campus-life-editorial lg:w-screen lg:shrink-0 lg:snap-start lg:px-8 xl:px-10 2xl:px-12">
+          <div className="lg:flex lg:w-max lg:items-stretch lg:gap-6 lg:pr-[10vw]">
+            <div className="campus-life-editorial lg:w-[min(100vw,1320px)] lg:shrink-0 lg:snap-start lg:px-8 xl:px-12">
               <div className="grid gap-7 lg:grid-cols-[minmax(0,0.58fr)_minmax(360px,0.42fr)] lg:items-stretch">
                 <div className="flex flex-col justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-6 motion-safe:delay-150">
                   <div className="max-w-xl">
-                    <SectionEyebrow value={section.subtitle ?? "Campus life"} />
+                    <div className="flex items-center gap-3"><SectionEyebrow value={section.subtitle ?? "Life around studies"} /><span className="hidden text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground sm:inline">Scroll to explore</span></div>
                     <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl lg:text-5xl">
-                      See the rhythm of student life at KSU.
+                      Find your people. Build your rhythm.
                     </h2>
                     <SectionBody
                       value={
@@ -1036,11 +1082,11 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
                       className="mt-7"
                     />
                   </div>
-                  <div className="student-life-rhythm mt-8 divide-y divide-primary/10 border-y border-primary/15">
+                  <div className="student-life-rhythm mt-8 space-y-1">
                     {rhythm.map((item, index) => (
                       <div
                         key={item.label}
-                        className="grid gap-3 py-4 sm:grid-cols-[86px_minmax(0,1fr)]"
+                        className="group grid gap-3 rounded-2xl px-3 py-4 transition hover:bg-white sm:grid-cols-[86px_minmax(0,1fr)]"
                       >
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-secondary">
@@ -1070,7 +1116,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
                 <CampusMosaicFeature item={feature} section={section} />
               </div>
             </div>
-            <div className="student-life-lanes mt-7 grid gap-4 sm:grid-cols-2 lg:mt-0 lg:flex lg:w-max lg:items-stretch lg:gap-0">
+            <div className="student-life-lanes mt-8 grid gap-4 sm:grid-cols-2 lg:mt-0 lg:flex lg:w-max lg:items-stretch lg:gap-5">
               {lanes.map((lane, index) => (
                 <CampusLifeLane key={lane.title} lane={lane} index={index} />
               ))}
@@ -1078,6 +1124,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
           </div>
         </CampusLifeHorizontalScroller>
       </div>
+      <div className="pointer-events-none absolute inset-x-6 bottom-5 hidden items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground lg:flex"><span>Scroll</span><span className="relative h-px flex-1 overflow-hidden bg-primary/15"><span className="absolute inset-y-0 left-0 w-[calc(var(--campus-progress,0)*100%)] bg-secondary transition-[width] duration-100" /></span><span>Explore life around studies</span></div>
     </section>
   );
 }
@@ -1090,7 +1137,7 @@ function CampusMosaicFeature({
   section: HomepageSection;
 }) {
   const body = (
-    <article className="group relative min-h-[340px] overflow-hidden bg-primary text-white shadow-2xl shadow-primary/15 sm:min-h-[430px] lg:min-h-[560px] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-6">
+    <article className="group relative min-h-[340px] overflow-hidden rounded-[1.75rem] bg-primary text-white shadow-2xl shadow-primary/15 sm:min-h-[430px] lg:min-h-[560px] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-6">
       <ImageCurtainReveal className="absolute inset-0 h-full" direction="down">
         <PublicImage
           src={itemImageUrl(item) ?? mediaUrl(heroImage(section))}
@@ -1144,7 +1191,7 @@ function CampusLifeLane({
   const Icon = lane.icon;
   const body = (
     <article
-      className="group relative min-h-[230px] overflow-hidden bg-primary text-white transition duration-300 hover:bg-primary/95 sm:min-h-[260px] lg:min-h-[560px] lg:w-[min(430px,58vw)] lg:snap-start lg:border-l lg:border-white/15 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
+      className="group relative min-h-[230px] overflow-hidden rounded-[1.75rem] bg-primary text-white transition duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/20 sm:min-h-[260px] lg:min-h-[560px] lg:w-[min(390px,34vw)] lg:snap-start motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
       style={{ animationDelay: `${Math.min(index, 5) * 80}ms` }}
     >
       <PublicImage
@@ -1261,6 +1308,16 @@ function campusLifeLanes(items: HomepageSectionItem[]): CampusLifeLaneData[] {
     const source = sourceItems[index];
     return {
       ...lane,
+      title: source?.title ?? lane.title,
+      body: source?.body_text ?? lane.body,
+      ctaLabel: source?.cta_label ?? lane.ctaLabel,
+      href: source?.cta_url ?? lane.href,
+      audience:
+        source?.audience === "prospective"
+          ? "For prospective students"
+          : source?.audience === "current_student"
+            ? "For current students"
+            : lane.audience,
       imageUrl:
         itemImageUrl(source) ?? fallbackImages[index % fallbackImages.length],
       imageAlt: itemContentText(source, "imageAlt"),

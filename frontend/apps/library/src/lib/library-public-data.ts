@@ -15,6 +15,7 @@ import {
   type LibraryServiceRecord,
   type LibraryStaff,
   type LibrarySearchResponse,
+  type LibraryAssistantContext,
   type LibraryTodayHours,
   type News,
 } from "@ksu/api-client";
@@ -334,6 +335,12 @@ export function getPublicBranches() {
       per_page: 100,
     }),
   ).then((result) => normalizeList(result, normalizeBranch));
+}
+
+export function getPublicAssistantContexts() {
+  return safeList<LibraryAssistantContext>(() =>
+    libraryServiceApi.assistantContexts.publicList(),
+  );
 }
 
 export async function getCatalogSearchData(
@@ -797,7 +804,7 @@ export async function getLibraryArticlesData({
 }
 
 export async function getLibrarySearchData(
-  options: { libraryId?: string; query?: string } = {},
+  options: { libraryId?: string; query?: string; type?: string } = {},
 ): Promise<LibrarySearchData> {
   const query = options.query?.trim() ?? "";
   const branches = await getPublicBranches();
@@ -826,6 +833,7 @@ export async function getLibrarySearchData(
         libraryServiceApi.search({
           q: query,
           library_id: selectedLibraryId || undefined,
+          types: options.type && options.type !== "everything" ? options.type : undefined,
           limit: 40,
         }),
       )

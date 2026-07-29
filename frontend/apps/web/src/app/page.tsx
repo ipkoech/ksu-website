@@ -56,7 +56,11 @@ import {
 } from "@/lib/homepage-sections";
 import { getNavData } from "@/lib/nav-data";
 import { getPublicVcHub } from "@/lib/vice-chancellor-data";
-import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
+import {
+  heriAfricaFrontendUrl,
+  libraryFrontendUrl,
+  researchFrontendUrl,
+} from "@/lib/service-urls";
 
 export const revalidate = 300;
 
@@ -190,6 +194,7 @@ export default async function HomePage() {
         megaMenuData={megaMenuData}
         researchHref={researchFrontendUrl}
         libraryHref={libraryFrontendUrl}
+        heriHref={heriAfricaFrontendUrl}
       />
 
       <AmbientPageBackground
@@ -206,6 +211,12 @@ export default async function HomePage() {
               <HeroAdmissionsSection
                 section={fallbackHomeHeroSection}
                 hero={composedHomepage.data?.hero}
+                programmeFinderData={{
+                  schools: homepage.schools,
+                  programmes: homepage.featuredProgrammes,
+                  intakes: homepage.activeIntakes,
+                  activeIntakeProgrammes: homepage.activeIntakeProgrammes,
+                }}
               />
             )}
             <HomepageSections
@@ -219,6 +230,7 @@ export default async function HomePage() {
                 schools: homepage.schools,
                 programmes: homepage.featuredProgrammes,
                 intakes: homepage.activeIntakes,
+                activeIntakeProgrammes: homepage.activeIntakeProgrammes,
               }}
               featuredStories={homepage.featuredStories}
               vcHub={vcHub}
@@ -229,6 +241,12 @@ export default async function HomePage() {
             <HeroAdmissionsSection
               section={fallbackHomeHeroSection}
               hero={composedHomepage.data?.hero}
+              programmeFinderData={{
+                schools: homepage.schools,
+                programmes: homepage.featuredProgrammes,
+                intakes: homepage.activeIntakes,
+                activeIntakeProgrammes: homepage.activeIntakeProgrammes,
+              }}
             />
 
             {/* Hero value proposition + secondary CTAs */}

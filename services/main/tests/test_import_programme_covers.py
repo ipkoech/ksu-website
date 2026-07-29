@@ -12,8 +12,12 @@ from app.seeders import import_programme_covers as importer
 from app.seeders.import_programme_covers import (
     CoverApprovalError,
     CoverAssetValidationError,
+    bundled_programme_cover_manifest_path,
+    bundled_programme_cover_source_dir,
+    import_all_bundled_programme_covers,
     import_programme_covers,
     validate_cover_assets,
+    validate_cover_approval,
 )
 from app.seeders.programme_cover_concepts import (
     ICT_PROGRAMME_COVER_CONCEPTS,
@@ -268,10 +272,66 @@ def test_cli_requires_manifest_and_exposes_exact_school_choices() -> None:
     actions = {action.dest: action for action in parser._actions}
 
     assert actions["school"].choices == tuple(sorted(SCHOOL_COVER_SCOPES))
-    assert actions["school"].required is True
-    assert actions["manifest"].required is True
+    assert actions["school"].required is False
+    assert actions["source"].required is False
+    assert actions["manifest"].required is False
+    assert actions["all_schools"].default is False
     with pytest.raises(SystemExit):
         parser.parse_args(["--school", "sist", "--source", "approved"])
+    with pytest.raises(SystemExit):
+        parser.parse_args(["--school", "SIST", "--all-schools"])
+
+
+def test_bundled_programme_cover_paths_are_school_scoped() -> None:
+    source_dir = bundled_programme_cover_source_dir(LAW_SCOPE)
+    manifest_path = bundled_programme_cover_manifest_path(LAW_SCOPE)
+
+    assert source_dir.name == LAW_SCOPE.slug
+    assert source_dir.parent.name == "programme-covers"
+    assert manifest_path == source_dir / "manifest.json"
+
+
+def test_bundled_programme_cover_assets_match_every_school_registry() -> None:
+    for school_code, school_scope in SCHOOL_COVER_SCOPES.items():
+        concepts = load_programme_cover_concepts(school_code)
+        source_dir = bundled_programme_cover_source_dir(school_scope)
+        manifest = importer.load_manifest(bundled_programme_cover_manifest_path(school_scope))
+
+        validate_cover_approval(concepts, school_scope=school_scope, manifest=manifest)
+        assets = validate_cover_assets(source_dir, concepts)
+
+        assert set(assets) == {concept.filename for concept in concepts}
+
+
+@pytest.mark.asyncio
+async def test_import_all_bundled_programme_covers_runs_each_school(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[tuple[str, Path, Path]] = []
+
+    async def fake_run_cli(
+        source_dir: Path, school_code: str, manifest_path: Path
+    ) -> importer.ImportSummary:
+        calls.append((school_code, source_dir, manifest_path))
+        return importer.ImportSummary(imported=1, updated=2)
+
+    monkeypatch.setattr(importer, "_run_cli", fake_run_cli)
+
+    summary = await import_all_bundled_programme_covers(("SOL", "SIST"))
+
+    assert summary == importer.ImportSummary(imported=2, updated=4)
+    assert calls == [
+        (
+            "SOL",
+            bundled_programme_cover_source_dir(SCHOOL_COVER_SCOPES["SOL"]),
+            bundled_programme_cover_manifest_path(SCHOOL_COVER_SCOPES["SOL"]),
+        ),
+        (
+            "SIST",
+            bundled_programme_cover_source_dir(SCHOOL_COVER_SCOPES["SIST"]),
+            bundled_programme_cover_manifest_path(SCHOOL_COVER_SCOPES["SIST"]),
+        ),
+    ]
 
 
 @pytest.mark.asyncio

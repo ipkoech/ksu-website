@@ -6,6 +6,7 @@ import {
   faqsApi,
   sportsFacilitiesApi,
   studentGovernanceApi,
+  mainApi,
   type Accommodation,
   type ArtsCulture,
   type Club,
@@ -64,6 +65,36 @@ export interface CampusLifePageData {
     governance?: number;
   };
   page?: number;
+  editorial?: LifeAroundStudiesEditorial | null;
+}
+
+export interface LifeAroundStudiesEditorial {
+  section: {
+    title?: string | null;
+    subtitle?: string | null;
+    description?: string | null;
+    items?: Array<{
+      id: string;
+      title?: string | null;
+      subtitle?: string | null;
+      body_text?: string | null;
+      cta_label?: string | null;
+      cta_url?: string | null;
+      audience?: string | null;
+      source_type?: string | null;
+      is_featured?: boolean;
+      content?: Record<string, unknown> | null;
+    }>;
+  };
+  stats: Record<string, number>;
+  clubs: Array<Record<string, unknown>>;
+  sports: Array<Record<string, unknown>>;
+  accommodation: Array<Record<string, unknown>>;
+  arts: Array<Record<string, unknown>>;
+  governance: Array<Record<string, unknown>>;
+  activities: Array<Record<string, unknown>>;
+  faqs: Array<Record<string, unknown>>;
+  contacts: Array<Record<string, unknown>>;
 }
 
 async function safeList<T>(promise: Promise<ListEnvelope<T>>): Promise<T[]> {
@@ -209,6 +240,15 @@ export async function getCampusLifeData(
   ]);
 
   const detail: CampusLifePageData["detail"] = {};
+  let editorial: LifeAroundStudiesEditorial | null = null;
+  if (!area) {
+    try {
+      const response = await mainApi.get<{ data?: LifeAroundStudiesEditorial }>("/api/v1/campus-life/homepage");
+      editorial = response.data ?? null;
+    } catch (error) {
+      console.warn("Failed to fetch Life Around Studies composition:", error);
+    }
+  }
 
   if (area === "clubs" && slug) {
     detail.club = await safeRecord(
@@ -257,5 +297,6 @@ export async function getCampusLifeData(
       governance: governanceResult.total,
     },
     page,
+    editorial,
   };
 }

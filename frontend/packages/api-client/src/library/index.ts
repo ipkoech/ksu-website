@@ -258,6 +258,138 @@ export interface LibraryPolicyPage {
   updated_at?: string;
 }
 
+export type LibraryAssistantContextStatus = "draft" | "active" | "archived";
+
+export interface LibraryAssistantSource {
+  id: string;
+  context_id: string;
+  source_type: string;
+  source_id: string;
+  title: string;
+  public_url?: string | null;
+  sort_order?: number;
+  is_approved: boolean;
+  approved_by_person_id?: string | null;
+  approved_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LibraryAssistantContext {
+  id: string;
+  library_id?: string | null;
+  name: string;
+  slug: string;
+  description?: string | null;
+  audience?: string | null;
+  instructions?: string | null;
+  allowed_source_types?: string[];
+  suggested_prompts?: Array<Record<string, unknown>>;
+  escalation_guidance?: string | null;
+  status?: LibraryAssistantContextStatus;
+  is_public?: boolean;
+  published_at?: string | null;
+  sort_order?: number;
+  sources?: LibraryAssistantSource[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LibraryAssistantSourcePayload {
+  source_type: string;
+  source_id: string;
+  title: string;
+  public_url?: string | null;
+  sort_order?: number;
+}
+
+export interface LibraryAssistantContextPayload {
+  library_id?: string | null;
+  name: string;
+  slug: string;
+  description?: string | null;
+  audience?: string | null;
+  instructions: string;
+  allowed_source_types?: string[];
+  suggested_prompts?: Array<Record<string, unknown>>;
+  escalation_guidance?: string | null;
+  sort_order?: number;
+  sources?: LibraryAssistantSourcePayload[];
+}
+
+export interface LibraryAssistantPageContext {
+  url?: string | null;
+  entity_type?: string | null;
+  entity_id?: string | null;
+  title?: string | null;
+}
+
+export interface LibraryAssistantAnswerRequest {
+  message: string;
+  context_id?: string | null;
+  conversation_id?: string | null;
+  page_context?: LibraryAssistantPageContext | null;
+}
+
+export interface LibraryAssistantCitation {
+  source_type: string;
+  source_id: string;
+  title: string;
+  url?: string | null;
+  snippet?: string | null;
+}
+
+export interface LibraryAssistantAnswer {
+  answer: string;
+  citations: LibraryAssistantCitation[];
+  suggested_questions: string[];
+  needs_verification: boolean;
+  should_escalate: boolean;
+  conversation_id?: string | null;
+  user_message_id?: string | null;
+  assistant_message_id?: string | null;
+  provider: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface LibraryAssistantMessage {
+  id: string;
+  conversation_id: string;
+  sender_type: "user" | "assistant" | "librarian" | "system" | string;
+  content: string;
+  citations: LibraryAssistantCitation[];
+  metadata?: Record<string, unknown> | null;
+  sender_person_id?: string | null;
+  created_at: string;
+}
+
+export interface LibraryAssistantConversation {
+  id: string;
+  context_id?: string | null;
+  verified_email: string;
+  title?: string | null;
+  status: string;
+  assigned_to_person_id?: string | null;
+  last_message_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  messages?: LibraryAssistantMessage[];
+}
+
+export interface LibraryAssistantVerificationResponse {
+  accepted: boolean;
+  conversation_id?: string | null;
+  message: string;
+}
+
+export interface LibraryAssistantStaffReplyPayload {
+  content: string;
+}
+
+export interface LibraryAssistantStaffStatusPayload {
+  status: string;
+}
+
 export interface LibraryServiceRecord {
   id: string;
   library_id: string;
@@ -659,6 +791,124 @@ export const libraryServiceApi = {
       "/api/v1/library/search",
       params,
     ),
+  assistantContexts: {
+    publicList: (params?: ListParams<{ library_id?: string }>) =>
+      libraryApi.get<{ data: LibraryAssistantContext[] }>(
+        "/api/v1/library/assistant-contexts/public",
+        params,
+      ),
+    list: (params?: ListParams<{ library_id?: string; status?: string }>) =>
+      libraryApi.get<{ data: LibraryAssistantContext[] }>(
+        "/api/v1/library/assistant-contexts/",
+        params,
+      ),
+    get: (id: string) =>
+      libraryApi.get<{ data: LibraryAssistantContext }>(
+        `/api/v1/library/assistant-contexts/${id}`,
+      ),
+    create: (data: LibraryAssistantContextPayload) =>
+      libraryApi.post<{ data: LibraryAssistantContext }>(
+        "/api/v1/library/assistant-contexts/",
+        data,
+      ),
+    update: (id: string, data: Partial<LibraryAssistantContextPayload>) =>
+      libraryApi.patch<{ data: LibraryAssistantContext }>(
+        `/api/v1/library/assistant-contexts/${id}`,
+        data,
+      ),
+    publish: (id: string) =>
+      libraryApi.post<{ data: LibraryAssistantContext }>(
+        `/api/v1/library/assistant-contexts/${id}/publish`,
+        {},
+      ),
+    archive: (id: string) =>
+      libraryApi.post<{ data: LibraryAssistantContext }>(
+        `/api/v1/library/assistant-contexts/${id}/archive`,
+        {},
+    ),
+  },
+  assistant: {
+    createGuestSession: () =>
+      libraryApi.post<{ data: { guest_session_id: string; expires_at: string } }>(
+        "/api/v1/library/assistant/guest/session",
+        {},
+      ),
+    answer: (data: LibraryAssistantAnswerRequest) =>
+      libraryApi.post<{ data: LibraryAssistantAnswer }>(
+        "/api/v1/library/assistant/answer",
+        data,
+      ),
+    verification: {
+      request: (email: string) =>
+        libraryApi.post<{ data: LibraryAssistantVerificationResponse }>(
+          "/api/v1/library/assistant/verification/request",
+          { email },
+        ),
+      resend: (email: string) =>
+        libraryApi.post<{ data: LibraryAssistantVerificationResponse }>(
+          "/api/v1/library/assistant/verification/resend",
+          { email },
+        ),
+      confirm: (data: { token?: string; code?: string }) =>
+        libraryApi.post<{ data: LibraryAssistantVerificationResponse }>(
+          "/api/v1/library/assistant/verification/confirm",
+          data,
+        ),
+    },
+    recovery: {
+      confirm: (token: string) =>
+        libraryApi.get<{ data: { conversation: LibraryAssistantConversation } }>(
+          `/api/v1/library/assistant/recovery/confirm?token=${encodeURIComponent(token)}`,
+        ),
+    },
+    conversations: {
+      list: () =>
+        libraryApi.get<{ data: LibraryAssistantConversation[] }>(
+          "/api/v1/library/assistant/conversations",
+        ),
+      get: (id: string) =>
+        libraryApi.get<{ data: LibraryAssistantConversation }>(
+          `/api/v1/library/assistant/conversations/${id}`,
+        ),
+      messages: (id: string) =>
+        libraryApi.get<{ data: LibraryAssistantMessage[] }>(
+          `/api/v1/library/assistant/conversations/${id}/messages`,
+        ),
+      continue: (id: string, data: LibraryAssistantAnswerRequest) =>
+        libraryApi.post<{ data: LibraryAssistantAnswer }>(
+          `/api/v1/library/assistant/conversations/${id}/continue`,
+          data,
+      ),
+    },
+    staff: {
+      conversations: {
+        list: (params?: ListParams<{ status?: string; context_id?: string; assigned_to?: string }>) =>
+          libraryApi.get<{ data: LibraryAssistantConversation[] }>(
+            "/api/v1/library/assistant/staff/conversations",
+            params,
+          ),
+        get: (id: string) =>
+          libraryApi.get<{ data: LibraryAssistantConversation }>(
+            `/api/v1/library/assistant/staff/conversations/${id}`,
+          ),
+        assign: (id: string, assigned_to_person_id: string | null) =>
+          libraryApi.post<{ data: LibraryAssistantConversation }>(
+            `/api/v1/library/assistant/staff/conversations/${id}/assign`,
+            { assigned_to_person_id },
+          ),
+        status: (id: string, data: LibraryAssistantStaffStatusPayload) =>
+          libraryApi.patch<{ data: LibraryAssistantConversation }>(
+            `/api/v1/library/assistant/staff/conversations/${id}/status`,
+            data,
+          ),
+        reply: (id: string, data: LibraryAssistantStaffReplyPayload) =>
+          libraryApi.post<{ data: LibraryAssistantConversation }>(
+            `/api/v1/library/assistant/staff/conversations/${id}/reply`,
+            data,
+          ),
+      },
+    },
+  },
   resources: {
     list: (
       params: ListParams<{

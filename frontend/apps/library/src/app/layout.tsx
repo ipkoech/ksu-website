@@ -4,6 +4,7 @@ import { MiniHeader, PublicFooter } from "@ksu/ui/layout/public";
 import { Announcements } from "@ksu/ui/components";
 import { announcementsApi } from "@ksu/api-client";
 import { LibraryHeader } from "../components/library-header";
+import { LibraryAssistantLauncher } from "../components/library-assistant-launcher";
 import { libraryFrontendUrl, publicFrontendUrl, researchFrontendUrl } from "../lib/service-urls";
 import "./globals.css";
 
@@ -104,6 +105,7 @@ export default async function RootLayout({
             />
             <LibraryHeader />
             {children}
+            <LibraryAssistantLauncher />
             <PublicFooter
               contactInfo={contactInfo}
               libraryHref={libraryFrontendUrl}

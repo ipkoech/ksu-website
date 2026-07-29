@@ -34,7 +34,11 @@ import {
 } from "@/lib/landing-data";
 import { getViceChancellor } from "@/lib/get-leadership";
 import { publicFileUrl, publicMediaUrl } from "@/lib/public-media";
-import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
+import {
+  heriAfricaFrontendUrl,
+  libraryFrontendUrl,
+  researchFrontendUrl,
+} from "@/lib/service-urls";
 
 export type HomeContactInfo = {
   address: string;
@@ -77,6 +81,7 @@ export type HomeCard = {
 export type HomeProgrammeCard = HomeCard & {
   schoolId?: string | null;
   schoolName?: string | null;
+  intakeIds?: string[] | null;
 };
 
 export type HomeSchoolCard = HomeCard & {
@@ -140,6 +145,7 @@ export type HomepageData = {
   featuredProgrammes: HomeProgrammeCard[];
   programmesSummary: HomeMetric[];
   activeIntakes: HomeIntake[];
+  activeIntakeProgrammes: HomeProgrammeCard[];
   admissionsActions: HomeCard[];
   latestNews: HomeCard[];
   featuredStories: HomeCard[];
@@ -169,8 +175,8 @@ const researchApiBaseUrl = getResearchApiBaseUrl();
 
 const stablePortalLinks: HomeLink[] = [
   {
-    label: "HERI",
-    href: "https://kisiiuniversity.ac.ke/event/heri-africa-launch",
+    label: "HERI AFRICA",
+    href: heriAfricaFrontendUrl,
     external: true,
   },
   {
@@ -191,6 +197,16 @@ const stablePortalLinks: HomeLink[] = [
   {
     label: "CONFERENCES",
     href: "https://digital.kisiiuniversity.ac.ke/conferences",
+    external: true,
+  },
+  {
+    label: "TENDERS",
+    href: "https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders",
+    external: true,
+  },
+  {
+    label: "HELP DESK",
+    href: "https://digital.kisiiuniversity.ac.ke/ksu_customer_care_centerr",
     external: true,
   },
 ];
@@ -314,7 +330,7 @@ async function getProgrammesList() {
   const response = await programmesApi.list({
     per_page: 100,
     fields:
-      "id,name,slug,level,mode_of_study,duration,department_id,department_name,cover_image_id,display_order",
+      "id,name,slug,level,mode_of_study,duration,department_id,department_name,cover_image_id,display_order,intake_ids",
     include:
       "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title),department(id,name,school_id,school_name,school(id,name,code,slug))",
   });
@@ -384,12 +400,26 @@ async function getFeaturedStories() {
 
 async function getActiveIntakes() {
   const response = await intakesApi.list({
-    is_open: true,
     per_page: 4,
     fields:
       "id,name,code,slug,application_start,application_end,late_application_end,is_active,is_open,cover_image_id,created_at,updated_at",
   });
-  return response.data ?? [];
+  const records = response.data ?? [];
+  return Promise.all(
+    records.map(async (record) => {
+      try {
+        const detail = await intakesApi.getBySlug(record.slug, {
+          fields:
+            "id,name,code,slug,application_start,application_end,late_application_end,is_active,is_open",
+          include:
+            "programmes:programme(id,name,slug,level,mode_of_study,duration,department_id,department_name)",
+        });
+        return detail.data ?? record;
+      } catch {
+        return record;
+      }
+    }),
+  );
 }
 
 const getResearchPartners = cache(async () => {
@@ -550,6 +580,7 @@ function normalizeFeaturedProgrammes(
     schoolName:
       present(programme.department?.school?.name) ??
       present(programme.department?.school_name),
+    intakeIds: programme.intake_ids ?? null,
   }));
 }
 
@@ -687,7 +718,13 @@ function normalizeIntakes(intakes: Intake[]): HomeIntake[] {
       isOpen: item.is_open,
       isActive: item.is_active,
       href: `/admissions/intakes/${item.slug}`,
-    }));
+    }))
+    .sort(
+      (first, second) =>
+        Number(second.isOpen) - Number(first.isOpen) ||
+        new Date(first.applicationStart).getTime() -
+          new Date(second.applicationStart).getTime(),
+    );
 }
 
 function formatDisplayDate(value?: string | null) {
@@ -786,6 +823,12 @@ export async function getHomepageData(): Promise<HomepageData> {
   const viceChancellorMessage =
     plainText(university?.vc_message) || viceChancellor?.message || null;
   const featuredProgrammes = normalizeFeaturedProgrammes(programmes);
+  const activeIntakeRecord = activeIntakes.find((intake) => intake.is_open) ?? activeIntakes[0];
+  const activeIntakeProgrammes = normalizeFeaturedProgrammes(
+    (activeIntakeRecord?.programmes ?? [])
+      .filter((item) => item.is_active && item.programme)
+      .map((item) => item.programme) as ProgrammeWithMedia[],
+  ).slice(0, 6);
   const programmesBySchool = await safe(
     getProgrammesBySchool(schools),
     new Map<string, HomeProgrammeCard[]>(),
@@ -842,6 +885,7 @@ export async function getHomepageData(): Promise<HomepageData> {
     featuredProgrammes,
     programmesSummary: buildProgrammeSummary(programmes),
     activeIntakes: normalizeIntakes(activeIntakes),
+    activeIntakeProgrammes,
     admissionsActions: [
       {
         title: "Explore programmes",

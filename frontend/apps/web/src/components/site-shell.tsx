@@ -6,7 +6,11 @@ import {
   type MegaMenuData,
 } from "@ksu/ui/layout/public";
 import { getNavData } from "@/lib/nav-data";
-import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
+import {
+  heriAfricaFrontendUrl,
+  libraryFrontendUrl,
+  researchFrontendUrl,
+} from "@/lib/service-urls";
 
 const socialLinks = {
   facebook: "https://facebook.com/kisiiuniversity",
@@ -24,8 +28,8 @@ const contactInfo = {
 
 const miniQuickLinks = [
   {
-    label: "HERI",
-    href: "https://kisiiuniversity.ac.ke/event/heri-africa-launch",
+    label: "HERI AFRICA",
+    href: heriAfricaFrontendUrl,
     external: true,
   },
   {
@@ -46,6 +50,16 @@ const miniQuickLinks = [
   {
     label: "CONFERENCES",
     href: "https://digital.kisiiuniversity.ac.ke/conferences",
+    external: true,
+  },
+  {
+    label: "TENDERS",
+    href: "https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders",
+    external: true,
+  },
+  {
+    label: "HELP DESK",
+    href: "https://digital.kisiiuniversity.ac.ke/ksu_customer_care_centerr",
     external: true,
   },
 ];
@@ -80,6 +94,7 @@ export async function PageShell({
           megaMenuData={resolvedMegaMenuData}
           researchHref={researchFrontendUrl}
           libraryHref={libraryFrontendUrl}
+          heriHref={heriAfricaFrontendUrl}
         />
       )}
       <main id="main-content" tabIndex={-1}>

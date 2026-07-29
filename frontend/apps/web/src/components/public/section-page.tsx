@@ -274,6 +274,8 @@ export function PublicSectionPage({
   showHero = true,
   heroSize = "default",
   academicLeadership,
+  landingContent,
+  hideScopeCards = false,
 }: {
   config: PublicPageConfig;
   header?: ReactNode;
@@ -281,6 +283,8 @@ export function PublicSectionPage({
   showHero?: boolean;
   heroSize?: "default" | "compact";
   academicLeadership?: AcademicOrganization | null;
+  landingContent?: ReactNode;
+  hideScopeCards?: boolean;
 }) {
   const continueItems = config.continueItems ?? config.navItems;
   const compactHero = heroSize === "compact";
@@ -383,7 +387,7 @@ export function PublicSectionPage({
                   ) : null}
                   {heroContent}
 
-                  {config.scopeCards?.length ? (
+                  {!hideScopeCards && config.scopeCards?.length ? (
                     <div
                       className={
                         compactHero
@@ -473,16 +477,20 @@ export function PublicSectionPage({
           </section>
         ) : null}
 
+        {landingContent}
+
         {academicLeadership ? (
           <AcademicLeadershipStructure data={academicLeadership} />
         ) : null}
 
-        {config.sections.map((section) => (
-          <SectionBlock
-            key={`${config.currentHref}-${section.eyebrow}`}
-            section={section}
-          />
-        ))}
+        {landingContent
+          ? null
+          : config.sections.map((section) => (
+              <SectionBlock
+                key={`${config.currentHref}-${section.eyebrow}`}
+                section={section}
+              />
+            ))}
 
         {config.hideContinue ? null : (
           <ScrollReveal

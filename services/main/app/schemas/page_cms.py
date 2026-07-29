@@ -14,6 +14,8 @@ from app.models import (
     PAGE_SECTION_STATUSES,
     PARTNERSHIP_CTA_SOURCES,
     SECTION_ITEM_TYPES,
+    LIFE_AROUND_STUDIES_AUDIENCES,
+    LIFE_AROUND_STUDIES_SOURCE_TYPES,
 )
 
 from .base import BaseReadSchema, BaseSchema
@@ -91,6 +93,12 @@ class SectionItemCreate(BaseSchema):
     video_provider: str | None = Field(default=None, max_length=64)
     video_url: str | None = Field(default=None, max_length=1024)
     video_duration_seconds: int | None = None
+    audience: str = Field(default="all", max_length=32)
+    source_type: str | None = Field(default=None, max_length=32)
+    source_id: uuid.UUID | None = None
+    is_featured: bool = False
+    poster_media_id: uuid.UUID | None = None
+    transcript: str | None = None
     display_order: int = 100
     is_enabled: bool = True
 
@@ -98,6 +106,16 @@ class SectionItemCreate(BaseSchema):
     @classmethod
     def validate_item_type(cls, value: str) -> str:
         return _validate_choice(value, SECTION_ITEM_TYPES, "item_type") or value
+
+    @field_validator("audience")
+    @classmethod
+    def validate_audience(cls, value: str) -> str:
+        return _validate_choice(value, LIFE_AROUND_STUDIES_AUDIENCES, "audience") or value
+
+    @field_validator("source_type")
+    @classmethod
+    def validate_source_type(cls, value: str | None) -> str | None:
+        return _validate_choice(value, LIFE_AROUND_STUDIES_SOURCE_TYPES, "source_type")
 
     @field_validator("cta_url")
     @classmethod
@@ -125,6 +143,12 @@ class SectionItemUpdate(BaseSchema):
     video_provider: str | None = Field(default=None, max_length=64)
     video_url: str | None = Field(default=None, max_length=1024)
     video_duration_seconds: int | None = None
+    audience: str | None = Field(default=None, max_length=32)
+    source_type: str | None = Field(default=None, max_length=32)
+    source_id: uuid.UUID | None = None
+    is_featured: bool | None = None
+    poster_media_id: uuid.UUID | None = None
+    transcript: str | None = None
     display_order: int | None = None
     is_enabled: bool | None = None
 
@@ -132,6 +156,16 @@ class SectionItemUpdate(BaseSchema):
     @classmethod
     def validate_item_type(cls, value: str | None) -> str | None:
         return _validate_choice(value, SECTION_ITEM_TYPES, "item_type")
+
+    @field_validator("audience")
+    @classmethod
+    def validate_audience(cls, value: str | None) -> str | None:
+        return _validate_choice(value, LIFE_AROUND_STUDIES_AUDIENCES, "audience")
+
+    @field_validator("source_type")
+    @classmethod
+    def validate_source_type(cls, value: str | None) -> str | None:
+        return _validate_choice(value, LIFE_AROUND_STUDIES_SOURCE_TYPES, "source_type")
 
     @field_validator("cta_url")
     @classmethod
@@ -159,6 +193,12 @@ class SectionItemRead(BaseReadSchema):
     video_provider: str | None = None
     video_url: str | None = None
     video_duration_seconds: int | None = None
+    audience: str = "all"
+    source_type: str | None = None
+    source_id: uuid.UUID | None = None
+    is_featured: bool = False
+    poster_media_id: uuid.UUID | None = None
+    transcript: str | None = None
     display_order: int
     is_enabled: bool
     content_enriched: dict[str, Any] | None = None

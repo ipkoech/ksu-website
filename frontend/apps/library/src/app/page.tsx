@@ -1,370 +1,203 @@
-import { Children } from "react";
+import Link from "next/link";
 import {
-  CompactRecord,
-  IconCard,
-  LibraryHero,
-  LibrarySection,
-  PrimaryLink,
-  SecondaryLink,
-  SidePanel,
+  ArrowRight,
+  BookOpen,
+  Clock3,
+  Database,
+  ExternalLink,
+  Library,
+  MapPin,
+  MessageCircle,
+  Search,
+  Users,
+} from "lucide-react";
+import { LibrarySearchHero } from "../components/library-search-hero";
+import {
+  LibraryActionLink,
+  LibraryContentBand,
+  LibrarySectionHeading,
   StatusMessage,
 } from "../components/library-ui";
 import {
   compactText,
   formatLabel,
   getLibraryOverviewData,
+  safeExternalUrl,
 } from "../lib/library-public-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function LibraryPage() {
-  const { branches, catalog, electronic, services, regulations, errors } =
-    await getLibraryOverviewData();
-  const primaryBranch = branches.data[0];
-  const branchContacts = branches.data
-    .filter((branch) => branch.phone || branch.email || branch.address)
-    .slice(0, 3);
-  const featuredElectronic = electronic.data
-    .filter((item) => item.is_featured)
-    .slice(0, 3);
-  const missionItems = [
-    { label: "Mission", value: primaryBranch?.mission },
-    { label: "Vision", value: primaryBranch?.vision },
-    { label: "Objectives", value: primaryBranch?.objectives },
-  ].filter((item) => compactText(item.value));
-  const supportRows = [
-    ...services.data.slice(0, 2).map((item) => ({
-      id: item.id,
-      title: item.name ?? "Library service",
-      meta: [formatLabel(item.service_type), "Service"],
-    })),
-    ...regulations.data.slice(0, 2).map((item) => ({
-      id: item.id,
-      title: item.title ?? "Library regulation",
-      meta: [formatLabel(item.category), formatLabel(item.status)],
-    })),
+  const {
+    branches,
+    catalog,
+    electronic,
+    services,
+    todayHours,
+    news,
+    events,
+    articles,
+    stats,
+    errors,
+  } = await getLibraryOverviewData();
+  const primaryHours = todayHours.data[0];
+  const featuredResources = electronic.data.filter((item) => item.is_featured).slice(0, 6);
+  const updates = [
+    ...news.data.slice(0, 2).map((item) => ({ ...item, kind: "News" })),
+    ...events.data.slice(0, 2).map((item) => ({ ...item, kind: "Event" })),
+    ...articles.data.slice(0, 1).map((item) => ({ ...item, kind: "Article" })),
+  ].slice(0, 3);
+  const statItems = stats?.stats ?? [
+    { key: "catalog", label: "Catalog records", value: catalog.meta?.total ?? catalog.data.length, description: "Books, journals, and more" },
+    { key: "electronic", label: "E-resources", value: electronic.meta?.total ?? electronic.data.length, description: "Databases and digital collections" },
+    { key: "branches", label: "Library branches", value: branches.data.length, description: "Access points across KSU" },
+    { key: "services", label: "Library services", value: services.data.length, description: "Support for your study and research" },
   ];
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
-      <LibraryHero
-        eyebrow="Kisii University Library"
-        title="Search, access, borrow, and get research support from one place."
-        body="Use the library portal to find branch services, print collections, electronic databases, guides, regulations, and the right support channel for your study or research task."
-        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Library" }]}
-        actions={
-          <>
-            <PrimaryLink href="/catalog">Search catalog</PrimaryLink>
-            <SecondaryLink href="/ask">Ask a librarian</SecondaryLink>
-          </>
-        }
-      />
+      <LibrarySearchHero />
 
       {errors.length > 0 ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-[1320px]">
-            {errors.map((error) => (
-              <StatusMessage key={error} tone="error">
-                {error}
-              </StatusMessage>
-            ))}
+            {errors.map((error) => <StatusMessage key={error} tone="error">{error}</StatusMessage>)}
           </div>
         </section>
       ) : null}
 
-      <LibrarySection
-        eyebrow="Start Here"
-        title="Core library workflows"
-        body="The Library portal is organized around the tasks students, staff, and researchers repeat most often."
-        tone="white"
-      >
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          <IconCard
-            icon="search"
-            title="Search the catalog"
-            body="Find books, journals, theses, reports, and other branch-held resources by title, author, publisher, or subject."
-            href="/catalog"
-            action="Open catalog"
-          />
-          <IconCard
-            icon="database"
-            title="Use e-resources"
-            body="Access subscribed databases, e-book platforms, reference collections, and off-campus access notes."
-            href="/electronic"
-            action="Browse databases"
-          />
-          <IconCard
-            icon="building"
-            title="Find branch services"
-            body="Check library branches, contacts, borrowing support, training, printing, scanning, and help channels."
-            href="/services"
-            action="View services"
-          />
-          <IconCard
-            icon="shield"
-            title="Read regulations"
-            body="Review active library conduct, borrowing, access, and fee guidance before using branch services."
-            href="/services#regulations-heading"
-            action="Read rules"
-          />
+      <section className="bg-primary px-4 py-6 text-white sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-[1680px] divide-y divide-white/20 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
+          {statItems.map((item) => (
+            <div key={item.key} className="flex items-center gap-4 px-4 py-4 first:pl-0 last:pr-0">
+              <MetricIcon index={statItems.indexOf(item)} />
+              <div>
+                <p className="text-2xl font-bold tabular-nums">{item.value.toLocaleString()}</p>
+                <p className="text-sm font-semibold text-white">{item.label}</p>
+                <p className="mt-1 text-xs text-white/65">{item.description}</p>
+              </div>
+            </div>
+          ))}
         </div>
-      </LibrarySection>
+      </section>
 
-      <LibrarySection
-        eyebrow="Quick Access"
-        title="Go straight to the resource you need"
-        body="These entry points keep common library journeys visible without changing the current public site design system."
-      >
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-          <div className="grid gap-5 md:grid-cols-2">
-            <IconCard
-              icon="book"
-              title="New and current records"
-              body="Start with recently published catalog records, active databases, and branch services maintained by the library team."
-              href="#latest-records"
-              action="View records"
-            />
-            <IconCard
-              icon="help"
-              title="Ask for support"
-              body="Send a question to the library team for catalog, access, borrowing, research, or training support."
-              href="/ask"
-              action="Ask a librarian"
-            />
-          </div>
-          <SidePanel title="Library contact point" eyebrow="Support desk">
-            <h3 className="text-xl font-semibold text-foreground">
-              {primaryBranch?.name ?? "Kisii University Library"}
-            </h3>
-            <p className="mt-3 text-sm leading-7 text-muted-foreground">
-              {compactText(primaryBranch?.description) ||
-                "Branch and service information is maintained by the library team."}
+      <LibraryContentBand>
+        <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Welcome to the Library</p>
+            <h2 className="mt-4 max-w-2xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-5xl">
+              Your partner in learning, research, and discovery.
+            </h2>
+            <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground">
+              Kisii University Library provides quality information resources,
+              supportive services, and inspiring spaces that help students and
+              staff excel in teaching, learning, and research.
             </p>
-            <dl className="mt-5 grid gap-3 text-sm text-muted-foreground">
-              <Meta label="Location" value={primaryBranch?.address} />
-              <Meta label="Phone" value={primaryBranch?.phone} />
-              <Meta label="Email" value={primaryBranch?.email} />
-            </dl>
-          </SidePanel>
-        </div>
-      </LibrarySection>
-
-      {missionItems.length > 0 ? (
-        <LibrarySection
-          eyebrow="Library Direction"
-          title="How the library supports teaching, learning, and research"
-          body="The overview surfaces branch-level mission and planning content when it has been published by the library team."
-          tone="white"
-        >
-          <div className="grid gap-5 lg:grid-cols-3">
-            {missionItems.map((item) => (
-              <CompactRecord
-                key={item.label}
-                icon="library"
-                eyebrow={item.label}
-                title={`Library ${item.label.toLowerCase()}`}
-                body={compactText(item.value)}
-              />
-            ))}
+            <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-primary">
+              <Link href="/catalog" className="inline-flex items-center gap-2 hover:text-secondary">Explore the catalog <ArrowRight aria-hidden className="h-4 w-4" /></Link>
+              <Link href="/electronic" className="inline-flex items-center gap-2 hover:text-secondary">Browse e-resources <ArrowRight aria-hidden className="h-4 w-4" /></Link>
+              <Link href="/ask" className="inline-flex items-center gap-2 hover:text-secondary">Ask a librarian <ArrowRight aria-hidden className="h-4 w-4" /></Link>
+            </div>
           </div>
-        </LibrarySection>
-      ) : null}
+          <div className="border-l-4 border-secondary bg-surface-subtle p-6 sm:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-secondary">At a glance</p>
+            <dl className="mt-5 grid gap-5 sm:grid-cols-2">
+              <Snapshot label="Today" value={primaryHours?.is_open ? "Open now" : "Check hours"} icon={<Clock3 aria-hidden className="h-5 w-5" />} />
+              <Snapshot label="Branches" value={`${branches.data.length} access points`} icon={<MapPin aria-hidden className="h-5 w-5" />} />
+              <Snapshot label="Digital access" value={`${electronic.data.length} resources`} icon={<Database aria-hidden className="h-5 w-5" />} />
+              <Snapshot label="Support" value="Ask a librarian" icon={<MessageCircle aria-hidden className="h-5 w-5" />} />
+            </dl>
+          </div>
+        </div>
+      </LibraryContentBand>
 
-      <LibrarySection
-        eyebrow="Branches"
-        title="Library access points"
-        body="Public branch records show the access points available to students, staff, researchers, and visitors."
-      >
-        {branches.data.length === 0 && !branches.error ? (
-          <StatusMessage>No public library branches are available yet.</StatusMessage>
+      <LibraryContentBand tone="soft">
+        <LibrarySectionHeading eyebrow="Start with a task" title="What would you like to do?" body="Move directly to the service or collection that supports your next academic task." />
+        <div className="grid gap-x-8 divide-y divide-border sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-3">
+          <TaskLink icon={<BookOpen aria-hidden />} title="Find a book" body="Search books, journals, theses, reports, and other print resources." href="/catalog" />
+          <TaskLink icon={<Search aria-hidden />} title="Find an article" body="Search across library collections and research discovery tools." href="/search?type=catalog" />
+          <TaskLink icon={<Database aria-hidden />} title="Access e-resources" body="Browse subscribed databases, e-books, journals, and platforms." href="/electronic" />
+          <TaskLink icon={<Library aria-hidden />} title="Find a thesis" body="Explore repository links and institutional research collections." href="/repositories" />
+          <TaskLink icon={<Users aria-hidden />} title="Get research help" body="Find research support, training, and subject guidance." href="/services" />
+          <TaskLink icon={<MessageCircle aria-hidden />} title="Ask a librarian" body="Send the library team a question about your study or research." href="/ask" />
+        </div>
+      </LibraryContentBand>
+
+      <LibraryContentBand>
+        <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
+          <LibrarySectionHeading eyebrow="Research support" title="Support for every stage of your work" body="From choosing a topic to publishing your findings, KSU librarians help you navigate information confidently." />
+          <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+            {[
+              ["Literature reviews", "Build a strong search strategy and discover relevant evidence."],
+              ["Referencing and citation", "Use sources responsibly and choose the right citation tools."],
+              ["Research databases", "Find scholarly journals, e-books, theses, and specialist collections."],
+              ["Thesis support", "Get guidance for postgraduate research and dissertation work."],
+              ["Scholarly communication", "Understand publishing, open access, and research visibility."],
+              ["Training and workshops", "Join practical sessions for information and digital literacy."],
+            ].map(([title, body]) => (
+              <div key={title} className="border-t border-border pt-4">
+                <h3 className="font-semibold text-foreground">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{body}</p>
+              </div>
+            ))}
+            <div className="sm:col-span-2 pt-2"><LibraryActionLink href="/services">Explore research support</LibraryActionLink></div>
+          </div>
+        </div>
+      </LibraryContentBand>
+
+      <LibraryContentBand tone="soft">
+        <LibrarySectionHeading eyebrow="Digital collections" title="Featured e-resources" body="Start with the digital platforms and collections most useful for study, teaching, and research." />
+        {featuredResources.length === 0 ? (
+          <StatusMessage>No featured electronic resources are available yet.</StatusMessage>
         ) : (
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {branches.data.slice(0, 6).map((branch) => (
-              <CompactRecord
-                key={branch.id}
-                icon="building"
-                eyebrow={formatLabel(branch.library_type ?? "library")}
-                title={branch.name ?? "Library branch"}
-                body={
-                  compactText(branch.description) ||
-                  "Branch information is being updated by the library team."
-                }
-                meta={[branch.address, branch.phone, branch.email]}
-              />
+          <div className="divide-y divide-border border-y border-border">
+            {featuredResources.map((resource) => (
+              <div key={resource.id} className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-3"><h3 className="text-lg font-semibold text-foreground">{resource.name}</h3><span className="text-xs font-semibold uppercase tracking-[0.12em] text-secondary">{formatLabel(resource.resource_type)}</span></div>
+                  <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">{compactText(resource.description) || resource.provider || "Access details are maintained by the library team."}</p>
+                </div>
+                {safeExternalUrl(resource.access_url) ? <a href={safeExternalUrl(resource.access_url)!} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-primary hover:text-secondary">Open resource <ExternalLink aria-hidden className="h-4 w-4" /></a> : <span className="text-sm text-muted-foreground">Access link pending</span>}
+              </div>
             ))}
           </div>
         )}
-      </LibrarySection>
+        <div className="mt-6"><LibraryActionLink href="/electronic">View all e-resources</LibraryActionLink></div>
+      </LibraryContentBand>
 
-      {featuredElectronic.length > 0 || branchContacts.length > 0 ? (
-        <LibrarySection
-          eyebrow="Featured Access"
-          title="Frequently used access points"
-          body="A compact overview of featured platforms and branch contact points."
-          tone="white"
-        >
-          <div className="grid gap-5 lg:grid-cols-2">
-            <OverviewList
-              title="Featured e-resources"
-              empty="No featured electronic resources are published yet."
-            >
-              {featuredElectronic.map((item) => (
-                <RecordRow
-                  key={item.id}
-                  title={item.name ?? "Untitled resource"}
-                  meta={[
-                    item.provider,
-                    formatLabel(item.resource_type),
-                    formatLabel(item.access_type),
-                  ]}
-                />
-              ))}
-            </OverviewList>
-            <OverviewList
-              title="Branch contacts"
-              empty="Branch contact details are being updated."
-            >
-              {branchContacts.map((branch) => (
-                <RecordRow
-                  key={branch.id}
-                  title={branch.name}
-                  meta={[branch.phone, branch.email, branch.address]}
-                />
-              ))}
-            </OverviewList>
+      <LibraryContentBand>
+        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+          <LibrarySectionHeading eyebrow="Library spaces" title="Find a place to study and connect" body="Explore KSU library branches, published opening hours, services, and contact points before your visit." />
+          <div className="divide-y divide-border border-y border-border">
+            {branches.data.slice(0, 4).map((branch) => (
+              <div key={branch.id} className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <div><h3 className="text-lg font-semibold text-foreground">{branch.name}</h3><p className="mt-1 text-sm text-muted-foreground">{branch.address ?? branch.location ?? "Location being updated"}</p></div>
+                <Link href="/hours" className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-primary hover:text-secondary">View hours <ArrowRight aria-hidden className="h-4 w-4" /></Link>
+              </div>
+            ))}
           </div>
-        </LibrarySection>
-      ) : null}
-
-      <LibrarySection
-        eyebrow="Latest Records"
-        title="What is currently published"
-        body="Recently published library records help users move from discovery to access without leaving the public portal."
-        tone="white"
-      >
-        <div id="latest-records" className="grid gap-5 xl:grid-cols-3">
-          <RecordPanel title="Catalog highlights" href="/catalog">
-            {catalog.data.slice(0, 4).map((item) => (
-              <RecordRow
-                key={item.id}
-                title={item.title}
-                meta={[
-                  item.authors,
-                  formatLabel(item.resource_type),
-                  item.status,
-                ]}
-              />
-            ))}
-          </RecordPanel>
-          <RecordPanel title="Electronic resources" href="/electronic">
-            {electronic.data.slice(0, 4).map((item) => (
-              <RecordRow
-                key={item.id}
-                title={item.name ?? "Untitled resource"}
-                meta={[
-                  item.provider,
-                  formatLabel(item.resource_type),
-                  formatLabel(item.access_type),
-                ]}
-              />
-            ))}
-          </RecordPanel>
-          <RecordPanel title="Support and rules" href="/services">
-            {supportRows.map((item) => (
-              <RecordRow key={item.id} title={item.title} meta={item.meta} />
-            ))}
-          </RecordPanel>
         </div>
-      </LibrarySection>
+      </LibraryContentBand>
+
+      <LibraryContentBand tone="soft">
+        <LibrarySectionHeading eyebrow="News and events" title="What is happening at the Library" body="Keep up with workshops, new resources, service updates, and academic support announcements." />
+        {updates.length === 0 ? <StatusMessage>No library updates are available yet.</StatusMessage> : <div className="grid gap-8 lg:grid-cols-3">{updates.map((item) => <article key={`${item.kind}-${item.id}`} className="border-t-4 border-secondary pt-4"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">{item.kind}</p><h3 className="mt-3 text-xl font-semibold leading-7 text-foreground">{item.title}</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">{compactText(item.summary ?? item.plain_text) || "Read the latest library update."}</p><Link href={`/${item.kind.toLowerCase()}s/${item.slug}`} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-secondary">Read update <ArrowRight aria-hidden className="h-4 w-4" /></Link></article>)}</div>}
+      </LibraryContentBand>
+
+      <section className="bg-primary px-4 py-16 text-white sm:px-6 lg:px-8"><div className="mx-auto flex max-w-[1280px] flex-col justify-between gap-8 sm:flex-row sm:items-end"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Personal support</p><h2 className="mt-3 max-w-2xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight sm:text-5xl">Need help finding the right source?</h2><p className="mt-4 max-w-xl text-base leading-7 text-white/75">Talk to a KSU librarian about your catalog search, database access, research question, or next assignment.</p></div><Link href="/ask" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-secondary px-5 py-3 text-sm font-semibold text-white transition hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-secondary/30">Ask a librarian <ArrowRight aria-hidden className="h-4 w-4" /></Link></div></section>
     </main>
   );
 }
 
-function RecordPanel({
-  title,
-  href,
-  children,
-}: {
-  title: string;
-  href: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between gap-4">
-        <h3 className="text-lg font-semibold text-foreground">{title}</h3>
-        <a href={href} className="text-sm font-semibold text-primary">
-          Open
-        </a>
-      </div>
-      <div className="mt-4 divide-y divide-slate-200">
-        {Children.count(children) > 0 ? (
-          children
-        ) : (
-          <p className="py-4 text-sm text-muted-foreground">No records available.</p>
-        )}
-      </div>
-    </section>
-  );
+function MetricIcon({ index }: { index: number }) {
+  const Icon = [BookOpen, Database, MapPin, Users][index] ?? Library;
+  return <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-secondary/50 text-secondary"><Icon aria-hidden className="h-5 w-5" /></span>;
 }
 
-function OverviewList({
-  title,
-  empty,
-  children,
-}: {
-  title: string;
-  empty: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h3 className="text-lg font-semibold text-foreground">{title}</h3>
-      <div className="mt-4 divide-y divide-slate-200">
-        {Children.count(children) > 0 ? (
-          children
-        ) : (
-          <p className="py-4 text-sm text-muted-foreground">{empty}</p>
-        )}
-      </div>
-    </section>
-  );
+function Snapshot({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
+  return <div className="flex gap-3"><span className="mt-0.5 text-secondary">{icon}</span><div><dt className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</dt><dd className="mt-1 text-sm font-semibold text-foreground">{value}</dd></div></div>;
 }
 
-function RecordRow({
-  title,
-  meta,
-}: {
-  title: string;
-  meta: Array<string | number | null | undefined>;
-}) {
-  const details = meta.map(compactText).filter(Boolean);
-
-  return (
-    <article className="py-4">
-      <h4 className="text-sm font-semibold leading-6 text-foreground">{title}</h4>
-      {details.length > 0 ? (
-        <p className="mt-1 text-xs leading-5 text-muted-foreground">
-          {details.join(" · ")}
-        </p>
-      ) : null}
-    </article>
-  );
-}
-
-function Meta({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string | number | null;
-}) {
-  if (!compactText(value)) return null;
-
-  return (
-    <div>
-      <dt className="font-semibold text-foreground">{label}</dt>
-      <dd className="mt-1">{value}</dd>
-    </div>
-  );
+function TaskLink({ icon, title, body, href }: { icon: React.ReactNode; title: string; body: string; href: string }) {
+  return <Link href={href} className="group flex gap-4 border-b border-border py-5 first:pt-0 sm:nth-[n+3]:border-b-0 lg:nth-[n+4]:border-b-0"><span className="mt-1 text-primary transition group-hover:text-secondary">{icon}</span><span><span className="block font-semibold text-foreground">{title}</span><span className="mt-1 block text-sm leading-6 text-muted-foreground">{body}</span></span></Link>;
 }

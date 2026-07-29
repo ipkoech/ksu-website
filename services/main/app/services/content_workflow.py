@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -26,6 +27,13 @@ ALLOWED_TRANSITIONS = {
     "rejected": {"submit": "submitted", "archive": "archived"},
     "archived": {},
 }
+
+
+def story_has_body(content: Any) -> bool:
+    if isinstance(content, dict) and content:
+        return True
+    text = re.sub(r"<[^>]+>", " ", str(content or ""))
+    return bool(text.split())
 
 
 class ContentWorkflowService:
@@ -186,6 +194,14 @@ class ContentWorkflowService:
             if comparable_schedule <= now:
                 raise ValueError("scheduled_for must be in the future")
             scheduled_for = comparable_schedule
+
+        if action == "publish" and content_type in {"story", "stories"}:
+            if not (
+                story_has_body(getattr(content, "rich_text", None))
+                or story_has_body(getattr(content, "plain_text", None))
+                or story_has_body(getattr(content, "structured_content", None))
+            ):
+                raise ValueError("Cannot publish a story without body content")
 
         content.status = to_status
         content.workflow_status = to_status
