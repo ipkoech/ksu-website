@@ -190,7 +190,6 @@ export function FeaturedStoriesSection({ stories }: { stories?: HomeCard[] }) {
 }
 
 const campusHeroImage = "/images/homepage/kisii-administration-campus.jpg";
-const uploadedHeroVideo = "/videos/hero-video.mp4";
 const heriAfricaLaunchImage = "/images/HERIAfricaLaunch.jpg";
 const researchImpactBackground = "/images/research/research-impact-bg.png";
 
@@ -212,7 +211,11 @@ export function HeroAdmissionsSection({
   const mobileMedia = hero?.media?.mobile;
   const videoMedia = hero?.media?.video;
   const posterMedia = hero?.media?.poster ?? desktopMedia;
-  const videoSrc = mediaUrl(videoMedia) ?? uploadedHeroVideo;
+  // Only play a video when one is explicitly selected by the homepage
+  // composition. The local promotional clip is intentionally not a default:
+  // it contains soft-focus transition frames and makes the hero look broken
+  // while the page is loading. A clear campus still is the safer fallback.
+  const videoSrc = mediaUrl(videoMedia);
   const desktopImageSrc = mediaUrl(desktopMedia) ?? campusHeroImage;
   const mobileImageSrc = mediaUrl(mobileMedia);
   const mediaAltText = mediaAlt(
@@ -223,8 +226,8 @@ export function HeroAdmissionsSection({
   const highlight = content?.highlight;
   const description =
     content?.description ??
-    section.subtitle ??
     section.description ??
+    section.subtitle ??
     "Advancing inclusive education, research, innovation and community impact.";
   const actions = heroActions(content?.actions, section.items, admissions ?? undefined);
 
