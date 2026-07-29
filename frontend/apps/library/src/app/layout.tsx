@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
+import { AccessibilityInitScript, AccessibilityShell } from "@ksu/ui";
 import { MiniHeader, PublicFooter } from "@ksu/ui/layout/public";
+import { Announcements } from "@ksu/ui/components";
+import { announcementsApi } from "@ksu/api-client";
 import { LibraryHeader } from "../components/library-header";
+import { LibraryAssistantLauncher } from "../components/library-assistant-launcher";
+import { libraryFrontendUrl, publicFrontendUrl, researchFrontendUrl } from "../lib/service-urls";
 import "./globals.css";
 
 const socialLinks = {
@@ -20,7 +25,7 @@ const contactInfo = {
 const miniQuickLinks = [
   {
     label: "Main Site",
-    href: "https://kisiiuniversity.ac.ke",
+    href: publicFrontendUrl,
     external: true,
   },
   {
@@ -59,31 +64,56 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  let announcements: Array<{ id: string; message: string; linkText?: string; linkHref?: string }> = [];
+  try {
+    const response = await announcementsApi.list({
+      is_published: true,
+      per_page: 3,
+      fields: "id,title,slug",
+    });
+    announcements = (response.data ?? []).map((item) => ({
+      id: item.id,
+      message: item.title,
+      linkText: "Read more",
+      linkHref: `/media/announcements/${item.slug}`,
+    }));
+  } catch {
+    // announcements are optional
+  }
+
   return (
     <html lang="en">
-      <body className="font-sans antialiased">
-        <div className="min-h-screen bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_38%,#f6f8fc_100%)] text-slate-950">
-          <a href="#library-main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-md focus:ring-2 focus:ring-ring">
-            Skip to library content
-          </a>
-          <MiniHeader
-            contactInfo={contactInfo}
-            quickLinks={miniQuickLinks}
-            socialLinks={socialLinks}
-          />
-          <LibraryHeader />
-          {children}
-          <PublicFooter
-            contactInfo={contactInfo}
-            libraryHref="/"
-            socialLinks={socialLinks}
-          />
-        </div>
+      <body className="font-sans antialiased" suppressHydrationWarning>
+        <AccessibilityInitScript />
+        <AccessibilityShell mainContentId="library-main">
+          <div className="min-h-screen bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_38%,hsl(var(--surface-muted))_100%)] text-foreground">
+            <Announcements
+              announcements={announcements}
+              rotating={announcements.length > 1}
+              intervalMs={6500}
+              background="secondary"
+            />
+            <MiniHeader
+              contactInfo={contactInfo}
+              quickLinks={miniQuickLinks}
+              socialLinks={socialLinks}
+            />
+            <LibraryHeader />
+            {children}
+            <LibraryAssistantLauncher />
+            <PublicFooter
+              contactInfo={contactInfo}
+              libraryHref={libraryFrontendUrl}
+              researchHref={researchFrontendUrl}
+              socialLinks={socialLinks}
+            />
+          </div>
+        </AccessibilityShell>
       </body>
     </html>
   );

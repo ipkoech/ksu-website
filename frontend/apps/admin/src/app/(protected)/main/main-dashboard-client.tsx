@@ -3,12 +3,16 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
+  BarChart3,
   Calendar,
+  Eye,
   FileText,
   GraduationCap,
   ImageIcon,
+  MousePointerClick,
   Newspaper,
   School,
+  TrendingUp,
   Users,
 } from "lucide-react";
 import {
@@ -19,6 +23,7 @@ import {
   useNewsList,
   usePersons,
   useProgrammes,
+  useReportsOverview,
   useSchools,
   useStaffAssignments,
 } from "@ksu/api-client";
@@ -32,6 +37,7 @@ import {
 } from "@ksu/ui/components";
 import { PageHeader } from "@/components/layout";
 import { formatCount } from "@/lib/counts";
+import { DashboardAnalyticsSection } from "@/components/analytics/chart-cards";
 
 const countParams = { page: 1, per_page: 1, fields: "id" };
 
@@ -69,6 +75,11 @@ export function MainDashboardClient() {
     queryKey: queryKeys.media.list(countParams),
     queryFn: () => mediaApi.list(countParams),
   });
+  const overview = useReportsOverview({ days: 30 });
+  const overviewData = overview.data?.data;
+  const trafficData = (overviewData?.traffic_by_day ?? []).map(
+    (d) => ({ label: d.date, value: d.value }),
+  );
 
   const stats = [
     {
@@ -254,43 +265,11 @@ export function MainDashboardClient() {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Data coverage</CardTitle>
-            <CardDescription>
-              Counts are read from backend list endpoints. Analytics, traffic,
-              and trend metrics are not shown until a reporting API is
-              available.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 text-sm md:grid-cols-3">
-            <div className="rounded-lg border bg-background p-3">
-              <p className="font-medium">Staff assignments</p>
-              <p className="mt-1 text-muted-foreground">
-                {formatCount(staff.data, staff.isLoading, staff.isError)}{" "}
-                records
-              </p>
-            </div>
-            <div className="rounded-lg border bg-background p-3">
-              <p className="font-medium">Departments</p>
-              <p className="mt-1 text-muted-foreground">
-                {formatCount(
-                  departments.data,
-                  departments.isLoading,
-                  departments.isError,
-                )}{" "}
-                records
-              </p>
-            </div>
-            <div className="rounded-lg border bg-background p-3">
-              <p className="font-medium">People</p>
-              <p className="mt-1 text-muted-foreground">
-                {formatCount(persons.data, persons.isLoading, persons.isError)}{" "}
-                records
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <DashboardAnalyticsSection
+          overview={overviewData}
+          traffic={trafficData}
+          isLoading={overview.isLoading}
+        />
       </div>
     </div>
   );

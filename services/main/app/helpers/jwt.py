@@ -48,7 +48,7 @@ def create_access_token(
         "exp": now + timedelta(minutes=settings.JWT_ACCESS_TTL_MINUTES),
     }
     permission_claims = _claim_values(permissions)
-    scope_claims = _claim_values(scopes if scopes is not None else permissions)
+    scope_claims = _claim_values(scopes)
     if permission_claims:
         payload["permissions"] = permission_claims
     if scope_claims:
@@ -119,7 +119,7 @@ def refresh_token(
         "exp": now + timedelta(minutes=settings.JWT_ACCESS_TTL_MINUTES),
     }
     permission_claims = _claim_values(permissions)
-    scope_claims = _claim_values(scopes if scopes is not None else permissions)
+    scope_claims = _claim_values(scopes)
     if permission_claims:
         access_payload["permissions"] = permission_claims
     if scope_claims:

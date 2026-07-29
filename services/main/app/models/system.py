@@ -36,6 +36,26 @@ class Setting(Base):
     updated_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[updated_by_id])
 
 
+class UserPreference(Base):
+    """Per-user preference or onboarding state."""
+
+    __tablename__ = "user_preferences"
+    __table_args__ = (
+        sa.UniqueConstraint("user_id", "namespace", "key", name="uq_user_preferences_user_namespace_key"),
+    )
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    namespace: Mapped[str] = mapped_column(sa.String(64), nullable=False, index=True)
+    key: Mapped[str] = mapped_column(sa.String(128), nullable=False, index=True)
+    value: Mapped[dict | list | str | int | float | bool | None] = mapped_column(JSONB, nullable=False)
+
+    user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
+
+
 class ApiKey(Base):
     """API keys for external integrations."""
 
@@ -80,4 +100,4 @@ class Webhook(Base):
     created_by: Mapped["User"] = relationship("User", foreign_keys=[created_by_id])
 
 
-__all__ = ["Setting", "ApiKey", "Webhook"]
+__all__ = ["Setting", "UserPreference", "ApiKey", "Webhook"]

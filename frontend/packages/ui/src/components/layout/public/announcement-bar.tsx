@@ -139,13 +139,13 @@ export function AnnouncementBar({
           aria-label="University announcement"
         >
           <div className="mx-auto w-full px-4 py-1.5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-            <div className="flex items-center justify-center gap-2.5 pr-10 text-xs sm:pr-0 sm:text-sm">
+            <div className="flex items-center justify-center gap-2.5 pr-28 text-xs sm:text-sm">
               <Icon
                 className={cn("w-4 h-4 flex-shrink-0", styles.iconClass)}
                 aria-hidden
               />
 
-              <span className="text-center font-medium leading-5 text-white/90">
+              <span className="text-center font-medium leading-5 text-white">
                 {message}
                 {linkText && linkHref && (
                   <Link
@@ -164,7 +164,7 @@ export function AnnouncementBar({
               {dismissible && (
                 <button
                   onClick={handleDismiss}
-                  className="ml-auto flex h-8 w-8 flex-shrink-0 items-center justify-center rounded transition-colors hover:bg-white/15"
+                  className="ml-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded transition-colors hover:bg-white/15"
                   aria-label="Dismiss announcement"
                 >
                   <X className="w-4 h-4" />
@@ -237,7 +237,7 @@ export function Announcements({
           <button
             type="button"
             onClick={() => setIsPaused((paused) => !paused)}
-            className="absolute right-12 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
+            className="absolute right-24 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
             aria-label={
               isPaused ? "Resume announcements" : "Pause announcements"
             }

@@ -53,3 +53,22 @@ export function useCommitImport() {
     },
   });
 }
+
+export function useStartImportCommit() {
+  return useMutation({
+    mutationFn: ({ resource, data }: { resource: string; data: ImportCommitRequest }) =>
+      importsApi.commitAsync(resource, data),
+  });
+}
+
+export function useImportJob(jobId: string | null, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: jobId ? queryKeys.imports.job(jobId) : queryKeys.imports.job(""),
+    queryFn: () => importsApi.getJob(jobId ?? ""),
+    enabled: options?.enabled !== false && !!jobId,
+    refetchInterval: (query) => {
+      const status = query.state.data?.data.status;
+      return status && !["PENDING", "STARTED", "RETRY"].includes(status) ? false : 2000;
+    },
+  });
+}

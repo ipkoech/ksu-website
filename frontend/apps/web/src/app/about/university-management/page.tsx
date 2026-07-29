@@ -1,334 +1,125 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  ChevronRight,
-  ClipboardCheck,
-  Compass,
-  GraduationCap,
-  History,
-  Landmark,
-  Users,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { BoardMemberGrid } from "@/components/about/BoardMemberGrid";
+import { ArrowRight, Award } from "lucide-react";
 import type { BoardMember } from "@/components/about/BoardMemberGrid";
-import { GovernanceChart } from "@/components/about/GovernanceChart";
-import type { LeaderCardData } from "@/components/about/LeaderCard";
-import { ScrollReveal } from "@ksu/ui/components";
 import { PublicImage } from "@/components/public/public-image";
-import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
-import {
-  getGovernanceBoard,
-  getLeadershipData,
-  getOverviewData,
-  quickNavigation,
-} from "@/lib/about-data";
+import { getManagementData } from "@/lib/about-data";
+import { AboutReveal } from "@/components/about/about-reveal";
+import { ImageCurtainReveal } from "@/components/about/image-curtain-reveal";
 
-type RouteCard = {
-  title: string;
-  href: string;
-  description: string;
-  action: string;
-  icon: LucideIcon;
-};
-
-const routeMeta: Record<string, RouteCard> = {
-  "/about": {
-    title: "About Overview",
-    href: "/about",
-    description: "Return to the About overview.",
-    action: "Back to overview",
-    icon: History,
-  },
-  "/about/history": {
-    title: "History",
-    href: "/about/history",
-    description: "Follow the institutional journey.",
-    action: "View history",
-    icon: History,
-  },
-  "/about/mission-vision": {
-    title: "Mission, Vision & Values",
-    href: "/about/mission-vision",
-    description: "Read the official institutional statements.",
-    action: "View statements",
-    icon: Compass,
-  },
-  "/about/governance": {
-    title: "Governance",
-    href: "/about/governance",
-    description: "Review University Council governance.",
-    action: "View governance",
-    icon: Landmark,
-  },
-  "/about/quality-assurance": {
-    title: "Quality Assurance",
-    href: "/about/quality-assurance",
-    description: "Review quality and accountability references.",
-    action: "View quality",
-    icon: ClipboardCheck,
-  },
-};
-
-function leaderProfileHref(slug: string) {
-  return `/about/university-management/${slug}`;
+function present(value?: string | null) {
+  const text = value?.trim();
+  return text && text.length ? text : null;
 }
 
-function isPlaceholderMember(member: BoardMember) {
-  return member.name.trim().toLowerCase().startsWith("published via");
+function normalizedIdentity(member: BoardMember) {
+  return member.name.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-function leaderToBoardMember(leader: LeaderCardData): BoardMember {
-  return {
-    name: leader.name,
-    role: leader.role,
-    photoUrl:
-      leader.photoUrl ||
-      (leader.role === "Vice Chancellor" ? "/logos/vc3.jpg" : undefined),
-  };
+function isViceChancellor(member: BoardMember) {
+  return /vice chancellor/i.test(member.role) && !/deputy|\bdvc\b/i.test(member.role);
+}
+
+function isDeputyViceChancellor(member: BoardMember) {
+  return /deputy vice chancellor|\bdvc\b/i.test(member.role);
+}
+
+function LeadershipCard({ member, featured = false, compact = false }: { member: BoardMember; featured?: boolean; compact?: boolean }) {
+  const content = (
+    <article className={`group overflow-hidden rounded-lg border border-border bg-white text-center shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg ${featured ? "w-[280px]" : compact ? "w-full max-w-[205px]" : "w-full max-w-[235px]"}`}>
+      <ImageCurtainReveal className="aspect-[4/3]" direction={featured ? "right" : "left"}><PublicImage src={member.photoUrl} alt={`${member.name}, ${member.role}`} ratio="profile" className="h-full w-full" sizes={featured ? "280px" : "235px"} imageClassName="object-cover object-top transition duration-500 group-hover:scale-[1.025]" /></ImageCurtainReveal>
+      <div className={featured ? "min-h-[92px] px-4 py-4" : "min-h-[76px] px-3 py-3"}><h3 className={`font-[family-name:var(--font-display)] font-semibold leading-tight text-foreground ${featured ? "text-lg" : compact ? "text-sm" : "text-base"}`}>{member.name}</h3><p className="mt-1.5 text-[11px] font-semibold leading-4 text-secondary">{member.role}</p></div>
+    </article>
+  );
+  return member.profileHref ? <Link href={member.profileHref} className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">{content}</Link> : content;
+}
+
+function ManagementBranch({ deputy, reports }: { deputy: BoardMember; reports: BoardMember[] }) {
+  return (
+    <div className="flex min-w-0 flex-col items-center">
+      <span aria-hidden className="h-6 w-px bg-secondary/70" />
+      <LeadershipCard member={deputy} />
+      {reports.length ? (
+        <>
+          <span aria-hidden className="h-6 w-px bg-secondary/70" />
+          <div className="relative grid w-full grid-cols-2 justify-items-center gap-4 pt-5">
+            <span aria-hidden className="absolute left-1/4 right-1/4 top-0 h-px bg-secondary/70" />
+            {reports.map((member) => (
+              <div key={`${member.name}-${member.role}`} className="relative flex w-full justify-center pt-1 before:absolute before:-top-5 before:h-5 before:w-px before:bg-secondary/70">
+                <span aria-hidden className="absolute -top-[1.42rem] h-2 w-2 rounded-full border-2 border-white bg-secondary shadow-sm" />
+                <LeadershipCard member={member} compact />
+              </div>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
 }
 
 export default async function UniversityManagementPage() {
-  const [leadership, overview, senate] = await Promise.all([
-    getLeadershipData(),
-    getOverviewData(),
-    getGovernanceBoard("senate"),
-  ]);
-  const navigationLinks = quickNavigation.filter(
-    (item) => item.href !== "/about/university-management",
+  const data = await getManagementData();
+  const managementBoard = data.managementBoard;
+  const members = (managementBoard?.members ?? []).filter(
+    (member, index, all) =>
+      all.findIndex(
+        (candidate) => normalizedIdentity(candidate) === normalizedIdentity(member),
+      ) === index,
   );
-  const relatedRoutes = [
-    routeMeta["/about"],
-    routeMeta["/about/history"],
-    routeMeta["/about/mission-vision"],
-    routeMeta["/about/governance"],
-    routeMeta["/about/quality-assurance"],
-  ];
-  const senateMembers = (senate?.members ?? []).filter(
-    (member) => !isPlaceholderMember(member),
+  const boardDescription = present(managementBoard?.mandate) ?? present(managementBoard?.description) ?? "The University Management Board provides executive leadership for the University, translating Council policy into academic, administrative and financial action while safeguarding quality, accountability and effective service delivery.";
+  const viceChancellor = members.find(isViceChancellor) ?? members[0];
+  const deputies = members.filter(
+    (member) => member !== viceChancellor && isDeputyViceChancellor(member),
   );
-  const viceChancellor = leadership.featuredLeader;
-  const vcPhotoUrl = viceChancellor.photoUrl || "/logos/vc3.jpg";
-  const managementMembers = [
-    viceChancellor,
-    ...leadership.deputies,
-    ...leadership.registrars,
-  ].map(leaderToBoardMember);
+  const officers = members.filter(
+    (member) => member !== viceChancellor && !deputies.includes(member),
+  );
+  const academicDeputy = deputies.find((member) => /academic|research|student/i.test(member.role)) ?? deputies[0];
+  const administrationDeputy = deputies.find((member) => /administration|planning|finance/i.test(member.role)) ?? deputies.find((member) => member !== academicDeputy);
+  const academicReports = officers.filter((member) => /academic|\(aa\)|research|innovation|resource mobilisation|reirm/i.test(member.role));
+  const administrationReports = officers.filter((member) => !academicReports.includes(member));
 
   return (
     <PageShell>
       <AboutPageLenis>
-        <section className="relative overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_44%,#eef4ff_100%)] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-          <div className="relative w-full">
-            <BreadcrumbTrail
-              items={[
-                { label: "Home", href: "/" },
-                { label: "About", href: "/about" },
-                { label: "University Management" },
-              ]}
-            />
-
-            <div className="mt-7 grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_320px] xl:items-start">
-              <nav
-                aria-label="About section links"
-                className="rounded-[1.5rem] border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur xl:sticky xl:top-28"
-              >
-                <p className="px-2 text-xs font-semibold uppercase text-secondary">
-                  Explore About
-                </p>
-                <ul className="mt-3 space-y-2">
-                  {navigationLinks.slice(0, 6).map((item) => (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        className="group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
-                      >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
-                          <ChevronRight aria-hidden className="h-4 w-4" />
-                        </span>
-                        <span className="min-w-0 flex-1">{item.title}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-
-              <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)]">
-                <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_340px]">
-                  <div className="px-6 py-8 sm:px-8 lg:px-10 lg:py-10">
-                    <p className="text-sm font-semibold uppercase text-secondary">
-                      University Management
-                    </p>
-                    <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.08] text-slate-950 sm:text-5xl xl:text-6xl">
-                      Vice Chancellor, senior leadership, and Senate
-                    </h1>
-                    <article className="mt-6 rounded-[1.25rem] border border-slate-200 bg-slate-50/80 p-5">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-secondary">
-                        {overview.vc_message_title ||
-                          "Message from the Vice Chancellor"}
-                      </p>
-                      <blockquote className="mt-3 text-base font-semibold leading-8 text-slate-800">
-                        {overview.vc_message ||
-                          "The Vice Chancellor welcomes students and stakeholders to a dynamic institution committed to academic excellence, research, and social responsibility."}
-                      </blockquote>
-                    </article>
-                    <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                      <Link
-                        href={leaderProfileHref(viceChancellor.slug)}
-                        className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-                      >
-                        View Vice Chancellor Profile
-                        <ArrowRight aria-hidden className="h-4 w-4" />
-                      </Link>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-slate-200 bg-slate-950 p-4 lg:border-l lg:border-t-0">
-                    <PublicImage
-                      src={vcPhotoUrl}
-                      alt={viceChancellor.name}
-                      ratio="profile"
-                      priority
-                      sizes="(min-width: 1280px) 340px, (min-width: 1024px) 30vw, 100vw"
-                      className="h-full min-h-[340px] rounded-[1.5rem]"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <aside className="space-y-5">
-                <nav
-                  aria-label="Related university management pages"
-                  className="rounded-[1.5rem] border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur"
-                >
-                  <p className="px-2 text-xs font-semibold uppercase text-secondary">
-                    Related Pages
-                  </p>
-                  <ul className="mt-3 space-y-2">
-                    {relatedRoutes.map((item) => {
-                      const Icon = item.icon;
-
-                      return (
-                        <li key={item.href}>
-                          <Link
-                            href={item.href}
-                            className="group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
-                          >
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
-                              <Icon aria-hidden className="h-4 w-4" />
-                            </span>
-                            <span className="min-w-0 flex-1">{item.title}</span>
-                            <ChevronRight
-                              aria-hidden
-                              className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary"
-                            />
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </nav>
-              </aside>
-            </div>
+        <section className="relative isolate overflow-hidden bg-[#062d62] text-white">
+          <div aria-hidden className="absolute inset-0 bg-[url('/images/about/about-management-branded.webp')] bg-cover bg-center opacity-80" />
+          <div aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,28,68,.97),rgba(4,38,83,.82),rgba(4,38,83,.16))]" />
+          <div className="relative mx-auto min-h-[380px] w-full max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
+            <nav aria-label="Breadcrumb" className="text-xs font-semibold text-white/75"><Link href="/" className="hover:text-white">Home</Link><span className="mx-2">/</span><Link href="/about" className="hover:text-white">About KSU</Link><span className="mx-2">/</span><span>University Management</span></nav>
+            <div className="mt-10 max-w-2xl"><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Executive leadership</p><h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-medium leading-tight text-white sm:text-5xl lg:text-6xl">University Management</h1><p className="mt-5 max-w-2xl text-base leading-7 text-white/85">{boardDescription}</p></div>
           </div>
         </section>
 
-        <ScrollReveal
-          as="section"
-          className="border-b border-slate-200 bg-white px-4 py-12 sm:px-6 lg:px-8 lg:py-14"
-        >
-          <div className="grid w-full gap-6 xl:grid-cols-[minmax(0,4fr)_minmax(220px,1fr)]">
-            <div className="min-w-0 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-              <GovernanceChart
-                managementOnly
-                title="Vice Chancellor and university management"
-                description="The chart follows the same structure used on Governance, with the Vice Chancellor at the top and management portfolios grouped below."
-                ariaLabel="Kisii University university management org chart"
-                senateDescription={senate?.mandate}
-                managementMembers={managementMembers}
-                senateMembers={senateMembers}
-              />
-            </div>
+        <section className="bg-white px-5 py-12 sm:px-8 lg:px-10 lg:py-16">
+          <AboutReveal className="mx-auto w-full max-w-7xl" variant="up">
+            <div className="text-center"><p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Executive leadership</p><h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold uppercase text-primary">Our Leadership Structure</h2><div className="mx-auto mt-2 h-0.5 w-10 bg-secondary" /></div>
 
-            <aside className="rounded-[1.75rem] border border-slate-200 bg-slate-950 p-6 text-white shadow-[0_24px_70px_-46px_rgba(15,23,42,0.7)] xl:sticky xl:top-28 xl:self-start">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-secondary ring-1 ring-white/10">
-                <Users aria-hidden className="h-5 w-5" />
-              </span>
-              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-secondary">
-                University Management Mandate
-              </p>
-              <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight">
-                Execute strategy and serve the university community
-              </h2>
-              <p className="mt-5 text-sm leading-7 text-white/75">
-                The Vice Chancellor leads institutional execution through the
-                deputy vice chancellors, registrars, and finance office. These
-                offices coordinate academic delivery, research, student
-                affairs, administration, planning, human resources, resource
-                mobilization, and financial stewardship.
-              </p>
-              <div className="mt-6 grid gap-3 border-t border-white/10 pt-5">
-                {[
-                  ["Executive Lead", "Vice Chancellor"],
-                  ["Deputy Portfolios", String(leadership.deputies.length)],
-                  ["Registrar and Finance Offices", String(leadership.registrars.length)],
-                ].map(([label, value]) => (
-                  <div key={label}>
-                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white/45">
-                      {label}
-                    </p>
-                    <p className="mt-1 text-sm font-semibold">{value}</p>
+            {viceChancellor ? <div className="mt-6 flex justify-center"><LeadershipCard member={viceChancellor} featured /></div> : <p className="mt-8 rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">Management profiles have not been published yet.</p>}
+
+            {deputies.length ? (
+              <>
+                <div className="hidden md:block">
+                  <div aria-hidden className="mx-auto h-7 w-px bg-secondary/70" />
+                  <div className="relative mx-auto max-w-5xl">
+                    <span aria-hidden className="absolute left-1/4 right-1/4 top-0 h-px bg-secondary/70" />
+                    <span aria-hidden className="absolute left-1/2 top-[-4px] h-2 w-2 -translate-x-1/2 rounded-full border-2 border-white bg-secondary shadow-sm" />
+                    <div className="grid grid-cols-2 gap-10">
+                      {academicDeputy ? <ManagementBranch deputy={academicDeputy} reports={academicReports} /> : null}
+                      {administrationDeputy ? <ManagementBranch deputy={administrationDeputy} reports={administrationReports} /> : null}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </aside>
-          </div>
-        </ScrollReveal>
-
-        {senateMembers.length ? (
-          <ScrollReveal
-            as="section"
-            className="bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-12 sm:px-6 lg:px-8 lg:py-14"
-          >
-            <div className="grid w-full gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
-              <aside className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm xl:sticky xl:top-28 xl:self-start">
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
-                  <GraduationCap aria-hidden className="h-5 w-5" />
-                </span>
-                <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-secondary">
-                  Senate
-                </p>
-                <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950">
-                  Academic authority for standards and scholarship
-                </h2>
-                <p className="mt-5 text-sm leading-7 text-slate-600">
-                  {senate?.mandate ||
-                    "Oversees academic standards, programme quality, examinations, and scholarly direction."}
-                </p>
-                <Link
-                  href="/about/mission-vision"
-                  className="mt-6 inline-flex items-center gap-2 border-t border-slate-200 pt-5 text-sm font-semibold text-primary"
-                >
-                  View mission, vision, and values
-                  <ArrowRight aria-hidden className="h-4 w-4" />
-                </Link>
-              </aside>
-
-              <div className="min-w-0 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                <div className="mb-6">
-                  <p className="text-sm font-semibold uppercase text-secondary">
-                    Senate Members
-                  </p>
-                  <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
-                    Published Senate records
-                  </h2>
                 </div>
-                <BoardMemberGrid members={senateMembers} />
-              </div>
-            </div>
-          </ScrollReveal>
-        ) : null}
+                <div className="mt-6 grid justify-items-center gap-5 sm:grid-cols-2 md:hidden">
+                  {[...deputies, ...officers].map((member) => <LeadershipCard key={`${member.name}-${member.role}`} member={member} compact={officers.includes(member)} />)}
+                </div>
+              </>
+            ) : null}
+
+            <div className="mt-10 grid gap-5 bg-[#f8f6f0] p-6 sm:grid-cols-[3.5rem_1fr_auto] sm:items-center"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-secondary"><Award className="h-6 w-6" aria-hidden /></span><div><h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-primary">Committed to Excellence</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">Our management team advances academic quality, innovation and dependable service across the University.</p></div><Link href="/about/university-council" className="inline-flex min-h-11 items-center justify-center gap-2 bg-primary px-5 py-3 text-sm font-bold text-white hover:bg-primary/90">Our Governance <ArrowRight className="h-4 w-4" aria-hidden /></Link></div>
+          </AboutReveal>
+        </section>
       </AboutPageLenis>
     </PageShell>
   );

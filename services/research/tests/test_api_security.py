@@ -9,7 +9,6 @@ from app.routes.v1.grants import router as grants_router
 from app.routes.v1.scholarships import router as scholarships_router
 from app.routes.v1.training import router as training_router
 from app.schemas import PublicDonationSubmission
-from app.services.content import NewsService
 from app.services.core import ProjectService
 from app.services.donation import DonationService
 
@@ -47,9 +46,17 @@ class _DonationDb:
         self.refreshes.append(item)
 
 
-def _route(router, path: str, method: str) -> APIRoute:
+def _iter_routes(router):
     for route in router.routes:
-        if isinstance(route, APIRoute) and route.path == path and method in route.methods:
+        if isinstance(route, APIRoute):
+            yield route
+        elif hasattr(route, "original_router"):
+            yield from _iter_routes(route.original_router)
+
+
+def _route(router, path: str, method: str) -> APIRoute:
+    for route in _iter_routes(router):
+        if route.path == path and method in route.methods:
             return route
     raise AssertionError(f"{method} {path} route not found")
 
@@ -72,19 +79,18 @@ class PublicVisibilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("research_projects.is_active is true", query_text)
         self.assertIn("research_projects.status in", query_text)
 
-    async def test_public_news_slug_requires_active_status_and_publish_window(self):
+    async def test_public_project_slug_filters_by_active_and_publish_window(self):
         db = _StatementDb()
 
-        await NewsService.get_public_by_slug(db, "research-update")
+        await ProjectService.get_public_by_slug(db, "research-project")
 
         self.assertEqual(1, len(db.statements))
         query_text = str(db.statements[0]).lower()
-        self.assertIn("research_news.deleted_at is null", query_text)
-        self.assertIn("research_news.slug", query_text)
-        self.assertIn("research_news.is_active is true", query_text)
-        self.assertIn("research_news.status in", query_text)
-        self.assertIn("research_news.published_at is null", query_text)
-        self.assertIn("research_news.expires_at is null", query_text)
+        self.assertIn("research_projects.slug", query_text)
+        self.assertIn("research_projects.is_public is true", query_text)
+        self.assertIn("research_projects.is_active is true", query_text)
+        self.assertIn("research_projects.deleted_at is null", query_text)
+        self.assertIn("research_projects.status in", query_text)
 
 
 class RouteProtectionTests(unittest.TestCase):
@@ -106,6 +112,8 @@ class RouteProtectionTests(unittest.TestCase):
             (grants_router, "/grant-reviews/{slug}"),
             (grants_router, "/grant-reports"),
             (grants_router, "/grant-reports/{slug}"),
+            (grants_router, "/grant-applications/id/{application_id}/reviews"),
+            (grants_router, "/grant-applications/id/{application_id}/reports"),
             (scholarships_router, "/scholarship-applications"),
             (scholarships_router, "/scholarship-applications/{slug}"),
             (training_router, "/mentorship-applications"),
@@ -118,10 +126,22 @@ class RouteProtectionTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertTrue(_is_protected(router, path))
 
+    def test_funding_relationship_writes_are_protected(self):
+        protected_routes = (
+            ("/grants/id/{grant_id}/themes/{theme_id}", "PUT"),
+            ("/grants/id/{grant_id}/themes/{theme_id}", "DELETE"),
+        )
+
+        for path, method in protected_routes:
+            with self.subTest(path=path, method=method):
+                self.assertTrue(_is_protected(grants_router, path, method))
+
 
 class PublicDonationSubmissionTests(unittest.IsolatedAsyncioTestCase):
     async def test_public_submission_creates_pending_intent_without_server_owned_fields(self):
         db = _DonationDb()
+        original_side_effects = DonationService._queue_submission_side_effects
+        DonationService._queue_submission_side_effects = classmethod(lambda cls, db, donation, donor: _noop())
         submission = PublicDonationSubmission.model_validate(
             {
                 "first_name": "Ada",
@@ -137,7 +157,10 @@ class PublicDonationSubmissionTests(unittest.IsolatedAsyncioTestCase):
             }
         )
 
-        donation = await DonationService.create_public_submission(db, submission)
+        try:
+            donation = await DonationService.create_public_submission(db, submission)
+        finally:
+            DonationService._queue_submission_side_effects = original_side_effects
         donor = db.added[0]
 
         self.assertEqual("Ada Lovelace", donor.display_name)
@@ -166,6 +189,10 @@ class PublicDonationSubmissionTests(unittest.IsolatedAsyncioTestCase):
         }
 
         self.assertFalse(forbidden_fields & set(PublicDonationSubmission.model_fields))
+
+
+async def _noop():
+    return None
 
 
 if __name__ == "__main__":

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a1628"/>
+      <stop offset="50%" style="stop-color:#152644"/>
+      <stop offset="100%" style="stop-color:#1e3a5f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <!-- Lab desk -->
+  <rect x="480" y="620" width="960" height="12" rx="4" fill="#2a4a7f" opacity="0.6"/>
+  <rect x="500" y="600" width="40" height="32" rx="3" fill="#c15106" opacity="0.7"/>
+  <rect x="580" y="590" width="80" height="42" rx="6" fill="#1043b1" opacity="0.5"/>
+  <rect x="700" y="605" width="60" height="28" rx="4" fill="#1e5a3f" opacity="0.6"/>
+  <rect x="800" y="595" width="50" height="36" rx="5" fill="#c15106" opacity="0.4"/>
+  <rect x="900" y="610" width="70" height="22" rx="3" fill="#1043b1" opacity="0.5"/>
+  <rect x="1020" y="585" width="90" height="46" rx="7" fill="#c15106" opacity="0.6"/>
+  <!-- Microscope shape -->
+  <rect x="650" y="520" width="8" height="100" rx="2" fill="#6a8bc3" opacity="0.8"/>
+  <rect x="620" y="510" width="68" height="20" rx="4" fill="#5a7bb3" opacity="0.7"/>
+  <circle cx="654" cy="480" r="18" fill="#8aacd9" opacity="0.6"/>
+  <rect x="640" y="468" width="28" height="4" rx="2" fill="#6a8bc3" opacity="0.7"/>
+  <!-- Background circles/decor -->
+  <circle cx="300" cy="300" r="120" fill="#1043b1" opacity="0.08"/>
+  <circle cx="1700" cy="250" r="180" fill="#c15106" opacity="0.06"/>
+  <circle cx="160" cy="800" r="80" fill="#1e5a3f" opacity="0.08"/>
+  <circle cx="1750" cy="900" r="100" fill="#1043b1" opacity="0.06"/>
+  <!-- Data points -->
+  <rect x="300" y="450" width="4" height="60" rx="2" fill="#c15106" opacity="0.5"/>
+  <rect x="320" y="420" width="4" height="90" rx="2" fill="#1043b1" opacity="0.5"/>
+  <rect x="340" y="460" width="4" height="50" rx="2" fill="#1e5a3f" opacity="0.4"/>
+  <rect x="360" y="400" width="4" height="110" rx="2" fill="#c15106" opacity="0.5"/>
+  <rect x="380" y="370" width="4" height="140" rx="2" fill="#1043b1" opacity="0.6"/>
+  <rect x="1600" y="480" width="4" height="70" rx="2" fill="#c15106" opacity="0.4"/>
+  <rect x="1620" y="440" width="4" height="110" rx="2" fill="#1043b1" opacity="0.5"/>
+  <rect x="1640" y="500" width="4" height="50" rx="2" fill="#1e5a3f" opacity="0.4"/>
+  <!-- Molecule connections -->
+  <line x1="1400" y1="400" x2="1460" y2="360" stroke="#6a8bc3" stroke-width="2" opacity="0.4"/>
+  <line x1="1460" y1="360" x2="1520" y2="400" stroke="#6a8bc3" stroke-width="2" opacity="0.4"/>
+  <line x1="1460" y1="360" x2="1460" y2="300" stroke="#6a8bc3" stroke-width="2" opacity="0.4"/>
+  <circle cx="1400" cy="400" r="10" fill="#1043b1" opacity="0.3"/>
+  <circle cx="1460" cy="360" r="10" fill="#c15106" opacity="0.3"/>
+  <circle cx="1520" cy="400" r="10" fill="#1e5a3f" opacity="0.3"/>
+  <circle cx="1460" cy="300" r="10" fill="#1043b1" opacity="0.3"/>
+</svg>

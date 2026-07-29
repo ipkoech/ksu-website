@@ -1,0 +1,202 @@
+[
+  {
+    "programme_name": "PhD in Curriculum Studies",
+    "department_code": "CIM",
+    "visual_family": "curriculum research",
+    "subject": "a layered spiral-bound curriculum map opening into branching learning pathways, with a research lens examining connected lesson modules",
+    "alt_text": "Illustration of a research lens examining a layered curriculum map and branching learning pathways",
+    "distinctiveness": "Doctoral curriculum inquiry represented by deep analysis of an interconnected programme architecture"
+  },
+  {
+    "programme_name": "PhD in Educational Management",
+    "department_code": "EFAPE",
+    "visual_family": "education leadership",
+    "subject": "a strategic school campus model viewed from above with connected governance nodes, an elevated leadership compass, and an orderly resource grid",
+    "alt_text": "Illustration of a school campus model connected by governance nodes and a leadership compass",
+    "distinctiveness": "Doctoral management represented by systems leadership and institution-wide governance"
+  },
+  {
+    "programme_name": "PhD in Educational Foundations",
+    "department_code": "EFAPE",
+    "visual_family": "foundations of education",
+    "subject": "an open scholarly volume supported by classical foundation blocks, with a lamp of inquiry and concentric rings suggesting historical and social context",
+    "alt_text": "Illustration of a scholarly volume on foundation blocks beside a lamp of inquiry",
+    "distinctiveness": "Doctoral foundational scholarship represented by philosophical, historical, and social layers beneath education"
+  },
+  {
+    "programme_name": "PhD in Educational Psychology",
+    "department_code": "ECDESNEEPSC",
+    "visual_family": "learning psychology research",
+    "subject": "a faceted brain-shaped learning model containing a maze, memory tiles, and a magnifying lens tracing cognitive connections to an open book",
+    "alt_text": "Illustration of a research lens tracing cognitive connections in a brain-shaped learning model",
+    "distinctiveness": "Doctoral educational psychology represented by rigorous investigation of cognition, memory, and learning"
+  },
+  {
+    "programme_name": "PhD in Early Childhood Development Education",
+    "department_code": "ECDESNEEPSC",
+    "visual_family": "early childhood research",
+    "subject": "a developmental growth spiral rising from tactile learning blocks toward a flowering learning tree, examined through a research lens",
+    "alt_text": "Illustration of a developmental spiral rising from learning blocks toward a flowering tree",
+    "distinctiveness": "Doctoral ECDE represented by longitudinal research into developmental stages and learning environments"
+  },
+  {
+    "programme_name": "PhD in Special Needs Education",
+    "department_code": "ECDESNEEPSC",
+    "visual_family": "inclusive education research",
+    "subject": "an accessible learning gateway with tactile dots, raised pathway lines, sound-wave arcs, and modular learning tools examined by a research prism",
+    "alt_text": "Illustration of an accessible learning gateway with tactile, audio, and modular learning tools",
+    "distinctiveness": "Doctoral special-needs research represented by multiple access modes studied as one inclusive system"
+  },
+  {
+    "programme_name": "PhD in Educational Counseling Psychology",
+    "department_code": "ECDESNEEPSC",
+    "visual_family": "counseling psychology research",
+    "subject": "two empty dialogue forms arranged around a calm central compass, with an emotion spectrum arc and a research lens mapping supportive pathways",
+    "alt_text": "Illustration of dialogue forms, an emotional spectrum, and a compass for counseling research",
+    "distinctiveness": "Doctoral counseling psychology represented by research into dialogue, emotional wellbeing, and guided change"
+  },
+  {
+    "programme_name": "Master of Education in Curriculum and Instruction",
+    "department_code": "CIM",
+    "visual_family": "instructional design",
+    "subject": "an open lesson-planning folio connected to a teaching sequence of concept cards, an instructional pointer, and a circular feedback loop",
+    "alt_text": "Illustration of a lesson-planning folio connected to concept cards and a feedback loop",
+    "distinctiveness": "Master's curriculum and instruction represented by applied lesson sequencing, delivery, and feedback"
+  },
+  {
+    "programme_name": "Master of Education in Administration",
+    "department_code": "EFAPE",
+    "visual_family": "school administration",
+    "subject": "an organized administrator desk with a campus key, stacked policy folders, a scheduling dial, and connected school-building blocks",
+    "alt_text": "Illustration of an administrator desk with policy folders, campus key, and scheduling dial",
+    "distinctiveness": "Applied administration represented by operational coordination, policy, scheduling, and stewardship"
+  },
+  {
+    "programme_name": "Master of Education in Planning and Economics",
+    "department_code": "EFAPE",
+    "visual_family": "education planning economics",
+    "subject": "a school investment landscape combining an abacus, rising resource bars, a calendar grid, and a blueprint path toward a campus",
+    "alt_text": "Illustration of an abacus, resource bars, calendar, and blueprint leading to a school campus",
+    "distinctiveness": "Education planning and economics represented by resource allocation, time horizons, and institutional investment"
+  },
+  {
+    "programme_name": "Master of Education in Sociology",
+    "department_code": "EFAPE",
+    "visual_family": "sociology of education",
+    "subject": "interlocking community circles surrounding a schoolhouse and open book, connected by bridges that show institutions, culture, and social networks",
+    "alt_text": "Illustration of interconnected community circles surrounding a schoolhouse and open book",
+    "distinctiveness": "Educational sociology represented by the relationships between schools, communities, culture, and institutions"
+  },
+  {
+    "programme_name": "Master of Education in Philosophy",
+    "department_code": "EFAPE",
+    "visual_family": "philosophy of education",
+    "subject": "a contemplative labyrinth emerging from an open book, balanced by a question-shaped pathway without glyphs, a reasoning prism, and a lamp of inquiry",
+    "alt_text": "Illustration of a reasoning labyrinth, prism, and lamp emerging from an open book",
+    "distinctiveness": "Educational philosophy represented by structured reasoning, inquiry, values, and competing paths of thought"
+  },
+  {
+    "programme_name": "Master of Education in Comparative Education",
+    "department_code": "EFAPE",
+    "visual_family": "comparative education systems",
+    "subject": "two contrasting school models on balanced platforms linked by a globe-like network of latitude curves and a shared bridge of learning resources",
+    "alt_text": "Illustration of two school models compared across a global network and shared learning bridge",
+    "distinctiveness": "Comparative education represented by systematic comparison of different education systems and contexts"
+  },
+  {
+    "programme_name": "Master of Education in History of Education",
+    "department_code": "EFAPE",
+    "visual_family": "education history",
+    "subject": "a chronological ribbon moving from a traditional writing tablet through archival books to a modern learning device, framed by an archive vault",
+    "alt_text": "Illustration of a timeline from a writing tablet through archival books to a modern learning device",
+    "distinctiveness": "History of education represented by material changes in teaching and learning across eras"
+  },
+  {
+    "programme_name": "Master of Education in Educational Psychology",
+    "department_code": "ECDESNEEPSC",
+    "visual_family": "applied learning psychology",
+    "subject": "a brain-shaped puzzle connected to memory cards, a learning staircase, and a gentle observation lens focused on one active cognitive pathway",
+    "alt_text": "Illustration of a brain puzzle connected to memory cards and a learning staircase",
+    "distinctiveness": "Master's educational psychology represented by applying cognitive insight to learning progression and assessment"
+  },
+  {
+    "programme_name": "Master of Education in Guidance and Counseling",
+    "department_code": "ECDESNEEPSC",
+    "visual_family": "guidance and counseling",
+    "subject": "a branching life-path map converging at a guidance compass, with two empty dialogue bubbles, a supportive bridge, and a calm destination light",
+    "alt_text": "Illustration of branching life paths meeting at a guidance compass and supportive bridge",
+    "distinctiveness": "Guidance and counseling represented by practical direction, supportive conversation, and confident choices"
+  },
+  {
+    "programme_name": "Master of Education in Special Needs Education",
+    "department_code": "ECDESNEEPSC",
+    "visual_family": "inclusive learning design",
+    "subject": "a modular classroom toolkit with tactile learning tiles, sound-wave support, an accessible ramp, and adjustable materials fitting around an open book",
+    "alt_text": "Illustration of tactile, audio, and adjustable learning tools arranged around an open book",
+    "distinctiveness": "Master's special-needs education represented by designing practical multi-modal supports for inclusive classrooms"
+  },
+  {
+    "programme_name": "Master of Education in Early Childhood Development Education",
+    "department_code": "ECDESNEEPSC",
+    "visual_family": "early childhood pedagogy",
+    "subject": "a nurturing learning garden with stacking blocks, a picture book without text, shape-sorter forms, and a young tree marked by successive growth rings",
+    "alt_text": "Illustration of learning blocks, a picture book, shape forms, and a growing tree in an early-learning garden",
+    "distinctiveness": "Master's ECDE represented by advanced design of play-based pedagogy and developmentally responsive environments"
+  },
+  {
+    "programme_name": "Bachelor of Education (Arts)",
+    "department_code": "ECDESNEEPSC",
+    "visual_family": "arts teacher education",
+    "subject": "an open teaching portfolio surrounded by a theatre mask silhouette without a face, a music wave, a paint palette without markings, and a literature scroll without writing",
+    "alt_text": "Illustration of an open teaching portfolio with theatre, music, visual-art, and literature objects",
+    "distinctiveness": "Arts teacher preparation represented by multiple humanities and creative disciplines organized for classroom teaching"
+  },
+  {
+    "programme_name": "Bachelor of Education (Science)",
+    "department_code": "CIM",
+    "visual_family": "science teacher education",
+    "subject": "an open teaching manual beside a laboratory flask, geometric molecular model, leaf specimen, and orbital teaching demonstration arranged as a classroom science station",
+    "alt_text": "Illustration of a science teaching station with a laboratory flask, molecular model, leaf, and open manual",
+    "distinctiveness": "Science teacher preparation represented by integrated experimental disciplines and classroom demonstration"
+  },
+  {
+    "programme_name": "Bachelor of Education (Primary Option)",
+    "department_code": "CIM",
+    "visual_family": "primary teacher education",
+    "subject": "a welcoming primary classroom learning island with counting beads without numerals, story cards without writing, geometric blocks, a small globe, and an open picture book",
+    "alt_text": "Illustration of a primary learning island with beads, story cards, blocks, globe, and picture book",
+    "distinctiveness": "Primary teacher preparation represented by broad foundational learning tools across literacy, numeracy, and discovery"
+  },
+  {
+    "programme_name": "Bachelor of Education (Early Childhood Development Education)",
+    "department_code": "ECDESNEEPSC",
+    "visual_family": "early childhood teacher education",
+    "subject": "a playful early-learning nook with large stacking shapes, a low picture-book stand without text, hand-sized rhythm objects, and a sprouting learning tree",
+    "alt_text": "Illustration of an early-learning nook with stacking shapes, picture books, rhythm objects, and a sprouting tree",
+    "distinctiveness": "Bachelor-level ECDE represented by practical preparation to facilitate safe, playful, foundational learning"
+  },
+  {
+    "programme_name": "Bachelor of Education (Special Needs Education)",
+    "department_code": "CIM",
+    "visual_family": "inclusive teacher education",
+    "subject": "an inclusive classroom doorway surrounded by tactile tiles, audio-wave cards, high-contrast shape resources, and an adjustable reading stand",
+    "alt_text": "Illustration of an inclusive classroom doorway with tactile, audio, visual, and adjustable learning resources",
+    "distinctiveness": "Bachelor-level inclusive teaching represented by classroom-ready access tools and adaptable resources"
+  },
+  {
+    "programme_name": "Diploma in Education Arts",
+    "department_code": "ECDESNEEPSC",
+    "visual_family": "practical arts teaching",
+    "subject": "a compact teaching toolkit case holding a paint brush, rhythm bars, a stage-curtain motif, a blank story card, and a simple lesson board without writing",
+    "alt_text": "Illustration of a compact arts teaching toolkit with visual, music, theatre, and story resources",
+    "distinctiveness": "Diploma-level arts education represented by practical classroom tools and lesson delivery resources"
+  },
+  {
+    "programme_name": "Post Graduate Diploma in Education",
+    "department_code": "CIM",
+    "visual_family": "professional teacher conversion",
+    "subject": "a bridge connecting a specialist knowledge portfolio to a classroom teaching kit, with a pedagogy compass, lesson-plan sheets without writing, and an assessment loop",
+    "alt_text": "Illustration of a bridge from a specialist portfolio to a classroom teaching kit and pedagogy compass",
+    "distinctiveness": "Postgraduate professional conversion represented by translating prior subject expertise into pedagogy and assessment"
+  }
+]

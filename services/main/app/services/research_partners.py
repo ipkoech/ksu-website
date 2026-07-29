@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
 import httpx
@@ -62,6 +63,45 @@ class ResearchPartnersProxyService:
         if not isinstance(payload, dict) or payload.get("status") != "success":
             raise ValueError("Research service returned an unexpected partner payload")
         return payload
+
+    @staticmethod
+    async def find_partner_by_id(
+        partner_id: uuid.UUID,
+        *,
+        per_page: int = 100,
+        max_pages: int = 10,
+    ) -> dict[str, Any] | None:
+        """Find a partner record by UUID via bounded pagination.
+
+        The Research service currently exposes partner detail by slug, not by UUID.
+        This helper follows pagination metadata instead of assuming the first page
+        contains every partner.
+        """
+
+        page = 1
+        partner_id_text = str(partner_id)
+
+        while page <= max_pages:
+            payload = await ResearchPartnersProxyService.list_partners(page=page, per_page=per_page)
+            partners = payload.get("data") or []
+            for partner in partners:
+                if not isinstance(partner, dict):
+                    continue
+                candidate_id = partner.get("id")
+                if candidate_id == partner_id or str(candidate_id) == partner_id_text:
+                    return partner
+
+            meta = payload.get("meta")
+            if not isinstance(meta, dict):
+                return None
+            total_pages = meta.get("pages")
+            if not isinstance(total_pages, int) or page >= total_pages:
+                return None
+            page += 1
+
+        raise ValueError(
+            f"Research partner lookup exceeded {max_pages} pages while searching for partner {partner_id_text}"
+        )
 
 
 __all__ = ["ResearchPartnersProxyService"]

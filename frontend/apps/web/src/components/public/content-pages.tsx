@@ -9,9 +9,15 @@ import {
   LinkIcon,
   MapPin,
   Newspaper,
+  PlayCircle,
 } from "lucide-react";
 import { RichTextRenderer } from "@ksu/ui/rich-text-renderer";
-import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
+import {
+  AmbientPageBackground,
+  ListPagination,
+  ScrollReveal,
+  ScrollRevealGroup,
+} from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import {
   MediaGalleryBento,
@@ -25,6 +31,7 @@ import {
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import {
   categoryLabel,
+  mediaPlaybackUrl,
   mediaUrl,
   present,
   recordDate,
@@ -34,13 +41,12 @@ import {
   type ContentDetailData,
   type ContentListingData,
   type ContentRecord,
-  type EventRecord,
 } from "@/lib/content-page-data";
 
 function kindLabel(
   kind: ContentListingData["kind"] | ContentDetailData["kind"],
 ) {
-  if (kind === "blogs") return "Articles";
+  if (kind === "blogs") return "Stories";
   if (kind === "events") return "Events";
   if (kind === "announcements") return "Announcements";
   if (kind === "media") return "Media";
@@ -53,6 +59,16 @@ function SectionKicker({ children }: { children: string }) {
       {children}
     </p>
   );
+}
+
+function listingBaseHref(data: ContentListingData) {
+  const sp = new URLSearchParams();
+  if (data.filters.q) sp.set("q", data.filters.q);
+  if (data.filters.type) sp.set("type", data.filters.type);
+  if (data.filters.entity_type) sp.set("entity_type", data.filters.entity_type);
+  if (data.filters.entity_id) sp.set("entity_id", data.filters.entity_id);
+  const search = sp.toString();
+  return `${data.href}${search ? `?${search}` : ""}`;
 }
 
 function ContentImage({
@@ -123,13 +139,13 @@ function RecordCard({
   return (
     <Link
       href={href}
-      className="group grid min-w-0 rounded-lg border border-slate-200 bg-white shadow-sm transition hover:border-primary/30 hover:shadow-[0_18px_50px_-38px_rgba(15,23,42,0.55)]"
+      className="group grid min-w-0 rounded-lg border border-border bg-white shadow-sm transition hover:border-primary/30 hover:shadow-[0_18px_50px_-38px_rgba(15,23,42,0.55)]"
     >
       <div
         className={
           compact
-            ? "aspect-[16/9] overflow-hidden rounded-t-lg bg-slate-100"
-            : "aspect-[4/3] overflow-hidden rounded-t-lg bg-slate-100"
+            ? "aspect-[16/9] overflow-hidden rounded-t-lg bg-surface-muted"
+            : "aspect-[4/3] overflow-hidden rounded-t-lg bg-surface-muted"
         }
       >
         <ContentImage record={record} />
@@ -137,13 +153,13 @@ function RecordCard({
       <div className="p-4">
         <div className="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-[0.08em] text-primary">
           <span>{categoryLabel(record)}</span>
-          {date ? <span className="text-slate-400">{date}</span> : null}
+          {date ? <span className="text-muted-foreground/70">{date}</span> : null}
         </div>
-        <h3 className="mt-2 line-clamp-2 text-base font-bold leading-6 text-slate-950 group-hover:text-primary">
+        <h3 className="mt-2 line-clamp-2 text-base font-bold leading-6 text-foreground group-hover:text-primary">
           {recordTitle(record)}
         </h3>
         {summary ? (
-          <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+          <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
             {summary}
           </p>
         ) : null}
@@ -156,9 +172,72 @@ function RecordCard({
   );
 }
 
+const editorialMosaicPattern = [
+  "md:col-span-4 md:row-span-2",
+  "md:col-span-2 md:row-span-1",
+  "md:col-span-2 md:row-span-1",
+  "md:col-span-3 md:row-span-1",
+  "md:col-span-3 md:row-span-1",
+];
+
+function EditorialMosaic({
+  records,
+  keyPrefix,
+}: {
+  records: ContentRecord[];
+  keyPrefix: string;
+}) {
+  return (
+    <ScrollRevealGroup
+      className="grid gap-3 md:auto-rows-[14rem] md:grid-cols-6"
+      staggerDelay={55}
+    >
+      {records.map((record, index) => {
+        const date = recordDate(record);
+        const isLead = index % editorialMosaicPattern.length === 0;
+
+        return (
+          <Link
+            key={`${keyPrefix}-${record.contentKind}-${record.id}`}
+            href={recordHref(record)}
+            className={`group relative min-h-72 cursor-pointer overflow-hidden rounded-xl bg-surface-muted shadow-sm outline-none ring-primary/35 transition hover:shadow-[0_22px_55px_-34px_rgba(15,23,42,0.72)] focus-visible:ring-2 md:min-h-0 ${
+              editorialMosaicPattern[index % editorialMosaicPattern.length]
+            }`}
+          >
+            <div className="absolute inset-0 transition duration-300 group-hover:scale-[1.025]">
+              <ContentImage record={record} large={isLead} />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+              <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.08em] text-white/75">
+                <span className="rounded-full bg-white/15 px-2.5 py-1 text-white backdrop-blur-sm">
+                  {categoryLabel(record)}
+                </span>
+                {date ? <span>{date}</span> : null}
+              </div>
+              <h3
+                className={`mt-3 font-[family-name:var(--font-display)] font-semibold leading-tight text-white ${
+                  isLead ? "text-2xl sm:text-3xl" : "text-lg"
+                }`}
+              >
+                {recordTitle(record)}
+              </h3>
+              {isLead && summarize(record, "") ? (
+                <p className="mt-2 line-clamp-2 max-w-2xl text-sm leading-6 text-white/75">
+                  {summarize(record, "")}
+                </p>
+              ) : null}
+            </div>
+          </Link>
+        );
+      })}
+    </ScrollRevealGroup>
+  );
+}
+
 function ListingHero({ data }: { data: ContentListingData }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm lg:p-6">
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-end">
         <div>
           <BreadcrumbTrail
@@ -168,10 +247,10 @@ function ListingHero({ data }: { data: ContentListingData }) {
             ]}
           />
           <SectionKicker>{data.eyebrow}</SectionKicker>
-          <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+          <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             {data.title}
           </h1>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700">
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
             {data.body}
           </p>
         </div>
@@ -183,12 +262,12 @@ function ListingHero({ data }: { data: ContentListingData }) {
             <Link
               key={item.href}
               href={item.href}
-              className="group flex min-h-11 items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 transition hover:border-primary/30 hover:text-primary"
+              className="group flex min-h-11 items-center justify-between gap-3 rounded-lg border border-border px-3 text-sm font-semibold text-muted-foreground transition hover:border-primary/30 hover:text-primary"
             >
               {item.label}
               <ArrowRight
                 aria-hidden
-                className="h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                className="h-4 w-4 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:text-primary"
               />
             </Link>
           ))}
@@ -202,24 +281,24 @@ function FeaturedRecord({ record }: { record: ContentRecord }) {
   return (
     <Link
       href={recordHref(record)}
-      className="group grid overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:border-primary/30 lg:grid-cols-[minmax(0,1fr)_22rem]"
+      className="group grid overflow-hidden rounded-lg border border-border bg-white shadow-sm transition hover:border-primary/30 lg:grid-cols-[minmax(0,1fr)_22rem]"
     >
       <div className="p-5 lg:p-6">
         <SectionKicker>{categoryLabel(record)}</SectionKicker>
-        <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 group-hover:text-primary sm:text-3xl">
+        <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground group-hover:text-primary sm:text-3xl">
           {recordTitle(record)}
         </h2>
         {summarize(record, "") ? (
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700">
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
             {summarize(record, "")}
           </p>
         ) : null}
-        <div className="mt-5 flex flex-wrap gap-3 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+        <div className="mt-5 flex flex-wrap gap-3 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
           {recordDate(record) ? <span>{recordDate(record)}</span> : null}
           <span>{kindLabel(record.contentKind)}</span>
         </div>
       </div>
-      <div className="min-h-64 bg-slate-100">
+      <div className="min-h-64 bg-surface-muted">
         <ContentImage record={record} large />
       </div>
     </Link>
@@ -249,7 +328,7 @@ const mediaDeskSections: Array<{
   },
   {
     id: "articles",
-    title: "Articles",
+    title: "Stories",
     body: "Feature articles, stories, and public explainers.",
     kinds: ["blogs"],
     href: "/media/articles",
@@ -278,15 +357,15 @@ function MediaDeskNav({
   return (
     <nav
       aria-label="Media Desk"
-      className="rounded-lg border border-slate-200 bg-white p-2 shadow-sm"
+      className="rounded-lg border border-border bg-white p-2 shadow-sm"
     >
-      <div className="grid gap-1">
+      <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 xl:grid-cols-6">
         <Link
           href="/media"
           className={`flex min-h-11 items-center justify-between rounded-md px-3 text-sm font-bold transition ${
             activeSection === "overview"
               ? "bg-primary text-white"
-              : "text-slate-700 hover:bg-primary/5 hover:text-primary"
+              : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
           }`}
         >
           Latest
@@ -299,7 +378,7 @@ function MediaDeskNav({
             className={`flex min-h-11 items-center justify-between rounded-md px-3 text-sm font-bold transition ${
               activeSection === item.id
                 ? "bg-primary text-white"
-                : "text-slate-700 hover:bg-primary/5 hover:text-primary"
+                : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
             }`}
           >
             {item.title}
@@ -311,167 +390,109 @@ function MediaDeskNav({
   );
 }
 
-function CalendarPanel({ events = [] }: { events?: EventRecord[] }) {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const first = new Date(year, month, 1);
-  const last = new Date(year, month + 1, 0);
-  const leading = first.getDay();
-  const days = Array.from({ length: leading + last.getDate() }, (_, index) => {
-    const day = index - leading + 1;
-    return day > 0 ? day : null;
-  });
-  const eventDays = new Set(
-    events
-      .filter((event) => event.start_date)
-      .map((event) => new Date(event.start_date as string))
-      .filter((date) => !Number.isNaN(date.getTime()))
-      .map((date) => date.getDate()),
-  );
-
-  return (
-    <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center gap-2">
-        <CalendarDays aria-hidden className="h-4 w-4 text-primary" />
-        <div>
-          <SectionKicker>Events Calendar</SectionKicker>
-          <h2 className="mt-1 text-base font-bold text-slate-950">
-            {new Intl.DateTimeFormat("en-KE", {
-              month: "long",
-              year: "numeric",
-            }).format(today)}
-          </h2>
-        </div>
-      </div>
-      <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[11px] font-bold uppercase text-slate-400">
-        {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
-          <span key={`${day}-${index}`}>{day}</span>
-        ))}
-      </div>
-      <div className="mt-2 grid grid-cols-7 gap-1">
-        {days.map((day, index) => {
-          const hasEvent = day !== null && eventDays.has(day);
-          return (
-            <span
-              key={`${day ?? "blank"}-${index}`}
-              className={`grid h-9 place-items-center rounded-md text-xs font-bold ${
-                day === null
-                  ? "text-transparent"
-                  : hasEvent
-                    ? "bg-primary text-white"
-                    : "bg-slate-50 text-slate-700"
-              }`}
-            >
-              {day}
-            </span>
-          );
-        })}
-      </div>
-      <div className="mt-4 grid gap-2">
-        {events.length ? (
-          events.slice(0, 5).map((event) => (
-            <Link
-              key={`${event.contentKind}-${event.id}`}
-              href={recordHref(event)}
-              className="group rounded-md border border-slate-200 p-3 transition hover:border-primary/30 hover:bg-primary/5"
-            >
-              <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
-                {recordDate(event)}
-              </p>
-              <p className="mt-1 line-clamp-2 text-sm font-bold leading-5 text-slate-900 group-hover:text-primary">
-                {recordTitle(event)}
-              </p>
-            </Link>
-          ))
-        ) : (
-          <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-3 text-sm leading-6 text-slate-600">
-            No events are published for this month yet.
-          </p>
-        )}
-      </div>
-    </aside>
-  );
-}
-
 function MediaDeskSections({ records }: { records: ContentRecord[] }) {
+  const overviewSections = mediaDeskSections.filter((section) =>
+    ["news", "events", "articles", "gallery"].includes(section.id),
+  );
+
   return (
     <div className="grid gap-5">
-      {mediaDeskSections
-        .filter((section) => section.id !== "gallery")
-        .map((section) => {
-        const sectionRecords = records
-          .filter((record) => section.kinds.includes(record.contentKind))
-          .slice(0, 3);
+      {overviewSections.map((section) => {
+          const sectionRecords = records
+            .filter((record) => section.kinds.includes(record.contentKind))
+            .slice(0, section.id === "gallery" ? 6 : 5);
 
-        return (
-          <div key={section.id} id={section.id} className="scroll-mt-32">
-            <ScrollReveal
-              as="section"
-              className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:p-6"
-            >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <SectionKicker>Media Desk</SectionKicker>
-                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
-                  {section.title}
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
-                  {section.body}
-                </p>
+          if (section.id === "gallery") {
+            return (
+              <div key={section.id} id={section.id} className="scroll-mt-32">
+                <MediaGalleryBento
+                  items={galleryBentoItems(sectionRecords)}
+                  title="University gallery"
+                  description={section.body}
+                />
+                <Link
+                  href={section.href}
+                  className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-full border border-primary/20 bg-white px-4 text-sm font-bold text-primary transition hover:bg-primary hover:text-white"
+                >
+                  View all gallery
+                  <ArrowRight aria-hidden className="h-4 w-4" />
+                </Link>
               </div>
-              <Link
-                href={section.href}
-                className="inline-flex min-h-10 items-center gap-2 rounded-full border border-primary/20 px-4 text-sm font-bold text-primary transition hover:bg-primary hover:text-white"
-              >
-                View all
-                <ArrowRight aria-hidden className="h-4 w-4" />
-              </Link>
-            </div>
+            );
+          }
 
-            {sectionRecords.length ? (
-              <ScrollRevealGroup
-                className="mt-5 grid gap-4 md:grid-cols-3"
-                staggerDelay={60}
+          return (
+            <div key={section.id} id={section.id} className="scroll-mt-32">
+              <ScrollReveal
+                as="section"
+                className="rounded-lg border border-border bg-white p-5 shadow-sm lg:p-6"
               >
-                {sectionRecords.map((record) => (
-                  <RecordCard
-                    key={`${section.id}-${record.contentKind}-${record.id}`}
-                    record={record}
-                    compact
-                  />
-                ))}
-              </ScrollRevealGroup>
-            ) : (
-              <p className="mt-5 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-                No {section.title.toLowerCase()} records are currently published.
-              </p>
-            )}
-            </ScrollReveal>
-          </div>
-        );
-      })}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <SectionKicker>Media Desk</SectionKicker>
+                    <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
+                      {section.title}
+                    </h2>
+                    <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground">
+                      {section.body}
+                    </p>
+                  </div>
+                  <Link
+                    href={section.href}
+                    className="inline-flex min-h-10 items-center gap-2 rounded-full border border-primary/20 px-4 text-sm font-bold text-primary transition hover:bg-primary hover:text-white"
+                  >
+                    View all
+                    <ArrowRight aria-hidden className="h-4 w-4" />
+                  </Link>
+                </div>
+
+                {sectionRecords.length ? (
+                  <div className="mt-5">
+                    <EditorialMosaic
+                      records={sectionRecords}
+                      keyPrefix={section.id}
+                    />
+                  </div>
+                ) : (
+                  <p className="mt-5 rounded-lg border border-dashed border-border bg-surface-subtle p-4 text-sm leading-6 text-muted-foreground">
+                    No {section.title.toLowerCase()} records are currently
+                    published.
+                  </p>
+                )}
+              </ScrollReveal>
+            </div>
+          );
+        })}
     </div>
   );
 }
 
-function MediaDeskStack({ data, records }: { data: ContentListingData; records: ContentRecord[] }) {
-  const section = mediaDeskSections.find((item) => item.id === data.mediaDeskSection);
-  const emptyLabel = section?.title.toLowerCase() ?? kindLabel(data.kind).toLowerCase();
+function MediaDeskStack({
+  data,
+  records,
+}: {
+  data: ContentListingData;
+  records: ContentRecord[];
+}) {
+  const section = mediaDeskSections.find(
+    (item) => item.id === data.mediaDeskSection,
+  );
+  const emptyLabel =
+    section?.title.toLowerCase() ?? kindLabel(data.kind).toLowerCase();
 
   if (data.mediaDeskSection === "gallery") {
     return (
       <div className="grid gap-5">
         <ScrollReveal
           as="section"
-          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:p-6"
+          className="rounded-lg border border-border bg-white p-5 shadow-sm lg:p-6"
         >
           <div>
             <SectionKicker>{`${data.total} records`}</SectionKicker>
-            <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+            <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
               {data.title}
             </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700">
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
               {section?.body ?? data.body}
             </p>
           </div>
@@ -487,14 +508,17 @@ function MediaDeskStack({ data, records }: { data: ContentListingData; records: 
   }
 
   return (
-    <ScrollReveal as="section" className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+    <ScrollReveal
+      as="section"
+      className="rounded-lg border border-border bg-white p-5 shadow-sm lg:p-6"
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <SectionKicker>{`${data.total} records`}</SectionKicker>
-          <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+          <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             {data.title}
           </h1>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700">
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
             {section?.body ?? data.body}
           </p>
         </div>
@@ -515,40 +539,24 @@ function MediaDeskStack({ data, records }: { data: ContentListingData; records: 
       <ContentFilters data={data} visible={records.length} />
 
       {records.length ? (
-        <ScrollRevealGroup className="mt-5 grid gap-3" staggerDelay={55}>
-          {records.map((record) => (
-            <Link
-              key={`${record.contentKind}-${record.id}`}
-              href={recordHref(record)}
-              className="group grid gap-4 rounded-lg border border-slate-200 bg-white p-3 transition hover:border-primary/30 hover:bg-slate-50 sm:grid-cols-[180px_minmax(0,1fr)]"
-            >
-              <div className="aspect-[16/10] overflow-hidden rounded-md bg-slate-100">
-                <ContentImage record={record} />
-              </div>
-              <div className="min-w-0 py-1">
-                <div className="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-[0.08em] text-primary">
-                  <span>{categoryLabel(record)}</span>
-                  {recordDate(record) ? (
-                    <span className="text-slate-400">{recordDate(record)}</span>
-                  ) : null}
-                </div>
-                <h2 className="mt-2 line-clamp-2 text-lg font-bold leading-6 text-slate-950 group-hover:text-primary">
-                  {recordTitle(record)}
-                </h2>
-                {summarize(record, "") ? (
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
-                    {summarize(record, "")}
-                  </p>
-                ) : null}
-              </div>
-            </Link>
-          ))}
-        </ScrollRevealGroup>
+        <div className="mt-5">
+          <EditorialMosaic
+            records={records}
+            keyPrefix={data.mediaDeskSection ?? data.kind}
+          />
+        </div>
       ) : (
-        <article className="mt-5 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
+        <article className="mt-5 rounded-lg border border-dashed border-border bg-surface-subtle p-5 text-sm text-muted-foreground">
           No {emptyLabel} records are currently published.
         </article>
       )}
+      <ListPagination
+        page={data.page}
+        totalPages={Math.ceil(data.total / data.perPage)}
+        total={data.total}
+        perPage={data.perPage}
+        baseHref={listingBaseHref(data)}
+      />
     </ScrollReveal>
   );
 }
@@ -562,27 +570,67 @@ function ContentFilters({
 }) {
   const typeOptions =
     data.kind === "media"
-      ? data.categories.map((item) => {
-          const url = new URL(item.href, "https://kisiiuniversity.ac.ke");
-          return {
-            value: url.searchParams.get("type") ?? "",
-            label: item.label,
-          } satisfies ListFilterOption;
-        }).filter((item) => item.value)
+      ? data.categories
+          .map((item) => {
+            const url = new URL(item.href, "https://kisiiuniversity.ac.ke");
+            return {
+              value: url.searchParams.get("type") ?? "",
+              label: item.label,
+            } satisfies ListFilterOption;
+          })
+          .filter((item) => item.value)
+      : [];
+  const entityTypeOptions: ListFilterOption[] = [
+    { value: "school", label: "School" },
+    { value: "department", label: "Department" },
+  ];
+  const entityOptions =
+    data.filters.entity_type === "department"
+      ? (data.entityOptions?.departments ?? [])
+      : (data.entityOptions?.schools ?? []);
+  const entitySelects: Array<{
+    name: string;
+    label: string;
+    value?: string;
+    allLabel: string;
+    options: ListFilterOption[];
+  }> =
+    data.kind === "news" || data.kind === "events" || data.kind === "media"
+      ? [
+          {
+            name: "entity_type",
+            label: "Entity",
+            value: data.filters.entity_type,
+            allLabel: "All entities",
+            options: entityTypeOptions,
+          },
+          {
+            name: "entity_id",
+            label:
+              data.filters.entity_type === "department"
+                ? "Department"
+                : "School",
+            value: data.filters.entity_id,
+            allLabel:
+              data.filters.entity_type === "department"
+                ? "All departments"
+                : "All schools",
+            options: entityOptions.map((item) => ({
+              value: item.href,
+              label: item.label,
+            })),
+          },
+        ]
       : [];
 
   return (
     <PublicListFilterForm
-      className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-3"
-      gridClassName={
-        typeOptions.length
-          ? "grid gap-3 md:grid-cols-[minmax(220px,1fr)_auto] xl:grid-cols-[minmax(220px,1fr)_12rem_auto] xl:items-end"
-          : "grid gap-3 md:grid-cols-[minmax(220px,1fr)_auto] md:items-end"
-      }
+      className="mt-5 rounded-lg border border-border bg-surface-subtle p-3"
       searchValue={data.filters.q}
       searchPlaceholder={`Search ${kindLabel(data.kind).toLowerCase()}`}
-      selects={
-        typeOptions.length
+      selects={[
+        ...entitySelects,
+        ...(typeOptions.length
           ? [
               {
                 name: "type",
@@ -592,8 +640,8 @@ function ContentFilters({
                 options: typeOptions,
               },
             ]
-          : []
-      }
+          : []),
+      ]}
       clearHref={data.href}
       total={data.total}
       visible={visible}
@@ -619,17 +667,19 @@ function galleryBentoItems(records: ContentRecord[]): MediaGalleryBentoItem[] {
         record.media_type === "video" || record.mime_type?.startsWith("video/");
       const isImage =
         record.media_type === "image" || record.mime_type?.startsWith("image/");
+      if (!isVideo && !isImage) return null;
 
       return {
         id: record.id,
-        type: isVideo ? "video" : isImage ? "image" : "file",
+        type: isVideo ? "video" : "image",
         title: recordTitle(record),
         description: summarize(record, null),
-        url,
+        url: isVideo ? mediaPlaybackUrl(record) : url,
         href: recordHref(record),
         span: gallerySpanPattern[index % gallerySpanPattern.length]!,
       };
-    });
+    })
+    .filter(Boolean) as MediaGalleryBentoItem[];
 }
 
 function MediaDeskListingPage({ data }: { data: ContentListingData }) {
@@ -646,28 +696,36 @@ function MediaDeskListingPage({ data }: { data: ContentListingData }) {
   return (
     <PageShell>
       <AboutPageLenis>
-        <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_70%,#f6f8fc_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="grid w-full gap-5">
+        <AmbientPageBackground variant="academic" intensity="soft">
+          <section className="w-full px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+            <div className="grid w-full gap-5">
             <BreadcrumbTrail
               items={[{ label: "Home", href: "/" }, { label: "Media Desk" }]}
             />
-            <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)_320px] 2xl:grid-cols-[260px_minmax(0,1fr)_360px]">
-              <aside className="xl:sticky xl:top-28 xl:self-start">
-                <MediaDeskNav activeSection={data.mediaDeskSection} />
-              </aside>
-              <main className="min-w-0">
+            <MediaDeskNav activeSection={data.mediaDeskSection} />
+            <div className="min-w-0">
+              <div className="min-w-0">
                 {data.mediaDeskSection === "overview" ? (
-                  <MediaDeskSections records={data.records} />
+                  <div className="grid gap-5">
+                    <header className="rounded-lg border border-border bg-white p-5 shadow-sm lg:p-6">
+                      <SectionKicker>University communications</SectionKicker>
+                      <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+                        {data.title}
+                      </h1>
+                      <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
+                        {data.body}
+                      </p>
+                    </header>
+                    <MediaDeskSections records={data.records} />
+                  </div>
                 ) : (
                   <MediaDeskStack data={data} records={records} />
                 )}
-              </main>
-              <aside className="xl:sticky xl:top-28 xl:self-start">
-                <CalendarPanel events={data.calendarEvents} />
-              </aside>
+              </div>
             </div>
-          </div>
-        </section>
+            </div>
+          </section>
+        </AmbientPageBackground>
       </AboutPageLenis>
     </PageShell>
   );
@@ -689,7 +747,7 @@ export function ContentListingPage({ data }: { data: ContentListingData }) {
   return (
     <PageShell>
       <AboutPageLenis>
-        <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_70%,#f6f8fc_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <section className="w-full bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_70%,hsl(var(--surface-muted))_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mx-auto grid w-full max-w-[1680px] gap-5">
             <ListingHero data={data} />
             {data.featured ? (
@@ -702,7 +760,7 @@ export function ContentListingPage({ data }: { data: ContentListingData }) {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <SectionKicker>{`${data.total} records`}</SectionKicker>
-                  <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+                  <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
                     {data.kind === "media" ? "Gallery" : "Latest records"}
                   </h2>
                 </div>
@@ -723,7 +781,7 @@ export function ContentListingPage({ data }: { data: ContentListingData }) {
 
               {records.length ? (
                 <ScrollRevealGroup
-                  className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                  className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
                   staggerDelay={70}
                 >
                   {records.map((record) => (
@@ -734,10 +792,17 @@ export function ContentListingPage({ data }: { data: ContentListingData }) {
                   ))}
                 </ScrollRevealGroup>
               ) : data.featured ? null : (
-                <article className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+                <article className="rounded-lg border border-dashed border-border bg-white p-6 text-sm text-muted-foreground">
                   No records are currently published in this section.
                 </article>
               )}
+              <ListPagination
+                page={data.page}
+                totalPages={Math.ceil(data.total / data.perPage)}
+                total={data.total}
+                perPage={data.perPage}
+                baseHref={listingBaseHref(data)}
+              />
             </ScrollReveal>
           </div>
         </section>
@@ -786,7 +851,7 @@ function StructuredValue({ value }: { value: unknown }) {
         {value.map((item, index) => (
           <li
             key={index}
-            className="rounded-lg bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-700"
+            className="rounded-lg bg-surface-subtle px-3 py-2 text-sm leading-6 text-muted-foreground"
           >
             {typeof item === "object" && item !== null ? (
               <StructuredObject value={item as Record<string, unknown>} />
@@ -801,7 +866,7 @@ function StructuredValue({ value }: { value: unknown }) {
   if (typeof value === "object")
     return <StructuredObject value={value as Record<string, unknown>} />;
   return (
-    <p className="mt-1 text-sm leading-6 text-slate-700">{String(value)}</p>
+    <p className="mt-1 text-sm leading-6 text-muted-foreground">{String(value)}</p>
   );
 }
 
@@ -828,7 +893,7 @@ function StructuredObject({ value }: { value: Record<string, unknown> }) {
         )
         .map(([key, item]) => (
           <div key={key}>
-            <dt className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+            <dt className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
               {key.replace(/_/g, " ")}
             </dt>
             <dd>
@@ -841,14 +906,17 @@ function StructuredObject({ value }: { value: Record<string, unknown> }) {
 }
 
 function StructuredContentSection({ data }: { data: ContentDetailData }) {
-  if (!data.structuredContent || !visibleStructuredEntries(data.structuredContent).length) {
+  if (
+    !data.structuredContent ||
+    !visibleStructuredEntries(data.structuredContent).length
+  ) {
     return null;
   }
 
   return (
     <ScrollReveal
       as="section"
-      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+      className="rounded-lg border border-border bg-white p-5 shadow-sm"
     >
       <SectionKicker>Structured Details</SectionKicker>
       <div className="mt-4">
@@ -878,16 +946,116 @@ function visibleStructuredEntries(value: Record<string, unknown>) {
   );
 }
 
+function GallerySection({ data }: { data: ContentDetailData }) {
+  if (data.galleryImages.length === 0) return null;
+
+  return (
+    <ScrollReveal
+      as="section"
+      className="rounded-lg border border-border bg-white p-5 shadow-sm"
+    >
+      <SectionKicker>Gallery</SectionKicker>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {data.galleryImages.map((image, index) => (
+          <a
+            key={index}
+            href={image.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative overflow-hidden rounded-lg border border-border bg-surface-muted shadow-sm transition hover:shadow-md"
+          >
+            <img
+              src={image.url}
+              alt={image.alt || image.title || `Gallery image ${index + 1}`}
+              className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-105"
+            />
+            {image.title ? (
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-brand-overlay/70 to-transparent p-3">
+                <p className="line-clamp-1 text-xs font-semibold text-white">
+                  {image.title}
+                </p>
+              </div>
+            ) : null}
+          </a>
+        ))}
+      </div>
+    </ScrollReveal>
+  );
+}
+
+function SupportingMediaSection({ data }: { data: ContentDetailData }) {
+  const videos = data.mediaAssets.filter(
+    (asset) => asset.role === "video" && asset.id !== data.coverVideo?.id,
+  );
+  const downloads = data.mediaAssets.filter((asset) =>
+    ["document", "attachment"].includes(asset.role),
+  );
+  if (!videos.length && !downloads.length) return null;
+
+  return (
+    <ScrollReveal as="section" className="grid gap-5">
+      {videos.length ? (
+        <div>
+          <SectionKicker>Videos</SectionKicker>
+          <div className="mt-3 grid gap-4 md:grid-cols-2">
+            {videos.map((asset) => (
+              <figure
+                key={asset.id}
+                className="overflow-hidden rounded-lg border border-border bg-brand-overlay"
+              >
+                <video
+                  controls
+                  preload="metadata"
+                  className="aspect-video w-full"
+                  src={asset.url}
+                >
+                  Your browser does not support embedded video.
+                </video>
+                <figcaption className="flex items-center gap-2 bg-white px-4 py-3 text-sm font-semibold text-foreground">
+                  <PlayCircle aria-hidden className="h-4 w-4 text-primary" />
+                  {asset.title || asset.filename || "Supporting video"}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {downloads.length ? (
+        <div>
+          <SectionKicker>Downloads and attachments</SectionKicker>
+          <div className="mt-3 divide-y divide-slate-200 border-y border-border">
+            {downloads.map((asset) => (
+              <a
+                key={asset.id}
+                href={asset.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-h-14 items-center gap-3 py-3 text-sm font-semibold text-foreground transition hover:text-primary"
+              >
+                <FileText aria-hidden className="h-5 w-5 text-primary" />
+                <span className="min-w-0 flex-1 truncate">
+                  {asset.title || asset.filename || "Download attachment"}
+                </span>
+                <Download aria-hidden className="h-4 w-4" />
+              </a>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </ScrollReveal>
+  );
+}
+
 function DetailBody({ data }: { data: ContentDetailData }) {
   if (data.record.contentKind === "media") {
     return (
       <ScrollReveal
         as="section"
-        className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+        className="rounded-lg border border-border bg-white p-5 shadow-sm"
       >
         <SectionKicker>Media Details</SectionKicker>
         {data.body ? (
-          <p className="mt-3 text-sm leading-7 text-slate-700">{data.body}</p>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">{data.body}</p>
         ) : null}
       </ScrollReveal>
     );
@@ -896,13 +1064,13 @@ function DetailBody({ data }: { data: ContentDetailData }) {
   return (
     <ScrollReveal
       as="article"
-      className="rounded-lg border border-slate-200 bg-white px-5 py-6 shadow-sm sm:px-7 lg:px-9 lg:py-8"
+      className="rounded-lg border border-border bg-white px-5 py-6 shadow-sm sm:px-7 lg:px-9 lg:py-8"
     >
       <RichTextRenderer
         content={data.body}
         className="prose-slate max-w-none prose-p:text-base prose-p:leading-8 prose-headings:font-[family-name:var(--font-display)] prose-a:text-primary"
         emptyFallback={
-          <p className="text-base leading-8 text-slate-700">{data.summary}</p>
+          <p className="text-base leading-8 text-muted-foreground">{data.summary}</p>
         }
       />
     </ScrollReveal>
@@ -918,23 +1086,24 @@ function DetailHero({ data }: { data: ContentDetailData }) {
             {data.eyebrow}
           </span>
           {recordDate(data.record) ? (
-            <span className="inline-flex min-h-8 items-center gap-2 rounded-full border border-primary/15 bg-primary/[0.03] px-3 text-xs font-bold uppercase tracking-[0.08em] text-slate-600">
+            <span className="inline-flex min-h-8 items-center gap-2 rounded-full border border-primary/15 bg-primary/[0.03] px-3 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
               <CalendarDays aria-hidden className="h-3.5 w-3.5 text-primary" />
               {recordDate(data.record)}
             </span>
           ) : null}
         </div>
-        <h1 className="mt-4 max-w-5xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-slate-950 sm:text-5xl xl:text-6xl">
+        <h1 className="mt-4 max-w-5xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-foreground sm:text-5xl xl:text-6xl">
           {data.title}
         </h1>
         {data.summary ? (
-          <p className="mt-5 max-w-4xl text-base leading-8 text-slate-700 sm:text-lg">
+          <p className="mt-5 max-w-4xl text-base leading-8 text-muted-foreground sm:text-lg">
             {data.summary}
           </p>
         ) : null}
-        <div className="mt-6 flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-600">
-          {data.record.contentKind === "events" && present(data.record.location) ? (
-            <span className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 px-3">
+        <div className="mt-6 flex flex-wrap items-center gap-3 text-sm font-semibold text-muted-foreground">
+          {data.record.contentKind === "events" &&
+          present(data.record.location) ? (
+            <span className="inline-flex min-h-10 items-center gap-2 rounded-full border border-border px-3">
               <MapPin aria-hidden className="h-4 w-4 text-primary" />
               {data.record.location}
             </span>
@@ -944,13 +1113,25 @@ function DetailHero({ data }: { data: ContentDetailData }) {
         </div>
       </div>
 
-      <figure className="relative min-h-[300px] border-t border-primary/10 bg-slate-100 sm:min-h-[420px] lg:min-h-[520px]">
+      <figure className="relative min-h-[300px] border-t border-primary/10 bg-surface-muted sm:min-h-[420px] lg:min-h-[520px]">
         <div className="absolute inset-0">
-          <ContentImage record={data.record} large />
+          {data.coverVideo ? (
+            <video
+              controls
+              preload="metadata"
+              poster={data.videoPoster?.url ?? data.heroImage ?? undefined}
+              className="h-full w-full bg-brand-overlay object-contain"
+              src={data.coverVideo.url}
+            >
+              Your browser does not support embedded video.
+            </video>
+          ) : (
+            <ContentImage record={data.record} large />
+          )}
         </div>
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/35 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-brand-overlay/35 to-transparent" />
         {data.heroImage ? (
-          <figcaption className="absolute bottom-3 left-3 rounded-md bg-white/90 px-3 py-2 text-xs font-semibold leading-5 text-slate-600 shadow-sm backdrop-blur">
+          <figcaption className="absolute bottom-3 left-3 rounded-md bg-white/90 px-3 py-2 text-xs font-semibold leading-5 text-muted-foreground shadow-sm backdrop-blur">
             {recordTitle(data.record)}
           </figcaption>
         ) : null}
@@ -962,7 +1143,7 @@ function DetailHero({ data }: { data: ContentDetailData }) {
 function DetailSidebar({ data }: { data: ContentDetailData }) {
   return (
     <aside className="grid gap-4 xl:sticky xl:top-28 xl:self-start">
-      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-lg border border-border bg-white p-4 shadow-sm">
         <SectionKicker>Continue</SectionKicker>
         <div className="mt-3 grid gap-2">
           <Link
@@ -974,7 +1155,7 @@ function DetailSidebar({ data }: { data: ContentDetailData }) {
           </Link>
           <Link
             href="/media"
-            className="inline-flex min-h-11 items-center justify-between gap-3 rounded-md border border-slate-200 px-3 text-sm font-bold text-slate-700 transition hover:border-primary/30 hover:text-primary"
+            className="inline-flex min-h-11 items-center justify-between gap-3 rounded-md border border-border px-3 text-sm font-bold text-muted-foreground transition hover:border-primary/30 hover:text-primary"
           >
             Media Desk
             <ArrowRight aria-hidden className="h-4 w-4" />
@@ -982,14 +1163,14 @@ function DetailSidebar({ data }: { data: ContentDetailData }) {
         </div>
       </section>
       {data.relatedLinks.length ? (
-        <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="rounded-lg border border-border bg-white p-4 shadow-sm">
           <SectionKicker>Related Links</SectionKicker>
           <div className="mt-3 grid gap-2">
             {data.relatedLinks.map((item) => (
               <a
                 key={item.href}
                 href={item.href}
-                className="group flex min-h-11 items-center gap-2 rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-700 transition hover:border-primary/30 hover:text-primary"
+                className="group flex min-h-11 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold text-muted-foreground transition hover:border-primary/30 hover:text-primary"
               >
                 <LinkIcon
                   aria-hidden
@@ -998,7 +1179,7 @@ function DetailSidebar({ data }: { data: ContentDetailData }) {
                 <span className="min-w-0 flex-1">{item.label}</span>
                 <ExternalLink
                   aria-hidden
-                  className="h-3.5 w-3.5 shrink-0 text-slate-300 group-hover:text-primary"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60 group-hover:text-primary"
                 />
               </a>
             ))}
@@ -1017,7 +1198,7 @@ function RelatedContentSection({ data }: { data: ContentDetailData }) {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <SectionKicker>Related Content</SectionKicker>
-          <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+          <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
             More from {kindLabel(data.kind)}
           </h2>
         </div>
@@ -1030,7 +1211,7 @@ function RelatedContentSection({ data }: { data: ContentDetailData }) {
         </Link>
       </div>
       <ScrollRevealGroup
-        className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+        className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
         staggerDelay={70}
       >
         {data.related.map((record) => (
@@ -1053,7 +1234,7 @@ export function ContentDetailPage({ data }: { data: ContentDetailData }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(data.jsonLd) }}
       />
       <AboutPageLenis>
-        <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_58%,#f6f8fc_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <section className="w-full bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_58%,hsl(var(--surface-muted))_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mx-auto grid w-full max-w-[1680px] gap-5">
             <BreadcrumbTrail
               items={[
@@ -1071,11 +1252,13 @@ export function ContentDetailPage({ data }: { data: ContentDetailData }) {
 
               <div className="grid min-w-0 gap-5">
                 <DetailHero data={data} />
-                <main className="grid min-w-0 gap-5">
+                <div className="grid min-w-0 gap-5">
                   <DetailBody data={data} />
+                  <GallerySection data={data} />
+                  <SupportingMediaSection data={data} />
                   <StructuredContentSection data={data} />
                   <RelatedContentSection data={data} />
-                </main>
+                </div>
               </div>
 
               <DetailSidebar data={data} />

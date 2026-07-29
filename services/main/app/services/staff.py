@@ -10,8 +10,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ..models import Board, Department, Division, HierarchyLevel, Person, School, StaffAssignment, UniversityInfo, Wing
-from ..models.staff import ENTITY_ROLES, ROLE_HIERARCHY
+from ..models import Board, Department, Division, Person, School, StaffAssignment, UniversityInfo, Wing
+from ..models.staff import ENTITY_ROLES, HIERARCHY_LEVEL_STAFF, ROLE_HIERARCHY
 
 
 UNIQUE_POSITION_ROLES = {
@@ -62,7 +62,7 @@ class StaffService:
     def resolve_hierarchy_level(role: str, explicit_level: int | None = None) -> int:
         if explicit_level is not None:
             return explicit_level
-        return int(ROLE_HIERARCHY.get(role, HierarchyLevel.STAFF))
+        return ROLE_HIERARCHY.get(role, HIERARCHY_LEVEL_STAFF)
 
     @staticmethod
     async def assign(
@@ -459,7 +459,7 @@ class StaffService:
             {
                 "role": role,
                 "label": StaffService.role_label(role),
-                "hierarchy_level": int(ROLE_HIERARCHY.get(role, HierarchyLevel.STAFF)),
+                "hierarchy_level": ROLE_HIERARCHY.get(role, HIERARCHY_LEVEL_STAFF),
                 "is_unique": role in UNIQUE_POSITION_ROLES,
             }
             for role in role_names

@@ -9,17 +9,25 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from ksu_common.schemas.responses import success
 from ksu_common.models import AuditLog
 
-from ....deps import CurrentUser, DbSession, require_scope
+from ....deps import CurrentUser, DbSession, require_scope, user_has_scope
 from ....services import AuditService
 from .._fields import FieldSelection, FieldsDep, build_selector
 
 router = APIRouter()
 
 
-@router.get("", dependencies=[Depends(require_scope("audit:read"))])
+def _authorize_audit_list_access(user, service_name: str | None) -> None:
+    if user_has_scope(user, "audit:read"):
+        return
+    if service_name == "research" and user_has_scope(user, "research.view"):
+        return
+    raise HTTPException(status_code=403, detail="Insufficient privileges")
+
+
+@router.get("")
 async def list_audit_logs(
     db: DbSession,
-    _: CurrentUser,
+    user: CurrentUser,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     service_name: str | None = None,
@@ -28,6 +36,7 @@ async def list_audit_logs(
     status: str | None = None,
     fields: FieldSelection = FieldsDep,
 ):
+    _authorize_audit_list_access(user, service_name)
     selector = build_selector(AuditLog, fields)
     result = await AuditService.list(
         db,

@@ -7,24 +7,37 @@
     "dev:web": "pnpm --filter @ksu/web dev",
     "dev:research": "pnpm --filter @ksu/research dev",
     "dev:library": "pnpm --filter @ksu/library dev",
+    "dev:heri": "pnpm --filter @ksu/heri-africa dev",
     "build": "turbo build",
     "build:admin": "pnpm --filter @ksu/admin build",
     "build:web": "pnpm --filter @ksu/web build",
     "build:research": "pnpm --filter @ksu/research build",
     "build:library": "pnpm --filter @ksu/library build",
+    "build:heri": "pnpm --filter @ksu/heri-africa build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
+    "test:accessibility:unit": "pnpm --filter @ksu/ui test",
+    "test:e2e:accessibility": "playwright test --grep @accessibility",
+    "test:e2e:school-portal": "playwright test school-portal.spec.ts --project=admin",
+    "test:e2e:heri": "playwright test --project=heri",
     "clean": "turbo clean && rm -rf node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
     "@changesets/cli": "^2.29.5",
     "@eslint/eslintrc": "^3.3.5",
+    "@playwright/test": "^1.55.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "eslint": "^9.39.4",
     "eslint-config-next": "^15.5.18",
+    "jsdom": "^26.1.0",
     "prettier": "^3.5.3",
     "turbo": "^2.5.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   },
   "pnpm": {
     "overrides": {

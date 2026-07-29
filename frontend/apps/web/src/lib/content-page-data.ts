@@ -1,15 +1,23 @@
 import {
   announcementsApi,
   blogsApi,
+  departmentsApi,
   eventsApi,
   mainApi,
   newsApi,
+  publicEntityApi,
+  schoolsApi,
   type Announcement,
   type Blog,
+  type Department,
   type Event,
   type Media,
   type News,
   type PaginatedResponse,
+  type PublicEntityContentRecord,
+  type PublicEntityContentType,
+  type PublicEntityType,
+  type School,
 } from "@ksu/api-client";
 import { publicFileUrl, resolvePublicMediaUrl } from "@/lib/public-media";
 
@@ -69,10 +77,37 @@ export type ContentListingData = {
   categories: ContentPageLink[];
   calendarEvents?: EventRecord[];
   total: number;
+  page: number;
+  perPage: number;
   filters: {
     q?: string;
     type?: string;
+    entity_type?: PublicEntityType;
+    entity_id?: string;
   };
+  entityOptions?: {
+    schools: ContentPageLink[];
+    departments: ContentPageLink[];
+  };
+};
+
+export type GalleryImage = {
+  url: string;
+  title: string;
+  alt?: string;
+  width?: number | null;
+  height?: number | null;
+};
+
+export type EditorialMediaAsset = {
+  id: string;
+  role: string;
+  url: string;
+  title: string;
+  alt?: string;
+  filename?: string;
+  mediaType?: string;
+  mimeType?: string;
 };
 
 export type ContentDetailData = {
@@ -90,11 +125,15 @@ export type ContentDetailData = {
   relatedLinks: ContentPageLink[];
   structuredContent: Record<string, unknown> | null;
   jsonLd: Record<string, unknown>;
+  galleryImages: GalleryImage[];
+  mediaAssets: EditorialMediaAsset[];
+  coverVideo: EditorialMediaAsset | null;
+  videoPoster: EditorialMediaAsset | null;
 };
 
 const nav: ContentPageLink[] = [
   { label: "News", href: "/media/news" },
-  { label: "Articles", href: "/media/articles" },
+  { label: "Stories", href: "/media/articles" },
   { label: "Events", href: "/media/events" },
   { label: "Announcements", href: "/media/announcements" },
   { label: "Gallery", href: "/media/gallery" },
@@ -103,7 +142,7 @@ const nav: ContentPageLink[] = [
 const mediaDeskNav: ContentPageLink[] = [
   { label: "News", href: "/media/news" },
   { label: "Events", href: "/media/events" },
-  { label: "Articles", href: "/media/articles" },
+  { label: "Stories", href: "/media/articles" },
   { label: "Announcements", href: "/media/announcements" },
   { label: "Gallery", href: "/media/gallery" },
 ];
@@ -194,6 +233,15 @@ const mediaFields = [
   "updated_at",
 ].join(",");
 
+const entityOptionFields = "id,name,slug";
+
+const entityContentFields = [
+  "entity(id,type,name,slug,department_type)",
+  "content_type",
+  "records(id,record_type,title,slug,summary,description,caption,alt_text,filename,original_filename,featured_media_id,featured_media_url,file_id,file_url,media_type,mime_type,public_url,url,thumbnail_url,document_type,category,version,location,is_virtual,start_date,end_date,published_at,created_at,updated_at,scope_type,scope_id,width,height,duration,display_order,download_count,credit)",
+  "meta(page,per_page,total,pages)",
+].join(",");
+
 function withKind(items: News[], kind: "news"): NewsRecord[];
 function withKind(items: Blog[], kind: "blogs"): BlogRecord[];
 function withKind(items: Event[], kind: "events"): EventRecord[];
@@ -210,6 +258,85 @@ function withKind(
     ...item,
     contentKind: kind,
   })) as ContentRecord[];
+}
+
+function normalizeEntityRecord(
+  record: PublicEntityContentRecord,
+): ContentRecord | null {
+  if (record.record_type === "news") {
+    return {
+      id: record.id,
+      title: record.title ?? "News",
+      slug: record.slug ?? record.id,
+      summary: record.summary,
+      plain_text: null,
+      rich_text: null,
+      structured_content: null,
+      related_links: [],
+      featured_media_id: record.featured_media_id,
+      published_at: record.published_at,
+      created_at: record.created_at,
+      updated_at: record.updated_at,
+      scope_type: record.scope_type,
+      scope_id: record.scope_id,
+      is_public: true,
+      is_published: true,
+      contentKind: "news",
+    } as unknown as NewsRecord;
+  }
+
+  if (record.record_type === "event") {
+    return {
+      id: record.id,
+      title: record.title ?? "Event",
+      slug: record.slug ?? record.id,
+      summary: record.summary,
+      plain_text: null,
+      rich_text: null,
+      structured_content: null,
+      related_links: [],
+      featured_media_id: record.featured_media_id,
+      start_date: record.start_date,
+      end_date: record.end_date,
+      location: record.location,
+      is_virtual: record.is_virtual,
+      published_at: record.published_at,
+      created_at: record.created_at,
+      updated_at: record.updated_at,
+      scope_type: record.scope_type,
+      scope_id: record.scope_id,
+      is_public: true,
+      is_published: true,
+      contentKind: "events",
+    } as unknown as EventRecord;
+  }
+
+  if (record.record_type === "gallery") {
+    return {
+      id: record.id,
+      filename: record.filename ?? "",
+      original_filename: record.original_filename ?? record.filename ?? "",
+      mime_type: record.mime_type ?? "",
+      public_url: record.public_url ?? record.url ?? record.file_url,
+      cdn_url: null,
+      url: record.url ?? record.public_url ?? record.file_url,
+      thumbnail_url: record.thumbnail_url,
+      title: record.title,
+      alt_text: record.alt_text,
+      description: record.description,
+      caption: record.caption,
+      media_type: record.media_type,
+      width: record.width,
+      height: record.height,
+      duration: record.duration,
+      credit: record.credit,
+      created_at: record.created_at,
+      updated_at: record.updated_at,
+      contentKind: "media",
+    } as PublicMediaRecord;
+  }
+
+  return null;
 }
 
 function metaCount<T>(response: ListResponse<T>) {
@@ -320,7 +447,7 @@ export function categoryLabel(record: ContentRecord) {
     return record.is_virtual ? "Virtual event" : "Event";
   if (record.contentKind === "media")
     return present(record.media_type) ?? "Media";
-  return record.contentKind === "blogs" ? "Article" : "News";
+  return record.contentKind === "blogs" ? "Story" : "News";
 }
 
 export function mediaUrl(record: ContentRecord) {
@@ -341,6 +468,17 @@ export function mediaUrl(record: ContentRecord) {
   }
 
   return publicFileUrl(record.featured_media_id);
+}
+
+export function mediaPlaybackUrl(record: ContentRecord) {
+  if (record.contentKind !== "media") return mediaUrl(record);
+
+  return (
+    resolvePublicMediaUrl(record.cdn_url) ??
+    resolvePublicMediaUrl(record.public_url) ??
+    resolvePublicMediaUrl(record.url) ??
+    null
+  );
 }
 
 function bodyContent(record: ContentRecord) {
@@ -379,13 +517,12 @@ function relatedLinks(record: ContentRecord): ContentPageLink[] {
 
 function listTitle(kind: ContentKind, mode: ContentListingMode, slug?: string) {
   if (kind === "blogs")
-    return slug
-      ? `${titleFromSlug(slug)} articles`
-      : "University articles and blogs";
+    return slug ? `${titleFromSlug(slug)} articles` : "University stories";
   if (kind === "events")
     return mode === "past" ? "Past events" : "University events";
   if (kind === "announcements") return "Announcements";
-  if (kind === "media") return slug ? `${titleFromSlug(slug)} gallery` : "Gallery";
+  if (kind === "media")
+    return slug ? `${titleFromSlug(slug)} gallery` : "Gallery";
   return slug ? `${titleFromSlug(slug)} news` : "University news";
 }
 
@@ -399,7 +536,7 @@ function titleFromSlug(slug?: string) {
 }
 
 function listingEyebrow(kind: ContentKind) {
-  if (kind === "blogs") return "Articles";
+  if (kind === "blogs") return "Stories";
   if (kind === "events") return "Events";
   if (kind === "announcements") return "Official Notices";
   if (kind === "media") return "Media Desk";
@@ -460,6 +597,72 @@ async function listByKind(
   return {
     records: withKind(response.data ?? [], kind),
     total: metaCount(response),
+  };
+}
+
+async function getEntityOptions() {
+  const [schools, departments] = await Promise.all([
+    safeList<School>(
+      schoolsApi.list({
+        fields: entityOptionFields,
+        per_page: 100,
+      }),
+    ),
+    safeList<Department>(
+      departmentsApi.list({
+        fields: entityOptionFields,
+        per_page: 200,
+      }),
+    ),
+  ]);
+
+  return {
+    schools: (schools.data ?? []).map((item) => ({
+      label: item.name,
+      href: item.id,
+    })),
+    departments: (departments.data ?? []).map((item) => ({
+      label: item.name,
+      href: item.id,
+    })),
+  };
+}
+
+async function listEntityContent({
+  kind,
+  entityType,
+  entityId,
+  page,
+  perPage,
+  search,
+}: {
+  kind: ContentKind;
+  entityType: PublicEntityType;
+  entityId: string;
+  page: number;
+  perPage: number;
+  search?: string;
+}) {
+  const contentType: PublicEntityContentType =
+    kind === "events" ? "events" : kind === "media" ? "gallery" : "news";
+
+  const response = await safeRecord(
+    publicEntityApi.content(entityType, entityId, {
+      content_type: contentType,
+      page,
+      per_page: perPage,
+      search,
+      fields: entityContentFields,
+    }),
+  );
+
+  const records = (response?.records ?? [])
+    .map(normalizeEntityRecord)
+    .filter(Boolean) as ContentRecord[];
+
+  return {
+    records,
+    total: response?.meta?.total ?? records.length,
   };
 }
 
@@ -555,6 +758,7 @@ export async function getContentListingData(
   kind: ContentKind,
   segments: string[] = [],
   searchParams: Record<string, string | string[] | undefined> = {},
+  page: number = 1,
 ): Promise<ContentListingData> {
   const [area, slug] = segments;
   const mode: ContentListingMode =
@@ -563,10 +767,86 @@ export async function getContentListingData(
     typeof searchParams.type === "string" ? searchParams.type : undefined;
   const search =
     typeof searchParams.q === "string" ? searchParams.q : undefined;
+  const entityType =
+    searchParams.entity_type === "school" ||
+    searchParams.entity_type === "department"
+      ? searchParams.entity_type
+      : undefined;
+  const rawEntityId =
+    typeof searchParams.entity_id === "string"
+      ? present(searchParams.entity_id)
+      : undefined;
+  const entityOptions = await getEntityOptions();
+  const entityId =
+    entityType &&
+    rawEntityId &&
+    (entityType === "department"
+      ? entityOptions.departments.some((item) => item.href === rawEntityId)
+      : entityOptions.schools.some((item) => item.href === rawEntityId))
+      ? rawEntityId
+      : undefined;
+  const perPage = kind === "media" ? 24 : 18;
   const listParams: Record<string, string | number | boolean | undefined> = {
-    per_page: kind === "media" ? 24 : 18,
+    per_page: perPage,
+    page,
     search,
   };
+
+  const canUseEntityContent =
+    Boolean(entityType && entityId) &&
+    (kind === "news" || kind === "events" || kind === "media");
+
+  if (canUseEntityContent && entityType && entityId) {
+    const primary = await listEntityContent({
+      kind,
+      entityType,
+      entityId,
+      page,
+      perPage,
+      search,
+    });
+    const filtered =
+      kind === "media" && mediaType
+        ? primary.records.filter(
+            (record) =>
+              record.contentKind === "media" && record.media_type === mediaType,
+          )
+        : primary.records;
+
+    return {
+      kind,
+      mediaDeskSection: mediaSectionForKind(kind),
+      title: listTitle(kind, mode, mediaType),
+      eyebrow: listingEyebrow(kind),
+      body:
+        kind === "media"
+          ? "Public images and videos published for the selected school or department."
+          : "Published records for the selected school or department.",
+      href: recordHrefPrefix(kind),
+      mode,
+      records: filtered,
+      featured: filtered[0] ?? null,
+      nav: nav.filter((item) => item.href !== recordHrefPrefix(kind)),
+      categories:
+        kind === "media"
+          ? [
+              { label: "Image", href: "/media/gallery?type=image" },
+              { label: "Video", href: "/media/gallery?type=video" },
+            ]
+          : [],
+      calendarEvents: await getCalendarEvents(),
+      total: mediaType ? filtered.length : primary.total,
+      page,
+      perPage,
+      filters: {
+        q: search,
+        type: mediaType,
+        entity_type: entityType,
+        entity_id: entityId,
+      },
+      entityOptions,
+    };
+  }
 
   if (kind === "media" && mode === "all" && !mediaType) {
     const [newsRecords, eventRecords, articleRecords, announcementRecords] =
@@ -585,8 +865,7 @@ export async function getContentListingData(
       const firstDate = recordDate(first);
       const secondDate = recordDate(second);
       return (
-        new Date(secondDate ?? 0).getTime() -
-        new Date(firstDate ?? 0).getTime()
+        new Date(secondDate ?? 0).getTime() - new Date(firstDate ?? 0).getTime()
       );
     });
     const featured =
@@ -619,10 +898,15 @@ export async function getContentListingData(
         eventRecords.total +
         articleRecords.total +
         announcementRecords.total,
+      page: 1,
+      perPage: perPage,
       filters: {
         q: search,
         type: mediaType,
+        entity_type: entityType,
+        entity_id: entityId ?? undefined,
       },
+      entityOptions,
     };
   }
 
@@ -677,10 +961,15 @@ export async function getContentListingData(
     categories: categoryLinks(allForCategories.records, kind),
     calendarEvents: await getCalendarEvents(),
     total: primary.total,
+    page,
+    perPage,
     filters: {
       q: search,
       type: mediaType,
+      entity_type: entityType,
+      entity_id: entityId ?? undefined,
     },
+    entityOptions,
   };
 }
 
@@ -694,9 +983,10 @@ export async function getMediaDeskListingData(
   section: MediaDeskSection = "overview",
   segments: string[] = [],
   searchParams: Record<string, string | string[] | undefined> = {},
+  page: number = 1,
 ) {
   if (section === "overview") {
-    return getContentListingData("media", [], searchParams);
+    return getContentListingData("media", [], searchParams, page);
   }
 
   const kind: ContentKind =
@@ -705,7 +995,7 @@ export async function getMediaDeskListingData(
       : section === "gallery"
         ? "media"
         : section;
-  const data = await getContentListingData(kind, segments, searchParams);
+  const data = await getContentListingData(kind, segments, searchParams, page);
   return { ...data, mediaDeskSection: section, nav: mediaDeskNav };
 }
 
@@ -804,6 +1094,60 @@ function jsonLd(record: ContentRecord, href: string) {
   return { ...base, "@type": "NewsArticle" };
 }
 
+async function fetchEditorialMedia(
+  entityType: string,
+  entityId: string,
+): Promise<EditorialMediaAsset[]> {
+  try {
+    const response = await mainApi.get<{
+      data: Array<{
+        id: string;
+        role: string;
+        media: {
+          id: string;
+          filename?: string;
+          public_url?: string | null;
+          cdn_url?: string | null;
+          url?: string;
+          title?: string | null;
+          alt_text?: string | null;
+          width?: number | null;
+          height?: number | null;
+          mime_type?: string;
+          media_type?: string;
+        } | null;
+      }>;
+    }>("/api/v1/public/media/links", {
+      entity_type: entityType,
+      entity_id: entityId,
+    });
+
+    return (response.data ?? [])
+      .filter((item) => item.media)
+      .map((item) => {
+        const m = item.media!;
+        const url =
+          resolvePublicMediaUrl(m.cdn_url) ??
+          resolvePublicMediaUrl(m.public_url) ??
+          resolvePublicMediaUrl(m.url) ??
+          "";
+        return {
+          id: item.id,
+          role: item.role,
+          url,
+          title: m.title || "",
+          alt: m.alt_text ?? undefined,
+          filename: m.filename,
+          mediaType: m.media_type,
+          mimeType: m.mime_type,
+        };
+      })
+      .filter((item) => item.url);
+  } catch {
+    return [];
+  }
+}
+
 export async function getContentDetailData(
   kind: ContentKind,
   slugOrId: string,
@@ -821,6 +1165,20 @@ export async function getContentDetailData(
     )
     .slice(0, 4);
   const href = recordHref(normalized);
+  const entityType =
+    kind === "blogs" ? "blog" : kind === "media" ? "media" : kind;
+
+  const mediaAssets =
+    kind !== "media"
+      ? await fetchEditorialMedia(entityType, normalized.id)
+      : [];
+  const galleryImages = mediaAssets
+    .filter(
+      (asset) =>
+        asset.role === "gallery" &&
+        (asset.mediaType === "image" || asset.mimeType?.startsWith("image/")),
+    )
+    .map((asset) => ({ url: asset.url, title: asset.title, alt: asset.alt }));
 
   return {
     kind,
@@ -831,11 +1189,19 @@ export async function getContentDetailData(
     title: recordTitle(normalized),
     summary: summarize(normalized, null),
     body: bodyContent(normalized),
-    heroImage: mediaUrl(normalized),
+    heroImage:
+      mediaAssets.find((asset) => asset.role === "cover-image")?.url ??
+      mediaUrl(normalized),
     meta: detailMeta(normalized),
     related,
     relatedLinks: relatedLinks(normalized),
     structuredContent: structuredContent(normalized),
     jsonLd: jsonLd(normalized, href),
+    galleryImages,
+    mediaAssets,
+    coverVideo:
+      mediaAssets.find((asset) => asset.role === "cover-video") ?? null,
+    videoPoster:
+      mediaAssets.find((asset) => asset.role === "video-poster") ?? null,
   };
 }

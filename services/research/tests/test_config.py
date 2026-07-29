@@ -3,9 +3,14 @@ import os
 import sys
 import unittest
 
+from fastapi.routing import APIRoute
 from pydantic import ValidationError
 
 from app.core.config import Settings, get_settings
+
+
+def route_paths(app):
+    return {route.path for route in app.routes if isinstance(route, APIRoute)}
 
 
 def base_settings(**overrides):
@@ -108,7 +113,7 @@ class SettingsTests(unittest.TestCase):
 
             app = research_main.create_app()
 
-            self.assertNotIn("/seed-assets", {route.path for route in app.routes})
+            self.assertNotIn("/seed-assets", route_paths(app))
         finally:
             research_main.settings = original_settings
             research_main.SEED_ASSETS_DIR = original_seed_assets_dir

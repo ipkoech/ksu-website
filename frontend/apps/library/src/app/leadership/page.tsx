@@ -42,17 +42,7 @@ export default async function LibraryLeadershipPage() {
             <SecondaryLink href="/services">View services</SecondaryLink>
           </>
         }
-      >
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-            Leadership records
-          </p>
-          <p className="mt-3 text-4xl font-bold sm:text-5xl">{leaders.length}</p>
-          <p className="mt-2 text-sm leading-6 text-white/75">
-            Public senior staff records published for library users.
-          </p>
-        </div>
-      </LibraryHero>
+      />
 
       {leadership.error ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8">
@@ -72,7 +62,7 @@ export default async function LibraryLeadershipPage() {
           <StatusMessage>No public leadership records are available yet.</StatusMessage>
         ) : (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="space-y-6">
+            <div className="flex flex-col gap-6">
               {lead ? (
                 <article className="rounded-lg border border-primary/25 bg-white p-6 shadow-sm">
                   <div className="flex flex-col gap-5 sm:flex-row">
@@ -83,10 +73,10 @@ export default async function LibraryLeadershipPage() {
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
                         {formatLabel(lead.role ?? "university librarian")}
                       </p>
-                      <h2 className="mt-3 text-2xl font-semibold text-slate-950">
+                      <h2 className="mt-3 text-2xl font-semibold text-foreground">
                         {lead.job_title ?? formatLabel(lead.role ?? "Library leader")}
                       </h2>
-                      <p className="mt-3 text-sm leading-7 text-slate-600">
+                      <p className="mt-3 text-sm leading-7 text-muted-foreground">
                         {compactText(lead.bio) || "Leadership profile details are being updated."}
                       </p>
                     </div>
@@ -100,7 +90,7 @@ export default async function LibraryLeadershipPage() {
               </div>
             </div>
             <SidePanel title="Office of the University Librarian" eyebrow="Leadership office">
-              <dl className="grid gap-3 text-sm text-slate-600">
+              <dl className="grid gap-3 text-sm text-muted-foreground">
                 <Meta label="Role" value={formatLabel(lead?.role ?? "library leadership")} />
                 <Meta label="Department" value={lead?.department} />
                 <Meta label="Specialization" value={lead?.specialization} />
@@ -115,17 +105,17 @@ export default async function LibraryLeadershipPage() {
 
 function LeaderCard({ member }: { member: { id: string; role?: string | null; job_title?: string | null; bio?: string | null; department?: string | null; specialization?: string | null } }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="rounded-lg border border-border bg-white p-5 shadow-sm">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
         {formatLabel(member.role ?? "library leadership")}
       </p>
-      <h2 className="mt-3 text-xl font-semibold text-slate-950">
+      <h2 className="mt-3 text-xl font-semibold text-foreground">
         {member.job_title ?? formatLabel(member.role ?? "Leader")}
       </h2>
-      <p className="mt-3 text-sm leading-7 text-slate-600">
+      <p className="mt-3 text-sm leading-7 text-muted-foreground">
         {compactText(member.bio) || "Leadership profile details are being updated."}
       </p>
-      <dl className="mt-5 grid gap-3 text-sm text-slate-600">
+      <dl className="mt-5 grid gap-3 text-sm text-muted-foreground">
         <Meta label="Department" value={member.department} />
         <Meta label="Specialization" value={member.specialization} />
       </dl>
@@ -143,7 +133,7 @@ function Meta({
   if (!compactText(value)) return null;
   return (
     <div>
-      <dt className="font-semibold text-slate-950">{label}</dt>
+      <dt className="font-semibold text-foreground">{label}</dt>
       <dd className="mt-1">{value}</dd>
     </div>
   );

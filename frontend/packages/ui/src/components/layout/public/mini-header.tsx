@@ -21,38 +21,40 @@ interface MiniHeaderProps {
 
 const defaultQuickLinks: QuickLink[] = [
   {
-    label: "Conferences",
-    href: "https://digital.kisiiuniversity.ac.ke/conferences",
+    label: "HERI AFRICA",
+    href:
+      process.env.NEXT_PUBLIC_HERI_AFRICA_FRONTEND_URL ||
+      "https://heri-africa.kisiiuniversity.ac.ke",
     external: true,
   },
   {
-    label: "Tenders",
-    href: "https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders",
+    label: "HUDUMA BORA",
+    href: "https://digital.kisiiuniversity.ac.ke/",
     external: true,
   },
   {
-    label: "Careers",
+    label: "STUDENT PORTAL",
+    href: "https://portal.kisiiuniversity.ac.ke",
+    external: true,
+  },
+  {
+    label: "CAREERS",
     href: "https://digital.kisiiuniversity.ac.ke/job_portal/open_adverts",
     external: true,
   },
   {
-    label: "Help Desk",
-    href: "https://digital.kisiiuniversity.ac.ke/ksu_customer_care_center",
+    label: "CONFERENCES",
+    href: "https://digital.kisiiuniversity.ac.ke/conferences",
     external: true,
   },
   {
-    label: "Visitors",
-    href: "https://kisiiuniversity.ac.ke/visit_home",
+    label: "TENDERS",
+    href: "https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders",
     external: true,
   },
   {
-    label: "Downloads",
-    href: "https://kisiiuniversity.ac.ke/page_downloads",
-    external: true,
-  },
-  {
-    label: "FAQ",
-    href: "https://kisiiuniversity.ac.ke/faq",
+    label: "HELP DESK",
+    href: "https://digital.kisiiuniversity.ac.ke/ksu_customer_care_centerr",
     external: true,
   },
 ];
@@ -71,7 +73,7 @@ export function MiniHeader({
   return (
     <div
       className={cn(
-        "hidden border-b border-white/10 bg-secondary text-xs text-white shadow-[inset_0_-1px_rgba(255,255,255,0.08)] xl:block",
+        "hidden border-b border-white/10 bg-primary text-xs text-white shadow-[inset_0_-1px_rgba(255,255,255,0.08)] xl:block",
         className,
       )}
     >
@@ -80,7 +82,7 @@ export function MiniHeader({
           {/* Contact Info */}
           <div className="flex min-w-0 items-center gap-4">
             {contactInfo?.address && (
-              <span className="flex min-w-0 items-center gap-1.5 text-white/80">
+              <span className="flex min-w-0 items-center gap-1.5 text-white">
                 <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                 <span className="hidden max-w-[150px] truncate xl:inline 2xl:max-w-none">
                   {contactInfo.address}
@@ -90,7 +92,7 @@ export function MiniHeader({
             {contactInfo?.phone && (
               <a
                 href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
-                className="flex min-h-10 shrink-0 items-center gap-1.5 text-white/80 transition-colors hover:text-white"
+                className="flex min-h-10 shrink-0 items-center gap-1.5 text-white transition-colors hover:text-white/80"
               >
                 <Phone className="w-3.5 h-3.5" />
                 <span className="hidden lg:inline">{contactInfo.phone}</span>
@@ -99,7 +101,7 @@ export function MiniHeader({
             {contactInfo?.email && (
               <a
                 href={`mailto:${contactInfo.email}`}
-                className="flex min-h-10 shrink-0 items-center gap-1.5 text-white/80 transition-colors hover:text-white"
+                className="flex min-h-10 shrink-0 items-center gap-1.5 text-white transition-colors hover:text-white/80"
               >
                 <Mail className="w-3.5 h-3.5" />
                 <span className="hidden lg:inline">{contactInfo.email}</span>
@@ -118,7 +120,7 @@ export function MiniHeader({
                   target={link.external ? "_blank" : undefined}
                   rel={link.external ? "noopener noreferrer" : undefined}
                   className={cn(
-                    "inline-flex min-h-10 items-center text-white/80 transition-colors hover:text-white",
+                    "inline-flex min-h-10 items-center text-white transition-colors hover:text-white/80",
                     index > 5 && "hidden 2xl:inline-flex",
                   )}
                 >
@@ -143,11 +145,11 @@ function SearchButton() {
   return (
     <Link
       href="/search"
-      className="flex min-h-10 items-center gap-1.5 text-white/80 transition-colors hover:text-white"
+      className="flex min-h-10 items-center gap-1.5 text-white transition-colors hover:text-white/80"
       aria-label="Search Kisii University"
     >
       <Search className="w-3.5 h-3.5" aria-hidden />
-      <span>Search</span>
+      <span>SEARCH</span>
     </Link>
   );
 }

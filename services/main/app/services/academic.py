@@ -13,7 +13,8 @@ from sqlalchemy.orm import selectinload
 from ksu_common import PaginatedResult
 
 from ..helpers.slug import unique_slug
-from ..models import Campus, Department, DepartmentService as DepartmentServiceModel, HierarchyLevel, Person, School, StaffAssignment
+from ..models import Campus, Department, DepartmentService as DepartmentServiceModel, Person, School, StaffAssignment
+from ..models.staff import HIERARCHY_LEVEL_HEAD
 from ._base import apply_updates, ilike_any, paginate_query
 
 
@@ -273,7 +274,7 @@ class DepartmentService:
                 matched_assignment = assignment
                 assignment.role = target_role
                 assignment.title = target_title
-                assignment.hierarchy_level = int(HierarchyLevel.HEAD)
+                assignment.hierarchy_level = HIERARCHY_LEVEL_HEAD
                 assignment.is_primary = True
                 assignment.is_public = True
                 assignment.status = "active"
@@ -292,7 +293,7 @@ class DepartmentService:
                     entity_id=department.id,
                     role=target_role,
                     title=target_title,
-                    hierarchy_level=int(HierarchyLevel.HEAD),
+                    hierarchy_level=HIERARCHY_LEVEL_HEAD,
                     is_primary=True,
                     is_public=True,
                     status="active",
@@ -361,3 +362,68 @@ class DepartmentService:
             .order_by(DepartmentServiceModel.display_order.asc(), DepartmentServiceModel.name.asc())
         )
         return list(result.scalars().all())
+
+
+class DepartmentServiceCatalogService:
+    @staticmethod
+    async def get_by_id(
+        db: AsyncSession,
+        service_id: uuid.UUID,
+        *,
+        is_active: bool | None = None,
+        load_options: Sequence = (),
+    ) -> DepartmentServiceModel | None:
+        query = select(DepartmentServiceModel).where(DepartmentServiceModel.id == service_id)
+        if is_active is not None:
+            query = query.where(DepartmentServiceModel.is_active.is_(is_active))
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def list(
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        department_id: uuid.UUID | None = None,
+        search: str | None = None,
+        is_active: bool | None = None,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = select(DepartmentServiceModel).order_by(
+            DepartmentServiceModel.display_order.asc(),
+            DepartmentServiceModel.name.asc(),
+        )
+        if load_options:
+            query = query.options(*load_options)
+        if department_id:
+            query = query.where(DepartmentServiceModel.department_id == department_id)
+        if search:
+            query = query.where(ilike_any(search, DepartmentServiceModel.name, DepartmentServiceModel.description))
+        if is_active is not None:
+            query = query.where(DepartmentServiceModel.is_active.is_(is_active))
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+    @staticmethod
+    async def create(db: AsyncSession, **data) -> DepartmentServiceModel:
+        if not data.get("slug") and data.get("name"):
+            data["slug"] = await unique_slug(db, DepartmentServiceModel, data["name"])
+        service = DepartmentServiceModel(**data)
+        db.add(service)
+        await db.flush()
+        return service
+
+    @staticmethod
+    async def update(db: AsyncSession, service: DepartmentServiceModel, **data) -> DepartmentServiceModel:
+        if data.get("name") and not data.get("slug"):
+            data["slug"] = await unique_slug(db, DepartmentServiceModel, data["name"], exclude_id=service.id)
+        apply_updates(service, **data)
+        await db.flush()
+        return service
+
+    @staticmethod
+    async def delete(db: AsyncSession, service: DepartmentServiceModel) -> None:
+        service.is_active = False
+        await db.flush()

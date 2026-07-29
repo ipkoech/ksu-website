@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { AlertCircle, CheckCircle2, Download, FileUp, Play } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTransition } from "@/lib/animations";
-import { importsApi, useCommitImport, useImportResource, usePreviewImport } from "@ksu/api-client";
+import { importsApi, useImportJob, useImportResource, usePreviewImport, useStartImportCommit } from "@ksu/api-client";
 import type { ImportCommitResult, ImportPreview, ImportPreviewRow } from "@ksu/api-client";
 import {
   Alert,
@@ -63,10 +63,13 @@ export default function ImportClientPage() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [commitResult, setCommitResult] = useState<ImportCommitResult | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [handledJobId, setHandledJobId] = useState<string | null>(null);
 
   const { data: resourceResponse, isLoading: isResourceLoading } = useImportResource(resourceKey);
   const previewImport = usePreviewImport();
-  const commitImport = useCommitImport();
+  const startImportCommit = useStartImportCommit();
+  const importJob = useImportJob(jobId);
   const resource = resourceResponse?.data;
 
   const validRows = useMemo(
@@ -89,6 +92,8 @@ export default function ImportClientPage() {
       return;
     }
     setCommitResult(null);
+    setJobId(null);
+    setHandledJobId(null);
     try {
       const response = await previewImport.mutateAsync({ resource: resourceKey, file });
       setPreview(response.data);
@@ -103,16 +108,34 @@ export default function ImportClientPage() {
       return;
     }
     try {
-      const response = await commitImport.mutateAsync({
+      const response = await startImportCommit.mutateAsync({
         resource: resourceKey,
         data: { rows: validRows.map((row) => row.raw), mode: "partial" },
       });
-      setCommitResult(response.data);
-      toast.success(`Created ${response.data.created_rows} record${response.data.created_rows === 1 ? "" : "s"}`);
+      setCommitResult(null);
+      setJobId(response.data.job_id);
+      setHandledJobId(null);
+      toast.success("Import queued. You can keep this page open while it processes.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Import failed");
     }
   };
+
+  useEffect(() => {
+    const job = importJob.data?.data;
+    if (!job || !jobId || handledJobId === jobId) return;
+
+    if (job.status === "SUCCESS" && job.result) {
+      setCommitResult(job.result);
+      setHandledJobId(jobId);
+      toast.success(`Created ${job.result.created_rows} record${job.result.created_rows === 1 ? "" : "s"}`);
+    }
+
+    if (job.status === "FAILURE") {
+      setHandledJobId(jobId);
+      toast.error(job.error || "Import failed");
+    }
+  }, [handledJobId, importJob.data, jobId]);
 
   return (
     <PageTransition>
@@ -204,9 +227,9 @@ export default function ImportClientPage() {
               <Card>
                 <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <CardTitle>Preview</CardTitle>
-                  <Button onClick={handleCommit} disabled={validRows.length === 0 || commitImport.isPending}>
+                  <Button onClick={handleCommit} disabled={validRows.length === 0 || startImportCommit.isPending || importJob.isFetching}>
                     <Play data-icon="inline-start" />
-                    {commitImport.isPending ? "Importing..." : `Import ${validRows.length} Valid Rows`}
+                    {startImportCommit.isPending || importJob.isFetching ? "Processing..." : `Import ${validRows.length} Valid Rows`}
                   </Button>
                 </CardHeader>
                 <CardContent>
@@ -239,6 +262,15 @@ export default function ImportClientPage() {
                 </CardContent>
               </Card>
             </>
+          ) : null}
+
+          {jobId && !commitResult ? (
+            <Alert>
+              <CheckCircle2 className="h-4 w-4" />
+              <AlertDescription>
+                Import job {importJob.data?.data.status?.toLowerCase() || "queued"}. Results will appear here when processing finishes.
+              </AlertDescription>
+            </Alert>
           ) : null}
 
           {commitResult ? (

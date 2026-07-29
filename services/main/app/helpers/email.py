@@ -16,13 +16,22 @@ settings = get_settings()
 _PLACEHOLDER_RE = re.compile(r"{{\s*([a-zA-Z0-9_]+)\s*}}")
 
 
-def _build_message(*, to_email: str, subject: str, text_body: str, html_body: str | None = None) -> EmailMessage:
+def _build_message(
+    *,
+    to_email: str,
+    subject: str,
+    text_body: str,
+    html_body: str | None = None,
+    reply_to_email: str | None = None,
+) -> EmailMessage:
     message = EmailMessage()
     from_email = settings.SMTP_FROM_EMAIL or settings.EMAIL_FROM or settings.SMTP_USERNAME or "no-reply@example.invalid"
     from_name = settings.SMTP_FROM_NAME
     message["From"] = f"{from_name} <{from_email}>" if from_name else from_email
     message["To"] = to_email
     message["Subject"] = subject
+    if reply_to_email:
+        message["Reply-To"] = reply_to_email
     message.set_content(text_body)
     if html_body:
         message.add_alternative(html_body, subtype="html")
@@ -138,9 +147,22 @@ def _send_message(message: EmailMessage) -> str:
     return f"smtp:{settings.SMTP_HOST}:{message['To']}"
 
 
-async def send_email(*, to_email: str, subject: str, text_body: str, html_body: str | None = None) -> str:
+async def send_email(
+    *,
+    to_email: str,
+    subject: str,
+    text_body: str,
+    html_body: str | None = None,
+    reply_to_email: str | None = None,
+) -> str:
     """Send an email asynchronously via Google Workspace SMTP."""
-    message = _build_message(to_email=to_email, subject=subject, text_body=text_body, html_body=html_body)
+    message = _build_message(
+        to_email=to_email,
+        subject=subject,
+        text_body=text_body,
+        html_body=html_body,
+        reply_to_email=reply_to_email,
+    )
     return await asyncio.to_thread(_send_message, message)
 
 

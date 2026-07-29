@@ -6,15 +6,15 @@ import { PageShell } from "@/components/site-shell";
 export default async function NotFound() {
   return (
     <PageShell>
-      <section className="flex min-h-[60vh] items-center justify-center bg-slate-50 px-4 py-12">
-        <div className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
+      <section className="flex min-h-[60vh] items-center justify-center bg-surface-subtle px-4 py-12">
+        <div className="w-full max-w-lg rounded-lg border border-border bg-white p-6 text-center shadow-sm">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Search className="h-6 w-6" aria-hidden />
         </div>
-        <h1 className="mt-5 text-2xl font-semibold tracking-normal text-slate-950">
+        <h1 className="mt-5 text-2xl font-semibold tracking-normal text-foreground">
           Page not found
         </h1>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
           The page may have moved, expired, or the address may be incorrect.
           Search the university site or return to the homepage.
         </p>

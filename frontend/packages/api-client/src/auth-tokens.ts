@@ -1,3 +1,5 @@
+import { getMainApiBaseUrl as resolveMainApiBaseUrl } from "./service-urls";
+
 type StoredTokens = {
   accessToken?: string;
   refreshToken?: string;
@@ -44,16 +46,17 @@ export function getStoredAccessToken() {
   return getStoredAuthTokens().accessToken;
 }
 
-export function getMainApiBaseUrl() {
-  return (process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000").replace(/\/$/, "");
+function getAuthRefreshBaseUrl() {
+  return resolveMainApiBaseUrl();
 }
 
-export async function refreshStoredAccessToken(baseUrl = getMainApiBaseUrl()) {
+export async function refreshStoredAccessToken(baseUrl = getAuthRefreshBaseUrl()) {
   const { refreshToken } = getStoredAuthTokens();
   if (!refreshToken) return false;
 
   const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/v1/auth/refresh`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh_token: refreshToken }),
   });

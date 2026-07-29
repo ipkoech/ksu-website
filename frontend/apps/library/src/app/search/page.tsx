@@ -2,6 +2,9 @@ import { Children } from "react";
 import Link from "next/link";
 import {
   LibraryContentBand,
+  LibraryFilterSelect,
+  LibraryFilterSubmit,
+  LibraryFilterTextInput,
   LibrarySectionHeading,
   PillNav,
   SearchPanel,
@@ -25,15 +28,17 @@ type SearchPageProps = {
   searchParams?: Promise<{
     q?: string;
     branch?: string;
+    type?: string;
   }>;
 };
 
 export default async function LibrarySearchPage({ searchParams }: SearchPageProps) {
   const params = (await searchParams) ?? {};
-  const { branches, catalog, electronic, selectedLibraryId, query, errors } =
+  const { branches, catalog, electronic, unified, selectedLibraryId, query, errors } =
     await getLibrarySearchData({
       libraryId: params.branch,
       query: params.q,
+      type: params.type,
     });
   const total = catalog.data.length + electronic.data.length;
 
@@ -44,10 +49,10 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-secondary">
             Library Search
           </p>
-          <h1 className="mt-3 max-w-4xl text-wrap font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-slate-950 sm:text-5xl">
+          <h1 className="mt-3 max-w-4xl text-wrap font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-foreground sm:text-5xl">
             Search catalog records, e-resources, downloads, services, and staff.
           </h1>
-          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
+          <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">
             Use a single query to discover branch catalog items, subscribed platforms,
             public files, support services, and library contacts.
           </p>
@@ -67,48 +72,20 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
             action="/search"
             className="mt-4 grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)_auto] lg:items-end"
           >
-            <div className="space-y-2">
-              <label
-                className="text-sm font-semibold text-slate-900"
-                htmlFor="search-branch"
-              >
-                Catalog branch
-              </label>
-              <select
-                id="search-branch"
-                name="branch"
-                defaultValue={selectedLibraryId}
-                className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                {branches.data.map((branch) => (
-                  <option key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label
-                className="text-sm font-semibold text-slate-900"
-                htmlFor="search-query"
-              >
-                Search terms
-              </label>
-              <input
-                id="search-query"
-                name="q"
-                type="search"
-                defaultValue={query}
-                placeholder="Title, author, database, provider, subject"
-                className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              />
-            </div>
-            <button
-              type="submit"
-              className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-            >
-              Search
-            </button>
+            <LibraryFilterSelect
+              name="branch"
+              label="Catalog Branch"
+              value={selectedLibraryId}
+              options={branches.data.map((branch) => ({ value: branch.id, label: branch.name }))}
+              allLabel="All branches"
+            />
+            <LibraryFilterTextInput
+              name="q"
+              label="Search Terms"
+              value={query}
+              placeholder="Title, author, database, provider, subject"
+            />
+            <LibraryFilterSubmit>Search Library</LibraryFilterSubmit>
           </form>
         </SearchPanel>
       </LibraryContentBand>
@@ -128,6 +105,10 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
           body={`${total} combined result${total === 1 ? "" : "s"} returned.`}
         />
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+          {unified && query ? (
+            <UnifiedResults results={unified.results} />
+          ) : null}
+          {!unified && (
           <div className="grid gap-5 xl:grid-cols-2">
           <ResultPanel title="Catalog records" href={`/catalog?q=${encodeURIComponent(query)}`}>
             {catalog.data.slice(0, 8).map((item) => (
@@ -159,6 +140,7 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
             ))}
           </ResultPanel>
           </div>
+          )}
           <SidePanel title="Quick access" eyebrow="Search">
             <div className="grid gap-3 text-sm">
               <Link href="/catalog" className="font-semibold text-primary">Advanced catalog</Link>
@@ -172,6 +154,43 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
   );
 }
 
+function UnifiedResults({
+  results,
+}: {
+  results: Array<{
+    id: string;
+    type: string;
+    title: string;
+    description?: string | null;
+    url?: string | null;
+    library_name?: string | null;
+  }>;
+}) {
+  return (
+    <section className="border-y border-border bg-white">
+      <div className="flex items-center justify-between gap-4 border-b border-border py-4">
+        <h2 className="text-lg font-semibold text-foreground">Unified library results</h2>
+        <span className="text-sm text-muted-foreground">{results.length} shown</span>
+      </div>
+      {results.length === 0 ? (
+        <p className="py-5 text-sm text-muted-foreground">No matching library records were found.</p>
+      ) : (
+        results.slice(0, 40).map((result) => (
+          <article key={`${result.type}-${result.id}`} className="flex flex-col gap-3 border-b border-border py-5 last:border-b-0 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-secondary">{formatLabel(result.type)}</p>
+              <h3 className="mt-2 text-base font-semibold text-foreground">{result.title}</h3>
+              {result.description ? <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">{result.description}</p> : null}
+              {result.library_name ? <p className="mt-2 text-xs text-muted-foreground">{result.library_name}</p> : null}
+            </div>
+            {result.url ? <a href={result.url} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center text-sm font-semibold text-primary hover:text-secondary">Open result</a> : null}
+          </article>
+        ))
+      )}
+    </section>
+  );
+}
+
 function ResultPanel({
   title,
   href,
@@ -182,9 +201,9 @@ function ResultPanel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
+        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
         <Link href={href} className="text-sm font-semibold text-primary">
           Open advanced
         </Link>
@@ -193,7 +212,7 @@ function ResultPanel({
         {Children.count(children) > 0 ? (
           children
         ) : (
-          <p className="py-4 text-sm text-slate-600">No records available.</p>
+          <p className="py-4 text-sm text-muted-foreground">No records available.</p>
         )}
       </div>
     </section>
@@ -210,9 +229,9 @@ function ResultRow({
   const details = meta.map(compactText).filter(Boolean);
   return (
     <article className="py-4">
-      <h3 className="text-sm font-semibold leading-6 text-slate-950">{title}</h3>
+      <h3 className="text-sm font-semibold leading-6 text-foreground">{title}</h3>
       {details.length > 0 ? (
-        <p className="mt-1 text-xs leading-5 text-slate-500">
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
           {details.join(" - ")}
         </p>
       ) : null}

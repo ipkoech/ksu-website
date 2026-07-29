@@ -1,16 +1,6 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
-import {
-  AnalyticsConsentBanner,
-  AnalyticsTracker,
-} from "@/components/analytics/analytics-tracker";
+import { AccessibilityInitScript, AccessibilityShell } from "@ksu/ui";
 import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-const playfairDisplay = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-display",
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://kisiiuniversity.ac.ke"),
@@ -63,14 +53,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${inter.variable} ${playfairDisplay.variable} font-sans antialiased`}
+        className="font-sans antialiased"
       >
-        <AnalyticsTracker />
-        <AnalyticsConsentBanner />
-        {children}
+        <AccessibilityInitScript />
+        <AccessibilityShell mainContentId="main-content">
+          {children}
+        </AccessibilityShell>
       </body>
     </html>
   );

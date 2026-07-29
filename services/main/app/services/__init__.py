@@ -1,7 +1,22 @@
 """Main service layer exports."""
 
-from .admissions import AdmissionInfoService, IntakeService, ProgrammeService
-from .academic import CampusService, DepartmentService, SchoolService
+from .admissions import (
+    AdmissionDocumentService,
+    AdmissionFaqService,
+    AdmissionInfoService,
+    AdmissionPageSectionService,
+    AdmissionPathwayService,
+    AdmissionRequirementService,
+    IntakeService,
+    ProgrammeFeeStructureService,
+    ProgrammeService,
+)
+from .academic import (
+    CampusService,
+    DepartmentService,
+    DepartmentServiceCatalogService,
+    SchoolService,
+)
 from .alumni import AlumniAssociationService, AlumniService
 from .audit import AuditService
 from .analytics import AnalyticsService
@@ -11,12 +26,17 @@ from .content import (
     BlogService,
     EventService,
     NewsService,
+    StoryContributorAccountRequestService,
+    StoryService,
     SliderGroupService,
     SliderService,
 )
+from .content_workflow import ContentWorkflowService
+from .corporate_dashboard import CorporateCommunicationDashboardService
 from .documents import DocumentService, PolicyService
 from .exchange import ExchangeProgrammeService
 from .governance import GovernanceService
+from .homepage_admissions import IntakeHomepageAdmissionService
 from .imports import ImportService
 from .marketing import (
     NewsletterService,
@@ -29,14 +49,37 @@ from .media import MediaService
 from .notification import NotificationService
 from .organization import DivisionService, WingService
 from .person import PersonService
+from .page_cms import (
+    HomepageCompositionService,
+    PageSectionService,
+    PageSectionWorkflowService,
+    PartnershipSpotlightService,
+    PartnershipSpotlightWorkflowService,
+    group_media_links,
+)
+from .public_page import PublicSitePageService
+from .public_contact_directory import PublicContactDirectoryService
+from .public_entity_content import PublicEntityContentService
 from .rbac import RBACService
 from .search import SearchService
 from .staff import StaffService
-from .student_life import AccommodationService, ArtsCultureService, ClubService, SportsFacilityService, StudentGovernanceService
-from .support import ContactService, FAQService, SupportTicketService
+from .student_life import (
+    AccommodationService,
+    ArtsCultureService,
+    ClubService,
+    SportsFacilityService,
+    StudentGovernanceService,
+)
+from .support import ContactReferenceError, ContactService, FAQService, SupportTicketService
 from .system import ApiKeyService, SettingService, WebhookService
 from .university import UniversityInfoService
+from .about_content import AboutContentAdminService, AboutContentService, FactsService, InstitutionalPageService
 from .user import UserService
+from .vice_chancellor import (
+    ViceChancellorAdminService,
+    ViceChancellorPublicService,
+    ViceChancellorWorkflowService,
+)
 
 __all__ = [
     "AuthService",
@@ -44,17 +87,34 @@ __all__ = [
     "AnalyticsService",
     "UserService",
     "PersonService",
+    "PageSectionService",
+    "PageSectionWorkflowService",
+    "PartnershipSpotlightService",
+    "PartnershipSpotlightWorkflowService",
+    "HomepageCompositionService",
+    "group_media_links",
+    "PublicSitePageService",
+    "PublicContactDirectoryService",
+    "PublicEntityContentService",
     "StaffService",
     "GovernanceService",
+    "IntakeHomepageAdmissionService",
     "ImportService",
     "DivisionService",
     "WingService",
     "CampusService",
     "SchoolService",
     "DepartmentService",
+    "DepartmentServiceCatalogService",
     "ProgrammeService",
     "IntakeService",
     "AdmissionInfoService",
+    "AdmissionPathwayService",
+    "AdmissionRequirementService",
+    "ProgrammeFeeStructureService",
+    "AdmissionDocumentService",
+    "AdmissionFaqService",
+    "AdmissionPageSectionService",
     "ClubService",
     "AccommodationService",
     "SportsFacilityService",
@@ -71,6 +131,10 @@ __all__ = [
     "AlumniAssociationService",
     "ExchangeProgrammeService",
     "UniversityInfoService",
+    "AboutContentService",
+    "FactsService",
+    "AboutContentAdminService",
+    "InstitutionalPageService",
     "SettingService",
     "ApiKeyService",
     "WebhookService",
@@ -79,12 +143,20 @@ __all__ = [
     "SearchService",
     "NewsService",
     "BlogService",
+    "StoryService",
+    "StoryContributorAccountRequestService",
     "AnnouncementService",
     "EventService",
     "SliderGroupService",
     "SliderService",
+    "ViceChancellorAdminService",
+    "ViceChancellorPublicService",
+    "ViceChancellorWorkflowService",
     "FAQService",
     "ContactService",
+    "ContactReferenceError",
     "SupportTicketService",
     "NotificationService",
+    "ContentWorkflowService",
+    "CorporateCommunicationDashboardService",
 ]

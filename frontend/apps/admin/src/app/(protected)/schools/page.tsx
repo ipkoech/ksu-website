@@ -1,5 +1,5 @@
-import { PortalDashboard } from "@/components/portals/portal-dashboard";
+import { SchoolDashboard } from "@/components/schools/dashboard/school-dashboard";
 
 export default function SchoolsPage() {
-  return <PortalDashboard portalKey="schools" />;
+  return <SchoolDashboard />;
 }

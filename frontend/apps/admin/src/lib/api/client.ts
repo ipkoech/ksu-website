@@ -64,6 +64,9 @@ export const api = {
     patch: <T,>(url: string, data?: any, config?: AxiosRequestConfig) =>
         client.patch<any, ApiResponse<T>>(url, data, config),
 
+    put: <T,>(url: string, data?: any, config?: AxiosRequestConfig) =>
+        client.put<any, ApiResponse<T>>(url, data, config),
+
     delete: <T,>(url: string, config?: AxiosRequestConfig) =>
         client.delete<any, ApiResponse<T>>(url, config),
 };

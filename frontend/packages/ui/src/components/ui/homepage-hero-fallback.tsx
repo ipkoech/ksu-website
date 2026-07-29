@@ -44,7 +44,7 @@ export function HomepageHeroFallback({
           className="h-full w-full object-cover object-center"
           aria-hidden="true"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/70 via-slate-950/50 to-slate-950/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-overlay/70 via-brand-overlay/50 to-brand-overlay/30" />
       </div>
 
       {/* Content */}

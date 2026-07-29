@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { AccessibilityInitScript, AccessibilityShell } from "@ksu/ui";
 import { PublicFooter } from "@ksu/ui/layout/public";
+import { Announcements } from "@ksu/ui/components";
+import { announcementsApi } from "@ksu/api-client";
 import { ResearchHeader } from "../components/research-header";
+import { getResearchSiteContext } from "../lib/research-site-context";
 import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-const playfairDisplay = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-display",
-});
 
 const socialLinks = {
   facebook: "https://facebook.com/kisiiuniversity",
@@ -19,10 +16,64 @@ const socialLinks = {
 };
 
 const contactInfo = {
-  address: "Main Campus, Kisii",
-  phone: "+254720875082",
-  email: "info@kisiiuniversity.ac.ke",
+  address: "408 - 40200 Kisii, Kenya",
+  phone: "+254 773 452 323",
+  email: "research@kisiiuniversity.ac.ke",
 };
+
+const researchFooterColumns = [
+  {
+    title: "Research",
+    links: [
+      { label: "Projects", href: "/projects" },
+      { label: "Publications", href: "/publications" },
+      { label: "Research Centers", href: "/centers" },
+      { label: "Expertise", href: "/expertise" },
+      { label: "Community Impact", href: "/community-impact" },
+    ],
+  },
+  {
+    title: "Innovation",
+    links: [
+      { label: "Innovations", href: "/innovations" },
+      { label: "Startups", href: "/startups" },
+      { label: "Incubation", href: "/incubation" },
+      { label: "Technology Transfer", href: "/technology-transfer" },
+      { label: "Competitions", href: "/competitions" },
+    ],
+  },
+  {
+    title: "Support",
+    links: [
+      { label: "Funding", href: "/funding" },
+      { label: "Scholarships", href: "/scholarships" },
+      { label: "Training", href: "/training" },
+      { label: "Mentorship", href: "/mentorship" },
+      { label: "Research Services", href: "/services" },
+    ],
+  },
+  {
+    title: "Resources",
+    links: [
+      { label: "Resources & Tools", href: "/resources-tools" },
+      { label: "Policies", href: "/resources-tools/policies" },
+      { label: "Downloads", href: "/resources-tools/downloads" },
+      { label: "Forms", href: "/resources-tools/forms" },
+      {
+        label: "Apply NACOSTI",
+        href: "https://research-portal.nacosti.go.ke/",
+        external: true,
+      },
+    ],
+  },
+];
+
+const researchLegalLinks = [
+  { label: "Privacy", href: "/privacy" },
+  { label: "Terms", href: "/terms" },
+  { label: "Sitemap", href: "/sitemap" },
+  { label: "Kisii University", href: "https://kisiiuniversity.ac.ke/", external: true },
+];
 
 export const metadata: Metadata = {
   title: {
@@ -43,23 +94,77 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  let announcements: Array<{ id: string; message: string; linkText?: string; linkHref?: string }> = [];
+  let resolvedContactInfo = contactInfo;
+  try {
+    const [response, siteContext] = await Promise.all([
+      announcementsApi.list({
+        is_published: true,
+        per_page: 3,
+        fields: "id,title,slug",
+      }),
+      getResearchSiteContext(),
+    ]);
+    announcements = (response.data ?? []).map((item) => ({
+      id: item.id,
+      message: item.title,
+      linkText: "Read more",
+      linkHref: `https://kisiiuniversity.ac.ke/media/announcements/${item.slug}`,
+    }));
+    const entity = getResearchContextEntity(siteContext);
+    resolvedContactInfo = {
+      address: compactText(entity?.office_location) || contactInfo.address,
+      phone: compactText(entity?.phone) || contactInfo.phone,
+      email: compactText(entity?.email) || contactInfo.email,
+    };
+  } catch {
+    // announcements are optional
+  }
+
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${playfairDisplay.variable} font-sans antialiased`}>
-        <div className="min-h-screen bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_38%,#f6f8fc_100%)] text-slate-950">
-          <a href="#research-main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-md focus:ring-2 focus:ring-ring">
-            Skip to research content
-          </a>
-          <ResearchHeader />
-          {children}
-          <PublicFooter contactInfo={contactInfo} socialLinks={socialLinks} />
-        </div>
+      <body className="font-sans antialiased" suppressHydrationWarning>
+        <AccessibilityInitScript />
+        <AccessibilityShell mainContentId="research-main">
+          <div className="min-h-screen bg-background text-foreground">
+            <Announcements
+              announcements={announcements}
+              rotating={announcements.length > 1}
+              intervalMs={6500}
+              background="secondary"
+            />
+            <ResearchHeader />
+            {children}
+            <PublicFooter
+              columns={researchFooterColumns}
+              contactInfo={resolvedContactInfo}
+              socialLinks={socialLinks}
+              legalLinks={researchLegalLinks}
+              className="bg-brand-overlay"
+            />
+          </div>
+        </AccessibilityShell>
       </body>
     </html>
   );
+}
+
+function compactText(value: unknown) {
+  if (value === null || value === undefined) return "";
+  return String(value).replace(/\s+/g, " ").trim();
+}
+
+function getResearchContextEntity(siteContext: Awaited<ReturnType<typeof getResearchSiteContext>>) {
+  return (
+    siteContext.researchContext?.entity ??
+    siteContext.researchContext?.department ??
+    siteContext.researchContext?.wing ??
+    siteContext.researchContext?.division ??
+    {}
+  ) as Record<string, unknown>;
 }

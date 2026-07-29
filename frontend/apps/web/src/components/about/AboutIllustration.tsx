@@ -36,7 +36,7 @@ export function AboutIllustration({
   return (
     <figure
       className={classes(
-        "relative isolate min-h-[220px] overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-100 shadow-[0_24px_70px_-46px_rgba(15,23,42,0.48)]",
+        "relative isolate min-h-[220px] overflow-hidden rounded-[1.5rem] border border-border bg-surface-muted shadow-[0_24px_70px_-46px_rgba(15,23,42,0.48)]",
         className,
       )}
     >

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
-from enum import IntEnum
 from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa
@@ -13,30 +12,28 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ksu_common.models.base import Base
 
 if TYPE_CHECKING:
+    from .media import Media
+    from .governance import GovernanceRole
     from .person import Person
     from .auth import User
 
 
-class HierarchyLevel(IntEnum):
-    """
-    Hierarchy levels for organizational positions.
-    Lower number = higher in hierarchy.
-
-    Administrative Track: VC → DVCs → Registrars → Directors → Managers → Deputies → Staff → Assistants
-    Academic Track: DVC Academic → Registrar Academic → Deans → CODs/Coordinators → Professors → Staff
-    """
-
-    COUNCIL_CHAIR = 1       # Council Chairperson (supreme governing authority)
-    VICE_CHANCELLOR = 2     # VC + Council Members
-    DEPUTY_VC = 3           # DVCs
-    REGISTRAR = 4           # Registrars, Finance Officer
-    DIRECTOR = 5            # Division Directors, Deans
-    MANAGER = 6             # Managers, Deputy Directors
-    HEAD = 7                # HODs, CODs, Deputies
-    COORDINATOR = 8         # Program Coordinators
-    SENIOR_STAFF = 9        # Senior Lecturers, Senior Officers
-    STAFF = 10              # Lecturers, Admin Staff
-    ASSISTANT = 11          # Assistant Lecturers, Tutorial Fellows, Assistants
+# Hierarchy levels for organizational positions.
+# Lower number = higher in hierarchy.
+#
+# Administrative Track: VC → DVCs → Registrars → Directors → Managers → Deputies → Staff → Assistants
+# Academic Track: DVC Academic → Registrar Academic → Deans → CODs/Coordinators → Professors → Staff
+HIERARCHY_LEVEL_COUNCIL_CHAIR = 1
+HIERARCHY_LEVEL_VICE_CHANCELLOR = 2
+HIERARCHY_LEVEL_DEPUTY_VC = 3
+HIERARCHY_LEVEL_REGISTRAR = 4
+HIERARCHY_LEVEL_DIRECTOR = 5
+HIERARCHY_LEVEL_MANAGER = 6
+HIERARCHY_LEVEL_HEAD = 7
+HIERARCHY_LEVEL_COORDINATOR = 8
+HIERARCHY_LEVEL_SENIOR_STAFF = 9
+HIERARCHY_LEVEL_STAFF = 10
+HIERARCHY_LEVEL_ASSISTANT = 11
 
 
 # Academic rank hierarchy (for Person.academic_rank)
@@ -53,89 +50,90 @@ ACADEMIC_RANK_ORDER = {
 # Role to hierarchy level mapping
 ROLE_HIERARCHY = {
     # Level 1 - Council
-    "chairperson": HierarchyLevel.COUNCIL_CHAIR,
-    "council_chair": HierarchyLevel.COUNCIL_CHAIR,
-    "chancellor": HierarchyLevel.COUNCIL_CHAIR,
+    "chairperson": HIERARCHY_LEVEL_COUNCIL_CHAIR,
+    "council_chair": HIERARCHY_LEVEL_COUNCIL_CHAIR,
+    "chancellor": HIERARCHY_LEVEL_COUNCIL_CHAIR,
 
     # Level 2 - VC & Council
-    "vc": HierarchyLevel.VICE_CHANCELLOR,
-    "vice_chancellor": HierarchyLevel.VICE_CHANCELLOR,
-    "council_member": HierarchyLevel.VICE_CHANCELLOR,
-    "member": HierarchyLevel.VICE_CHANCELLOR,
-    "vice_chairperson": HierarchyLevel.VICE_CHANCELLOR,
-    "ex_officio": HierarchyLevel.VICE_CHANCELLOR,
+    "vc": HIERARCHY_LEVEL_VICE_CHANCELLOR,
+    "vice_chancellor": HIERARCHY_LEVEL_VICE_CHANCELLOR,
+    "council_member": HIERARCHY_LEVEL_VICE_CHANCELLOR,
+    "member": HIERARCHY_LEVEL_VICE_CHANCELLOR,
+    "vice_chairperson": HIERARCHY_LEVEL_VICE_CHANCELLOR,
+    "ex_officio": HIERARCHY_LEVEL_VICE_CHANCELLOR,
 
     # Level 3 - DVCs
-    "dvc": HierarchyLevel.DEPUTY_VC,
-    "deputy_vice_chancellor": HierarchyLevel.DEPUTY_VC,
-    "dvc_arsa": HierarchyLevel.DEPUTY_VC,
-    "dvc_apf": HierarchyLevel.DEPUTY_VC,
+    "dvc": HIERARCHY_LEVEL_DEPUTY_VC,
+    "deputy_vice_chancellor": HIERARCHY_LEVEL_DEPUTY_VC,
+    "dvc_arsa": HIERARCHY_LEVEL_DEPUTY_VC,
+    "dvc_apf": HIERARCHY_LEVEL_DEPUTY_VC,
 
     # Level 4 - Registrars
-    "registrar": HierarchyLevel.REGISTRAR,
-    "registrar_academic": HierarchyLevel.REGISTRAR,
-    "registrar_admin": HierarchyLevel.REGISTRAR,
-    "finance_officer": HierarchyLevel.REGISTRAR,
-    "board_secretary": HierarchyLevel.REGISTRAR,
-    "secretary": HierarchyLevel.REGISTRAR,
+    "registrar": HIERARCHY_LEVEL_REGISTRAR,
+    "registrar_academic": HIERARCHY_LEVEL_REGISTRAR,
+    "registrar_admin": HIERARCHY_LEVEL_REGISTRAR,
+    "finance_officer": HIERARCHY_LEVEL_REGISTRAR,
+    "board_secretary": HIERARCHY_LEVEL_REGISTRAR,
+    "secretary": HIERARCHY_LEVEL_REGISTRAR,
 
     # Level 5 - Deans & Directors
-    "dean": HierarchyLevel.DIRECTOR,
-    "director": HierarchyLevel.DIRECTOR,
-    "librarian": HierarchyLevel.DIRECTOR,
-    "university_librarian": HierarchyLevel.DIRECTOR,
-    "chief_librarian": HierarchyLevel.DIRECTOR,
-    "head_librarian": HierarchyLevel.DIRECTOR,
-    "chief_officer": HierarchyLevel.DIRECTOR,
+    "dean": HIERARCHY_LEVEL_DIRECTOR,
+    "director": HIERARCHY_LEVEL_DIRECTOR,
+    "librarian": HIERARCHY_LEVEL_DIRECTOR,
+    "university_librarian": HIERARCHY_LEVEL_DIRECTOR,
+    "chief_librarian": HIERARCHY_LEVEL_DIRECTOR,
+    "head_librarian": HIERARCHY_LEVEL_DIRECTOR,
+    "chief_officer": HIERARCHY_LEVEL_DIRECTOR,
 
     # Level 6 - Managers
-    "manager": HierarchyLevel.MANAGER,
-    "deputy_director": HierarchyLevel.MANAGER,
-    "deputy_dean": HierarchyLevel.MANAGER,
-    "deputy_librarian": HierarchyLevel.MANAGER,
-    "deputy_registrar": HierarchyLevel.MANAGER,
+    "manager": HIERARCHY_LEVEL_MANAGER,
+    "deputy_director": HIERARCHY_LEVEL_MANAGER,
+    "deputy_dean": HIERARCHY_LEVEL_MANAGER,
+    "deputy_librarian": HIERARCHY_LEVEL_MANAGER,
+    "deputy_registrar": HIERARCHY_LEVEL_MANAGER,
 
     # Level 7 - HODs & CODs
-    "hod": HierarchyLevel.HEAD,
-    "head": HierarchyLevel.HEAD,
-    "cod": HierarchyLevel.HEAD,
-    "section_head": HierarchyLevel.HEAD,
-    "deputy_hod": HierarchyLevel.HEAD,
+    "hod": HIERARCHY_LEVEL_HEAD,
+    "head": HIERARCHY_LEVEL_HEAD,
+    "cod": HIERARCHY_LEVEL_HEAD,
+    "section_head": HIERARCHY_LEVEL_HEAD,
+    "deputy_hod": HIERARCHY_LEVEL_HEAD,
 
     # Level 8 - Coordinators
-    "coordinator": HierarchyLevel.COORDINATOR,
-    "program_coordinator": HierarchyLevel.COORDINATOR,
-    "project_coordinator": HierarchyLevel.COORDINATOR,
-    "branch_librarian": HierarchyLevel.COORDINATOR,
-    "principal_investigator": HierarchyLevel.COORDINATOR,
-    "project_lead": HierarchyLevel.COORDINATOR,
+    "coordinator": HIERARCHY_LEVEL_COORDINATOR,
+    "program_coordinator": HIERARCHY_LEVEL_COORDINATOR,
+    "project_coordinator": HIERARCHY_LEVEL_COORDINATOR,
+    "postgraduate_coordinator": HIERARCHY_LEVEL_COORDINATOR,
+    "branch_librarian": HIERARCHY_LEVEL_COORDINATOR,
+    "principal_investigator": HIERARCHY_LEVEL_COORDINATOR,
+    "project_lead": HIERARCHY_LEVEL_COORDINATOR,
 
     # Level 9 - Senior Staff
-    "senior_lecturer": HierarchyLevel.SENIOR_STAFF,
-    "associate_professor": HierarchyLevel.SENIOR_STAFF,
-    "professor": HierarchyLevel.SENIOR_STAFF,
-    "senior_officer": HierarchyLevel.SENIOR_STAFF,
-    "senior_admin": HierarchyLevel.SENIOR_STAFF,
-    "principal_officer": HierarchyLevel.SENIOR_STAFF,
+    "senior_lecturer": HIERARCHY_LEVEL_SENIOR_STAFF,
+    "associate_professor": HIERARCHY_LEVEL_SENIOR_STAFF,
+    "professor": HIERARCHY_LEVEL_SENIOR_STAFF,
+    "senior_officer": HIERARCHY_LEVEL_SENIOR_STAFF,
+    "senior_admin": HIERARCHY_LEVEL_SENIOR_STAFF,
+    "principal_officer": HIERARCHY_LEVEL_SENIOR_STAFF,
 
     # Level 10 - Staff
-    "lecturer": HierarchyLevel.STAFF,
-    "admin": HierarchyLevel.STAFF,
-    "officer": HierarchyLevel.STAFF,
-    "technician": HierarchyLevel.STAFF,
-    "staff": HierarchyLevel.STAFF,
-    "researcher": HierarchyLevel.STAFF,
-    "senior_researcher": HierarchyLevel.STAFF,
-    "staff_rep": HierarchyLevel.STAFF,
-    "student_rep": HierarchyLevel.STAFF,
-    "convenor": HierarchyLevel.STAFF,
+    "lecturer": HIERARCHY_LEVEL_STAFF,
+    "admin": HIERARCHY_LEVEL_STAFF,
+    "officer": HIERARCHY_LEVEL_STAFF,
+    "technician": HIERARCHY_LEVEL_STAFF,
+    "staff": HIERARCHY_LEVEL_STAFF,
+    "researcher": HIERARCHY_LEVEL_STAFF,
+    "senior_researcher": HIERARCHY_LEVEL_STAFF,
+    "staff_rep": HIERARCHY_LEVEL_STAFF,
+    "student_rep": HIERARCHY_LEVEL_STAFF,
+    "convenor": HIERARCHY_LEVEL_STAFF,
 
     # Level 11 - Assistants
-    "assistant_lecturer": HierarchyLevel.ASSISTANT,
-    "tutorial_fellow": HierarchyLevel.ASSISTANT,
-    "graduate_assistant": HierarchyLevel.ASSISTANT,
-    "assistant": HierarchyLevel.ASSISTANT,
-    "admin_assistant": HierarchyLevel.ASSISTANT,
+    "assistant_lecturer": HIERARCHY_LEVEL_ASSISTANT,
+    "tutorial_fellow": HIERARCHY_LEVEL_ASSISTANT,
+    "graduate_assistant": HIERARCHY_LEVEL_ASSISTANT,
+    "assistant": HIERARCHY_LEVEL_ASSISTANT,
+    "admin_assistant": HIERARCHY_LEVEL_ASSISTANT,
 }
 
 # Valid roles per entity type
@@ -153,6 +151,7 @@ ENTITY_ROLES = {
     ],
     "department": [
         "hod", "head", "cod", "deputy_hod", "section_head", "coordinator",
+        "postgraduate_coordinator",
         "professor", "associate_professor", "senior_lecturer", "lecturer",
         "assistant_lecturer", "tutorial_fellow", "graduate_assistant",
         "admin", "technician", "officer", "assistant", "staff",
@@ -168,6 +167,7 @@ ENTITY_ROLES = {
         "principal_investigator", "project_lead", "chairperson", "researcher",
         "senior_researcher", "admin", "officer", "staff",
     ],
+    "club": ["patron", "chairperson", "vice_chairperson", "secretary", "treasurer", "official", "member"],
     "directorate": ["director", "deputy_director", "manager", "coordinator", "officer", "admin", "staff"],
 }
 
@@ -291,6 +291,47 @@ class StaffAssignment(Base):
     # Assignment notes
     notes: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
 
+    # ─── Governance Appointment ───
+    governance_role_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("governance_roles.id", ondelete="SET NULL"), nullable=True
+    )
+    appointment_category: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True)
+    official_designation: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    public_role_label: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    represented_institution: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    current_office: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    appointing_authority: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    appointment_reference: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    term_number: Mapped[Optional[int]] = mapped_column(sa.Integer, nullable=True)
+    is_ex_officio: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
+    is_voting_member: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    show_contact_publicly: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
+    portrait_media_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True
+    )
+    profile_slug: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    profile_summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    appointment_status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="draft")
+    workflow_status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="draft")
+    submitted_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    approved_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    published_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    submitted_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    approved_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    published_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    unpublished_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    archived_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    publish_without_portrait_override: Mapped[bool] = mapped_column(
+        sa.Boolean, nullable=False, server_default=sa.text("false")
+    )
+    publication_notes: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+
     # ─── Relationships ───
     person: Mapped["Person"] = relationship(
         "Person",
@@ -301,6 +342,10 @@ class StaffAssignment(Base):
         "User",
         foreign_keys=[user_id],
     )
+    governance_role: Mapped[Optional["GovernanceRole"]] = relationship(
+        "GovernanceRole", foreign_keys=[governance_role_id]
+    )
+    portrait_media: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[portrait_media_id])
     reports_to: Mapped[Optional["StaffAssignment"]] = relationship(
         "StaffAssignment",
         remote_side="StaffAssignment.id",
@@ -319,6 +364,13 @@ class StaffAssignment(Base):
         sa.Index("ix_staff_assignments_entity_role", "entity_type", "entity_id", "role"),
         sa.Index("ix_staff_assignments_hierarchy", "entity_type", "entity_id", "hierarchy_level"),
         sa.Index("ix_staff_assignments_active", "status", "entity_type"),
+        sa.Index("ix_staff_assignments_governance_workflow", "entity_type", "entity_id", "workflow_status"),
+        sa.Index(
+            "uq_staff_assignments_governance_profile_slug",
+            "profile_slug",
+            unique=True,
+            postgresql_where=sa.text("profile_slug IS NOT NULL AND deleted_at IS NULL"),
+        ),
         sa.Index(
             "uq_staff_assignments_active_school_dean",
             "entity_type",
@@ -344,12 +396,12 @@ class StaffAssignment(Base):
     @property
     def computed_hierarchy_level(self) -> int:
         """Get hierarchy level from role if not explicitly set."""
-        return ROLE_HIERARCHY.get(self.role, HierarchyLevel.STAFF)
+        return ROLE_HIERARCHY.get(self.role, HIERARCHY_LEVEL_STAFF)
 
     @property
     def is_leadership(self) -> bool:
         """Check if this is a leadership position (level 1-7)."""
-        return self.hierarchy_level <= HierarchyLevel.HEAD
+        return self.hierarchy_level <= HIERARCHY_LEVEL_HEAD
 
     @property
     def is_current(self) -> bool:
@@ -399,4 +451,11 @@ class StaffAssignment(Base):
         return f"<StaffAssignment person_id={self.person_id} entity_type={self.entity_type} role={self.role}>"
 
 
-__all__ = ["StaffAssignment", "HierarchyLevel", "ROLE_HIERARCHY", "ENTITY_ROLES", "ACADEMIC_RANK_ORDER"]
+__all__ = [
+    "StaffAssignment",
+    "ROLE_HIERARCHY",
+    "ENTITY_ROLES",
+    "ACADEMIC_RANK_ORDER",
+    "HIERARCHY_LEVEL_HEAD",
+    "HIERARCHY_LEVEL_STAFF",
+]

@@ -39,6 +39,27 @@ class SettingRead(BaseReadSchema):
     updated_by_id: uuid.UUID | None = None
 
 
+class UserPreferenceInput(BaseSchema):
+    namespace: str = Field(min_length=1, max_length=64)
+    key: str = Field(min_length=1, max_length=128)
+    value: Any
+
+
+class UserPreferencesUpdate(BaseSchema):
+    preferences: list[UserPreferenceInput]
+
+
+class UserPreferenceRead(BaseReadSchema):
+    namespace: str
+    key: str
+    value: Any
+    user_id: uuid.UUID
+
+
+class UserPreferencesRead(BaseSchema):
+    preferences: list[UserPreferenceRead]
+
+
 class ApiKeyCreate(BaseSchema):
     name: str = Field(min_length=1, max_length=255)
     description: str | None = None
@@ -108,6 +129,10 @@ __all__ = [
     "SettingCreate",
     "SettingUpdate",
     "SettingRead",
+    "UserPreferenceInput",
+    "UserPreferencesUpdate",
+    "UserPreferenceRead",
+    "UserPreferencesRead",
     "ApiKeyCreate",
     "ApiKeyUpdate",
     "ApiKeyRead",

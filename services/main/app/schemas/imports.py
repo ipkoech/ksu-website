@@ -67,3 +67,11 @@ class ImportCommitRead(BaseSchema):
     skipped_rows: int
     failed_rows: int
     rows: list[ImportCommitRowRead]
+
+
+class ImportJobRead(BaseSchema):
+    job_id: str
+    status: str
+    resource: str | None = None
+    result: ImportCommitRead | None = None
+    error: str | None = None

@@ -124,6 +124,224 @@ class Innovation(Base, SEOMixin, CoverImageRefMixin, AttachmentRefsMixin):
         return f"<Innovation {self.slug}: {self.title[:50]}>"
 
 
+class StartupVenture(Base, SEOMixin, CoverImageRefMixin, AttachmentRefsMixin):
+    """Startup, spinout, or venture formed around a research innovation."""
+
+    __tablename__ = "startup_ventures"
+
+    name: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    slug: Mapped[str] = mapped_column(sa.String(128), unique=True, nullable=False, index=True)
+    code: Mapped[Optional[str]] = mapped_column(sa.String(32), unique=True, nullable=True, index=True)
+
+    innovation_id: Mapped[uuid.UUID] = mapped_column(
+        sa.Uuid,
+        sa.ForeignKey(f"{SCHEMA}.innovations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    partner_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.Uuid,
+        sa.ForeignKey(f"{SCHEMA}.partners.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    center_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
+    lead_founder_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
+
+    venture_stage: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="idea", index=True)
+    registration_status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="not_registered", index=True)
+    registration_number: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    incorporation_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
+    sector: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+
+    summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    problem: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    solution: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    business_model: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    market: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    traction: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    founders: Mapped[Optional[list[dict]]] = mapped_column(JSONB, nullable=True)
+
+    funding_raised: Mapped[Optional[Decimal]] = mapped_column(sa.Numeric(15, 2), nullable=True)
+    currency: Mapped[str] = mapped_column(sa.String(3), nullable=False, server_default="KES")
+    website: Mapped[Optional[str]] = mapped_column(sa.String(512), nullable=True)
+    pitch_deck_url: Mapped[Optional[str]] = mapped_column(sa.String(512), nullable=True)
+
+    status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="active", index=True)
+    is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    is_featured: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
+    display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+
+    def __repr__(self) -> str:
+        return f"<StartupVenture {self.slug}: {self.name}>"
+
+
+class IncubationRecord(Base, SEOMixin, AttachmentRefsMixin):
+    """Incubation, acceleration, mentorship, or commercialization support record."""
+
+    __tablename__ = "incubation_records"
+
+    title: Mapped[str] = mapped_column(sa.String(500), nullable=False)
+    slug: Mapped[str] = mapped_column(sa.String(128), unique=True, nullable=False, index=True)
+    code: Mapped[Optional[str]] = mapped_column(sa.String(32), unique=True, nullable=True, index=True)
+
+    innovation_id: Mapped[uuid.UUID] = mapped_column(
+        sa.Uuid,
+        sa.ForeignKey(f"{SCHEMA}.innovations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    startup_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.Uuid,
+        sa.ForeignKey(f"{SCHEMA}.startup_ventures.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    partner_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.Uuid,
+        sa.ForeignKey(f"{SCHEMA}.partners.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    center_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
+
+    program_name: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    cohort: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    incubation_type: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="incubation", index=True)
+    start_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
+    end_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
+    stage: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="active", index=True)
+
+    milestones: Mapped[Optional[list[dict]]] = mapped_column(JSONB, nullable=True)
+    support_received: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    outcomes: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    next_steps: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    mentor_ids: Mapped[Optional[list[str]]] = mapped_column(JSONB, nullable=True)
+
+    status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="active", index=True)
+    is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    is_featured: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
+    display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+
+    def __repr__(self) -> str:
+        return f"<IncubationRecord {self.slug}: {self.title[:50]}>"
+
+
+class InnovationCompetitionEntry(Base, SEOMixin, AttachmentRefsMixin):
+    """Competition, hackathon, showcase, demo day, challenge, or pitch record."""
+
+    __tablename__ = "innovation_competition_entries"
+
+    title: Mapped[str] = mapped_column(sa.String(500), nullable=False)
+    slug: Mapped[str] = mapped_column(sa.String(128), unique=True, nullable=False, index=True)
+    code: Mapped[Optional[str]] = mapped_column(sa.String(32), unique=True, nullable=True, index=True)
+
+    innovation_id: Mapped[uuid.UUID] = mapped_column(
+        sa.Uuid,
+        sa.ForeignKey(f"{SCHEMA}.innovations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    startup_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.Uuid,
+        sa.ForeignKey(f"{SCHEMA}.startup_ventures.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    partner_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.Uuid,
+        sa.ForeignKey(f"{SCHEMA}.partners.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    event_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
+    center_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
+
+    entry_type: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="competition", index=True)
+    competition_name: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    organizer_name: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    venue: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    country: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    event_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True, index=True)
+    application_deadline: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
+    entry_status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="submitted", index=True)
+    award: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    position: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True)
+    prize_value: Mapped[Optional[Decimal]] = mapped_column(sa.Numeric(15, 2), nullable=True)
+    currency: Mapped[str] = mapped_column(sa.String(3), nullable=False, server_default="KES")
+    pitch_summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    judges_feedback: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    public_url: Mapped[Optional[str]] = mapped_column(sa.String(512), nullable=True)
+    pitch_deck_url: Mapped[Optional[str]] = mapped_column(sa.String(512), nullable=True)
+
+    status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="active", index=True)
+    is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    is_featured: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
+    display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+
+    def __repr__(self) -> str:
+        return f"<InnovationCompetitionEntry {self.slug}: {self.title[:50]}>"
+
+
+class TechnologyTransferCase(Base, SEOMixin, AttachmentRefsMixin):
+    """Formal disclosure, protection, licensing, adoption, or commercialization case."""
+
+    __tablename__ = "technology_transfer_cases"
+
+    title: Mapped[str] = mapped_column(sa.String(500), nullable=False)
+    slug: Mapped[str] = mapped_column(sa.String(128), unique=True, nullable=False, index=True)
+    code: Mapped[Optional[str]] = mapped_column(sa.String(32), unique=True, nullable=True, index=True)
+
+    innovation_id: Mapped[uuid.UUID] = mapped_column(
+        sa.Uuid,
+        sa.ForeignKey(f"{SCHEMA}.innovations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    partner_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.Uuid,
+        sa.ForeignKey(f"{SCHEMA}.partners.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    center_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
+    lead_officer_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
+
+    case_type: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="disclosure", index=True)
+    transfer_status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="disclosed", index=True)
+    disclosure_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
+    protection_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
+    agreement_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True, index=True)
+    expiry_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
+
+    ip_reference: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    agreement_reference: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    license_type: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    territory: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    exclusivity: Mapped[Optional[str]] = mapped_column(sa.String(32), nullable=True)
+    commercial_terms: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    revenue_terms: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    upfront_value: Mapped[Optional[Decimal]] = mapped_column(sa.Numeric(15, 2), nullable=True)
+    annual_value: Mapped[Optional[Decimal]] = mapped_column(sa.Numeric(15, 2), nullable=True)
+    revenue_generated: Mapped[Optional[Decimal]] = mapped_column(sa.Numeric(15, 2), nullable=True)
+    currency: Mapped[str] = mapped_column(sa.String(3), nullable=False, server_default="KES")
+    summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    public_benefit: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    next_steps: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+
+    status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="active", index=True)
+    is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    is_featured: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
+    display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+
+    def __repr__(self) -> str:
+        return f"<TechnologyTransferCase {self.slug}: {self.title[:50]}>"
+
+
 class ResearchOutput(Base, CoverImageRefMixin):
     """
     Research output/deliverable from a project.
@@ -207,6 +425,10 @@ class ResearchOutput(Base, CoverImageRefMixin):
 
 __all__ = [
     "Innovation",
+    "StartupVenture",
+    "IncubationRecord",
+    "InnovationCompetitionEntry",
+    "TechnologyTransferCase",
     "ResearchOutput",
     "innovation_sponsors",
 ]

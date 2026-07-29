@@ -11,14 +11,25 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Blog, Event, Media, News
+from app.models import Blog, Event, Media, News, Slider, SliderGroup
 from app.schemas.base import slugify
 
 from ._shared import SeedContext
+from .live_site_snapshot import LIVE_SITE_BLOG_ITEMS, LIVE_SITE_EVENT_ITEMS, LIVE_SITE_NEWS_ITEMS
 
 
 EAT = ZoneInfo("Africa/Nairobi")
 ASSET_ROOT = Path(__file__).resolve().parent / "assets" / "content"
+SEO_DESCRIPTION_MAX_LENGTH = 500
+
+
+def _seo_description(value: object) -> str | None:
+    if value is None:
+        return None
+    description = str(value).strip()
+    if len(description) <= SEO_DESCRIPTION_MAX_LENGTH:
+        return description
+    return description[:SEO_DESCRIPTION_MAX_LENGTH].rstrip()
 
 
 NEWS_ITEMS = [
@@ -277,6 +288,78 @@ EVENT_ITEMS = [
 ]
 
 
+HOMEPAGE_SLIDER_GROUP = {
+    "name": "Homepage Hero",
+    "slug": "homepage-hero",
+    "location": "home.hero",
+    "is_main": True,
+    "is_public": True,
+    "is_active": True,
+    "max_slides": 3,
+    "auto_play": True,
+    "auto_play_duration": 7000,
+    "show_navigation_dots": True,
+    "show_arrows": True,
+    "transition_effect": "fade",
+}
+
+
+HOMEPAGE_SLIDER_ITEMS = [
+    {
+        "title": "KSU Vice Chancellor Joins Nyamira County Governor to Celebrate Vocational Training Graduates",
+        "subtitle": "Vocational Training Graduates",
+        "plain_text": (
+            "The Vice Chancellor joined Nyamira County leadership to celebrate vocational training "
+            "graduates and encouraged them to use their skills with confidence, resilience, and purpose."
+        ),
+        "rich_text": (
+            "<p>The Vice Chancellor joined Nyamira County leadership to celebrate vocational training "
+            "graduates and encouraged them to use their hard-earned skills with confidence, resilience, "
+            "and purpose.</p>"
+        ),
+        "asset_filename": "slider-vocational-training-graduates.jpg",
+        "source_url": "https://kisiiuniversity.ac.ke/blog/ksu-vice-chancellor-joins-nyamira-county-governor-to-celebrate-vocational-training-graduates",
+        "source_image_url": "https://kisiiuniversity.ac.ke/storage/public/resources/CL8DOu0Kt4REaFZhYzLcil31wOk3NfGODGep95lF.jpg",
+        "link_text": "Read story",
+        "display_order": 10,
+    },
+    {
+        "title": "School of Health Sciences receives 50million worth of Equipment",
+        "subtitle": "Health Sciences Equipment",
+        "plain_text": (
+            "Kisii University received equipment worth over KSh 50 million from Seeding Labs, Boston, "
+            "strengthening infectious disease research, teaching, learning, and molecular diagnostics capacity."
+        ),
+        "rich_text": (
+            "<p>Kisii University received equipment worth over KSh 50 million from Seeding Labs, Boston, "
+            "strengthening infectious disease research, teaching, learning, and emerging molecular diagnostics capacity.</p>"
+        ),
+        "asset_filename": "slider-health-sciences-equipment.jpg",
+        "source_url": "https://kisiiuniversity.ac.ke/blog/school-of-health-sciences-receives-50million-worth-of-equipment",
+        "source_image_url": "https://kisiiuniversity.ac.ke/storage/public/resources/jM6e7rjGSW9rRaGpqH0UCgRnwXLpuhOyFzEqy5c9.jpg",
+        "link_text": "View equipment update",
+        "display_order": 20,
+    },
+    {
+        "title": "KSU Top Achievers Dinner",
+        "subtitle": "Student Excellence",
+        "plain_text": (
+            "The Vice Chancellor hosted a Top Achievers Dinner recognizing students whose academic, "
+            "leadership, innovation, service, sports, and creative achievements reflect the breadth of Kisii University talent."
+        ),
+        "rich_text": (
+            "<p>The Vice Chancellor hosted a Top Achievers Dinner recognizing students whose academic, "
+            "leadership, innovation, service, sports, and creative achievements reflect the breadth of Kisii University talent.</p>"
+        ),
+        "asset_filename": "slider-top-achievers-dinner.jpg",
+        "source_url": "https://kisiiuniversity.ac.ke/blog/ksu-top-achievers-dinner",
+        "source_image_url": "https://kisiiuniversity.ac.ke/storage/public/resources/X5W42j4UtCHBvwnZbsxcPwKFshwqMiE2BR6MEtRf.jpg",
+        "link_text": "See achievers",
+        "display_order": 30,
+    },
+]
+
+
 def _asset_metadata(asset_filename: str) -> tuple[Path, str, int, str]:
     path = ASSET_ROOT / asset_filename
     if not path.exists():
@@ -292,25 +375,37 @@ def _asset_metadata(asset_filename: str) -> tuple[Path, str, int, str]:
 async def _upsert_media(
     db: AsyncSession,
     *,
-    asset_filename: str,
+    asset_filename: str | None = None,
     title: str,
     alt_text: str,
     source_image_url: str,
     tags: list[str],
 ) -> Media:
-    path, mime_type, file_size, file_hash = _asset_metadata(asset_filename)
-    storage_path = str(path.relative_to(Path.cwd()))
+    if asset_filename:
+        path, mime_type, file_size, file_hash = _asset_metadata(asset_filename)
+        storage_path = str(path.relative_to(Path.cwd()))
+        filename = path.name
+        storage_provider = "local"
+    else:
+        mime_type, _ = mimetypes.guess_type(source_image_url)
+        mime_type = mime_type or "image/jpeg"
+        file_size = 0
+        file_hash = hashlib.sha256(source_image_url.encode("utf-8")).hexdigest()
+        filename = source_image_url.rstrip("/").rsplit("/", 1)[-1] or f"{slugify(title)}.jpg"
+        storage_path = source_image_url
+        storage_provider = "remote"
+
     media = (
         await db.execute(select(Media).where(Media.storage_path == storage_path))
     ).scalar_one_or_none()
 
     payload = {
-        "filename": path.name,
-        "original_filename": path.name,
+        "filename": filename,
+        "original_filename": filename,
         "mime_type": mime_type,
         "file_size": file_size,
         "file_hash": file_hash,
-        "storage_provider": "local",
+        "storage_provider": storage_provider,
         "storage_path": storage_path,
         "public_url": source_image_url,
         "title": title,
@@ -323,7 +418,7 @@ async def _upsert_media(
         "is_processed": True,
         "extra_metadata": {
             "source": "kisiiuniversity.ac.ke",
-            "seed_asset": True,
+            "seed_asset": asset_filename is not None,
         },
     }
 
@@ -346,16 +441,16 @@ async def _upsert_news(db: AsyncSession, spec: dict[str, object], media: Media) 
         "slug": slug,
         "summary": spec["summary"],
         "plain_text": spec["plain_text"],
-        "rich_text": spec["rich_text"],
+        "rich_text": spec.get("rich_text") or f"<p>{spec['plain_text']}</p>",
         "structured_content": {
             "source_url": spec["source_url"],
             "source_channel": "official_website",
         },
-        "related_links": spec["related_links"],
+        "related_links": spec.get("related_links") or [{"label": "Official Kisii University source", "url": spec["source_url"]}],
         "featured_media_id": media.id,
         "author_user_id": None,
         "meta_title": spec["title"],
-        "meta_description": spec["summary"],
+        "meta_description": _seo_description(spec["summary"]),
         "keywords": {"tags": ["kisii university", "news", "public website"]},
         "scope_type": "university",
         "scope_id": None,
@@ -386,18 +481,18 @@ async def _upsert_blog(db: AsyncSession, spec: dict[str, object], media: Media) 
         "title": spec["title"],
         "slug": slug,
         "summary": spec["summary"],
-        "excerpt": spec["excerpt"],
+        "excerpt": spec.get("excerpt") or spec["summary"],
         "plain_text": spec["plain_text"],
-        "rich_text": spec["rich_text"],
+        "rich_text": spec.get("rich_text") or f"<p>{spec['plain_text']}</p>",
         "structured_content": {
             "source_url": spec["source_url"],
             "source_channel": "official_website",
         },
-        "related_links": spec["related_links"],
+        "related_links": spec.get("related_links") or [{"label": "Official Kisii University source", "url": spec["source_url"]}],
         "featured_media_id": media.id,
         "author_user_id": None,
         "meta_title": spec["title"],
-        "meta_description": spec["summary"],
+        "meta_description": _seo_description(spec["summary"]),
         "keywords": {"tags": ["kisii university", "blog", "research", "innovation"]},
         "scope_type": "university",
         "scope_id": None,
@@ -429,7 +524,7 @@ async def _upsert_event(db: AsyncSession, spec: dict[str, object], media: Media)
         "slug": slug,
         "summary": spec["summary"],
         "plain_text": spec["plain_text"],
-        "rich_text": spec["rich_text"],
+        "rich_text": spec.get("rich_text") or f"<p>{spec['plain_text']}</p>",
         "structured_content": {
             "source_url": spec["source_url"],
             "source_channel": "official_website",
@@ -442,9 +537,9 @@ async def _upsert_event(db: AsyncSession, spec: dict[str, object], media: Media)
         "is_featured": spec["is_featured"],
         "featured_media_id": media.id,
         "author_user_id": None,
-        "related_links": spec["related_links"],
+        "related_links": spec.get("related_links") or [{"label": "Official Kisii University source", "url": spec["source_url"]}],
         "meta_title": spec["title"],
-        "meta_description": spec["summary"],
+        "meta_description": _seo_description(spec["summary"]),
         "keywords": {"tags": ["kisii university", "event", "public website"]},
         "scope_type": "university",
         "scope_id": None,
@@ -467,13 +562,75 @@ async def _upsert_event(db: AsyncSession, spec: dict[str, object], media: Media)
     await db.flush()
 
 
+async def _upsert_slider_group(db: AsyncSession) -> SliderGroup:
+    group = (
+        await db.execute(select(SliderGroup).where(SliderGroup.slug == HOMEPAGE_SLIDER_GROUP["slug"]))
+    ).scalar_one_or_none()
+
+    if group is None:
+        group = SliderGroup(**HOMEPAGE_SLIDER_GROUP)
+        db.add(group)
+    else:
+        for field_name, value in HOMEPAGE_SLIDER_GROUP.items():
+            setattr(group, field_name, value)
+
+    await db.flush()
+    return group
+
+
+async def _upsert_slider(db: AsyncSession, group: SliderGroup, spec: dict[str, object], media: Media) -> None:
+    item = (
+        await db.execute(
+            select(Slider).where(
+                Slider.slider_group_id == group.id,
+                Slider.title == spec["title"],
+            )
+        )
+    ).scalar_one_or_none()
+
+    payload = {
+        "slider_group_id": group.id,
+        "title": spec["title"],
+        "subtitle": spec.get("subtitle") or spec.get("category"),
+        "plain_text": spec["plain_text"],
+        "rich_text": spec.get("rich_text") or f"<p>{spec['plain_text']}</p>",
+        "structured_content": {
+            "source_url": spec["source_url"],
+            "source_channel": "official_website",
+        },
+        "desktop_media_id": media.id,
+        "mobile_media_id": media.id,
+        "external_url": spec["source_url"],
+        "link_text": spec.get("link_text") or "Read update",
+        "open_in_new_tab": False,
+        "scope_type": None,
+        "scope_id": None,
+        "is_main": True,
+        "is_public": True,
+        "is_active": True,
+        "start_datetime": None,
+        "end_datetime": None,
+        "archived_at": None,
+        "display_order": spec["display_order"],
+    }
+
+    if item is None:
+        item = Slider(**payload)
+        db.add(item)
+    else:
+        for field_name, value in payload.items():
+            setattr(item, field_name, value)
+
+    await db.flush()
+
+
 async def seed_content(db: AsyncSession, ctx: SeedContext) -> None:
     del ctx
 
-    for spec in NEWS_ITEMS:
+    for spec in LIVE_SITE_NEWS_ITEMS:
         media = await _upsert_media(
             db,
-            asset_filename=spec["asset_filename"],
+            asset_filename=spec.get("asset_filename"),
             title=spec["title"],
             alt_text=spec["title"],
             source_image_url=spec["source_image_url"],
@@ -481,10 +638,10 @@ async def seed_content(db: AsyncSession, ctx: SeedContext) -> None:
         )
         await _upsert_news(db, spec, media)
 
-    for spec in BLOG_ITEMS:
+    for spec in LIVE_SITE_BLOG_ITEMS:
         media = await _upsert_media(
             db,
-            asset_filename=spec["asset_filename"],
+            asset_filename=spec.get("asset_filename"),
             title=spec["title"],
             alt_text=spec["title"],
             source_image_url=spec["source_image_url"],
@@ -492,13 +649,25 @@ async def seed_content(db: AsyncSession, ctx: SeedContext) -> None:
         )
         await _upsert_blog(db, spec, media)
 
-    for spec in EVENT_ITEMS:
+    for spec in LIVE_SITE_EVENT_ITEMS:
         media = await _upsert_media(
             db,
-            asset_filename=spec["asset_filename"],
+            asset_filename=spec.get("asset_filename"),
             title=spec["title"],
             alt_text=spec["title"],
             source_image_url=spec["source_image_url"],
             tags=["event", "kisii-university", "homepage"],
         )
         await _upsert_event(db, spec, media)
+
+    slider_group = await _upsert_slider_group(db)
+    for spec in LIVE_SITE_NEWS_ITEMS[:3]:
+        media = await _upsert_media(
+            db,
+            asset_filename=spec.get("asset_filename"),
+            title=spec["title"],
+            alt_text=spec["title"],
+            source_image_url=spec["source_image_url"],
+            tags=["slider", "kisii-university", "homepage"],
+        )
+        await _upsert_slider(db, slider_group, spec, media)

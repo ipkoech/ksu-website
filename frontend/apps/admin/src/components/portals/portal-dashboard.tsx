@@ -14,7 +14,6 @@ import {
 } from "@ksu/ui/components";
 import { usePermissions } from "@ksu/auth";
 import { PageHeader } from "@/components/layout";
-import { formatCount } from "@/lib/counts";
 import { getPortalConfig } from "@/lib/portals/registry";
 import type { PortalConfig, PortalKey } from "@/lib/portals/types";
 
@@ -138,9 +137,15 @@ function PortalStatCard({
           <Icon className="size-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
-            {formatCount(query.data as any, query.isLoading, query.isError)}
-          </div>
+          {query.isLoading ? (
+            <div className="h-8 w-16 animate-pulse rounded bg-muted" aria-label="Loading statistic" />
+          ) : (
+            <div className="text-2xl font-bold">
+              {query.isError || query.data === undefined
+                ? "Unavailable"
+                : query.data.toLocaleString()}
+            </div>
+          )}
           <p className="text-xs text-muted-foreground">{stat.description}</p>
         </CardContent>
       </Card>

@@ -1,0 +1,126 @@
+name: Quality and Security
+
+on:
+  pull_request:
+  push:
+    branches: [dev, staging, main]
+
+permissions:
+  contents: read
+
+jobs:
+  repository:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install validation tools
+        run: python -m pip install --disable-pip-version-check pyyaml detect-secrets
+      - name: Validate repository files
+        run: |
+          git diff --check
+          python -m compileall -q scripts services/common/ksu_common
+          scripts/validate_migrations.sh
+          detect-secrets scan --all-files --exclude-files '(^|/)(\.env|node_modules|\.pnpm-store|test-results|\.git/)' --baseline .secrets.baseline
+      - name: Validate Compose production topology
+        env:
+          POSTGRES_PASSWORD: ci-only-not-a-production-secret
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.vm.yml config >/tmp/ksu-compose.yaml
+          python scripts/audit_compose_ports.py docker-compose.yml docker-compose.vm.yml
+      - name: Inspect Dockerfiles for root runtime
+        run: |
+          ! rg -n '^USER root$|^USER 0$' services/*/Dockerfile frontend/Dockerfile
+
+  backend:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [common, main, research, library]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install service dependencies
+        working-directory: services/${{ matrix.service }}
+        run: |
+          python -m pip install --upgrade pip
+          if [ "${{ matrix.service }}" != common ]; then pip install -e ../common; fi
+          pip install -e . pytest ruff
+      - name: Compile and lint
+        working-directory: services/${{ matrix.service }}
+        run: |
+          python -m compileall -q .
+          ruff check .
+      - name: Tests
+        working-directory: services/${{ matrix.service }}
+        run: pytest -q --disable-warnings
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm --dir frontend install --frozen-lockfile
+      - run: pnpm --dir frontend lint
+      - run: pnpm --dir frontend build
+
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ksu_ci
+          POSTGRES_USER: ksu_ci
+          POSTGRES_PASSWORD: ksu_ci_password
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U ksu_ci -d ksu_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: [6379:6379]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install real service test dependencies
+        run: pip install asyncpg redis
+      - name: Exercise PostgreSQL and Redis
+        env:
+          DATABASE_URL: postgresql://ksu_ci:ksu_ci_password@localhost:5432/ksu_ci
+          REDIS_URL: redis://localhost:6379/0
+        run: python scripts/tests/integration_dependencies.py
+
+  images:
+    runs-on: ubuntu-latest
+    needs: [repository]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production backend images
+        env:
+          POSTGRES_PASSWORD: ci-only-not-a-production-secret
+        run: docker compose -f docker-compose.yml -f docker-compose.vm.yml build main research library
+      - name: Scan images when Trivy is available
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ksu-backend/main:local
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: 1

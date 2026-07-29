@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { ReactNode } from "react";
 import {
   ArrowRight,
@@ -20,6 +21,10 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import {
+  LibraryHeroContentMotion,
+  LibraryHeroMotion,
+} from "./library-motion";
 
 type IconName =
   | "book"
@@ -60,44 +65,49 @@ export function LibraryHero({
   body,
   actions,
   breadcrumbs,
-  children,
+  imageSrc = "/images/library/library-hero-imagegen.webp",
+  imageAlt = "Kisii University campus library and learning environment",
 }: {
   eyebrow: string;
   title: string;
   body: string;
   actions?: ReactNode;
   breadcrumbs?: { label: string; href?: string }[];
-  children?: ReactNode;
+  imageSrc?: string;
+  imageAlt?: string;
 }) {
   return (
-    <section className="relative overflow-hidden border-b border-slate-200 bg-primary px-4 py-10 text-white sm:px-6 sm:py-12 lg:px-8">
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.9)_0%,rgba(2,20,49,0.75)_42%,rgba(16,67,177,0.35)_74%,rgba(193,81,6,0.22)_100%)]" />
-      <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(120deg,rgba(255,255,255,0.16)_0_1px,transparent_1px_100%),linear-gradient(30deg,rgba(255,255,255,0.08)_0_1px,transparent_1px_100%)] [background-size:64px_64px]" />
-      <div className="relative mx-auto grid max-w-[1320px] gap-8 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-end lg:gap-10">
-        <div className="min-w-0 max-w-4xl">
+    <LibraryHeroMotion>
+      <Image
+        src={imageSrc}
+        alt={imageAlt}
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-[48%_50%]"
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.94)_0%,rgba(2,20,49,0.82)_42%,rgba(2,20,49,0.32)_78%,rgba(2,20,49,0.12)_100%)]" />
+      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-brand-overlay/40 to-transparent" />
+      <div className="relative mx-auto flex min-h-[70vh] max-w-[1680px] flex-col justify-center px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <LibraryHeroContentMotion>
           {breadcrumbs?.length ? (
             <BreadcrumbTrail items={breadcrumbs} />
           ) : null}
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/80 sm:text-sm sm:tracking-[0.24em]">
             {eyebrow}
           </p>
-          <h1 className="mt-4 max-w-3xl text-wrap font-[family-name:var(--font-display)] text-3xl font-bold leading-tight sm:text-5xl lg:text-6xl">
+          <h1 className="mt-4 max-w-3xl text-balance font-[family-name:var(--font-display)] text-3xl font-bold leading-tight sm:text-5xl lg:text-6xl">
             {title}
           </h1>
-          <p className="mt-5 max-w-2xl text-sm leading-7 text-white/80 sm:text-base sm:leading-8 lg:text-lg">
+          <p className="mt-5 max-w-2xl text-pretty text-sm leading-7 text-white/85 sm:text-base sm:leading-8 lg:text-lg">
             {body}
           </p>
           {actions ? (
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">{actions}</div>
           ) : null}
-        </div>
-        {children ? (
-          <div className="min-w-0 rounded-lg border border-white/20 bg-white/10 p-4 shadow-2xl backdrop-blur sm:p-5">
-            {children}
-          </div>
-        ) : null}
+        </LibraryHeroContentMotion>
       </div>
-    </section>
+    </LibraryHeroMotion>
   );
 }
 
@@ -147,20 +157,22 @@ export function LibrarySection({
     <section
       className={
         tone === "white"
-          ? "bg-white px-4 py-12 sm:px-6 lg:px-8"
-          : "border-y border-slate-200 bg-slate-50 px-4 py-12 sm:px-6 lg:px-8"
+          ? "bg-white px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+          : "border-y border-border bg-surface-subtle px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       }
     >
-      <div className="mx-auto max-w-[1320px]">
+      <div className="mx-auto w-full max-w-[1680px]">
         <div className="mb-7 max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary sm:text-sm sm:tracking-[0.24em]">
             {eyebrow}
           </p>
-          <h2 className="mt-3 text-wrap font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+          <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground sm:text-4xl">
             {title}
           </h2>
           {body ? (
-            <p className="mt-4 text-base leading-7 text-slate-600">{body}</p>
+            <p className="mt-4 text-pretty text-base leading-7 text-foreground">
+              {body}
+            </p>
           ) : null}
         </div>
         {children}
@@ -190,10 +202,10 @@ export function IconCard({
       <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary text-white shadow-sm">
         <Icon aria-hidden className="h-5 w-5" />
       </span>
-      <h3 className="mt-5 text-lg font-semibold leading-7 text-slate-950">
+      <h3 className="mt-5 text-lg font-semibold leading-7 text-foreground">
         {title}
       </h3>
-      <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
+      <p className="mt-3 text-sm leading-7 text-muted-foreground">{body}</p>
       {children}
       {href ? (
         <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-primary">
@@ -205,7 +217,7 @@ export function IconCard({
   );
 
   const className =
-    "group flex min-h-[230px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]";
+    "group flex min-h-[230px] flex-col rounded-lg border border-border bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20";
 
   return href ? (
     <Link href={href} className={className}>
@@ -226,7 +238,7 @@ export function PrimaryLink({
   return (
     <Link
       href={href}
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-center text-sm font-semibold text-primary shadow-sm transition hover:bg-white/90"
+      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-secondary px-5 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-secondary/30"
     >
       {children}
       <ArrowRight aria-hidden className="h-4 w-4" />
@@ -244,7 +256,7 @@ export function SecondaryLink({
   return (
     <Link
       href={href}
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/40 bg-white/10 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/20"
+      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/40 bg-white/10 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
     >
       {children}
       <ArrowRight aria-hidden className="h-4 w-4" />
@@ -264,11 +276,50 @@ export function ExternalAnchor({
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-primary/25 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
+      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
     >
       {children}
       <ExternalLink aria-hidden className="h-4 w-4" />
     </a>
+  );
+}
+
+export function LibraryActionLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+    >
+      {children}
+      <ArrowRight aria-hidden className="h-4 w-4" />
+    </Link>
+  );
+}
+
+export function LibraryBadge({
+  children,
+  tone = "neutral",
+}: {
+  children: ReactNode;
+  tone?: "neutral" | "primary" | "secondary" | "muted";
+}) {
+  const toneClass = {
+    neutral: "border-border bg-surface-subtle text-muted-foreground",
+    primary: "border-primary/15 bg-primary/10 text-primary",
+    secondary: "border-secondary/20 bg-secondary text-white",
+    muted: "border-border bg-surface-muted text-muted-foreground",
+  }[tone];
+
+  return (
+    <span className={`inline-flex items-center rounded-md border px-3 py-1 text-xs font-semibold ${toneClass}`}>
+      {children}
+    </span>
   );
 }
 
@@ -285,7 +336,7 @@ export function StatusMessage({
       className={
         tone === "error"
           ? "rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
-          : "rounded-md border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600"
+          : "rounded-md border border-border bg-white p-4 text-sm leading-6 text-muted-foreground"
       }
     >
       {children}
@@ -312,11 +363,11 @@ export function LibraryContentBand({
     <section
       className={
         tone === "soft"
-          ? "border-y border-slate-200 bg-slate-50 px-4 py-10 sm:px-6 lg:px-8"
-          : "bg-white px-4 py-10 sm:px-6 lg:px-8"
+          ? "border-y border-border bg-surface-subtle px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+          : "bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       }
     >
-      <div className="mx-auto max-w-[1320px]">{children}</div>
+      <div className="mx-auto w-full max-w-[1680px]">{children}</div>
     </section>
   );
 }
@@ -335,20 +386,165 @@ export function LibrarySectionHeading({
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary sm:text-sm sm:tracking-[0.22em]">
         {eyebrow}
       </p>
-      <h2 className="mt-3 text-wrap font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+      <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground sm:text-4xl">
         {title}
       </h2>
-      {body ? <p className="mt-4 text-base leading-7 text-slate-600">{body}</p> : null}
+      {body ? <p className="mt-4 text-pretty text-base leading-7 text-muted-foreground">{body}</p> : null}
     </div>
   );
 }
 
 export function SearchPanel({ children }: { children: ReactNode }) {
   return (
-    <div className="-mt-4 min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)] sm:-mt-8 sm:p-5">
+    <div className="-mt-4 min-w-0 rounded-lg border border-border bg-white p-4 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)] sm:-mt-8 sm:p-5">
       {children}
     </div>
   );
+}
+
+type LibraryFilterOption = {
+  value: string;
+  label: string;
+};
+
+export function LibraryFilterTextInput({
+  name,
+  label,
+  value,
+  placeholder,
+  className = "",
+}: {
+  name: string;
+  label: string;
+  value?: string | null;
+  placeholder: string;
+  className?: string;
+}) {
+  return (
+    <label className={`block min-w-0 ${className}`}>
+      <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        {label}
+      </span>
+      <span className="relative mt-2 block">
+        <Search
+          aria-hidden
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70"
+        />
+        <input
+          type="search"
+          name={name}
+          defaultValue={value?.trim() ?? ""}
+          placeholder={placeholder}
+          autoComplete="off"
+          className="h-11 w-full rounded-md border border-border bg-white pl-9 pr-3 text-sm font-medium text-foreground outline-none ring-primary/20 transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4"
+        />
+      </span>
+    </label>
+  );
+}
+
+export function LibraryFilterSelect({
+  name,
+  label,
+  value,
+  options,
+  allLabel,
+  includeAllOption = true,
+  className = "",
+}: {
+  name: string;
+  label: string;
+  value?: string | null;
+  options: LibraryFilterOption[];
+  allLabel?: string;
+  includeAllOption?: boolean;
+  className?: string;
+}) {
+  const normalizedOptions = normalizeFilterOptions(options);
+
+  return (
+    <label className={`block min-w-0 ${className}`}>
+      <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        {label}
+      </span>
+      <select
+        name={name}
+        defaultValue={value?.trim() ?? ""}
+        className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm font-semibold text-foreground outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
+      >
+        {includeAllOption ? <option value="">{allLabel ?? `All ${label.toLowerCase()}`}</option> : null}
+        {normalizedOptions.map((option) => (
+          <option key={`${name}-${option.value}-${option.label}`} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+export function LibraryFilterCheckbox({
+  name,
+  value,
+  checked,
+  children,
+}: {
+  name: string;
+  value: string;
+  checked?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <label className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border bg-white px-3 py-2 text-sm font-semibold text-muted-foreground transition focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/20">
+      <input
+        type="checkbox"
+        name={name}
+        value={value}
+        defaultChecked={checked}
+        className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+      />
+      {children}
+    </label>
+  );
+}
+
+export function LibraryFilterSubmit({ children }: { children: ReactNode }) {
+  return (
+    <button
+      type="submit"
+      className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+    >
+      {children}
+    </button>
+  );
+}
+
+export function LibraryFilterClearLink({
+  href,
+  children = "Clear Filters",
+}: {
+  href: string;
+  children?: ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-white px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:border-primary/25 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+    >
+      {children}
+    </Link>
+  );
+}
+
+function normalizeFilterOptions(options: LibraryFilterOption[]) {
+  const seen = new Set<string>();
+
+  return options.filter((option) => {
+    const key = `${option.value}-${option.label}`;
+    if (!option.value || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 export function SidePanel({
@@ -361,13 +557,13 @@ export function SidePanel({
   children: ReactNode;
 }) {
   return (
-    <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <aside className="h-fit min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
       {eyebrow ? (
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
           {eyebrow}
         </p>
       ) : null}
-      <h3 className={eyebrow ? "mt-3 text-lg font-semibold text-slate-950 sm:text-xl" : "text-lg font-semibold text-slate-950 sm:text-xl"}>
+      <h3 className={eyebrow ? "mt-3 text-lg font-semibold text-foreground sm:text-xl" : "text-lg font-semibold text-foreground sm:text-xl"}>
         {title}
       </h3>
       <div className="mt-4">{children}</div>
@@ -385,14 +581,14 @@ export function MetricStrip({
       {items.map((item) => (
         <div
           key={item.label}
-          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+          className="rounded-lg border border-border bg-white p-5 shadow-sm"
         >
-          <p className="text-3xl font-bold text-slate-950">{item.value}</p>
+          <p className="text-3xl font-bold text-foreground">{item.value}</p>
           <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
             {item.label}
           </p>
           {item.detail ? (
-            <p className="mt-2 text-sm leading-6 text-slate-600">{item.detail}</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.detail}</p>
           ) : null}
         </div>
       ))}
@@ -406,12 +602,12 @@ export function PillNav({
   items: Array<{ label: string; href: string }>;
 }) {
   return (
-    <nav className="flex max-w-full gap-2 overflow-x-auto pb-2" aria-label="Library page sections">
+    <nav className="flex max-w-full flex-wrap gap-2 pb-2" aria-label="Library page sections">
       {items.map((item) => (
         <Link
           key={item.href}
           href={item.href}
-          className="inline-flex min-h-11 shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+          className="inline-flex min-h-11 shrink-0 items-center rounded-md border border-border bg-white px-4 py-2 text-sm font-semibold text-muted-foreground shadow-sm transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
         >
           {item.label}
         </Link>
@@ -450,12 +646,12 @@ export function CompactRecord({
             {eyebrow}
           </p>
         ) : null}
-        <h3 className="mt-1 text-base font-semibold leading-7 text-slate-950 sm:text-lg">
+        <h3 className="mt-1 text-base font-semibold leading-7 text-foreground sm:text-lg">
           {title}
         </h3>
-        {body ? <p className="mt-2 text-sm leading-7 text-slate-600">{body}</p> : null}
+        {body ? <p className="mt-2 text-sm leading-7 text-muted-foreground">{body}</p> : null}
         {details.length > 0 ? (
-          <p className="mt-3 text-xs leading-5 text-slate-500">
+          <p className="mt-3 text-xs leading-5 text-muted-foreground">
             {details.join(" · ")}
           </p>
         ) : null}
@@ -472,12 +668,12 @@ export function CompactRecord({
   return href ? (
     <Link
       href={href}
-      className="block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md"
+      className="block rounded-lg border border-border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
     >
       {content}
     </Link>
   ) : (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="rounded-lg border border-border bg-white p-5 shadow-sm">
       {content}
     </article>
   );
@@ -493,12 +689,12 @@ export function QuickStat({
   detail?: string | null;
 }) {
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-2xl font-bold text-slate-950">{value}</p>
+    <div className="rounded-md border border-border bg-white p-4 shadow-sm">
+      <p className="text-2xl font-bold text-foreground">{value}</p>
       <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-secondary">
         {label}
       </p>
-      {detail ? <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p> : null}
+      {detail ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{detail}</p> : null}
     </div>
   );
 }
@@ -513,13 +709,9 @@ export function InfoPanel({
   children: ReactNode;
 }) {
   return (
-    <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-        {eyebrow}
-      </p>
-      <h3 className="mt-3 text-xl font-semibold text-slate-950">{title}</h3>
-      <div className="mt-4">{children}</div>
-    </aside>
+    <SidePanel eyebrow={eyebrow} title={title}>
+      {children}
+    </SidePanel>
   );
 }
 
@@ -546,10 +738,10 @@ export function RecordListItem({
           {eyebrow}
         </p>
       ) : null}
-      <h3 className="mt-2 text-lg font-semibold leading-7 text-slate-950">{title}</h3>
-      {body ? <p className="mt-2 text-sm leading-7 text-slate-600">{body}</p> : null}
+      <h3 className="mt-2 text-lg font-semibold leading-7 text-foreground">{title}</h3>
+      {body ? <p className="mt-2 text-sm leading-7 text-muted-foreground">{body}</p> : null}
       {details.length > 0 ? (
-        <p className="mt-3 text-xs leading-5 text-slate-500">{details.join(" · ")}</p>
+        <p className="mt-3 text-xs leading-5 text-muted-foreground">{details.join(" · ")}</p>
       ) : null}
       {href ? (
         <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
@@ -563,12 +755,12 @@ export function RecordListItem({
   return href ? (
     <Link
       href={href}
-      className="block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md"
+      className="block rounded-lg border border-border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
     >
       {content}
     </Link>
   ) : (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="rounded-lg border border-border bg-white p-5 shadow-sm">
       {content}
     </article>
   );

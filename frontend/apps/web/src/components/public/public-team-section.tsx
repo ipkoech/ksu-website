@@ -327,20 +327,20 @@ function SearchControls({
       <label className="relative block">
         <Search
           aria-hidden
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70"
         />
         <input
           value={query}
           onChange={(event) => onQuery(event.target.value)}
           placeholder="Search team member..."
-          className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none ring-primary/20 transition placeholder:text-slate-400 focus:border-primary focus:ring-4"
+          className="h-11 w-full rounded-lg border border-border bg-white pl-9 pr-3 text-sm outline-none ring-primary/20 transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4"
         />
       </label>
       <label className="relative block">
         <select
           value={group}
           onChange={(event) => onGroup(event.target.value as TeamGroupFilter)}
-          className="h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-9 text-sm font-semibold text-slate-700 outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
+          className="h-11 w-full appearance-none rounded-lg border border-border bg-white px-3 pr-9 text-sm font-semibold text-muted-foreground outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
         >
           <option value="all">All Groups</option>
           {groups.map((item) => (
@@ -351,14 +351,14 @@ function SearchControls({
         </select>
         <ChevronDown
           aria-hidden
-          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70"
         />
       </label>
       <label className="relative block">
         <select
           value={role}
           onChange={(event) => onRole(event.target.value)}
-          className="h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-9 text-sm font-semibold text-slate-700 outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
+          className="h-11 w-full appearance-none rounded-lg border border-border bg-white px-3 pr-9 text-sm font-semibold text-muted-foreground outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
         >
           <option value="all">All Roles</option>
           {roles.map((item) => (
@@ -369,7 +369,7 @@ function SearchControls({
         </select>
         <ChevronDown
           aria-hidden
-          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70"
         />
       </label>
     </div>
@@ -397,7 +397,7 @@ function LeadershipCard({
 }) {
   return (
     <article
-      className={`relative min-w-0 rounded-lg border border-slate-200 bg-white shadow-sm transition hover:border-primary/25 hover:shadow-md ${
+      className={`relative min-w-0 rounded-lg border border-border bg-white shadow-sm transition hover:border-primary/25 hover:shadow-md ${
         top ? "mx-auto w-full max-w-sm p-4" : "p-3"
       }`}
     >
@@ -408,7 +408,7 @@ function LeadershipCard({
         <div
           className={`${
             top ? "h-20 w-20" : "h-14 w-14"
-          } shrink-0 overflow-hidden rounded-lg bg-slate-100`}
+          } shrink-0 overflow-hidden rounded-lg bg-surface-muted`}
         >
           <Avatar member={member} />
         </div>
@@ -416,7 +416,7 @@ function LeadershipCard({
           <h2
             className={`${
               top ? "text-base" : "text-sm"
-            } truncate font-bold text-slate-950`}
+            } truncate font-bold text-foreground`}
           >
             {member.name}
           </h2>
@@ -426,7 +426,7 @@ function LeadershipCard({
           {member.email ? (
             <a
               href={`mailto:${member.email}`}
-              className="mt-3 flex min-w-0 items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-primary"
+              className="mt-3 flex min-w-0 items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary"
             >
               <Mail aria-hidden className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{member.email}</span>
@@ -441,13 +441,13 @@ function LeadershipCard({
 
 function MiniMemberCard({ member }: { member: TeamMember }) {
   return (
-    <article className="min-w-0 rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition hover:border-primary/25 hover:shadow-md">
+    <article className="min-w-0 rounded-lg border border-border bg-white p-3 shadow-sm transition hover:border-primary/25 hover:shadow-md">
       <div className="flex min-w-0 gap-3">
-        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-muted">
           <Avatar member={member} />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-bold text-slate-950">
+          <h3 className="truncate text-sm font-bold text-foreground">
             {member.name}
           </h3>
           <p className="mt-1 line-clamp-2 text-xs font-semibold capitalize leading-4 text-primary">
@@ -456,7 +456,7 @@ function MiniMemberCard({ member }: { member: TeamMember }) {
           {member.email ? (
             <a
               href={`mailto:${member.email}`}
-              className="mt-2 flex min-w-0 items-center gap-1.5 text-[0.72rem] font-medium text-slate-500 hover:text-primary"
+              className="mt-2 flex min-w-0 items-center gap-1.5 text-[0.72rem] font-medium text-muted-foreground hover:text-primary"
             >
               <Mail aria-hidden className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{member.email}</span>
@@ -471,9 +471,9 @@ function MiniMemberCard({ member }: { member: TeamMember }) {
 
 function LeadershipFeature({ member }: { member: TeamMember }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="rounded-lg border border-border bg-white p-4 shadow-sm">
       <div className="grid gap-4 md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center">
-        <div className="h-24 w-24 overflow-hidden rounded-lg bg-slate-100">
+        <div className="h-24 w-24 overflow-hidden rounded-lg bg-surface-muted">
           <Avatar member={member} />
         </div>
         <div className="min-w-0">
@@ -481,17 +481,17 @@ function LeadershipFeature({ member }: { member: TeamMember }) {
             <span className="rounded bg-primary px-2 py-1 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-white">
               Leadership
             </span>
-            <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+            <span className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
               {member.role}
             </span>
           </div>
-          <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
+          <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
             {member.name}
           </h2>
           {member.email ? (
             <a
               href={`mailto:${member.email}`}
-              className="mt-2 flex min-w-0 items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-primary"
+              className="mt-2 flex min-w-0 items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary"
             >
               <Mail aria-hidden className="h-4 w-4 shrink-0" />
               <span className="truncate">{member.email}</span>
@@ -524,7 +524,7 @@ function LeadershipFeature({ member }: { member: TeamMember }) {
 
 function StaffGroupPanel({ group }: { group: StaffGroup }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-lg border border-border bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <Users aria-hidden className="h-4 w-4 shrink-0 text-primary" />
@@ -532,7 +532,7 @@ function StaffGroupPanel({ group }: { group: StaffGroup }) {
             {group.label}
           </h2>
         </div>
-        <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
+        <span className="rounded-full bg-surface-muted px-2 py-1 text-xs font-bold text-muted-foreground">
           {group.members.length}
         </span>
       </div>
@@ -575,14 +575,14 @@ export function PublicTeamSection({
 
   if (!members.length) {
     return (
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-lg border border-border bg-white p-6 shadow-sm">
         <div className="flex gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] text-primary">
             <UserRound aria-hidden className="h-5 w-5" />
           </span>
           <div>
-            <p className="text-sm font-semibold text-slate-950">{emptyTitle}</p>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
+            <p className="text-sm font-semibold text-foreground">{emptyTitle}</p>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
               Published members will appear here once active public assignments
               are attached to this unit.
             </p>
@@ -594,12 +594,12 @@ export function PublicTeamSection({
 
   return (
     <section className="grid gap-5">
-      <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="grid gap-3 rounded-lg border border-border bg-white p-4 shadow-sm">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
             {subtitle}
           </p>
-          <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
+          <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
             {heading}
           </h2>
         </div>
@@ -661,11 +661,11 @@ export function PublicTeamSection({
           ) : null}
         </div>
       ) : (
-        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-sm font-semibold text-slate-950">
+        <section className="rounded-lg border border-border bg-white p-6 shadow-sm">
+          <p className="text-sm font-semibold text-foreground">
             No team members match the current search.
           </p>
-          <p className="mt-1 text-sm leading-6 text-slate-600">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
             Clear the search field or choose All Groups and All Roles to view
             the full team.
           </p>
