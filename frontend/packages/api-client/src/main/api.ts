@@ -165,7 +165,11 @@ export function resolveMainMediaUrl(value?: string | null): string | undefined {
     path = path.replace(/^\/uploads\/uploads\//, "/uploads/");
   }
 
-  return new URL(path, MAIN_API_BASE_URL).toString();
+  // Server-side API calls use the Docker-internal hostname, but media URLs
+  // are rendered into the browser and must use the public API/gateway host.
+  const publicMediaBaseUrl =
+    process.env.NEXT_PUBLIC_MAIN_API_URL || MAIN_API_BASE_URL;
+  return new URL(path, publicMediaBaseUrl).toString();
 }
 
 async function parseImportResponse<T>(response: Response): Promise<T> {
