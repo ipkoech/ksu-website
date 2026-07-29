@@ -49,11 +49,14 @@ export function CampusLifeHorizontalScroller({
       const stickyTop = stickyFrame
         ? parseFloat(window.getComputedStyle(stickyFrame).top) || 0
         : 0;
-      section.style.minHeight = `${Math.ceil(stickyHeight + maxTranslate)}px`;
+      // A 1:1 vertical-to-horizontal mapping creates a very long pinned
+      // scene, especially on wide desktops. Compress the travel distance
+      // while still allowing the rail to reach its final story.
+      const scrollableDistance = Math.max(Math.ceil(maxTranslate * 0.68), 1);
+      section.style.minHeight = `${Math.ceil(stickyHeight + scrollableDistance)}px`;
 
       const sectionTop =
         section.getBoundingClientRect().top + window.scrollY - stickyTop;
-      const scrollableDistance = Math.max(maxTranslate, 1);
       const progress = Math.min(
         Math.max((window.scrollY - sectionTop) / scrollableDistance, 0),
         1,
