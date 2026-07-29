@@ -19,6 +19,8 @@ depends_on = None
 
 
 def upgrade() -> None:
+    if "library_conversation_recoveries" in sa.inspect(op.get_bind()).get_table_names(schema="library"):
+        return
     op.create_table(
         "library_conversation_recoveries",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),

@@ -27,7 +27,16 @@ def _base_columns() -> list[sa.Column]:
     ]
 
 
+def _table_exists(table_name: str) -> bool:
+    return table_name in sa.inspect(op.get_bind()).get_table_names(schema="library")
+
+
 def upgrade() -> None:
+    # The bootstrap migration creates from current ORM metadata, which may
+    # already include assistant tables on a fresh database. Preserve those
+    # tables and let the follow-up migrations add only missing revisions.
+    if _table_exists("library_assistant_contexts"):
+        return
     op.create_table(
         "library_assistant_contexts",
         *_base_columns(),

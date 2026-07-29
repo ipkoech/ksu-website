@@ -19,23 +19,29 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "library_guest_sessions",
-        sa.Column("context_id", postgresql.UUID(as_uuid=True), nullable=True),
-        schema="library",
-    )
-    op.add_column(
-        "library_guest_sessions",
-        sa.Column("page_context", sa.JSON(), nullable=True),
-        schema="library",
-    )
-    op.create_index(
-        "ix_library_guest_sessions_context_id",
-        "library_guest_sessions",
-        ["context_id"],
-        unique=False,
-        schema="library",
-    )
+    inspector = sa.inspect(op.get_bind())
+    columns = {column["name"] for column in inspector.get_columns("library_guest_sessions", schema="library")}
+    indexes = {index["name"] for index in inspector.get_indexes("library_guest_sessions", schema="library")}
+    if "context_id" not in columns:
+        op.add_column(
+            "library_guest_sessions",
+            sa.Column("context_id", postgresql.UUID(as_uuid=True), nullable=True),
+            schema="library",
+        )
+    if "page_context" not in columns:
+        op.add_column(
+            "library_guest_sessions",
+            sa.Column("page_context", sa.JSON(), nullable=True),
+            schema="library",
+        )
+    if "ix_library_guest_sessions_context_id" not in indexes:
+        op.create_index(
+            "ix_library_guest_sessions_context_id",
+            "library_guest_sessions",
+            ["context_id"],
+            unique=False,
+            schema="library",
+        )
 
 
 def downgrade() -> None:

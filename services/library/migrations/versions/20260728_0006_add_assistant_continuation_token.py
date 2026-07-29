@@ -18,23 +18,29 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "library_conversations",
-        sa.Column("continuation_token_hash", sa.String(128), nullable=True),
-        schema="library",
-    )
-    op.add_column(
-        "library_conversations",
-        sa.Column("continuation_expires_at", sa.DateTime(timezone=True), nullable=True),
-        schema="library",
-    )
-    op.create_index(
-        "ix_library_conversations_continuation_token_hash",
-        "library_conversations",
-        ["continuation_token_hash"],
-        unique=False,
-        schema="library",
-    )
+    inspector = sa.inspect(op.get_bind())
+    columns = {column["name"] for column in inspector.get_columns("library_conversations", schema="library")}
+    indexes = {index["name"] for index in inspector.get_indexes("library_conversations", schema="library")}
+    if "continuation_token_hash" not in columns:
+        op.add_column(
+            "library_conversations",
+            sa.Column("continuation_token_hash", sa.String(128), nullable=True),
+            schema="library",
+        )
+    if "continuation_expires_at" not in columns:
+        op.add_column(
+            "library_conversations",
+            sa.Column("continuation_expires_at", sa.DateTime(timezone=True), nullable=True),
+            schema="library",
+        )
+    if "ix_library_conversations_continuation_token_hash" not in indexes:
+        op.create_index(
+            "ix_library_conversations_continuation_token_hash",
+            "library_conversations",
+            ["continuation_token_hash"],
+            unique=False,
+            schema="library",
+        )
 
 
 def downgrade() -> None:
