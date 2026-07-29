@@ -1058,7 +1058,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
       className="campus-life-scroll-scene relative isolate overflow-hidden bg-[linear-gradient(180deg,#fff_0%,hsl(var(--surface-subtle)/.92)_100%)] py-10 lg:py-0"
     >
       <div className="pointer-events-none absolute inset-y-0 right-0 -z-10 hidden w-[42%] bg-[radial-gradient(circle_at_65%_48%,hsl(var(--primary)/.12),transparent_68%)] lg:block" />
-      <div className="campus-life-sticky-frame mx-auto max-w-[1680px] px-4 sm:px-6 lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[calc(100svh-var(--public-header-offset,96px))] lg:max-w-none lg:items-center lg:px-0 xl:px-0 2xl:px-0">
+      <div className="campus-life-sticky-frame mx-auto max-w-[1680px] px-4 sm:px-6 lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[460px] lg:max-w-none lg:items-center lg:px-0 xl:px-0 2xl:px-0">
         <CampusLifeHorizontalScroller>
           <div className="lg:flex lg:w-max lg:items-stretch lg:gap-6">
             <div className="campus-life-editorial lg:w-[min(100vw,1320px)] lg:shrink-0 lg:snap-start lg:px-8 xl:px-12">
@@ -1140,7 +1140,7 @@ function CampusMosaicFeature({
   section: HomepageSection;
 }) {
   const body = (
-    <article className="group relative min-h-[340px] overflow-hidden rounded-[1.75rem] bg-primary text-white shadow-2xl shadow-primary/15 sm:min-h-[430px] lg:min-h-[560px] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-6">
+    <article className="group relative min-h-[320px] overflow-hidden rounded-[1.75rem] bg-primary text-white shadow-2xl shadow-primary/15 sm:min-h-[400px] lg:min-h-[460px] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-6">
       <ImageCurtainReveal className="absolute inset-0 h-full" direction="down">
         <PublicImage
           src={itemImageUrl(item) ?? mediaUrl(heroImage(section))}
@@ -1194,7 +1194,7 @@ function CampusLifeLane({
   const Icon = lane.icon;
   const body = (
     <article
-      className="group relative min-h-[230px] overflow-hidden rounded-[1.75rem] bg-primary text-white transition duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/20 sm:min-h-[260px] lg:min-h-[560px] lg:w-[min(390px,34vw)] lg:snap-start motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
+      className="group relative min-h-[230px] overflow-hidden rounded-[1.75rem] bg-primary text-white transition duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/20 sm:min-h-[260px] lg:min-h-[460px] lg:w-[min(390px,34vw)] lg:snap-start motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
       style={{ animationDelay: `${Math.min(index, 5) * 80}ms` }}
     >
       <PublicImage
@@ -1222,7 +1222,7 @@ function CampusLifeLane({
           <Icon className="h-5 w-5 text-secondary" aria-hidden />
         </span>
       </div>
-      <div className="relative flex min-h-[230px] flex-col justify-end p-5 sm:min-h-[260px] sm:p-6 lg:min-h-[560px] lg:p-7">
+      <div className="relative flex min-h-[230px] flex-col justify-end p-5 sm:min-h-[260px] sm:p-6 lg:min-h-[460px] lg:p-7">
         <div className="max-w-sm">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-secondary">
             {lane.audience}
