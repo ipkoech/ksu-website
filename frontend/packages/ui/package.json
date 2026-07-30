@@ -31,7 +31,8 @@
     "./globals.css": "./src/globals.css",
     "./hooks": "./src/hooks/index.ts",
     "./lib": "./src/lib/index.ts",
-    "./providers": "./src/providers/index.ts"
+    "./providers": "./src/providers/index.ts",
+    "./motion": "./src/motion/index.ts"
   },
   "scripts": {
     "lint": "eslint src/",

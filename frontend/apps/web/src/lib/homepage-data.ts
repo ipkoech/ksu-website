@@ -390,7 +390,7 @@ async function getLatestBlogs() {
 async function getFeaturedStories() {
   const response = await storiesApi.list({
     is_featured: true,
-    per_page: 4,
+    per_page: 7,
     fields:
       "id,title,slug,summary,plain_text,story_type,category,published_at,featured_media_id,featured_media,contributor_name_snapshot,created_at",
     include: "featured_media(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
