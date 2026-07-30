@@ -7,45 +7,84 @@ type CampusLifeHorizontalScrollerProps = {
   children: ReactNode;
 };
 
-/**
- * A bounded horizontal story rail. Wheel input advances the rail while the
- * pointer is over it, but the rail never changes the document's height.
- */
+/** Maps ordinary page scrolling to a bounded horizontal story rail. */
 export function CampusLifeHorizontalScroller({
   children,
 }: CampusLifeHorizontalScrollerProps) {
+  const sceneRef = useRef<HTMLDivElement | null>(null);
   const railRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    const scene = sceneRef.current?.closest(
+      ".campus-life-scroll-scene",
+    ) as HTMLElement | null;
     const rail = railRef.current;
-    if (!rail) return;
+    const frame = sceneRef.current;
+    if (!scene || !rail || !frame) return;
 
-    const onWheel = (event: WheelEvent) => {
-      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-      const maxScroll = rail.scrollWidth - rail.clientWidth;
-      if (maxScroll <= 0) return;
+    let raf = 0;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const desktop = window.matchMedia("(min-width: 1024px)");
 
-      const next = Math.min(
-        Math.max(rail.scrollLeft + event.deltaY, 0),
-        maxScroll,
+    const update = () => {
+      raf = 0;
+      if (!desktop.matches || reduceMotion.matches) {
+        rail.style.transform = "translate3d(0,0,0)";
+        scene.style.height = "";
+        return;
+      }
+
+      const maxTranslate = Math.max(rail.scrollWidth - frame.clientWidth, 0);
+      const stickyHeight = frame.clientHeight;
+      const travel = Math.min(Math.max(Math.ceil(maxTranslate * 0.52), 1), 760);
+      scene.style.height = `${stickyHeight + travel}px`;
+
+      const top = scene.getBoundingClientRect().top + window.scrollY;
+      const start = top - (parseFloat(getComputedStyle(frame).top) || 0);
+      const progress = Math.min(
+        Math.max((window.scrollY - start) / travel, 0),
+        1,
       );
-      if (next === rail.scrollLeft) return;
-      event.preventDefault();
-      rail.scrollLeft = next;
+      rail.style.transform = `translate3d(${-progress * maxTranslate}px,0,0)`;
     };
 
-    rail.addEventListener("wheel", onWheel, { passive: false });
-    return () => rail.removeEventListener("wheel", onWheel);
+    const requestUpdate = () => {
+      if (!raf) raf = window.requestAnimationFrame(update);
+    };
+    const observer = new ResizeObserver(requestUpdate);
+    observer.observe(frame);
+    observer.observe(rail);
+    window.addEventListener("scroll", requestUpdate, { passive: true });
+    window.addEventListener("resize", requestUpdate);
+    desktop.addEventListener("change", requestUpdate);
+    reduceMotion.addEventListener("change", requestUpdate);
+    requestUpdate();
+
+    return () => {
+      if (raf) window.cancelAnimationFrame(raf);
+      observer.disconnect();
+      window.removeEventListener("scroll", requestUpdate);
+      window.removeEventListener("resize", requestUpdate);
+      desktop.removeEventListener("change", requestUpdate);
+      reduceMotion.removeEventListener("change", requestUpdate);
+      scene.style.height = "";
+      rail.style.transform = "";
+    };
   }, []);
 
   return (
     <div
-      ref={railRef}
-      className="campus-life-horizontal-track overflow-x-auto overscroll-x-contain scroll-smooth [scrollbar-color:hsl(var(--primary)/.35)_transparent] [scrollbar-width:thin]"
-      tabIndex={0}
-      aria-label="Life around studies stories"
+      ref={sceneRef}
+      className="campus-life-sticky-frame lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[460px] lg:items-center"
     >
-      {children}
+      <div className="campus-life-horizontal-track w-full overflow-hidden" aria-label="Life around studies stories">
+        <div
+          ref={railRef}
+          className="campus-life-horizontal-rail flex w-max items-stretch gap-5 transition-transform duration-75 ease-linear will-change-transform motion-reduce:transform-none motion-reduce:transition-none"
+        >
+          {children}
+        </div>
+      </div>
     </div>
   );
 }

@@ -1055,7 +1055,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="relative isolate overflow-hidden bg-[linear-gradient(180deg,#fff_0%,hsl(var(--surface-subtle)/.92)_100%)] py-12 sm:py-14"
+      className="campus-life-scroll-scene relative isolate overflow-hidden bg-[linear-gradient(180deg,#fff_0%,hsl(var(--surface-subtle)/.92)_100%)] py-12 sm:py-14"
     >
       <div className="pointer-events-none absolute inset-y-0 right-0 -z-10 hidden w-[42%] bg-[radial-gradient(circle_at_65%_48%,hsl(var(--primary)/.12),transparent_68%)] lg:block" />
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
