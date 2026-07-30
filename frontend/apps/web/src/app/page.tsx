@@ -201,8 +201,8 @@ export default async function HomePage() {
               {/* 1. Video Hero */}
               <VideoHero slides={heroSlides} />
 
-              {/* 2. Numbers/Facts Strip */}
-              <NumbersFactsSection stats={stats} />
+              {/* 2. Numbers/Facts Strip - only if we have data */}
+              {stats.length > 0 && <NumbersFactsSection stats={stats} />}
 
               {/* 3. Strategic Partnership */}
               <StrategicPartnershipSection />
@@ -212,26 +212,34 @@ export default async function HomePage() {
 
               {isContentDegraded && <ContentDegradedNotice />}
 
-              {/* 5. Featured Stories */}
-              <FeaturedStoriesGrid stories={homepage.featuredStories} />
+              {/* 5. Featured Stories - only if we have stories */}
+              {homepage.featuredStories.length > 0 && (
+                <FeaturedStoriesGrid stories={homepage.featuredStories} />
+              )}
 
               {/* 6. Life at KSU */}
               <LifeAtKsuSection />
 
-              {/* 7. News & Events */}
-              <LandingReveal>
-                <LatestContentSection
-                  newsItems={homepage.latestNews}
-                  events={homepage.upcomingEvents}
-                  blog={homepage.latestBlog}
-                />
-              </LandingReveal>
+              {/* 7. News & Events - only if we have content */}
+              {(homepage.latestNews.length > 0 ||
+                homepage.upcomingEvents.length > 0 ||
+                homepage.latestBlog) && (
+                <LandingReveal>
+                  <LatestContentSection
+                    newsItems={homepage.latestNews}
+                    events={homepage.upcomingEvents}
+                    blog={homepage.latestBlog}
+                  />
+                </LandingReveal>
+              )}
 
               {/* 8. Research */}
               <ResearchSection />
 
-              {/* 9. Partners */}
-              <PartnersMarquee partners={homepage.partners} />
+              {/* 9. Partners - only if we have partners */}
+              {homepage.partners.length > 0 && (
+                <PartnersMarquee partners={homepage.partners} />
+              )}
 
               {/* 10. Journey CTA */}
               <JourneyCtaSection />
@@ -283,27 +291,22 @@ export default async function HomePage() {
 }
 
 function buildStats(facts: HomeMetric[]) {
-  const defaultStats = [
-    { value: 45000, suffix: "+", label: "Alumni" },
-    { value: 18000, suffix: "+", label: "Active Students" },
-    { value: 1200, suffix: "+", label: "Staff" },
-    { value: 10, label: "Schools" },
-    { value: 150, suffix: "+", label: "Programmes" },
-    { value: 50, suffix: "+", label: "Research Projects" },
-  ];
+  if (facts.length === 0) return [];
 
-  if (facts.length === 0) return defaultStats;
-
-  return facts.slice(0, 6).map((fact) => {
-    const numericValue = parseInt(fact.value.replace(/[^0-9]/g, ""), 10) || 0;
-    const hasSuffix = fact.value.includes("+") || fact.value.includes("K");
-    return {
-      value: numericValue,
-      suffix: hasSuffix ? "+" : undefined,
-      label: fact.label,
-      description: fact.detail,
-    };
-  });
+  return facts
+    .slice(0, 6)
+    .map((fact) => {
+      const numericValue = parseInt(fact.value.replace(/[^0-9]/g, ""), 10) || 0;
+      if (numericValue === 0) return null;
+      const hasSuffix = fact.value.includes("+") || fact.value.includes("K");
+      return {
+        value: numericValue,
+        suffix: hasSuffix ? "+" : undefined,
+        label: fact.label,
+        description: fact.detail,
+      };
+    })
+    .filter((stat): stat is NonNullable<typeof stat> => stat !== null);
 }
 
 function ContentDegradedNotice() {

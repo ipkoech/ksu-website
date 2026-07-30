@@ -13,7 +13,7 @@ import {
   JourneyCtaSection,
 } from "@/components/home/landing-sections";
 import { EntityInquiryLauncher } from "@/components/public/entity-inquiry-launcher";
-import { getHomepageData } from "@/lib/homepage-data";
+import { getHomepageData, type HomeMetric } from "@/lib/homepage-data";
 import { getNavData } from "@/lib/nav-data";
 import {
   heriAfricaFrontendUrl,
@@ -27,7 +27,7 @@ const heroSlides = [
   {
     id: "main-hero",
     videoSrc: "/videos/ksu-campus-hero.mp4",
-    posterSrc: "/images/hero/campus-aerial.jpg",
+    posterSrc: "/logos/ksu-bck1.jpg",
     eyebrow: "Kisii University",
     title: "Shaping Tomorrow. Inspiring Innovation.",
     subtitle:
@@ -38,20 +38,32 @@ const heroSlides = [
   },
 ];
 
-const defaultStats = [
-  { value: 45000, suffix: "+", label: "Alumni" },
-  { value: 18000, suffix: "+", label: "Active Students" },
-  { value: 1200, suffix: "+", label: "Staff" },
-  { value: 10, label: "Schools" },
-  { value: 150, suffix: "+", label: "Programmes" },
-  { value: 50, suffix: "+", label: "Research Projects" },
-];
+function buildStats(facts: HomeMetric[]) {
+  if (facts.length === 0) return [];
+
+  return facts
+    .slice(0, 6)
+    .map((fact) => {
+      const numericValue = parseInt(fact.value.replace(/[^0-9]/g, ""), 10) || 0;
+      if (numericValue === 0) return null;
+      const hasSuffix = fact.value.includes("+") || fact.value.includes("K");
+      return {
+        value: numericValue,
+        suffix: hasSuffix ? "+" : undefined,
+        label: fact.label,
+        description: fact.detail,
+      };
+    })
+    .filter((stat): stat is NonNullable<typeof stat> => stat !== null);
+}
 
 export default async function LandingPage() {
   const [homepage, megaMenuData] = await Promise.all([
     getHomepageData(),
     getNavData(),
   ]);
+
+  const stats = buildStats(homepage.facts);
 
   return (
     <ReducedMotionProvider>
@@ -79,8 +91,8 @@ export default async function LandingPage() {
           {/* 1. Video Hero */}
           <VideoHero slides={heroSlides} />
 
-          {/* 2. Numbers/Facts Strip */}
-          <NumbersFactsSection stats={defaultStats} />
+          {/* 2. Numbers/Facts Strip - only if we have data */}
+          {stats.length > 0 && <NumbersFactsSection stats={stats} />}
 
           {/* 3. Strategic Partnership */}
           <StrategicPartnershipSection />
@@ -88,25 +100,23 @@ export default async function LandingPage() {
           {/* 4. Audience Band */}
           <AudienceBandSection />
 
-          {/* 5. Academics Section - using existing */}
-          {/* TODO: Add AcademicsSection component */}
+          {/* 5. Featured Stories - only if we have stories */}
+          {homepage.featuredStories.length > 0 && (
+            <FeaturedStoriesGrid stories={homepage.featuredStories} />
+          )}
 
-          {/* 6. Featured Stories */}
-          <FeaturedStoriesGrid stories={homepage.featuredStories} />
-
-          {/* 7. Life at KSU */}
+          {/* 6. Life at KSU */}
           <LifeAtKsuSection />
 
-          {/* 8. News/Events - using existing LatestContentSection */}
-          {/* TODO: Add NewsEventsSection component */}
-
-          {/* 9. Research */}
+          {/* 7. Research */}
           <ResearchSection />
 
-          {/* 10. Partners */}
-          <PartnersMarquee partners={homepage.partners} />
+          {/* 8. Partners - only if we have partners */}
+          {homepage.partners.length > 0 && (
+            <PartnersMarquee partners={homepage.partners} />
+          )}
 
-          {/* 11. Journey CTA */}
+          {/* 9. Journey CTA */}
           <JourneyCtaSection />
         </AmbientPageBackground>
 
