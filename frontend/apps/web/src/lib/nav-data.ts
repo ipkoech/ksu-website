@@ -16,23 +16,31 @@ import type {
 export async function getNavData(): Promise<MegaMenuData> {
   const [schoolsResult, divisionsResult, adminDepartmentsResult, clubsResult] =
     await Promise.allSettled([
-      schoolsApi.list({
-        fields: "id,name,slug",
-        per_page: 50,
-      }),
-      divisionsApi.list({
-        fields: "id,name,slug,division_type",
-        per_page: 50,
-      }),
-      departmentsApi.list({
-        fields: "id,name,slug,code,school_id,department_type",
-        department_type: "administrative",
-        per_page: 100,
-      }),
-      clubsApi.list({
-        fields: "id,name,slug",
-        per_page: 12,
-      }),
+      retryOnce(() =>
+        schoolsApi.list({
+          fields: "id,name,slug",
+          per_page: 50,
+        }),
+      ),
+      retryOnce(() =>
+        divisionsApi.list({
+          fields: "id,name,slug,division_type",
+          per_page: 50,
+        }),
+      ),
+      retryOnce(() =>
+        departmentsApi.list({
+          fields: "id,name,slug,code,school_id,department_type",
+          department_type: "administrative",
+          per_page: 100,
+        }),
+      ),
+      retryOnce(() =>
+        clubsApi.list({
+          fields: "id,name,slug",
+          per_page: 12,
+        }),
+      ),
     ]);
 
   if (
@@ -41,19 +49,15 @@ export async function getNavData(): Promise<MegaMenuData> {
     adminDepartmentsResult.status === "rejected" ||
     clubsResult.status === "rejected"
   ) {
-    console.error("Failed to fetch some nav data:", {
-      schools:
-        schoolsResult.status === "rejected" ? schoolsResult.reason : undefined,
-      divisions:
-        divisionsResult.status === "rejected"
-          ? divisionsResult.reason
-          : undefined,
-      departments:
-        adminDepartmentsResult.status === "rejected"
-          ? adminDepartmentsResult.reason
-          : undefined,
-      clubs: clubsResult.status === "rejected" ? clubsResult.reason : undefined,
-    });
+    console.warn(
+      "Navigation data unavailable; using the fallback menu.",
+      compactFailures({
+        schools: rejectionMessage(schoolsResult),
+        divisions: rejectionMessage(divisionsResult),
+        departments: rejectionMessage(adminDepartmentsResult),
+        clubs: rejectionMessage(clubsResult),
+      }),
+    );
   }
 
   const schools: NavSchool[] =
@@ -80,18 +84,20 @@ export async function getNavData(): Promise<MegaMenuData> {
 
   const wingsResult = await Promise.allSettled(
     divisions.map((division) =>
-      wingsApi.listByDivision(division.id, {
-        fields: "id,name,slug,code,wing_type",
-        is_active: true,
-      }),
+      retryOnce(() =>
+        wingsApi.listByDivision(division.id, {
+          fields: "id,name,slug,code,wing_type",
+          is_active: true,
+        }),
+      ),
     ),
   );
 
   if (wingsResult.some((result) => result.status === "rejected")) {
-    console.error("Failed to fetch some nav data:", {
+    console.warn("Navigation data unavailable; using the fallback menu.", {
       wings: wingsResult
         .filter((result) => result.status === "rejected")
-        .map((result) => result.reason),
+        .map((result) => rejectionMessage(result)),
     });
   }
 
@@ -151,6 +157,32 @@ export async function getNavData(): Promise<MegaMenuData> {
     adminUnits,
     clubs,
   };
+}
+
+async function retryOnce<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch {
+    return operation();
+  }
+}
+
+function rejectionMessage(result: PromiseSettledResult<unknown>) {
+  if (result.status !== "rejected") {
+    return undefined;
+  }
+
+  return result.reason instanceof Error
+    ? result.reason.message
+    : String(result.reason);
+}
+
+function compactFailures(failures: Record<string, string | undefined>) {
+  return Object.fromEntries(
+    Object.entries(failures).filter((entry): entry is [string, string] =>
+      Boolean(entry[1]),
+    ),
+  );
 }
 
 function uniqueNavUnits<T extends { id: string; slug: string }>(
