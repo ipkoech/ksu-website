@@ -1,11 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowRight, AlertTriangle, Mail, Phone, Newspaper } from "lucide-react";
-import {
-  AmbientPageBackground,
-  ScrollReveal,
-  ScrollRevealGroup,
-} from "@ksu/ui/components";
+import { ArrowRight, AlertTriangle, Mail, Newspaper } from "lucide-react";
+import { AmbientPageBackground, ScrollReveal } from "@ksu/ui/components";
 import { MiniHeader, PublicFooter, PublicHeader } from "@ksu/ui/layout/public";
 import { ReducedMotionProvider } from "@ksu/ui/motion";
 import {
@@ -19,27 +15,16 @@ import {
   PartnersMarquee,
   JourneyCtaSection,
 } from "@/components/home/landing-sections";
-import { CountdownStrip } from "@/components/home/countdown-strip";
-import { HomepageSections } from "@/components/home/section-renderer";
+import { AcademicsPathwaySection } from "@/components/home/academics-pathway-section";
 import { NewsletterSubscribeForm } from "@/components/home/newsletter-subscribe-form";
-import {
-  FeaturedStoriesSection,
-  HeroAdmissionsSection,
-} from "@/components/home/sections/composed-section-variants";
 import { PublicImage } from "@/components/public/public-image";
 import { EntityInquiryLauncher } from "@/components/public/entity-inquiry-launcher";
 import {
   getHomepageData,
   type HomeCard,
-  type HomeIntake,
   type HomeMetric,
 } from "@/lib/homepage-data";
-import {
-  getComposedHomepage,
-  type HomepageSection,
-} from "@/lib/homepage-sections";
 import { getNavData } from "@/lib/nav-data";
-import { getPublicVcHub } from "@/lib/vice-chancellor-data";
 import {
   heriAfricaFrontendUrl,
   libraryFrontendUrl,
@@ -48,45 +33,11 @@ import {
 
 export const revalidate = 300;
 
-const fallbackHomeHeroSection: HomepageSection = {
-  id: "homepage-hero-fallback",
-  page_key: "homepage",
-  scope_type: "university",
-  section_key: "hero-admissions-fallback",
-  layout_variant: "hero_admissions",
-  title: "Shaping Tomorrow. Inspiring Innovation.",
-  subtitle: "Kisii University",
-  description:
-    "A leading public university committed to academic excellence, innovative research and transforming communities.",
-  items: [
-    {
-      id: "explore-programmes",
-      item_type: "cta",
-      title: "Explore programmes",
-      cta_label: "Explore programmes",
-      cta_url: "/academics/programmes",
-      display_order: 10,
-      is_enabled: true,
-      content: { intent: "primary" },
-    },
-    {
-      id: "discover-kisii",
-      item_type: "cta",
-      title: "Discover Kisii University",
-      cta_label: "Discover Kisii University",
-      cta_url: "/about",
-      display_order: 20,
-      is_enabled: true,
-      content: { intent: "secondary" },
-    },
-  ],
-};
-
 const heroSlides = [
   {
     id: "main-hero",
     videoSrc: "/videos/ksu-campus-hero.mp4",
-    posterSrc: "/logos/ksu-bck1.jpg",
+    posterSrc: "/images/homepage/kisii-administration-campus.jpg",
     eyebrow: "Kisii University",
     title: "Shaping Tomorrow. Inspiring Innovation.",
     subtitle:
@@ -122,12 +73,11 @@ function LandingReveal({
 }
 
 export default async function HomePage() {
-  const [homepage, megaMenuData, composedHomepage, vcHub] = await Promise.all([
+  const [homepage, megaMenuData] = await Promise.all([
     getHomepageData(),
     getNavData(),
-    getComposedHomepage(),
-    getPublicVcHub(),
   ]);
+
   const isContentDegraded =
     [
       homepage.schools.length === 0,
@@ -135,10 +85,6 @@ export default async function HomePage() {
       homepage.latestNews.length === 0,
       homepage.upcomingEvents.length === 0,
     ].filter(Boolean).length >= 2;
-
-  const hasComposedHero = composedHomepage.sections.some(
-    (section) => section.layout_variant === "hero_admissions"
-  );
 
   const stats = buildStats(homepage.facts);
 
@@ -165,86 +111,57 @@ export default async function HomePage() {
           className="overflow-x-clip"
           tabIndex={-1}
         >
-          {composedHomepage.hasRenderableSections ? (
-            <>
-              {hasComposedHero ? null : (
-                <HeroAdmissionsSection
-                  section={fallbackHomeHeroSection}
-                  hero={composedHomepage.data?.hero}
-                  programmeFinderData={{
-                    schools: homepage.schools,
-                    programmes: homepage.featuredProgrammes,
-                    intakes: homepage.activeIntakes,
-                    activeIntakeProgrammes: homepage.activeIntakeProgrammes,
-                  }}
-                />
-              )}
-              <HomepageSections
-                sections={composedHomepage.sections}
-                hero={composedHomepage.data?.hero}
-                socialLinks={homepage.socialLinks}
-                partnershipSpotlights={
-                  composedHomepage.data?.partnership_spotlights ?? []
-                }
-                programmeFinderData={{
-                  schools: homepage.schools,
-                  programmes: homepage.featuredProgrammes,
-                  intakes: homepage.activeIntakes,
-                  activeIntakeProgrammes: homepage.activeIntakeProgrammes,
-                }}
-                featuredStories={homepage.featuredStories}
-                vcHub={vcHub}
-              />
-            </>
-          ) : (
-            <>
-              {/* 1. Video Hero */}
-              <VideoHero slides={heroSlides} />
+          {/* 1. Video Hero */}
+          <VideoHero slides={heroSlides} />
 
-              {/* 2. Numbers/Facts Strip - only if we have data */}
-              {stats.length > 0 && <NumbersFactsSection stats={stats} />}
+          {/* 2. Numbers/Facts Strip */}
+          {stats.length > 0 && <NumbersFactsSection stats={stats} />}
 
-              {/* 3. Strategic Partnership */}
-              <StrategicPartnershipSection />
+          {/* 3. Strategic Partnership */}
+          <StrategicPartnershipSection />
 
-              {/* 4. Audience Band */}
-              <AudienceBandSection />
+          {/* 4. Audience Band */}
+          <AudienceBandSection />
 
-              {isContentDegraded && <ContentDegradedNotice />}
+          {isContentDegraded && <ContentDegradedNotice />}
 
-              {/* 5. Featured Stories - only if we have stories */}
-              {homepage.featuredStories.length > 0 && (
-                <FeaturedStoriesGrid stories={homepage.featuredStories} />
-              )}
+          {/* 5. Academics */}
+          <AcademicsPathwaySection
+            schools={homepage.schools}
+            activeIntakes={homepage.activeIntakes}
+          />
 
-              {/* 6. Life at KSU */}
-              <LifeAtKsuSection />
-
-              {/* 7. News & Events - only if we have content */}
-              {(homepage.latestNews.length > 0 ||
-                homepage.upcomingEvents.length > 0 ||
-                homepage.latestBlog) && (
-                <LandingReveal>
-                  <LatestContentSection
-                    newsItems={homepage.latestNews}
-                    events={homepage.upcomingEvents}
-                    blog={homepage.latestBlog}
-                  />
-                </LandingReveal>
-              )}
-
-              {/* 8. Research */}
-              <ResearchSection />
-
-              {/* 9. Partners - only if we have partners */}
-              {homepage.partners.length > 0 && (
-                <PartnersMarquee partners={homepage.partners} />
-              )}
-
-              {/* 10. Journey CTA */}
-              <JourneyCtaSection />
-            </>
+          {/* 6. Featured Stories */}
+          {homepage.featuredStories.length > 0 && (
+            <FeaturedStoriesGrid stories={homepage.featuredStories} />
           )}
+
+          {/* 7. Life at KSU */}
+          <LifeAtKsuSection />
+
+          {/* 8. News & Events */}
+          {(homepage.latestNews.length > 0 ||
+            homepage.upcomingEvents.length > 0 ||
+            homepage.latestBlog) && (
+            <LandingReveal>
+              <LatestContentSection
+                newsItems={homepage.latestNews}
+                events={homepage.upcomingEvents}
+                blog={homepage.latestBlog}
+              />
+            </LandingReveal>
+          )}
+
+          {/* 9. Research */}
+          <ResearchSection />
+
+          {/* 10. Partners */}
+          {homepage.partners.length > 0 && (
+            <PartnersMarquee partners={homepage.partners} />
+          )}
+
+          {/* 11. Journey CTA */}
+          <JourneyCtaSection />
         </AmbientPageBackground>
 
         {/* Mobile Sticky CTA Bar */}
