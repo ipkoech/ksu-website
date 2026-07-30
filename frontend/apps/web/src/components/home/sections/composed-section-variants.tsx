@@ -1055,13 +1055,13 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
   return (
     <section
       id={section.section_key}
-      className="campus-life-scroll-scene relative isolate overflow-hidden bg-[linear-gradient(180deg,#fff_0%,hsl(var(--surface-subtle)/.92)_100%)] py-10 lg:py-0"
+      className="relative isolate overflow-hidden bg-[linear-gradient(180deg,#fff_0%,hsl(var(--surface-subtle)/.92)_100%)] py-12 sm:py-14"
     >
       <div className="pointer-events-none absolute inset-y-0 right-0 -z-10 hidden w-[42%] bg-[radial-gradient(circle_at_65%_48%,hsl(var(--primary)/.12),transparent_68%)] lg:block" />
-      <div className="campus-life-sticky-frame mx-auto max-w-[1680px] px-4 sm:px-6 lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[460px] lg:max-w-none lg:items-center lg:px-0 xl:px-0 2xl:px-0">
+      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <CampusLifeHorizontalScroller>
-          <div className="lg:flex lg:w-max lg:items-stretch lg:gap-6">
-            <div className="campus-life-editorial lg:w-[min(100vw,1320px)] lg:shrink-0 lg:snap-start lg:px-8 xl:px-12">
+          <div className="flex w-max items-stretch gap-5 pb-3 lg:gap-6">
+            <div className="campus-life-editorial w-[min(88vw,980px)] shrink-0 snap-start">
               <div className="grid gap-7 lg:grid-cols-[minmax(0,0.58fr)_minmax(360px,0.42fr)] lg:items-stretch">
                 <div className="flex flex-col justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-6 motion-safe:delay-150">
                   <div className="max-w-xl">
@@ -1119,7 +1119,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
                 <CampusMosaicFeature item={feature} section={section} />
               </div>
             </div>
-            <div className="student-life-lanes mt-8 grid gap-4 sm:grid-cols-2 lg:mt-0 lg:flex lg:w-max lg:items-stretch lg:gap-5">
+            <div className="student-life-lanes mt-0 grid gap-4 sm:grid-cols-2 lg:flex lg:w-max lg:items-stretch lg:gap-5">
               {lanes.map((lane, index) => (
                 <CampusLifeLane key={lane.title} lane={lane} index={index} />
               ))}
@@ -1127,7 +1127,6 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
           </div>
         </CampusLifeHorizontalScroller>
       </div>
-      <div className="pointer-events-none absolute inset-x-6 bottom-5 hidden items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground lg:flex"><span>Scroll</span><span className="relative h-px flex-1 overflow-hidden bg-primary/15"><span className="absolute inset-y-0 left-0 w-[calc(var(--campus-progress,0)*100%)] bg-secondary transition-[width] duration-100" /></span><span>Explore life around studies</span></div>
     </section>
   );
 }
