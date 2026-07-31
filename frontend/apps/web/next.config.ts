@@ -7,8 +7,12 @@ const researchFrontendUrl =
 const libraryFrontendUrl =
   process.env.NEXT_PUBLIC_LIBRARY_FRONTEND_URL ||
   "https://library.kisiiuniversity.ac.ke";
+const heriFrontendUrl =
+  process.env.KSU_HERI_FRONTEND_URL || "http://localhost:3004";
 const withPath = (baseUrl: string, path: string) =>
   `${baseUrl.replace(/\/$/, "")}${path}`;
+const withHeriPath = (path: string) =>
+  `${heriFrontendUrl.replace(/\/$/, "")}/heri-africa${path}`;
 
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
@@ -221,6 +225,18 @@ const nextConfig: NextConfig = {
         source: "/students/admissions/center",
         destination: "https://digital.kisiiuniversity.ac.ke/students/admissions/center",
         permanent: true,
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/heri-africa",
+        destination: withHeriPath(""),
+      },
+      {
+        source: "/heri-africa/:path*",
+        destination: withHeriPath("/:path*"),
       },
     ];
   },

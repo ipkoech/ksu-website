@@ -52,7 +52,9 @@ export default defineConfig({
       testDir: "./apps/heri-africa/e2e",
       use: {
         ...devices["Desktop Chrome"],
-        baseURL: process.env.HERI_E2E_BASE_URL ?? "http://localhost:3004",
+        baseURL:
+          process.env.HERI_E2E_BASE_URL ??
+          "http://localhost:3000/heri-africa/",
       },
     },
     {
@@ -60,7 +62,9 @@ export default defineConfig({
       testDir: "./apps/heri-africa/e2e",
       use: {
         ...devices["Pixel 5"],
-        baseURL: process.env.HERI_E2E_BASE_URL ?? "http://localhost:3004",
+        baseURL:
+          process.env.HERI_E2E_BASE_URL ??
+          "http://localhost:3000/heri-africa/",
       },
     },
   ],

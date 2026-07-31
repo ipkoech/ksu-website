@@ -19,6 +19,7 @@ export default [
       "**/.next-codex/**",
       "**/.next-codex-*/**",
       "**/tmp/ksu-*-next/**",
+      "**/tmp/**",
       "**/out/**",
       "**/node_modules/**",
       "**/dist/**",

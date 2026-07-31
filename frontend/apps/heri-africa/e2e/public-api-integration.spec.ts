@@ -28,13 +28,13 @@ test.describe("HERI public API integration", () => {
   test("renders the public shell and contact integration surface", async ({
     page,
   }) => {
-    await page.goto("/contact");
+    await page.goto("./contact");
     await expect(
       page.getByRole("heading", { name: /Connect With the Research Chair/i }),
     ).toBeVisible();
     await expect(
       page.getByRole("contentinfo").getByRole("link", { name: "Our Work" }),
-    ).toHaveAttribute("href", "/our-work");
+    ).toHaveAttribute("href", "/heri-africa/our-work");
   });
 
   test("submits a contact enquiry to the HERI API", async ({ page }) => {
@@ -49,7 +49,7 @@ test.describe("HERI public API integration", () => {
         },
       });
     });
-    await page.goto("/contact");
+    await page.goto("./contact");
     await page.getByLabel(/Full name/).fill("Amina Otieno");
     await page.getByLabel(/Email address/).fill("amina@example.org");
     await page

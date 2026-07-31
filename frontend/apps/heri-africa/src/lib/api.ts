@@ -64,7 +64,10 @@ export type HeroSlide = {
 };
 
 const apiBase =
-  process.env.NEXT_PUBLIC_HERI_API_URL ?? "http://localhost:8003/api/v1/heri";
+  (typeof window === "undefined"
+    ? process.env.KSU_HERI_API_URL
+    : process.env.NEXT_PUBLIC_HERI_API_URL) ??
+  "http://localhost:8003/api/v1/heri";
 
 async function get<T>(path: string): Promise<T> {
   const response = await fetch(`${apiBase}${path}`, {

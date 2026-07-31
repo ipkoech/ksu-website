@@ -232,7 +232,7 @@ deploy_local() {
     (cd frontend && pnpm build)
   fi
 
-  local services=(postgres redis main research library celery-main celery-library)
+  local services=(postgres redis main research library heri celery-main celery-library celery-heri)
   if [[ "${with_gateway}" -eq 1 ]]; then
     services+=(gateway)
   fi
@@ -450,7 +450,7 @@ if [[ "\${MODE}" = "status" || "\${MODE}" = "logs" ]]; then
       default_services=(postgres redis "\${default_services[@]}")
     fi
   else
-    default_services=(main research library celery-main celery-research celery-library web-prod admin-prod research-web-prod library-web-prod gateway edge)
+    default_services=(main research library heri celery-main celery-research celery-library celery-heri web-prod admin-prod research-web-prod library-web-prod heri-web-prod gateway edge)
     if [[ "\${external_data}" -eq 0 ]]; then
       default_services+=(postgres redis)
     fi
@@ -660,8 +660,8 @@ if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
   backend_services=(main research library)
   worker_services=(celery-main celery-research celery-library)
 else
-  backend_services=(main research library)
-  worker_services=(celery-main celery-research celery-library)
+  backend_services=(main research library heri)
+  worker_services=(celery-main celery-research celery-library celery-heri)
 fi
 core_services=("\${backend_services[@]}" "\${worker_services[@]}")
 if [[ "\${external_data}" -eq 0 ]]; then
@@ -681,7 +681,7 @@ if [[ "\${SKIP_FRONTEND}" -eq 0 ]]; then
     frontend_services+=(admin-prod research-web-prod)
     proxy_services+=(research-edge)
   else
-    frontend_services+=(web-prod admin-prod research-web-prod library-web-prod)
+    frontend_services+=(web-prod admin-prod research-web-prod library-web-prod heri-web-prod)
     proxy_services+=(edge)
   fi
 fi
@@ -1244,7 +1244,7 @@ deploy_vm() {
     if [[ "${deploy_scope}" = "research" ]]; then
       inspect_services="main research library celery-main celery-research celery-library admin-prod research-web-prod research-gateway research-edge"
     else
-      inspect_services="main research library celery-main celery-research celery-library edge gateway"
+      inspect_services="main research library heri celery-main celery-research celery-library celery-heri web-prod admin-prod research-web-prod library-web-prod heri-web-prod edge gateway"
     fi
   fi
 

@@ -9,6 +9,8 @@ const news = [
   },
 ];
 
+const heriRoute = (route: string) => `.${route}`;
+
 test.describe("HERI public browser matrix", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/api/v1/heri/site", (route) =>
@@ -119,7 +121,7 @@ test.describe("HERI public browser matrix", () => {
       ["/partner-with-us", /Partner With Us to/i],
     ] as const;
     for (const [route, heading] of routes) {
-      await page.goto(route);
+      await page.goto(heriRoute(route));
       await expect(
         page.getByRole("heading", { name: heading }).first(),
       ).toBeVisible();
@@ -130,7 +132,7 @@ test.describe("HERI public browser matrix", () => {
     await page.route("**/api/v1/heri/news/reading-in-kisii", (route) =>
       route.fulfill({ json: { ...news[0], body: "Full story content." } }),
     );
-    await page.goto("/news-insights/reading-in-kisii");
+    await page.goto("./news-insights/reading-in-kisii");
     await expect(
       page.getByRole("heading", { name: news[0].title }),
     ).toBeVisible();
@@ -148,7 +150,7 @@ test.describe("HERI public browser matrix", () => {
         },
       }),
     );
-    await page.goto("/contact");
+    await page.goto("./contact");
     await page.getByRole("button", { name: /send enquiry/i }).click();
     await expect(page.getByLabel(/Full name/)).toHaveJSProperty(
       "validity.valueMissing",
@@ -175,7 +177,7 @@ test.describe("HERI public browser matrix", () => {
     await page.route("**/api/v1/heri/news**", (route) =>
       route.fulfill({ status: 503, json: { detail: "Unavailable" } }),
     );
-    await page.goto("/news-insights");
+    await page.goto("./news-insights");
     await expect(
       page.getByRole("heading", { name: /Research, Events & Stories/i }),
     ).toBeVisible();
@@ -196,7 +198,7 @@ test.describe("HERI public browser matrix", () => {
         });
       },
     );
-    await page.goto("/partner-with-us");
+    await page.goto("./partner-with-us");
     await page.getByLabel(/Full name/).fill("Amina Otieno");
     await page.getByLabel(/Email address/).fill("amina@example.org");
     await page.getByLabel(/Organisation/).fill("Kisii Literacy Network");
@@ -220,7 +222,7 @@ test.describe("HERI public browser matrix", () => {
   });
 
   test("team and insights filters are interactive", async ({ page }) => {
-    await page.goto("/team");
+    await page.goto("./team");
     await expect(
       page.getByRole("button", { name: "Leadership" }),
     ).toBeVisible();
@@ -229,7 +231,7 @@ test.describe("HERI public browser matrix", () => {
       page.getByText("No team members are currently published in this group."),
     ).not.toBeVisible();
 
-    await page.goto("/news-insights");
+    await page.goto("./news-insights");
     await page.getByRole("button", { name: "News", exact: true }).click();
     await expect(page.getByText(news[0].title)).toBeVisible();
     await page.getByPlaceholder(/Search news/).fill("does not exist");
@@ -248,7 +250,7 @@ test.describe("HERI public browser matrix", () => {
       "/partner-with-us",
       "/contact",
     ]) {
-      await page.goto(route);
+      await page.goto(heriRoute(route));
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth > window.innerWidth + 1,
       );
