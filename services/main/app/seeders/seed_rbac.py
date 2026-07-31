@@ -321,6 +321,20 @@ for spec in ROLE_SPECS:
         break
 
 
+for spec in ROLE_SPECS:
+    for permission_name in spec["permission_names"]:
+        if permission_name in _existing_permissions:
+            continue
+        resource, action = _split_permission_name(permission_name)
+        PERMISSION_SPECS.append((
+            permission_name,
+            f"Grant {permission_name.replace('_', ' ')}",
+            resource,
+            action,
+        ))
+        _existing_permissions.add(permission_name)
+
+
 async def seed_rbac(db: AsyncSession, ctx: SeedContext) -> None:
     for name, description, resource, action in PERMISSION_SPECS:
         await upsert_permission(
