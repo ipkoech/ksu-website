@@ -28,12 +28,16 @@ export interface LandingHeroSlide {
   desktopImageUrl?: string;
   mobileImageUrl?: string;
   imageAlt: string;
+  videoUrl?: string;
   primaryLabel: string;
   primaryHref: string;
   primaryExternal?: boolean;
   secondaryLabel?: string;
   secondaryHref?: string;
   secondaryExternal?: boolean;
+  tertiaryLabel?: string;
+  tertiaryHref?: string;
+  tertiaryExternal?: boolean;
 }
 
 export interface LandingHeroData {

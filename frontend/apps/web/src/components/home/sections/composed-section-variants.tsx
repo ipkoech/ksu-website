@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import type { ComponentType, ReactNode } from "react";
+import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 import {
   Activity,
   ArrowRight,
@@ -24,6 +26,8 @@ import {
   Youtube,
   type LucideIcon,
 } from "lucide-react";
+import { Reveal, RevealGroup } from "@/components/home/motion-reveal";
+import { SectionFadeIn } from "@/components/home/section-fade-in";
 import { AdmissionsCountdown } from "@/components/home/admissions-countdown";
 import { AdmissionsPopover } from "@/components/home/admissions-popover";
 import { ImageCurtainReveal } from "@/components/about/image-curtain-reveal";
@@ -77,6 +81,127 @@ export type ProgrammeFinderData = {
 };
 
 export function FeaturedStoriesSection({ stories }: { stories?: HomeCard[] }) {
+  const items = (stories ?? []).slice(0, 4);
+  if (!items.length) return null;
+  const [lead, ...rest] = items;
+
+  return (
+    <section className="bg-surface-subtle py-12 lg:py-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <SectionFadeIn className="text-center">
+          <SectionTitle
+            title="Featured Stories"
+            subtitle="News and stories from across Kisii University"
+          />
+        </SectionFadeIn>
+
+        {/* Lead story — full width */}
+        <Reveal variant="fade-up" className="mt-10">
+          <LinkWrapper
+            href={lead.href}
+            className="group relative block overflow-hidden rounded-2xl bg-primary"
+          >
+            <div className="aspect-[16/9] w-full sm:aspect-[21/9]">
+              <PublicImage
+                src={lead.imageUrl}
+                alt={lead.title}
+                ratio="fill"
+                fallbackContent={<Newspaper className="h-10 w-10" />}
+                sizes="(min-width: 1280px) 1280px, 100vw"
+                className="absolute inset-0 h-full w-full"
+                imageClassName="object-cover transition duration-700 group-hover:scale-[1.03]"
+              />
+            </div>
+            <div
+              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent"
+              aria-hidden
+            />
+            <div className="absolute inset-x-0 bottom-0 p-5 text-white sm:p-8">
+              <div className="flex flex-wrap items-center gap-3 text-xs font-semibold">
+                <span className="rounded-full bg-secondary px-3 py-1 uppercase tracking-[0.08em]">
+                  {lead.eyebrow ?? "Featured"}
+                </span>
+                {lead.meta ? (
+                  <span className="text-white/80">{lead.meta}</span>
+                ) : null}
+              </div>
+              <h3 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl">
+                {lead.title}
+              </h3>
+              {lead.body ? (
+                <p className="mt-2 line-clamp-2 max-w-2xl text-sm leading-6 text-white/85 sm:text-base">
+                  {lead.body}
+                </p>
+              ) : null}
+              <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-secondary">
+                Read story
+                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+              </span>
+            </div>
+          </LinkWrapper>
+        </Reveal>
+
+        {/* Supporting stories */}
+        {rest.length ? (
+          <RevealGroup
+            variant="fade-up"
+            staggerDelay={100}
+            className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {rest.map((story) => (
+              <LinkWrapper
+                key={story.id ?? story.href}
+                href={story.href}
+                className="group"
+              >
+                <div className="aspect-[16/10] overflow-hidden rounded-2xl bg-accent">
+                  <PublicImage
+                    src={story.imageUrl}
+                    alt={story.title}
+                    ratio="fill"
+                    fallbackContent={<Newspaper className="h-8 w-8" />}
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    className="h-full w-full"
+                    imageClassName="object-cover transition duration-500 group-hover:scale-105"
+                  />
+                </div>
+                <div className="mt-4">
+                  {story.eyebrow || story.meta ? (
+                    <p className="text-xs text-muted-foreground">
+                      {story.eyebrow}
+                      {story.eyebrow && story.meta ? " · " : ""}
+                      {story.meta}
+                    </p>
+                  ) : null}
+                  <h3 className="mt-2 font-[family-name:var(--font-display)] text-lg font-semibold leading-tight text-foreground group-hover:text-primary">
+                    {story.title}
+                  </h3>
+                  <span className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-secondary">
+                    Read more
+                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                  </span>
+                </div>
+              </LinkWrapper>
+            ))}
+          </RevealGroup>
+        ) : null}
+
+        {/* Explore more */}
+        <Reveal variant="fade-up" delay={150} className="mt-10 text-center">
+          <Link
+            href="/stories"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90"
+          >
+            Explore more stories
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+function _OldFeaturedStoriesSection({ stories }: { stories?: HomeCard[] }) {
   const items = (stories ?? []).slice(0, 4);
   if (!items.length) return null;
   const [lead, ...secondary] = items;
@@ -232,10 +357,10 @@ export function HeroAdmissionsSection({
   const actions = heroActions(content?.actions, section.items, admissions ?? undefined);
 
   return (
-    <section className="relative isolate min-h-[clamp(390px,calc(100svh-13rem),580px)] overflow-hidden bg-primary text-white">
+    <section className="relative isolate h-[60vh] min-h-[480px] max-h-[720px] overflow-hidden bg-primary text-white lg:h-[70vh]">
       {videoSrc ? (
         <video
-          className="absolute inset-0 h-full w-full object-cover object-[50%_55%]"
+          className="absolute inset-0 h-full w-full object-cover"
           autoPlay
           muted
           loop
@@ -255,7 +380,7 @@ export function HeroAdmissionsSection({
               ratio="fill"
               priority
               className="absolute inset-0 h-full w-full md:hidden"
-              imageClassName="object-cover object-[50%_54%]"
+              imageClassName="object-cover"
               sizes="100vw"
             />
           ) : null}
@@ -267,35 +392,32 @@ export function HeroAdmissionsSection({
             className={`absolute inset-0 h-full w-full ${
               mobileImageSrc ? "hidden md:block" : ""
             }`}
-            imageClassName="object-cover object-[50%_55%]"
+            imageClassName="object-cover"
             sizes="100vw"
           />
         </>
       )}
+      {/* Bottom gradient for text readability */}
       <div
-        className="pointer-events-none absolute inset-y-0 left-0 w-full bg-[linear-gradient(90deg,rgba(1,8,22,.48)_0%,rgba(1,8,22,.24)_34%,transparent_72%)] sm:w-[82%] lg:w-[68%]"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"
         aria-hidden
       />
 
-      <div
-        className={`relative z-10 mx-auto grid min-h-[clamp(390px,calc(100svh-13rem),580px)] max-w-[1680px] items-center gap-8 px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16 xl:px-10 2xl:px-12 ${
-          "lg:grid-cols-1"
-        }`}
-      >
-        <div className="max-w-2xl self-end [text-shadow:0_2px_14px_rgba(0,0,0,.55)]">
-          <h1 className="line-clamp-2 max-w-2xl text-balance font-[family-name:var(--font-display)] text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-6xl">
+      <div className="relative z-10 mx-auto flex h-full max-w-[1680px] items-end px-4 pb-28 sm:px-6 sm:pb-32 lg:px-8 lg:pb-36 xl:px-10 2xl:px-12">
+        <div className="max-w-2xl">
+          <h1 className="text-balance font-[family-name:var(--font-display)] text-3xl font-bold leading-[1.1] sm:text-4xl md:text-5xl lg:text-6xl">
             {headline}
             {highlight ? (
               <span className="text-secondary"> {highlight}</span>
             ) : null}
           </h1>
-          <SectionBody
-            value={description}
-            light
-            className="mt-4 line-clamp-2 max-w-xl text-base leading-7 text-white/90 sm:text-lg sm:leading-8"
-          />
+          {description ? (
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-white/90 sm:text-lg">
+              {description}
+            </p>
+          ) : null}
           {actions.length ? (
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap items-center gap-4">
               {actions.slice(0, 2).map((action, index) => (
                 <HeroActionLink
                   key={action.key ?? `${action.href}-${index}`}
@@ -306,11 +428,73 @@ export function HeroAdmissionsSection({
             </div>
           ) : null}
         </div>
-
-        {showAdmissions && admissions ? <AdmissionsPopover admissions={admissions} /> : null}
       </div>
+
+      {showAdmissions && admissions ? (
+        <div className="absolute bottom-6 right-6 hidden lg:block xl:right-10">
+          <AdmissionsPopover admissions={admissions} />
+        </div>
+      ) : null}
     </section>
   );
+}
+
+type PartnershipChapter = {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  body: string;
+  values: string[];
+};
+
+const fallbackPartnershipChapters: PartnershipChapter[] = [
+  {
+    id: "fallback-initiative",
+    title: "The initiative",
+    body: "HERI-Africa — Harnessing Education Research for Impact in Africa — is a Pan-African initiative bringing together collaborators from government, universities and civil society research organizations, working to raise the impact of education research on the continent from 3% to 30% by 2050.",
+    values: [],
+  },
+  {
+    id: "fallback-ksu-role",
+    title: "Kisii University's role",
+    subtitle: "The Research Chair in Language Education",
+    body: "A leading Africa-led Centre of Excellence in language education research — advancing foundational literacy, educational transformation, and global societal impact. The Chair advances impactful, policy-responsive, and practice-oriented research in language education and foundational literacy for educational transformation in Africa and beyond.",
+    values: [
+      "Excellence",
+      "Collaboration",
+      "Inclusivity",
+      "Accountability",
+      "Innovation",
+      "Responsiveness",
+      "Integrity",
+      "African-Centred knowledge",
+    ],
+  },
+];
+
+function partnershipChapters(section: HomepageSection): PartnershipChapter[] {
+  const chapters = displayItems(section)
+    .filter((item) => item.content?.group === "chapter")
+    .map((item): PartnershipChapter | null => {
+      if (!item.title || !item.body_text) return null;
+      const rawValues = item.content?.values;
+      const values = Array.isArray(rawValues)
+        ? rawValues.filter(
+            (value): value is string =>
+              typeof value === "string" && value.trim().length > 0,
+          )
+        : [];
+      return {
+        id: item.id,
+        title: item.title,
+        subtitle: item.subtitle,
+        body: item.body_text,
+        values,
+      };
+    })
+    .filter((chapter): chapter is PartnershipChapter => chapter !== null);
+
+  return chapters.length ? chapters : fallbackPartnershipChapters;
 }
 
 function homepageAdmissionsFromIntakes(
@@ -472,11 +656,13 @@ function HeroActionLink({
   action,
   prominent = false,
   subtle = false,
+  ghost = false,
   fullWidth = false,
 }: {
   action: HomepageHeroAction;
   prominent?: boolean;
   subtle?: boolean;
+  ghost?: boolean;
   fullWidth?: boolean;
 }) {
   return (
@@ -487,11 +673,13 @@ function HeroActionLink({
       className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${
         fullWidth ? "w-full" : ""
       } ${
-        prominent
-          ? "bg-secondary text-white shadow-sm hover:bg-secondary/90"
-          : subtle
-            ? "px-2 py-1 text-white/85 hover:text-white"
-            : "border border-white/35 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
+        ghost
+          ? "px-0 text-white/90 hover:text-white"
+          : prominent
+            ? "bg-secondary text-white shadow-sm hover:bg-secondary/90"
+            : subtle
+              ? "px-2 py-1 text-white/85 hover:text-white"
+              : "border border-white/35 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
       }`}
     >
       {action.label}
@@ -516,7 +704,12 @@ function heroActions(
         key: item.id,
         label: heroActionLabel(item),
         href: normalizeHeroHref(item.cta_url!),
-        style: item.content?.intent === "primary" ? "primary" : "secondary",
+        style:
+          item.content?.intent === "primary"
+            ? "primary"
+            : item.content?.intent === "tertiary"
+              ? "tertiary"
+              : "secondary",
       }),
     );
 
@@ -531,7 +724,9 @@ function heroActions(
   const hasApplicationAction =
     Boolean(admissionAction) ||
     [...actions, ...sectionActions].some((action) =>
-      /apply|application|admission/i.test(action.label),
+      /apply|application|admission|study with us|study at ksu/i.test(
+        action.label,
+      ),
     );
   const merged = [
     ...(admissionAction ? [admissionAction] : []),
@@ -542,8 +737,8 @@ function heroActions(
       : [
           {
             key: "fallback-study",
-            label: "Study at KSU",
-            href: "/academics/programmes",
+            label: "Study With Us",
+            href: "/admissions/how-to-apply",
             style: "primary" as const,
           },
         ]),
@@ -553,13 +748,22 @@ function heroActions(
       href: "/academics/programmes",
       style: "secondary" as const,
     },
+    {
+      key: "fallback-discover",
+      label: "Discover KSU",
+      href: "/about",
+      style: "tertiary" as const,
+    },
   ];
   const seen = new Set<string>();
   let applicationActionSeen = false;
   return merged.filter((action) => {
     const identity = normalizeHeroHref(action.href);
     if (!action.label || !identity || seen.has(identity)) return false;
-    const isApplicationAction = /apply|application|admission/i.test(action.label);
+    const isApplicationAction =
+      /apply|application|admission|study with us|study at ksu/i.test(
+        action.label,
+      );
     if (isApplicationAction && applicationActionSeen) return false;
     if (isApplicationAction) applicationActionSeen = true;
     seen.add(identity);
@@ -594,39 +798,172 @@ function formatPublicDate(value?: string | null) {
   }).format(date);
 }
 
-export function PulseStripSection({ section }: SectionVariantProps) {
-  const items = officialPulseItems(section);
-  const configuredMaxItems =
-    typeof section.settings?.maxItems === "number"
-      ? section.settings.maxItems
-      : 5;
-  const maxItems = Math.min(Math.max(configuredMaxItems, 1), 5);
+export function PulseStripSection({ section, factsSection }: SectionVariantProps) {
+  const stats = factsSection ? extractStats(factsSection) : [];
+
+  if (stats.length === 0) return null;
 
   return (
     <section
-      aria-label={section.title ?? "University pulse"}
-      className="border-y border-primary/10 bg-primary text-white"
+      aria-label={factsSection?.title ?? "Kisii University at a glance"}
+      className="relative z-10 -mt-14 pb-12 sm:-mt-16 lg:-mt-20 lg:pb-16"
     >
-      <div className="mx-auto grid max-w-[1680px] gap-0 px-4 sm:px-6 lg:grid-cols-[190px_minmax(0,1fr)] lg:px-8 xl:px-10 2xl:px-12">
-        <div className="flex min-h-[86px] items-center gap-3 border-b border-white/10 py-4 lg:border-b-0 lg:border-r lg:pr-5">
-          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-secondary">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-secondary/25" />
-            <Activity className="relative h-5 w-5" aria-hidden />
-          </span>
-          <div className="min-w-0">
-            <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-tight text-white">
-              {section.title ?? "University pulse"}
-            </h2>
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <SectionFadeIn duration={800}>
+          <div className="rounded-2xl bg-white px-6 py-10 shadow-lg shadow-primary/10 lg:px-12 lg:py-12">
+            <div className="flex flex-wrap items-start justify-center gap-x-12 gap-y-10 lg:gap-x-16">
+              {stats.slice(0, 6).map((stat, index) => (
+                <NumberStatItem
+                  key={stat.id}
+                  stat={stat}
+                  index={index}
+                  total={Math.min(stats.length, 6)}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-
-        <div className="-mx-4 flex snap-x gap-0 overflow-x-auto px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:grid lg:auto-cols-fr lg:grid-flow-col lg:divide-x lg:divide-white/10 lg:overflow-visible lg:px-0">
-          {items.slice(0, maxItems).map((item, index) => (
-            <PulseItem key={item.id} item={item} index={index} />
-          ))}
-        </div>
+        </SectionFadeIn>
       </div>
     </section>
+  );
+}
+
+function SectionTitle({
+  title,
+  subtitle,
+  centered = true,
+}: {
+  title: string;
+  subtitle?: string;
+  centered?: boolean;
+}) {
+  return (
+    <div className={centered ? "text-center" : ""}>
+      <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold text-primary sm:text-4xl">
+        {title}
+      </h2>
+      {subtitle ? (
+        <p
+          className={`mt-4 text-base text-muted-foreground lg:text-lg ${
+            centered ? "mx-auto max-w-2xl" : "max-w-3xl"
+          }`}
+        >
+          {subtitle}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+interface StatData {
+  id: string;
+  value: number;
+  suffix?: string;
+  label: string;
+}
+
+function extractStats(section: HomepageSection): StatData[] {
+  const items = displayItems(section);
+  return items
+    .filter((item) => item.title && /^\d/.test(item.title))
+    .map((item) => {
+      const match = item.title?.match(/^([\d,.]+)([\+KMB%])?/i);
+      const rawValue = match?.[1]?.replace(/[,\.]/g, "") ?? "0";
+      const suffix = match?.[2] ?? "";
+      return {
+        id: item.id,
+        value: parseInt(rawValue, 10) || 0,
+        suffix: suffix || undefined,
+        label: item.body_text ?? item.subtitle ?? "",
+      };
+    })
+    .filter((stat) => stat.value > 0);
+}
+
+function NumberStatItem({
+  stat,
+  index,
+  total,
+}: {
+  stat: StatData;
+  index: number;
+  total: number;
+}) {
+  const centerIndex = (total - 1) / 2;
+  const distanceFromCenter = Math.abs(index - centerIndex);
+  const delay = distanceFromCenter * 120;
+
+  return (
+    <div
+      className="text-center motion-safe:animate-fade-in motion-safe:[animation-duration:0.6s] motion-safe:[animation-fill-mode:both]"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <div className="font-[family-name:var(--font-display)] text-4xl font-bold tabular-nums tracking-tight text-primary sm:text-5xl lg:text-6xl">
+        <CountUpNumber value={stat.value} delay={delay} />
+        {stat.suffix && (
+          <span className="text-secondary">{stat.suffix}</span>
+        )}
+      </div>
+      <p className="mt-2 text-sm text-muted-foreground lg:text-base">
+        {stat.label}
+      </p>
+    </div>
+  );
+}
+
+function CountUpNumber({ value, delay }: { value: number; delay: number }) {
+  const [count, setCount] = useState(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (hasAnimated) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          const duration = 2000;
+          const startTime = performance.now() + delay;
+
+          const animate = (currentTime: number) => {
+            const elapsed = currentTime - startTime;
+            if (elapsed < 0) {
+              requestAnimationFrame(animate);
+              return;
+            }
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setCount(Math.floor(eased * value));
+
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            } else {
+              setCount(value);
+            }
+          };
+
+          requestAnimationFrame(animate);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, [value, delay, hasAnimated]);
+
+  const prefersReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  return (
+    <span ref={ref}>
+      {prefersReducedMotion ? value.toLocaleString() : count.toLocaleString()}
+    </span>
   );
 }
 
@@ -757,25 +1094,31 @@ export function FeaturedPartnershipSection({
         cta_url: "/research/partnerships",
       };
 
-  const pillars = spotlight?.pillars?.length
-    ? spotlight.pillars
-    : [
-        { label: "Innovation programmes" },
-        { label: "Entrepreneurship & incubation" },
-        { label: "Regional development" },
-        { label: "Capacity building" },
-      ];
+  const chapters = partnershipChapters(section);
 
   return (
     <section
       id={section.section_key}
-      className="border-b border-border bg-white/[0.82] py-10 backdrop-blur-[1px] lg:py-12"
+      className="overflow-hidden border-b border-border bg-white py-12 lg:py-16"
     >
       <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        {/* Story opening — the statement */}
+        <SectionFadeIn className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+            {spotlight
+              ? "Kisii University × HERI Africa"
+              : (section.subtitle ?? "Strategic partnership")}
+          </p>
+          <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-primary sm:text-4xl lg:text-5xl">
+            {title ?? "Building Africa together"}
+          </h2>
+        </SectionFadeIn>
+
+        <div className="mt-10 grid gap-10 lg:mt-14 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-16">
+          {/* The scene — curtain draws back on the image */}
           <div className="relative">
             <ImageCurtainReveal
-              className="min-h-[280px] lg:min-h-[360px]"
+              className="min-h-[320px] rounded-2xl lg:h-full lg:min-h-[480px]"
               direction="down"
             >
               <PublicImage
@@ -785,51 +1128,80 @@ export function FeaturedPartnershipSection({
                   title ?? "Kisii University and Heri Africa partnership",
                 )}
                 ratio="fill"
-                className="absolute inset-0 h-full w-full rounded-none"
+                className="absolute inset-0 h-full w-full"
                 imageClassName="object-cover object-[50%_38%]"
               />
             </ImageCurtainReveal>
-            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-l-2 border-secondary pl-4">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-                Strategic partnership
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Building Africa together through research, enterprise and community impact.
-              </p>
-            </div>
+            <Reveal
+              variant="fade-up"
+              delay={700}
+              className="absolute bottom-5 left-5 max-w-[85%]"
+            >
+              <div className="rounded-xl bg-white/95 px-5 py-3 shadow-lg shadow-primary/15 backdrop-blur-sm">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-secondary">
+                  Strategic partnership
+                </p>
+                <p className="mt-0.5 text-sm font-semibold text-primary">
+                  Building Africa together through research, enterprise and
+                  community impact.
+                </p>
+              </div>
+            </Reveal>
           </div>
 
-          <div className="max-w-3xl">
-            <SectionEyebrow
-              value={
-                spotlight
-                  ? "Kisii University × HERI Africa"
-                  : (section.subtitle ?? "Featured partnership")
-              }
-            />
-            <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl lg:text-5xl">
-              {title ?? "Building Africa together"}
-            </h2>
-            <SectionBody
-              value={summary}
-              className="mt-4 max-w-2xl text-base leading-7"
-            />
-            <div className="mt-7 divide-y divide-blue-100 border-y border-border">
-              {pillars.slice(0, 4).map((pillar, index) => (
-                <div
-                  key={`${String(pillar.label)}-${index}`}
-                  className="flex items-center gap-4 py-3"
-                >
-                  <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-secondary">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <p className="text-sm font-semibold leading-6 text-primary">
-                    {String(pillar.label ?? "Partnership opportunity")}
-                  </p>
-                </div>
-              ))}
+          {/* The narrative — the story in chapters, driven by CMS items */}
+          <div className="flex flex-col justify-center">
+            <div className="relative border-l-2 border-secondary/30 pl-8">
+              <RevealGroup
+                variant="fade-left"
+                staggerDelay={200}
+                duration={600}
+                className="space-y-10"
+              >
+                {chapters.map((chapter) => (
+                  <div key={chapter.id} className="relative">
+                    <span
+                      className="absolute -left-[39px] top-1 h-3 w-3 rounded-full bg-secondary ring-4 ring-secondary/20"
+                      aria-hidden
+                    />
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                      {chapter.title}
+                    </p>
+                    {chapter.subtitle ? (
+                      <h3 className="mt-3 font-[family-name:var(--font-display)] text-xl font-bold text-primary sm:text-2xl">
+                        {chapter.subtitle}
+                      </h3>
+                    ) : null}
+                    <p className="mt-3 max-w-2xl text-base leading-8 text-muted-foreground">
+                      {chapter.body}
+                    </p>
+                    {chapter.values.length ? (
+                      <div className="mt-5 flex max-w-2xl flex-wrap gap-2">
+                        {chapter.values.map((value) => (
+                          <span
+                            key={value}
+                            className="rounded-full border border-secondary/30 bg-secondary/5 px-3 py-1 text-xs font-semibold text-primary"
+                          >
+                            {value}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </RevealGroup>
             </div>
-            {cta ? <CtaLink item={cta} className="mt-7" /> : null}
+
+            {/* The invitation — story close */}
+            <Reveal variant="fade-up" delay={500} className="mt-10">
+              <Link
+                href={cta.cta_url}
+                className="inline-flex min-h-11 items-center gap-2 rounded-md bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90"
+              >
+                Read more
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
+            </Reveal>
           </div>
         </div>
       </div>
@@ -839,15 +1211,11 @@ export function FeaturedPartnershipSection({
 
 export function ProgrammeFinderSection({
   section,
-  academicDatesSection,
   programmeFinderData,
 }: SectionVariantProps) {
   const journey = displayItems(section).filter(
     (item) => itemContentText(item, "group") === "journey",
   );
-  const dateItems = academicDatesSection
-    ? displayItems(academicDatesSection).slice(0, 4)
-    : [];
   const intakes = programmeFinderData?.intakes ?? [];
   const programmes = programmeFinderData?.programmes ?? [];
   const schools = programmeFinderData?.schools ?? [];
@@ -857,124 +1225,124 @@ export function ProgrammeFinderSection({
     : activeIntake
       ? programmes.filter((programme) => programme.intakeIds?.includes(activeIntake.id)).slice(0, 6)
       : [];
-  const hasAdmissionDates = dateItems.length > 0 || intakes.length > 0;
+  const activeDeadline =
+    activeIntake?.lateApplicationEnd ?? activeIntake?.applicationEnd;
 
   return (
     <section
       id={section.section_key}
-      className="programme-discovery-mosaic relative isolate overflow-hidden bg-primary py-4 text-white sm:py-6 lg:py-8"
+      className="relative isolate overflow-hidden bg-primary py-12 text-white lg:py-20"
     >
       <PublicImage
         src="/images/landing-page/tc-fore.png"
         alt="Kisii University tuition complex and landscaped campus"
         ratio="fill"
-        priority
         className="pointer-events-none absolute inset-0 h-full w-full"
         imageClassName="object-cover object-center"
         sizes="100vw"
       />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(2,13,47,.80)_0%,rgba(2,13,47,.66)_34%,rgba(2,13,47,.38)_50%,rgba(2,13,47,.08)_72%,rgba(2,13,47,.34)_100%)]" aria-hidden />
-      <div className="relative w-full">
-        <div className="programme-mosaic-grid relative isolate grid overflow-hidden bg-[#03133f]/55 shadow-[0_24px_80px_-40px_rgba(0,0,0,.75)] lg:grid-cols-[minmax(0,1fr)_330px]">
-          <div className="relative min-w-0 lg:col-start-1 lg:row-span-2">
-          <header className="programme-mosaic-intro relative flex min-h-[clamp(330px,28vw,430px)] flex-col justify-start overflow-hidden p-5 pt-10 text-white sm:p-8 sm:pt-14 lg:p-12 lg:pt-16">
-            <div className="relative">
-              <h2 className="mt-0 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.98] text-white sm:text-5xl lg:text-6xl">
-                Find your path
-                <span className="block text-[#39c8ff]">at Kisii University</span>
-              </h2>
-              <p className="mt-3 max-w-md text-sm leading-6 text-white">
-                {/Search programmes and follow five steps/i.test(section.description ?? "")
-                  ? "Explore our diverse range of undergraduate and postgraduate programmes and take the next step towards your future."
-                  : (section.description ??
-                    "Explore our diverse range of undergraduate and postgraduate programmes and take the next step towards your future.")}
-              </p>
-            </div>
-          </header>
+      <div
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(2,20,49,0.92)_0%,rgba(2,20,49,0.68)_32%,rgba(2,20,49,0.45)_58%,rgba(2,20,49,0.85)_100%)]"
+        aria-hidden
+      />
 
+      <div className="relative z-10 mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        {/* Opening */}
+        <Reveal
+          variant="fade-up"
+          className="mx-auto max-w-3xl text-center"
+        >
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+            {section.subtitle ?? "Programmes and academic pathways"}
+          </p>
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-white sm:text-4xl">
+            {section.title ?? "Find the right programme. Build your future."}
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-white/85">
+            {/Search programmes and follow/i.test(section.description ?? "")
+              ? "Explore our diverse range of undergraduate and postgraduate programmes and take the next step towards your future."
+              : (section.description ??
+                "Explore our diverse range of undergraduate and postgraduate programmes and take the next step towards your future.")}
+          </p>
+        </Reveal>
+
+        {/* Search — the heart of the section */}
+        <div className="mt-8">
           <ProgrammeFinderInteractive
             programmes={programmes}
             schools={schools}
             intakeProgrammes={intakeProgrammes}
             intakeName={activeIntake?.name}
           />
-          </div>
+        </div>
 
-          {hasAdmissionDates ? (
-          <aside className="programme-mosaic-dates relative z-10 mx-auto mt-5 w-full max-w-5xl overflow-hidden bg-[#03133f]/95 p-5 text-white sm:p-6 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:mt-0 lg:max-w-none lg:px-7 lg:py-8">
-              <div className="absolute inset-x-0 top-0 h-1 bg-secondary" />
-              <SectionEyebrow
-                value="Admissions"
-                light
-              />
-              <div className="mt-2 flex items-center justify-between gap-4">
-                <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white">
-                  Your journey starts here
-                </h3>
-                <CalendarDays className="h-6 w-6 text-secondary" aria-hidden />
-              </div>
-              <div className="mt-7 space-y-5">
-                {[
-                  ["1", "Explore Programmes", "Search and filter programmes that match your interests and goals.", "/academics/programmes"],
-                  ["2", "Check Requirements", "Review entry requirements and prepare your application.", "/admissions/requirements"],
-                  ["3", "Apply Online", "Complete your application and take the first step towards your future.", intakes[0]?.href ?? "/admissions/how-to-apply"],
-                ].map(([number, label, body, href]) => (
-                  <LinkWrapper key={number} href={href} className="group flex gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/35 text-sm font-semibold transition group-hover:border-secondary group-hover:bg-secondary">{number}</span>
-                    <span><strong className="block text-sm text-white">{label}</strong><span className="mt-1 block text-xs leading-5 text-white/70">{body}</span></span>
-                  </LinkWrapper>
-                ))}
-              </div>
-              <LinkWrapper href="/admissions" className="mt-7 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-white/50 text-sm font-bold text-white transition hover:border-secondary hover:bg-secondary">Learn more <ArrowRight className="h-4 w-4" aria-hidden /></LinkWrapper>
-            </aside>
-          ) : (
-            <div className="hidden bg-primary" />
-          )}
-
-          <div className="programme-mosaic-journey border-t border-white/15 bg-primary/90 p-5 sm:p-6 lg:col-span-2 lg:row-start-3 lg:px-7 lg:py-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <SectionEyebrow value="Your journey to Kisii University" light />
-                <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white">
-                  Three clear steps. One destination.
-                </h3>
-              </div>
-              <LinkWrapper
-                href="/admissions/how-to-apply"
-                className="inline-flex min-h-10 w-fit shrink-0 items-center justify-center gap-2 text-sm font-bold text-white transition hover:text-secondary"
-              >
-                Application guide
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </LinkWrapper>
-            </div>
-
-            <div className="relative mt-5 grid gap-1 sm:grid-cols-2 lg:grid-cols-3 lg:gap-0">
+        {/* One journey, told once */}
+        {journey.length ? (
+          <div className="mx-auto mt-6 max-w-5xl">
+            <div className="relative">
               <span
-                className="programme-journey-line absolute left-[10%] right-[10%] top-5 hidden h-px origin-left bg-white/25 lg:block"
+                className="absolute left-[10%] right-[10%] top-5 hidden h-px bg-white/25 lg:block"
                 aria-hidden
               />
-              {journey.slice(0, 3).map((item, index) => (
-                <div
-                  key={item.id}
-                  className="programme-journey-step group relative flex gap-4 border-b border-white/10 py-3 last:border-b-0 sm:border-b-0 sm:px-2 lg:block lg:px-3 lg:py-0 lg:text-center"
-                  style={{ animationDelay: `${index * 70}ms` }}
-                >
-                  <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary font-semibold text-white ring-8 ring-primary transition group-hover:bg-white group-hover:text-primary lg:mx-auto">
-                    {itemContentNumber(item, "step") ?? index + 1}
-                  </span>
-                  <div className="min-w-0 lg:mt-4">
-                    <h4 className="text-sm font-bold text-white">
-                      {item.title}
-                    </h4>
-                    <p className="mt-1 line-clamp-1 text-xs leading-5 text-white/70 lg:line-clamp-2">
-                      {item.body_text}
-                    </p>
+              <RevealGroup
+                variant="fade-up"
+                staggerDelay={120}
+                className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 lg:gap-2"
+              >
+                {journey.slice(0, 5).map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="relative flex gap-3 lg:block lg:px-2 lg:text-center"
+                  >
+                    <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary font-semibold text-white ring-8 ring-primary/60 lg:mx-auto">
+                      {itemContentNumber(item, "step") ?? index + 1}
+                    </span>
+                    <div className="min-w-0 lg:mt-3">
+                      <h4 className="text-sm font-bold text-white">
+                        {item.title}
+                      </h4>
+                      <p className="mt-1 text-xs leading-5 text-white/70">
+                        {item.body_text}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </RevealGroup>
             </div>
           </div>
-        </div>
+        ) : null}
+
+        {/* Active intake — the invitation */}
+        {activeIntake?.isOpen ? (
+          <Reveal
+            variant="fade-up"
+            delay={200}
+            className="mx-auto mt-8 max-w-3xl"
+          >
+            <div className="flex flex-col items-center justify-between gap-4 rounded-2xl bg-white px-6 py-5 text-foreground shadow-lg shadow-primary/20 sm:flex-row">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                  Applications open
+                </p>
+                <p className="mt-1 font-[family-name:var(--font-display)] text-lg font-bold text-primary">
+                  {activeIntake.name}
+                </p>
+                {activeDeadline ? (
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    Application deadline: {formatPublicDate(activeDeadline)}
+                  </p>
+                ) : null}
+              </div>
+              <Link
+                href={activeIntake.href ?? "/admissions/how-to-apply"}
+                className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90"
+              >
+                Apply Now
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
+            </div>
+          </Reveal>
+        ) : null}
       </div>
     </section>
   );
@@ -987,7 +1355,7 @@ export function DateTimelineSection({ section }: SectionVariantProps) {
       id={section.section_key}
       className="border-b border-border bg-white/[0.82] py-10 backdrop-blur-[1px] lg:py-12"
     >
-      <div className="mx-auto grid max-w-[1680px] gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.36fr)_minmax(0,0.64fr)] lg:px-8 xl:px-10 2xl:px-12">
+      <SectionFadeIn className="mx-auto grid max-w-[1680px] gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.36fr)_minmax(0,0.64fr)] lg:px-8 xl:px-10 2xl:px-12">
         <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
           <SectionEyebrow value={section.subtitle ?? "Important dates"} />
           <h2 className="mt-2 max-w-md font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
@@ -1000,7 +1368,7 @@ export function DateTimelineSection({ section }: SectionVariantProps) {
             <DateLineItem key={item.id} item={item} index={index} />
           ))}
         </div>
-      </div>
+      </SectionFadeIn>
     </section>
   );
 }
@@ -1058,7 +1426,10 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
       className="campus-life-scroll-scene relative isolate overflow-hidden bg-[linear-gradient(180deg,#fff_0%,hsl(var(--surface-subtle)/.92)_100%)] py-12 sm:py-14"
     >
       <div className="pointer-events-none absolute inset-y-0 right-0 -z-10 hidden w-[42%] bg-[radial-gradient(circle_at_65%_48%,hsl(var(--primary)/.12),transparent_68%)] lg:block" />
-      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <SectionFadeIn
+        opacityOnly
+        className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+      >
         <CampusLifeHorizontalScroller>
           <div className="flex w-max items-stretch gap-5 pb-3 lg:gap-6">
             <div className="campus-life-editorial w-[min(88vw,980px)] shrink-0 snap-start">
@@ -1126,7 +1497,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
             </div>
           </div>
         </CampusLifeHorizontalScroller>
-      </div>
+      </SectionFadeIn>
     </section>
   );
 }
@@ -1369,7 +1740,7 @@ export function LeadershipActivitySection({
       id={section.section_key}
       className="overflow-hidden border-b border-primary/10 bg-surface/[0.86] backdrop-blur-[1px]"
     >
-      <div className="mx-auto grid max-w-[1680px] lg:h-[720px] lg:grid-cols-[minmax(300px,0.34fr)_minmax(0,0.66fr)] xl:h-[740px] 2xl:h-[760px]">
+      <SectionFadeIn className="mx-auto grid max-w-[1680px] lg:h-[720px] lg:grid-cols-[minmax(300px,0.34fr)_minmax(0,0.66fr)] xl:h-[740px] 2xl:h-[760px]">
         <div className="relative border-b border-primary/10 lg:grid lg:h-full lg:min-h-0 lg:grid-rows-[52%_48%] lg:border-b-0 lg:border-r">
           <div className="relative min-h-[300px] overflow-hidden bg-primary lg:min-h-0">
             <div className="absolute -left-24 top-10 h-72 w-72 rounded-full border border-secondary/20" />
@@ -1440,7 +1811,7 @@ export function LeadershipActivitySection({
             </Link>
           ) : null}
         </div>
-      </div>
+      </SectionFadeIn>
     </section>
   );
 }
@@ -1467,7 +1838,7 @@ export function ResearchCardsSection({ section }: SectionVariantProps) {
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,6,23,.76)_0%,rgba(2,6,23,.54)_34%,rgba(2,6,23,.18)_58%,rgba(2,6,23,.04)_100%)]" />
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(2,6,23,.04),rgba(2,6,23,.16))]" />
 
-      <div className="mx-auto grid max-w-[1680px] gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.38fr)_minmax(0,0.62fr)] lg:items-end lg:px-8 xl:px-10 2xl:px-12">
+      <SectionFadeIn className="mx-auto grid max-w-[1680px] gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.38fr)_minmax(0,0.62fr)] lg:items-end lg:px-8 xl:px-10 2xl:px-12">
         <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
           <SectionEyebrow
             value={section.subtitle ?? "Research and innovation"}
@@ -1503,7 +1874,7 @@ export function ResearchCardsSection({ section }: SectionVariantProps) {
             <ResearchFocusArea key={item.id} item={item} index={index} />
           ))}
         </div>
-      </div>
+      </SectionFadeIn>
     </section>
   );
 }
@@ -1605,7 +1976,7 @@ export function NewsGridSection({
       id={section.section_key}
       className="border-b border-primary/10 bg-[linear-gradient(180deg,hsl(var(--surface-subtle)/.86)_0%,rgba(255,255,255,.80)_54%,hsl(var(--surface-muted)/.82)_100%)] py-12 backdrop-blur-[1px] lg:py-14"
     >
-      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <SectionFadeIn className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mb-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
           <div>
             <SectionEyebrow
@@ -1723,7 +2094,7 @@ export function NewsGridSection({
             />
           </div>
         </div>
-      </div>
+      </SectionFadeIn>
     </section>
   );
 }
@@ -1990,7 +2361,7 @@ export function EventsListSection({ section }: SectionVariantProps) {
       id={section.section_key}
       className="border-b border-border bg-accent/35 py-12 lg:py-14"
     >
-      <div className="mx-auto grid max-w-[1680px] gap-7 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.3fr)_minmax(0,0.7fr)] lg:px-8 xl:px-10 2xl:px-12">
+      <SectionFadeIn className="mx-auto grid max-w-[1680px] gap-7 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.3fr)_minmax(0,0.7fr)] lg:px-8 xl:px-10 2xl:px-12">
         <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
           <SectionEyebrow value={section.subtitle ?? "Upcoming events"} />
           <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
@@ -2003,7 +2374,7 @@ export function EventsListSection({ section }: SectionVariantProps) {
             <EventLineItem key={item.id} item={item} index={index} />
           ))}
         </div>
-      </div>
+      </SectionFadeIn>
     </section>
   );
 }
@@ -2018,7 +2389,7 @@ export function LogoCarouselSection({ section }: SectionVariantProps) {
       className="relative isolate overflow-hidden border-b border-border bg-white/[0.84] py-12 backdrop-blur-[1px] lg:py-14"
     >
       <div className="pointer-events-none absolute right-0 top-0 -z-10 h-full w-1/2 bg-[radial-gradient(circle_at_70%_25%,rgba(3,71,52,.08),transparent_38%)]" />
-      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <SectionFadeIn className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="max-w-4xl motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
           <SectionEyebrow value={section.subtitle ?? "Our partners"} />
           <h2 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-primary sm:text-4xl lg:text-5xl">
@@ -2078,7 +2449,7 @@ export function LogoCarouselSection({ section }: SectionVariantProps) {
             </div>
           </div>
         </div>
-      </div>
+      </SectionFadeIn>
     </section>
   );
 }
@@ -2201,8 +2572,8 @@ export function AlumniStorySection({ section }: SectionVariantProps) {
       id={section.section_key}
       className="border-b border-border bg-accent/35 py-12 lg:py-14"
     >
-      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="grid overflow-hidden bg-white lg:grid-cols-[0.38fr_0.62fr] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
+      <SectionFadeIn className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="grid overflow-hidden bg-white lg:grid-cols-[0.38fr_0.62fr]">
           <PublicImage
             src={imageUrl}
             alt={mediaAlt(image, section.title ?? "Alumni story")}
@@ -2224,36 +2595,64 @@ export function AlumniStorySection({ section }: SectionVariantProps) {
             {item ? <CtaLink item={item} className="mt-6" /> : null}
           </div>
         </div>
-      </div>
+      </SectionFadeIn>
     </section>
   );
 }
 
 export function FactsStripSection({ section }: SectionVariantProps) {
-  return (
-    <section className="bg-primary py-10 text-white">
-      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <SectionEyebrow
-          value={section.title ?? "Kisii University at a glance"}
-          light
-        />
-        <div className="mt-5 grid grid-cols-2 gap-y-6 sm:grid-cols-4 lg:grid-cols-7">
-          {displayItems(section)
-            .slice(0, 7)
-            .map((item) => (
-              <div
-                key={item.id}
-                className="border-l border-white/20 px-4 first:border-l-0 first:pl-0"
-              >
-                <p className="font-[family-name:var(--font-display)] text-3xl font-semibold">
-                  {item.title}
-                </p>
-                <p className="mt-2 text-sm leading-6 text-white/75">
-                  {item.body_text ?? item.subtitle}
-                </p>
-              </div>
-            ))}
+  const stats = extractStats(section);
+
+  if (stats.length === 0) {
+    return (
+      <section className="bg-primary py-10 text-white">
+        <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+          <SectionEyebrow
+            value={section.title ?? "Kisii University at a glance"}
+            light
+          />
+          <div className="mt-5 grid grid-cols-2 gap-y-6 sm:grid-cols-4 lg:grid-cols-7">
+            {displayItems(section)
+              .slice(0, 7)
+              .map((item) => (
+                <div
+                  key={item.id}
+                  className="border-l border-white/20 px-4 first:border-l-0 first:pl-0"
+                >
+                  <p className="font-[family-name:var(--font-display)] text-3xl font-semibold">
+                    {item.title}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-white/75">
+                    {item.body_text ?? item.subtitle}
+                  </p>
+                </div>
+              ))}
+          </div>
         </div>
+      </section>
+    );
+  }
+
+  return (
+    <section
+      aria-label={section.title ?? "Kisii University at a glance"}
+      className="relative z-10 -mt-14 pb-12 sm:-mt-16 lg:-mt-20 lg:pb-16"
+    >
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <SectionFadeIn duration={800}>
+          <div className="rounded-2xl bg-white px-6 py-10 shadow-lg shadow-primary/10 lg:px-12 lg:py-12">
+            <div className="flex flex-wrap items-start justify-center gap-x-12 gap-y-10 lg:gap-x-16">
+              {stats.slice(0, 6).map((stat, index) => (
+                <NumberStatItem
+                  key={stat.id}
+                  stat={stat}
+                  index={index}
+                  total={Math.min(stats.length, 6)}
+                />
+              ))}
+            </div>
+          </div>
+        </SectionFadeIn>
       </div>
     </section>
   );
@@ -2296,9 +2695,9 @@ function SectionFrame({
           : "border-b border-border bg-white py-14 lg:py-16"
       }
     >
-      <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <SectionFadeIn className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         {children}
-      </div>
+      </SectionFadeIn>
     </section>
   );
 }

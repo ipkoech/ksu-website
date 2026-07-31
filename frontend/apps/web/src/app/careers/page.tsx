@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, BriefcaseBusiness, Users } from "lucide-react";
-import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { CampusPageHeader } from "@ksu/ui/components";
+import { PageShell } from "@/components/site-shell";
 import { announcementsApi, type Announcement } from "@ksu/api-client";
 
 export const metadata = {
@@ -64,28 +65,16 @@ export default async function CareersPage() {
 
   return (
     <PageShell>
+      <CampusPageHeader
+        title="Careers and job adverts"
+        eyebrow="Careers"
+        description="Open job adverts and career-related notices. Formal applications are handled through the official digital job portal."
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Careers" }]}
+        seed="/careers"
+      />
+
       <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <BreadcrumbTrail
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Careers" },
-          ]}
-        />
-
-        <div className="mt-8">
-          <p className="text-sm font-semibold uppercase text-secondary">
-            Careers
-          </p>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
-            Careers and job adverts
-          </h1>
-          <p className="mt-4 text-base leading-8 text-muted-foreground">
-            Open job adverts and career-related notices. Formal applications
-            are handled through the official digital job portal.
-          </p>
-        </div>
-
-        <div className="mt-10">
+        <div className="mt-0">
           <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
             Current notices
           </h2>

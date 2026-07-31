@@ -7827,6 +7827,18 @@ export const portalConfigs: Record<string, PortalConfig> = {
         icon: FileText,
         scope: "library.manage_statistics",
       },
+      {
+        title: "Assistant Inbox",
+        href: "/library/assistant",
+        icon: MessageSquare,
+        scope: "library.view",
+      },
+      {
+        title: "Assistant Contexts",
+        href: "/library/assistant/contexts",
+        icon: Sparkles,
+        scope: "library.manage_services",
+      },
     ],
     dashboard: dashboard(
       "Library Dashboard",

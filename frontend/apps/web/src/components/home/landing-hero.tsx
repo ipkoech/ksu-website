@@ -1,9 +1,10 @@
 "use client";
 
-import { type FocusEvent, useEffect, useMemo, useState } from "react";
+import { type FocusEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play, Volume2, VolumeX } from "lucide-react";
+import { cn } from "@ksu/ui/lib/utils";
 import { ArtDirectedImage } from "@/components/public/art-directed-image";
 import type { LandingHeroData, LandingHeroSlide } from "@/lib/landing-data";
 
@@ -16,8 +17,12 @@ const fallbackSlide: LandingHeroSlide = {
   desktopImageUrl: "/logos/ksu-bck5.jpg",
   mobileImageUrl: "/logos/ksu-bck5.jpg",
   imageAlt: "Kisii University",
-  primaryLabel: "Apply Now",
+  primaryLabel: "Study With Us",
   primaryHref: "/admissions/how-to-apply",
+  secondaryLabel: "Explore Programmes",
+  secondaryHref: "/academics/programmes",
+  tertiaryLabel: "Discover KSU",
+  tertiaryHref: "/about",
 };
 
 const fallbackHeroSettings: Omit<LandingHeroData, "slides"> = {
@@ -44,22 +49,43 @@ export function LandingHero({
     [providedSlides],
   );
   const prefersReducedMotion = useReducedMotion();
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
+
   const activeSlide = slides[activeIndex] ?? fallbackSlide;
+  const hasVideo = Boolean(activeSlide.videoUrl);
   const hasMultipleSlides = slides.length > 1;
-  const shouldAutoPlay =
-    autoPlay && hasMultipleSlides && !isPaused && !prefersReducedMotion;
+  const shouldAutoPlay = autoPlay && hasMultipleSlides && !isPaused && !prefersReducedMotion;
   const shouldShowControls = hasMultipleSlides && showNavigationDots;
   const shouldShowArrows = hasMultipleSlides && showArrows;
 
-  const showPreviousSlide = () => {
+  const showPreviousSlide = useCallback(() => {
     setActiveIndex((index) => (index - 1 + slides.length) % slides.length);
-  };
+  }, [slides.length]);
 
-  const showNextSlide = () => {
+  const showNextSlide = useCallback(() => {
     setActiveIndex((index) => (index + 1) % slides.length);
-  };
+  }, [slides.length]);
+
+  const togglePlayPause = useCallback(() => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      videoRef.current.play();
+      setIsVideoPlaying(true);
+    } else {
+      videoRef.current.pause();
+      setIsVideoPlaying(false);
+    }
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    if (!videoRef.current) return;
+    videoRef.current.muted = !videoRef.current.muted;
+    setIsMuted(videoRef.current.muted);
+  }, []);
 
   useEffect(() => {
     if (!shouldAutoPlay) return;
@@ -75,12 +101,16 @@ export function LandingHero({
     }
   }, [activeIndex, slides.length]);
 
+  useEffect(() => {
+    if (prefersReducedMotion && videoRef.current) {
+      videoRef.current.pause();
+      setIsVideoPlaying(false);
+    }
+  }, [prefersReducedMotion]);
+
   const handleBlur = (event: FocusEvent<HTMLElement>) => {
     const nextTarget = event.relatedTarget;
-    if (
-      !(nextTarget instanceof Node) ||
-      !event.currentTarget.contains(nextTarget)
-    ) {
+    if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
       setIsPaused(false);
     }
   };
@@ -95,6 +125,7 @@ export function LandingHero({
       onFocusCapture={() => setIsPaused(true)}
       onBlurCapture={handleBlur}
     >
+      {/* Background Media */}
       <div className="absolute inset-0">
         <AnimatePresence mode="wait">
           <motion.div
@@ -103,48 +134,95 @@ export function LandingHero({
             initial={prefersReducedMotion ? false : { opacity: 0 }}
             animate={prefersReducedMotion ? undefined : { opacity: 1 }}
             exit={prefersReducedMotion ? undefined : { opacity: 0 }}
-            transition={{
-              duration: prefersReducedMotion ? 0 : 0.7,
-              ease: "easeOut",
-            }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.7, ease: "easeOut" }}
           >
-            <ArtDirectedImage
-              desktopSrc={activeSlide.desktopImageUrl ?? activeSlide.imageUrl}
-              mobileSrc={activeSlide.mobileImageUrl}
-              alt={activeSlide.imageAlt}
-              priority={activeIndex === 0}
-              imageClassName="h-full w-full object-cover"
-            />
+            {hasVideo && !prefersReducedMotion ? (
+              <video
+                ref={videoRef}
+                src={activeSlide.videoUrl}
+                poster={activeSlide.imageUrl}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="h-full w-full object-cover motion-safe:animate-ken-burns"
+                aria-hidden="true"
+              />
+            ) : (
+              <div className="h-full w-full motion-safe:animate-ken-burns">
+                <ArtDirectedImage
+                  desktopSrc={activeSlide.desktopImageUrl ?? activeSlide.imageUrl}
+                  mobileSrc={activeSlide.mobileImageUrl}
+                  alt={activeSlide.imageAlt}
+                  priority={activeIndex === 0}
+                  imageClassName="h-full w-full object-cover"
+                />
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
+
+        {/* Overlays */}
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.72)_0%,rgba(2,20,49,0.28)_55%,rgba(2,20,49,0.04)_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-overlay/55 via-transparent to-transparent" />
       </div>
 
-      {shouldShowArrows ? (
+      {/* Navigation Arrows */}
+      {shouldShowArrows && (
         <>
           <button
             type="button"
             onClick={showPreviousSlide}
-            className="absolute left-3 top-1/2 z-20 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-brand-overlay/30 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-brand-overlay/50 sm:h-12 sm:w-12"
+            className="absolute left-3 top-1/2 z-20 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-brand-overlay/30 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-brand-overlay/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary sm:left-4 sm:h-12 sm:w-12"
             aria-label="Show previous hero slide"
           >
-            <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
+            <ChevronLeft className="h-5 w-5" aria-hidden />
           </button>
           <button
             type="button"
             onClick={showNextSlide}
-            className="absolute right-3 top-1/2 z-20 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-brand-overlay/30 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-brand-overlay/50 sm:h-12 sm:w-12"
+            className="absolute right-3 top-1/2 z-20 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-brand-overlay/30 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-brand-overlay/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary sm:right-4 sm:h-12 sm:w-12"
             aria-label="Show next hero slide"
           >
-            <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
+            <ChevronRight className="h-5 w-5" aria-hidden />
           </button>
         </>
-      ) : null}
+      )}
 
+      {/* Video Controls */}
+      {hasVideo && !prefersReducedMotion && (
+        <div className="absolute bottom-4 right-4 z-20 flex gap-2 sm:bottom-6 sm:right-6">
+          <button
+            type="button"
+            onClick={togglePlayPause}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white ring-1 ring-white/20 backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            aria-label={isVideoPlaying ? "Pause video" : "Play video"}
+          >
+            {isVideoPlaying ? (
+              <Pause className="h-5 w-5" aria-hidden />
+            ) : (
+              <Play className="ml-0.5 h-5 w-5" aria-hidden />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={toggleMute}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white ring-1 ring-white/20 backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            aria-label={isMuted ? "Unmute video" : "Mute video"}
+          >
+            {isMuted ? (
+              <VolumeX className="h-5 w-5" aria-hidden />
+            ) : (
+              <Volume2 className="h-5 w-5" aria-hidden />
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Content */}
       <div className="relative z-10 flex h-full w-full items-end px-4 pb-12 sm:px-6 sm:pb-14 lg:px-8 lg:pb-16 xl:px-10 2xl:px-12">
         <AnimatePresence mode="wait">
-          <HeroEditorialPanel
+          <HeroContent
             key={activeSlide.id}
             slide={activeSlide}
             isPaused={isPaused}
@@ -153,7 +231,8 @@ export function LandingHero({
         </AnimatePresence>
       </div>
 
-      {shouldShowControls ? (
+      {/* Dot Indicators (mobile) */}
+      {shouldShowControls && (
         <div
           className="absolute inset-x-0 bottom-3 z-20 flex justify-center gap-2 md:hidden"
           aria-label="Hero slides"
@@ -163,26 +242,27 @@ export function LandingHero({
               key={slide.id}
               type="button"
               onClick={() => setActiveIndex(index)}
-              className="group flex h-5 w-5 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-1 focus-visible:ring-offset-primary"
+              className="group flex h-6 w-6 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-1 focus-visible:ring-offset-primary"
               aria-label={`Show slide ${index + 1}: ${slide.title}`}
               aria-current={index === activeIndex ? "true" : undefined}
             >
               <span
-                className={
+                className={cn(
+                  "rounded-full transition-all",
                   index === activeIndex
-                    ? "h-2 w-2 rounded-full bg-secondary"
-                    : "h-2 w-2 rounded-full bg-white/50 transition group-hover:bg-white/80"
-                }
+                    ? "h-2.5 w-2.5 bg-secondary"
+                    : "h-2 w-2 bg-white/50 group-hover:bg-white/80"
+                )}
               />
             </button>
           ))}
         </div>
-      ) : null}
+      )}
     </section>
   );
 }
 
-function HeroEditorialPanel({
+function HeroContent({
   slide,
   isPaused,
   prefersReducedMotion,
@@ -193,6 +273,7 @@ function HeroEditorialPanel({
 }) {
   const hasPrimaryCta = Boolean(slide.primaryHref && slide.primaryLabel);
   const hasSecondaryCta = Boolean(slide.secondaryHref && slide.secondaryLabel);
+  const hasTertiaryCta = Boolean(slide.tertiaryHref && slide.tertiaryLabel);
 
   return (
     <motion.div
@@ -206,26 +287,29 @@ function HeroEditorialPanel({
       <p className="mb-3 inline-flex w-fit items-center rounded-full border border-white/25 bg-white/8 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white/90 backdrop-blur-sm sm:text-xs">
         {slide.eyebrow}
       </p>
+
       <h1 className="max-w-[720px] text-balance font-[family-name:var(--font-display)] text-3xl font-bold leading-[1.15] text-white sm:text-4xl lg:text-5xl">
         {slide.title}
       </h1>
+
       <p className="mt-4 line-clamp-3 max-w-xl text-sm leading-7 text-white/85 sm:text-base sm:leading-8">
         {slide.body}
       </p>
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        {hasPrimaryCta ? (
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        {hasPrimaryCta && (
           <Link
             href={slide.primaryHref}
             target={slide.primaryExternal ? "_blank" : undefined}
             rel={slide.primaryExternal ? "noopener noreferrer" : undefined}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-secondary/25 transition hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
           >
             {slide.primaryLabel}
             <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
-        ) : null}
-        {hasSecondaryCta ? (
+        )}
+
+        {hasSecondaryCta && (
           <Link
             href={slide.secondaryHref!}
             target={slide.secondaryExternal ? "_blank" : undefined}
@@ -235,7 +319,19 @@ function HeroEditorialPanel({
             {slide.secondaryLabel}
             <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
-        ) : null}
+        )}
+
+        {hasTertiaryCta && (
+          <Link
+            href={slide.tertiaryHref!}
+            target={slide.tertiaryExternal ? "_blank" : undefined}
+            rel={slide.tertiaryExternal ? "noopener noreferrer" : undefined}
+            className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-white/90 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+          >
+            {slide.tertiaryLabel}
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+        )}
       </div>
     </motion.div>
   );

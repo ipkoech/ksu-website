@@ -37,6 +37,8 @@ export default async function StoryDetailPage({
     getNavData(),
     storiesApi
       .getBySlug(slug, {
+        fields:
+          "id,title,slug,summary,plain_text,rich_text,story_type,category,published_at,created_at,reading_minutes,contributor_name_snapshot,show_contributor_name,featured_media_id,related_links",
         include:
           "featured_media(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
       })

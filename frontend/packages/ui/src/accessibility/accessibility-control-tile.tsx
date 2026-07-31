@@ -33,6 +33,7 @@ export function AccessibilityControlTile({
   const button = (
     <button
       type="button"
+      aria-label={label}
       aria-pressed={pressed}
       aria-describedby={descriptionId}
       onClick={onClick}

@@ -16,6 +16,7 @@ from .seed_cover_images import seed_cover_images
 from .seed_divisions import seed_divisions
 from .seed_featured_stories import seed_featured_stories
 from .seed_homepage_admissions import seed_homepage_admissions
+from .seed_student_life_stories import seed_student_life_stories
 from .seed_governance import seed_governance
 from .seed_management import seed_management
 from .seed_leadership_media import seed_leadership_media
@@ -52,6 +53,7 @@ async def run() -> None:
             await seed_admissions_catalog(db, ctx)
             await seed_content(db, ctx)
             await seed_featured_stories(db, ctx)
+            await seed_student_life_stories(db, ctx)
             await seed_public_records(db, ctx)
             await seed_about_content(db, ctx)
             await seed_public_site_pages(db, ctx)

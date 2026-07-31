@@ -88,10 +88,10 @@ ANNUAL_FACT_GROUPS = (
     {
         "slug": "access-and-growth",
         "heading": "Access and Growth",
-        "summary": "New-student admissions and placement figures reported in the Strategic Plan.",
+        "summary": "New-student admissions and placement figures.",
         "display_order": 40,
         "items": (
-            {"label": "New students in 2023/24", "display_value": "10,172", "numeric_value": 10172, "icon_key": "user-plus"},
+            {"label": "New students in 2026/27", "display_value": "8,000", "numeric_value": 8000, "icon_key": "user-plus"},
             {
                 "label": "New-enrolment growth since 2019/20",
                 "display_value": "139",
@@ -139,8 +139,8 @@ ANNUAL_FACT_GROUPS = (
 INSTITUTIONAL_PAGES = (
     {
         "page_type": "about", "slug": "about", "eyebrow": "About Kisii University",
-        "title": "A Legacy of Excellence. A Future of Impact.",
-        "introduction": "Kisii University is a chartered public university advancing accessible education, purposeful research, innovation and service from Kisii County to Kenya and beyond.",
+        "title": "An Inclusive and Bordeless Learning Path.",
+        "introduction": "Kisii University is Kenya's 13th chartered public university advancing accessible education, purposeful research, innovation and service from Kisii County to Kenya and beyond.",
         "sections": (
             {"slug": "core-values", "section_type": "commitments", "eyebrow": "Core values", "heading": "What guides how we work", "theme": "blue", "items": (
                 ("Transformative Thinking", "We welcome creativity, inquiry and bold ideas that solve real-world challenges.", "lightbulb"),

@@ -12,6 +12,7 @@ import {
 import { cn } from "../../lib/utils";
 
 type AnimationVariant =
+  | "fade"
   | "fade-up"
   | "fade-down"
   | "fade-left"
@@ -32,6 +33,10 @@ interface ScrollRevealProps {
 }
 
 const variantStyles: Record<AnimationVariant, { initial: string; animate: string }> = {
+  fade: {
+    initial: "opacity-0",
+    animate: "opacity-100",
+  },
   "fade-up": {
     initial: "opacity-0 translate-y-6",
     animate: "opacity-100 translate-y-0",

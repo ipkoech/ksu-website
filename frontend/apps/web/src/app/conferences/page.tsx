@@ -3,7 +3,8 @@ import Link from "next/link";
 import { ArrowRight, CalendarDays, MapPin } from "lucide-react";
 import { eventsApi } from "@ksu/api-client";
 import type { Event } from "@ksu/api-client";
-import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { CampusPageHeader } from "@ksu/ui/components";
+import { PageShell } from "@/components/site-shell";
 
 export const metadata: Metadata = {
   title: "Conferences",
@@ -44,29 +45,17 @@ export default async function ConferencesPage() {
 
   return (
     <PageShell>
-      <section className="w-full bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_70%,hsl(var(--surface-muted))_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      <CampusPageHeader
+        title="Conferences and calls"
+        eyebrow="Conferences"
+        description="Find conference events, calls for papers, registration links, and multidisciplinary engagement opportunities."
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Conferences" }]}
+        seed="/conferences"
+      />
+
+      <section className="w-full bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_70%,hsl(var(--surface-muted))_100%)] px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mx-auto max-w-4xl">
-          <BreadcrumbTrail
-            items={[
-              { label: "Home", href: "/" },
-              { label: "Conferences" },
-            ]}
-          />
-
-          <div className="mt-6">
-            <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
-              Conferences
-            </p>
-            <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-foreground sm:text-5xl">
-              Conferences and calls
-            </h1>
-            <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">
-              Find conference events, calls for papers, registration links, and
-              multidisciplinary engagement opportunities.
-            </p>
-          </div>
-
-          <div className="mt-14">
+          <div className="mt-0">
             <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
               Conference records
             </p>

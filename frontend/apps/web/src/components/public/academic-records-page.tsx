@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -13,7 +14,10 @@ import type {
   PublicPageConfig,
   PublicPageSection,
 } from "@/components/public/section-page";
-import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { PageShell } from "@/components/site-shell";
+import { AboutPageLenis } from "@/components/ui/about-page-lenis";
+import { AboutReveal } from "@/components/about/about-reveal";
+import { ImageCurtainReveal } from "@/components/about/image-curtain-reveal";
 import { PublicListFilterForm } from "@/components/public/list-filter-form";
 import { PublicImage } from "@/components/public/public-image";
 
@@ -184,36 +188,91 @@ function _Records({
   );
 }
 
-function AcademicPageIntro({
+const heroContent: Record<
+  AcademicRecordsKind,
+  { title: string; image: string; cta: { href: string; label: string } }
+> = {
+  schools: {
+    title: "Schools that shape possibility",
+    image: "/images/about-us/gate-1.jpg",
+    cta: { href: "/academics/programmes", label: "Browse programmes" },
+  },
+  programmes: {
+    title: "Find your direction",
+    image: "/images/about-us/law-4.jpg",
+    cta: { href: "/admissions", label: "Explore admissions" },
+  },
+  calendar: {
+    title: "Plan your academic year",
+    image: "/images/about-us/pathway-3.jpg",
+    cta: { href: "/academics/examinations", label: "Examination resources" },
+  },
+  examinations: {
+    title: "Prepare with confidence",
+    image: "/images/about-us/science-complex-3.jpg",
+    cta: { href: "/academics/calendar", label: "Academic calendar" },
+  },
+};
+
+function AcademicHero({
   config,
   kind,
 }: {
   config: PublicPageConfig;
   kind: AcademicRecordsKind;
 }) {
-  const titles: Record<AcademicRecordsKind, string> = {
-    schools: "Schools that shape possibility",
-    programmes: "Find your direction",
-    calendar: "Plan your academic year",
-    examinations: "Prepare with confidence",
-  };
+  const hero = heroContent[kind];
 
   return (
-    <div className="border-b border-border px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-      <div className="mx-auto flex w-full max-w-[1680px] items-end justify-between gap-8">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+    <section className="relative isolate min-h-[430px] overflow-hidden bg-primary text-white">
+      <Image
+        src={hero.image}
+        alt={config.title}
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover motion-safe:animate-ken-burns"
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,28,68,.97)_0%,rgba(4,38,83,.84)_44%,rgba(4,38,83,.18)_82%)]" />
+      <div className="relative mx-auto flex min-h-[430px] w-full max-w-[1680px] flex-col justify-center px-4 py-8 sm:px-6 lg:px-8">
+        <nav aria-label="Breadcrumb" className="text-xs font-semibold text-white/72">
+          {config.breadcrumb.map((item, index) => (
+            <span key={`${item.label}-${index}`}>
+              {index > 0 ? (
+                <span className="mx-2" aria-hidden>
+                  /
+                </span>
+              ) : null}
+              {item.href && index < config.breadcrumb.length - 1 ? (
+                <Link href={item.href} className="hover:text-white">
+                  {item.label}
+                </Link>
+              ) : (
+                <span>{item.label}</span>
+              )}
+            </span>
+          ))}
+        </nav>
+        <div className="mt-8 max-w-3xl">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-secondary">
             {config.eyebrow}
           </p>
-          <h1 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.98] text-foreground sm:text-5xl lg:text-6xl">
-            {titles[kind]}
+          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.06] sm:text-5xl lg:text-[3.6rem]">
+            {hero.title}
           </h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-white/80">
+            {config.body}
+          </p>
+          <Link
+            href={hero.cta.href}
+            className="mt-7 inline-flex min-h-12 items-center gap-2 bg-secondary px-5 py-3 text-sm font-bold uppercase text-foreground transition hover:bg-amber-400"
+          >
+            {hero.cta.label}
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
         </div>
-        <p className="hidden max-w-sm border-l-2 border-secondary pl-4 text-sm leading-6 text-muted-foreground lg:block">
-          {config.body}
-        </p>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -226,7 +285,7 @@ function SchoolsEditorial({
     <>
       <section className="border-y border-border bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <div className="mx-auto grid w-full max-w-[1680px] gap-0 overflow-hidden border border-border lg:grid-cols-[0.8fr_1.2fr]">
-          <div className="flex flex-col justify-between bg-white p-6 sm:p-8 lg:p-12">
+          <AboutReveal variant="left" className="flex flex-col justify-between bg-white p-6 sm:p-8 lg:p-12">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">
                 Academic schools
@@ -244,8 +303,8 @@ function SchoolsEditorial({
               <div><strong className="block text-2xl text-primary">{section.cards.filter((card) => card.href).length}</strong>pathways</div>
               <div><strong className="block text-2xl text-primary">KSU</strong>community</div>
             </div>
-          </div>
-          <div className="relative min-h-[260px] overflow-hidden bg-slate-900 lg:min-h-[360px]">
+          </AboutReveal>
+          <ImageCurtainReveal className="min-h-[260px] lg:min-h-[360px]" direction="right">
             <PublicImage
               src="/images/backgrounds/KSUGreenLandscapingMay2026-9664.jpg"
               alt="Kisii University campus"
@@ -258,11 +317,11 @@ function SchoolsEditorial({
             <p className="absolute bottom-5 left-5 text-xs font-bold uppercase tracking-[0.16em] text-white/90">
               Learning in context
             </p>
-          </div>
+          </ImageCurtainReveal>
         </div>
       </section>
       <section className="px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-        <div className="mx-auto w-full max-w-[1680px]">
+        <AboutReveal className="mx-auto w-full max-w-[1680px]">
           {section.filters ? (
             <PublicListFilterForm
               className="mb-7 max-w-2xl border-b border-border pb-5"
@@ -299,7 +358,7 @@ function SchoolsEditorial({
               </Link>
             ))}
           </div>
-        </div>
+        </AboutReveal>
       </section>
     </>
   );
@@ -322,7 +381,10 @@ function ProgrammeFinder({
   return (
     <section className="px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <div className="mx-auto grid w-full max-w-[1680px] overflow-hidden border border-border lg:grid-cols-[0.7fr_1.3fr]">
-        <div className="relative min-h-[300px] overflow-hidden bg-primary [clip-path:polygon(0_0,100%_0,72%_100%,0_100%)] lg:min-h-[560px]">
+        <ImageCurtainReveal
+          direction="left"
+          className="min-h-[300px] bg-primary [clip-path:polygon(0_0,100%_0,72%_100%,0_100%)] lg:min-h-[560px]"
+        >
           <PublicImage
             src="/images/backgrounds/VCKSUMedicalSchoolInspectionApril1,2026-5704.jpg"
             alt="Kisii University students learning"
@@ -338,8 +400,8 @@ function ProgrammeFinder({
               Build the future you want to lead.
             </p>
           </div>
-        </div>
-        <div className="relative bg-[#faf8f2] p-6 sm:p-8 lg:p-12 lg:pr-28">
+        </ImageCurtainReveal>
+        <AboutReveal variant="right" className="relative bg-[#faf8f2] p-6 sm:p-8 lg:p-12 lg:pr-28">
           <div className="absolute right-0 top-10 hidden w-20 bg-secondary px-3 py-5 text-center text-white lg:block">
             <GraduationCap className="mx-auto h-5 w-5" aria-hidden />
             <span className="mt-2 block text-[10px] font-bold uppercase tracking-[0.12em]">Admissions</span>
@@ -390,7 +452,7 @@ function ProgrammeFinder({
             <span className="text-muted-foreground">Page {page}</span>
             {hasNextPage ? <Link href={pageHref(page + 1)} className="font-semibold text-primary">Next →</Link> : <span />}
           </nav>
-        </div>
+        </AboutReveal>
       </div>
     </section>
   );
@@ -398,9 +460,9 @@ function ProgrammeFinder({
 
 function CalendarEditorial({ section }: { section: PublicPageSection }) {
   return (
-    <section className="border-y border-border bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <section className="border-y border-border bg-[#faf8f3] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <div className="mx-auto grid w-full max-w-[1680px] gap-8 lg:grid-cols-[0.8fr_1.2fr]">
-        <div>
+        <AboutReveal variant="left">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Academic calendar</p>
           <h2 className="mt-3 max-w-md font-[family-name:var(--font-display)] text-5xl font-semibold leading-[0.95] text-primary sm:text-6xl">Plan ahead.<br /><span className="text-secondary">Stay on track.</span></h2>
           <p className="mt-5 max-w-md text-sm leading-7 text-muted-foreground">A year of discovery, growth, and achievement. Your academic journey starts here.</p>
@@ -423,8 +485,8 @@ function CalendarEditorial({ section }: { section: PublicPageSection }) {
               </div>
             </div>
           </div>
-        </div>
-        <div className="relative overflow-hidden border border-primary/10 bg-white p-5 sm:p-8">
+        </AboutReveal>
+        <AboutReveal variant="right" delay={120} className="relative overflow-hidden border border-primary/10 bg-white p-5 sm:p-8">
           <div className="absolute left-1/2 top-1/2 hidden h-56 w-[88%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-2 border-primary/10 sm:block" />
           <div className="relative grid gap-3 sm:grid-cols-2">
             {section.cards.map((card, index) => (
@@ -438,7 +500,7 @@ function CalendarEditorial({ section }: { section: PublicPageSection }) {
           <div className="relative mt-6 border-t border-border pt-5 text-right">
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Dates may change — check official updates</span>
           </div>
-        </div>
+        </AboutReveal>
       </div>
     </section>
   );
@@ -446,10 +508,10 @@ function CalendarEditorial({ section }: { section: PublicPageSection }) {
 
 function ExaminationsEditorial({ section }: { section: PublicPageSection }) {
   return (
-    <section className="border-y border-border bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <section className="border-y border-border bg-[#f5f2ea] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <div className="mx-auto w-full max-w-[1680px]">
         <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-end">
-          <div className="relative min-h-[280px] overflow-hidden bg-primary p-6 text-white sm:p-8">
+          <ImageCurtainReveal direction="right" className="min-h-[280px] bg-primary text-white">
             <PublicImage
               src="/images/backgrounds/KSUGreenLandscapingMay2026-7456.jpg"
               alt="Kisii University student preparing for examinations"
@@ -459,26 +521,26 @@ function ExaminationsEditorial({ section }: { section: PublicPageSection }) {
               imageClassName="object-cover"
             />
             <div className="absolute inset-0 bg-primary/70" />
-            <div className="relative z-10 flex h-full flex-col justify-end">
+            <div className="relative z-10 flex h-full flex-col justify-end p-6 sm:p-8">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Examinations</p>
             <h2 className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight sm:text-5xl">Prepare with confidence.</h2>
             <p className="mt-4 max-w-md text-sm leading-7 text-white/75">Timetables, policies, and official examination documents in one place.</p>
             </div>
-          </div>
-          <div className="border border-white/15 bg-white/10 p-5 sm:p-6">
+          </ImageCurtainReveal>
+          <AboutReveal variant="right" className="bg-primary p-5 text-white sm:p-6">
             <div className="flex items-center gap-3 text-secondary"><Clock3 className="h-5 w-5" aria-hidden /><span className="text-xs font-bold uppercase tracking-[0.16em]">Upcoming examination period</span></div>
             <p className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold">{section.cards[0]?.title ?? "No examination period published"}</p>
             <p className="mt-1 text-sm text-white/70">{section.cards[0]?.body ?? "Published examination dates will appear here."}</p>
-          </div>
+          </AboutReveal>
         </div>
-        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <AboutReveal delay={120} className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {section.cards.map((card) => (
-            <Link key={card.title} href={card.href ?? "#"} className="group flex min-h-32 flex-col justify-between border border-white/15 bg-white p-5 text-brand-overlay transition hover:-translate-y-1 hover:border-secondary">
+            <Link key={card.title} href={card.href ?? "#"} className="group flex min-h-32 flex-col justify-between border border-border bg-white p-5 text-brand-overlay transition hover:-translate-y-1 hover:border-secondary motion-reduce:transform-none">
               <div className="flex items-start justify-between gap-3"><FileText className="h-5 w-5 text-secondary" aria-hidden /><Download className="h-4 w-4 text-primary transition-transform group-hover:translate-y-0.5" aria-hidden /></div>
               <span><span className="mt-6 block font-semibold text-primary">{card.title}</span><span className="mt-1 block text-xs leading-5 text-slate-600">{card.body}</span></span>
             </Link>
           ))}
-        </div>
+        </AboutReveal>
       </div>
     </section>
   );
@@ -511,9 +573,8 @@ export function AcademicRecordsPage({
 
   return (
     <PageShell>
-      <BreadcrumbTrail items={config.breadcrumb} />
-      <div>
-        <AcademicPageIntro config={config} kind={kind} />
+      <AboutPageLenis>
+        <AcademicHero config={config} kind={kind} />
         {kind === "schools" ? <SchoolsEditorial section={section} /> : null}
         {kind === "programmes" ? (
           <ProgrammeFinder config={config} section={section} page={page} pageHref={pageHref} hasNextPage={hasNextPage} />
@@ -525,7 +586,7 @@ export function AcademicRecordsPage({
             <Search className="h-5 w-5" aria-hidden /> No published records are available yet.
           </div>
         ) : null}
-      </div>
+      </AboutPageLenis>
     </PageShell>
   );
 }

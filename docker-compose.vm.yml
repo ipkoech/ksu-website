@@ -190,7 +190,7 @@ services:
         APP_DIR: heri-africa
         PACKAGE_NAME: "@ksu/heri-africa"
         NEXT_BASE_PATH: /heri-africa
-        KSU_HERI_API_URL: ${VM_FRONTEND_BUILD_HERI_API_URL:-http://127.0.0.1:8003}
+        KSU_HERI_API_URL: ${VM_FRONTEND_BUILD_HERI_API_URL:-http://127.0.0.1:8003/api/v1/heri}
         NEXT_PUBLIC_HERI_API_URL: ${NEXT_PUBLIC_HERI_API_URL:-/api/v1/heri}
       extra_hosts:
         - "host.docker.internal:host-gateway"
@@ -199,7 +199,7 @@ services:
       FRONTEND_HEALTH_PATH: /heri-africa/
       NEXT_BASE_PATH: /heri-africa
       NEXT_TELEMETRY_DISABLED: "1"
-      KSU_HERI_API_URL: ${KSU_HERI_API_URL:-http://heri:8003}
+      KSU_HERI_API_URL: ${KSU_HERI_API_URL:-http://heri:8003/api/v1/heri}
       NEXT_PUBLIC_HERI_API_URL: ${NEXT_PUBLIC_HERI_API_URL:-/api/v1/heri}
     extra_hosts:
       - "host.docker.internal:host-gateway"

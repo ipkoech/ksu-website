@@ -166,7 +166,7 @@ export type HomepageHeroAction = {
   type?: string | null;
   label: string;
   href: string;
-  style?: "primary" | "secondary" | null;
+  style?: "primary" | "secondary" | "tertiary" | null;
   open_in_new_tab?: boolean;
 };
 

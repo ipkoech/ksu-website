@@ -110,6 +110,15 @@ const config: Config = {
         lg: "var(--shadow-lg)",
         xl: "var(--shadow-xl)",
       },
+      keyframes: {
+        "ken-burns": {
+          "0%": { transform: "scale(1)" },
+          "100%": { transform: "scale(1.08)" },
+        },
+      },
+      animation: {
+        "ken-burns": "ken-burns 10s ease-out forwards",
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

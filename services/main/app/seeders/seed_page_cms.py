@@ -16,7 +16,7 @@ from ._shared import SeedContext
 
 
 SEED_OWNER = "page-cms-homepage-v1"
-SEED_VERSION = 4
+SEED_VERSION = 6
 PENDING_HERI_AFRICA_SOURCE_ID = uuid.UUID("8d724ec7-3b5b-54f8-b3f3-8770f627dd6a")
 PENDING_HERI_AFRICA_HEADLINE = "Heri Africa partnership spotlight pending"
 
@@ -26,92 +26,43 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
         "section_key": "hero-admissions",
         "layout_variant": "hero_admissions",
         "display_order": 10,
-        "title": "Kisii University",
-        "subtitle": "A world-class university in the advancement of academic excellence, research and social welfare.",
-        "description": "Explore admissions, programmes and student life at Kisii University.",
+        "title": "Shaping Tomorrow. Inspiring Innovation.",
+        "subtitle": "Kisii University",
+        "description": "A leading public university committed to academic excellence, innovative research, and transforming communities across Kenya and beyond.",
         "settings": {
-            "eyebrow": "Admissions open",
+            "eyebrow": "Kisii University",
             "backgroundRole": "heroImage",
-            "primaryCta": {"label": "Apply now", "href": "/admission/how-to-apply"},
-            "secondaryCta": {"label": "Explore programmes", "href": "/programmes"},
+            "primaryCta": {"label": "Study With Us", "href": "/admissions/how-to-apply"},
+            "secondaryCta": {"label": "Explore Programmes", "href": "/academics/programmes"},
+            "tertiaryCta": {"label": "Discover KSU", "href": "/about"},
         },
         "items": (
             {
                 "item_type": "cta",
-                "title": "Apply now",
+                "title": "Study With Us",
                 "body_text": "Start your application and review entry requirements.",
-                "cta_label": "How to apply",
-                "cta_url": "/admission/how-to-apply",
+                "cta_label": "Study With Us",
+                "cta_url": "/admissions/how-to-apply",
                 "display_order": 10,
                 "content": {"intent": "primary"},
             },
             {
                 "item_type": "cta",
-                "title": "Find a programme",
+                "title": "Explore Programmes",
                 "body_text": "Browse diploma, undergraduate and postgraduate study options.",
-                "cta_label": "View programmes",
-                "cta_url": "/programmes",
+                "cta_label": "Explore Programmes",
+                "cta_url": "/academics/programmes",
                 "display_order": 20,
                 "content": {"intent": "secondary"},
             },
-        ),
-    },
-    {
-        "section_key": "pulse",
-        "layout_variant": "pulse_strip",
-        "display_order": 20,
-        "title": "University pulse",
-        "description": "A compact, high-signal feed for admissions, graduation, research, partnerships and university events.",
-        "settings": {
-            "feeds": ["news", "events", "announcements"],
-            "maxItems": 5,
-            "cta": {"label": "View all updates", "href": "/news"},
-        },
-        "items": (
             {
-                "item_type": "card",
-                "title": "Admissions and reporting",
-                "body_text": "Check active intakes, reporting dates and official application guidance.",
-                "cta_label": "Admissions",
-                "cta_url": "/admissions",
-                "display_order": 10,
-                "content": {"icon": "admissions"},
-            },
-            {
-                "item_type": "card",
-                "title": "Research and innovation",
-                "body_text": "See grants, research launches and community-impact work from KSU.",
-                "cta_label": "Research",
-                "cta_url": "/research",
-                "display_order": 20,
-                "content": {"icon": "research"},
-            },
-            {
-                "item_type": "card",
-                "title": "Strategic partnerships",
-                "body_text": "Track MoUs and collaborations advancing teaching, enterprise and impact.",
-                "cta_label": "Partnership",
-                "cta_url": "/research/partnerships",
+                "item_type": "cta",
+                "title": "Discover KSU",
+                "body_text": "Learn about the university, its history and its mission.",
+                "cta_label": "Discover KSU",
+                "cta_url": "/about",
                 "display_order": 30,
-                "content": {"icon": "partnership"},
-            },
-            {
-                "item_type": "card",
-                "title": "Public lectures and events",
-                "body_text": "Find official lectures, conferences, student activities and university events.",
-                "cta_label": "Events",
-                "cta_url": "/events",
-                "display_order": 40,
-                "content": {"icon": "calendar"},
-            },
-            {
-                "item_type": "card",
-                "title": "Graduation updates",
-                "body_text": "Follow graduation notices, ceremony dates and clearance information.",
-                "cta_label": "View updates",
-                "cta_url": "/news",
-                "display_order": 50,
-                "content": {"icon": "graduation"},
+                "content": {"intent": "tertiary"},
             },
         ),
     },
@@ -120,37 +71,152 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
         "layout_variant": "pillar_grid",
         "display_order": 40,
         "title": "Why Kisii University?",
-        "subtitle": "Discover your place at Kisii University",
-        "description": "Kisii University brings together public-service education, applied research and inclusive student support for learners and communities in Kenya and beyond.",
-        "settings": {"presentation": "image_cards"},
+        "subtitle": "Why choose KSU",
+        "description": "An inclusive, borderless public university   advancing teaching, research and community engagement for learners and communities in Kenya and beyond.",
+        "settings": {"presentation": "story_chapters"},
         "items": (
-            {"item_type": "card", "title": "A public university with academic depth", "body_text": "KSU combines accredited programmes, experienced faculty and practical learning for Kenya’s workforce needs.", "cta_label": "Explore academics", "cta_url": "/academics", "display_order": 10, "content": {"imageUrl": "/images/Home/OurKSU-82.jpg", "imageAlt": "Kisii University academic community", "icon": "academic"}},
-            {"item_type": "card", "title": "Community-rooted impact", "body_text": "KSU connects learning and innovation to the needs of communities in Kenya and beyond.", "cta_label": "Explore impact", "cta_url": "/research", "display_order": 20, "content": {"imageUrl": "/images/landing-page/why-kisii/bg-3.jpg", "imageAlt": "Kisii University community impact", "icon": "research"}},
-            {"item_type": "card", "title": "Future-ready pathways", "body_text": "Build practical skills through applied learning, enterprise, leadership and opportunities to progress.", "cta_label": "Explore academics", "cta_url": "/academics", "display_order": 30, "content": {"imageUrl": "/images/landing-page/why-kisii/pathway-2.jpg", "imageAlt": "Kisii University learning pathways", "icon": "innovation"}},
-            {"item_type": "card", "title": "An inclusive student experience", "body_text": "Students find academic support, leadership, clubs, sports and campus services that help them belong and progress.", "cta_label": "Explore campus life", "cta_url": "/campus-life", "display_order": 40, "content": {"imageUrl": "/images/backgrounds/KSUB-RollPhotos2025-123.jpg", "imageAlt": "Kisii University students", "icon": "students"}},
+            {
+                "item_type": "card",
+                "title": "Teaching",
+                "body_text": (
+                    "Teaching at Kisii University begins with a simple conviction: every learner deserves "
+                    "instruction that transforms. In lecture halls like the Sakagwa Academic Block, experienced "
+                    "faculty guide students through accredited programmes stretching from certificate level to "
+                    "doctoral research   in education, business, health sciences, law, agriculture and the pure "
+                    "and applied sciences. Learning is deliberately practical: coursework connects to fieldwork, "
+                    "laboratories to industry, and assessment to the competencies Kenya's workforce actually "
+                    "demands. And because KSU is proudly borderless, those halls hold students from every county "
+                    "in Kenya and from across East Africa and beyond   learning side by side, on campus and "
+                    "through flexible, school-based modes that meet learners where they are. Whoever you are and "
+                    "wherever you begin, teaching here is designed to take you further than you thought possible."
+                ),
+                "cta_label": "Explore academics",
+                "cta_url": "/academics",
+                "display_order": 10,
+                "content": {"imageUrl": "/images/landing-page/why-kisii/sakgwa-academic-block.jpg", "imageAlt": "The Sakagwa Academic Block at Kisii University", "icon": "teaching"},
+            },
+            {
+                "item_type": "card",
+                "title": "Research",
+                "body_text": (
+                    "Research at Kisii University is anchored on a simple test: does it change anything? From the "
+                    "university's research centres, faculty and postgraduate students pursue questions drawn from "
+                    "real life   food security on smallholder farms, disease burdens in county health systems, "
+                    "literacy in early classrooms, and technology built for African realities. The university "
+                    "publishes, wins grants and hosts international collaborations   including the HERI-Africa "
+                    "Research Chair in Language Education   yet measures success by impact rather than output "
+                    "alone. Research training starts early: undergraduates join projects as assistants, "
+                    "postgraduates are mentored toward publication, and findings are shared openly with the "
+                    "policymakers and practitioners who can use them. This is inquiry without borders   "
+                    "connecting Kisii to networks across Africa and the world, and always bringing what is "
+                    "learned back home."
+                ),
+                "cta_label": "Explore research",
+                "cta_url": "/research",
+                "display_order": 20,
+                "content": {"imageUrl": "/images/landing-page/why-kisii/bg-3.jpg", "imageAlt": "The Kisii University tower rising above campus", "icon": "research"},
+            },
+            {
+                "item_type": "card",
+                "title": "Community Engagement",
+                "body_text": (
+                    "The gate on the hill welcomes more than students. Farmers, teachers, entrepreneurs and "
+                    "county officials all walk through it, because Kisii University treats its neighbours as "
+                    "partners in everything it does. Knowledge flows outward through medical camps and health "
+                    "outreach, agricultural extension in the Gusii highlands, literacy programmes in local "
+                    "schools, business incubation for young entrepreneurs, and public lectures open to all. And "
+                    "engagement is a two-way street: communities bring the questions that shape the university's "
+                    "teaching and research, and the university returns evidence, skills and service. Inclusivity "
+                    "is the thread running through it all   KSU serves learners and neighbours regardless of "
+                    "background, gender, ability or origin. A borderless university is, in the end, simply one "
+                    "whose gates never close: to ideas, to partnership, and to every community it exists to serve."
+                ),
+                "cta_label": "Learn more",
+                "cta_url": "/research/partnerships",
+                "display_order": 30,
+                "content": {"imageUrl": "/images/landing-page/why-kisii/pathway-2.jpg", "imageAlt": "The open main gate of Kisii University", "icon": "community"},
+            },
+            {
+                "item_type": "card",
+                "title": "Inclusivity & Borderlessness",
+                "body_text": (
+                    "Inclusivity and borderlessness are not slogans at Kisii University   they are how the "
+                    "institution is built. Admission is open to talent from every background: students arrive "
+                    "from all corners of Kenya, from across East Africa and beyond, and find a campus where "
+                    "gender equity, disability support and student welfare are treated as foundations rather "
+                    "than afterthoughts. Learning crosses borders too: flexible, school-based and "
+                    "technology-enabled modes carry KSU's programmes to working adults, teachers upgrading "
+                    "their skills and learners far from Kisii town. Partnerships stretch the university outward "
+                    "  from county governments to continental networks like HERI-Africa   so that ideas, staff "
+                    "and students move freely between institutions and countries. The result is a university "
+                    "without walls in every sense that matters: open in admission, open in delivery, and open "
+                    "to the world. Everyone with the will to learn has a place here."
+                ),
+                "cta_label": "Explore campus life",
+                "cta_url": "/campus-life",
+                "display_order": 40,
+                "content": {"imageUrl": "/images/backgrounds/KSUB-RollPhotos2025-123.jpg", "imageAlt": "Kisii University students on campus", "icon": "inclusion"},
+            },
         ),
     },
     {
         "section_key": "featured-partnership",
         "layout_variant": "featured_partnership",
         "display_order": 30,
-        "title": "Kisii University & Heri Africa — Building Africa Together.",
+        "title": "Kisii University & Heri Africa Building Africa Together.",
         "subtitle": "Strategic partnership",
         "description": "Partnering to advance innovation, entrepreneurship, digital transformation and community impact across Africa.",
         "settings": {
             "spotlightKey": "heri-africa",
             "spotlightSourceType": "research_partner",
-            "cta": {"label": "Explore research partnerships", "href": "/research/partnerships"},
+            "cta": {"label": "Explore More", "href": "/heri-africa"},
         },
         "items": (
             {
                 "item_type": "card",
                 "title": "Heri Africa spotlight",
                 "body_text": "Connect public-facing partnership content to the research partner source record.",
-                "cta_label": "Research partnerships",
-                "cta_url": "/research/partnerships",
+                "cta_label": "Read More",
+                "cta_url": "/heri-africa",
                 "display_order": 10,
                 "content": {"spotlightSlug": "heri-africa"},
+            },
+            {
+                "item_type": "card",
+                "title": "The initiative",
+                "body_text": (
+                    "HERI-Africa   Harnessing Education Research for Impact in Africa   is a Pan-African "
+                    "initiative bringing together collaborators from government, universities and civil society "
+                    "research organizations, working to raise the impact of education research on the continent "
+                    "from 3% to 30% by 2050."
+                ),
+                "display_order": 20,
+                "content": {"group": "chapter"},
+            },
+            {
+                "item_type": "card",
+                "title": "Kisii University's role",
+                "subtitle": "The Research Chair in Language Education",
+                "body_text": (
+                    "A leading Africa-led Centre of Excellence in language education research   advancing "
+                    "foundational literacy, educational transformation, and global societal impact. The Chair "
+                    "advances impactful, policy-responsive, and practice-oriented research in language education "
+                    "and foundational literacy for educational transformation in Africa and beyond."
+                ),
+                "display_order": 30,
+                "content": {
+                    "group": "chapter",
+                    "values": [
+                        "Excellence",
+                        "Collaboration",
+                        "Inclusivity",
+                        "Accountability",
+                        "Innovation",
+                        "Responsiveness",
+                        "Integrity",
+                        "African-Centred knowledge",
+                    ],
+                },
             },
         ),
     },
@@ -200,16 +266,16 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
         "display_order": 90,
         "title": "Life Around Studies",
         "subtitle": "Life around studies",
-        "description": "From sport to innovation, clubs and culture, campus life creates room to grow.",
+        "description": "Culture, service, innovation, careers and community: the campus in motion, told through the students living it.",
         "settings": {"cta": {"label": "Explore campus life", "href": "/campus-life"}},
         "items": (
-            {"item_type": "media", "title": "Student Clubs", "body_text": "Find communities that turn interests into friendships, leadership and service.", "cta_label": "Explore clubs", "cta_url": "/campus-life/clubs", "display_order": 10, "source_type": "club", "is_featured": True, "content": {"imageUrl": "/images/backgrounds/KSUB-RollPhotos2025-123.jpg", "imageAlt": "Kisii University students"}},
-            {"item_type": "media", "title": "Sports & Recreation", "body_text": "Stay active through team sport, recreation and spaces designed for wellbeing.", "cta_label": "See sports", "cta_url": "/campus-life/sports", "display_order": 20, "source_type": "sport", "is_featured": True, "content": {"imageUrl": "/images/history/KSUGreenLandscapingMay2026-3810.jpg", "imageAlt": "Kisii University grounds"}},
-            {"item_type": "media", "title": "Innovation Hub", "body_text": "Build, test and collaborate beyond the classroom through innovation and enterprise.", "cta_label": "Explore innovation", "cta_url": "/research/innovation", "display_order": 30, "source_type": "manual", "is_featured": True, "content": {"imageUrl": "/images/about/about-quality-assurance-branded.webp", "imageAlt": "Innovation at Kisii University"}},
-            {"item_type": "media", "title": "Modern Hostels", "body_text": "Choose a supportive place to live, learn and build lasting campus connections.", "cta_label": "View accommodation", "cta_url": "/campus-life/accommodation", "display_order": 40, "source_type": "accommodation", "audience": "prospective", "content": {"imageUrl": "/images/homepage/kisii-administration-campus.jpg", "imageAlt": "Kisii University campus"}},
-            {"item_type": "media", "title": "Culture & Arts", "body_text": "Celebrate creativity, heritage and expression through music, performance and art.", "cta_label": "Discover culture", "cta_url": "/campus-life/gallery", "display_order": 50, "source_type": "arts", "is_featured": True, "content": {"imageUrl": "/images/about/about-history-branded.webp", "imageAlt": "Culture at Kisii University"}},
-            {"item_type": "media", "title": "Health & Wellness", "body_text": "Access the services, guidance and support that help students thrive.", "cta_label": "Find support", "cta_url": "/campus-life/health-services", "display_order": 60, "source_type": "manual", "audience": "current_student", "content": {"imageUrl": "/images/about/about-service-charter-branded.webp", "imageAlt": "Student support at Kisii University"}},
-            {"item_type": "media", "title": "Student Governance", "body_text": "Have a voice in campus life through representative student leadership and engagement.", "cta_label": "Meet student leaders", "cta_url": "/campus-life/student-life", "display_order": 70, "source_type": "governance", "audience": "current_student", "content": {"imageUrl": "/images/about/about-governance-branded.webp", "imageAlt": "Student governance at Kisii University"}},
+            {"item_type": "media", "title": "Art & Culture", "body_text": "The Cultural Festival spills from campus into the streets of Kisii Town in a celebration of heritage, diversity and national pride.", "cta_label": "Discover culture", "cta_url": "/campus-life#art-culture", "display_order": 10, "source_type": "arts", "is_featured": True, "content": {"imageUrl": "/images/student-life/cultural-festival-11th/image1.jpg", "imageAlt": "Procession at the 11th Kisii University Cultural Festival", "storySlug": "cultural-festival-11th"}},
+            {"item_type": "media", "title": "Careers", "body_text": "Career guidance, mentorship and student-led professional summits connect students to the world of work before graduation.", "cta_label": "Explore careers", "cta_url": "/campus-life#careers", "display_order": 20, "source_type": "manual", "is_featured": True, "content": {"imageUrl": "/images/student-life/career-guidance/image4.jpg", "imageAlt": "Career guidance session at Kisii University", "storySlug": "career-guidance"}},
+            {"item_type": "media", "title": "Student Health", "body_text": "From campus health services to student volunteers trained to save lives when seconds matter.", "cta_label": "Explore health", "cta_url": "/campus-life#student-health", "display_order": 30, "source_type": "manual", "is_featured": True, "content": {"imageUrl": "/images/student-life/st-john-95th-parade/image2.jpg", "imageAlt": "St. John Ambulance Kisii University Division members", "storySlug": "st-john-lifesavers"}},
+            {"item_type": "media", "title": "Leadership", "body_text": "Leadership is practised, not just taught: national parades, student government and evenings honouring excellence.", "cta_label": "See leadership", "cta_url": "/campus-life#leadership", "display_order": 40, "source_type": "governance", "is_featured": True, "content": {"imageUrl": "/images/student-life/st-john-95th-parade/image1.jpg", "imageAlt": "Kisii University members at the 95th St. John Annual Parade", "storySlug": "st-john-95th-parade"}},
+            {"item_type": "media", "title": "Research & Innovation", "body_text": "Innovation Week turned campus into a marketplace of ideas: 300+ participants and 97 exhibitors co-creating a sustainable future.", "cta_label": "Explore innovation", "cta_url": "/campus-life#research-innovation", "display_order": 50, "source_type": "manual", "is_featured": True, "content": {"imageUrl": "/images/student-life/innovation-week/image3.jpg", "imageAlt": "Exhibition during Kisii University's inaugural Innovation Week", "storySlug": "innovation-week"}},
+            {"item_type": "media", "title": "Clubs & Societies", "body_text": "Dozens of societies turn interests into impact, including clubs recognised at State House for national contribution.", "cta_label": "Explore clubs", "cta_url": "/campus-life#clubs-societies", "display_order": 60, "source_type": "club", "is_featured": True, "content": {"imageUrl": "/images/student-life/best-tax-club-award/image1.jpg", "imageAlt": "Kisii University Tax Club recognition at State House", "storySlug": "best-tax-club-award"}},
+            {"item_type": "media", "title": "Accommodation", "body_text": "A supportive place to live and learn, close to lectures, libraries and the communities that make campus home.", "cta_label": "View accommodation", "cta_url": "/campus-life#accommodation", "display_order": 70, "source_type": "accommodation", "audience": "prospective", "content": {"imageUrl": "/images/homepage/kisii-administration-campus.jpg", "imageAlt": "Kisii University campus"}},
         ),
     },
     {
@@ -303,7 +369,7 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
     {
         "section_key": "facts",
         "layout_variant": "facts_strip",
-        "display_order": 45,
+        "display_order": 20,
         "title": "Kisii University at a glance",
         "subtitle": "Key institutional facts for the public homepage.",
         "description": "A concise facts strip for first-time visitors.",
@@ -312,13 +378,13 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
             "source": "institutional_seed",
         },
         "items": (
-            {"item_type": "stat", "title": "20,000+", "subtitle": "Students", "display_order": 10, "content": {"label": "Students"}},
-            {"item_type": "stat", "title": "100+", "subtitle": "Programmes", "display_order": 20, "content": {"label": "Programmes"}},
-            {"item_type": "stat", "title": "500+", "subtitle": "Academic Staff", "display_order": 30, "content": {"label": "Academic Staff"}},
+            {"item_type": "stat", "title": "45,000+", "subtitle": "Alumni", "display_order": 1, "content": {"label": "Alumni"}},
+            {"item_type": "stat", "title": "30,000+", "subtitle": "Students", "display_order": 10, "content": {"label": "Students"}},
+            {"item_type": "stat", "title": "200+", "subtitle": "Programmes", "display_order": 20, "content": {"label": "Programmes"}},
+            {"item_type": "stat", "title": "700+", "subtitle": "Academic Staff", "display_order": 30, "content": {"label": "Academic Staff"}},
             {"item_type": "stat", "title": "50+", "subtitle": "Student Clubs", "display_order": 40, "content": {"label": "Student Clubs"}},
-            {"item_type": "stat", "title": "13+", "subtitle": "Research Centres", "display_order": 50, "content": {"label": "Research Centres"}},
-            {"item_type": "stat", "title": "60+", "subtitle": "Years of Excellence", "display_order": 60, "content": {"label": "Years of Excellence"}},
-            {"item_type": "stat", "title": "98%", "subtitle": "Graduate Employability", "display_order": 70, "content": {"label": "Graduate Employability"}},
+            {"item_type": "stat", "title": "4+", "subtitle": "Research Centres", "display_order": 50, "content": {"label": "Research Centres"}},
+            {"item_type": "stat", "title": "13+", "subtitle": "Years of Excellence", "display_order": 60, "content": {"label": "Years of Excellence"}},
         ),
     },
 )
@@ -423,6 +489,20 @@ async def _seed_homepage_sections(db: AsyncSession) -> None:
     }
 
     now = datetime.now(timezone.utc)
+
+    # Retire seed-owned homepage sections whose spec has been removed
+    # (e.g. the old "pulse" strip replaced by the facts overlap card).
+    spec_keys = {spec["section_key"] for spec in HOMEPAGE_SECTION_SPECS}
+    for identity, section in existing.items():
+        page_key, scope_type, _scope_id, section_key = identity
+        if page_key != "homepage" or scope_type != "university":
+            continue
+        if section_key in spec_keys:
+            continue
+        if _is_seed_owned_section(section):
+            section.deleted_at = now
+            section.is_enabled = False
+
     leadership_news = await _seed_leadership_activity_news(db)
     for spec in HOMEPAGE_SECTION_SPECS:
         identity = ("homepage", "university", None, spec["section_key"])

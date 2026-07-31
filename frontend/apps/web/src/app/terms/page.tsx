@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, FileText } from "lucide-react";
-import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { CampusPageHeader } from "@ksu/ui/components";
+import { PageShell } from "@/components/site-shell";
 
 export const metadata = {
   title: "Terms of Use",
@@ -10,28 +11,16 @@ export const metadata = {
 export default function TermsPage() {
   return (
     <PageShell>
+      <CampusPageHeader
+        title="Website terms and public use guidance"
+        eyebrow="Terms of Use"
+        description="By accessing and using the Kisii University website, you agree to these terms. If you do not agree, please do not use this website."
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Terms of Use" }]}
+        seed="/terms"
+      />
+
       <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <BreadcrumbTrail
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Terms of Use" },
-          ]}
-        />
-
-        <div className="mt-8">
-          <p className="text-sm font-semibold uppercase text-secondary">
-            Terms of Use
-          </p>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
-            Website terms and public use guidance
-          </h1>
-          <p className="mt-4 text-base leading-8 text-muted-foreground">
-            By accessing and using the Kisii University website, you agree to
-            these terms. If you do not agree, please do not use this website.
-          </p>
-        </div>
-
-        <div className="mt-10 space-y-8">
+        <div className="space-y-8">
           <section>
             <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Purpose of this website

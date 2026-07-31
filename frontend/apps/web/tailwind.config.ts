@@ -175,6 +175,10 @@ const config: Config = {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        "ken-burns": {
+          "0%": { transform: "scale(1)" },
+          "100%": { transform: "scale(1.08)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -187,6 +191,7 @@ const config: Config = {
         "slide-in-right": "slide-in-from-right 0.2s ease-out",
         "scale-in": "scale-in 0.2s ease-out",
         shimmer: "shimmer 2s infinite linear",
+        "ken-burns": "ken-burns 10s ease-out forwards",
       },
       minHeight: {
         touch: "44px",

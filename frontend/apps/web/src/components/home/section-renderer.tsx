@@ -139,10 +139,8 @@ export function HomepageSections({
       section.layout_variant === "facts_strip" ||
       section.section_key === "facts",
   );
-  const hasMergedWhySection = sections.some(
-    (section) =>
-      section.layout_variant === "pillar_grid" &&
-      section.section_key === "why-kisii",
+  const hasPulseStrip = sections.some(
+    (section) => section.layout_variant === "pulse_strip",
   );
   const academicDatesSection = sections.find(
     (section) =>
@@ -165,10 +163,7 @@ export function HomepageSections({
   return (
     <>
       {orderedSections.map((section) => {
-        if (section.layout_variant === "alumni_story") {
-          return null;
-        }
-        if (hasMergedWhySection && section.layout_variant === "facts_strip") {
+        if (hasPulseStrip && section.layout_variant === "facts_strip") {
           return null;
         }
         if (
@@ -212,7 +207,7 @@ function orderHomepageSections(sections: HomepageSection[]) {
     pulse_strip: 20,
     featured_partnership: 30,
     pillar_grid: 40,
-    facts_strip: 41,
+    facts_strip: 20,
     programme_finder: 50,
     date_timeline: 51,
     featured_stories: 55,

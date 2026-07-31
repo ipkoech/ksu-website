@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowRight, ClipboardList } from "lucide-react";
 import { announcementsApi } from "@ksu/api-client";
-import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { CampusPageHeader } from "@ksu/ui/components";
+import { PageShell } from "@/components/site-shell";
 
 export const metadata: Metadata = {
   title: "Tenders",
@@ -50,26 +51,16 @@ export default async function TendersPage() {
 
   return (
     <PageShell>
+      <CampusPageHeader
+        title="Tenders and procurement notices"
+        eyebrow="Tenders"
+        description="Access procurement notices, supplier opportunities, and tender-related public information through official university channels."
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Tenders" }]}
+        seed="/tenders"
+      />
+
       <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <BreadcrumbTrail
-          items={[{ label: "Home", href: "/" }, { label: "Tenders" }]}
-        />
-
-        <header className="mt-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-secondary">
-            Tenders
-          </p>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
-            Tenders and procurement notices
-          </h1>
-          <p className="mt-4 text-base leading-8 text-muted-foreground">
-            Access procurement notices, supplier opportunities, and
-            tender-related public information through official university
-            channels.
-          </p>
-        </header>
-
-        <section className="mt-12">
+        <section className="mt-0">
           <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
             Current notices
           </h2>

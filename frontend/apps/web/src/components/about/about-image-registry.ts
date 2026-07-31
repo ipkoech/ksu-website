@@ -1,5 +1,7 @@
 export type AboutImagePage =
   | "about"
+  | "academics"
+  | "admissions"
   | "numbersFacts"
   | "qualityAssurance"
   | "serviceCharter"
@@ -28,6 +30,28 @@ export const ABOUT_PAGE_IMAGE_POOLS = {
     aboutUsImages.pavilion,
     aboutUsImages.ictVillage,
     aboutUsImages.science,
+  ],
+  academics: [
+    aboutUsImages.law,
+    aboutUsImages.science,
+    aboutUsImages.ictVillage,
+    aboutUsImages.blockC,
+    aboutUsImages.pathway,
+    aboutUsImages.gate,
+    aboutUsImages.pavilion,
+    aboutUsImages.sakagwa,
+    aboutUsImages.bgFore,
+  ],
+  admissions: [
+    aboutUsImages.pavilion,
+    aboutUsImages.gate,
+    aboutUsImages.bgFore,
+    aboutUsImages.pathway,
+    aboutUsImages.sakagwa,
+    aboutUsImages.blockC,
+    aboutUsImages.science,
+    aboutUsImages.law,
+    aboutUsImages.ictVillage,
   ],
   numbersFacts: [
     aboutUsImages.bgFore,

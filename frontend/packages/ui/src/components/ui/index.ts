@@ -4,6 +4,7 @@ export * from "./ambient-page-background";
 export * from "./avatar";
 export * from "./badge";
 export * from "./button";
+export * from "./campus-page-header";
 export * from "./calendar";
 export * from "./card";
 export * from "./checkbox";

@@ -25,6 +25,7 @@ import type {
 import { ListPagination, ScrollReveal } from "@ksu/ui/components";
 import type { CampusLifePageData } from "@/lib/get-campus-life";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
+import { CampusLifeStoryLanding } from "@/components/campus-life/campus-life-story-landing";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { PublicImage } from "@/components/public/public-image";
 import {
@@ -1658,23 +1659,29 @@ export function CampusLifeContent({
   return (
     <PageShell>
       <AboutPageLenis>
-        <Hero
-          eyebrow={copy.eyebrow}
-          title={copy.title}
-          body={copy.body}
-          image={copy.image}
-        />
-        <div className="grid w-full gap-8 bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-8">
-          <SideNav currentHref={currentHref} />
-          <div className="min-w-0">
-            <ContentByArea
-              area={area}
-              slug={slug}
-              data={data}
-              filters={filters}
+        {area === "landing" ? (
+          <CampusLifeStoryLanding />
+        ) : (
+          <>
+            <Hero
+              eyebrow={copy.eyebrow}
+              title={copy.title}
+              body={copy.body}
+              image={copy.image}
             />
-          </div>
-        </div>
+            <div className="grid w-full gap-8 bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-8">
+              <SideNav currentHref={currentHref} />
+              <div className="min-w-0">
+                <ContentByArea
+                  area={area}
+                  slug={slug}
+                  data={data}
+                  filters={filters}
+                />
+              </div>
+            </div>
+          </>
+        )}
         <section className="border-y border-border bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
           <div className="grid w-full gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
             <div>
