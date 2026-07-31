@@ -31,16 +31,10 @@ import { ImageComparison } from "./image-comparison";
 import { AboutReveal } from "./about-reveal";
 import { ImageCurtainReveal } from "./image-curtain-reveal";
 import { InstitutionalIcon } from "./institutional-icon";
-
-const heroFallback = "/images/about/about-overview-branded.webp";
-const identityFallback = "/images/about/about-mission-vision.webp";
+import { createAboutImagePicker } from "./about-image-registry";
 
 function paragraphs(value?: string | null) {
   return (value ?? "").split(/\n\s*\n/).map((item) => item.trim()).filter(Boolean);
-}
-
-function mediaUrl(media: { url?: string | null } | null | undefined, fallback: string) {
-  return media?.url?.trim() || fallback;
 }
 
 function mediaAlt(media: { alt?: string | null; alt_text?: string | null } | null | undefined, fallback: string) {
@@ -249,6 +243,11 @@ export function PublicAboutPage({ data, facts, historyInitiallyOpen = false }: {
   const tourTriggerRef = useRef<HTMLButtonElement>(null);
   const content = data.content;
   const university = data.university;
+  const pickAboutImage = createAboutImagePicker("about");
+  const heroImage = pickAboutImage(content?.hero_media?.url);
+  const identityImage = pickAboutImage(content?.identity_media?.url);
+  const oldCampusImage = pickAboutImage(content?.old_campus_media?.url);
+  const modernCampusImage = pickAboutImage(content?.modern_campus_media?.url);
   const heroParagraphs = paragraphs(content?.hero_introduction || university.overview).slice(0, 1);
   const coreValues = (university.core_values ?? "").split(/[;|\n]+/).map((item) => item.trim()).filter(Boolean);
   const quickFacts = university.quick_facts ?? {};
@@ -299,7 +298,7 @@ export function PublicAboutPage({ data, facts, historyInitiallyOpen = false }: {
   return (
     <div className="bg-surface text-foreground">
       <section className="relative isolate min-h-[610px] overflow-hidden bg-[#062d62] text-white lg:min-h-[640px]">
-        <Image src={mediaUrl(content?.hero_media, heroFallback)} alt={mediaAlt(content?.hero_media, "Aerial view of Kisii University campus")} fill priority sizes="100vw" className="object-cover motion-safe:animate-[kenburns_24s_ease-in-out_infinite_alternate]" />
+        <Image src={heroImage} alt={mediaAlt(content?.hero_media, "Kisii University main campus gate")} fill priority sizes="100vw" className="object-cover motion-safe:animate-[kenburns_24s_ease-in-out_infinite_alternate]" />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,28,68,.96)_0%,rgba(4,38,83,.84)_43%,rgba(4,38,83,.16)_80%)]" />
         <div className="relative mx-auto flex min-h-[610px] w-full flex-col justify-center px-5 py-10 sm:px-8 lg:min-h-[640px] lg:px-16 xl:px-20">
           <nav aria-label="Breadcrumb" className="mb-10 text-sm font-semibold text-white/80"><Link href="/" className="hover:text-white">Home</Link><span className="mx-3">/</span><span>{content?.hero_eyebrow || "About Kisii University"}</span></nav>
@@ -327,7 +326,7 @@ export function PublicAboutPage({ data, facts, historyInitiallyOpen = false }: {
           </div>
         </AboutReveal>
         <ImageCurtainReveal className="min-h-[390px] rounded-sm shadow-lg lg:min-h-[440px]" direction="right">
-          <Image src={mediaUrl(content?.identity_media, identityFallback)} alt={mediaAlt(content?.identity_media, "Kisii University research and learning environment")} fill sizes="(min-width:1024px) 58vw, 100vw" className={`object-cover transition duration-1000 motion-reduce:transition-none ${content?.identity_media?.url ? "hover:scale-[1.03]" : "origin-top-right scale-[2.35] object-right-top"}`} />
+          <Image src={identityImage} alt={mediaAlt(content?.identity_media, "Sakagwa Teaching Complex at Kisii University")} fill sizes="(min-width:1024px) 58vw, 100vw" className="object-cover transition duration-1000 hover:scale-[1.03] motion-reduce:transition-none" />
           {hasVirtualTour ? (
             <button ref={tourTriggerRef} type="button" onClick={() => setTour(true)} className="absolute left-1/2 top-1/2 z-10 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 border-white/80 bg-white text-primary shadow-xl transition hover:scale-105 hover:bg-secondary focus:outline-none focus:ring-4 focus:ring-white/70 motion-reduce:transition-none" aria-label={`Open ${content?.virtual_tour_title || "Kisii University virtual campus tour"}`}>
               <Play className="ml-1 h-6 w-6 fill-current" aria-hidden />
@@ -361,7 +360,7 @@ export function PublicAboutPage({ data, facts, historyInitiallyOpen = false }: {
           <AboutReveal variant="left">
           <div className="grid gap-5 lg:grid-cols-2 lg:items-end"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">From Our Roots. To Our Future.</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-primary sm:text-4xl">A Campus in Transformation</h2></div><p className="text-sm leading-7 text-muted-foreground">Our journey is one of growth, vision and impact. From humble beginnings to a modern university, we continue to invest in people, infrastructure and innovation for a better tomorrow.</p></div>
           </AboutReveal>
-          <ImageCurtainReveal className="mt-8 min-h-[260px] rounded-sm border border-primary/10" direction="left"><ImageComparison before={mediaUrl(content?.old_campus_media, "/images/history/KSUGreenLandscapingMay2026-3810.jpg")} after={mediaUrl(content?.modern_campus_media, heroFallback)} beforeAlt={content?.old_campus_media?.alt || "Historic Kisii University campus"} afterAlt={content?.modern_campus_media?.alt || "Modern Kisii University campus"} /></ImageCurtainReveal>
+          <ImageCurtainReveal className="mt-8 min-h-[260px] rounded-sm border border-primary/10" direction="left"><ImageComparison before={oldCampusImage} after={modernCampusImage} beforeAlt={content?.old_campus_media?.alt || "Kisii University academic campus"} afterAlt={content?.modern_campus_media?.alt || "Modern Kisii University campus"} /></ImageCurtainReveal>
         </div>
       </section>
 

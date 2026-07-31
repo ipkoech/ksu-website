@@ -12,6 +12,7 @@ import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import { getQualityAssuranceData } from "@/lib/about-data";
 import { publicFileUrl } from "@/lib/public-media";
+import { createAboutImagePicker } from "@/components/about/about-image-registry";
 
 type ResourceDocument = {
   id: string;
@@ -46,6 +47,7 @@ function documentMatches(document: ResourceDocument, term: string) {
 
 export default async function QualityAssurancePage() {
   const data = await getQualityAssuranceData();
+  const qualityHeroImage = createAboutImagePicker("qualityAssurance")();
   const planDocuments = data.documents.filter((document) =>
     documentMatches(document, "strategic"),
   );
@@ -117,7 +119,8 @@ export default async function QualityAssurancePage() {
           <section className="relative isolate overflow-hidden bg-brand-overlay text-white">
             <div
               aria-hidden
-              className="absolute inset-0 bg-[url('/images/about/about-quality-assurance-branded.webp')] bg-cover bg-center opacity-55 mix-blend-luminosity"
+              className="absolute inset-0 bg-cover bg-center opacity-55 mix-blend-luminosity"
+              style={{ backgroundImage: `url("${qualityHeroImage}")` }}
             />
             <div
               aria-hidden

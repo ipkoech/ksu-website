@@ -5,6 +5,7 @@ import { RichTextRenderer } from "@ksu/ui/rich-text-renderer";
 import type { PublicFactItem, PublicFactsData } from "@/lib/public-about-data";
 import { AboutReveal } from "./about-reveal";
 import { ImageCurtainReveal } from "./image-curtain-reveal";
+import { createAboutImagePicker } from "./about-image-registry";
 
 function factValue(item: PublicFactItem) {
   return `${item.prefix || ""}${item.display_value}${item.suffix || ""}${item.unit ? ` ${item.unit}` : ""}`;
@@ -31,17 +32,9 @@ function FactLine({ item }: { item: PublicFactItem }) {
   );
 }
 
-const factImageFallbacks: Record<string, string> = {
-  "institutional-profile": "/images/backgrounds/about-hero.jpg",
-  "academic-organisation": "/images/backgrounds/KSUB-RollPhotos2025-123.jpg",
-  "student-community": "/images/Home/OurKSU-82.jpg",
-  "access-and-growth": "/images/about/about-overview.webp",
-  "graduate-impact": "/images/about/about-mission-vision.webp",
-  "research-and-knowledge": "/images/HERIAfricaLaunch.jpg",
-};
-
 export function NumbersFactsPage({ data }: { data: PublicFactsData }) {
   const edition = data.edition;
+  const pickImage = createAboutImagePicker("numbersFacts");
 
   return (
     <main className="bg-white">
@@ -103,7 +96,7 @@ export function NumbersFactsPage({ data }: { data: PublicFactsData }) {
               <article>
               <ImageCurtainReveal className="aspect-[16/10]" direction={data.groups.indexOf(group) % 2 === 0 ? "right" : "left"}>
                 <Image
-                  src={group.image?.url || factImageFallbacks[group.slug] || "/images/backgrounds/about-hero.jpg"}
+                  src={pickImage(group.image?.url)}
                   alt={group.image?.alt_text || group.image?.alt || group.image_alt_text || `${group.heading} at Kisii University`}
                   fill
                   sizes="(min-width: 1280px) 32vw, (min-width: 768px) 50vw, 100vw"

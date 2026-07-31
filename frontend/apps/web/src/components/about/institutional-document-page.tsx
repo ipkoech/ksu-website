@@ -15,44 +15,22 @@ import type {
 import { AboutReveal } from "./about-reveal";
 import { ImageCurtainReveal } from "./image-curtain-reveal";
 import { InstitutionalIcon } from "./institutional-icon";
-
-const heroFallbacks = {
-  service_charter: "/images/about/about-service-charter-branded.webp",
-  strategic_plan: "/images/about/about-strategic-plan-branded.webp",
-  about: "/images/backgrounds/about-hero.jpg",
-};
-
-const narrativeFallbacks = {
-  service_charter: "/images/about/about-service-charter.webp",
-  strategic_plan: "/images/HERIAfricaLaunch.jpg",
-  about: "/images/about/about-overview.webp",
-};
-
-const quoteFallbacks = {
-  service_charter: "/images/about/about-quality-assurance.webp",
-  strategic_plan: "/images/about/about-strategic-plan.webp",
-  about: "/images/about/about-mission-vision.webp",
-};
-
-const priorityFallbacks = [
-  "/images/about/about-overview.webp",
-  "/images/HERIAfricaLaunch.jpg",
-  "/images/Home/OurKSU-82.jpg",
-  "/images/about/about-leadership.webp",
-  "/images/about/about-administration.webp",
-];
+import {
+  createAboutImagePicker,
+  type AboutImagePicker,
+  type AboutImagePage,
+} from "./about-image-registry";
 
 type PageType = PublicInstitutionalPage["page_type"];
 
-function documentHref(document: PublicInstitutionalPage["primary_document"]) {
-  return document?.file?.url || null;
+function imagePageFor(type: PageType): AboutImagePage {
+  if (type === "service_charter") return "serviceCharter";
+  if (type === "strategic_plan") return "strategicPlan";
+  return "about";
 }
 
-function sectionImage(
-  section: PublicInstitutionalSection,
-  fallback: string,
-) {
-  return section.primary_media?.url || fallback;
+function documentHref(document: PublicInstitutionalPage["primary_document"]) {
+  return document?.file?.url || null;
 }
 
 function SectionHeading({
@@ -87,10 +65,10 @@ function SectionHeading({
 
 function NarrativeSection({
   section,
-  type,
+  pickImage,
 }: {
   section: PublicInstitutionalSection;
-  type: PageType;
+  pickImage: AboutImagePicker;
 }) {
   return (
     <section className="overflow-hidden bg-[#faf8f3]">
@@ -109,7 +87,7 @@ function NarrativeSection({
         </AboutReveal>
         <ImageCurtainReveal className="min-h-[320px] lg:min-h-[470px]" direction="right">
           <Image
-            src={sectionImage(section, narrativeFallbacks[type])}
+            src={pickImage(section.primary_media?.url)}
             alt={section.media_alt_text || section.primary_media?.alt_text || section.heading}
             fill
             sizes="(min-width: 1024px) 50vw, 100vw"
@@ -184,7 +162,7 @@ function ProcessSection({ section }: { section: PublicInstitutionalSection }) {
   );
 }
 
-function PrioritiesSection({ section }: { section: PublicInstitutionalSection }) {
+function PrioritiesSection({ section, pickImage }: { section: PublicInstitutionalSection; pickImage: AboutImagePicker }) {
   return (
     <section className="overflow-hidden bg-white px-5 py-14 sm:px-8 lg:px-10 lg:py-20">
       <AboutReveal className="mx-auto max-w-7xl">
@@ -209,7 +187,7 @@ function PrioritiesSection({ section }: { section: PublicInstitutionalSection })
                 </p>
               ) : null}
               <ImageCurtainReveal className="mt-5 aspect-[4/3] rounded-sm" direction={index % 2 === 0 ? "right" : "left"}>
-                <Image src={item.image?.url || priorityFallbacks[index] || priorityFallbacks[0]} alt={item.image_alt_text || item.image?.alt_text || item.title} fill sizes="(min-width:1024px) 20vw, 50vw" className="object-cover transition duration-700 group-hover:scale-[1.04] motion-reduce:transition-none" />
+                <Image src={pickImage(item.image?.url)} alt={item.image_alt_text || item.image?.alt_text || item.title} fill sizes="(min-width:1024px) 20vw, 50vw" className="object-cover transition duration-700 group-hover:scale-[1.04] motion-reduce:transition-none" />
               </ImageCurtainReveal>
             </article>
           ))}
@@ -219,11 +197,11 @@ function PrioritiesSection({ section }: { section: PublicInstitutionalSection })
   );
 }
 
-function OutcomesSection({ section }: { section: PublicInstitutionalSection }) {
+function OutcomesSection({ section, pickImage }: { section: PublicInstitutionalSection; pickImage: AboutImagePicker }) {
   return (
     <section className="overflow-hidden bg-[#f5f2ea]">
       <div className="mx-auto grid max-w-7xl lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
-        <ImageCurtainReveal className="min-h-[340px] lg:min-h-[500px]" direction="left"><Image src={section.primary_media?.url || "/images/HERIAfricaLaunch.jpg"} alt={section.media_alt_text || section.primary_media?.alt_text || section.heading} fill sizes="(min-width:1024px) 48vw, 100vw" className="object-cover" /></ImageCurtainReveal>
+        <ImageCurtainReveal className="min-h-[340px] lg:min-h-[500px]" direction="left"><Image src={pickImage(section.primary_media?.url)} alt={section.media_alt_text || section.primary_media?.alt_text || section.heading} fill sizes="(min-width:1024px) 48vw, 100vw" className="object-cover" /></ImageCurtainReveal>
         <AboutReveal variant="right" className="px-5 py-14 sm:px-8 lg:px-12 lg:py-16"><SectionHeading section={section} />
         <div className="mt-8 grid gap-6">
           {section.items.map((item, index) => (
@@ -239,17 +217,17 @@ function OutcomesSection({ section }: { section: PublicInstitutionalSection }) {
 
 function QuoteSection({
   section,
-  type,
+  pickImage,
 }: {
   section: PublicInstitutionalSection;
-  type: PageType;
+  pickImage: AboutImagePicker;
 }) {
   return (
     <section className="bg-primary text-white">
       <div className="mx-auto grid max-w-7xl lg:grid-cols-[0.85fr_1.15fr]">
       <ImageCurtainReveal className="min-h-[300px] lg:min-h-[430px]" direction="right">
         <Image
-          src={sectionImage(section, quoteFallbacks[type])}
+          src={pickImage(section.primary_media?.url)}
           alt={section.media_alt_text || section.primary_media?.alt_text || "Kisii University community"}
           fill
           sizes="(min-width: 1024px) 46vw, 100vw"
@@ -318,23 +296,25 @@ function DocumentsSection({
 function StructuredSection({
   section,
   page,
+  pickImage,
 }: {
   section: PublicInstitutionalSection;
   page: PublicInstitutionalPage;
+  pickImage: AboutImagePicker;
 }) {
   switch (section.section_type) {
     case "narrative":
-      return <NarrativeSection section={section} type={page.page_type} />;
+      return <NarrativeSection section={section} pickImage={pickImage} />;
     case "commitments":
       return <CommitmentsSection section={section} />;
     case "process":
       return <ProcessSection section={section} />;
     case "priorities":
-      return <PrioritiesSection section={section} />;
+      return <PrioritiesSection section={section} pickImage={pickImage} />;
     case "outcomes":
-      return <OutcomesSection section={section} />;
+      return <OutcomesSection section={section} pickImage={pickImage} />;
     case "quote":
-      return <QuoteSection section={section} type={page.page_type} />;
+      return <QuoteSection section={section} pickImage={pickImage} />;
     case "document_collection":
       return <DocumentsSection section={section} page={page} />;
     default:
@@ -424,7 +404,8 @@ function ClosingCta({ type }: { type: PageType }) {
 }
 
 export function InstitutionalDocumentPage({ page }: { page: PublicInstitutionalPage }) {
-  const hero = page.hero_media?.url || heroFallbacks[page.page_type];
+  const pickImage = createAboutImagePicker(imagePageFor(page.page_type));
+  const hero = pickImage(page.hero_media?.url);
   const isCharter = page.page_type === "service_charter";
   const promise = isCharter ? page.sections.find((section) => section.section_type === "narrative") : undefined;
   const primaryHref = documentHref(page.primary_document);
@@ -462,7 +443,7 @@ export function InstitutionalDocumentPage({ page }: { page: PublicInstitutionalP
 
       {isCharter ? <DocumentSummary page={page} promise={promise} /> : null}
       {page.sections.filter((section) => !(isCharter && section.id === promise?.id)).map((section) => (
-        <StructuredSection key={section.id} section={section} page={page} />
+        <StructuredSection key={section.id} section={section} page={page} pickImage={pickImage} />
       ))}
       <ClosingCta type={page.page_type} />
     </main>
