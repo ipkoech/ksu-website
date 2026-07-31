@@ -303,6 +303,16 @@ async function getLandingHeroGroup() {
   return chooseHeroGroup(groupsResponse.data ?? [], false) ?? null;
 }
 
+const MAIN_HERO_VIDEO_URL = "/videos/main-hero.mp4";
+
+function withHeroVideo(slides: LandingHeroSlide[]): LandingHeroSlide[] {
+  return slides.map((slide, index) =>
+    index === 0 && !slide.videoUrl
+      ? { ...slide, videoUrl: MAIN_HERO_VIDEO_URL }
+      : slide,
+  );
+}
+
 export async function getLandingHeroData(): Promise<LandingHeroData> {
   try {
     const group = await getLandingHeroGroup();
@@ -310,17 +320,21 @@ export async function getLandingHeroData(): Promise<LandingHeroData> {
       const sliders = await listGroupSliders(group.id);
       return {
         ...heroSettingsFromGroup(group),
-        slides: sliders.slice(0, maxSlidesFromGroup(group)).map(normalizeSlider),
+        slides: withHeroVideo(
+          sliders.slice(0, maxSlidesFromGroup(group)).map(normalizeSlider),
+        ),
       };
     }
 
     const mainSliders = await listMainSliders();
     return {
       ...defaultHeroSettings,
-      slides: mainSliders
-        .filter((slider) => !slider.scope_type && !slider.scope_id)
-        .slice(0, 5)
-        .map(normalizeSlider),
+      slides: withHeroVideo(
+        mainSliders
+          .filter((slider) => !slider.scope_type && !slider.scope_id)
+          .slice(0, 5)
+          .map(normalizeSlider),
+      ),
     };
   } catch (error) {
     if (!isAbortError(error)) {

@@ -90,6 +90,8 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   return (
     <main id="library-main" className="min-h-screen bg-white">
       <LibraryHero
+        imageSrc="/images/library/stacks-science.jpg"
+        imageAlt="Book stacks in the Science and Technology section of the Kisii University Library"
         eyebrow="Library Catalog"
         title="Find print and digital items held by library branches."
         body="Search by title, author, publisher, ISBN, call number, or subject. Use the branch selector to narrow results to the location you plan to visit."

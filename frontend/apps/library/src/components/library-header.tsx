@@ -34,14 +34,14 @@ const libraryNavGroups: LibraryNavGroup[] = [
         description: "Databases, e-books, journals, and online platforms.",
       },
       {
-        label: "Repository",
-        href: "/repositories",
-        description: "Institutional repository links and digital collections.",
+        label: "Repository & access links",
+        href: "/electronic#external-links",
+        description: "Institutional repository, OPAC, and off-campus access.",
       },
       {
-        label: "Downloads",
-        href: "/downloads",
-        description: "Forms, guides, files, and library documents.",
+        label: "Documents & forms",
+        href: "/electronic#downloads",
+        description: "Guides, forms, and library documents.",
       },
     ],
   },
@@ -60,14 +60,9 @@ const libraryNavGroups: LibraryNavGroup[] = [
         description: "Send a question to the library team.",
       },
       {
-        label: "Hours",
-        href: "/hours",
-        description: "Opening hours and branch schedules.",
-      },
-      {
-        label: "Contact the Library",
+        label: "Contact & Hours",
         href: "/contact",
-        description: "Branch contacts and librarian inquiries.",
+        description: "Branch contacts, inquiries, and opening hours.",
       },
     ],
   },
@@ -81,34 +76,34 @@ const libraryNavGroups: LibraryNavGroup[] = [
         description: "Library mandate, branches, and service context.",
       },
       {
-        label: "Staff",
-        href: "/staff",
-        description: "Find library staff and subject support contacts.",
+        label: "Leadership",
+        href: "/about#leadership",
+        description: "Library leadership and governance records.",
       },
       {
-        label: "Leadership",
-        href: "/leadership",
-        description: "Library leadership and governance records.",
+        label: "Staff directory",
+        href: "/about#staff",
+        description: "Find library staff and subject support contacts.",
       },
     ],
   },
   {
     label: "Updates",
-    href: "/news",
+    href: "/updates",
     items: [
       {
         label: "News",
-        href: "/news",
+        href: "/updates",
         description: "Library notices and service updates.",
       },
       {
         label: "Events",
-        href: "/events",
+        href: "/updates?type=events",
         description: "Training, workshops, and library events.",
       },
       {
         label: "Articles",
-        href: "/articles",
+        href: "/updates?type=articles",
         description: "Learning articles and library guidance.",
       },
     ],
@@ -226,7 +221,7 @@ export function LibraryHeader() {
 }
 
 function isActive(pathname: string, href: string) {
-  const path = href.split("#")[0];
+  const path = href.split("#")[0].split("?")[0];
   return path === "/" ? pathname === "/" : pathname.startsWith(path);
 }
 

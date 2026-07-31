@@ -1400,303 +1400,151 @@ export function PillarGridSection({
 }
 
 export function MediaMosaicSection({ section }: SectionVariantProps) {
-  const items = displayItems(section);
-  const feature = items[0];
-  const lanes = campusLifeLanes(items);
-  const rhythm = [
-    {
-      label: "Study",
-      title: "Academic days with room to grow",
-      body: "Move between lectures, practical spaces, library time and guided support.",
-    },
-    {
-      label: "Belong",
-      title: "People, clubs and student leadership",
-      body: "Find communities that help you build confidence, friendships and purpose.",
-    },
-    {
-      label: "Live",
-      title: "A complete student experience",
-      body: "Balance class with sport, culture, wellness, accommodation and campus events.",
-    },
-  ];
+  const items = displayItems(section).slice(0, 7);
+  if (!items.length) return null;
+  const [feature, ...rest] = items;
+
   return (
     <section
       id={section.section_key}
-      className="campus-life-scroll-scene relative isolate overflow-hidden bg-[linear-gradient(180deg,#fff_0%,hsl(var(--surface-subtle)/.92)_100%)] py-12 sm:py-14"
+      className="border-b border-border bg-[linear-gradient(180deg,#fff_0%,hsl(var(--surface-subtle)/.92)_100%)] py-12 lg:py-16"
     >
-      <div className="pointer-events-none absolute inset-y-0 right-0 -z-10 hidden w-[42%] bg-[radial-gradient(circle_at_65%_48%,hsl(var(--primary)/.12),transparent_68%)] lg:block" />
-      <SectionFadeIn
-        opacityOnly
-        className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
-      >
-        <CampusLifeHorizontalScroller>
-          <div className="flex w-max items-stretch gap-5 pb-3 lg:gap-6">
-            <div className="campus-life-editorial w-[min(88vw,980px)] shrink-0 snap-start">
-              <div className="grid gap-7 lg:grid-cols-[minmax(0,0.58fr)_minmax(360px,0.42fr)] lg:items-stretch">
-                <div className="flex flex-col justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-6 motion-safe:delay-150">
-                  <div className="max-w-xl">
-                    <div className="flex items-center gap-3"><SectionEyebrow value="Life around studies" /><span className="hidden text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground sm:inline">Scroll to explore</span></div>
-                    <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl lg:text-5xl">
-                      Find your people. Build your rhythm.
-                    </h2>
-                    <SectionBody
-                      value={
-                        section.description ??
-                        "See how students belong, stay active, access support and navigate daily life beyond the lecture room."
-                      }
-                      className="mt-4 text-base leading-8"
-                    />
-                    <CtaLink
-                      item={{
-                        title: "Explore campus life",
-                        cta_label: "Explore campus life",
-                        cta_url: "/campus-life",
-                      }}
-                      className="mt-7"
-                    />
-                  </div>
-                  <div className="student-life-rhythm mt-8 space-y-1">
-                    {rhythm.map((item, index) => (
-                      <div
-                        key={item.label}
-                        className="group grid gap-3 rounded-2xl px-3 py-4 transition hover:bg-white sm:grid-cols-[86px_minmax(0,1fr)]"
-                      >
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-secondary">
-                            {item.label}
-                          </p>
-                          <p className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold leading-none text-primary/25">
-                            {String(index + 1).padStart(2, "0")}
-                          </p>
-                        </div>
-                        <div>
-                          <h3 className="font-[family-name:var(--font-display)] text-xl font-semibold leading-tight text-foreground">
-                            {item.title}
-                          </h3>
-                          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                            {item.body}
-                          </p>
-                        </div>
-                        <span
-                          className="hidden"
-                          aria-hidden="true"
-                          style={{ animationDelay: `${index * 80}ms` }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <CampusMosaicFeature item={feature} section={section} />
-              </div>
-            </div>
-            <div className="student-life-lanes mt-0 grid gap-4 sm:grid-cols-2 lg:flex lg:w-max lg:items-stretch lg:gap-5">
-              {lanes.map((lane, index) => (
-                <CampusLifeLane key={lane.title} lane={lane} index={index} />
-              ))}
-            </div>
-          </div>
-        </CampusLifeHorizontalScroller>
+      <SectionFadeIn className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        {/* Opening */}
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+            {section.subtitle ?? "Life around studies"}
+          </p>
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-primary sm:text-4xl">
+            {section.title ?? "Life Around Studies"}
+          </h2>
+          {section.description ? (
+            <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
+              {section.description}
+            </p>
+          ) : null}
+        </div>
+
+        {/* Mosaic grid */}
+        <RevealGroup
+          variant="fade-up"
+          staggerDelay={90}
+          className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          {feature ? (
+            <CampusMosaicCard
+              item={feature}
+              className="min-h-[280px] sm:col-span-2 sm:row-span-2 lg:min-h-[420px]"
+              featured
+            />
+          ) : null}
+          {rest.slice(0, 4).map((item) => (
+            <CampusMosaicCard
+              key={item.id}
+              item={item}
+              className="min-h-[200px]"
+            />
+          ))}
+          {rest.slice(4, 6).map((item) => (
+            <CampusMosaicCard
+              key={item.id}
+              item={item}
+              className="min-h-[200px] sm:col-span-2 lg:col-span-2"
+            />
+          ))}
+        </RevealGroup>
+
+        {/* Explore CTA */}
+        <div className="mt-10 text-center">
+          <Link
+            href={settingCtaHref(section) ?? "/campus-life"}
+            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90"
+          >
+            {settingCtaLabel(section) ?? "Explore campus life"}
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+        </div>
       </SectionFadeIn>
     </section>
   );
 }
 
-function CampusMosaicFeature({
+function CampusMosaicCard({
   item,
-  section,
+  className,
+  featured = false,
 }: {
-  item?: HomepageSectionItem;
-  section: HomepageSection;
+  item: HomepageSectionItem;
+  className?: string;
+  featured?: boolean;
 }) {
-  const body = (
-    <article className="group relative min-h-[320px] overflow-hidden rounded-[1.75rem] bg-primary text-white shadow-2xl shadow-primary/15 sm:min-h-[400px] lg:min-h-[460px] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-6">
-      <ImageCurtainReveal className="absolute inset-0 h-full" direction="down">
-        <PublicImage
-          src={itemImageUrl(item) ?? mediaUrl(heroImage(section))}
-          alt={
-            itemContentText(item, "imageAlt") ??
-            item?.media_alt_text ??
-            item?.title ??
-            "Kisii University campus life"
-          }
-          ratio="fill"
-          className="absolute inset-0 h-full rounded-none"
-          imageClassName="h-full object-cover transition duration-700 group-hover:scale-[1.03]"
-          sizes="(min-width: 1024px) 58vw, 100vw"
-        />
-      </ImageCurtainReveal>
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,23,57,.04),rgba(3,23,57,.22)_35%,rgba(3,23,57,.86))]" />
-      <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7 lg:p-8">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
-          {item?.subtitle ?? "Life around studies"}
-        </p>
-        <h3 className="mt-2 max-w-2xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white sm:text-3xl">
-          {item?.title ?? "A campus built for belonging"}
-        </h3>
-        <p className="mt-3 line-clamp-3 max-w-xl text-sm leading-7 text-white/76">
-          {item?.body_text ??
-            item?.cta_description ??
-            "Student communities, sports, culture, accommodation and support services shape everyday life at Kisii University."}
-        </p>
-        <span className="mt-5 inline-flex min-h-10 items-center gap-2 border border-white/25 bg-white/10 px-4 text-sm font-semibold text-white backdrop-blur transition group-hover:bg-white/15">
-          {item?.cta_label ?? "See campus life"}
-          <ArrowRight className="h-4 w-4" aria-hidden />
-        </span>
-      </div>
-    </article>
-  );
+  const imageUrl = itemContentText(item, "imageUrl");
+  const imageAlt = itemContentText(item, "imageAlt") ?? item.title ?? "Campus life";
 
-  return item?.cta_url ? (
-    <LinkWrapper href={item.cta_url}>{body}</LinkWrapper>
-  ) : (
-    body
-  );
-}
-
-function CampusLifeLane({
-  lane,
-  index,
-}: {
-  lane: CampusLifeLaneData;
-  index: number;
-}) {
-  const Icon = lane.icon;
-  const body = (
-    <article
-      className="group relative min-h-[230px] overflow-hidden rounded-[1.75rem] bg-primary text-white transition duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/20 sm:min-h-[260px] lg:min-h-[460px] lg:w-[min(390px,34vw)] lg:snap-start motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4"
-      style={{ animationDelay: `${Math.min(index, 5) * 80}ms` }}
+  return (
+    <LinkWrapper
+      href={item.cta_url ?? "/campus-life"}
+      className={`group relative block overflow-hidden rounded-2xl bg-primary ${className ?? ""}`}
     >
       <PublicImage
-        src={lane.imageUrl}
-        alt={
-          lane.imageAlt ??
-          lane.source?.media_alt_text ??
-          lane.source?.title ??
-          "Life around studies"
-        }
+        src={imageUrl ?? "/logos/ksu-bck1.jpg"}
+        alt={imageAlt}
         ratio="fill"
-        className="absolute inset-0 h-full rounded-none"
-        imageClassName={[
-          "object-cover transition duration-700 group-hover:scale-[1.03]",
-          index % 2 === 0 ? "object-center" : "object-[42%_50%]",
-        ].join(" ")}
-        sizes="(min-width: 1024px) 28vw, 90vw"
+        className="absolute inset-0 h-full w-full"
+        imageClassName="object-cover transition duration-700 group-hover:scale-[1.04]"
+        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
       />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,23,57,.04),rgba(3,23,57,.18)_34%,rgba(3,23,57,.90))]" />
-      <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4 text-white/80 sm:p-5">
-        <span className="font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-white/25">
-          {String(index + 1).padStart(2, "0")}
-        </span>
-        <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur">
-          <Icon className="h-5 w-5 text-secondary" aria-hidden />
+      <div
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent"
+        aria-hidden
+      />
+      <div className="absolute inset-x-0 bottom-0 p-5">
+        <h3
+          className={`font-[family-name:var(--font-display)] font-bold text-white ${
+            featured ? "text-2xl sm:text-3xl" : "text-lg"
+          }`}
+        >
+          {item.title}
+        </h3>
+        {item.body_text ? (
+          <p
+            className={`mt-1 text-white/85 ${
+              featured
+                ? "line-clamp-3 max-w-xl text-sm leading-6"
+                : "line-clamp-2 text-xs leading-5"
+            }`}
+          >
+            {item.body_text}
+          </p>
+        ) : null}
+        <span className="mt-3 inline-flex items-center gap-2 text-xs font-bold text-secondary sm:text-sm">
+          {item.cta_label ?? "Explore"}
+          <ArrowRight
+            className="h-4 w-4 transition group-hover:translate-x-1"
+            aria-hidden
+          />
         </span>
       </div>
-      <div className="relative flex min-h-[230px] flex-col justify-end p-5 sm:min-h-[260px] sm:p-6 lg:min-h-[460px] lg:p-7">
-        <div className="max-w-sm">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-secondary">
-            {lane.audience}
-          </p>
-          <h3 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white lg:text-3xl">
-            {lane.title}
-          </h3>
-          <p className="mt-3 line-clamp-3 text-sm leading-6 text-white/78">
-            {lane.body}
-          </p>
-          <span className="mt-5 inline-flex items-center gap-2 border-b border-secondary pb-1 text-sm font-semibold text-secondary transition group-hover:gap-3">
-            {lane.ctaLabel}
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </span>
-        </div>
-      </div>
-    </article>
+    </LinkWrapper>
   );
-
-  return lane.href ? <LinkWrapper href={lane.href}>{body}</LinkWrapper> : body;
 }
 
-type CampusLifeLaneData = {
-  title: string;
-  audience: string;
-  body: string;
-  ctaLabel: string;
-  href: string;
-  icon: LucideIcon;
-  imageUrl?: string;
-  imageAlt?: string;
-  source?: HomepageSectionItem;
-};
+function settingCtaHref(section: HomepageSection) {
+  const cta = section.settings?.cta;
+  if (cta && typeof cta === "object" && "href" in cta) {
+    const href = (cta as { href?: unknown }).href;
+    return typeof href === "string" && href.trim() ? href : undefined;
+  }
+  return undefined;
+}
 
-function campusLifeLanes(items: HomepageSectionItem[]): CampusLifeLaneData[] {
-  const fallbackImages = [
-    "/images/Home/OurKSU-82.jpg",
-    "/images/Home/KSUGreenLandscaping.jpg",
-    "/images/Home/um-hero.jpg",
-  ];
-  const sourceItems = items.slice(1);
-  const laneDefaults = [
-    {
-      title: "Belong from day one",
-      audience: "For prospective students",
-      body: "Clubs, societies, peer networks and orientation moments help new students quickly find their place.",
-      ctaLabel: "Find clubs and societies",
-      href: "/campus-life/clubs",
-      icon: Users,
-    },
-    {
-      title: "Compete, train and recharge",
-      audience: "For active students",
-      body: "Sports, recreation and wellness spaces give students a healthy rhythm beyond lecture rooms.",
-      ctaLabel: "Explore sports",
-      href: "/campus-life/sports",
-      icon: Trophy,
-    },
-    {
-      title: "Settle with confidence",
-      audience: "For parents and guardians",
-      body: "Accommodation, support offices and practical guidance make the transition to campus clearer.",
-      ctaLabel: "View accommodation",
-      href: "/campus-life/accommodation",
-      icon: Landmark,
-    },
-    {
-      title: "Support when it matters",
-      audience: "For every student",
-      body: "Wellness, counselling, accessibility and student services keep academic progress human and supported.",
-      ctaLabel: "Get support",
-      href: "/campus-life/support",
-      icon: Handshake,
-    },
-    {
-      title: "Create, lead and build",
-      audience: "For leaders and innovators",
-      body: "Culture, student leadership, talent showcases and innovation spaces connect learning with initiative.",
-      ctaLabel: "Explore opportunities",
-      href: "/campus-life",
-      icon: Lightbulb,
-    },
-  ];
-
-  return laneDefaults.slice(0, 4).map((lane, index) => {
-    const source = sourceItems[index];
-    return {
-      ...lane,
-      title: source?.title ?? lane.title,
-      body: source?.body_text ?? lane.body,
-      ctaLabel: source?.cta_label ?? lane.ctaLabel,
-      href: source?.cta_url ?? lane.href,
-      audience:
-        source?.audience === "prospective"
-          ? "For prospective students"
-          : source?.audience === "current_student"
-            ? "For current students"
-            : lane.audience,
-      imageUrl:
-        itemImageUrl(source) ?? fallbackImages[index % fallbackImages.length],
-      imageAlt: itemContentText(source, "imageAlt"),
-      source,
-    };
-  });
+function settingCtaLabel(section: HomepageSection) {
+  const cta = section.settings?.cta;
+  if (cta && typeof cta === "object" && "label" in cta) {
+    const label = (cta as { label?: unknown }).label;
+    return typeof label === "string" && label.trim() ? label : undefined;
+  }
+  return undefined;
 }
 
 export function LeadershipActivitySection({

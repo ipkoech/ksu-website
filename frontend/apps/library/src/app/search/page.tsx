@@ -64,8 +64,8 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
               { label: "Catalog", href: "/catalog" },
               { label: "E-resources", href: "/electronic" },
               { label: "Services", href: "/services" },
-              { label: "Downloads", href: "/downloads" },
-              { label: "Staff", href: "/staff" },
+              { label: "Downloads", href: "/electronic#downloads" },
+              { label: "Staff", href: "/about#staff" },
             ]}
           />
           <form

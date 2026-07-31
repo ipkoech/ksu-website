@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import heriLogo from "../../public/logos/heri-africa-logo.svg";
 
 export const siteLinks = [
   ["About", "/about"],
@@ -47,10 +48,18 @@ export function SiteHeader() {
                 UNIVERSITY
               </span>
             </span>
-            <span className="text-xl font-bold tracking-tight sm:text-2xl">
-              HERI AFRICA{" "}
-              <span className="block text-[9px] font-normal tracking-[0.12em] text-heri-teal">
-                Language Education Research Chair
+            <span className="flex min-w-0 items-center gap-2">
+              <Image
+                src={heriLogo}
+                alt="HERI Africa — Harnessing Education Research for Impact in Africa"
+                className="h-14 w-auto shrink-0"
+                priority
+                unoptimized
+              />
+              <span className="hidden text-[9px] font-normal uppercase tracking-[0.12em] text-heri-teal xl:block">
+                Language Education
+                <br />
+                Research Chair
               </span>
             </span>
           </Link>

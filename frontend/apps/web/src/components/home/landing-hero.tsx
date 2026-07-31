@@ -17,6 +17,7 @@ const fallbackSlide: LandingHeroSlide = {
   desktopImageUrl: "/logos/ksu-bck5.jpg",
   mobileImageUrl: "/logos/ksu-bck5.jpg",
   imageAlt: "Kisii University",
+  videoUrl: "/videos/main-hero.mp4",
   primaryLabel: "Study With Us",
   primaryHref: "/admissions/how-to-apply",
   secondaryLabel: "Explore Programmes",

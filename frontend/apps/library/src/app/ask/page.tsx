@@ -25,6 +25,8 @@ export default async function AskLibrarianPage() {
   return (
     <main id="library-main" className="min-h-screen bg-white">
       <LibraryHero
+        imageSrc="/images/library/reading-veranda.jpg"
+        imageAlt="Students studying on the veranda of the Kisii University Library"
         eyebrow="Ask the Library"
         title="Start with a question. Continue with a person when you need one."
         body="The Library assistant searches approved Kisii University Library guidance and shows its sources. You get one free answer, then an email-verified conversation you can return to later."
@@ -69,7 +71,7 @@ export default async function AskLibrarianPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <a href="/contact#contact-form" className="inline-flex min-h-11 items-center gap-2 rounded-md bg-secondary px-5 py-3 text-sm font-semibold text-white hover:bg-secondary/90">Contact the Library</a>
-            <a href="/hours" className="inline-flex min-h-11 items-center gap-2 rounded-md border border-white/35 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10">View opening hours</a>
+            <a href="/contact#hours" className="inline-flex min-h-11 items-center gap-2 rounded-md border border-white/35 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10">View opening hours</a>
           </div>
         </div>
       </section>

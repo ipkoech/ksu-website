@@ -16,7 +16,7 @@ from ._shared import SeedContext
 
 
 SEED_OWNER = "page-cms-homepage-v1"
-SEED_VERSION = 6
+SEED_VERSION = 7
 PENDING_HERI_AFRICA_SOURCE_ID = uuid.UUID("8d724ec7-3b5b-54f8-b3f3-8770f627dd6a")
 PENDING_HERI_AFRICA_HEADLINE = "Heri Africa partnership spotlight pending"
 
@@ -279,21 +279,6 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
         ),
     },
     {
-        "section_key": "leadership-activity",
-        "layout_variant": "leadership_activity",
-        "display_order": 60,
-        "title": "Leadership in action",
-        "subtitle": "Vice Chancellor",
-        "description": "Our leadership advances knowledge, nurtures talent and transforms communities.",
-        "settings": {"leaderName": "Prof. Charles O. Ong’ondo, PhD", "leaderTitle": "Vice Chancellor", "leaderImage": "/logos/vc3.jpg", "cta": {"label": "Meet our leadership", "href": "/about/vice-chancellor"}},
-        "items": (
-            {"item_type": "card", "title": "AI & Data Science Centre launched", "cta_url": "/news", "display_order": 10, "content": {"category": "Innovation", "date": "Latest activity", "imageUrl": "/images/about/about-quality-assurance-branded.webp"}},
-            {"item_type": "card", "title": "MoU signed with the University of Pretoria", "cta_url": "/news", "display_order": 20, "content": {"category": "Partnership", "date": "Latest activity", "imageUrl": "/images/about/about-governance-branded.webp"}},
-            {"item_type": "card", "title": "UNESCO delegation visits Kisii University", "cta_url": "/news", "display_order": 30, "content": {"category": "Global engagement", "date": "Latest activity", "imageUrl": "/images/about/about-management-branded.webp"}},
-            {"item_type": "card", "title": "Student leaders engagement forum", "cta_url": "/news", "display_order": 40, "content": {"category": "Leadership", "date": "Latest activity", "imageUrl": "/images/backgrounds/KSUB-RollPhotos2025-123.jpg"}},
-        ),
-    },
-    {
         "section_key": "research-impact",
         "layout_variant": "research_cards",
         "display_order": 70,
@@ -352,18 +337,6 @@ HOMEPAGE_SECTION_SPECS: tuple[dict[str, Any], ...] = (
         "items": tuple(
             {"item_type": "card", "title": name, "display_order": order, "content": {"label": name}}
             for order, name in enumerate(("UNESCO", "World Health Organization", "Google", "KEMRI", "JICA", "Microsoft", "USAID", "Safaricom"), start=10)
-        ),
-    },
-    {
-        "section_key": "alumni-impact",
-        "layout_variant": "alumni_story",
-        "display_order": 130,
-        "title": "Alumni Making Impact",
-        "subtitle": "Alumni success story",
-        "description": "Our alumni carry Kisii University knowledge and service into communities around the world.",
-        "settings": {"imageUrl": "/images/about/about-leadership.webp"},
-        "items": (
-            {"item_type": "card", "title": "Dr. Mercy Nyanchoka", "subtitle": "Medical Doctor and Kisii University alumna", "body_text": "Kisii University gave me the foundation and confidence to pursue my dreams and make a difference.", "cta_label": "View more alumni stories", "cta_url": "/alumni", "display_order": 10, "content": {"imageUrl": "/images/about/about-leadership.webp"}},
         ),
     },
     {

@@ -43,9 +43,9 @@ export default async function LibraryPage() {
   const primaryHours = todayHours.data[0];
   const featuredResources = electronic.data.filter((item) => item.is_featured).slice(0, 6);
   const updates = [
-    ...news.data.slice(0, 2).map((item) => ({ ...item, kind: "News" })),
-    ...events.data.slice(0, 2).map((item) => ({ ...item, kind: "Event" })),
-    ...articles.data.slice(0, 1).map((item) => ({ ...item, kind: "Article" })),
+    ...news.data.slice(0, 2).map((item) => ({ ...item, kind: "News", updateType: "news" })),
+    ...events.data.slice(0, 2).map((item) => ({ ...item, kind: "Event", updateType: "events" })),
+    ...articles.data.slice(0, 1).map((item) => ({ ...item, kind: "Article", updateType: "articles" })),
   ].slice(0, 3);
   const statItems = stats?.stats ?? [
     { key: "catalog", label: "Catalog records", value: catalog.meta?.total ?? catalog.data.length, description: "Books, journals, and more" },
@@ -117,7 +117,7 @@ export default async function LibraryPage() {
           <TaskLink icon={<BookOpen aria-hidden />} title="Find a book" body="Search books, journals, theses, reports, and other print resources." href="/catalog" />
           <TaskLink icon={<Search aria-hidden />} title="Find an article" body="Search across library collections and research discovery tools." href="/search?type=catalog" />
           <TaskLink icon={<Database aria-hidden />} title="Access e-resources" body="Browse subscribed databases, e-books, journals, and platforms." href="/electronic" />
-          <TaskLink icon={<Library aria-hidden />} title="Find a thesis" body="Explore repository links and institutional research collections." href="/repositories" />
+          <TaskLink icon={<Library aria-hidden />} title="Find a thesis" body="Explore repository links and institutional research collections." href="/electronic#external-links" />
           <TaskLink icon={<Users aria-hidden />} title="Get research help" body="Find research support, training, and subject guidance." href="/services" />
           <TaskLink icon={<MessageCircle aria-hidden />} title="Ask a librarian" body="Send the library team a question about your study or research." href="/ask" />
         </div>
@@ -172,7 +172,7 @@ export default async function LibraryPage() {
             {branches.data.slice(0, 4).map((branch) => (
               <div key={branch.id} className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between">
                 <div><h3 className="text-lg font-semibold text-foreground">{branch.name}</h3><p className="mt-1 text-sm text-muted-foreground">{branch.address ?? branch.location ?? "Location being updated"}</p></div>
-                <Link href="/hours" className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-primary hover:text-secondary">View hours <ArrowRight aria-hidden className="h-4 w-4" /></Link>
+                <Link href="/contact#hours" className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-primary hover:text-secondary">View hours <ArrowRight aria-hidden className="h-4 w-4" /></Link>
               </div>
             ))}
           </div>
@@ -181,7 +181,8 @@ export default async function LibraryPage() {
 
       <LibraryContentBand tone="soft">
         <LibrarySectionHeading eyebrow="News and events" title="What is happening at the Library" body="Keep up with workshops, new resources, service updates, and academic support announcements." />
-        {updates.length === 0 ? <StatusMessage>No library updates are available yet.</StatusMessage> : <div className="grid gap-8 lg:grid-cols-3">{updates.map((item) => <article key={`${item.kind}-${item.id}`} className="border-t-4 border-secondary pt-4"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">{item.kind}</p><h3 className="mt-3 text-xl font-semibold leading-7 text-foreground">{item.title}</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">{compactText(item.summary ?? item.plain_text) || "Read the latest library update."}</p><Link href={`/${item.kind.toLowerCase()}s/${item.slug}`} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-secondary">Read update <ArrowRight aria-hidden className="h-4 w-4" /></Link></article>)}</div>}
+        {updates.length === 0 ? <StatusMessage>No library updates are available yet.</StatusMessage> : <div className="grid gap-8 lg:grid-cols-3">{updates.map((item) => <article key={`${item.kind}-${item.id}`} className="border-t-4 border-secondary pt-4"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">{item.kind}</p><h3 className="mt-3 text-xl font-semibold leading-7 text-foreground">{item.title}</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">{compactText(item.summary ?? item.plain_text) || "Read the latest library update."}</p><Link href={`/updates/${item.updateType}/${item.slug}`} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-secondary">Read update <ArrowRight aria-hidden className="h-4 w-4" /></Link></article>)}</div>}
+        <div className="mt-6"><LibraryActionLink href="/updates">View all updates</LibraryActionLink></div>
       </LibraryContentBand>
 
       <section className="bg-primary px-4 py-16 text-white sm:px-6 lg:px-8"><div className="mx-auto flex max-w-[1280px] flex-col justify-between gap-8 sm:flex-row sm:items-end"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Personal support</p><h2 className="mt-3 max-w-2xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight sm:text-5xl">Need help finding the right source?</h2><p className="mt-4 max-w-xl text-base leading-7 text-white/75">Talk to a KSU librarian about your catalog search, database access, research question, or next assignment.</p></div><Link href="/ask" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-secondary px-5 py-3 text-sm font-semibold text-white transition hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-secondary/30">Ask a librarian <ArrowRight aria-hidden className="h-4 w-4" /></Link></div></section>

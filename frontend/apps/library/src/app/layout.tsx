@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { AccessibilityInitScript, AccessibilityShell } from "@ksu/ui";
-import { MiniHeader, PublicFooter } from "@ksu/ui/layout/public";
-import { Announcements } from "@ksu/ui/components";
-import { announcementsApi } from "@ksu/api-client";
+import { MiniHeader } from "@ksu/ui/layout/public";
 import { LibraryHeader } from "../components/library-header";
+import { LibraryFooter } from "../components/library-footer";
 import { LibraryAssistantLauncher } from "../components/library-assistant-launcher";
-import { libraryFrontendUrl, publicFrontendUrl, researchFrontendUrl } from "../lib/service-urls";
+import { publicFrontendUrl } from "../lib/service-urls";
 import "./globals.css";
 
 const socialLinks = {
@@ -40,8 +39,8 @@ const miniQuickLinks = [
     label: "Branches",
     href: "/services#branches-heading",
   },
-  { label: "Hours", href: "/hours" },
-  { label: "Repository", href: "/repositories" },
+  { label: "Hours", href: "/contact#hours" },
+  { label: "Repository", href: "/electronic#external-links" },
   { label: "Ask", href: "/ask" },
 ];
 
@@ -64,40 +63,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  let announcements: Array<{ id: string; message: string; linkText?: string; linkHref?: string }> = [];
-  try {
-    const response = await announcementsApi.list({
-      is_published: true,
-      per_page: 3,
-      fields: "id,title,slug",
-    });
-    announcements = (response.data ?? []).map((item) => ({
-      id: item.id,
-      message: item.title,
-      linkText: "Read more",
-      linkHref: `/media/announcements/${item.slug}`,
-    }));
-  } catch {
-    // announcements are optional
-  }
-
   return (
     <html lang="en">
       <body className="font-sans antialiased" suppressHydrationWarning>
         <AccessibilityInitScript />
         <AccessibilityShell mainContentId="library-main">
           <div className="min-h-screen bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_38%,hsl(var(--surface-muted))_100%)] text-foreground">
-            <Announcements
-              announcements={announcements}
-              rotating={announcements.length > 1}
-              intervalMs={6500}
-              background="secondary"
-            />
             <MiniHeader
               contactInfo={contactInfo}
               quickLinks={miniQuickLinks}
@@ -106,12 +82,7 @@ export default async function RootLayout({
             <LibraryHeader />
             {children}
             <LibraryAssistantLauncher />
-            <PublicFooter
-              contactInfo={contactInfo}
-              libraryHref={libraryFrontendUrl}
-              researchHref={researchFrontendUrl}
-              socialLinks={socialLinks}
-            />
+            <LibraryFooter contactInfo={contactInfo} />
           </div>
         </AccessibilityShell>
       </body>

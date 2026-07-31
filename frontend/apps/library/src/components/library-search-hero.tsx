@@ -8,7 +8,6 @@ import { buildLibrarySearchHref } from "../lib/library-home";
 
 const searchTypes = [
   { label: "Everything", value: "everything" },
-  { label: "Books", value: "catalog" },
   { label: "Catalog", value: "catalog" },
   { label: "E-resources", value: "databases" },
   { label: "Repository", value: "external_link" },
@@ -21,8 +20,8 @@ export function LibrarySearchHero() {
   return (
     <section className="relative isolate overflow-hidden bg-primary text-white">
       <Image
-        src="/images/library/library-hero-imagegen.webp"
-        alt="Students studying in the Kisii University Library"
+        src="/images/library/reading-hall.jpg"
+        alt="The main reading hall of the Kisii University Library"
         fill
         priority
         sizes="100vw"
@@ -98,13 +97,13 @@ export function LibrarySearchHero() {
           </form>
 
           <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-white/85">
-            <Link className="transition hover:text-white" href="/hours">
+            <Link className="transition hover:text-white" href="/contact#hours">
               Library hours
             </Link>
             <Link className="transition hover:text-white" href="/electronic">
               Access e-resources
             </Link>
-            <Link className="transition hover:text-white" href="/repositories">
+            <Link className="transition hover:text-white" href="/electronic#external-links">
               Visit the repository
             </Link>
           </div>

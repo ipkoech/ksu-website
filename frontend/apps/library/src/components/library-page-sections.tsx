@@ -11,8 +11,8 @@ export function EditorialPageHero({
   eyebrow,
   title,
   body,
-  imageSrc = "/images/library/library-hero-imagegen.webp",
-  imageAlt = "Kisii University Library and learning environment",
+  imageSrc = "/images/library/library-exterior.jpg",
+  imageAlt = "The Kisii University Library building",
   breadcrumbs,
   actions,
 }: {

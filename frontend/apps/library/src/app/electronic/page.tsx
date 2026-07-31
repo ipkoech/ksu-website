@@ -1,5 +1,6 @@
 import type { LibraryElectronicResource } from "@ksu/api-client";
 import {
+  CompactRecord,
   ExternalAnchor,
   LibraryActionLink,
   LibraryBadge,
@@ -20,6 +21,8 @@ import {
   compactText,
   formatLabel,
   getElectronicResources,
+  getLibraryDownloadsData,
+  getLibraryLinksData,
   safeExternalUrl,
 } from "../../lib/library-public-data";
 
@@ -68,12 +71,26 @@ export default async function ElectronicResourcesPage({
   const accessLevel = params.access?.trim() ?? "";
   const featuredOnly = params.featured === "true";
   const page = pageFromSearchParams(params);
-  const resources = await getElectronicResources(query, {
-    resourceType,
-    accessLevel,
-    featured: featuredOnly || undefined,
-    page,
-  });
+  const [resources, linksData, downloadsData] = await Promise.all([
+    getElectronicResources(query, {
+      resourceType,
+      accessLevel,
+      featured: featuredOnly || undefined,
+      page,
+    }),
+    getLibraryLinksData(),
+    getLibraryDownloadsData(),
+  ]);
+  const externalLinks = linksData.groupedLinks
+    .flatMap(({ branch, links }) => links.map((link) => ({ ...link, branch })))
+    .filter((link) =>
+      ["repository", "opac", "myloft", "database", "ejournal"].includes(
+        link.link_type,
+      ),
+    );
+  const downloadFiles = downloadsData.groupedFiles.flatMap(({ branch, files }) =>
+    files.map((file) => ({ ...file, branch })),
+  );
   const featured = resources.data.filter((item) => item.is_featured).slice(0, 3);
   const grouped = groupByLetter(resources.data);
   const vpnCount = resources.data.filter((item) => item.requires_vpn).length;
@@ -92,6 +109,8 @@ export default async function ElectronicResourcesPage({
   return (
     <main id="library-main" className="min-h-screen bg-white">
       <LibraryHero
+        imageSrc="/images/library/shelves.jpg"
+        imageAlt="Rows of shelved books in the Kisii University Library"
         eyebrow="Electronic Resources"
         title="Access databases, e-books, journals, and research tools."
         body="Browse the A-Z list of subscribed and recommended electronic resources. Records include provider, access conditions, registration notes, VPN requirements, and direct access links."
@@ -179,7 +198,7 @@ export default async function ElectronicResourcesPage({
           })}
         />
         <div className="mb-6 flex flex-wrap gap-2">
-          {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => (
+          {grouped.map(([letter]) => (
             <a
               key={letter}
               href={`#letter-${letter}`}
@@ -249,6 +268,61 @@ export default async function ElectronicResourcesPage({
           </>
         )}
       </LibraryContentBand>
+
+      <div id="external-links" className="scroll-mt-24">
+        <LibrarySection
+          eyebrow="Repository & external access"
+          title="Repository, OPAC, and off-campus access points"
+          body="Verified library links for repository content, OPAC records, e-journals, and remote access tools."
+          tone="white"
+        >
+          {externalLinks.length === 0 ? (
+            <StatusMessage>No public repository or external access links are available yet.</StatusMessage>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {externalLinks.map((link) => (
+                <CompactRecord
+                  key={link.id}
+                  icon="database"
+                  eyebrow={formatLabel(link.link_type)}
+                  title={link.label}
+                  body={compactText(link.description) || "Access link details are maintained by the library team."}
+                  meta={[link.branch.name]}
+                  href={safeExternalUrl(link.url) ?? undefined}
+                  action="Open link"
+                />
+              ))}
+            </div>
+          )}
+        </LibrarySection>
+      </div>
+
+      <div id="downloads" className="scroll-mt-24">
+        <LibrarySection
+          eyebrow="Downloads"
+          title="Library documents and forms"
+          body="Public documents published by library branches, including guides, forms, and policies."
+        >
+          {downloadFiles.length === 0 ? (
+            <StatusMessage>No public library downloads are available yet.</StatusMessage>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {downloadFiles.map((file) => (
+                <CompactRecord
+                  key={file.id}
+                  icon="file"
+                  eyebrow={formatLabel(file.file_category ?? "file")}
+                  title={file.title}
+                  body={compactText(file.description) || "Document details are being updated."}
+                  meta={[file.branch.name, formatLabel(file.access_level)]}
+                  href={file.file_url ?? undefined}
+                  action="Download"
+                />
+              ))}
+            </div>
+          )}
+        </LibrarySection>
+      </div>
     </main>
   );
 }

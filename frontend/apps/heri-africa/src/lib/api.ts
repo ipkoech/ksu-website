@@ -63,11 +63,20 @@ export type HeroSlide = {
   is_active: boolean;
 };
 
-const apiBase =
+const API_PREFIX = "/api/v1/heri";
+
+// Accepts both bare origins (http://heri:8003) and full base URLs so a
+// misconfigured env var cannot silently 404 every server-side fetch.
+function normalizeBase(base: string): string {
+  const trimmed = base.replace(/\/+$/, "");
+  return trimmed.endsWith(API_PREFIX) ? trimmed : `${trimmed}${API_PREFIX}`;
+}
+
+const apiBase = normalizeBase(
   (typeof window === "undefined"
     ? process.env.KSU_HERI_API_URL
-    : process.env.NEXT_PUBLIC_HERI_API_URL) ??
-  "http://localhost:8003/api/v1/heri";
+    : process.env.NEXT_PUBLIC_HERI_API_URL) ?? "http://localhost:8003",
+);
 
 async function get<T>(path: string): Promise<T> {
   const response = await fetch(`${apiBase}${path}`, {

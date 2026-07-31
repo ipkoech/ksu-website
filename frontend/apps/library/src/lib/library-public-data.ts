@@ -144,7 +144,7 @@ const serviceFields =
 const regulationFields =
   "id,library_id,title,slug,category,content,effective_date,status,is_public,sort_order";
 const staffFields =
-  "id,library_id,person_id,job_title,department,department_section,role,is_public,is_active,bio,specialization,sort_order";
+  "id,library_id,person_id,person,job_title,department,department_section,role,is_public,is_active,bio,specialization,sort_order";
 const branchFileFields =
   "id,library_id,media_id,title,description,file_category,access_level,is_public,sort_order,related_entity_type,related_entity_id,file_url,thumbnail_url";
 const branchLinkFields =
@@ -616,6 +616,10 @@ export async function getLibraryAboutData(): Promise<LibraryAboutData> {
   };
 }
 
+export function getLibraryTodayHours() {
+  return safeList<LibraryTodayHours>(() => libraryServiceApi.todayHours());
+}
+
 export async function getLibraryHoursData(): Promise<LibraryHoursData> {
   const branches = await getPublicBranches();
   const grouped = await getBranchHours(branches.data);
@@ -701,7 +705,7 @@ export async function getLibraryNewsData({
   perPage?: number;
   page?: number;
 } = {}): Promise<LibraryContentData<News>> {
-  let records = await safeList<News>(() =>
+  const records = await safeList<News>(() =>
     newsApi.list({
       fields: editorialFields,
       scope_type: "library",
@@ -711,17 +715,6 @@ export async function getLibraryNewsData({
       per_page: perPage,
     }),
   );
-  if (records.data.length === 0 && !records.error) {
-    records = await safeList<News>(() =>
-      newsApi.list({
-        fields: editorialFields,
-        is_published: true,
-        search: query?.trim() || undefined,
-        page,
-        per_page: perPage,
-      }),
-    );
-  }
   return {
     records,
     query: query?.trim() ?? "",
@@ -738,7 +731,7 @@ export async function getLibraryEventsData({
   perPage?: number;
   page?: number;
 } = {}): Promise<LibraryContentData<Event>> {
-  let records = await safeList<Event>(() =>
+  const records = await safeList<Event>(() =>
     eventsApi.list({
       fields: editorialFields,
       scope_type: "library",
@@ -748,17 +741,6 @@ export async function getLibraryEventsData({
       per_page: perPage,
     }),
   );
-  if (records.data.length === 0 && !records.error) {
-    records = await safeList<Event>(() =>
-      eventsApi.list({
-        fields: editorialFields,
-        is_published: true,
-        search: query?.trim() || undefined,
-        page,
-        per_page: perPage,
-      }),
-    );
-  }
   return {
     records,
     query: query?.trim() ?? "",
@@ -775,7 +757,7 @@ export async function getLibraryArticlesData({
   perPage?: number;
   page?: number;
 } = {}): Promise<LibraryContentData<Blog>> {
-  let records = await safeList<Blog>(() =>
+  const records = await safeList<Blog>(() =>
     blogsApi.list({
       fields: editorialFields,
       scope_type: "library",
@@ -785,22 +767,39 @@ export async function getLibraryArticlesData({
       per_page: perPage,
     }),
   );
-  if (records.data.length === 0 && !records.error) {
-    records = await safeList<Blog>(() =>
-      blogsApi.list({
-        fields: editorialFields,
-        is_published: true,
-        search: query?.trim() || undefined,
-        page,
-        per_page: perPage,
-      }),
-    );
-  }
   return {
     records,
     query: query?.trim() ?? "",
     errors: uniqueErrors(records.error),
   };
+}
+
+export const LIBRARY_UPDATE_TYPES = ["news", "events", "articles"] as const;
+export type LibraryUpdateType = (typeof LIBRARY_UPDATE_TYPES)[number];
+
+export function isLibraryUpdateType(value: string): value is LibraryUpdateType {
+  return (LIBRARY_UPDATE_TYPES as readonly string[]).includes(value);
+}
+
+const updateDetailFields = `${editorialFields},is_featured,scope_type`;
+
+export async function getLibraryUpdateDetail(
+  type: LibraryUpdateType,
+  slug: string,
+): Promise<{ data: News | Event | Blog | null; error: string | null }> {
+  if (type === "news") {
+    return safeRecord<News>(() =>
+      newsApi.getBySlug(slug, { fields: updateDetailFields }),
+    );
+  }
+  if (type === "events") {
+    return safeRecord<Event>(() =>
+      eventsApi.getBySlug(slug, { fields: updateDetailFields }),
+    );
+  }
+  return safeRecord<Blog>(() =>
+    blogsApi.getBySlug(slug, { fields: updateDetailFields }),
+  );
 }
 
 export async function getLibrarySearchData(

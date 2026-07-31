@@ -357,11 +357,15 @@ if ! "\${DOCKER[@]}" compose version >/dev/null 2>&1; then
 fi
 
 section "Validate production configuration"
-for service_env in services/main/.env services/research/.env services/library/.env services/heri_africa/.env; do
-  [[ -f "\${REPO_PATH}/\${service_env}" ]] || continue
-  service_name="\$(basename "\$(dirname "\${service_env}")")"
-  python3 "\${REPO_PATH}/scripts/validate_production_env.py" --env "\${ENV_NAME}" --service "\${service_name}" --file "\${REPO_PATH}/\${service_env}"
-done
+if [[ -f "\${REPO_PATH}/scripts/validate_production_env.py" ]]; then
+  for service_env in services/main/.env services/research/.env services/library/.env; do
+    [[ -f "\${REPO_PATH}/\${service_env}" ]] || continue
+    service_name="\$(basename "\$(dirname "\${service_env}")")"
+    python3 "\${REPO_PATH}/scripts/validate_production_env.py" --env "\${ENV_NAME}" --service "\${service_name}" --file "\${REPO_PATH}/\${service_env}"
+  done
+else
+  step "No production validation script found; skipping static env validation"
+fi
 
 ensure_swap() {
   local min_swap_mb=4096
@@ -563,6 +567,9 @@ APP_ENV=\${ENV_NAME}
 IMAGE_TAG=\${IMAGE_TAG}
 BACKEND_IMAGE_PREFIX=\${BACKEND_IMAGE_PREFIX}
 FRONTEND_IMAGE_PREFIX=\${FRONTEND_IMAGE_PREFIX}
+POSTGRES_DB=\${POSTGRES_DB:-ksu_services_db}
+POSTGRES_USER=\${POSTGRES_USER:-ksu_service_user}
+POSTGRES_PASSWORD=\${POSTGRES_PASSWORD:-compose-interpolation-only}
 EDGE_HTTP_PORT=\${EDGE_HTTP_PORT}
 PUBLIC_SERVER_NAME=\${PUBLIC_HOST}
 API_SERVER_NAME=\${API_SERVER_NAME}
@@ -585,6 +592,9 @@ KSU_LIBRARY_API_URL=http://library:8002
 EOF
 
 required_env_files=(services/main/.env services/research/.env services/library/.env)
+if [[ -f services/heri_africa/Dockerfile ]]; then
+  required_env_files+=(services/heri_africa/.env)
+fi
 
 missing_env=()
 for env_file in "\${required_env_files[@]}"; do
@@ -613,6 +623,10 @@ if [[ -f .deploy/docker-compose.external-data.yml ]]; then
     printf 'RESEARCH_REDIS_URL=%s\n' "\$(read_env_value services/research/.env REDIS_URL)"
     printf 'LIBRARY_DATABASE_URL=%s\n' "\$(read_env_value services/library/.env DATABASE_URL)"
     printf 'LIBRARY_REDIS_URL=%s\n' "\$(read_env_value services/library/.env REDIS_URL)"
+    if [[ -f services/heri_africa/.env ]]; then
+      printf 'HERI_DATABASE_URL=%s\n' "\$(read_env_value services/heri_africa/.env DATABASE_URL)"
+      printf 'HERI_REDIS_URL=%s\n' "\$(read_env_value services/heri_africa/.env REDIS_URL)"
+    fi
   } >> "\${COMPOSE_ENV_FILE}"
 fi
 

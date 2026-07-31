@@ -1,6 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Eye, Goal, UsersRound } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  Eye,
+  FileText,
+  Goal,
+  GraduationCap,
+  Languages,
+} from "lucide-react";
 import { SiteShell } from "../components/site-shell";
 import { HeroCarousel } from "../components/home/hero-carousel";
 import {
@@ -151,10 +159,15 @@ export default async function HeriHomePage() {
       <main className="min-h-screen bg-white">
         <HeroCarousel slides={managedHeroSlides} />
         <section className="mx-auto grid max-w-7xl gap-6 px-6 py-8 sm:grid-cols-2 lg:grid-cols-4 lg:py-10">
-          {pillars.map(([title, description, iconColor], index) => (
-            <article
+          {pillars.map(([title, description, iconColor], index) => {
+            const PillarIcon = [BookOpen, Languages, FileText, GraduationCap][
+              index
+            ];
+            return (
+            <Link
               key={title}
-              className="group relative overflow-hidden rounded-t-[3rem] rounded-br-[3rem] border border-slate-100 bg-white pb-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+              href="/our-work"
+              className="group relative block overflow-hidden rounded-t-[3rem] rounded-br-[3rem] border border-slate-100 bg-white pb-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-heri-teal"
             >
               <div className="relative h-32 overflow-hidden bg-heri-cream">
                 <Image
@@ -174,7 +187,7 @@ export default async function HeriHomePage() {
                 <span
                   className={`absolute -bottom-5 left-4 grid size-12 place-items-center rounded-full ${iconColor} text-white ring-4 ring-white`}
                 >
-                  <UsersRound className="size-6" />
+                  <PillarIcon className="size-6" />
                 </span>
               </div>
               <div className="px-5 pt-8">
@@ -184,12 +197,16 @@ export default async function HeriHomePage() {
                 <p className="mt-3 text-sm leading-6 text-slate-600">
                   {description}
                 </p>
-                <span className="mt-4 inline-flex text-xl text-heri-lime transition group-hover:translate-x-1">
+                <span
+                  aria-hidden
+                  className="mt-4 inline-flex text-xl text-heri-lime transition group-hover:translate-x-1"
+                >
                   →
                 </span>
               </div>
-            </article>
-          ))}
+            </Link>
+            );
+          })}
         </section>
         <section className="mx-auto grid max-w-7xl items-center gap-12 px-6 py-16 lg:grid-cols-2 lg:py-20">
           <div className="relative mx-auto size-[300px] sm:size-[380px]">
@@ -202,11 +219,6 @@ export default async function HeriHomePage() {
                 sizes="380px"
                 className="object-cover"
               />
-            </div>
-            <div className="absolute inset-0 grid place-items-center">
-              <span className="rounded-full bg-white/90 px-5 py-3 text-4xl text-heri-lime shadow">
-                ⌁
-              </span>
             </div>
           </div>
           <div>
@@ -352,14 +364,20 @@ export default async function HeriHomePage() {
             </Link>
           </div>
           <div className="mt-6 grid gap-5 lg:grid-cols-3">
-            {[...newsData, ...eventData].slice(0, 3).map((item) => (
+            {[...newsData, ...eventData].slice(0, 3).map((item, index) => (
               <article
                 key={item.id}
-                className="overflow-hidden rounded-xl border border-slate-200 bg-white"
+                className="overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:-translate-y-1 hover:shadow-lg"
               >
                 <div className="relative h-32 bg-heri-cream">
                   <Image
-                    src="/images/landing-page/tc-fore.png"
+                    src={
+                      [
+                        "/images/HERIAfricaLaunch.jpg",
+                        "/images/backgrounds/about-hero.jpg",
+                        "/images/landing-page/tc-fore.png",
+                      ][index % 3]
+                    }
                     alt=""
                     fill
                     sizes="(max-width: 1024px) 100vw, 33vw"
@@ -368,11 +386,16 @@ export default async function HeriHomePage() {
                 </div>
                 <div className="p-5">
                   <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-heri-teal">
-                    News &amp; Insights
+                    {"slug" in item ? "News & Insights" : "Event"}
                   </p>
                   <h3 className="mt-2 font-bold text-heri-blue">
                     {"title" in item ? item.title : "Latest HERI Africa story"}
                   </h3>
+                  {"excerpt" in item && item.excerpt ? (
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+                      {item.excerpt}
+                    </p>
+                  ) : null}
                   <Link
                     href={
                       "slug" in item ? `/news-insights/${item.slug}` : "/events"
@@ -404,9 +427,9 @@ export default async function HeriHomePage() {
                 ].map((name) => <span key={name}>{name}</span>)}
           </div>
         </section>
-        <section className="bg-gradient-to-r from-heri-lime to-heri-teal px-6 py-8">
+        <section className="bg-gradient-to-r from-heri-teal to-heri-ink px-6 py-10">
           <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-5 md:flex-row md:items-center">
-            <h2 className="max-w-xl text-3xl font-bold leading-tight text-heri-blue">
+            <h2 className="max-w-xl text-3xl font-bold leading-tight text-white">
               Partner with us to advance language education research in Africa
             </h2>
             <Link
