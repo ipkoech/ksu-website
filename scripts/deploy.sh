@@ -357,9 +357,10 @@ if ! "\${DOCKER[@]}" compose version >/dev/null 2>&1; then
 fi
 
 section "Validate production configuration"
-for service_env in services/main/.env services/research/.env services/library/.env; do
+for service_env in services/main/.env services/research/.env services/library/.env services/heri_africa/.env; do
+  [[ -f "\${REPO_PATH}/\${service_env}" ]] || continue
   service_name="\$(basename "\$(dirname "\${service_env}")")"
-  python3 scripts/validate_production_env.py --env "\${ENV_NAME}" --service "\${service_name}" --file "\${service_env}"
+  python3 "\${REPO_PATH}/scripts/validate_production_env.py" --env "\${ENV_NAME}" --service "\${service_name}" --file "\${REPO_PATH}/\${service_env}"
 done
 
 ensure_swap() {
