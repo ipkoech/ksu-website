@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "@ksu/ui";
 import { RichTextEditor } from "@ksu/ui/components";
-import { useHeriResourceMutation, useHeriResourceQuery } from "@/lib/api/heri";
+import { useHeriPartnerSync, useHeriResourceMutation, useHeriResourceQuery } from "@/lib/api/heri";
 
 type RecordValue =
   | string
@@ -116,6 +116,7 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
     status: status === "all" ? undefined : status,
   });
   const resourceMutation = useHeriResourceMutation(config.resource);
+  const partnerSync = useHeriPartnerSync();
   const loading = resourceQuery.isPending || resourceQuery.isFetching;
 
   const load = useCallback(async () => {
@@ -265,6 +266,16 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
       toast.error(message);
     }
   };
+
+  const syncPartners = async () => {
+    try {
+      const result = await partnerSync.mutateAsync();
+      toast.success(`Synced ${result.total} partners (${result.created} new, ${result.updated} updated)`);
+      await load();
+    } catch (reason) {
+      toast.error(reason instanceof Error ? reason.message : "Unable to sync partners");
+    }
+  };
   const toggleSelected = (id: string) =>
     setSelectedIds((current) => {
       const next = new Set(current);
@@ -363,25 +374,37 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
             {config.description}
           </p>
         </div>
-        {canWrite && (
-          <button
-            onClick={() =>
-              openEditor({
-                id: "",
-                ...Object.fromEntries(
-                  config.fields.map((field) => [
-                    field.name,
-                    field.type === "boolean" ? false : "",
-                  ]),
-                ),
-              })
-            }
-            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-          >
-            <Plus className="size-4" />
-            Create record
-          </button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {config.resource === "partners" && canWrite && (
+            <button
+              onClick={() => void syncPartners()}
+              disabled={partnerSync.isPending}
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-emerald-300 px-4 py-2.5 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RefreshCw className={`size-4 ${partnerSync.isPending ? "animate-spin" : ""}`} />
+              {partnerSync.isPending ? "Syncing…" : "Sync from Research Service"}
+            </button>
+          )}
+          {canWrite && (
+            <button
+              onClick={() =>
+                openEditor({
+                  id: "",
+                  ...Object.fromEntries(
+                    config.fields.map((field) => [
+                      field.name,
+                      field.type === "boolean" ? false : "",
+                    ]),
+                  ),
+                })
+              }
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            >
+              <Plus className="size-4" />
+              Create record
+            </button>
+          )}
+        </div>
       </header>
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-3 md:flex-row">

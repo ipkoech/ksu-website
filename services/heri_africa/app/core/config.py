@@ -29,6 +29,8 @@ class HeriSettings(BaseSettings):
     UPLOAD_DIR: str = "/app/uploads"
     MEDIA_URL: str = "/media"
     CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:3001", "http://localhost:3004"]
+    RESEARCH_SERVICE_URL: str = "http://research:8001"
+    RESEARCH_SERVICE_API_KEY: str | None = None
 
     @field_validator("DATABASE_URL")
     @classmethod

@@ -182,6 +182,8 @@ services:
       REDIS_URL: redis://redis:6379/3
       CELERY_BROKER_URL: redis://redis:6379/3
       CELERY_RESULT_BACKEND: redis://redis:6379/3
+      RESEARCH_SERVICE_URL: ${HERI_RESEARCH_SERVICE_URL:-http://research:8001}
+      RESEARCH_SERVICE_API_KEY: ${HERI_RESEARCH_SERVICE_API_KEY:-}
       LOG_LEVEL: ${HERI_LOG_LEVEL:-INFO}
       LOG_FORMAT: ${HERI_LOG_FORMAT:-json}
       LOG_DIR: /app/logs
