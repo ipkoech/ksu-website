@@ -44,6 +44,7 @@ const joinLinks = [
 
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
   return (
     <>
       <a
@@ -56,7 +57,7 @@ export function SiteHeader() {
         Advancing language education and foundational literacy across Africa
       </div>
       <header className="sticky top-0 z-40 px-4 pt-0 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-[1370px] items-center justify-between gap-5 rounded-b-[2rem] border border-slate-100 bg-white px-5 py-4 shadow-[0_12px_28px_rgba(8,44,43,0.16)] sm:px-8 lg:gap-8 lg:px-10">
+        <div className="mx-auto flex max-w-[1370px] items-center justify-between gap-5 rounded-b-[2rem] border border-slate-100 bg-white px-5 py-5 shadow-[0_12px_28px_rgba(8,44,43,0.16)] sm:px-8 sm:py-6 lg:gap-8 lg:px-10">
           <Link
             className="flex min-w-0 items-center gap-3 text-heri-blue"
             href="/"
@@ -67,7 +68,7 @@ export function SiteHeader() {
                 alt="Kisii University"
                 width={42}
                 height={42}
-                className="size-10 object-contain"
+                className="size-12 object-contain"
               />
               <span className="text-xs font-semibold leading-tight text-heri-ink">
                 KISII
@@ -79,7 +80,7 @@ export function SiteHeader() {
               <Image
                 src={heriLogo}
                 alt="HERI Africa — Harnessing Education Research for Impact in Africa"
-                className="h-14 w-auto shrink-0"
+                className="h-16 w-auto shrink-0"
                 priority
                 unoptimized
               />
@@ -93,7 +94,16 @@ export function SiteHeader() {
           <nav aria-label="Primary navigation" className="hidden items-center gap-6 text-sm font-medium lg:flex">
             {siteLinks.map((item) =>
               item.children ? (
-                <details className="group relative" key={item.href}>
+                <details
+                  className="group relative"
+                  key={item.href}
+                  open={openMenu === item.href}
+                  onToggle={(event) => {
+                    const details = event.currentTarget;
+                    if (details.open) setOpenMenu(item.href);
+                    else if (openMenu === item.href) setOpenMenu(null);
+                  }}
+                >
                   <summary className="flex cursor-pointer list-none items-center gap-1 transition-colors hover:text-heri-teal focus:outline-none focus:ring-2 focus:ring-heri-lime [&::-webkit-details-marker]:hidden">
                     {item.label}
                     <span className="text-[10px] transition-transform group-open:rotate-180">⌄</span>
@@ -104,6 +114,7 @@ export function SiteHeader() {
                         className="block rounded-lg px-3 py-2 text-sm whitespace-nowrap transition-colors hover:bg-heri-cream hover:text-heri-teal focus:outline-none focus:ring-2 focus:ring-heri-lime"
                         href={href}
                         key={href}
+                        onClick={() => setOpenMenu(null)}
                       >
                         {label}
                       </Link>
@@ -120,13 +131,21 @@ export function SiteHeader() {
                 </Link>
               ),
             )}
-            <details className="group relative">
+            <details
+              className="group relative"
+              open={openMenu === "join-us"}
+              onToggle={(event) => {
+                const details = event.currentTarget;
+                if (details.open) setOpenMenu("join-us");
+                else if (openMenu === "join-us") setOpenMenu(null);
+              }}
+            >
               <summary className="flex cursor-pointer list-none items-center gap-1 rounded-full bg-heri-lime px-4 py-2 text-xs font-bold text-heri-ink transition-colors hover:bg-heri-teal hover:text-white focus:outline-none focus:ring-2 focus:ring-heri-teal [&::-webkit-details-marker]:hidden">
                 Join Us <span className="text-[10px] transition-transform group-open:rotate-180">⌄</span>
               </summary>
               <div className="absolute right-0 top-full z-50 mt-3 min-w-48 rounded-xl border border-slate-100 bg-white p-2 shadow-xl">
                 {joinLinks.map(([label, href]) => (
-                  <Link className="block rounded-lg px-3 py-2 text-sm font-medium text-heri-ink transition-colors hover:bg-heri-cream hover:text-heri-teal" href={href} key={href}>
+                  <Link className="block rounded-lg px-3 py-2 text-sm font-medium text-heri-ink transition-colors hover:bg-heri-cream hover:text-heri-teal" href={href} key={href} onClick={() => setOpenMenu(null)}>
                     {label}
                   </Link>
                 ))}
