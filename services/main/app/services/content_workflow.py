@@ -10,6 +10,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models import ContentWorkflowLog
+from .change_tracking import track_update
 
 
 ALLOWED_TRANSITIONS = {
@@ -62,6 +63,13 @@ class ContentWorkflowService:
             comments=comments,
             changed_fields=changed_fields,
         )
+
+    @staticmethod
+    def _field_diffs(content: Any, changed_fields: dict[str, Any] | None) -> dict[str, Any] | None:
+        """Turn a raw update payload into before/after diffs for record history."""
+        if not changed_fields:
+            return changed_fields
+        return track_update(content, changed_fields) or changed_fields
 
     @staticmethod
     def owner_metadata_for_scope(
@@ -122,6 +130,8 @@ class ContentWorkflowService:
         if from_status == "draft":
             return False
 
+        changed_fields = cls._field_diffs(content, changed_fields)
+
         content.status = "draft"
         content.workflow_status = "draft"
         for field, value in (
@@ -179,6 +189,7 @@ class ContentWorkflowService:
         if actor_kind not in allowed or current not in allowed[actor_kind]:
             raise ValueError(f"{actor_kind} cannot edit content in {current} state")
         if actor_kind == "reviewer" and changed_fields:
+            changed_fields = cls._field_diffs(content, changed_fields)
             db.add(cls.build_log(
                 content_type=content_type,
                 content_id=content.id,

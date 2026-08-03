@@ -18,6 +18,7 @@ from ksu_common import PaginatedResult
 from ..helpers.slug import unique_slug
 from ..models import Announcement, Blog, Event, News, Role, Slider, SliderGroup, Story, StoryContributorAccountRequest, UserRole
 from ._base import apply_updates, ilike_any, paginate_query
+from .change_tracking import track_update
 from .user import UserService
 
 
@@ -175,6 +176,7 @@ class _RichContentService:
     async def update(cls, db: AsyncSession, instance, **data):
         if data.get("title") and not data.get("slug"):
             data["slug"] = await unique_slug(db, cls.model, data["title"], exclude_id=instance.id)
+        track_update(instance, data)
         apply_updates(instance, **data)
         await db.flush()
         return instance
@@ -530,6 +532,7 @@ class EventService:
     async def update(db: AsyncSession, event: Event, **data) -> Event:
         if data.get("title") and not data.get("slug"):
             data["slug"] = await unique_slug(db, Event, data["title"], exclude_id=event.id)
+        track_update(event, data)
         apply_updates(event, **data)
         await db.flush()
         return event
@@ -675,6 +678,7 @@ class SliderGroupService:
     async def update(db: AsyncSession, group: SliderGroup, **data) -> SliderGroup:
         if data.get("name") and not data.get("slug"):
             data["slug"] = await unique_slug(db, SliderGroup, data["name"], exclude_id=group.id)
+        track_update(group, data)
         apply_updates(group, **data)
         await db.flush()
         return group
@@ -720,6 +724,7 @@ class SliderService:
 
     @staticmethod
     async def update(db: AsyncSession, slider: Slider, **data) -> Slider:
+        track_update(slider, data)
         apply_updates(slider, **data)
         await db.flush()
         return slider

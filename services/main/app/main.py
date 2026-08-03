@@ -19,6 +19,7 @@ from .api.v1 import register_routes
 from .cache_invalidation import should_invalidate_public_cache
 from .helpers.storage import normalize_storage_path
 from .models import Media
+from .services.change_tracking import begin_audit_context, collected_audit_changes, reset_audit_context
 from .realtime.connection_manager import manager
 from .realtime.redis_subscriber import subscriber
 
@@ -81,24 +82,30 @@ def create_app() -> FastAPI:
         if should_skip_audit(request.url.path):
             return await call_next(request)
 
+        audit_token = begin_audit_context()
         try:
-            response = await call_next(request)
-        except Exception as exc:
+            try:
+                response = await call_next(request)
+            except Exception as exc:
+                await persist_audit_log(
+                    AsyncSessionLocal,
+                    service_name=settings.SERVICE_NAME,
+                    request=request,
+                    status_code=500,
+                    error_message=str(exc),
+                    changes=collected_audit_changes(),
+                )
+                raise
+
             await persist_audit_log(
                 AsyncSessionLocal,
                 service_name=settings.SERVICE_NAME,
                 request=request,
-                status_code=500,
-                error_message=str(exc),
+                status_code=response.status_code,
+                changes=collected_audit_changes(),
             )
-            raise
-
-        await persist_audit_log(
-            AsyncSessionLocal,
-            service_name=settings.SERVICE_NAME,
-            request=request,
-            status_code=response.status_code,
-        )
+        finally:
+            reset_audit_context(audit_token)
         if should_invalidate_public_cache(request, response.status_code):
             await invalidate_prefix("public")
         return response

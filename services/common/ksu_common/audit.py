@@ -305,6 +305,7 @@ async def persist_audit_log(
     status_code: int,
     error_message: str | None = None,
     details: dict[str, Any] | None = None,
+    changes: dict[str, Any] | None = None,
 ) -> None:
     """Persist a request audit log entry."""
     payload = _extract_optional_token(request) or {}
@@ -342,6 +343,7 @@ async def persist_audit_log(
         user_agent=request.headers.get("user-agent"),
         error_message=error_message,
         details=extracted_details,
+        changes=changes,
         happened_at=datetime.now(timezone.utc),
     )
 
