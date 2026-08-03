@@ -12,6 +12,7 @@ import { StatusChip } from "@/components/workflow/status-chip";
 import {
   contentWorkflowApi,
   mainExportsApi,
+  usersApi,
   type ContentWorkflowBulkAction,
 } from "@ksu/api-client";
 
@@ -1673,6 +1674,7 @@ export function EditableServiceResourcePage<
               readOnly={false}
             />
             <SheetFooter className="sticky bottom-0 mt-auto gap-2 border-t bg-background pt-4 sm:gap-0">
+              <LastEditedBy record={editingRecord} />
               <EditorFooter
                 editingRecord={editingRecord}
                 canCreate={canCreate}
@@ -1712,6 +1714,7 @@ export function EditableServiceResourcePage<
               readOnly={editorIntent === "view"}
             />
             <DialogFooter className="gap-2 sm:gap-0">
+              <LastEditedBy record={editingRecord} />
               <EditorFooter
                 editingRecord={editingRecord}
                 canCreate={canCreate}
@@ -2112,12 +2115,75 @@ function RecordListRow<TRecord extends RecordShape>({
             record.updated_at ??
             record.created_at ??
             "No metadata"}
+          <RecordEditedBy record={record} />
         </p>
         </div>
       </div>
       {actions}
     </div>
   );
+}
+
+/**
+ * Resolves the display name of a record's last editor: prefers the joined
+ * `updated_by` dict when the serializer includes it, otherwise looks the user
+ * up once by `updated_by_id` (cached forever, like workflow history actors).
+ */
+function useEditorName(record: RecordShape) {
+  const joinedName =
+    typeof record.updated_by?.full_name === "string" && record.updated_by.full_name.trim()
+      ? (record.updated_by.full_name as string)
+      : null;
+  const editorId = typeof record.updated_by_id === "string" ? record.updated_by_id : null;
+  const userQuery = useQuery({
+    queryKey: ["record-editor", editorId],
+    queryFn: () => usersApi.get(editorId!),
+    enabled: Boolean(editorId) && !joinedName,
+    staleTime: Infinity,
+    retry: false,
+  });
+  return joinedName ?? userQuery.data?.data?.full_name ?? null;
+}
+
+function RecordEditedBy({ record }: { record: RecordShape }) {
+  const name = useEditorName(record);
+  if (!name) return null;
+  return <span>{` · edited by ${name}`}</span>;
+}
+
+/** "Last edited by {name}, {relative time}" line for the editor footers. */
+function LastEditedBy({ record }: { record: RecordShape | null }) {
+  const name = useEditorName(record ?? {});
+  if (!record || !name) return null;
+  const stamp = typeof record.updated_at === "string" ? record.updated_at : null;
+  return (
+    <p className="mr-auto self-center text-xs text-muted-foreground">
+      Last edited by {name}
+      {stamp ? `, ${relativeTime(stamp)}` : ""}
+    </p>
+  );
+}
+
+function relativeTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  const diffSeconds = Math.round((date.getTime() - Date.now()) / 1000);
+  const divisions: Array<[number, Intl.RelativeTimeFormatUnit]> = [
+    [60, "second"],
+    [60, "minute"],
+    [24, "hour"],
+    [7, "day"],
+    [4.34524, "week"],
+    [12, "month"],
+    [Number.POSITIVE_INFINITY, "year"],
+  ];
+  const formatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+  let duration = diffSeconds;
+  for (const [amount, unit] of divisions) {
+    if (Math.abs(duration) < amount) return formatter.format(Math.round(duration), unit);
+    duration /= amount;
+  }
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
 function RecordMediaPreview({
