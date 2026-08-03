@@ -31,7 +31,7 @@ import {
   Textarea,
 } from "@ksu/ui/components";
 
-type WorkflowActionDefinition = {
+export type WorkflowActionDefinition = {
   action: ContentWorkflowAction;
   label: string;
   icon: typeof Check;
@@ -40,7 +40,8 @@ type WorkflowActionDefinition = {
   needsSchedule?: boolean;
 };
 
-const workflowActionsByStatus: Record<string, WorkflowActionDefinition[]> = {
+/** Status → available workflow actions, exported for reuse outside the queue. */
+export const workflowActionsByStatus: Record<string, WorkflowActionDefinition[]> = {
   submitted: [
     { action: "start_review", label: "Start review", icon: FilePenLine },
   ],

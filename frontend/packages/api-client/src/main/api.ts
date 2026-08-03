@@ -1831,6 +1831,21 @@ export const contentWorkflowApi = {
       payload,
     ),
 
+  /**
+   * Runs a workflow transition for a record outside the review queue, where
+   * no queue item (and therefore no workflow_action_path) is available.
+   */
+  actionByType: (
+    contentType: string,
+    contentId: string,
+    action: ContentWorkflowAction,
+    payload: ContentWorkflowActionPayload = {},
+  ) =>
+    mainApi.post<{ data: ContentWorkflowActionResult }>(
+      `/api/v1/content-workflow/${contentType}/${contentId}/${action}`,
+      payload,
+    ),
+
   logs: (
     contentType: ContentWorkflowQueueItem["content_type"],
     contentId: string,

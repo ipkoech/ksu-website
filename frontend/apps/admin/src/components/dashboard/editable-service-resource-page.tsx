@@ -7,6 +7,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArchiveRestore, ArrowUpDown, ChevronDown, Database, Edit, Eye, FilterX, HelpCircle, History, MoreHorizontal, Plus, Search, ShieldCheck, SlidersHorizontal, Sparkles, Trash2 } from "lucide-react";
 
 import { RecordHistory } from "@/components/workflow/record-history";
+import { NextActionButton } from "@/components/workflow/next-action-button";
+import { StatusChip } from "@/components/workflow/status-chip";
 
 const RESEARCH_FRONTEND = process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL;
 
@@ -833,6 +835,19 @@ export function EditableServiceResourcePage<
     }
 
     const detailHref = getRecordDetailHref?.(record);
+    const nextActionButton =
+      historyContentType && record.workflow_status ? (
+        <NextActionButton
+          contentType={historyContentType}
+          record={{ id: String(record.id), workflow_status: record.workflow_status }}
+          recordTitle={getRecordTitle(record)}
+          canEdit={canEdit}
+          canReview={hasAnyWorkflowScope?.(["content.review", "content.manage"]) === true}
+          canPublish={hasAnyWorkflowScope?.(["content.publish"]) === true}
+          onEdit={canEdit ? () => startEdit(record) : undefined}
+          onCompleted={() => queryClient.invalidateQueries({ queryKey })}
+        />
+      ) : null;
     const workflowActions = (getRecordWorkflowActions?.(record) ?? []).filter(
       (action) => !action.scopes?.length || hasAnyWorkflowScope?.(action.scopes) === true,
     );
@@ -844,7 +859,7 @@ export function EditableServiceResourcePage<
       Boolean(historyContentType) ||
       Boolean(deleteRecord && canDelete);
 
-    if (!canShowMenu) return null;
+    if (!canShowMenu && !nextActionButton) return null;
 
     return (
       <div
@@ -852,6 +867,7 @@ export function EditableServiceResourcePage<
         onClick={(event) => event.stopPropagation()}
         onKeyDown={(event) => event.stopPropagation()}
       >
+        {nextActionButton}
         {!actionsInMenuOnly ? (
           <>
             {workflowActions.slice(0, 2).map((action) => (
@@ -900,6 +916,7 @@ export function EditableServiceResourcePage<
           </>
         ) : null}
 
+        {canShowMenu ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -964,6 +981,7 @@ export function EditableServiceResourcePage<
             ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
+        ) : null}
       </div>
     );
   };
@@ -1817,8 +1835,13 @@ function RecordListRow<TRecord extends RecordShape>({
         <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="break-words font-semibold tracking-tight">{getRecordTitle(record)}</p>
-          {record.status ? <Badge variant="outline">{record.status}</Badge> : null}
-          {record.workflow_status ? <Badge variant="secondary">{String(record.workflow_status).replace(/_/g, " ")}</Badge> : null}
+          {record.status && !record.workflow_status ? <Badge variant="outline">{record.status}</Badge> : null}
+          {record.workflow_status ? (
+            <StatusChip
+              status={String(record.workflow_status)}
+              scheduledFor={record.scheduled_publish_at}
+            />
+          ) : null}
           {typeof record.is_active === "boolean" ? (
             <Badge variant={record.is_active ? "default" : "secondary"}>
               {record.is_active ? "Active" : "Inactive"}

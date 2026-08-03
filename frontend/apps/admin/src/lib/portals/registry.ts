@@ -130,6 +130,7 @@ import type {
   EditableListFilter,
 } from "@/components/dashboard/editable-service-resource-page";
 import { contentAttachmentRoles } from "@/components/content/content-attachment-roles";
+import { WORKFLOW_STATUS_FILTER_OPTIONS } from "@/components/workflow/status-chip";
 
 const pageParams = { page: 1, per_page: 50 };
 const countParams = { page: 1, per_page: 1, fields: "id" };
@@ -176,22 +177,11 @@ async function libraryAdminCount(key: string) {
   return statCount(Number(item?.value ?? 0));
 }
 
-const statusOptions = [
-  { label: "Draft", value: "draft" },
-  { label: "Submitted", value: "submitted" },
-  { label: "Under Review", value: "under_review" },
-  { label: "Approved", value: "approved" },
-  { label: "Published", value: "published" },
-  { label: "Archived", value: "archived" },
-];
+// One shared plain-language status vocabulary (see status-chip.tsx). The old
+// hardcoded lists diverged from the backend ("under_review" vs "in_review").
+const statusOptions = WORKFLOW_STATUS_FILTER_OPTIONS;
 
-const contentStatusOptions = [
-  { label: "Draft", value: "draft" },
-  { label: "Under Review", value: "under_review" },
-  { label: "Scheduled", value: "scheduled" },
-  { label: "Published", value: "published" },
-  { label: "Archived", value: "archived" },
-];
+const contentStatusOptions = WORKFLOW_STATUS_FILTER_OPTIONS;
 
 /** Plain-language send-state label for newsletter rows. */
 function newsletterSendStateLabel(record: PortalRecord): string {
