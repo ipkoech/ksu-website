@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi import HTTPException
 
-from app.models import project_focus_areas, project_funders, project_partners
-from app.services.core import ProjectRelationshipService, ProjectService
+from app.models import center_partners, project_focus_areas, project_funders, project_partners
+from app.services.core import CenterRelationshipService, ProjectRelationshipService, ProjectService
 
 
 class ProjectRelationshipBindingTests(unittest.IsolatedAsyncioTestCase):
@@ -48,6 +48,38 @@ class ProjectRelationshipBindingTests(unittest.IsolatedAsyncioTestCase):
         insert_mock.assert_called_once_with(project_partners)
         insert_mock.return_value.values.assert_called_once_with(project_id=project_id, partner_id=partner_id)
         db.execute.assert_awaited_once_with("insert-statement")
+        db.flush.assert_awaited_once()
+
+
+class CenterPartnerRelationshipTests(unittest.IsolatedAsyncioTestCase):
+    async def test_add_partner_inserts_metadata(self):
+        db = AsyncMock()
+        db.scalar = AsyncMock(return_value=0)
+        center_id = uuid.uuid4()
+        partner_id = uuid.uuid4()
+        metadata = {"partnership_type": "strategic", "status": "active", "notes": "MOU"}
+
+        with (
+            patch.object(CenterRelationshipService, "_ensure_center", new=AsyncMock()),
+            patch.object(CenterRelationshipService, "_ensure_partner", new=AsyncMock()),
+            patch("app.services.core.insert") as insert_mock,
+        ):
+            insert_mock.return_value.values = MagicMock(return_value="insert-statement")
+            await CenterRelationshipService.add_partner(db, center_id, partner_id, metadata)
+
+        insert_mock.assert_called_once_with(center_partners)
+        insert_mock.return_value.values.assert_called_once_with(center_id=center_id, partner_id=partner_id, **metadata)
+        db.execute.assert_awaited_once_with("insert-statement")
+        db.flush.assert_awaited_once()
+
+    async def test_remove_partner_deletes_link(self):
+        db = AsyncMock()
+        center_id = uuid.uuid4()
+        partner_id = uuid.uuid4()
+        with patch("app.services.core.delete") as delete_mock:
+            delete_mock.return_value.where.return_value = "delete-statement"
+            await CenterRelationshipService.remove_partner(db, center_id, partner_id)
+        db.execute.assert_awaited_once_with("delete-statement")
         db.flush.assert_awaited_once()
 
     async def test_add_funder_inserts_project_funder_ids(self):

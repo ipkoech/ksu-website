@@ -30,6 +30,7 @@ from ..models import (
     SuccessStory,
     Sustainability,
     center_focus_areas,
+    center_partners,
     program_themes,
     project_focus_areas,
     project_funders,
@@ -365,6 +366,75 @@ class CenterRelationshipService:
     @staticmethod
     async def _ensure_focus_area(db: AsyncSession, focus_area_id: uuid.UUID) -> FocusArea:
         return await _get_or_404(db, FocusArea, focus_area_id, "Focus area not found")
+
+    @staticmethod
+    async def _ensure_partner(db: AsyncSession, partner_id: uuid.UUID) -> Partner:
+        return await _get_or_404(db, Partner, partner_id, "Partner not found")
+
+    @staticmethod
+    async def list_partners(db: AsyncSession, center_id: uuid.UUID) -> list[dict[str, Any]]:
+        await CenterRelationshipService._ensure_center(db, center_id)
+        result = await db.execute(
+            select(
+                Partner,
+                center_partners.c.partnership_type,
+                center_partners.c.partnership_level,
+                center_partners.c.mou_start_date,
+                center_partners.c.mou_end_date,
+                center_partners.c.status.label("relationship_status"),
+                center_partners.c.collaboration_areas,
+                center_partners.c.notes,
+            )
+            .join(center_partners, Partner.id == center_partners.c.partner_id)
+            .where(center_partners.c.center_id == center_id)
+            .order_by(Partner.display_order.asc(), Partner.name.asc())
+        )
+        rows = []
+        for partner, partnership_type, partnership_level, mou_start_date, mou_end_date, relationship_status, collaboration_areas, notes in result.all():
+            rows.append({
+                "id": partner.id,
+                "name": partner.name,
+                "slug": partner.slug,
+                "acronym": partner.acronym,
+                "partner_type": partner.partner_type,
+                "partnership_level": partnership_level or partner.partnership_level,
+                "about": partner.about,
+                "collaboration_areas": collaboration_areas if collaboration_areas is not None else partner.collaboration_areas,
+                "website": partner.website,
+                "country": partner.country,
+                "status": relationship_status,
+                "partnership_type": partnership_type,
+                "mou_start_date": mou_start_date,
+                "mou_end_date": mou_end_date,
+                "notes": notes,
+            })
+        return rows
+
+    @staticmethod
+    async def add_partner(db: AsyncSession, center_id: uuid.UUID, partner_id: uuid.UUID, metadata: dict[str, Any] | None = None) -> None:
+        await CenterRelationshipService._ensure_center(db, center_id)
+        await CenterRelationshipService._ensure_partner(db, partner_id)
+        exists = await db.scalar(
+            select(func.count()).select_from(center_partners).where(
+                center_partners.c.center_id == center_id,
+                center_partners.c.partner_id == partner_id,
+            )
+        )
+        values = {"center_id": center_id, "partner_id": partner_id, **(metadata or {})}
+        if not exists:
+            await db.execute(insert(center_partners).values(**values))
+        elif metadata:
+            await db.execute(
+                center_partners.update()
+                .where(center_partners.c.center_id == center_id, center_partners.c.partner_id == partner_id)
+                .values(**metadata)
+            )
+        await db.flush()
+
+    @staticmethod
+    async def remove_partner(db: AsyncSession, center_id: uuid.UUID, partner_id: uuid.UUID) -> None:
+        await db.execute(delete(center_partners).where(center_partners.c.center_id == center_id, center_partners.c.partner_id == partner_id))
+        await db.flush()
 
     @staticmethod
     async def list_projects(db: AsyncSession, center_id: uuid.UUID) -> list[dict[str, Any]]:

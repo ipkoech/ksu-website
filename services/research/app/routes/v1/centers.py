@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...core.auth import require_scope
 from ...core.database import get_db
 from ...schemas import (
+    CenterPartnerLink,
     ResearchCenterCreate,
     ResearchCenterUpdate,
     ResearchFarmCreate,
@@ -89,6 +90,28 @@ async def list_center_farms(center_id: uuid.UUID, db: AsyncSession = Depends(get
 @router.get("/centers/id/{center_id}/focus-areas", tags=["Research Centers"])
 async def list_center_focus_areas(center_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await CenterRelationshipService.list_focus_areas(db, center_id))
+
+
+@router.get("/centers/id/{center_id}/partners", tags=["Research Centers"])
+async def list_center_partners(center_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return success(data=await CenterRelationshipService.list_partners(db, center_id))
+
+
+@router.get("/public/heri/centers/{center_id}/partners", tags=["HERI Public"])
+async def list_public_heri_center_partners(center_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """Public partner directory feed consumed by the HERI Africa site."""
+    return success(data=await CenterRelationshipService.list_partners(db, center_id))
+
+
+@router.put("/centers/id/{center_id}/partners/{partner_id}", tags=["Research Centers"], dependencies=[Depends(require_scope("research.manage_projects"))])
+async def add_center_partner(center_id: uuid.UUID, partner_id: uuid.UUID, payload: CenterPartnerLink | None = None, db: AsyncSession = Depends(get_db)):
+    await CenterRelationshipService.add_partner(db, center_id, partner_id, payload.model_dump(exclude_none=True) if payload else None)
+    return success(data={"center_id": center_id, "partner_id": partner_id}, message="Center partner linked")
+
+
+@router.delete("/centers/id/{center_id}/partners/{partner_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Research Centers"], dependencies=[Depends(require_scope("research.manage_projects"))])
+async def remove_center_partner(center_id: uuid.UUID, partner_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    await CenterRelationshipService.remove_partner(db, center_id, partner_id)
 
 
 @router.put("/centers/id/{center_id}/focus-areas/{focus_area_id}", tags=["Research Centers"], dependencies=[Depends(require_scope("research.manage_projects"))])

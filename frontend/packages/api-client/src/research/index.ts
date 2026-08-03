@@ -686,6 +686,17 @@ function readonlyCenterRelationApi(relation: "projects" | "programs" | "farms") 
   };
 }
 
+function centerPartnerBindingApi() {
+  return {
+    list: (centerId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(`/api/v1/centers/id/${centerId}/partners`),
+    add: (centerId: string, partnerId: string, metadata?: Record<string, unknown>) =>
+      researchApi.put<{ data: ResearchGenericRecord }>(`/api/v1/centers/id/${centerId}/partners/${partnerId}`, metadata),
+    remove: (centerId: string, partnerId: string) =>
+      researchApi.delete<void>(`/api/v1/centers/id/${centerId}/partners/${partnerId}`),
+  };
+}
+
 function centerFocusAreaBindingApi() {
   return {
     list: (centerId: string) =>
@@ -910,6 +921,7 @@ export const researchServiceApi = {
     programs: readonlyCenterRelationApi("programs"),
     farms: readonlyCenterRelationApi("farms"),
     focusAreas: centerFocusAreaBindingApi(),
+    partners: centerPartnerBindingApi(),
   },
   farms: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/farms",

@@ -102,6 +102,25 @@ function CenterRelations({ center }: { center: ResearchGenericRecord }) {
           ),
         },
         {
+          value: "partners",
+          label: "Partners",
+          content: (
+            <BindableRecordsCard
+              title="Center Partners"
+              addLabel="Link partner"
+              relationshipLabel="Partner"
+              queryKey={["research", "centers", center.id, "partners"]}
+              queryFn={() => researchServiceApi.centerRelations.partners.list(String(center.id))}
+              candidateQueryFn={(search) => researchServiceApi.partners.list({ page: 1, per_page: 20, q: search || undefined, fields: "id,name,slug,partner_type,partnership_level,status" })}
+              bindRecord={(recordId) => researchServiceApi.centerRelations.partners.add(String(center.id), recordId)}
+              unbindRecord={(recordId) => researchServiceApi.centerRelations.partners.remove(String(center.id), recordId)}
+              emptyLabel="No partners are linked to this center."
+              searchPlaceholder="Search partners"
+              metaFields={["partner_type", "partnership_level", "status"]}
+            />
+          ),
+        },
+        {
           value: "focus-areas",
           label: "Focus Areas",
           content: (

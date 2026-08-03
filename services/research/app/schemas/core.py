@@ -94,6 +94,16 @@ class ResearchCenterList(BaseReadSchema):
     is_featured: bool
 
 
+class CenterPartnerLink(BaseSchema):
+    partnership_type: str | None = Field(None, max_length=64)
+    partnership_level: str | None = Field(None, max_length=32)
+    mou_start_date: date | None = None
+    mou_end_date: date | None = None
+    status: str | None = Field(None, max_length=32)
+    collaboration_areas: list[str] | dict[str, Any] | None = None
+    notes: str | None = None
+
+
 # ============================================================================
 # Research Farm
 # ============================================================================
