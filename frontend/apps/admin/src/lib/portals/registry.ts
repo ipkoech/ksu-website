@@ -193,13 +193,25 @@ const contentStatusOptions = [
   { label: "Archived", value: "archived" },
 ];
 
-const newsletterSendStatusOptions = [
-  { label: "Draft", value: "draft" },
-  { label: "Scheduled", value: "scheduled" },
-  { label: "Sending", value: "sending" },
-  { label: "Sent", value: "sent" },
-  { label: "Failed", value: "failed" },
-];
+/** Plain-language send-state label for newsletter rows. */
+function newsletterSendStateLabel(record: PortalRecord): string {
+  switch (record.send_status) {
+    case "scheduled":
+      return record.scheduled_send_at
+        ? `Scheduled for ${new Date(record.scheduled_send_at).toLocaleString()}`
+        : "Scheduled to send";
+    case "sending":
+      return "Sending…";
+    case "sent":
+      return record.sent_at
+        ? `Sent ${new Date(record.sent_at).toLocaleString()}`
+        : "Sent";
+    case "failed":
+      return "Sending failed";
+    default:
+      return "Not sent yet";
+  }
+}
 
 const contactStatusOptions = [
   { label: "Active", value: "active" },
@@ -2989,19 +3001,6 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
         label: "Publish Date",
         type: "datetime-local",
       },
-      {
-        name: "scheduled_send_at",
-        label: "Scheduled Send Time",
-        type: "datetime-local",
-        helpText: "Used by newsletter delivery automation when dispatch is enabled.",
-      },
-      {
-        name: "send_status",
-        label: "Send Status",
-        type: "select",
-        options: newsletterSendStatusOptions,
-        defaultValue: "draft",
-      },
       { name: "is_public", label: "Public", type: "boolean", defaultValue: true },
     ],
     listFilters: [
@@ -3018,28 +3017,96 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     create: (payload) => newslettersApi.create(payload),
     update: (id, payload) => newslettersApi.update(id, payload),
     delete: (id) => newslettersApi.delete(id),
+    getRecordWorkflowActions: (record) => {
+      const actions: Array<{
+        label: string;
+        variant?: "default" | "outline" | "secondary" | "destructive" | "ghost";
+        successMessage?: string;
+        mode?: "confirm" | "sheet";
+        fields?: EditableField[];
+        defaults?: PortalPayload;
+        validate?: (values: PortalPayload) => Record<string, string>;
+        buildPayload?: (values: PortalPayload) => PortalPayload;
+        payload: PortalPayload;
+        confirmTitle?: string;
+        confirmDescription?: string;
+      }> = [];
+      const sendState = record.send_status || "draft";
+      if (sendState === "draft" || sendState === "failed") {
+        actions.push({
+          label: sendState === "failed" ? "Try again" : "Send now",
+          successMessage:
+            "Newsletter queued for sending. Delivery starts within a few minutes.",
+          payload: {
+            send_status: "scheduled",
+            scheduled_send_at: new Date().toISOString(),
+          },
+          confirmTitle:
+            sendState === "failed" ? "Retry sending this newsletter?" : "Send newsletter now?",
+          confirmDescription: `Send "${record.title}" to all active subscribers? This cannot be undone.`,
+        });
+        actions.push({
+          label: "Schedule send…",
+          variant: "outline",
+          mode: "sheet",
+          successMessage: "Newsletter send scheduled",
+          fields: [
+            {
+              name: "scheduled_send_at",
+              label: "Send Time",
+              type: "datetime-local",
+              required: true,
+              helpText:
+                "Pick a future date and time. The newsletter is emailed automatically then.",
+            },
+          ],
+          validate: (values) => {
+            const errors: Record<string, string> = {};
+            const raw = values.scheduled_send_at;
+            if (typeof raw !== "string" || !raw) {
+              errors.scheduled_send_at = "Choose when to send the newsletter";
+            } else if (new Date(raw).getTime() <= Date.now()) {
+              errors.scheduled_send_at = "The send time must be in the future";
+            }
+            return errors;
+          },
+          buildPayload: (values) => ({
+            send_status: "scheduled",
+            scheduled_send_at: values.scheduled_send_at,
+          }),
+          payload: {},
+        });
+      }
+      if (sendState === "scheduled") {
+        actions.push({
+          label: "Cancel schedule",
+          variant: "outline",
+          successMessage: "Scheduled send cancelled",
+          payload: { send_status: "draft", scheduled_send_at: null },
+          confirmTitle: "Cancel the scheduled send?",
+          confirmDescription: `"${record.title}" will go back to Draft and will not be emailed until you send it again.`,
+        });
+      }
+      return actions;
+    },
     getRecordTitle: (record) => record.title,
     getRecordMeta: (record) =>
       [
         record.edition,
         record.status,
-        record.scheduled_send_at
-          ? `Scheduled ${new Date(record.scheduled_send_at).toLocaleString()}`
+        newsletterSendStateLabel(record),
+        record.send_status === "failed" && record.send_error
+          ? `Problem: ${record.send_error}`
           : null,
-        record.sent_at ? `Sent ${new Date(record.sent_at).toLocaleString()}` : null,
       ]
         .filter(Boolean)
         .join(" · "),
     emptyMessage: "No newsletter editions were returned.",
-    buildPayload: (values) => {
-      const hasSchedule = Boolean(values.scheduled_send_at);
-      return {
-        ...values,
-        status: values.status || (hasSchedule ? "scheduled" : "draft"),
-        send_status: values.send_status || (hasSchedule ? "scheduled" : "draft"),
-        is_public: values.is_public ?? true,
-      };
-    },
+    buildPayload: (values) => ({
+      ...values,
+      status: values.status || "draft",
+      is_public: values.is_public ?? true,
+    }),
     viewScopes: ["marketing.view", "marketing.manage_newsletters"],
     manageScopes: ["marketing.manage_newsletters"],
   } as PortalResourceConfig<Newsletter>,
