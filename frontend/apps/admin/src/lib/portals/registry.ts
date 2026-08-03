@@ -41,6 +41,7 @@ import {
   blogsApi,
   academicCalendarsApi,
   contactsApi,
+  contentWorkflowApi,
   clubsApi,
   departmentServicesApi,
   departmentsApi,
@@ -2531,6 +2532,8 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     create: (payload) => storiesApi.create(payload),
     update: (id, payload) => storiesApi.update(id, payload),
     remove: (id) => storiesApi.delete(id),
+    publish: (id) => contentWorkflowApi.actionByType("stories", id, "publish"),
+    unpublish: (id) => contentWorkflowApi.actionByType("stories", id, "unpublish"),
     manageScopes: ["content.manage_stories", "content.publish"],
     fields: [
       ...contentFields("corporate"),
