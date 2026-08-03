@@ -125,8 +125,38 @@ export type OpportunitySummary = {
   application_url: string | null;
   closing_at: string | null;
 };
+export type ImpactMetricSummary = {
+  id: string;
+  label: string;
+  value: string;
+  unit: string | null;
+  description: string;
+  position: number;
+};
+export type PublicPageSection = {
+  id: string;
+  section_type: string;
+  position: number;
+  configuration: Record<string, unknown>;
+};
+export type PublicPage = {
+  slug: string;
+  title: string;
+  seo_title: string | null;
+  seo_description: string | null;
+  sections: PublicPageSection[];
+};
 export async function getOpportunities(): Promise<OpportunitySummary[]> {
   return get<OpportunitySummary[]>("/opportunities?limit=24");
+}
+export async function getResearchThemes(): Promise<ResearchSummary[]> {
+  return get<ResearchSummary[]>("/research/themes?limit=24");
+}
+export async function getImpactMetrics(): Promise<ImpactMetricSummary[]> {
+  return get<ImpactMetricSummary[]>("/impact-metrics");
+}
+export async function getPublicPage(slug: string): Promise<PublicPage> {
+  return get<PublicPage>(`/pages/${encodeURIComponent(slug)}`);
 }
 export async function getHeroSlides(): Promise<HeroSlide[]> {
   return get<HeroSlide[]>("/hero-slides");
