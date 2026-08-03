@@ -1881,6 +1881,36 @@ export const recordRecoveryApi = {
     ),
 };
 
+// Per-resource CSV exports (GET /api/v1/exports/{resource}.csv)
+export const mainExportsApi = {
+  /**
+   * Downloads a resource's admin listing as CSV, honoring the caller's list
+   * filters. Fetched with credentials (not window.open) because access tokens
+   * live in sessionStorage, which a new tab cannot read.
+   */
+  downloadCsv: async (
+    resource: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ) => {
+    const token = getStoredAccessToken();
+    const url = new URL(`${getMainApiBaseUrl()}/api/v1/exports/${resource}.csv`);
+    Object.entries(params ?? {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        url.searchParams.append(key, String(value));
+      }
+    });
+    const response = await fetch(url.toString(), {
+      credentials: "include",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || error.message || "CSV export failed");
+    }
+    return response.blob();
+  },
+};
+
 // Sliders
 export const slidersApi = {
   listGroups: (

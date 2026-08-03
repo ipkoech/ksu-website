@@ -90,6 +90,10 @@ export interface PortalResourceConfig<
   hasWorkflowHistory?: boolean;
   /** Backend content-type key for /api/v1/records/{type}/{id}/restore and workflow logs. */
   recoveryContentType?: string;
+  /** Backend resource key for GET /api/v1/exports/{resource}.csv ("Download CSV" toolbar button). */
+  exportResource?: string;
+  /** Spreadsheet import page for this resource (e.g. /imports/faqs). */
+  importHref?: string;
   portalScope?: {
     typeField?: string;
     idField?: string;

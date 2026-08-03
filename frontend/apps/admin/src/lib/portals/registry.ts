@@ -967,6 +967,18 @@ const RECOVERY_CONTENT_TYPES: Record<string, string> = {
   sliders: "sliders",
 };
 
+/**
+ * Maps registry resource keys onto the backend resource keys served by
+ * GET /api/v1/exports/{resource}.csv.
+ */
+const EXPORT_RESOURCES: Record<string, string> = {
+  news: "news",
+  "press-releases": "blogs",
+  notices: "announcements",
+  events: "events",
+  stories: "stories",
+};
+
 function contentResource<TRecord extends PortalRecord>({
   key,
   title,
@@ -1097,6 +1109,9 @@ function contentResource<TRecord extends PortalRecord>({
     supportsRecovery: Boolean(RECOVERY_CONTENT_TYPES[key]),
     hasWorkflowHistory: Boolean(RECOVERY_CONTENT_TYPES[key]),
     recoveryContentType: RECOVERY_CONTENT_TYPES[key],
+    // Exports replay the caller's visible filters only, so keep the button off
+    // portal-scope-locked (school/department) variants of these resources.
+    exportResource: scopeType === "corporate" ? EXPORT_RESOURCES[key] : undefined,
   };
 }
 
@@ -2880,6 +2895,8 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     }),
     viewScopes: ["content.view"],
     manageScopes: ["support.manage_faqs", "content.manage_pages", "content.publish"],
+    exportResource: "faqs",
+    importHref: "/imports/faqs",
   } as PortalResourceConfig<FAQ>,
   contacts: {
     key: "contacts",
@@ -2970,6 +2987,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     viewScopes: ["content.view"],
     manageScopes: ["support.manage_contacts", "content.manage_pages", "content.publish"],
     canDelete: false,
+    exportResource: "contacts",
   } as PortalResourceConfig<ContactDirectory>,
   newsletters: {
     key: "newsletters",
@@ -3174,6 +3192,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     canEdit: false,
     canDelete: false,
     readOnlyMessage: "Subscribers are created from the public website subscription form.",
+    exportResource: "newsletter-subscribers",
   } as PortalResourceConfig<NewsletterSubscriber>,
   testimonials: {
     key: "testimonials",
@@ -3222,6 +3241,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     }),
     viewScopes: ["content.view"],
     manageScopes: ["content.manage", "content.publish"],
+    exportResource: "testimonials",
   } as PortalResourceConfig<Testimonial>,
 };
 
@@ -3855,6 +3875,7 @@ const corporateCommunicationResources: Record<string, PortalResourceConfig<any, 
     manageScopes: ["policy.manage", "office.manage_content", "content.manage_pages"],
     hasWorkflowHistory: true,
     recoveryContentType: "documents",
+    exportResource: "documents",
   } as PortalResourceConfig<Document>,
   policies: {
     key: "policies",

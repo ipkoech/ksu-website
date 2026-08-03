@@ -4,13 +4,14 @@ import { useEffect, useId, useMemo, useState, type Dispatch, type KeyboardEvent,
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArchiveRestore, ArrowUpDown, ChevronDown, Database, Edit, Eye, FilterX, HelpCircle, History, MoreHorizontal, Plus, Search, ShieldCheck, SlidersHorizontal, Sparkles, Trash2 } from "lucide-react";
+import { ArchiveRestore, ArrowUpDown, ChevronDown, Database, Download, Edit, Eye, FileSpreadsheet, FilterX, HelpCircle, History, MoreHorizontal, Plus, Search, ShieldCheck, SlidersHorizontal, Sparkles, Trash2 } from "lucide-react";
 
 import { RecordHistory } from "@/components/workflow/record-history";
 import { NextActionButton } from "@/components/workflow/next-action-button";
 import { StatusChip } from "@/components/workflow/status-chip";
 import {
   contentWorkflowApi,
+  mainExportsApi,
   type ContentWorkflowBulkAction,
 } from "@ksu/api-client";
 
@@ -283,6 +284,13 @@ interface EditableServiceResourcePageProps<
    * row gains a "History" action that opens the record's workflow timeline.
    */
   historyContentType?: string;
+  /**
+   * Backend resource key for GET /api/v1/exports/{resource}.csv. When set,
+   * the toolbar gains a "Download CSV" button honoring the current filters.
+   */
+  exportResource?: string;
+  /** Spreadsheet import page for this resource (e.g. /imports/faqs). */
+  importHref?: string;
   emptyState?: {
     title?: string;
     description?: string;
@@ -472,6 +480,8 @@ export function EditableServiceResourcePage<
   recoveryStates = ["archived", "deleted"],
   restoreRecord,
   historyContentType,
+  exportResource,
+  importHref,
   emptyState,
 }: EditableServiceResourcePageProps<TRecord, TPayload>) {
   const router = useRouter();
@@ -502,6 +512,7 @@ export function EditableServiceResourcePage<
   const inRecoveryView = supportsRecovery && recordState !== "active";
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<"publish" | "archive" | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -646,6 +657,30 @@ export function EditableServiceResourcePage<
       toast.error(`The bulk ${action} could not be completed. Try again in a moment.`);
     } finally {
       setBulkAction(null);
+    }
+  };
+
+  const downloadCsv = async () => {
+    if (!exportResource || isExporting) return;
+    setIsExporting(true);
+    try {
+      const blob = await mainExportsApi.downloadCsv(exportResource, {
+        ...(inRecoveryView ? { record_state: recordState } : {}),
+        ...activeFilters,
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${exportResource}.csv`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      toast.success("CSV downloaded. Check your downloads folder.");
+    } catch {
+      toast.error("The CSV could not be downloaded. Try again in a moment.");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -1098,6 +1133,26 @@ export function EditableServiceResourcePage<
         <Button type="button" size="sm" className="shadow-sm" onClick={startCreate}>
           <Plus data-icon="inline-start" />
           {primaryActionLabel ?? "Create Record"}
+        </Button>
+      ) : null}
+      {exportResource ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={isExporting}
+          onClick={downloadCsv}
+        >
+          <Download data-icon="inline-start" />
+          {isExporting ? "Preparing CSV..." : "Download CSV"}
+        </Button>
+      ) : null}
+      {importHref && canCreate && !inRecoveryView ? (
+        <Button asChild type="button" variant="outline" size="sm">
+          <Link href={importHref}>
+            <FileSpreadsheet data-icon="inline-start" />
+            Import from spreadsheet
+          </Link>
         </Button>
       ) : null}
       {toolbarSlot}

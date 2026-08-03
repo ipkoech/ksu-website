@@ -255,6 +255,8 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
       historyContentType={
         scopedResource.hasWorkflowHistory ? scopedResource.recoveryContentType : undefined
       }
+      exportResource={scopedResource.exportResource}
+      importHref={scopedResource.importHref}
       toolbarSlot={
         <>
           {scopedResource.key === "media-assets" && canManage ? (
