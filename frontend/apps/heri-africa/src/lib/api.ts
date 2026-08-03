@@ -115,8 +115,9 @@ export async function getProjects(): Promise<ResearchSummary[]> {
 export async function getPublications(): Promise<ResearchSummary[]> {
   return get<ResearchSummary[]>("/research/publications?limit=24");
 }
-export async function getPartners(): Promise<PartnerSummary[]> {
-  return get<PartnerSummary[]>("/partners?limit=50");
+export async function getPartners(centerId?: string): Promise<PartnerSummary[]> {
+  const query = centerId ? `&center_id=${encodeURIComponent(centerId)}` : "";
+  return get<PartnerSummary[]>(`/partners?limit=50${query}`);
 }
 export async function getEvents(): Promise<EventSummary[]> {
   return get<EventSummary[]>("/events?limit=24");
