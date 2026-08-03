@@ -54,6 +54,44 @@ async def publish_due_content(db, *, now: datetime | None = None) -> int:
     return promoted
 
 
+async def expire_due_content(db, *, now: datetime | None = None) -> int:
+    """Unpublish published records whose expiry time has passed. Returns count."""
+    now = now or datetime.now(timezone.utc)
+    expired = 0
+    for content_type, model in CONTENT_MODELS.items():
+        if not (_has_column(model, "workflow_status") and _has_column(model, "expires_at")):
+            continue
+        conditions = [
+            model.workflow_status == "published",
+            model.expires_at.is_not(None),
+            model.expires_at <= now,
+        ]
+        if _has_column(model, "deleted_at"):
+            conditions.append(model.deleted_at.is_(None))
+        rows = (await db.execute(select(model).where(*conditions))).scalars().all()
+        for record in rows:
+            # Direct stamped transition: published -> unpublished, actor=None (system).
+            record.status = "unpublished"
+            record.workflow_status = "unpublished"
+            record.is_published = False
+            if _has_column(record, "is_public"):
+                record.is_public = False
+            if _has_column(record, "unpublished_at"):
+                record.unpublished_at = now
+            db.add(ContentWorkflowService.build_log(
+                content_type=content_type,
+                content_id=record.id,
+                from_status="published",
+                to_status="unpublished",
+                action="system_expire",
+                actor_id=None,
+                comments="Unpublished automatically — expiry date reached.",
+            ))
+            expired += 1
+    await db.commit()
+    return expired
+
+
 @celery_app.task(name="main.content.publish_due")
 def publish_due() -> int:
     async def _run() -> int:
@@ -63,7 +101,18 @@ def publish_due() -> int:
     return asyncio.run(_run())
 
 
+@celery_app.task(name="main.content.expire_due")
+def expire_due() -> int:
+    async def _run() -> int:
+        async with AsyncSessionLocal() as db:
+            return await expire_due_content(db)
+
+    return asyncio.run(_run())
+
+
 __all__ = [
+    "expire_due",
+    "expire_due_content",
     "publish_due",
     "publish_due_content",
 ]

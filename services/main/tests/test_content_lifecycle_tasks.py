@@ -130,6 +130,69 @@ async def test_publish_due_ignores_future_schedule(monkeypatch):
 
 
 @pytest.mark.anyio
+async def test_expire_due_unpublishes_expired_news(monkeypatch):
+    from app.tasks import content_lifecycle
+
+    monkeypatch.setattr(content_lifecycle, "CONTENT_MODELS", {"news": News})
+    record = _published_news()
+    db = _FakeDb([record])
+    now = datetime.now(timezone.utc)
+
+    count = await content_lifecycle.expire_due_content(db, now=now)
+
+    assert count == 1
+    assert record.workflow_status == "unpublished"
+    assert record.status == "unpublished"
+    assert record.is_published is False
+    assert record.is_public is False
+    assert record.unpublished_at == now
+    assert db.committed is True
+
+    assert len(db.added) == 1
+    log = db.added[0]
+    assert log.action == "system_expire"
+    assert log.content_type == "news"
+    assert log.content_id == record.id
+    assert log.from_status == "published"
+    assert log.to_status == "unpublished"
+    assert log.actor_id is None
+
+    statement = str(db.statements[0])
+    assert "news.workflow_status = :workflow_status_1" in statement
+    assert "news.expires_at <= :expires_at_1" in statement
+    assert "news.deleted_at IS NULL" in statement
+
+
+@pytest.mark.anyio
+async def test_expire_due_ignores_unexpired(monkeypatch):
+    """The expiry filter lives in SQL: an empty result set unpublishes nothing."""
+    from app.tasks import content_lifecycle
+
+    monkeypatch.setattr(content_lifecycle, "CONTENT_MODELS", {"news": News})
+    db = _FakeDb([])
+
+    count = await content_lifecycle.expire_due_content(db)
+
+    assert count == 0
+    assert db.added == []
+    assert "news.expires_at <= :expires_at_1" in str(db.statements[0])
+
+
+@pytest.mark.anyio
+async def test_expire_due_skips_models_without_expiry_column(monkeypatch):
+    from app.tasks import content_lifecycle
+
+    class _NoExpiry:
+        workflow_status = "published"
+
+    monkeypatch.setattr(content_lifecycle, "CONTENT_MODELS", {"plain": _NoExpiry})
+    db = _FakeDb([])
+
+    assert await content_lifecycle.expire_due_content(db) == 0
+    assert db.statements == []
+
+
+@pytest.mark.anyio
 async def test_publish_due_skips_models_without_schedule_columns(monkeypatch):
     from app.tasks import content_lifecycle
 

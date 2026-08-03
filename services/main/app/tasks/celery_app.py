@@ -42,6 +42,7 @@ celery_app.conf.update(
         "main.outbox.publish_pending": {"queue": "main.events"},
         "main.notifications.consume_event": {"queue": "main.notifications"},
         "main.content.publish_due": {"queue": "main.maintenance"},
+        "main.content.expire_due": {"queue": "main.maintenance"},
     },
     beat_schedule={
         "expire-notifications-every-15-minutes": {
@@ -63,6 +64,10 @@ celery_app.conf.update(
         "publish-due-content-every-5-minutes": {
             "task": "main.content.publish_due",
             "schedule": crontab(minute="*/5"),
+        },
+        "expire-due-content-every-15-minutes": {
+            "task": "main.content.expire_due",
+            "schedule": crontab(minute="*/15"),
         },
         "publish-pending-outbox": {
             "task": "main.outbox.publish_pending",
