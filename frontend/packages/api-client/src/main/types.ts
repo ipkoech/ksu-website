@@ -1841,7 +1841,32 @@ export interface Document {
   is_public: boolean;
   requires_login: boolean;
   download_count: number;
+  status: string;
   is_active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Policy {
+  id: string;
+  title: string;
+  slug: string;
+  code?: string | null;
+  category: string;
+  summary?: string | null;
+  content?: string | null;
+  division_id?: string | null;
+  department_id?: string | null;
+  version?: string | null;
+  effective_date?: string | null;
+  review_date?: string | null;
+  supersedes_id?: string | null;
+  approved_by_id?: string | null;
+  approved_at?: string | null;
+  pdf_file_id?: string | null;
+  is_public: boolean;
+  status: string;
   display_order: number;
   created_at: string;
   updated_at: string;

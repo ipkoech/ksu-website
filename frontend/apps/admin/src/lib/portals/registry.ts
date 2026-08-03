@@ -55,6 +55,7 @@ import {
   newsApi,
   newslettersApi,
   personsApi,
+  policiesApi,
   programmesApi,
   researchServiceApi,
   slidersApi,
@@ -100,6 +101,7 @@ import {
   type Newsletter,
   type NewsletterSubscriber,
   type Person,
+  type Policy,
   type Programme,
   type ResearchGenericPayload,
   type ResearchGenericRecord,
@@ -3663,6 +3665,209 @@ const corporateCommunicationResources: Record<string, PortalResourceConfig<any, 
     canCreate: false,
     canDelete: false,
   },
+  documents: {
+    key: "documents",
+    title: "Official Documents",
+    description:
+      "Records register of official university documents, charters, forms, minutes, and reports.",
+    backHref: "/corporate-communication",
+    queryKey: ["corporate", "documents"],
+    fields: [
+      { name: "title", label: "Title", required: true },
+      {
+        name: "document_type",
+        label: "Document Type",
+        type: "select",
+        required: true,
+        options: [
+          { label: "Policy", value: "policy" },
+          { label: "Charter", value: "charter" },
+          { label: "Report", value: "report" },
+          { label: "Minutes", value: "minutes" },
+          { label: "Form", value: "form" },
+          { label: "Guide", value: "guide" },
+        ],
+      },
+      { name: "category", label: "Category" },
+      { name: "description", label: "Description", type: "textarea" },
+      {
+        name: "file_id",
+        label: "Document File",
+        type: "media",
+        required: true,
+        media: {
+          mediaType: "document",
+          helperText: "Upload or pick the official file for this record.",
+          isPublic: true,
+        },
+      },
+      {
+        name: "version",
+        label: "Version",
+        helpText: "e.g. 2.1 or 2026 revision",
+      },
+      { name: "is_public", label: "Public", type: "boolean", defaultValue: true },
+      { name: "requires_login", label: "Requires Login", type: "boolean" },
+    ],
+    listFilters: [
+      {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search documents by title, description, or category",
+      },
+      {
+        name: "document_type",
+        label: "Document Type",
+        type: "select",
+        options: [
+          { label: "Policy", value: "policy" },
+          { label: "Charter", value: "charter" },
+          { label: "Report", value: "report" },
+          { label: "Minutes", value: "minutes" },
+          { label: "Form", value: "form" },
+          { label: "Guide", value: "guide" },
+        ],
+      },
+      { name: "category", label: "Category", type: "text" },
+    ],
+    list: (filters) => {
+      const { search: _search, ...params } = filters ?? {};
+      return documentsApi.listAdmin({
+        ...pageParams,
+        ...params,
+        q: typeof filters?.search === "string" ? filters.search : undefined,
+      });
+    },
+    create: (payload) => documentsApi.create(payload),
+    update: (id, payload) => documentsApi.update(id, payload),
+    delete: (id) => documentsApi.delete(id),
+    getRecordTitle: titleOf,
+    getRecordMeta: (record) =>
+      joinMetaValues([
+        record.document_type,
+        record.category,
+        record.version ? `v${record.version}` : null,
+        record.status,
+        `${record.download_count ?? 0} downloads`,
+      ]),
+    emptyMessage:
+      "No documents in the register yet. Add the first official document to start the record.",
+    viewScopes: ["policy.view", "office.view", "content.view"],
+    manageScopes: ["policy.manage", "office.manage_content", "content.manage_pages"],
+    hasWorkflowHistory: true,
+    recoveryContentType: "documents",
+  } as PortalResourceConfig<Document>,
+  policies: {
+    key: "policies",
+    title: "University Policies",
+    description:
+      "Records register of university policies with versions, effective dates, and the policy each one replaces.",
+    backHref: "/corporate-communication",
+    queryKey: ["corporate", "policies"],
+    fields: [
+      { name: "title", label: "Title", required: true },
+      { name: "code", label: "Policy Code" },
+      { name: "category", label: "Category", required: true },
+      { name: "summary", label: "Summary", type: "textarea" },
+      {
+        name: "version",
+        label: "Version",
+        helpText: "e.g. 2.1 or 2026 revision",
+      },
+      { name: "effective_date", label: "Effective Date", type: "date" },
+      {
+        name: "review_date",
+        label: "Review Date",
+        type: "date",
+        helpText: "When this policy should be checked again",
+      },
+      {
+        name: "supersedes_id",
+        label: "Replaces Policy",
+        type: "entity",
+        relation: { adapter: "policy", allowClear: true },
+      },
+      {
+        name: "pdf_file_id",
+        label: "Policy PDF",
+        type: "media",
+        media: {
+          mediaType: "document",
+          accept: "application/pdf",
+          helperText: "Official PDF copy of the policy.",
+          isPublic: true,
+        },
+      },
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        defaultValue: "draft",
+        options: [
+          { label: "Draft", value: "draft" },
+          { label: "Active", value: "active" },
+          { label: "Archived", value: "archived" },
+        ],
+      },
+      { name: "is_public", label: "Public", type: "boolean", defaultValue: true },
+    ],
+    listFilters: [
+      {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search policies by title, code, or summary",
+      },
+      { name: "category", label: "Category", type: "text" },
+    ],
+    list: (filters) => {
+      const { search: _search, ...params } = filters ?? {};
+      return policiesApi.list({
+        ...pageParams,
+        ...params,
+        q: typeof filters?.search === "string" ? filters.search : undefined,
+      });
+    },
+    create: (payload) => policiesApi.create(payload),
+    update: (id, payload) => policiesApi.update(id, payload),
+    delete: (id) => policiesApi.delete(id),
+    getRecordWorkflowActions: (record) =>
+      record.status !== "archived"
+        ? [
+            {
+              label: "Move to archive",
+              variant: "destructive",
+              successMessage: "Policy moved to archive",
+              payload: { status: "archived", is_public: false },
+              confirmTitle: "Move policy to archive?",
+              confirmDescription: `"${titleOf(record)}" will be hidden from the website and moved to Archived. You can bring it back anytime.`,
+            },
+          ]
+        : [
+            {
+              label: "Restore policy",
+              successMessage: "Policy restored",
+              payload: { status: "active" },
+              confirmTitle: "Restore this policy?",
+              confirmDescription: `"${titleOf(record)}" will be marked active again and can appear on the website.`,
+            },
+          ],
+    getRecordTitle: titleOf,
+    getRecordMeta: (record) =>
+      joinMetaValues([
+        record.code,
+        record.category,
+        record.version ? `v${record.version}` : null,
+        record.effective_date ? `Effective ${record.effective_date}` : null,
+        record.status,
+      ]),
+    emptyMessage:
+      "No policies in the register yet. Add the first policy to start the record.",
+    canDelete: false,
+    viewScopes: ["policy.view", "content.view"],
+    manageScopes: ["policy.manage", "admin:*"],
+  } as PortalResourceConfig<Policy>,
 };
 
 const corporateResourceHrefs: Record<string, string> = {
@@ -3681,6 +3886,8 @@ const corporateResourceHrefs: Record<string, string> = {
   "newsletter-subscribers": "/corporate-communication/engagement/newsletter-subscribers",
   testimonials: "/corporate-communication/engagement/testimonials",
   "student-clubs": "/corporate-communication/student-life/club-submissions",
+  documents: "/corporate-communication/records/documents",
+  policies: "/corporate-communication/records/policies",
 };
 
 for (const [key, href] of Object.entries(corporateResourceHrefs)) {
@@ -3723,6 +3930,10 @@ const corporateResourceRouteAliases: Record<string, string> = {
   "engagement/newsletter-subscribers": "newsletter-subscribers",
   "engagement/testimonials": "testimonials",
   "student-life/club-submissions": "student-clubs",
+  documents: "documents",
+  policies: "policies",
+  "records/documents": "documents",
+  "records/policies": "policies",
 };
 
 async function firstSliderGroupId() {
@@ -7030,6 +7241,26 @@ export const portalConfigs: Record<string, PortalConfig> = {
             href: "/corporate-communication/review-queue",
             icon: ClipboardCheck,
             scope: ["content.review", "content.publish"],
+          },
+        ],
+      },
+      {
+        title: "Records Register",
+        href: "/corporate-communication/records/documents",
+        icon: FileArchive,
+        scope: ["policy.view", "policy.manage", "content.manage_pages", "office.manage_content", "admin:*"],
+        children: [
+          {
+            title: "Official Documents",
+            href: "/corporate-communication/records/documents",
+            icon: FileText,
+            scope: ["policy.view", "policy.manage", "content.manage_pages", "office.manage_content", "admin:*"],
+          },
+          {
+            title: "University Policies",
+            href: "/corporate-communication/records/policies",
+            icon: ScrollText,
+            scope: ["policy.view", "policy.manage", "content.manage_pages", "admin:*"],
           },
         ],
       },

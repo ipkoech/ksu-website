@@ -78,6 +78,7 @@ import type {
   Testimonial,
   Newsletter,
   NewsletterSubscriber,
+  Policy,
   ProgrammeFeeStructure,
   Role,
   Permission,
@@ -1232,6 +1233,29 @@ export const documentsApi = {
     mainApi.patch<{ data: Document }>(`/api/v1/documents/${id}`, data),
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/documents/${id}`),
+};
+
+// Policies
+export const policiesApi = {
+  list: (
+    params?: ListParams<{
+      q?: string;
+      category?: string;
+      division_id?: string;
+      department_id?: string;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Policy>>("/api/v1/policies", params),
+
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Policy }>(`/api/v1/policies/${slug}`, params),
+
+  create: (data: Partial<Policy>) =>
+    mainApi.post<{ data: Policy }>("/api/v1/policies", data),
+
+  update: (id: string, data: Partial<Policy>) =>
+    mainApi.patch<{ data: Policy }>(`/api/v1/policies/${id}`, data),
+
+  delete: (id: string) => mainApi.delete<void>(`/api/v1/policies/${id}`),
 };
 
 // Intakes
