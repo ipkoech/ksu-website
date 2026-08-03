@@ -51,6 +51,7 @@ from .public_entity_content import router as public_entity_content_router
 from .public_team import router as public_team_router
 from .public.inquiries import router as public_inquiries_router
 from .realtime import router as realtime_router
+from .record_recovery import router as record_recovery_router
 from .programmes import router as programmes_router
 from .search import router as search_router
 from .schools import router as schools_router
@@ -85,6 +86,7 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(events_router, prefix="/api/v1/events", tags=["Content"])
     app.include_router(stories_router, prefix="/api/v1/stories", tags=["Content"])
     app.include_router(content_workflow_router, prefix="/api/v1/content-workflow", tags=["Content"])
+    app.include_router(record_recovery_router, prefix="/api/v1/records", tags=["Content"])
     app.include_router(sliders_router, prefix="/api/v1/sliders", tags=["Content"])
     app.include_router(newsletters_router, prefix="/api/v1/newsletters", tags=["Marketing"])
     app.include_router(testimonials_router, prefix="/api/v1/testimonials", tags=["Marketing"])

@@ -40,6 +40,21 @@ def _apply_scope_filters(query, model, *, scope_type=None, scope_id=None, is_pub
     return query
 
 
+def _record_state_query(model, record_state: str):
+    """Base admin-list query honoring the requested record lifecycle state.
+
+    - ``active`` (default): soft-deleted rows are hidden.
+    - ``archived``: not deleted, but moved to the archived workflow state.
+    - ``deleted``: only soft-deleted rows, so they can be restored.
+    """
+    if record_state == "deleted":
+        return select(model).where(model.deleted_at.is_not(None))
+    query = model.active_query()
+    if record_state == "archived":
+        query = query.where(model.workflow_status == "archived")
+    return query
+
+
 def _active_window_filter(model, now: datetime):
     return (
         model.archived_at.is_(None),
@@ -228,9 +243,10 @@ class _RichContentService:
         scheduled_from: datetime | None = None,
         scheduled_to: datetime | None = None,
         search: str | None = None,
+        record_state: str = "active",
         load_options: Sequence = (),
     ) -> PaginatedResult:
-        query = cls.model.active_query().order_by(cls.model.created_at.desc())
+        query = _record_state_query(cls.model, record_state).order_by(cls.model.created_at.desc())
         if load_options:
             query = query.options(*load_options)
         query = _apply_scope_filters(
@@ -348,9 +364,10 @@ class StoryService(_RichContentService):
         story_type: str | None = None,
         category: str | None = None,
         contributor_user_id: uuid.UUID | None = None,
+        record_state: str = "active",
         load_options: Sequence = (),
     ) -> PaginatedResult:
-        query = cls.model.active_query().order_by(cls.model.updated_at.desc(), cls.model.created_at.desc())
+        query = _record_state_query(cls.model, record_state).order_by(cls.model.updated_at.desc(), cls.model.created_at.desc())
         if load_options:
             query = query.options(*load_options)
         query = _apply_scope_filters(query, cls.model, scope_type=scope_type, scope_id=scope_id, is_public=None, is_main=is_main)
@@ -583,10 +600,11 @@ class EventService:
         scheduled_from: datetime | None = None,
         scheduled_to: datetime | None = None,
         search: str | None = None,
+        record_state: str = "active",
         load_options: Sequence = (),
     ) -> PaginatedResult:
         now = datetime.now(timezone.utc)
-        query = Event.active_query().order_by(Event.start_date.asc(), Event.display_order.asc())
+        query = _record_state_query(Event, record_state).order_by(Event.start_date.asc(), Event.display_order.asc())
         if load_options:
             query = query.options(*load_options)
         query = _apply_scope_filters(
@@ -748,9 +766,10 @@ class SliderService:
         scope_id: uuid.UUID | None = None,
         is_main: bool | None = None,
         status: str | None = None,
+        record_state: str = "active",
         load_options: Sequence = (),
     ) -> list[Slider]:
-        query = select(Slider).where(Slider.deleted_at.is_(None))
+        query = _record_state_query(Slider, record_state)
         if load_options:
             query = query.options(*load_options)
         if slider_group_id:

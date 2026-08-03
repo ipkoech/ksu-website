@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from types import SimpleNamespace
+from typing import Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 
@@ -105,6 +106,7 @@ async def list_media(
     entity_id: uuid.UUID | None = None,
     role: str | None = Query(default=None, max_length=64),
     search: str | None = None,
+    record_state: Literal["active", "deleted"] = "active",
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(Media, fields)
@@ -120,6 +122,7 @@ async def list_media(
         entity_id=entity_id,
         role=role,
         search=search,
+        record_state=record_state,
         load_options=selector.load_options,
     )
     return success(data=selector.apply(result.items), meta=result.meta)

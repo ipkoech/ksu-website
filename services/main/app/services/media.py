@@ -483,9 +483,15 @@ class MediaService:
         entity_id: uuid.UUID | None = None,
         role: str | None = None,
         search: str | None = None,
+        record_state: str = "active",
         load_options: Sequence = (),
     ) -> PaginatedResult:
-        query = Media.active_query().outerjoin(MediaFolder, Media.folder_id == MediaFolder.id).order_by(Media.created_at.desc())
+        base = (
+            select(Media).where(Media.deleted_at.is_not(None))
+            if record_state == "deleted"
+            else Media.active_query()
+        )
+        query = base.outerjoin(MediaFolder, Media.folder_id == MediaFolder.id).order_by(Media.created_at.desc())
         query = query.where(await MediaService._visibility_filter(user))
         if load_options:
             query = query.options(*load_options)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
@@ -161,6 +161,7 @@ async def list_admin_events(
     scheduled_from: datetime | None = None,
     scheduled_to: datetime | None = None,
     search: str | None = None,
+    record_state: Literal["active", "archived", "deleted"] = "active",
     include_scope: bool = False,
     fields: FieldSelection = FieldsDep,
 ):
@@ -182,6 +183,7 @@ async def list_admin_events(
         scheduled_from=scheduled_from,
         scheduled_to=scheduled_to,
         search=search,
+        record_state=record_state,
         load_options=selector.load_options,
     )
     items = []

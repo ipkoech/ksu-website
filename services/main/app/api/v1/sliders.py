@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -84,6 +85,7 @@ async def list_admin_sliders(
     scope_id: uuid.UUID | None = None,
     is_main: bool | None = None,
     status: str | None = None,
+    record_state: Literal["active", "archived", "deleted"] = "active",
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(Slider, fields)
@@ -94,6 +96,7 @@ async def list_admin_sliders(
         scope_id=scope_id,
         is_main=is_main,
         status=status,
+        record_state=record_state,
         load_options=selector.load_options,
     )
     return success(data=selector.apply(items))
