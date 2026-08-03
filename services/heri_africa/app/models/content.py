@@ -107,6 +107,18 @@ class ResearchPublication(UUIDMixin, Base):
     resource_url: Mapped[str | None] = mapped_column(String(500))
 
 
+class ImpactMetric(UUIDMixin, Base):
+    """A publishable metric displayed on the public Our Work page."""
+
+    __tablename__ = "impact_metrics"
+    label: Mapped[str] = mapped_column(String(180))
+    value: Mapped[str] = mapped_column(String(120))
+    unit: Mapped[str | None] = mapped_column(String(80))
+    description: Mapped[str] = mapped_column(Text, default="")
+    position: Mapped[int] = mapped_column(Integer, default=0, index=True)
+    is_visible: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+
+
 class Event(UUIDMixin, Base):
     __tablename__ = "events"
     slug: Mapped[str] = mapped_column(String(180), unique=True, index=True)

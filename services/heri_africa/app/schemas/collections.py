@@ -53,3 +53,38 @@ class OpportunitySummary(BaseModel):
     summary: str
     application_url: str | None
     closing_at: object | None
+
+
+class ImpactMetricSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    label: str
+    value: str
+    unit: str | None
+    description: str
+    position: int
+
+
+class PageSectionSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    section_type: str
+    position: int
+    configuration: dict[str, object]
+
+
+class PublicPageResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    slug: str
+    title: str
+    seo_title: str | None
+    seo_description: str | None
+    sections: list[PageSectionSummary]
+
+
+class PaginatedCollection(BaseModel):
+    items: list[object]
+    page: int
+    per_page: int
+    total: int
+    pages: int
