@@ -168,6 +168,10 @@ COCMS_PERMISSION_NAMES = [
     "marketing.manage_newsletters",
     "support.manage_faqs",
     "support.manage_contacts",
+    "policy.view",
+    "policy.view_drafts",
+    "policy.manage",
+    "policy.publish",
     *VC_HUB_PERMISSION_NAMES,
 ]
 

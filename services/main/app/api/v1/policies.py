@@ -10,12 +10,19 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ._fields import FieldSelection, FieldsDep, build_selector
-from ...deps import CurrentUser, DbSession, require_scope
+from ...deps import CurrentUser, DbSession, user_has_scope
 from ...models import Policy
 from ...schemas import PolicyCreate, PolicyUpdate
 from ...services import PolicyService
 
 router = APIRouter()
+
+POLICY_MANAGE_SCOPES = ("policy.manage", "office.manage_content", "content.manage_pages")
+
+
+def require_policy_manage(user: CurrentUser) -> None:
+    if not any(user_has_scope(user, scope) for scope in POLICY_MANAGE_SCOPES):
+        raise HTTPException(status_code=403, detail="Not authorized to manage policies")
 
 
 @router.get("")
@@ -54,13 +61,13 @@ async def get_policy(slug: str, db: DbSession, fields: FieldSelection = FieldsDe
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_policy_manage)])
 async def create_policy(data: PolicyCreate, db: DbSession, _: CurrentUser):
     item = await PolicyService.create(db, **data.model_dump())
     return success(data=item, message="Policy created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.patch("/{item_id}", dependencies=[Depends(require_policy_manage)])
 async def update_policy(item_id: uuid.UUID, data: PolicyUpdate, db: DbSession, _: CurrentUser):
     item = await PolicyService.get_by_id(db, item_id)
     if item is None:
@@ -69,7 +76,7 @@ async def update_policy(item_id: uuid.UUID, data: PolicyUpdate, db: DbSession, _
     return success(data=item, message="Policy updated")
 
 
-@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_policy_manage)])
 async def delete_policy(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await PolicyService.get_by_id(db, item_id)
     if item is None:

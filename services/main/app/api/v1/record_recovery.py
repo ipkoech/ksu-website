@@ -79,10 +79,11 @@ async def restore_record(content_type: str, record_id: uuid.UUID, db: DbSession,
 
     await _authorize_recovery(db, user, content_type, record)
 
-    if record.deleted_at is not None:
+    was_deleted = record.deleted_at is not None
+    if was_deleted:
         record.restore()
         message = "Record restored"
-    elif getattr(record, "workflow_status", None) == "archived" or getattr(record, "archived_at", None) is not None:
+    if getattr(record, "workflow_status", None) == "archived" or getattr(record, "archived_at", None) is not None:
         record.workflow_status = "draft"
         if hasattr(record, "status"):
             record.status = "draft"
@@ -102,7 +103,7 @@ async def restore_record(content_type: str, record_id: uuid.UUID, db: DbSession,
             comments="Restored from archive",
         ))
         message = "Record restored from archive"
-    else:
+    elif not was_deleted:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Record is neither archived nor deleted",
