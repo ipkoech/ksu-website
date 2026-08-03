@@ -19,7 +19,7 @@ CONTENT_WORKFLOW_STATUSES = (
 CONTENT_WORKFLOW_ACTIONS = (
     "submit", "start_review", "request_changes", "approve", "schedule",
     "publish", "unpublish", "reject", "archive", "edit_reset",
-    "withdraw", "review_edit",
+    "withdraw", "review_edit", "system_publish", "system_expire",
 )
 
 

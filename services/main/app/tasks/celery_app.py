@@ -41,6 +41,7 @@ celery_app.conf.update(
         "main.outbox.publish_one": {"queue": "main.events"},
         "main.outbox.publish_pending": {"queue": "main.events"},
         "main.notifications.consume_event": {"queue": "main.notifications"},
+        "main.content.publish_due": {"queue": "main.maintenance"},
     },
     beat_schedule={
         "expire-notifications-every-15-minutes": {
@@ -59,6 +60,10 @@ celery_app.conf.update(
             "task": "main.media.cleanup_expired_batches",
             "schedule": crontab(minute=15),
         },
+        "publish-due-content-every-5-minutes": {
+            "task": "main.content.publish_due",
+            "schedule": crontab(minute="*/5"),
+        },
         "publish-pending-outbox": {
             "task": "main.outbox.publish_pending",
             "schedule": 10.0,
@@ -71,6 +76,7 @@ celery_app.conf.imports = (
     "app.tasks.email",
     "app.tasks.imports",
     "app.tasks.newsletters",
+    "app.tasks.content_lifecycle",
     "app.tasks.notifications",
     "app.tasks.social_posts",
     "app.tasks.media",

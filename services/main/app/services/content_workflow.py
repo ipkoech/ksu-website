@@ -40,6 +40,30 @@ class ContentWorkflowService:
     """Transition content that exposes the shared publication status fields."""
 
     @staticmethod
+    def build_log(
+        *,
+        content_type: str,
+        content_id: uuid.UUID,
+        from_status: str,
+        to_status: str,
+        action: str,
+        actor_id: uuid.UUID | None,
+        comments: str | None = None,
+        changed_fields: dict[str, Any] | None = None,
+    ) -> ContentWorkflowLog:
+        """Single construction path for workflow log rows."""
+        return ContentWorkflowLog(
+            content_type=content_type,
+            content_id=content_id,
+            from_status=from_status,
+            to_status=to_status,
+            action=action,
+            actor_id=actor_id,
+            comments=comments,
+            changed_fields=changed_fields,
+        )
+
+    @staticmethod
     def owner_metadata_for_scope(
         scope_type: str | None,
         scope_id: uuid.UUID | None,
@@ -120,7 +144,7 @@ class ContentWorkflowService:
             if hasattr(content, field):
                 setattr(content, field, value)
 
-        db.add(ContentWorkflowLog(
+        db.add(cls.build_log(
             content_type=content_type,
             content_id=content.id,
             from_status=from_status,
@@ -155,7 +179,7 @@ class ContentWorkflowService:
         if actor_kind not in allowed or current not in allowed[actor_kind]:
             raise ValueError(f"{actor_kind} cannot edit content in {current} state")
         if actor_kind == "reviewer" and changed_fields:
-            db.add(ContentWorkflowLog(
+            db.add(cls.build_log(
                 content_type=content_type,
                 content_id=content.id,
                 from_status=current,
@@ -242,7 +266,7 @@ class ContentWorkflowService:
             content.is_published = False
             content.archived_at = now
 
-        db.add(ContentWorkflowLog(
+        db.add(cls.build_log(
             content_type=content_type,
             content_id=content.id,
             from_status=from_status,
