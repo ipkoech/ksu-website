@@ -1,14 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
   Building2,
+  Clock3,
   HandCoins,
   Landmark,
+  Mail,
+  MapPin,
   Network,
+  Phone,
   School,
   UsersRound,
 } from "lucide-react";
-import { PartnershipForm } from "../../components/forms/partnership-form";
+import { ContactForm } from "../../components/forms/contact-form";
 import { SiteShell } from "../../components/site-shell";
 import { getPartners } from "../../lib/api";
 
@@ -197,37 +202,54 @@ export default async function PartnerPage() {
           className="mx-auto grid max-w-7xl gap-8 px-6 py-14 lg:grid-cols-[1.15fr_0.85fr] lg:px-10"
           id="partnership-enquiry"
         >
+          <aside className="rounded-3xl bg-heri-cream/60 p-7 lg:p-8">
+            <div className="h-1 w-10 bg-heri-lime" />
+            <h2 className="mt-4 text-4xl font-bold text-heri-blue">
+              Let’s work together
+            </h2>
+            <p className="mt-4 text-sm leading-6 text-slate-600">
+              Whether you have a partnership idea, a research question, or a
+              general enquiry, our team will connect you with the right person.
+            </p>
+            <div className="mt-8 grid gap-6 text-sm text-slate-700">
+              <ContactDetail icon={MapPin} title="Visit us">
+                Kisii University Main Campus
+                <br />
+                Nyanchwa, Kisii County, Kenya
+              </ContactDetail>
+              <ContactDetail icon={Mail} title="Email">
+                <a className="hover:text-heri-teal" href="mailto:heri-language@kisiiuniversity.ac.ke">
+                  heri-language@kisiiuniversity.ac.ke
+                </a>
+              </ContactDetail>
+              <ContactDetail icon={Phone} title="Telephone">
+                <a className="hover:text-heri-teal" href="tel:+254796123456">
+                  +254 796 123 456
+                </a>
+              </ContactDetail>
+              <ContactDetail icon={Clock3} title="Office hours">
+                Monday – Friday: 8:00 AM – 5:00 PM (EAT)
+              </ContactDetail>
+            </div>
+            <div className="mt-8 rounded-2xl bg-heri-teal p-5 text-white">
+              <h3 className="font-bold text-heri-lime">What happens next?</h3>
+              <p className="mt-2 text-sm leading-6 text-white/80">
+                We review every enquiry and respond within five working days.
+              </p>
+            </div>
+          </aside>
           <div>
             <h2 className="text-4xl font-bold text-heri-blue">
-              Partnership Enquiry
+              Send us an enquiry
             </h2>
             <p className="mt-3 text-sm text-slate-600">
-              Tell us about your organisation and how we can collaborate.
+              Select “Partnership enquiry” for collaboration proposals, or use
+              the other categories for general, research, media and event questions.
             </p>
             <div className="mt-7">
-              <PartnershipForm />
+              <ContactForm />
             </div>
           </div>
-          <aside className="rounded-3xl bg-heri-teal p-8 text-white">
-            <h2 className="text-3xl font-bold text-heri-lime">
-              Partnering With HERI Africa Creates Lasting Impact
-            </h2>
-            {[
-              "Evidence That Informs Decisions",
-              "Stronger Systems And Capacity",
-              "Inclusive, Local-Led Solutions",
-              "Strategic Visibility",
-              "Pan-African Reach",
-            ].map((item) => (
-              <div className="border-b border-heri-lime/50 py-5" key={item}>
-                <h3 className="font-bold text-heri-lime">{item}</h3>
-                <p className="mt-2 text-sm leading-6 text-white/80">
-                  Build practical, evidence-led solutions grounded in local
-                  realities and communities.
-                </p>
-              </div>
-            ))}
-          </aside>
         </section>
         <section className="border-t border-slate-200 px-6 py-12">
           <div className="mx-auto max-w-7xl">
@@ -273,5 +295,25 @@ export default async function PartnerPage() {
         </section>
       </main>
     </SiteShell>
+  );
+}
+
+function ContactDetail({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: typeof MapPin;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex gap-4">
+      <Icon className="mt-0.5 size-6 shrink-0 text-heri-teal" />
+      <div>
+        <p className="font-bold text-heri-blue">{title}</p>
+        <div className="mt-1 leading-6">{children}</div>
+      </div>
+    </div>
   );
 }

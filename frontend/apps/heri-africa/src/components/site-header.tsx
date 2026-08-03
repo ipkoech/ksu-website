@@ -38,8 +38,7 @@ export const siteLinks: readonly NavItem[] = [
 ];
 
 const joinLinks = [
-  ["Partner With Us", "/partner-with-us"],
-  ["Contact Us", "/contact"],
+  ["Contact & Partner With Us", "/partner-with-us"],
 ] as const;
 
 export function SiteHeader() {
