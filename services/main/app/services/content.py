@@ -771,12 +771,15 @@ class SliderService:
         scope_id: uuid.UUID | None = None,
         is_main: bool | None = None,
         status: str | None = None,
+        search: str | None = None,
         record_state: str = "active",
         load_options: Sequence = (),
     ) -> list[Slider]:
         query = _record_state_query(Slider, record_state)
         if load_options:
             query = query.options(*load_options)
+        if search:
+            query = query.where(ilike_any(search, Slider.title, Slider.subtitle))
         if slider_group_id:
             query = query.where(Slider.slider_group_id == slider_group_id)
         query = _apply_scope_filters(

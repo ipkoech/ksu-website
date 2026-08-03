@@ -85,6 +85,7 @@ async def list_admin_sliders(
     scope_id: uuid.UUID | None = None,
     is_main: bool | None = None,
     status: str | None = None,
+    search: str | None = None,
     record_state: Literal["active", "archived", "deleted"] = "active",
     fields: FieldSelection = FieldsDep,
 ):
@@ -96,6 +97,7 @@ async def list_admin_sliders(
         scope_id=scope_id,
         is_main=is_main,
         status=status,
+        search=search,
         record_state=record_state,
         load_options=selector.load_options,
     )

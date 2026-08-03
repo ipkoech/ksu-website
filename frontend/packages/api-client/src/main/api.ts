@@ -1895,6 +1895,7 @@ export const slidersApi = {
       scope_id?: string;
       is_main?: boolean;
       status?: string;
+      search?: string;
     }>,
   ) => mainApi.get<{ data: Slider[] }>("/api/v1/sliders/admin", params),
 
@@ -2045,6 +2046,7 @@ export const faqsApi = {
       scope_type?: string;
       scope_id?: string;
       is_main?: boolean;
+      search?: string;
     }>,
   ) => mainApi.get<PaginatedResponse<FAQ>>("/api/v1/faqs/admin", params),
 
@@ -2151,6 +2153,7 @@ export const testimonialsApi = {
       department_id?: string;
       programme_id?: string;
       featured_only?: boolean;
+      search?: string;
     }>,
   ) =>
     mainApi.get<PaginatedResponse<Testimonial>>(
@@ -2182,6 +2185,7 @@ export const newslettersApi = {
   listAdmin: (
     params?: ListParams<{
       q?: string;
+      search?: string;
       status?: string;
     }>,
   ) =>

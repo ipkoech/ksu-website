@@ -41,6 +41,7 @@ async def list_newsletters_admin(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     q: str | None = None,
+    search: str | None = None,
     status: str | None = None,
     fields: FieldSelection = FieldsDep,
 ):
@@ -49,7 +50,7 @@ async def list_newsletters_admin(
         db,
         page=page,
         per_page=per_page,
-        q=q,
+        q=q or search,
         status=status,
         public_only=False,
         load_options=selector.load_options,

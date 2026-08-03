@@ -1024,6 +1024,12 @@ function contentResource<TRecord extends PortalRecord>({
     fields: fields ?? contentFields(scopeType),
     listFilters: [
       {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search by title…",
+      },
+      {
         name: "status",
         label: "Status",
         type: "select",
@@ -2708,6 +2714,12 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     ],
     listFilters: [
       {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search by title or subtitle…",
+      },
+      {
         name: "slider_group_id",
         label: "Slider Group",
         type: "entity",
@@ -2800,6 +2812,12 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     ],
     listFilters: [
       {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search by title or file name…",
+      },
+      {
         name: "folder_id",
         label: "Folder",
         type: "entity",
@@ -2844,6 +2862,12 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     queryKey: ["corporate", "faqs"],
     fields: faqFields(),
     listFilters: [
+      {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search by question or answer…",
+      },
       { name: "is_public", label: "Public", type: "boolean" },
       { name: "is_main", label: "Main Site", type: "boolean" },
     ],
@@ -3004,6 +3028,12 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       { name: "is_public", label: "Public", type: "boolean", defaultValue: true },
     ],
     listFilters: [
+      {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search by title, summary, or content…",
+      },
       { name: "status", label: "Public Status", type: "select", options: contentStatusOptions },
     ],
     list: (filters) =>
@@ -3159,7 +3189,15 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     backHref: "/corporate-communication",
     queryKey: ["corporate", "testimonials"],
     fields: testimonialFields,
-    listFilters: [{ name: "featured_only", label: "Featured", type: "boolean" }],
+    listFilters: [
+      {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search by name, role, or quote…",
+      },
+      { name: "featured_only", label: "Featured", type: "boolean" },
+    ],
     list: (filters) => testimonialsApi.listAdmin({ ...pageParams, ...filters }),
     create: (payload) => testimonialsApi.create(payload),
     update: (id, payload) => testimonialsApi.update(id, payload),

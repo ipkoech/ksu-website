@@ -188,11 +188,14 @@ class TestimonialService:
         programme_id: uuid.UUID | None = None,
         featured_only: bool = False,
         public_only: bool = True,
+        search: str | None = None,
         load_options: Sequence = (),
     ) -> PaginatedResult:
         query = select(Testimonial).order_by(Testimonial.display_order.asc(), Testimonial.created_at.desc())
         if load_options:
             query = query.options(*load_options)
+        if search:
+            query = query.where(ilike_any(search, Testimonial.name, Testimonial.role, Testimonial.quote))
         if testimonial_type:
             query = query.where(Testimonial.testimonial_type == testimonial_type)
         if school_id:

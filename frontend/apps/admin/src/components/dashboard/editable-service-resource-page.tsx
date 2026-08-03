@@ -1045,10 +1045,10 @@ export function EditableServiceResourcePage<
           </SelectContent>
         </Select>
       ) : filter.type === "text" ? (
-        <Input
-          value={filterValues[filter.name] ?? ""}
+        <DebouncedFilterInput
+          value={typeof filterValues[filter.name] === "string" ? filterValues[filter.name] : ""}
           placeholder={filter.placeholder ?? filter.label}
-          onChange={(event) => updateFilter(filter.name, event.target.value || null)}
+          onCommit={(nextValue) => updateFilter(filter.name, nextValue || null)}
         />
       ) : filter.type === "date" ? (
         <DateTimePicker
@@ -1144,11 +1144,11 @@ export function EditableServiceResourcePage<
                 {searchFilter ? (
                   <div className="relative min-w-0 flex-1">
                     <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      value={filterValues[searchFilter.name] ?? ""}
+                    <DebouncedFilterInput
+                      value={typeof filterValues[searchFilter.name] === "string" ? filterValues[searchFilter.name] : ""}
                       placeholder={searchFilter.placeholder ?? "Search records"}
                       className="pl-9"
-                      onChange={(event) => updateFilter(searchFilter.name, event.target.value || null)}
+                      onCommit={(nextValue) => updateFilter(searchFilter.name, nextValue || null)}
                     />
                   </div>
                 ) : (
@@ -1634,6 +1634,46 @@ export function EditableServiceResourcePage<
         isLoading={updateMutation.isPending}
       />
     </div>
+  );
+}
+
+/**
+ * Text filter input that waits for a typing pause before committing the value,
+ * so list queries are not refetched on every keystroke.
+ */
+function DebouncedFilterInput({
+  value,
+  placeholder,
+  className,
+  onCommit,
+  delay = 350,
+}: {
+  value: string;
+  placeholder?: string;
+  className?: string;
+  onCommit: (value: string) => void;
+  delay?: number;
+}) {
+  const [draft, setDraft] = useState(value);
+
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  useEffect(() => {
+    if (draft === value) return;
+    const handle = setTimeout(() => onCommit(draft), delay);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft, delay, value]);
+
+  return (
+    <Input
+      value={draft}
+      placeholder={placeholder}
+      className={className}
+      onChange={(event) => setDraft(event.target.value)}
+    />
   );
 }
 

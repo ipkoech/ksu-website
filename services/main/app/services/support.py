@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ksu_common import PaginatedResult
 
 from ..models import ContactDirectory, Department, Division, FAQ, Person, School, SupportTicket, Wing
-from ._base import apply_updates, paginate_query
+from ._base import apply_updates, ilike_any, paginate_query
 
 
 class ContactReferenceError(ValueError):
@@ -74,6 +74,7 @@ class FAQService:
         is_public: bool | None = True,
         is_main: bool | None = None,
         status: str | None = "published",
+        search: str | None = None,
         load_options: Sequence = (),
     ) -> PaginatedResult:
         query = FAQ.active_query().order_by(FAQ.display_order.asc(), FAQ.created_at.desc())
@@ -82,6 +83,8 @@ class FAQService:
         query = _apply_scope(query, FAQ, scope_type=scope_type, scope_id=scope_id, is_public=is_public, is_main=is_main)
         if status is not None:
             query = query.where(FAQ.status == status)
+        if search:
+            query = query.where(ilike_any(search, FAQ.question, FAQ.answer_plain_text))
         return await paginate_query(db, query, page=page, per_page=per_page)
 
     @staticmethod
