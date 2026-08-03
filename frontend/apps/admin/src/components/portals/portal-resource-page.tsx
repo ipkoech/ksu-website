@@ -252,6 +252,9 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
               recordRecoveryApi.restore(scopedResource.recoveryContentType!, record.id)
           : undefined
       }
+      historyContentType={
+        scopedResource.hasWorkflowHistory ? scopedResource.recoveryContentType : undefined
+      }
       toolbarSlot={
         <>
           {scopedResource.key === "media-assets" && canManage ? (

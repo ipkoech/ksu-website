@@ -2464,13 +2464,22 @@ export interface ContentWorkflowActionResult {
   workflow_status?: ContentWorkflowStatus;
 }
 
+/** Log rows include system/audit actions beyond the user-triggered ones. */
+export type ContentWorkflowLogAction =
+  | ContentWorkflowAction
+  | "edit_reset"
+  | "withdraw"
+  | "review_edit"
+  | "system_publish"
+  | "system_expire";
+
 export interface ContentWorkflowLog {
   id: string;
   content_type: string;
   content_id: string;
   from_status: ContentWorkflowStatus;
   to_status: ContentWorkflowStatus;
-  action: ContentWorkflowAction;
+  action: ContentWorkflowLogAction;
   actor_id?: string | null;
   comments?: string | null;
   changed_fields?: Record<string, unknown> | null;

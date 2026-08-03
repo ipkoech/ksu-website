@@ -41,6 +41,7 @@ import {
 } from "@ksu/ui/components";
 import { PageHeader } from "@/components/layout";
 import { DateTimePicker } from "@/components/shared/date-time-picker";
+import { RecordHistory } from "./record-history";
 import { WorkflowActions } from "./workflow-actions";
 
 const statusOptions = [
@@ -381,12 +382,6 @@ function ReviewDetail({
   canEdit: boolean;
   onCompleted: () => void;
 }) {
-  const historyQuery = useQuery({
-    queryKey: ["content-workflow", "history", item?.content_type, item?.id],
-    queryFn: () => contentWorkflowApi.logs(item!.content_type, item!.id),
-    enabled: Boolean(item),
-  });
-
   if (!item) {
     return (
       <Card>
@@ -521,32 +516,7 @@ function ReviewDetail({
             </div>
           </TabsContent>
           <TabsContent value="history" className="mt-0">
-            {historyQuery.isLoading ? (
-              <QueueLoading />
-            ) : historyQuery.isError ? (
-              <QueueMessage message="Workflow history could not be loaded." />
-            ) : historyQuery.data?.data.length ? (
-              <div className="divide-y rounded-md border">
-                {historyQuery.data.data.map((entry) => (
-                  <div key={entry.id} className="p-4">
-                    <p className="font-medium">
-                      {humanize(entry.action)}: {humanize(entry.from_status)} to{" "}
-                      {humanize(entry.to_status)}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {formatDate(entry.created_at)}
-                    </p>
-                    {entry.comments ? (
-                      <p className="mt-3 text-sm text-muted-foreground">
-                        {entry.comments}
-                      </p>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <QueueMessage message="No workflow actions have been recorded." />
-            )}
+            <RecordHistory contentType={item.content_type} contentId={item.id} />
           </TabsContent>
         </Tabs>
       </CardContent>

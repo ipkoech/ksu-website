@@ -4,7 +4,9 @@ import { useEffect, useId, useMemo, useState, type Dispatch, type KeyboardEvent,
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArchiveRestore, ArrowUpDown, ChevronDown, Database, Edit, Eye, FilterX, HelpCircle, MoreHorizontal, Plus, Search, ShieldCheck, SlidersHorizontal, Sparkles, Trash2 } from "lucide-react";
+import { ArchiveRestore, ArrowUpDown, ChevronDown, Database, Edit, Eye, FilterX, HelpCircle, History, MoreHorizontal, Plus, Search, ShieldCheck, SlidersHorizontal, Sparkles, Trash2 } from "lucide-react";
+
+import { RecordHistory } from "@/components/workflow/record-history";
 
 const RESEARCH_FRONTEND = process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL;
 
@@ -269,6 +271,11 @@ interface EditableServiceResourcePageProps<
   recoveryStates?: Array<"archived" | "deleted">;
   /** Restores an archived or soft-deleted record. Required for the recovery views. */
   restoreRecord?: (record: TRecord) => Promise<unknown>;
+  /**
+   * Backend content-type key for the workflow logs endpoint. When set, each
+   * row gains a "History" action that opens the record's workflow timeline.
+   */
+  historyContentType?: string;
   emptyState?: {
     title?: string;
     description?: string;
@@ -457,6 +464,7 @@ export function EditableServiceResourcePage<
   supportsRecovery = false,
   recoveryStates = ["archived", "deleted"],
   restoreRecord,
+  historyContentType,
   emptyState,
 }: EditableServiceResourcePageProps<TRecord, TPayload>) {
   const router = useRouter();
@@ -468,6 +476,7 @@ export function EditableServiceResourcePage<
   const [editorIntent, setEditorIntent] = useState<"create" | "view" | "edit">("create");
   const [editingRecord, setEditingRecord] = useState<TRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TRecord | null>(null);
+  const [historyTarget, setHistoryTarget] = useState<TRecord | null>(null);
   const [workflowTarget, setWorkflowTarget] = useState<{
     record: TRecord;
     action: EditableRecordWorkflowAction<TRecord, TPayload>;
@@ -832,6 +841,7 @@ export function EditableServiceResourcePage<
       viewInEditor ||
       Boolean(detailHref) ||
       canEdit ||
+      Boolean(historyContentType) ||
       Boolean(deleteRecord && canDelete);
 
     if (!canShowMenu) return null;
@@ -932,6 +942,12 @@ export function EditableServiceResourcePage<
               <DropdownMenuItem onClick={() => startEdit(record)}>
                 <Edit data-icon="inline-start" />
                 Edit record
+              </DropdownMenuItem>
+            ) : null}
+            {historyContentType ? (
+              <DropdownMenuItem onClick={() => setHistoryTarget(record)}>
+                <History data-icon="inline-start" />
+                History
               </DropdownMenuItem>
             ) : null}
             {deleteRecord && canDelete ? (
@@ -1508,6 +1524,31 @@ export function EditableServiceResourcePage<
         </Dialog>
       )}
 
+      {historyContentType ? (
+        <Sheet
+          open={!!historyTarget}
+          onOpenChange={(open) => {
+            if (!open) setHistoryTarget(null);
+          }}
+        >
+          <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-xl">
+            <SheetHeader>
+              <SheetTitle>History</SheetTitle>
+              <SheetDescription>
+                {historyTarget
+                  ? `Everything that has happened to "${getRecordTitle(historyTarget)}".`
+                  : "Record history."}
+              </SheetDescription>
+            </SheetHeader>
+            {historyTarget ? (
+              <RecordHistory
+                contentType={historyContentType}
+                contentId={historyTarget.id}
+              />
+            ) : null}
+          </SheetContent>
+        </Sheet>
+      ) : null}
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => {
