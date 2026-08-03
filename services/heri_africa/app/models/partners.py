@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from datetime import date
+import uuid
 
-from sqlalchemy import Boolean, Date, Integer, String, Text
+from sqlalchemy import Boolean, Date, Integer, String, Text, Uuid
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -20,8 +21,8 @@ class Partner(UUIDMixin, Base):
     country: Mapped[str | None] = mapped_column(String(120))
     # Canonical Research Service references. These IDs allow the HERI projection
     # to stay aligned with the university-wide partner and centre records.
-    research_partner_id: Mapped[str | None] = mapped_column(String(36), index=True)
-    research_center_id: Mapped[str | None] = mapped_column(String(36), index=True)
+    research_partner_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, index=True)
+    research_center_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, index=True)
     partner_type: Mapped[str | None] = mapped_column(String(32), index=True)
     partnership_level: Mapped[str | None] = mapped_column(String(32))
     about: Mapped[str | None] = mapped_column(Text)

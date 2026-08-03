@@ -12,8 +12,8 @@ depends_on = None
 
 def upgrade() -> None:
     columns = (
-        sa.Column("research_partner_id", sa.String(36), nullable=True),
-        sa.Column("research_center_id", sa.String(36), nullable=True),
+        sa.Column("research_partner_id", sa.Uuid(), nullable=True),
+        sa.Column("research_center_id", sa.Uuid(), nullable=True),
         sa.Column("partner_type", sa.String(32), nullable=True),
         sa.Column("partnership_level", sa.String(32), nullable=True),
         sa.Column("about", sa.Text(), nullable=True),
