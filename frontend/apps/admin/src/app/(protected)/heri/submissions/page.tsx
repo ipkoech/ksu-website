@@ -1,2 +1,4 @@
-import { HeriCrudWorkspace } from "../_components/heri-crud-workspace";
-export default function HeriSubmissionsPage() { return <HeriCrudWorkspace config={{ resource: "submissions", title: "Submissions", description: "Review incoming contact, partnership, network, newsletter, and event enquiries with status tracking and internal notes.", permission: "heri.submissions.write", fields: [{ name: "kind", label: "Type", required: true }, { name: "name", label: "Name", required: true }, { name: "email", label: "Email", required: true }, { name: "organisation", label: "Organisation" }, { name: "country", label: "Country" }, { name: "status", label: "Status", type: "select", options: ["new", "reviewing", "assigned", "in_progress", "responded", "approved", "rejected", "closed", "spam"] }, { name: "internal_notes", label: "Internal notes", type: "textarea" }] }} />; }
+import { SubmissionsInbox } from "../_components/submissions-inbox";
+export default function HeriSubmissionsPage() {
+  return <SubmissionsInbox />;
+}
