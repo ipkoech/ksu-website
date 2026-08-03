@@ -22,6 +22,8 @@ class NewsDetail(NewsSummary):
 
 
 class SiteResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     name: str
     tagline: str | None
     contact: dict[str, object]
