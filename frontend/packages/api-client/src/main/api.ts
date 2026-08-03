@@ -60,6 +60,9 @@ import type {
   ContentWorkflowAction,
   ContentWorkflowActionPayload,
   ContentWorkflowActionResult,
+  ContentWorkflowBulkAction,
+  ContentWorkflowBulkItem,
+  ContentWorkflowBulkItemResult,
   ContentWorkflowLog,
   ContentWorkflowQueueFilters,
   ContentWorkflowQueueItem,
@@ -1852,6 +1855,21 @@ export const contentWorkflowApi = {
   ) =>
     mainApi.get<{ data: ContentWorkflowLog[] }>(
       `/api/v1/content-workflow/${contentType}/${contentId}/logs`,
+    ),
+
+  /**
+   * Applies one workflow action to many records (max 50). Authorization and
+   * transition failures never fail the whole request; each item reports its
+   * own `{content_id, ok, error}` result.
+   */
+  bulk: (
+    action: ContentWorkflowBulkAction,
+    items: ContentWorkflowBulkItem[],
+    comments?: string,
+  ) =>
+    mainApi.post<{ data: ContentWorkflowBulkItemResult[] }>(
+      "/api/v1/content-workflow/bulk",
+      { action, comments, items },
     ),
 };
 

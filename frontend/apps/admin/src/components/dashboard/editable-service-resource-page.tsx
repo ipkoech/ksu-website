@@ -9,6 +9,10 @@ import { ArchiveRestore, ArrowUpDown, ChevronDown, Database, Edit, Eye, FilterX,
 import { RecordHistory } from "@/components/workflow/record-history";
 import { NextActionButton } from "@/components/workflow/next-action-button";
 import { StatusChip } from "@/components/workflow/status-chip";
+import {
+  contentWorkflowApi,
+  type ContentWorkflowBulkAction,
+} from "@ksu/api-client";
 
 const RESEARCH_FRONTEND = process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL;
 
@@ -35,6 +39,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Checkbox,
   Alert,
   AlertDescription,
   ConfirmDialog,
@@ -495,6 +500,8 @@ export function EditableServiceResourcePage<
   const [sortValue, setSortValue] = useState(() => serializeSort(defaultSort ?? sortOptions[0]));
   const [recordState, setRecordState] = useState<"active" | "archived" | "deleted">("active");
   const inRecoveryView = supportsRecovery && recordState !== "active";
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
+  const [bulkAction, setBulkAction] = useState<"publish" | "archive" | null>(null);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -544,6 +551,39 @@ export function EditableServiceResourcePage<
     setPage(1);
   }, [activeFilters, perPage, recordState]);
 
+  // Bulk workflow actions only make sense on workflow resources for users who
+  // can publish; selection is page-scoped, so it resets with the visible page.
+  const bulkEnabled =
+    Boolean(historyContentType) &&
+    !inRecoveryView &&
+    hasAnyWorkflowScope?.(["content.publish"]) === true;
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [activeFilters, page, perPage, recordState]);
+
+  const toggleSelected = (recordId: string, checked: boolean) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (checked) {
+        next.add(recordId);
+      } else {
+        next.delete(recordId);
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const allPageSelected =
+    records.length > 0 && records.every((record) => selectedIds.has(String(record.id)));
+  const somePageSelected = records.some((record) => selectedIds.has(String(record.id)));
+
+  const toggleSelectAllOnPage = (checked: boolean) => {
+    setSelectedIds(checked ? new Set(records.map((record) => String(record.id))) : new Set());
+  };
+
   const createMutation = useMutation({
     mutationFn: create,
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
@@ -557,6 +597,58 @@ export function EditableServiceResourcePage<
     mutationFn: (id: string) => deleteRecord?.(id) ?? Promise.resolve(),
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
+  const bulkMutation = useMutation({
+    mutationFn: ({
+      action,
+      items,
+    }: {
+      action: ContentWorkflowBulkAction;
+      items: Array<{ content_type: string; content_id: string }>;
+    }) => contentWorkflowApi.bulk(action, items),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+  });
+
+  const runBulkAction = async (action: "publish" | "archive") => {
+    if (!historyContentType) return;
+    const selectedRecords = records.filter((record) => selectedIds.has(String(record.id)));
+    if (selectedRecords.length === 0) return;
+
+    const verb = action === "publish" ? "Published" : "Archived";
+    const failureVerb = action === "publish" ? "published" : "archived";
+    try {
+      const response = await bulkMutation.mutateAsync({
+        action,
+        items: selectedRecords.map((record) => ({
+          content_type: historyContentType,
+          content_id: String(record.id),
+        })),
+      });
+      const results = response.data ?? [];
+      const failures = results.filter((result) => !result.ok);
+      const okCount = results.length - failures.length;
+      if (failures.length === 0) {
+        toast.success(`${verb} ${okCount} of ${results.length}.`);
+      } else {
+        const titlesById = new Map(
+          selectedRecords.map((record) => [String(record.id), getRecordTitle(record)]),
+        );
+        const detail = failures
+          .map(
+            (failure) =>
+              `'${titlesById.get(failure.content_id) ?? failure.content_id}' — ${failure.error ?? "not allowed right now"}`,
+          )
+          .join("; ");
+        const couldnt = failures.length === 1 ? "1 couldn't" : `${failures.length} couldn't`;
+        toast.error(`${verb} ${okCount} of ${results.length}. ${couldnt} be ${failureVerb}: ${detail}`);
+      }
+      clearSelection();
+    } catch {
+      toast.error(`The bulk ${action} could not be completed. Try again in a moment.`);
+    } finally {
+      setBulkAction(null);
+    }
+  };
+
   const restoreMutation = useMutation({
     mutationFn: (record: TRecord) => restoreRecord?.(record) ?? Promise.resolve(),
     onSuccess: (_result, record) => {
@@ -1307,6 +1399,15 @@ export function EditableServiceResourcePage<
                     <table className="hidden w-full min-w-[960px] text-sm md:table">
                       <thead className="border-b bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
                         <tr>
+                          {bulkEnabled ? (
+                            <th className="w-10 px-4 py-3">
+                              <Checkbox
+                                aria-label="Select all records on this page"
+                                checked={allPageSelected ? true : somePageSelected ? "indeterminate" : false}
+                                onCheckedChange={(checked) => toggleSelectAllOnPage(checked === true)}
+                              />
+                            </th>
+                          ) : null}
                           {recordColumns.map((column) => (
                             <th key={column.key} className={`px-4 py-3 font-semibold ${column.className ?? ""}`}>
                               {column.label}
@@ -1328,6 +1429,19 @@ export function EditableServiceResourcePage<
                             onClick={() => openRecordDetail(record)}
                             onKeyDown={(event) => handleRecordKeyDown(event, record)}
                           >
+                            {bulkEnabled ? (
+                              <td
+                                className="w-10 px-4 py-3"
+                                onClick={(event) => event.stopPropagation()}
+                                onKeyDown={(event) => event.stopPropagation()}
+                              >
+                                <Checkbox
+                                  aria-label={`Select ${getRecordTitle(record)}`}
+                                  checked={selectedIds.has(String(record.id))}
+                                  onCheckedChange={(checked) => toggleSelected(String(record.id), checked === true)}
+                                />
+                              </td>
+                            ) : null}
                             {recordColumns.map((column) => (
                               <td key={column.key} className={`px-4 py-3 ${column.className ?? ""}`}>
                                 {column.render(record)}
@@ -1366,6 +1480,14 @@ export function EditableServiceResourcePage<
                             detailHref={inRecoveryView ? null : getRecordDetailHref?.(record)}
                             openInEditor={viewInEditor && !inRecoveryView}
                             onOpen={() => openRecordDetail(record)}
+                            selection={
+                              bulkEnabled
+                                ? {
+                                    selected: selectedIds.has(String(record.id)),
+                                    onSelectedChange: (checked) => toggleSelected(String(record.id), checked),
+                                  }
+                                : undefined
+                            }
                           />
                         )
                       ))}
@@ -1398,6 +1520,14 @@ export function EditableServiceResourcePage<
                           detailHref={inRecoveryView ? null : getRecordDetailHref?.(record)}
                           openInEditor={viewInEditor && !inRecoveryView}
                           onOpen={() => openRecordDetail(record)}
+                          selection={
+                            bulkEnabled
+                              ? {
+                                  selected: selectedIds.has(String(record.id)),
+                                  onSelectedChange: (checked) => toggleSelected(String(record.id), checked),
+                                }
+                              : undefined
+                          }
                         />
                       )
                     ))}
@@ -1651,6 +1781,62 @@ export function EditableServiceResourcePage<
         }}
         isLoading={updateMutation.isPending}
       />
+      {bulkEnabled && selectedIds.size > 0 ? (
+        <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
+          <div className="flex flex-wrap items-center gap-2 rounded-full border bg-background/95 px-4 py-2 shadow-lg backdrop-blur sm:gap-3 sm:px-5">
+            <p className="text-sm font-medium">
+              {selectedIds.size} selected
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              disabled={bulkMutation.isPending}
+              onClick={() => setBulkAction("publish")}
+            >
+              Publish
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={bulkMutation.isPending}
+              onClick={() => setBulkAction("archive")}
+            >
+              Archive
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={bulkMutation.isPending}
+              onClick={clearSelection}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      ) : null}
+      <ConfirmDialog
+        open={!!bulkAction}
+        onOpenChange={(open) => {
+          if (!open && !bulkMutation.isPending) setBulkAction(null);
+        }}
+        title={
+          bulkAction === "archive"
+            ? `Archive ${selectedIds.size} record${selectedIds.size === 1 ? "" : "s"}?`
+            : `Publish ${selectedIds.size} record${selectedIds.size === 1 ? "" : "s"}?`
+        }
+        description={
+          bulkAction === "archive"
+            ? `The ${selectedIds.size} selected record${selectedIds.size === 1 ? "" : "s"} will move to the archive. You can restore them later from the Archived view.`
+            : `The ${selectedIds.size} selected record${selectedIds.size === 1 ? "" : "s"} will appear on the public website immediately. Records that are not ready to publish are skipped and reported.`
+        }
+        confirmLabel={bulkAction === "archive" ? "Archive" : "Publish"}
+        onConfirm={async () => {
+          if (bulkAction) await runBulkAction(bulkAction);
+        }}
+        isLoading={bulkMutation.isPending}
+      />
     </div>
   );
 }
@@ -1802,6 +1988,7 @@ function RecordListRow<TRecord extends RecordShape>({
   detailHref,
   openInEditor = false,
   onOpen,
+  selection,
 }: {
   record: TRecord;
   getRecordTitle: (record: TRecord) => string;
@@ -1810,6 +1997,10 @@ function RecordListRow<TRecord extends RecordShape>({
   detailHref?: string | null;
   openInEditor?: boolean;
   onOpen?: () => void;
+  selection?: {
+    selected: boolean;
+    onSelectedChange: (checked: boolean) => void;
+  };
 }) {
   const isInteractive = openInEditor || Boolean(detailHref);
   const visualMedia = getRecordVisualMedia(record);
@@ -1831,6 +2022,19 @@ function RecordListRow<TRecord extends RecordShape>({
       onKeyDown={handleKeyDown}
     >
       <div className="flex min-w-0 flex-1 gap-4">
+        {selection ? (
+          <div
+            className="flex shrink-0 items-start pt-1"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            <Checkbox
+              aria-label={`Select ${getRecordTitle(record)}`}
+              checked={selection.selected}
+              onCheckedChange={(checked) => selection.onSelectedChange(checked === true)}
+            />
+          </div>
+        ) : null}
         <RecordMediaPreview media={visualMedia} record={record} />
         <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">

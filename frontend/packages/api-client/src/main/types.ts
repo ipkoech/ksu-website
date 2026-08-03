@@ -2489,6 +2489,26 @@ export interface ContentWorkflowActionResult {
   workflow_status?: ContentWorkflowStatus;
 }
 
+/** Actions the bulk transition endpoint accepts. */
+export type ContentWorkflowBulkAction =
+  | "submit"
+  | "approve"
+  | "publish"
+  | "unpublish"
+  | "archive";
+
+export interface ContentWorkflowBulkItem {
+  content_type: string;
+  content_id: string;
+}
+
+/** Per-item outcome from POST /api/v1/content-workflow/bulk. */
+export interface ContentWorkflowBulkItemResult {
+  content_id: string;
+  ok: boolean;
+  error: string | null;
+}
+
 /** Log rows include system/audit actions beyond the user-triggered ones. */
 export type ContentWorkflowLogAction =
   | ContentWorkflowAction
