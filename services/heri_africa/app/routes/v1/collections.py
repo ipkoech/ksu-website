@@ -35,8 +35,17 @@ async def team_detail(slug: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/partners", response_model=list[PartnerSummary])
-async def partners(limit: int = Query(50, ge=1, le=100), db: AsyncSession = Depends(get_db)):
-    return [PartnerSummary.model_validate(item) for item in await PublicService().list(db, Partner, limit=limit)]
+async def partners(limit: int = Query(50, ge=1, le=100), center_id: str | None = Query(None), db: AsyncSession = Depends(get_db)):
+    query = PublicService.public_query(Partner).order_by(Partner.display_order.asc(), Partner.name.asc()).limit(limit)
+    if center_id:
+        query = query.where(Partner.research_center_id == center_id)
+    records = (await db.execute(query)).scalars().all()
+    return [PartnerSummary.model_validate(item) for item in records]
+
+
+@router.get("/centers/{center_id}/partners", response_model=list[PartnerSummary])
+async def center_partners(center_id: str, limit: int = Query(50, ge=1, le=100), db: AsyncSession = Depends(get_db)):
+    return await partners(limit=limit, center_id=center_id, db=db)
 
 
 @router.get("/research/projects", response_model=list[ResearchSummary])

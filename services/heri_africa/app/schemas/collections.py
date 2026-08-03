@@ -24,6 +24,17 @@ class PartnerSummary(BaseModel):
     logo_url: str | None
     website_url: str | None
     country: str | None
+    research_partner_id: str | None = None
+    research_center_id: str | None = None
+    partner_type: str | None = None
+    partnership_level: str | None = None
+    collaboration_areas: list | dict | None = None
+    partnership_start: object | None = None
+    partnership_end: object | None = None
+    mou_signed_date: object | None = None
+    mou_expiry_date: object | None = None
+    relationship_status: str = "active"
+    relationship_notes: str | None = None
 
 
 class ResearchSummary(BaseModel):

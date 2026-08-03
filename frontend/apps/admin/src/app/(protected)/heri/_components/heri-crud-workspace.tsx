@@ -188,6 +188,7 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
             "social_links",
             "seo_defaults",
             "payload",
+            "collaboration_areas",
           ].includes(field.name)
             ? JSON.parse(String(value))
             : field.type === "number"

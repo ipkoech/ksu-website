@@ -99,6 +99,10 @@ export async function getNewsDetail(slug: string): Promise<NewsDetail> {
   return get<NewsDetail>(`/news/${encodeURIComponent(slug)}`);
 }
 
+export async function getCenterPartners(centerId: string): Promise<PartnerSummary[]> {
+  return get<PartnerSummary[]>(`/centers/${encodeURIComponent(centerId)}/partners?limit=50`);
+}
+
 export async function getTeam(): Promise<TeamSummary[]> {
   return get<TeamSummary[]>("/team?limit=24");
 }
