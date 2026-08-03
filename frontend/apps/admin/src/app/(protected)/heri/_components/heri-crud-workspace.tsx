@@ -16,6 +16,7 @@ import {
 import { toast } from "@ksu/ui";
 import { RichTextEditor } from "@ksu/ui/components";
 import { useHeriPartnerSync, useHeriResourceMutation, useHeriResourceQuery } from "@/lib/api/heri";
+import { HeriMediaPicker } from "./heri-media-picker";
 
 type RecordValue =
   | string
@@ -43,7 +44,8 @@ type Field = {
     | "select"
     | "boolean"
     | "number"
-    | "date";
+    | "date"
+    | "media";
   required?: boolean;
   options?: string[];
 };
@@ -750,6 +752,11 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
                         minHeight="14rem"
                         placeholder={`Write ${field.label.toLowerCase()}…`}
                       />
+                    ) : field.type === "media" ? (
+                      <>
+                        <input type="hidden" name={field.name} value={String(selected[field.name] ?? "")} />
+                        <HeriMediaPicker value={String(selected[field.name] ?? "")} onChange={(value) => { selected[field.name] = value; setSelected({ ...selected }); setIsDirty(true); }} />
+                      </>
                     ) : field.type === "textarea" ? (
                       <textarea
                         name={field.name}
