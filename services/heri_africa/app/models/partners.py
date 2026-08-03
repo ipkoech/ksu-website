@@ -23,6 +23,7 @@ class Partner(UUIDMixin, Base):
     # to stay aligned with the university-wide partner and centre records.
     research_partner_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, index=True)
     research_center_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, index=True)
+    research_center_slug: Mapped[str | None] = mapped_column(String(180), index=True)
     partner_type: Mapped[str | None] = mapped_column(String(32), index=True)
     partnership_level: Mapped[str | None] = mapped_column(String(32))
     about: Mapped[str | None] = mapped_column(Text)

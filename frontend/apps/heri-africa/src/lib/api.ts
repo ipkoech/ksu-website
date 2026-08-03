@@ -4,6 +4,7 @@ export type SiteSettings = {
   contact: Record<string, unknown>;
   social_links: Record<string, unknown>;
   seo_defaults: Record<string, unknown>;
+  research_center_slug: string | null;
 };
 
 export type NewsSummary = {
@@ -115,8 +116,8 @@ export async function getProjects(): Promise<ResearchSummary[]> {
 export async function getPublications(): Promise<ResearchSummary[]> {
   return get<ResearchSummary[]>("/research/publications?limit=24");
 }
-export async function getPartners(centerId?: string): Promise<PartnerSummary[]> {
-  const query = centerId ? `&center_id=${encodeURIComponent(centerId)}` : "";
+export async function getPartners(centerId?: string, centerSlug?: string): Promise<PartnerSummary[]> {
+  const query = centerId ? `&center_id=${encodeURIComponent(centerId)}` : centerSlug ? `&center_slug=${encodeURIComponent(centerSlug)}` : "";
   return get<PartnerSummary[]>(`/partners?limit=50${query}`);
 }
 export async function getEvents(): Promise<EventSummary[]> {

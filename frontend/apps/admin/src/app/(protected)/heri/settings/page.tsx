@@ -4,6 +4,7 @@ import { HeriSettingsNavigationEditor } from "../_components/heri-settings-navig
 const settingsFields = [
   { name: "name", label: "Site name", required: true },
   { name: "tagline", label: "Tagline" },
+  { name: "research_center_slug", label: "Primary research centre slug" },
   { name: "contact", label: "Contact JSON", type: "textarea" as const },
   {
     name: "social_links",

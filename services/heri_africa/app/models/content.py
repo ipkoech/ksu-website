@@ -43,6 +43,7 @@ class SiteSettings(UUIDMixin, Base):
     contact: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     social_links: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     seo_defaults: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    research_center_slug: Mapped[str | None] = mapped_column(String(180), nullable=True, index=True)
 
 
 class Page(UUIDMixin, Base):

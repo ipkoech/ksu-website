@@ -26,6 +26,7 @@ class PartnerSummary(BaseModel):
     country: str | None
     research_partner_id: str | None = None
     research_center_id: str | None = None
+    research_center_slug: str | None = None
     partner_type: str | None = None
     partnership_level: str | None = None
     collaboration_areas: list | dict | None = None
