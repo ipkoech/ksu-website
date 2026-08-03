@@ -258,7 +258,7 @@ class SocialMediaPostService:
         query = (
             select(SocialMediaPost)
             .options(selectinload(SocialMediaPost.deliveries))
-            .where(SocialMediaPost.id == item_id)
+            .where(SocialMediaPost.id == item_id, SocialMediaPost.deleted_at.is_(None))
         )
         if load_options:
             query = query.options(*load_options)
@@ -329,7 +329,9 @@ class SocialMediaPostService:
 
     @staticmethod
     async def delete(db: AsyncSession, item: SocialMediaPost) -> None:
-        await db.delete(item)
+        # Soft delete: keep the post and its SocialMediaDelivery rows as an
+        # audit trail of what was actually sent to each platform.
+        item.soft_delete()
         await db.flush()
 
     @staticmethod
@@ -342,7 +344,11 @@ class SocialMediaPostService:
         source_type: str | None = None,
         load_options: Sequence = (),
     ) -> PaginatedResult:
-        query = select(SocialMediaPost).order_by(SocialMediaPost.scheduled_at.desc().nullslast(), SocialMediaPost.created_at.desc())
+        query = (
+            select(SocialMediaPost)
+            .where(SocialMediaPost.deleted_at.is_(None))
+            .order_by(SocialMediaPost.scheduled_at.desc().nullslast(), SocialMediaPost.created_at.desc())
+        )
         if load_options:
             query = query.options(*load_options)
         if status:
