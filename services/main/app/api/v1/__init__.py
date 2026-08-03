@@ -71,6 +71,7 @@ from .users import router as users_router
 from .wings import router as wings_router
 from .vice_chancellor import router as vice_chancellor_router
 from .content_workflow_bulk import router as content_workflow_bulk_router
+from .exports import router as exports_router
 
 
 def register_routes(app: FastAPI) -> None:
@@ -148,3 +149,4 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(public_team_router, prefix="/api/v1/public", tags=["Public"])
     app.include_router(public_inquiries_router, prefix="/api/v1/public", tags=["Public"])
     app.include_router(content_workflow_bulk_router, prefix="/api/v1/content-workflow", tags=["Content"])
+    app.include_router(exports_router, prefix="/api/v1/exports", tags=["Exports"])
