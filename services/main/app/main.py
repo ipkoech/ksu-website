@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 
-from ksu_common import configure_service_logging, invalidate_prefix, persist_audit_log, should_skip_audit
+from ksu_common import configure_service_logging, invalidate_prefix, persist_audit_log, request_actor_id, should_skip_audit
 from ksu_common.cache import close_redis
 
 from .core.config import get_settings
@@ -82,7 +82,7 @@ def create_app() -> FastAPI:
         if should_skip_audit(request.url.path):
             return await call_next(request)
 
-        audit_token = begin_audit_context()
+        audit_token = begin_audit_context(actor_id=request_actor_id(request))
         try:
             try:
                 response = await call_next(request)

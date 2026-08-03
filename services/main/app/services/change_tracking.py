@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from contextvars import ContextVar, Token
 from typing import Any
 
@@ -30,9 +31,17 @@ def _jsonable(value: Any) -> Any:
     return str(value)
 
 
-def begin_audit_context() -> Token:
+def begin_audit_context(actor_id: uuid.UUID | None = None) -> Token:
     """Open a request-scoped audit context; the middleware owns its lifecycle."""
-    return _AUDIT_CONTEXT.set({"changes": {}})
+    return _AUDIT_CONTEXT.set({"changes": {}, "actor_id": actor_id})
+
+
+def current_audit_actor() -> uuid.UUID | None:
+    """Return the acting user's id for the current request, if known."""
+    context = _AUDIT_CONTEXT.get()
+    if context is None:
+        return None
+    return context.get("actor_id")
 
 
 def reset_audit_context(token: Token) -> None:

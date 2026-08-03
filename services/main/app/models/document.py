@@ -11,7 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ksu_common.models.base import Base
 
-from .content import WorkflowMetadataMixin
+from .content import UpdatedByMixin, WorkflowMetadataMixin
 
 if TYPE_CHECKING:
     from .academic import Department
@@ -49,7 +49,7 @@ class Policy(Base):
     pdf_file: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[pdf_file_id])
 
 
-class Document(Base, WorkflowMetadataMixin):
+class Document(Base, WorkflowMetadataMixin, UpdatedByMixin):
     __tablename__ = "documents"
 
     title: Mapped[str] = mapped_column(sa.String(255), nullable=False)

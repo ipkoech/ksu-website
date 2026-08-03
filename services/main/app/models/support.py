@@ -11,8 +11,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ksu_common.models.base import Base
 
+from .content import UpdatedByMixin
 
-class FAQ(Base):
+
+class FAQ(Base, UpdatedByMixin):
     __tablename__ = "faqs"
 
     question: Mapped[str] = mapped_column(sa.Text, nullable=False)
@@ -30,7 +32,7 @@ class FAQ(Base):
     helpful_count: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("0"))
 
 
-class ContactDirectory(Base):
+class ContactDirectory(Base, UpdatedByMixin):
     __tablename__ = "contact_directory"
 
     name: Mapped[str] = mapped_column(sa.String(255), nullable=False)

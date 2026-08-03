@@ -20,7 +20,7 @@ from .cache import (
     invalidate_cache,
     invalidate_prefix,
 )
-from .audit import AuditEntry, AuditLogger, audit_action, get_audit_logger, persist_audit_log, should_skip_audit
+from .audit import AuditEntry, AuditLogger, audit_action, get_audit_logger, persist_audit_log, request_actor_id, should_skip_audit
 from .rate_limit import RateLimiter, RateLimitExceeded, rate_limit, reset_rate_limit
 from .repository import BaseRepository
 from .logging import configure_service_logging
@@ -59,6 +59,7 @@ __all__ = [
     "audit_action",
     "get_audit_logger",
     "persist_audit_log",
+    "request_actor_id",
     "should_skip_audit",
     # Rate limiting
     "RateLimiter",

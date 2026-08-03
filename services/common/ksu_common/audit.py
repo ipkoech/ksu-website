@@ -297,6 +297,18 @@ async def _extract_request_details(request: Request) -> dict[str, Any] | None:
     return details or None
 
 
+def request_actor_id(request: Request) -> uuid.UUID | None:
+    """Best-effort actor UUID extracted from the request's bearer token."""
+    payload = _extract_optional_token(request) or {}
+    sub = payload.get("sub")
+    if not sub:
+        return None
+    try:
+        return uuid.UUID(str(sub))
+    except ValueError:
+        return None
+
+
 async def persist_audit_log(
     session_factory: async_sessionmaker[AsyncSession],
     *,

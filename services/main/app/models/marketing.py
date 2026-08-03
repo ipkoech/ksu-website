@@ -12,6 +12,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ksu_common.models.base import Base
 
+from .content import UpdatedByMixin
+
 if TYPE_CHECKING:
     from .admissions import Programme
     from .academic import Department, School
@@ -20,7 +22,7 @@ if TYPE_CHECKING:
     from .person import Person
 
 
-class Newsletter(Base):
+class Newsletter(Base, UpdatedByMixin):
     __tablename__ = "newsletters"
 
     title: Mapped[str] = mapped_column(sa.String(255), nullable=False)
@@ -57,7 +59,7 @@ class NewsletterSubscriber(Base):
     status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="active", index=True)
 
 
-class Testimonial(Base):
+class Testimonial(Base, UpdatedByMixin):
     __tablename__ = "testimonials"
 
     person_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("persons.id", ondelete="SET NULL"), nullable=True, index=True)
