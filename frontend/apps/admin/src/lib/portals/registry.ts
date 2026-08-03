@@ -2878,6 +2878,30 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     create: (payload) => contactsApi.create(payload),
     update: (id, payload) => contactsApi.update(id, payload),
     viewInEditor: true,
+    getRecordWorkflowActions: (record) =>
+      record.status === "archived"
+        ? [
+            {
+              label: "Restore contact",
+              successMessage: "Contact restored",
+              payload: {},
+              run: () => contactsApi.unarchive(record.id),
+              confirmTitle: "Restore this contact?",
+              confirmDescription: `"${record.name}" will be marked active again and can appear on the website.`,
+            },
+          ]
+        : [
+            {
+              label: "Move to archive",
+              variant: "destructive",
+              successMessage: "Contact archived",
+              payload: {},
+              run: () => contactsApi.archive(record.id),
+              confirmTitle: "Move contact to archive?",
+              confirmDescription:
+                "This contact will be hidden from the website and moved to Archived. You can bring it back anytime.",
+            },
+          ],
     getRecordTitle: (record) => record.name,
     getRecordMeta: (record) =>
       metaOf(record, [

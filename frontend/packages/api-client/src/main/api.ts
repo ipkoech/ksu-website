@@ -2068,6 +2068,16 @@ export const contactsApi = {
 
   update: (id: string, data: Partial<ContactDirectory>) =>
     mainApi.patch<{ data: ContactDirectory }>(`/api/v1/contacts/${id}`, data),
+
+  archive: (id: string) =>
+    mainApi.post<{ data: ContactDirectory }>(
+      `/api/v1/contacts/admin/${id}/archive`,
+    ),
+
+  unarchive: (id: string) =>
+    mainApi.post<{ data: ContactDirectory }>(
+      `/api/v1/contacts/admin/${id}/unarchive`,
+    ),
 };
 
 export const contactDirectoryApi = {
