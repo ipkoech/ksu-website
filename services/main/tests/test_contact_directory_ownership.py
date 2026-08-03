@@ -174,3 +174,72 @@ async def test_create_contact_returns_clean_validation_error_for_bad_reference()
 
     assert exc_info.value.status_code == 422
     assert exc_info.value.detail == "School not found"
+
+
+def _managed_contact(status="active", is_public=True):
+    return SimpleNamespace(
+        name="Registry office",
+        scope_type="school",
+        scope_id=uuid.uuid4(),
+        contact_person_id=None,
+        status=status,
+        is_public=is_public,
+    )
+
+
+@pytest.mark.anyio
+async def test_archive_contact_sets_archived_status_and_hides_from_public():
+    user = SimpleNamespace(id=uuid.uuid4())
+    contact = _managed_contact()
+
+    with (
+        patch.object(contacts.ContactService, "get_by_id", return_value=contact),
+        patch("app.api.v1._scoped._can_access_scope", return_value=True),
+    ):
+        response = await contacts.archive_contact(uuid.uuid4(), db=_ReferenceDb(), user=user)
+
+    assert contact.status == "archived"
+    assert contact.is_public is False
+    assert response["data"] is contact
+
+
+@pytest.mark.anyio
+async def test_unarchive_contact_restores_active_status():
+    user = SimpleNamespace(id=uuid.uuid4())
+    contact = _managed_contact(status="archived", is_public=False)
+
+    with (
+        patch.object(contacts.ContactService, "get_by_id", return_value=contact),
+        patch("app.api.v1._scoped._can_access_scope", return_value=True),
+    ):
+        response = await contacts.unarchive_contact(uuid.uuid4(), db=_ReferenceDb(), user=user)
+
+    assert contact.status == "active"
+    assert response["data"] is contact
+
+
+@pytest.mark.anyio
+async def test_archive_contact_rejects_unowned_scope():
+    user = SimpleNamespace(id=uuid.uuid4())
+    contact = _managed_contact()
+
+    with (
+        patch.object(contacts.ContactService, "get_by_id", return_value=contact),
+        patch("app.api.v1._scoped._can_access_scope", return_value=False),
+    ):
+        with pytest.raises(HTTPException) as exc_info:
+            await contacts.archive_contact(uuid.uuid4(), db=_ReferenceDb(), user=user)
+
+    assert exc_info.value.status_code == 403
+    assert contact.status == "active"
+
+
+@pytest.mark.anyio
+async def test_archive_contact_missing_returns_404():
+    user = SimpleNamespace(id=uuid.uuid4())
+
+    with patch.object(contacts.ContactService, "get_by_id", return_value=None):
+        with pytest.raises(HTTPException) as exc_info:
+            await contacts.archive_contact(uuid.uuid4(), db=_ReferenceDb(), user=user)
+
+    assert exc_info.value.status_code == 404
