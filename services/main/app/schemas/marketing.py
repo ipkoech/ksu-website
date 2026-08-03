@@ -62,6 +62,8 @@ class NewsletterRead(BaseReadSchema):
     status: str
     cover_image: dict[str, Any] | None = None
     pdf_file: dict[str, Any] | None = None
+    updated_by_id: uuid.UUID | None = None
+    updated_by: dict[str, Any] | None = None
     is_public: bool
 
 
@@ -139,6 +141,8 @@ class TestimonialRead(BaseReadSchema):
     photo: dict[str, Any] | None = None
     programme: dict[str, Any] | None = None
     school: dict[str, Any] | None = None
+    updated_by_id: uuid.UUID | None = None
+    updated_by: dict[str, Any] | None = None
     is_public: bool
 
 
