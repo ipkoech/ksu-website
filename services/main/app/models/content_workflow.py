@@ -19,6 +19,7 @@ CONTENT_WORKFLOW_STATUSES = (
 CONTENT_WORKFLOW_ACTIONS = (
     "submit", "start_review", "request_changes", "approve", "schedule",
     "publish", "unpublish", "reject", "archive", "edit_reset",
+    "withdraw", "review_edit",
 )
 
 
@@ -40,18 +41,15 @@ class ContentWorkflowLog(Base):
 
     __table_args__ = (
         sa.CheckConstraint(
-            "from_status IN ('draft', 'submitted', 'in_review', 'changes_requested', "
-            "'approved', 'scheduled', 'published', 'unpublished', 'rejected', 'archived')",
+            "from_status IN ({})".format(", ".join(f"'{s}'" for s in CONTENT_WORKFLOW_STATUSES)),
             name="ck_content_workflow_logs_from_status",
         ),
         sa.CheckConstraint(
-            "to_status IN ('draft', 'submitted', 'in_review', 'changes_requested', "
-            "'approved', 'scheduled', 'published', 'unpublished', 'rejected', 'archived')",
+            "to_status IN ({})".format(", ".join(f"'{s}'" for s in CONTENT_WORKFLOW_STATUSES)),
             name="ck_content_workflow_logs_to_status",
         ),
         sa.CheckConstraint(
-            "action IN ('submit', 'start_review', 'request_changes', 'approve', 'schedule', "
-            "'publish', 'unpublish', 'reject', 'archive', 'edit_reset')",
+            "action IN ({})".format(", ".join(f"'{a}'" for a in CONTENT_WORKFLOW_ACTIONS)),
             name="ck_content_workflow_logs_action",
         ),
         sa.Index("ix_content_workflow_logs_content_created", "content_type", "content_id", "created_at"),
