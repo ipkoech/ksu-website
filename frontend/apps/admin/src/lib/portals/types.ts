@@ -82,6 +82,14 @@ export interface PortalResourceConfig<
   canEdit?: boolean;
   canDelete?: boolean;
   viewInEditor?: boolean;
+  /** Enables the "All | Archived | Recently deleted" browser with one-click restore. */
+  supportsRecovery?: boolean;
+  /** Which recovery views the backend supports. Defaults to both when supportsRecovery is set. */
+  recoveryStates?: Array<"archived" | "deleted">;
+  /** Shows the per-record workflow history timeline. */
+  hasWorkflowHistory?: boolean;
+  /** Backend content-type key for /api/v1/records/{type}/{id}/restore and workflow logs. */
+  recoveryContentType?: string;
   portalScope?: {
     typeField?: string;
     idField?: string;

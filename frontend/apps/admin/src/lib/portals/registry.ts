@@ -949,6 +949,19 @@ function commonEventPayload(values: PortalPayload, scopeType?: string) {
   };
 }
 
+/**
+ * Maps registry resource keys onto the backend content-type keys used by
+ * /api/v1/records/{content_type}/{id}/restore and the workflow logs endpoint.
+ */
+const RECOVERY_CONTENT_TYPES: Record<string, string> = {
+  news: "news",
+  "press-releases": "blogs",
+  notices: "announcements",
+  events: "events",
+  stories: "stories",
+  sliders: "sliders",
+};
+
 function contentResource<TRecord extends PortalRecord>({
   key,
   title,
@@ -1070,6 +1083,9 @@ function contentResource<TRecord extends PortalRecord>({
     viewScopes: ["content.view", ...manageScopes],
     manageScopes,
     deleteScopes: ["content.publish", ...manageScopes],
+    supportsRecovery: Boolean(RECOVERY_CONTENT_TYPES[key]),
+    hasWorkflowHistory: Boolean(RECOVERY_CONTENT_TYPES[key]),
+    recoveryContentType: RECOVERY_CONTENT_TYPES[key],
   };
 }
 
@@ -2715,6 +2731,9 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     }),
     viewScopes: ["marketing.view", "marketing.manage_sliders"],
     manageScopes: ["marketing.manage_sliders"],
+    supportsRecovery: true,
+    hasWorkflowHistory: true,
+    recoveryContentType: "sliders",
   } as PortalResourceConfig<Slider>,
   "media-folders": {
     key: "media-folders",
@@ -2799,6 +2818,9 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     manageScopes: ["media.manage", "media.upload"],
     deleteScopes: ["media.delete", "media.manage"],
     canCreate: false,
+    supportsRecovery: true,
+    recoveryStates: ["deleted"],
+    recoveryContentType: "media",
   } as PortalResourceConfig<Media>,
   faqs: {
     key: "faqs",

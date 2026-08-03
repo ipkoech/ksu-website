@@ -8,7 +8,7 @@ import {
 } from "@/components/dashboard/editable-service-resource-page";
 import { getPortalResource } from "@/lib/portals/registry";
 import type { PortalPayload, PortalResourceConfig } from "@/lib/portals/types";
-import { usePortalAccess, useUploadMedia, type PortalAccess } from "@ksu/api-client";
+import { recordRecoveryApi, usePortalAccess, useUploadMedia, type PortalAccess } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 import {
   Badge,
@@ -244,6 +244,14 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
       tableLayout={displayOptions.tableLayout}
       actionsInMenuOnly={displayOptions.actionsInMenuOnly}
       editorMode={displayOptions.editorMode}
+      supportsRecovery={scopedResource.supportsRecovery}
+      recoveryStates={scopedResource.recoveryStates}
+      restoreRecord={
+        scopedResource.supportsRecovery && scopedResource.recoveryContentType
+          ? (record: { id: string }) =>
+              recordRecoveryApi.restore(scopedResource.recoveryContentType!, record.id)
+          : undefined
+      }
       toolbarSlot={
         <>
           {scopedResource.key === "media-assets" && canManage ? (

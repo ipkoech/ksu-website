@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useState, type Dispatch, type KeyboardEvent,
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpDown, ChevronDown, Database, Edit, Eye, FilterX, HelpCircle, MoreHorizontal, Plus, Search, ShieldCheck, SlidersHorizontal, Sparkles, Trash2 } from "lucide-react";
+import { ArchiveRestore, ArrowUpDown, ChevronDown, Database, Edit, Eye, FilterX, HelpCircle, MoreHorizontal, Plus, Search, ShieldCheck, SlidersHorizontal, Sparkles, Trash2 } from "lucide-react";
 
 const RESEARCH_FRONTEND = process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL;
 
@@ -260,6 +260,15 @@ interface EditableServiceResourcePageProps<
   actionsInMenuOnly?: boolean;
   sortOptions?: EditableSortOption[];
   defaultSort?: EditableSortOption;
+  /**
+   * Shows the "All records | Archived | Recently deleted" browser. The list
+   * function receives a `record_state` param for the non-default views.
+   */
+  supportsRecovery?: boolean;
+  /** Which recovery views the backend supports (defaults to both). */
+  recoveryStates?: Array<"archived" | "deleted">;
+  /** Restores an archived or soft-deleted record. Required for the recovery views. */
+  restoreRecord?: (record: TRecord) => Promise<unknown>;
   emptyState?: {
     title?: string;
     description?: string;
@@ -445,6 +454,9 @@ export function EditableServiceResourcePage<
   actionsInMenuOnly = false,
   sortOptions = [],
   defaultSort,
+  supportsRecovery = false,
+  recoveryStates = ["archived", "deleted"],
+  restoreRecord,
   emptyState,
 }: EditableServiceResourcePageProps<TRecord, TPayload>) {
   const router = useRouter();
@@ -470,6 +482,8 @@ export function EditableServiceResourcePage<
   const [workflowValues, setWorkflowValues] = useState<RecordShape>({});
   const [filterValues, setFilterValues] = useState<RecordShape>({});
   const [sortValue, setSortValue] = useState(() => serializeSort(defaultSort ?? sortOptions[0]));
+  const [recordState, setRecordState] = useState<"active" | "archived" | "deleted">("active");
+  const inRecoveryView = supportsRecovery && recordState !== "active";
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -487,12 +501,13 @@ export function EditableServiceResourcePage<
     [defaultSort, sortOptions, sortValue],
   );
   const recordsQuery = useQuery({
-    queryKey: [...queryKey, "filters", activeFilters, "sort", activeSort, "page", page, "perPage", perPage],
+    queryKey: [...queryKey, "filters", activeFilters, "sort", activeSort, "page", page, "perPage", perPage, "recordState", recordState],
     queryFn: () =>
       list({
         page,
         per_page: perPage,
         ...(activeSort ? { sort: activeSort.sort, order: activeSort.order } : {}),
+        ...(inRecoveryView ? { record_state: recordState } : {}),
         ...activeFilters,
       }),
   });
@@ -516,7 +531,7 @@ export function EditableServiceResourcePage<
 
   useEffect(() => {
     setPage(1);
-  }, [activeFilters, perPage]);
+  }, [activeFilters, perPage, recordState]);
 
   const createMutation = useMutation({
     mutationFn: create,
@@ -530,6 +545,16 @@ export function EditableServiceResourcePage<
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteRecord?.(id) ?? Promise.resolve(),
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+  });
+  const restoreMutation = useMutation({
+    mutationFn: (record: TRecord) => restoreRecord?.(record) ?? Promise.resolve(),
+    onSuccess: (_result, record) => {
+      toast.success(`'${getRecordTitle(record)}' has been restored. It's back in your drafts.`);
+      return queryClient.invalidateQueries({ queryKey });
+    },
+    onError: () => {
+      toast.error(`Failed to restore ${title.toLowerCase()}`);
+    },
   });
 
   const startEdit = (record: TRecord) => {
@@ -720,6 +745,7 @@ export function EditableServiceResourcePage<
   };
 
   const openRecordDetail = (record: TRecord) => {
+    if (inRecoveryView) return;
     if (viewInEditor) {
       startView(record);
       return;
@@ -764,6 +790,39 @@ export function EditableServiceResourcePage<
   };
 
   const renderRecordActions = (record: TRecord) => {
+    if (inRecoveryView) {
+      const stampValue =
+        recordState === "deleted"
+          ? record.deleted_at
+          : record.archived_at ?? record.updated_at;
+      const stampDate = stampValue ? new Date(stampValue) : null;
+      return (
+        <div
+          className="flex shrink-0 items-center gap-3"
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          {stampDate && !Number.isNaN(stampDate.getTime()) ? (
+            <span className="text-xs text-muted-foreground">
+              {recordState === "deleted" ? "deleted on" : "archived on"}{" "}
+              {stampDate.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+            </span>
+          ) : null}
+          {restoreRecord && canEdit ? (
+            <Button
+              type="button"
+              size="sm"
+              disabled={restoreMutation.isPending}
+              onClick={() => restoreMutation.mutate(record)}
+            >
+              <ArchiveRestore data-icon="inline-start" />
+              Restore
+            </Button>
+          ) : null}
+        </div>
+      );
+    }
+
     const detailHref = getRecordDetailHref?.(record);
     const workflowActions = (getRecordWorkflowActions?.(record) ?? []).filter(
       (action) => !action.scopes?.length || hasAnyWorkflowScope?.(action.scopes) === true,
@@ -909,7 +968,7 @@ export function EditableServiceResourcePage<
         tableLayout === "compact" && "flex-wrap sm:items-center sm:justify-end",
       )}
     >
-      {canCreate ? (
+      {canCreate && !inRecoveryView ? (
         <Button type="button" size="sm" className="shadow-sm" onClick={startCreate}>
           <Plus data-icon="inline-start" />
           {primaryActionLabel ?? "Create Record"}
@@ -1039,6 +1098,31 @@ export function EditableServiceResourcePage<
             </CardHeader>
           ) : null}
           <CardContent className="p-4 sm:p-5">
+            {supportsRecovery ? (
+              <div className="mb-4 inline-flex flex-wrap items-center gap-1 rounded-full border bg-muted/30 p-1">
+                {([
+                  { value: "active", label: "All records" },
+                  ...(recoveryStates.includes("archived")
+                    ? [{ value: "archived", label: "Archived" }]
+                    : []),
+                  ...(recoveryStates.includes("deleted")
+                    ? [{ value: "deleted", label: "Recently deleted" }]
+                    : []),
+                ] as Array<{ value: "active" | "archived" | "deleted"; label: string }>).map((segment) => (
+                  <Button
+                    key={segment.value}
+                    type="button"
+                    size="sm"
+                    variant={recordState === segment.value ? "secondary" : "ghost"}
+                    className="rounded-full"
+                    aria-pressed={recordState === segment.value}
+                    onClick={() => setRecordState(segment.value)}
+                  >
+                    {segment.label}
+                  </Button>
+                ))}
+              </div>
+            ) : null}
             {tableLayout === "compact" ? (
               <div className="mb-4 flex flex-col gap-3 rounded-2xl border bg-muted/20 p-3 lg:flex-row lg:items-center lg:justify-between">
                 {searchFilter ? (
@@ -1155,10 +1239,22 @@ export function EditableServiceResourcePage<
             ) : records.length === 0 ? (
               <div className="rounded-2xl border bg-gradient-to-br from-background to-muted/25 p-8">
                 <EmptyState
-                  title={emptyState?.title ?? "No records found"}
-                  description={emptyState?.description ?? emptyMessage}
+                  title={
+                    inRecoveryView
+                      ? recordState === "archived"
+                        ? "Nothing in the archive"
+                        : "Nothing recently deleted"
+                      : emptyState?.title ?? "No records found"
+                  }
+                  description={
+                    inRecoveryView
+                      ? recordState === "archived"
+                        ? "Records you archive will appear here — nothing is ever lost permanently."
+                        : "Records you delete will appear here so you can restore them."
+                      : emptyState?.description ?? emptyMessage
+                  }
                 />
-                {canCreate || emptyState?.secondaryAction ? (
+                {!inRecoveryView && (canCreate || emptyState?.secondaryAction) ? (
                   <div className="mt-4 flex flex-wrap justify-center gap-2">
                     {canCreate ? (
                       <Button type="button" size="sm" onClick={startCreate}>
@@ -1191,10 +1287,10 @@ export function EditableServiceResourcePage<
                             key={record.id}
                             className={cn(
                               "align-top transition-colors",
-                              (viewInEditor || getRecordDetailHref?.(record)) && "cursor-pointer hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                              !inRecoveryView && (viewInEditor || getRecordDetailHref?.(record)) && "cursor-pointer hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                             )}
-                            role={viewInEditor ? "button" : getRecordDetailHref?.(record) ? "link" : undefined}
-                            tabIndex={viewInEditor || getRecordDetailHref?.(record) ? 0 : undefined}
+                            role={inRecoveryView ? undefined : viewInEditor ? "button" : getRecordDetailHref?.(record) ? "link" : undefined}
+                            tabIndex={!inRecoveryView && (viewInEditor || getRecordDetailHref?.(record)) ? 0 : undefined}
                             onClick={() => openRecordDetail(record)}
                             onKeyDown={(event) => handleRecordKeyDown(event, record)}
                           >
@@ -1217,10 +1313,10 @@ export function EditableServiceResourcePage<
                             key={`mobile-${record.id}`}
                             className={cn(
                               "p-3",
-                              (viewInEditor || getRecordDetailHref?.(record)) && "cursor-pointer transition-colors hover:bg-muted/35",
+                              !inRecoveryView && (viewInEditor || getRecordDetailHref?.(record)) && "cursor-pointer transition-colors hover:bg-muted/35",
                             )}
-                            role={viewInEditor ? "button" : getRecordDetailHref?.(record) ? "link" : undefined}
-                            tabIndex={viewInEditor || getRecordDetailHref?.(record) ? 0 : undefined}
+                            role={inRecoveryView ? undefined : viewInEditor ? "button" : getRecordDetailHref?.(record) ? "link" : undefined}
+                            tabIndex={!inRecoveryView && (viewInEditor || getRecordDetailHref?.(record)) ? 0 : undefined}
                             onClick={() => openRecordDetail(record)}
                             onKeyDown={(event) => handleRecordKeyDown(event, record)}
                           >
@@ -1233,8 +1329,8 @@ export function EditableServiceResourcePage<
                             getRecordTitle={getRecordTitle}
                             getRecordMeta={getRecordMeta}
                             actions={renderRecordActions(record)}
-                            detailHref={getRecordDetailHref?.(record)}
-                            openInEditor={viewInEditor}
+                            detailHref={inRecoveryView ? null : getRecordDetailHref?.(record)}
+                            openInEditor={viewInEditor && !inRecoveryView}
                             onOpen={() => openRecordDetail(record)}
                           />
                         )
@@ -1251,8 +1347,8 @@ export function EditableServiceResourcePage<
                             "p-3",
                             (viewInEditor || getRecordDetailHref?.(record)) && "cursor-pointer transition-colors hover:bg-muted/35",
                           )}
-                          role={viewInEditor ? "button" : getRecordDetailHref?.(record) ? "link" : undefined}
-                          tabIndex={viewInEditor || getRecordDetailHref?.(record) ? 0 : undefined}
+                          role={inRecoveryView ? undefined : viewInEditor ? "button" : getRecordDetailHref?.(record) ? "link" : undefined}
+                          tabIndex={!inRecoveryView && (viewInEditor || getRecordDetailHref?.(record)) ? 0 : undefined}
                           onClick={() => openRecordDetail(record)}
                           onKeyDown={(event) => handleRecordKeyDown(event, record)}
                         >
@@ -1265,8 +1361,8 @@ export function EditableServiceResourcePage<
                           getRecordTitle={getRecordTitle}
                           getRecordMeta={getRecordMeta}
                           actions={renderRecordActions(record)}
-                          detailHref={getRecordDetailHref?.(record)}
-                          openInEditor={viewInEditor}
+                          detailHref={inRecoveryView ? null : getRecordDetailHref?.(record)}
+                          openInEditor={viewInEditor && !inRecoveryView}
                           onOpen={() => openRecordDetail(record)}
                         />
                       )

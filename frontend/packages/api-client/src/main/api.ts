@@ -1816,6 +1816,14 @@ export const contentWorkflowApi = {
     ),
 };
 
+// Record recovery (restore archived / soft-deleted records)
+export const recordRecoveryApi = {
+  restore: (contentType: string, recordId: string) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/records/${contentType}/${recordId}/restore`,
+    ),
+};
+
 // Sliders
 export const slidersApi = {
   listGroups: (
