@@ -1,6 +1,9 @@
 from types import SimpleNamespace
 
+import pytest
+
 from ksu_common.cache import _build_function_cache_key
+import ksu_common.cache as cache_module
 
 
 async def sample_public_detail(slug, db=None, fields=None, include=None):
@@ -53,3 +56,39 @@ def test_function_cache_key_ignores_infrastructure_arguments():
     )
 
     assert without_db == with_db
+
+
+class _FakeRedis:
+    def __init__(self):
+        self.values = {}
+
+    async def get(self, key):
+        return self.values.get(key)
+
+    async def setex(self, key, timeout, value):
+        self.values[key] = value
+
+
+@pytest.mark.asyncio
+async def test_cached_public_caches_json_serializable_list_responses(monkeypatch):
+    redis = _FakeRedis()
+    calls = 0
+
+    async def endpoint(*, slug: str):
+        nonlocal calls
+        calls += 1
+        return [{"slug": slug}]
+
+    async def get_fake_redis():
+        return redis
+
+    monkeypatch.setattr(cache_module, "get_redis", get_fake_redis)
+    cached_endpoint = cache_module.cached_public(timeout=60, vary_on=("slug",))(endpoint)
+
+    first = await cached_endpoint(slug="computer-science")
+    second = await cached_endpoint(slug="computer-science")
+
+    assert first.headers["X-Cache"] == "MISS"
+    assert second.headers["X-Cache"] == "HIT"
+    assert second.body == b'[{"slug":"computer-science"}]'
+    assert calls == 1

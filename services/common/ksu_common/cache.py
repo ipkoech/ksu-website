@@ -81,6 +81,18 @@ def _normalize_cache_value(value: Any) -> Any:
         return str(value)
 
 
+def _cacheable_json_value(value: Any) -> Any | None:
+    """Return a JSON-safe endpoint value, or ``None`` when it is not cacheable."""
+    if isinstance(value, Response):
+        return None
+    try:
+        encoded = jsonable_encoder(value)
+        json.dumps(encoded)
+    except (TypeError, ValueError):
+        return None
+    return encoded
+
+
 def _build_function_cache_key(
     prefix: str,
     func: Callable,
@@ -167,12 +179,10 @@ def cached_public(
 
                 result = await func(*args, **kwargs)
 
-                if isinstance(result, dict):
-                    encoded_result = jsonable_encoder(result)
+                encoded_result = _cacheable_json_value(result)
+                if encoded_result is not None:
                     await client.setex(cache_key, timeout, json.dumps(encoded_result))
                     return JSONResponse(content=encoded_result, headers={"X-Cache": "MISS"})
-                elif isinstance(result, Response):
-                    return result
 
                 return result
 
@@ -224,8 +234,8 @@ def cache_response(
 
                 result = await func(*args, **kwargs)
 
-                if isinstance(result, dict):
-                    encoded_result = jsonable_encoder(result)
+                encoded_result = _cacheable_json_value(result)
+                if encoded_result is not None:
                     await client.setex(cache_key, timeout, json.dumps(encoded_result))
                     return JSONResponse(content=encoded_result, headers={"X-Cache": "MISS"})
 
