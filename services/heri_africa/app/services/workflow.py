@@ -14,18 +14,38 @@ TRANSITIONS: dict[str, set[str]] = {
     "archived": {"draft", "published"},
 }
 
-ROLE_TARGETS: dict[str, set[str]] = {
-    "editor": {"in_review", "draft"},
-    "publisher": {"draft", "in_review", "approved", "scheduled", "published", "archived"},
-    "administrator": {"draft", "in_review", "approved", "scheduled", "published", "archived"},
+TRANSITION_PERMISSIONS: dict[str, dict[str, str]] = {
+    "draft": {"in_review": "heri.content.submit", "archived": "heri.content.publish"},
+    "in_review": {
+        "draft": "heri.content.review",
+        "approved": "heri.content.review",
+        "archived": "heri.content.publish",
+    },
+    "approved": {
+        "scheduled": "heri.content.publish",
+        "published": "heri.content.publish",
+        "draft": "heri.content.review",
+        "archived": "heri.content.publish",
+    },
+    "scheduled": {
+        "published": "heri.content.publish",
+        "approved": "heri.content.review",
+        "archived": "heri.content.publish",
+    },
+    "published": {"archived": "heri.content.publish"},
+    "archived": {
+        "draft": "heri.content.review",
+        "published": "heri.content.publish",
+    },
 }
 
 
 class WorkflowService:
-    def transition(self, current: str, target: str, role: str) -> str:
-        normalized_role = role.lower()
+    def transition(self, current: str, target: str) -> str:
         if target not in TRANSITIONS.get(current, set()):
             raise WorkflowError(f"Cannot transition {current} to {target}")
-        if target not in ROLE_TARGETS.get(normalized_role, set()):
-            raise WorkflowError(f"Role {role} cannot transition content to {target}")
         return target
+
+    def transition_permission(self, current: str, target: str) -> str:
+        self.transition(current, target)
+        return TRANSITION_PERMISSIONS[current][target]
