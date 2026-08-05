@@ -19,8 +19,8 @@ Capture a plan from a disposable/local PostgreSQL database, not a production
 database:
 
 ```bash
-DATABASE_URL=postgresql://ksu_ci:ksu_ci_password@127.0.0.1:5432/ksu_ci \
-  python3 scripts/performance_harness.py \
+export DATABASE_URL=postgresql://ksu_ci:ksu_ci_password@127.0.0.1:5432/ksu_ci
+python3 scripts/performance_harness.py \
   --base-url http://127.0.0.1:8000 \
   --endpoint health=/health \
   --database-url "$DATABASE_URL" \
