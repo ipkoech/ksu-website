@@ -23,15 +23,48 @@ for service in "${services[@]}"; do
     printf '%s\n' "${heads}" >&2
     exit 1
   fi
-  changed_migrations="$(git diff --name-only --diff-filter=AM HEAD -- "${migration_dir}" || true)"
-  changed_migrations+="$(git ls-files --others --exclude-standard -- "${migration_dir}" || true)"
-  [[ -n "${changed_migrations}" ]] || continue
+
+  scan_mode="${MIGRATION_SCAN_MODE:-changed}"
+  if [[ "${CI:-}" == "true" && -z "${MIGRATION_SCAN_MODE:-}" ]]; then
+    scan_mode="committed"
+  fi
+  migration_files=()
+  case "${scan_mode}" in
+    all)
+      mapfile -t migration_files < <(git ls-files -- "${migration_dir}" | sed '/^$/d' | sort -u)
+      ;;
+    committed)
+      commit_range="${MIGRATION_COMMIT_RANGE:-HEAD^..HEAD}"
+      range_start="${commit_range%%..*}"
+      if [[ "${range_start}" == "${commit_range}" ]] || ! git rev-parse --verify "${range_start}^{commit}" >/dev/null 2>&1; then
+        echo "error: committed migration scan requires a resolvable commit range: ${commit_range}" >&2
+        exit 1
+      fi
+      mapfile -t migration_files < <(
+        git diff --name-only --diff-filter=AM "${commit_range}" -- "${migration_dir}" \
+          | sed '/^$/d' | sort -u
+      )
+      ;;
+    changed)
+      mapfile -t migration_files < <(
+        {
+          git diff --name-only --diff-filter=AM HEAD -- "${migration_dir}" || true
+          git ls-files --others --exclude-standard -- "${migration_dir}" || true
+        } | sed '/^$/d' | sort -u
+      )
+      ;;
+    *)
+      echo "error: unsupported MIGRATION_SCAN_MODE=${scan_mode}; use changed, committed, or all" >&2
+      exit 1
+      ;;
+  esac
+  ((${#migration_files[@]})) || continue
   upgrade_source="$(mktemp)"
   trap 'rm -f "${upgrade_source}"' EXIT
-  while IFS= read -r migration; do
+  for migration in "${migration_files[@]}"; do
     [[ -f "${migration}" ]] || continue
     awk '/^def upgrade/{in_upgrade=1} /^def downgrade/{in_upgrade=0} in_upgrade' "${migration}" >> "${upgrade_source}"
-  done <<< "${changed_migrations}"
+  done
   if rg -n -i 'drop_table|drop_column|op\.execute\s*\(.*\b(drop|truncate)\b' "${upgrade_source}"; then
     if [[ "${MIGRATION_DESTRUCTIVE_REVIEW:-}" != approved ]]; then
       echo "error: destructive migration detected in ${service}; set MIGRATION_DESTRUCTIVE_REVIEW=approved only after review" >&2
