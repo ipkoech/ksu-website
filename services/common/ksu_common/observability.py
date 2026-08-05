@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
+import math
 import re
 import uuid
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
 from dataclasses import dataclass, field
+from itertools import islice
 from time import perf_counter
 from typing import Protocol, cast
 
@@ -30,6 +33,16 @@ _SENSITIVE_DETAIL_KEY = re.compile(
 _MAX_OBSERVABILITY_TEXT_LENGTH = 256
 _MAX_DETAIL_TEXT_LENGTH = 1024
 _MAX_DETAIL_DEPTH = 8
+_MAX_TAGS = 32
+_MAX_DETAIL_MAPPING_ENTRIES = 32
+_MAX_DETAIL_SEQUENCE_ENTRIES = 64
+_SENSITIVE_VALUE = re.compile(
+    r"""(?ix)
+    (?P<authorization>\bauthorization\s*:\s*(?:bearer|basic)\s+)[^\s,;]+ |
+    (?P<bearer>\bbearer\s+)[^\s,;]+ |
+    (?P<assignment>\b(?:api[-_ ]?key|access[-_ ]?token|refresh[-_ ]?token|id[-_ ]?token|token|secret|password|credential)\s*[:=]\s*(?:bearer\s+)?)[^\s,;]+
+    """
+)
 
 
 class MetricsSink(Protocol):
@@ -63,15 +76,34 @@ def _normalize_text(value: object, *, field_name: str, maximum: int) -> str:
     return candidate[:maximum]
 
 
+def _redact_secret_text(value: str) -> str:
+    """Remove credential values embedded in otherwise neutral telemetry text."""
+
+    def replacement(match: re.Match[str]) -> str:
+        prefix = next(
+            group for group in match.group("authorization", "bearer", "assignment") if group is not None
+        )
+        return f"{prefix}[REDACTED]"
+
+    return _SENSITIVE_VALUE.sub(replacement, value)
+
+
 def _normalize_tags(tags: Mapping[str, object] | None) -> dict[str, str]:
     if not tags:
         return {}
-    return {
-        _normalize_text(key, field_name="metric tag", maximum=_MAX_OBSERVABILITY_TEXT_LENGTH): _normalize_text(
-            value, field_name="metric tag value", maximum=_MAX_OBSERVABILITY_TEXT_LENGTH
+    normalized: dict[str, str] = {}
+    for key, value in islice(tags.items(), _MAX_TAGS):
+        normalized_key = _normalize_text(
+            key, field_name="metric tag", maximum=_MAX_OBSERVABILITY_TEXT_LENGTH
         )
-        for key, value in tags.items()
-    }
+        normalized[normalized_key] = (
+            "[REDACTED]"
+            if _SENSITIVE_DETAIL_KEY.search(normalized_key)
+            else _redact_secret_text(
+                _normalize_text(value, field_name="metric tag value", maximum=_MAX_OBSERVABILITY_TEXT_LENGTH)
+            )
+        )
+    return normalized
 
 
 def _normalize_details(value: object, *, depth: int = 0) -> object:
@@ -82,10 +114,12 @@ def _normalize_details(value: object, *, depth: int = 0) -> object:
     if value is None or isinstance(value, (bool, int, float)):
         return value
     if isinstance(value, str):
-        return value.replace("\r", " ").replace("\n", " ")[:_MAX_DETAIL_TEXT_LENGTH]
+        return _redact_secret_text(
+            value.replace("\r", " ").replace("\n", " ")[:_MAX_DETAIL_TEXT_LENGTH]
+        )
     if isinstance(value, Mapping):
         details: dict[str, object] = {}
-        for key, item in value.items():
+        for key, item in islice(value.items(), _MAX_DETAIL_MAPPING_ENTRIES):
             normalized_key = _normalize_text(
                 key, field_name="audit detail key", maximum=_MAX_OBSERVABILITY_TEXT_LENGTH
             )
@@ -96,7 +130,10 @@ def _normalize_details(value: object, *, depth: int = 0) -> object:
             )
         return details
     if isinstance(value, (list, tuple, set, frozenset)):
-        return [_normalize_details(item, depth=depth + 1) for item in value]
+        return [
+            _normalize_details(item, depth=depth + 1)
+            for item in islice(value, _MAX_DETAIL_SEQUENCE_ENTRIES)
+        ]
     return f"[{type(value).__name__}]"
 
 
@@ -128,9 +165,12 @@ class Metrics:
     def observe_latency(
         self, name: str, duration_ms: float, *, tags: Mapping[str, object] | None = None
     ) -> Metric:
+        normalized_duration = float(duration_ms)
+        if not math.isfinite(normalized_duration):
+            raise ValueError("duration_ms must be finite")
         metric = Metric(
             name=_normalize_text(name, field_name="metric name", maximum=_MAX_OBSERVABILITY_TEXT_LENGTH),
-            value=max(0.0, float(duration_ms)),
+            value=max(0.0, normalized_duration),
             tags=_normalize_tags(tags),
         )
         if self._sink is not None:
@@ -172,8 +212,8 @@ class Tracer:
         )
         try:
             yield span
-        except Exception as exc:
-            span.outcome = "error"
+        except BaseException as exc:
+            span.outcome = "cancelled" if isinstance(exc, asyncio.CancelledError) else "error"
             span.error_type = type(exc).__name__
             raise
         else:

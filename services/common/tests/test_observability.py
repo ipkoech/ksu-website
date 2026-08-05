@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 
+import pytest
+from fastapi import Request
 from ksu_common.logging import JsonFormatter
 from ksu_common.observability import (
     AuditEvent,
@@ -10,6 +13,8 @@ from ksu_common.observability import (
     Span,
     Tracer,
     audit_event,
+    begin_request_observation,
+    end_request_observation,
     health_status,
     normalize_request_id,
 )
@@ -79,17 +84,89 @@ def test_metrics_normalize_values_before_passing_them_to_an_injected_sink() -> N
     ]
 
 
-def test_tracer_emits_a_completed_span_with_correlation_context() -> None:
+def test_metrics_redact_secret_like_tag_values_and_bound_tag_cardinality() -> None:
+    observed: list[dict[str, str]] = []
+
+    class Sink:
+        def increment(self, name: str, value: int, *, tags: dict[str, str]) -> None:
+            observed.append(tags)
+
+        def observe_latency(self, name: str, duration_ms: float, *, tags: dict[str, str]) -> None:
+            observed.append(tags)
+
+    metrics = Metrics(Sink())
+    tags = {
+        "request": "Authorization: Bearer super-secret-token",
+        "access": "token=another-secret",
+        **{f"tag-{index}": str(index) for index in range(40)},
+    }
+
+    metrics.increment("requests.completed", tags=tags)
+
+    assert len(observed[0]) <= 32
+    assert "super-secret-token" not in json.dumps(observed[0])
+    assert "another-secret" not in json.dumps(observed[0])
+    assert observed[0]["request"] == "Authorization: Bearer [REDACTED]"
+    assert observed[0]["access"] == "token=[REDACTED]"
+
+
+@pytest.mark.parametrize("duration_ms", [float("nan"), float("inf"), float("-inf")])
+def test_metrics_reject_non_finite_latency_values(duration_ms: float) -> None:
+    with pytest.raises(ValueError, match="finite"):
+        Metrics().observe_latency("request.duration", duration_ms)
+
+
+def test_tracer_emits_a_completed_span_with_active_request_context() -> None:
     spans: list[Span] = []
     tracer = Tracer(spans.append)
+    request = Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "path": "/catalog",
+            "headers": [
+                (b"x-request-id", b"request-123"),
+                (b"x-correlation-id", b"correlation-456"),
+            ],
+        }
+    )
+    observation = begin_request_observation(request, service_name="library")
 
-    with tracer.span("library.catalog.search", attributes={"query": "title"}) as span:
-        assert span.name == "library.catalog.search"
+    try:
+        with tracer.span("library.catalog.search", attributes={"query": "title"}) as span:
+            assert span.name == "library.catalog.search"
+    finally:
+        end_request_observation(observation)
 
     assert len(spans) == 1
     assert spans[0].outcome == "success"
     assert spans[0].duration_ms >= 0
     assert spans[0].attributes == {"query": "title"}
+    assert spans[0].request_id == "request-123"
+    assert spans[0].correlation_id == "correlation-456"
+    assert spans[0].trace_id == "correlation-456"
+
+
+def test_tracer_marks_error_spans_and_emits_them() -> None:
+    spans: list[Span] = []
+    tracer = Tracer(spans.append)
+
+    with pytest.raises(ValueError, match="invalid query"), tracer.span("library.catalog.search"):
+        raise ValueError("invalid query")
+
+    assert spans[0].outcome == "error"
+    assert spans[0].error_type == "ValueError"
+
+
+def test_tracer_marks_cancelled_spans_and_emits_them() -> None:
+    spans: list[Span] = []
+    tracer = Tracer(spans.append)
+
+    with pytest.raises(asyncio.CancelledError), tracer.span("library.catalog.search"):
+        raise asyncio.CancelledError()
+
+    assert spans[0].outcome == "cancelled"
+    assert spans[0].error_type == "CancelledError"
 
 
 def test_audit_events_redact_secrets_and_preserve_service_owned_context() -> None:
@@ -119,3 +196,27 @@ def test_audit_events_redact_secrets_and_preserve_service_owned_context() -> Non
     }
     assert event.request_id is None
     assert event.correlation_id is None
+
+
+def test_audit_events_redact_neutral_string_secrets_and_bound_containers() -> None:
+    details = {
+        "message": "upstream Authorization: Bearer super-secret-token failed",
+        "note": "token=another-secret",
+        "entries": list(range(80)),
+    }
+    details.update({f"field-{index}": index for index in range(40)})
+
+    event = audit_event(
+        service="research",
+        action="publication.create",
+        outcome="failure",
+        details=details,
+    )
+
+    serialized = json.dumps(event.details)
+    assert "super-secret-token" not in serialized
+    assert "another-secret" not in serialized
+    assert event.details["message"] == "upstream Authorization: Bearer [REDACTED] failed"
+    assert event.details["note"] == "token=[REDACTED]"
+    assert len(event.details) <= 32
+    assert len(event.details["entries"]) <= 64
