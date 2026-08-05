@@ -47,6 +47,18 @@ x-frontend-dev: &frontend-dev
     NEXT_PUBLIC_SCHOOL_PORTAL_ENABLED: ${NEXT_PUBLIC_SCHOOL_PORTAL_ENABLED:-true}
   restart: unless-stopped
 
+# PostgreSQL connection budget (all values are Compose-level deployment inputs):
+#   (4 API services * API_WORKERS + 4 Celery services * CELERY_CONCURRENCY)
+#   * (DB_POOL_SIZE + DB_MAX_OVERFLOW) <=
+#   POSTGRES_MAX_CONNECTIONS - POSTGRES_CONNECTION_RESERVE.
+#
+# Every Uvicorn worker and every Celery prefork child owns a separate SQLAlchemy
+# engine/pool. Keep these variables coordinated when scaling either tier.
+# Defaults: (4 * 2 + 4 * 1) * (5 + 0) = 60 <= 100 - 20 = 80.
+x-backend-database-capacity: &backend-database-capacity
+  DB_POOL_SIZE: ${DB_POOL_SIZE:-5}
+  DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW:-0}
+
 services:
 
   # ── API Gateway ──────────────────────────────────────────────────────────────
@@ -74,10 +86,17 @@ services:
   # ── PostgreSQL (shared DB, separate schemas) ──────────────────────────────────
   postgres:
     image: postgres:16-alpine
+    command:
+      - postgres
+      - -c
+      - max_connections=${POSTGRES_MAX_CONNECTIONS:-100}
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-ksu_services_db}
       POSTGRES_USER: ${POSTGRES_USER:-ksu_service_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      # Kept explicit for deployment capacity validation; the Compose budget
+      # holds it back for migrations, exporters, and administration.
+      POSTGRES_CONNECTION_RESERVE: ${POSTGRES_CONNECTION_RESERVE:-20}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-schemas.sql:/docker-entrypoint-initdb.d/init-schemas.sql:ro
@@ -119,7 +138,9 @@ services:
     expose:
       - "8000"
     env_file: ./services/main/.env
+    command: ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "172.31.0.2", "--workers", "${API_WORKERS:-2}"]
     environment:
+      <<: *backend-database-capacity
       APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
@@ -165,7 +186,9 @@ services:
     expose:
       - "8001"
     env_file: ./services/research/.env
+    command: ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8001", "--proxy-headers", "--forwarded-allow-ips", "172.31.0.2", "--workers", "${API_WORKERS:-2}"]
     environment:
+      <<: *backend-database-capacity
       APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/2
@@ -206,7 +229,9 @@ services:
     expose:
       - "8003"
     env_file: ./services/heri_africa/.env
+    command: ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8003", "--proxy-headers", "--forwarded-allow-ips", "172.31.0.2", "--workers", "${API_WORKERS:-2}"]
     environment:
+      <<: *backend-database-capacity
       APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/3
@@ -244,7 +269,9 @@ services:
     expose:
       - "8002"
     env_file: ./services/library/.env
+    command: ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8002", "--proxy-headers", "--forwarded-allow-ips", "172.31.0.2", "--workers", "${API_WORKERS:-2}"]
     environment:
+      <<: *backend-database-capacity
       APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/1
@@ -284,7 +311,9 @@ services:
     command: ./scripts/start-celery-worker.sh
     env_file: ./services/main/.env
     environment:
+      <<: *backend-database-capacity
       APP_ENV: production
+      CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
@@ -319,7 +348,9 @@ services:
     command: ./scripts/start-celery-worker.sh
     env_file: ./services/library/.env
     environment:
+      <<: *backend-database-capacity
       APP_ENV: production
+      CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/1
@@ -353,7 +384,9 @@ services:
     command: ./scripts/start-celery-worker.sh
     env_file: ./services/research/.env
     environment:
+      <<: *backend-database-capacity
       APP_ENV: production
+      CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/2
       CELERY_BROKER_URL: redis://redis:6379/2
@@ -389,10 +422,18 @@ services:
     build:
       context: ./services
       dockerfile: heri_africa/Dockerfile
-    command: ./scripts/start-celery-worker.sh
+    command: >-
+      sh -c 'if [ -n "$${PROMETHEUS_MULTIPROC_DIR:-}" ]; then
+      mkdir -p "$$PROMETHEUS_MULTIPROC_DIR" &&
+      find "$$PROMETHEUS_MULTIPROC_DIR" -mindepth 1 -maxdepth 1 -delete;
+      fi; exec celery -A app.tasks.celery_app.celery_app worker
+      --loglevel="$${CELERY_LOG_LEVEL:-INFO}"
+      --concurrency="$${CELERY_CONCURRENCY:-1}"'
     env_file: ./services/heri_africa/.env
     environment:
+      <<: *backend-database-capacity
       APP_ENV: production
+      CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/3
       CELERY_BROKER_URL: redis://redis:6379/3
