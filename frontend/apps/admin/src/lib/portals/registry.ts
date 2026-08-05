@@ -26,7 +26,10 @@ import {
   PenLine,
   Rocket,
   ScrollText,
+  Send,
   Settings,
+  Settings2,
+  Share2,
   ShieldCheck,
   Sparkles,
   Sprout,
@@ -671,7 +674,7 @@ const testimonialFields = [
   { name: "name", label: "Name", required: true },
   { name: "role", label: "Role" },
   { name: "quote", label: "Quote", required: true, type: "textarea" as const },
-  { name: "full_story", label: "Full Story", type: "textarea" as const },
+  { name: "full_story", label: "Full Story", type: "richtext" as const },
   { name: "testimonial_type", label: "Type" },
   {
     name: "school_id",
@@ -7871,6 +7874,27 @@ export const portalConfigs: Record<string, PortalConfig> = {
         ],
       },
       {
+        title: "Social Media",
+        href: "/corporate-communication/social",
+        icon: Share2,
+        scope: ["marketing.manage_social", "admin:*"],
+        navKey: "social",
+        children: [
+          {
+            title: "Posts & Scheduling",
+            href: "/corporate-communication/social",
+            icon: Send,
+            scope: ["marketing.manage_social", "admin:*"],
+          },
+          {
+            title: "Connected Accounts",
+            href: "/corporate-communication/social/accounts",
+            icon: LinkIcon,
+            scope: ["marketing.manage_social", "admin:*"],
+          },
+        ],
+      },
+      {
         title: "Media Library",
         href: "/corporate-communication/media/assets",
         icon: ImageIcon,
@@ -7983,6 +8007,13 @@ export const portalConfigs: Record<string, PortalConfig> = {
             scope: ["content.view"],
           },
         ],
+      },
+      {
+        title: "Settings",
+        href: "/corporate-communication/settings",
+        icon: Settings2,
+        scope: ["homepage.manage", "content.manage", "marketing.manage_social", "admin:*"],
+        navKey: "settings",
       },
     ],
     dashboard: {

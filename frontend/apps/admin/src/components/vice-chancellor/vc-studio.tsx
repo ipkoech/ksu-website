@@ -55,6 +55,8 @@ import {
   TabsList,
   TabsTrigger,
   Textarea,
+  RichTextEditor,
+  richTextToPlainText,
 } from "@ksu/ui/components";
 import {
   queryKeys,
@@ -1110,7 +1112,7 @@ function SpeechEditor({
               title: current.title,
               slug: current.slug,
               summary: current.summary,
-              plain_text: current.plain_text,
+              rich_text: current.rich_text ?? current.plain_text,
               speech_type: current.speech_type,
               delivered_at: dateValue(current.delivered_at),
               venue: current.venue,
@@ -1217,10 +1219,11 @@ function SpeechEditor({
             />
           </Field>
           <Field label="Full speech text">
-            <Textarea
-              rows={10}
-              value={form.plain_text ?? ""}
-              onChange={(e) => set("plain_text", e.target.value)}
+            <RichTextEditor
+              value={form.rich_text ?? ""}
+              onChange={(value) => set("rich_text", value)}
+              minHeight="240px"
+              placeholder="Enter the full speech text with formatting..."
             />
           </Field>
           <div className="grid gap-4 sm:grid-cols-3">
@@ -1342,7 +1345,8 @@ function SpeechEditor({
                 title: form.title!,
                 slug: form.slug!,
                 summary: clean(form.summary),
-                plain_text: clean(form.plain_text),
+                rich_text: clean(form.rich_text),
+                plain_text: richTextToPlainText(form.rich_text ?? ""),
                 speech_type: form.speech_type,
                 delivered_at: datePayload(dateValue(form.delivered_at)),
                 venue: clean(form.venue),
