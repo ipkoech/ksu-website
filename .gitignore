@@ -19,10 +19,8 @@ ehthumbs.db
 node_modules/
 .pnpm-store/
 .next/
-.next.docker-owned-*/
-.next-codex/
-.next-codex-*/
-.next-build/
+.next-*/
+.next.*/
 **/tmp/ksu-*-next/
 out/
 dist/
@@ -36,6 +34,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 *.mp4
+!frontend/apps/web/public/videos/hero-video.mp4
 
 # Python dependencies, caches, and outputs
 __pycache__/
@@ -72,7 +71,11 @@ services/**/media/
 celerybeat-schedule
 celerybeat.pid
 
+# Local tooling output
+graphify-out/
+
 # Scratch work
+*.bak
 AGENTS.md
 tmp/
 .scratch/
@@ -80,6 +83,8 @@ tmp/
 .superpowers/
 .playwright/
 .playwright-cli/
+test-results/
+playwright-report/
 **/superpowers/plans/
 *.test.mjs
 .worktrees/
@@ -87,11 +92,8 @@ tmp/
 designs/
 design/
 docs/
-!docs/
-docs/*
-!docs/accessibility/
-!docs/accessibility/*.md
 deploy/**/*.md
 ADMIN_PORTAL_*.md
 frontend/apps/library/.chrome-visual-profile/
 frontend/apps/library/visual-audit/
+media-src/
