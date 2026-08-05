@@ -48,7 +48,6 @@ type PendingFile = {
   altText: string;
   description: string;
   isPublic: boolean;
-  progress: number;
   status: "pending" | "uploading" | "completed" | "failed";
   error?: string;
   mediaId?: string;
@@ -107,14 +106,6 @@ export function MediaBatchUploaderDialog({
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
-  const overall = useMemo(
-    () =>
-      items.length
-        ? items.reduce((sum, item) => sum + item.progress, 0) / items.length
-        : 0,
-    [items],
-  );
-
   const completedCount = useMemo(
     () => items.filter((item) => item.status === "completed").length,
     [items],
@@ -129,6 +120,11 @@ export function MediaBatchUploaderDialog({
     () => items.filter((item) => item.status === "pending").length,
     [items],
   );
+
+  // Honest progress: the upload client cannot report byte-level progress, so
+  // the overall bar tracks settled files (completed + failed) out of the total.
+  const settledCount = completedCount + failedCount;
+  const overall = items.length ? (settledCount / items.length) * 100 : 0;
 
   const dropZoneState: DropZoneState = useMemo(() => {
     if (uploading) return "uploading";
@@ -150,7 +146,6 @@ export function MediaBatchUploaderDialog({
         altText: "",
         description: "",
         isPublic: false,
-        progress: 0,
         status: "pending" as const,
       })),
     ]);
@@ -192,18 +187,15 @@ export function MediaBatchUploaderDialog({
   };
 
   const uploadOne = async (item: PendingFile): Promise<void> => {
-    patch(item.key, { status: "uploading", progress: 10, error: undefined });
+    patch(item.key, { status: "uploading", error: undefined });
     try {
       const options: MediaUploadOptions = {
         folderId: folderId || undefined,
         isPublic: item.isPublic,
       };
-      patch(item.key, { progress: 30 });
 
       const result = await mediaApi.upload(item.file, options);
       const media = result.data;
-
-      patch(item.key, { progress: 70 });
 
       // Update metadata if title/alt/description provided
       if (item.title || item.altText || item.description) {
@@ -216,13 +208,11 @@ export function MediaBatchUploaderDialog({
 
       patch(item.key, {
         status: "completed",
-        progress: 100,
         mediaId: media.id,
       });
     } catch (caught) {
       patch(item.key, {
         status: "failed",
-        progress: 100,
         error: caught instanceof Error ? caught.message : "Upload failed",
       });
     }
@@ -256,7 +246,7 @@ export function MediaBatchUploaderDialog({
     if (!failed.length) return;
     setUploading(true);
     for (const item of failed) {
-      patch(item.key, { status: "pending", progress: 0, error: undefined });
+      patch(item.key, { status: "pending", error: undefined });
     }
     await Promise.allSettled(failed.map(uploadOne));
     await queryClient.invalidateQueries({ queryKey });
@@ -444,13 +434,15 @@ export function MediaBatchUploaderDialog({
               </div>
             </div>
 
-            {/* Overall progress */}
+            {/* Overall progress (settled files out of total) */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="font-medium">Overall progress</span>
-                <span className="tabular-nums text-muted-foreground">{Math.round(overall)}%</span>
+                <span className="tabular-nums text-muted-foreground">
+                  {settledCount} of {items.length} processed
+                </span>
               </div>
-              <Progress value={overall} aria-label="Overall upload progress" />
+              <Progress value={overall} aria-label="Files processed" />
             </div>
 
             {/* File list */}
@@ -536,11 +528,21 @@ export function MediaBatchUploaderDialog({
                           <span className="hidden truncate sm:inline">- {item.file.name}</span>
                         </div>
                       </div>
-                      <Progress
-                        className="sm:col-span-2"
-                        value={item.progress}
-                        aria-label={`${item.file.name} upload progress`}
-                      />
+                      {/* Honest per-file state: the client cannot stream upload
+                          progress, so uploading shows an indeterminate bar. */}
+                      <div
+                        className="h-1.5 w-full overflow-hidden rounded-full bg-muted sm:col-span-2"
+                        role="status"
+                        aria-label={`${item.file.name} upload status: ${item.status}`}
+                      >
+                        {item.status === "uploading" ? (
+                          <div className="h-full w-full animate-pulse rounded-full bg-primary/60" />
+                        ) : item.status === "completed" ? (
+                          <div className="h-full w-full rounded-full bg-emerald-500" />
+                        ) : item.status === "failed" ? (
+                          <div className="h-full w-full rounded-full bg-destructive" />
+                        ) : null}
+                      </div>
                       {item.error ? (
                         <Alert variant="destructive" className="sm:col-span-2">
                           <AlertDescription>{item.error}</AlertDescription>

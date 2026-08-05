@@ -228,6 +228,7 @@ export function PortalResourcePage({ portalKey, resourceKey, initialFilters }: P
       create={scopedResource.create}
       update={scopedResource.update}
       delete={scopedResource.delete}
+      beforeDelete={scopedResource.beforeDelete}
       getRecordTitle={scopedResource.getRecordTitle}
       getRecordMeta={scopedResource.getRecordMeta}
       getRecordDetailHref={scopedResource.getRecordDetailHref}

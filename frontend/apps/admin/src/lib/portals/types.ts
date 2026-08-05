@@ -67,6 +67,11 @@ export interface PortalResourceConfig<
   create: (payload: TPayload) => Promise<unknown>;
   update: (id: string, payload: Partial<TPayload>) => Promise<unknown>;
   delete?: (id: string) => Promise<unknown>;
+  /**
+   * Optional pre-delete lookup; the resolved message is shown in the delete
+   * confirm dialog (e.g. a where-used summary). See EditableServiceResourcePage.
+   */
+  beforeDelete?: (record: TRecord) => Promise<string | null | undefined | void>;
   getRecordTitle: (record: TRecord) => string;
   getRecordMeta?: (record: TRecord) => string;
   getRecordDetailHref?: (record: TRecord) => string | null | undefined;

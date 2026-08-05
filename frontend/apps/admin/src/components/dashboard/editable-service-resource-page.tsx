@@ -236,6 +236,13 @@ interface EditableServiceResourcePageProps<
   create: (payload: TPayload) => Promise<unknown>;
   update: (id: string, payload: Partial<TPayload>) => Promise<unknown>;
   delete?: (id: string) => Promise<unknown>;
+  /**
+   * Optional pre-delete lookup that runs when a delete is requested. The
+   * resolved message is appended to the confirm dialog (e.g. "Used in 3
+   * places…"), and confirming is blocked while the lookup is in flight.
+   * Backwards compatible: when omitted the delete flow is unchanged.
+   */
+  beforeDelete?: (record: TRecord) => Promise<string | null | undefined | void>;
   getRecordTitle: (record: TRecord) => string;
   getRecordMeta?: (record: TRecord) => string;
   getRecordDetailHref?: (record: TRecord) => string | null | undefined;
@@ -457,6 +464,7 @@ export function EditableServiceResourcePage<
   create,
   update,
   delete: deleteRecord,
+  beforeDelete,
   getRecordTitle,
   getRecordMeta,
   getRecordDetailHref,
@@ -500,6 +508,10 @@ export function EditableServiceResourcePage<
   const [editorIntent, setEditorIntent] = useState<"create" | "view" | "edit">("create");
   const [editingRecord, setEditingRecord] = useState<TRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TRecord | null>(null);
+  const [deleteContext, setDeleteContext] = useState<{
+    status: "idle" | "loading" | "ready";
+    message: string | null;
+  }>({ status: "idle", message: null });
   const [historyTarget, setHistoryTarget] = useState<TRecord | null>(null);
   const [workflowTarget, setWorkflowTarget] = useState<{
     record: TRecord;
@@ -820,6 +832,20 @@ export function EditableServiceResourcePage<
     }
   };
 
+  const requestDelete = (record: TRecord) => {
+    setDeleteTarget(record);
+    if (!beforeDelete) {
+      setDeleteContext({ status: "idle", message: null });
+      return;
+    }
+    setDeleteContext({ status: "loading", message: null });
+    void beforeDelete(record)
+      .then((message) =>
+        setDeleteContext({ status: "ready", message: message ?? null }),
+      )
+      .catch(() => setDeleteContext({ status: "ready", message: null }));
+  };
+
   const confirmDelete = async () => {
     if (!deleteTarget || !deleteRecord) return;
     if (!canDelete) {
@@ -1106,7 +1132,7 @@ export function EditableServiceResourcePage<
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
-                  onClick={() => setDeleteTarget(record)}
+                  onClick={() => requestDelete(record)}
                 >
                   <Trash2 data-icon="inline-start" />
                   Delete record
@@ -1767,11 +1793,19 @@ export function EditableServiceResourcePage<
           if (!open) setDeleteTarget(null);
         }}
         title={`Delete ${title.toLowerCase()}?`}
-        description={`This will delete "${deleteTarget ? getRecordTitle(deleteTarget) : "this record"}".`}
+        description={[
+          `This will delete "${deleteTarget ? getRecordTitle(deleteTarget) : "this record"}".`,
+          deleteContext.status === "loading"
+            ? "Checking where this record is used…"
+            : deleteContext.message ?? "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         variant="destructive"
         confirmLabel="Delete"
         onConfirm={confirmDelete}
         isLoading={deleteMutation.isPending}
+        disabled={deleteContext.status === "loading"}
       />
       <Sheet
         open={!!workflowEditorTarget}
