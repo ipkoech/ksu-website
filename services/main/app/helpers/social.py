@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
+import secrets
+import time
 from base64 import b64encode
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Protocol
+from urllib.parse import quote
 
 import httpx
 
@@ -263,8 +268,103 @@ class BaseSocialAdapter:
             )
 
 
+def _oauth1_percent_encode(value: str) -> str:
+    """RFC 5849 percent-encoding (stricter than urllib's default safe set)."""
+    return quote(str(value), safe="~")
+
+
+def build_oauth1_header(
+    *,
+    method: str,
+    url: str,
+    consumer_key: str,
+    consumer_secret: str,
+    token: str,
+    token_secret: str,
+    query_params: dict[str, str] | None = None,
+    nonce: str | None = None,
+    timestamp: str | None = None,
+) -> str:
+    """Build an OAuth 1.0a HMAC-SHA1 Authorization header (RFC 5849).
+
+    JSON request bodies are not part of the signature base string; only
+    oauth_* params and any URL query params are signed — which matches how
+    the X API v2 endpoints are called here.
+    """
+    oauth_params = {
+        "oauth_consumer_key": consumer_key,
+        "oauth_nonce": nonce or secrets.token_hex(16),
+        "oauth_signature_method": "HMAC-SHA1",
+        "oauth_timestamp": timestamp or str(int(time.time())),
+        "oauth_token": token,
+        "oauth_version": "1.0",
+    }
+    signable = {**(query_params or {}), **oauth_params}
+    parameter_string = "&".join(
+        f"{_oauth1_percent_encode(key)}={_oauth1_percent_encode(signable[key])}"
+        for key in sorted(signable)
+    )
+    base_string = "&".join(
+        (
+            method.upper(),
+            _oauth1_percent_encode(url),
+            _oauth1_percent_encode(parameter_string),
+        )
+    )
+    signing_key = (
+        f"{_oauth1_percent_encode(consumer_secret)}&{_oauth1_percent_encode(token_secret)}"
+    )
+    signature = b64encode(
+        hmac.new(
+            signing_key.encode("utf-8"),
+            base_string.encode("utf-8"),
+            hashlib.sha1,
+        ).digest()
+    ).decode("ascii")
+    oauth_params["oauth_signature"] = signature
+    header_params = ", ".join(
+        f'{_oauth1_percent_encode(key)}="{_oauth1_percent_encode(value)}"'
+        for key, value in sorted(oauth_params.items())
+    )
+    return f"OAuth {header_params}"
+
+
 class XAdapter(BaseSocialAdapter):
     provider = "x"
+
+    def _oauth1_credentials(
+        self, account: SocialPlatformAccount
+    ) -> tuple[str, str, str, str] | None:
+        """Return (consumer_key, consumer_secret, access_token, access_token_secret)
+        when the account is configured for OAuth 1.0a user context, else None."""
+        credentials = self._credentials(account)
+        consumer_key = credentials.get("consumer_key")
+        consumer_secret = credentials.get("consumer_secret")
+        access_token = credentials.get("access_token")
+        access_token_secret = credentials.get("access_token_secret")
+        if consumer_key and consumer_secret and access_token and access_token_secret:
+            return (
+                str(consumer_key),
+                str(consumer_secret),
+                str(access_token),
+                str(access_token_secret),
+            )
+        return None
+
+    def _oauth1_header_for(
+        self, account: SocialPlatformAccount, method: str, path: str
+    ) -> str:
+        consumer_key, consumer_secret, token, token_secret = self._oauth1_credentials(
+            account
+        )  # type: ignore[misc]
+        return build_oauth1_header(
+            method=method,
+            url=f"{settings.X_API_BASE_URL}{path}",
+            consumer_key=consumer_key,
+            consumer_secret=consumer_secret,
+            token=token,
+            token_secret=token_secret,
+        )
 
     async def ensure_access_token(self, account: SocialPlatformAccount) -> str:
         if not self._is_expired(account):
@@ -305,6 +405,25 @@ class XAdapter(BaseSocialAdapter):
         return self._token(account)
 
     async def validate_credentials(self, account: SocialPlatformAccount) -> tuple[bool, str | None]:
+        # OAuth 1.0a user context (consumer key/secret + access token/secret
+        # from the developer portal). No scopes on 1.0a tokens — the app's
+        # permission level (Read and Write) governs; the API call verifies it.
+        if self._oauth1_credentials(account):
+            async with self._client(base_url=settings.X_API_BASE_URL) as client:
+                try:
+                    await self._request_json(
+                        client,
+                        "GET",
+                        "/2/users/me",
+                        headers={
+                            "Authorization": self._oauth1_header_for(
+                                account, "GET", "/2/users/me"
+                            )
+                        },
+                    )
+                except SocialAdapterError as exc:
+                    return False, exc.message
+            return True, None
         try:
             self._require_scopes(account, "tweet.write", "users.read")
             token = await self.ensure_access_token(account)
@@ -334,9 +453,14 @@ class XAdapter(BaseSocialAdapter):
                 "media_not_supported",
                 "X publishing currently supports text-only posts in this integration",
             )
-        self._require_scopes(account, "tweet.write")
-        token = await self.ensure_access_token(account)
-        headers = {"Authorization": f"Bearer {token}"}
+        if self._oauth1_credentials(account):
+            headers = {
+                "Authorization": self._oauth1_header_for(account, "POST", "/2/tweets")
+            }
+        else:
+            self._require_scopes(account, "tweet.write")
+            token = await self.ensure_access_token(account)
+            headers = {"Authorization": f"Bearer {token}"}
         async with self._client(headers=headers, base_url=settings.X_API_BASE_URL) as client:
             payload = {"text": content}
             data = await self._request_json(client, "POST", "/2/tweets", json_data=payload)
