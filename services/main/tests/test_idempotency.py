@@ -3,24 +3,27 @@ from __future__ import annotations
 import json
 import math
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
 import sqlalchemy as sa
+from app.api.v1 import newsletters
 from app.api.v1.public import inquiries
 from app.models.idempotency import CommandIdempotency
 from app.schemas.contact_inquiry import PublicEntityInquiryCreate
 from app.services.idempotency import (
     CommandClaim,
+    IdempotencyKeyReuseError,
     acquire_command,
+    acquire_json_command,
     complete_command,
     fail_command,
     request_fingerprint,
 )
 from fastapi.responses import JSONResponse
-
 
 ROOT = Path(__file__).parents[1]
 MIGRATION = ROOT / "migrations" / "versions" / "20260805_0040_add_command_idempotency.py"
@@ -63,11 +66,29 @@ def _target() -> SimpleNamespace:
     )
 
 
-def _request(key: str) -> SimpleNamespace:
+def _request(key: str, *, path: str = "/api/v1/public/schools/business/inquiries", method: str = "POST") -> SimpleNamespace:
     return SimpleNamespace(
         headers={"Idempotency-Key": key},
         client=SimpleNamespace(host="127.0.0.1"),
+        method=method,
+        url=SimpleNamespace(path=path),
     )
+
+
+def _subscriber(**overrides) -> SimpleNamespace:
+    values = {
+        "id": uuid.uuid4(),
+        "email": "jane@example.com",
+        "name": "Jane Student",
+        "subscribed_at": datetime(2026, 8, 5, tzinfo=timezone.utc),
+        "unsubscribed_at": None,
+        "frequency": "all",
+        "categories": None,
+        "is_verified": False,
+        "status": "active",
+    }
+    values.update(overrides)
+    return SimpleNamespace(**values)
 
 
 def test_request_fingerprint_rejects_non_finite_json_values():
@@ -124,21 +145,12 @@ async def test_school_inquiry_replays_the_stored_response_without_creating_again
         "message": "Inquiry received",
         "data": {"id": "inquiry-1", "reference_number": "INQ-1", "status": "new"},
     }
-    record = CommandIdempotency(
-        command_name="public.school_inquiry.create",
-        scope=f"public:school:{target.entity_id}",
-        idempotency_key="client-key",
-        request_fingerprint="a" * 64,
-        state="completed",
-        status_code=201,
-        response_body=body,
-    )
     create = AsyncMock()
     monkeypatch.setattr(inquiries, "resolve_public_inquiry_target", AsyncMock(return_value=target))
     monkeypatch.setattr(
         inquiries,
-        "acquire_command",
-        AsyncMock(return_value=CommandClaim(kind="replay", record=record)),
+        "acquire_json_command",
+        AsyncMock(return_value=JSONResponse(status_code=201, content=body)),
     )
     monkeypatch.setattr(inquiries.ContactInquiryService, "create_public", create)
 
@@ -166,7 +178,7 @@ async def test_school_inquiry_only_started_claim_executes_business_logic(monkeyp
     monkeypatch.setattr(inquiries, "resolve_public_inquiry_target", AsyncMock(return_value=target))
     monkeypatch.setattr(
         inquiries,
-        "acquire_command",
+        "acquire_json_command",
         AsyncMock(return_value=CommandClaim(kind="started", record=record)),
     )
     monkeypatch.setattr(inquiries, "_enforce_email_limit", AsyncMock(), raising=False)
@@ -188,18 +200,18 @@ async def test_school_inquiry_only_started_claim_executes_business_logic(monkeyp
 @pytest.mark.asyncio
 async def test_school_inquiry_pending_claim_returns_documented_retry_response(monkeypatch):
     target = _target()
-    record = CommandIdempotency(
-        command_name="public.school_inquiry.create",
-        scope=f"public:school:{target.entity_id}",
-        idempotency_key="client-key",
-        request_fingerprint="a" * 64,
-    )
     create = AsyncMock()
     monkeypatch.setattr(inquiries, "resolve_public_inquiry_target", AsyncMock(return_value=target))
     monkeypatch.setattr(
         inquiries,
-        "acquire_command",
-        AsyncMock(return_value=CommandClaim(kind="in_progress", record=record)),
+        "acquire_json_command",
+        AsyncMock(
+            return_value=JSONResponse(
+                status_code=409,
+                content={"status": "error", "message": "still processing", "code": "idempotency_in_progress"},
+                headers={"Retry-After": "1"},
+            )
+        ),
     )
     monkeypatch.setattr(inquiries.ContactInquiryService, "create_public", create)
 
@@ -212,6 +224,178 @@ async def test_school_inquiry_pending_claim_returns_documented_retry_response(mo
     assert response.headers["retry-after"] == "1"
     assert json.loads(response.body)["code"] == "idempotency_in_progress"
     create.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_entity_inquiry_started_claim_executes_business_logic_and_stores_response(monkeypatch):
+    target = SimpleNamespace(
+        entity_type="department",
+        entity_id=uuid.uuid4(),
+        name="Admissions Office",
+        slug="admissions-office",
+    )
+    record = CommandIdempotency(
+        command_name="public.entity_inquiry.create",
+        scope=f"public:{target.entity_type}:{target.entity_id}",
+        idempotency_key="client-key",
+        request_fingerprint="a" * 64,
+    )
+    item = SimpleNamespace(id=uuid.uuid4(), reference_number="INQ-9", status="new")
+    create = AsyncMock(return_value=item)
+    monkeypatch.setattr(inquiries, "resolve_public_inquiry_target", AsyncMock(return_value=target))
+    monkeypatch.setattr(
+        inquiries,
+        "acquire_json_command",
+        AsyncMock(return_value=CommandClaim(kind="started", record=record)),
+    )
+    monkeypatch.setattr(inquiries, "_enforce_email_limit", AsyncMock(), raising=False)
+    monkeypatch.setattr(inquiries, "_find_duplicate", AsyncMock(return_value=None), raising=False)
+    monkeypatch.setattr(inquiries.ContactInquiryService, "create_public", create)
+
+    response = await inquiries.create_public_entity_inquiry.__wrapped__(
+        entity_type="department",
+        entity_slug="admissions-office",
+        request=_request("client-key", path="/api/v1/public/entities/department/admissions-office/inquiries"),
+        data=_payload(),
+        db=SimpleNamespace(),
+        idempotency_key="client-key",
+    )
+
+    assert isinstance(response, JSONResponse)
+    assert response.status_code == 201
+    assert json.loads(response.body)["data"]["id"] == str(item.id)
+    assert create.await_count == 1
+    assert record.state == "completed"
+    assert record.status_code == 201
+    assert record.response_body == json.loads(response.body)
+
+
+@pytest.mark.asyncio
+async def test_entity_inquiry_key_reuse_returns_conflict_without_business_logic(monkeypatch):
+    target = SimpleNamespace(
+        entity_type="department",
+        entity_id=uuid.uuid4(),
+        name="Admissions Office",
+        slug="admissions-office",
+    )
+    create = AsyncMock()
+    monkeypatch.setattr(inquiries, "resolve_public_inquiry_target", AsyncMock(return_value=target))
+    monkeypatch.setattr(
+        inquiries,
+        "acquire_json_command",
+        AsyncMock(
+            return_value=JSONResponse(
+                status_code=409,
+                content={"status": "error", "message": "reused", "code": "idempotency_key_reused"},
+            )
+        ),
+    )
+    monkeypatch.setattr(inquiries.ContactInquiryService, "create_public", create)
+
+    response = await inquiries.create_public_entity_inquiry.__wrapped__(
+        entity_type="department",
+        entity_slug="admissions-office",
+        request=_request("client-key", path="/api/v1/public/entities/department/admissions-office/inquiries"),
+        data=_payload(),
+        db=SimpleNamespace(),
+        idempotency_key="client-key",
+    )
+
+    assert isinstance(response, JSONResponse)
+    assert response.status_code == 409
+    assert json.loads(response.body)["code"] == "idempotency_key_reused"
+    create.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_newsletter_subscribe_started_claim_stores_response(monkeypatch):
+    record = CommandIdempotency(
+        command_name="public.newsletter.subscribe",
+        scope="public:newsletter:jane@example.com",
+        idempotency_key="client-key",
+        request_fingerprint="a" * 64,
+    )
+    item = _subscriber()
+    subscribe = AsyncMock(return_value=item)
+    monkeypatch.setattr(
+        newsletters,
+        "acquire_json_command",
+        AsyncMock(return_value=CommandClaim(kind="started", record=record)),
+    )
+    monkeypatch.setattr(newsletters._NEWSLETTER_EMAIL_LIMITER, "check", AsyncMock())
+    monkeypatch.setattr(newsletters.NewsletterSubscriberService, "subscribe", subscribe)
+
+    response = await newsletters.subscribe_newsletter.__wrapped__(
+        request=_request("client-key", path="/api/v1/newsletters/subscribe"),
+        data=newsletters.NewsletterSubscriberCreate(email="jane@example.com", name="Jane Student"),
+        db=SimpleNamespace(),
+        idempotency_key="client-key",
+    )
+
+    body = json.loads(response.body)
+    assert isinstance(response, JSONResponse)
+    assert response.status_code == 201
+    assert body["message"] == "Subscription created"
+    assert body["data"]["email"] == item.email
+    assert record.state == "completed"
+    assert record.status_code == 201
+    assert record.response_body == body
+    subscribe.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_newsletter_unsubscribe_missing_subscriber_stores_failed_response(monkeypatch):
+    record = CommandIdempotency(
+        command_name="public.newsletter.unsubscribe",
+        scope="public:newsletter:jane@example.com",
+        idempotency_key="client-key",
+        request_fingerprint="a" * 64,
+    )
+    unsubscribe = AsyncMock(return_value=None)
+    monkeypatch.setattr(
+        newsletters,
+        "acquire_json_command",
+        AsyncMock(return_value=CommandClaim(kind="started", record=record)),
+    )
+    monkeypatch.setattr(newsletters._NEWSLETTER_EMAIL_LIMITER, "check", AsyncMock())
+    monkeypatch.setattr(newsletters.NewsletterSubscriberService, "unsubscribe", unsubscribe)
+
+    response = await newsletters.unsubscribe_newsletter.__wrapped__(
+        request=_request("client-key", path="/api/v1/newsletters/unsubscribe"),
+        email="jane@example.com",
+        db=SimpleNamespace(),
+        idempotency_key="client-key",
+    )
+
+    assert isinstance(response, JSONResponse)
+    assert response.status_code == 404
+    assert json.loads(response.body) == {"detail": "Subscriber not found"}
+    assert record.state == "failed"
+    assert record.status_code == 404
+    assert record.response_body == {"detail": "Subscriber not found"}
+    unsubscribe.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_acquire_json_command_converts_key_reuse_into_conflict_response(monkeypatch):
+    monkeypatch.setattr(
+        "app.services.idempotency.acquire_command",
+        AsyncMock(side_effect=IdempotencyKeyReuseError("used with a different request payload")),
+    )
+
+    response = await acquire_json_command(
+        _Db(),
+        command_name="public.entity_inquiry.create",
+        scope="public:department:1",
+        idempotency_key="client-key",
+        request_payload={"subject": "Admissions question"},
+        in_progress_body={"code": "idempotency_in_progress"},
+        key_reuse_body={"code": "idempotency_key_reused"},
+    )
+
+    assert isinstance(response, JSONResponse)
+    assert response.status_code == 409
+    assert json.loads(response.body)["code"] == "idempotency_key_reused"
 
 
 def test_migration_uses_the_current_main_head_and_guards_terminal_rows():

@@ -7,6 +7,8 @@ import json
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -71,6 +73,40 @@ async def acquire_command(db: AsyncSession, *, command_name: str, scope: str, id
     return CommandClaim(kind="replay", record=existing)
 
 
+async def acquire_json_command(
+    db: AsyncSession,
+    *,
+    command_name: str,
+    scope: str,
+    idempotency_key: str,
+    request_payload: Any,
+    in_progress_body: dict[str, Any],
+    key_reuse_body: dict[str, Any],
+    retry_after: int | str = 1,
+) -> CommandClaim | JSONResponse:
+    """Reserve a key or return the JSON response that should short-circuit execution."""
+    try:
+        claim = await acquire_command(
+            db,
+            command_name=command_name,
+            scope=scope,
+            idempotency_key=idempotency_key,
+            request_payload=request_payload,
+        )
+    except IdempotencyKeyReuseError:
+        return JSONResponse(status_code=409, content=jsonable_encoder(key_reuse_body))
+
+    if claim.kind == "replay":
+        return JSONResponse(status_code=claim.record.status_code, content=jsonable_encoder(claim.record.response_body))
+    if claim.kind == "in_progress":
+        return JSONResponse(
+            status_code=409,
+            content=jsonable_encoder(in_progress_body),
+            headers={"Retry-After": str(retry_after)},
+        )
+    return claim
+
+
 def complete_command(record: CommandIdempotency, *, status_code: int, response_body: dict[str, Any]) -> None:
     """Store a successful command response for later replay."""
     _set_response(record, state="completed", status_code=status_code, response_body=response_body)
@@ -81,13 +117,37 @@ def fail_command(record: CommandIdempotency, *, status_code: int, response_body:
     _set_response(record, state="failed", status_code=status_code, response_body=response_body)
 
 
+def complete_json_command(
+    record: CommandIdempotency,
+    *,
+    status_code: int,
+    response_body: dict[str, Any],
+) -> JSONResponse:
+    """Persist and return a JSON terminal success response."""
+    body = jsonable_encoder(response_body)
+    complete_command(record, status_code=status_code, response_body=body)
+    return JSONResponse(status_code=status_code, content=body)
+
+
+def fail_json_command(
+    record: CommandIdempotency,
+    *,
+    status_code: int,
+    response_body: dict[str, Any],
+) -> JSONResponse:
+    """Persist and return a JSON terminal failure response."""
+    body = jsonable_encoder(response_body)
+    fail_command(record, status_code=status_code, response_body=body)
+    return JSONResponse(status_code=status_code, content=body)
+
+
 def _set_response(record: CommandIdempotency, *, state: Literal["completed", "failed"], status_code: int, response_body: dict[str, Any]) -> None:
     if record.state not in (None, "pending"):
         raise ValueError("only pending idempotency records may be completed or failed")
     if not 100 <= status_code <= 599:
         raise ValueError("status_code must be between 100 and 599")
     if not isinstance(response_body, dict):
-        raise ValueError("response_body must be an object")
+        raise TypeError("response_body must be an object")
     request_fingerprint(response_body)
     record.state = state
     record.status_code = status_code
@@ -101,4 +161,15 @@ def _require_non_empty(name: str, value: str, *, max_length: int) -> None:
         raise ValueError(f"{name} must not exceed {max_length} characters")
 
 
-__all__ = ["CommandClaim", "CommandClaimKind", "IdempotencyKeyReuseError", "acquire_command", "complete_command", "fail_command", "request_fingerprint"]
+__all__ = [
+    "CommandClaim",
+    "CommandClaimKind",
+    "IdempotencyKeyReuseError",
+    "acquire_command",
+    "acquire_json_command",
+    "complete_command",
+    "complete_json_command",
+    "fail_command",
+    "fail_json_command",
+    "request_fingerprint",
+]
