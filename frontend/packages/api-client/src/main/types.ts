@@ -3488,3 +3488,28 @@ export interface VcGalleryMediaLink {
   display_order: number;
   media?: VcPublicMedia | null;
 }
+
+// User notifications (inbox)
+export interface UserNotification {
+  id: string;
+  title: string;
+  subject?: string | null;
+  message: string;
+  notification_type: string;
+  priority: string;
+  action_url?: string | null;
+  scope_type?: string | null;
+  scope_id?: string | null;
+  channels: string[];
+  is_read: boolean;
+  read_at?: string | null;
+  archived_at?: string | null;
+  created_at: string;
+}
+
+export interface UserNotificationPreferences {
+  in_app: boolean;
+  email: boolean;
+  sms: boolean;
+  push: boolean;
+}

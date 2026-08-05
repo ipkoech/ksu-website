@@ -140,6 +140,8 @@ import type {
   VcVideoPayload,
   VcWorkflowAction,
   VcGalleryMediaLink,
+  UserNotification,
+  UserNotificationPreferences,
 } from "./types";
 import type { FetchCacheOptions, FieldSelectionParams, QueryParams } from "../client";
 
@@ -2692,4 +2694,46 @@ export const viceChancellorApi = {
     mainApi.post<{ data: T }>(`${VC_BASE}/${resource}/${id}/${action}`, {
       reason,
     }),
+};
+
+// User Notifications (inbox)
+export const userNotificationsApi = {
+  list: (params?: {
+    page?: number;
+    per_page?: number;
+    unread_only?: boolean;
+  }) =>
+    mainApi.get<PaginatedResponse<UserNotification>>(
+      "/api/v1/notifications",
+      params,
+    ),
+
+  unreadCount: () =>
+    mainApi.get<{ data: { count: number } }>("/api/v1/notifications/unread-count"),
+
+  markRead: (id: string) =>
+    mainApi.patch<{ data: UserNotification }>(
+      `/api/v1/notifications/${id}/read`,
+    ),
+
+  markAllRead: () =>
+    mainApi.post<{ data: { updated: number } }>("/api/v1/notifications/read-all"),
+
+  archive: (id: string) =>
+    mainApi.post<{ data: UserNotification }>(
+      `/api/v1/notifications/${id}/archive`,
+    ),
+
+  remove: (id: string) => mainApi.delete<void>(`/api/v1/notifications/${id}`),
+
+  getPreferences: () =>
+    mainApi.get<{ data: UserNotificationPreferences }>(
+      "/api/v1/notifications/preferences",
+    ),
+
+  updatePreferences: (data: UserNotificationPreferences) =>
+    mainApi.put<{ data: UserNotificationPreferences }>(
+      "/api/v1/notifications/preferences",
+      data,
+    ),
 };
