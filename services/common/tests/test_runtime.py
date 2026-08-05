@@ -1,10 +1,22 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, Request
-from fastapi.testclient import TestClient
+import json
 
+import ksu_common.cache as cache_module
+import pytest
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.testclient import TestClient
+from ksu_common.cache import cached_public
 from ksu_common.rate_limit import install_request_body_limit_middleware
-from ksu_common.runtime import AuditOptions, CorsConfig, ServiceAppConfig, create_service_app
+from ksu_common.response_validation import allow_response_model_exemption
+from ksu_common.runtime import (
+    AuditOptions,
+    CorsConfig,
+    ServiceAppConfig,
+    create_service_app,
+)
+from pydantic import BaseModel
 
 
 def _register_routes(app: FastAPI) -> None:
@@ -163,3 +175,110 @@ def test_runtime_exposes_prometheus_http_metrics_without_raw_urls() -> None:
     assert "secret-record-123" not in body
     assert "route=\"/metrics\"" not in body
     assert "ksu_http_server_request_duration_seconds" in body
+
+
+class _WidgetResponse(BaseModel):
+    name: str
+
+
+def _response_validation_app(register_routes) -> FastAPI:
+    return create_service_app(
+        ServiceAppConfig(service_name="test-service", title="Test", version="1.0.0"),
+        cors=CorsConfig(origins=("https://example.test",)),
+        register_routes=register_routes,
+    )
+
+
+def test_runtime_rejects_raw_json_responses_that_bypass_a_declared_response_model() -> None:
+    def register_routes(app: FastAPI) -> None:
+        @app.get("/widget", response_model=_WidgetResponse)
+        async def widget() -> JSONResponse:
+            return JSONResponse({"name": 42})
+
+    response = TestClient(_response_validation_app(register_routes), raise_server_exceptions=False).get(
+        "/widget"
+    )
+
+    assert response.status_code == 500
+
+
+def test_runtime_keeps_fastapi_response_model_validation_for_cached_results(monkeypatch) -> None:
+    class FakeRedis:
+        async def get(self, _key):
+            return json.dumps({"name": "cached", "unexpected": "discarded"})
+
+        async def setex(self, _key, _timeout, _value):
+            raise AssertionError("cache hit must not be written")
+
+    async def get_fake_redis():
+        return FakeRedis()
+
+    monkeypatch.setattr(cache_module, "get_redis", get_fake_redis)
+    calls = 0
+
+    def register_routes(app: FastAPI) -> None:
+        @app.get("/widget", response_model=_WidgetResponse)
+        @cached_public()
+        async def widget() -> dict[str, str]:
+            nonlocal calls
+            calls += 1
+            return {"name": "handler"}
+
+    response = TestClient(_response_validation_app(register_routes)).get("/widget")
+
+    assert response.json() == {"name": "cached"}
+    assert calls == 0
+
+
+def test_runtime_records_public_routes_missing_response_models_outside_production() -> None:
+    def register_routes(app: FastAPI) -> None:
+        @app.get("/public", response_model=None)
+        async def public_route() -> dict[str, bool]:
+            return {"ok": True}
+
+    app = _response_validation_app(register_routes)
+
+    assert getattr(app.state, "response_model_coverage", []) == ["GET /public"]
+
+
+def test_runtime_rejects_public_routes_missing_response_models_in_production(monkeypatch) -> None:
+    monkeypatch.setenv("APP_ENV", "production")
+
+    def register_routes(app: FastAPI) -> None:
+        @app.get("/public", response_model=None)
+        async def public_route() -> dict[str, bool]:
+            return {"ok": True}
+
+    with pytest.raises(ValueError, match="GET /public"):
+        _response_validation_app(register_routes)
+
+
+def test_runtime_rejects_response_model_escapes_outside_health_metrics_or_internal_routes(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("APP_ENV", "production")
+
+    async def public_route() -> dict[str, bool]:
+        return {"ok": True}
+
+    public_route.__response_model_exemption__ = "internal"
+
+    def register_routes(app: FastAPI) -> None:
+        app.add_api_route("/public", public_route, methods=["GET"], response_model=None)
+
+    with pytest.raises(ValueError, match="invalid response-model exemption"):
+        _response_validation_app(register_routes)
+
+
+def test_runtime_allows_explicit_health_response_model_exemption_in_production(monkeypatch) -> None:
+    monkeypatch.setenv("APP_ENV", "production")
+
+    def register_routes(app: FastAPI) -> None:
+        @app.get("/health", response_model=None)
+        @allow_response_model_exemption("health")
+        async def health() -> dict[str, bool]:
+            return {"ok": True}
+
+    app = _response_validation_app(register_routes)
+
+    assert app.state.response_model_coverage == []

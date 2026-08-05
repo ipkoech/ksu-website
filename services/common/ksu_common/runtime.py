@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import os
 import re
 from collections.abc import Awaitable, Callable, Sequence
 from contextlib import AbstractAsyncContextManager
@@ -24,6 +25,11 @@ from .observability import (
     complete_request_observation,
     end_request_observation,
     get_prometheus_registry,
+)
+from .response_validation import (
+    StrictResponseValidationRoute,
+    allow_response_model_exemption,
+    enforce_response_model_coverage,
 )
 
 STANDARD_CORS_METHODS = ("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
@@ -60,6 +66,8 @@ class ServiceAppConfig:
     default_response_class: type[Response] | None = None
     error_response_class: type[Response] | None = None
     metrics_path: str | None = "/metrics"
+    environment: str | None = None
+    strict_response_model_validation: bool | None = None
 
 
 @dataclass(frozen=True)
@@ -113,6 +121,7 @@ def create_service_app(
     if config.default_response_class is not None:
         app_options["default_response_class"] = config.default_response_class
     app = FastAPI(**app_options)
+    app.router.route_class = StrictResponseValidationRoute
     registry = metrics_registry or get_prometheus_registry()
     sinks = [registry]
     if metrics_sink is not None:
@@ -123,6 +132,7 @@ def create_service_app(
 
     if config.metrics_path:
         @app.get(config.metrics_path, include_in_schema=False)
+        @allow_response_model_exemption("metrics")
         async def metrics_endpoint() -> Response:
             return Response(
                 content=registry.render(),
@@ -156,6 +166,17 @@ def create_service_app(
         )
 
     register_routes(app)
+    configured_environment = config.environment or os.getenv("APP_ENV", "")
+    is_production = configured_environment.strip().lower() == "production"
+    strict_response_model_validation = (
+        is_production
+        if config.strict_response_model_validation is None
+        else config.strict_response_model_validation
+    )
+    app.state.response_model_coverage = enforce_response_model_coverage(
+        app.routes,
+        production=strict_response_model_validation,
+    )
 
     # Register this last so body-limit middleware installed by route registrars
     # is inside the shared observation boundary. Header-only rejections still
