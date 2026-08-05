@@ -218,7 +218,9 @@ html[data-a11y-pause-motion="true"] [class*="animate-"],
 html[data-a11y-pause-motion="true"] [data-rotating="true"] {
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
-  transition-duration: 0.01ms !important;
+  transition-property: color, background-color, border-color, outline-color,
+    text-decoration-color, fill, stroke, opacity, box-shadow !important;
+  transition-duration: 150ms !important;
   scroll-behavior: auto !important;
 }
 
@@ -326,7 +328,8 @@ html[data-a11y-widget-size="oversized"] .ksu-floating-action svg {
     --primary: 201 100% 36%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 24 94% 39%;
+    /* Darkened from 39% so small orange text on white meets WCAG AA (≥4.5:1) */
+    --secondary: 24 94% 34%;
     --secondary-foreground: 0 0% 100%;
 
     /* Neutrals */
@@ -392,18 +395,31 @@ html[data-a11y-widget-size="oversized"] .ksu-floating-action svg {
        Typography
        Shared across all frontend apps.
        ======================================== */
-    --font-sans: "Bookman Old Style", Georgia, serif;
-    --font-display: "Bookman Old Style", Georgia, serif;
-    --font-size-xs: 10pt;
-    --font-size-sm: 11pt;
-    --font-size-base: 12pt;
-    --font-size-lg: 14pt;
-    --font-size-xl: 16pt;
-    --font-size-2xl: 18pt;
-    --font-size-3xl: 20pt;
-    --font-size-4xl: 22pt;
-    --font-size-5xl: 24pt;
-    --font-size-6xl: 24pt;
+    /* Apps opt into brand faces by defining --app-font-sans / --app-font-display
+       (e.g. via next/font variables). Everything else gets the system sans stack. */
+    --font-sans: var(
+      --app-font-sans,
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial,
+      sans-serif
+    );
+    --font-display: var(--app-font-display, var(--font-sans));
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 1.875rem;
+    --font-size-4xl: 2.25rem;
+    --font-size-5xl: 3rem;
+    --font-size-6xl: 3.75rem;
+    --font-size-7xl: 4.5rem;
 
     /* Line Heights */
     --line-height-tight: 1.25;
@@ -413,8 +429,8 @@ html[data-a11y-widget-size="oversized"] .ksu-floating-action svg {
     --line-height-loose: 2;
 
     /* Letter Spacing */
-    --letter-spacing-tighter: 0em;
-    --letter-spacing-tight: 0em;
+    --letter-spacing-tighter: -0.02em;
+    --letter-spacing-tight: -0.01em;
     --letter-spacing-normal: 0em;
     --letter-spacing-wide: 0.025em;
     --letter-spacing-wider: 0.05em;
@@ -562,19 +578,23 @@ html[data-a11y-widget-size="oversized"] .ksu-floating-action svg {
       scroll-behavior: auto;
     }
 
+    /* Reduced motion means gentler, not dead: movement stops, but short
+       color/opacity feedback (hover, focus, toasts) is preserved. */
     *,
     *::before,
     *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
+      transition-property: color, background-color, border-color, outline-color,
+        text-decoration-color, fill, stroke, opacity, box-shadow !important;
+      transition-duration: 150ms !important;
       scroll-behavior: auto !important;
     }
   }
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-sans, "Bookman Old Style", Georgia, serif);
+    font-family: var(--font-sans);
     font-size: var(--font-size-base);
     line-height: var(--line-height-normal);
     font-feature-settings:
@@ -587,7 +607,7 @@ html[data-a11y-widget-size="oversized"] .ksu-floating-action svg {
   .h1 {
     font-size: var(--font-size-4xl);
     line-height: var(--line-height-tight);
-    letter-spacing: var(--letter-spacing-normal);
+    letter-spacing: var(--letter-spacing-tighter);
     font-weight: 700;
   }
 
@@ -595,7 +615,7 @@ html[data-a11y-widget-size="oversized"] .ksu-floating-action svg {
   .h2 {
     font-size: var(--font-size-3xl);
     line-height: var(--line-height-tight);
-    letter-spacing: var(--letter-spacing-normal);
+    letter-spacing: var(--letter-spacing-tight);
     font-weight: 600;
   }
 
@@ -631,17 +651,8 @@ html[data-a11y-widget-size="oversized"] .ksu-floating-action svg {
     line-height: var(--line-height-relaxed);
   }
 
-  small,
-  .text-sm {
+  small {
     font-size: var(--font-size-sm);
-  }
-
-  .text-xs {
-    font-size: var(--font-size-xs);
-  }
-
-  .text-lg {
-    font-size: var(--font-size-lg);
   }
 
   /* Links */

@@ -68,7 +68,7 @@ export function ScrollReveal({
   className,
   variant = "fade-up",
   delay = 0,
-  duration = 600,
+  duration = 400,
   threshold = 0.01,
   once = true,
   rootMargin = "0px 0px 12% 0px",
@@ -136,7 +136,7 @@ export function ScrollReveal({
       ref,
       "data-scroll-reveal": true,
       className: cn(
-        prefersReducedMotion ? undefined : "transition-all ease-out",
+        prefersReducedMotion ? undefined : "transition-[opacity,transform] ease-[cubic-bezier(0.16,1,0.3,1)]",
         "motion-reduce:!translate-x-0 motion-reduce:!translate-y-0 motion-reduce:!scale-100 motion-reduce:!opacity-100 motion-reduce:!transition-none",
         visible ? styles.animate : styles.initial,
         className
@@ -164,7 +164,7 @@ export function ScrollRevealGroup({
   className,
   variant = "fade-up",
   staggerDelay = 75,
-  duration = 600,
+  duration = 400,
   threshold = 0.01,
   rootMargin = "0px 0px 12% 0px",
   once = true,
@@ -227,7 +227,7 @@ export function ScrollRevealGroup({
         key={index}
         data-scroll-reveal
         className={cn(
-          prefersReducedMotion ? undefined : "transition-all ease-out",
+          prefersReducedMotion ? undefined : "transition-[opacity,transform] ease-[cubic-bezier(0.16,1,0.3,1)]",
           "motion-reduce:!translate-x-0 motion-reduce:!translate-y-0 motion-reduce:!scale-100 motion-reduce:!opacity-100 motion-reduce:!transition-none",
           visible ? styles.animate : styles.initial
         )}
