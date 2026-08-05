@@ -380,6 +380,7 @@ export async function getUniversityCouncilPage(): Promise<UniversityCouncilPageD
   } catch (error) {
     if (!isNotFoundError(error)) {
       console.error("Failed to fetch University Council page:", error);
+      throw error;
     }
     return null;
   }
@@ -394,6 +395,7 @@ export async function getUniversityCouncilProfile(slug: string): Promise<Univers
   } catch (error) {
     if (!isNotFoundError(error)) {
       console.error(`Failed to fetch University Council profile ${slug}:`, error);
+      throw error;
     }
     return null;
   }
@@ -566,6 +568,7 @@ export async function getGovernanceBoard(slug: string) {
   } catch (error) {
     if (!isNotFoundError(error)) {
       console.error(`Failed to fetch governance board ${slug}:`, error);
+      throw error;
     }
     return null;
   }

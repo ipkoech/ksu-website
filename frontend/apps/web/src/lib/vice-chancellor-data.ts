@@ -1,5 +1,9 @@
 import { leadershipApi, viceChancellorApi } from "@ksu/api-client";
 
+import { nullIfNotFound } from "./public-fetch";
+
+// Swallows all errors (not just 404s): the homepage renders this as an
+// optional section and must degrade instead of erroring.
 export async function getPublicVcHub() {
   try {
     return (await viceChancellorApi.publicHub()).data;
@@ -11,16 +15,16 @@ export async function getPublicVcHub() {
 export async function getPublicVcSpeech(slug: string) {
   try {
     return (await viceChancellorApi.publicSpeech(slug)).data;
-  } catch {
-    return null;
+  } catch (error) {
+    return nullIfNotFound(error);
   }
 }
 
 export async function getPublicVcGallery(slug: string) {
   try {
     return (await viceChancellorApi.publicGallery(slug)).data;
-  } catch {
-    return null;
+  } catch (error) {
+    return nullIfNotFound(error);
   }
 }
 
@@ -33,7 +37,7 @@ export async function getActiveViceChancellor() {
           "person:id,slug,title,first_name,middle_name,last_name,full_name,email,phone,photo_id,photo_url,bio,full_bio,qualifications,institutional_role,leadership_message",
       })
     ).data;
-  } catch {
-    return null;
+  } catch (error) {
+    return nullIfNotFound(error);
   }
 }

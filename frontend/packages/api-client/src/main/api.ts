@@ -26,6 +26,7 @@ import type {
   Board,
   BoardMemberCreatePayload,
   School,
+  NavigationData,
   Division,
   Wing,
   Department,
@@ -140,7 +141,7 @@ import type {
   VcWorkflowAction,
   VcGalleryMediaLink,
 } from "./types";
-import type { FieldSelectionParams, QueryParams } from "../client";
+import type { FetchCacheOptions, FieldSelectionParams, QueryParams } from "../client";
 
 type ListParams<
   T extends Partial<Record<keyof T, string | number | boolean | undefined>> =
@@ -447,6 +448,11 @@ export const publicResearchContextApi = {
       data,
       params,
     ),
+};
+
+// Aggregated public navigation (mega menu)
+export const navigationApi = {
+  get: () => mainApi.get<{ data: NavigationData }>("/api/v1/navigation"),
 };
 
 // Divisions
@@ -1767,10 +1773,12 @@ export const announcementsApi = {
       is_published?: boolean;
       search?: string;
     }>,
+    cacheOptions?: FetchCacheOptions,
   ) =>
     mainApi.get<PaginatedResponse<Announcement>>(
       "/api/v1/announcements",
       params,
+      cacheOptions,
     ),
 
   listAdmin: (
