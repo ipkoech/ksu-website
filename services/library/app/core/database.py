@@ -14,6 +14,7 @@ database = create_database_runtime(
         echo=settings.APP_ENV == "development",
         pool_size=settings.DB_POOL_SIZE,
         max_overflow=settings.DB_MAX_OVERFLOW,
+        connect_args={"server_settings": {"search_path": f"{settings.DB_SCHEMA},public"}},
     )
 )
 engine = database.engine
