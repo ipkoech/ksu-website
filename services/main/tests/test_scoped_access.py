@@ -224,6 +224,20 @@ class ScopedAccessTests(unittest.IsolatedAsyncioTestCase):
             )
         )
 
+    async def test_club_assignment_grants_own_media_scope(self):
+        club_id = uuid.uuid4()
+        user = _user(staff_assignments=[_staff_assignment("club", club_id, role="official")])
+
+        self.assertTrue(
+            await can_access_scope(None, user, "media.upload", "club", club_id)
+        )
+        self.assertTrue(
+            await can_access_scope(None, user, "media.manage", "club", club_id)
+        )
+        self.assertFalse(
+            await can_access_scope(None, user, "media.upload", "club", uuid.uuid4())
+        )
+
     async def test_filter_records_for_scope_removes_other_offices(self):
         own_wing_id = uuid.uuid4()
         other_wing_id = uuid.uuid4()

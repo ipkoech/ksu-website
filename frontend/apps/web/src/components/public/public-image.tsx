@@ -26,6 +26,7 @@ interface PublicImageProps {
   imageClassName?: string;
   sizes?: string;
   priority?: boolean;
+  unoptimized?: boolean;
   fallbackSrc?: string;
   fallbackContent?: ReactNode;
 }
@@ -38,6 +39,7 @@ export function PublicImage({
   imageClassName,
   sizes = "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw",
   priority = false,
+  unoptimized = false,
   fallbackSrc = defaultFallback,
   fallbackContent,
 }: PublicImageProps) {
@@ -50,7 +52,7 @@ export function PublicImage({
   return (
     <div
       className={cn(
-        "relative w-full overflow-hidden bg-blue-50 text-primary",
+        "relative w-full overflow-hidden bg-accent text-primary",
         ratioClasses[ratio],
         className,
       )}
@@ -62,6 +64,7 @@ export function PublicImage({
           fill
           sizes={sizes}
           priority={priority}
+          unoptimized={unoptimized}
           loading={priority ? undefined : "lazy"}
           className={cn("object-cover", imageClassName)}
           onError={() => {
@@ -95,7 +98,7 @@ export function ProgressiveImageCard({
 }: ProgressiveImageCardProps) {
   return (
     <div
-      className={cn("group relative overflow-hidden bg-slate-950", className)}
+      className={cn("group relative overflow-hidden bg-brand-overlay", className)}
     >
       <PublicImage
         {...imageProps}

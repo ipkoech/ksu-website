@@ -282,6 +282,22 @@ def _has_permission(permissions: set[str], scope: str) -> bool:
     return any(_permission_grants_scope(permission, normalized_scope) for permission in normalized_permissions)
 
 
+def permissions_for_user(user: User) -> set[str]:
+    """Return active permission names granted to a loaded user."""
+    return {
+        rp.permission.name
+        for assignment in user.role_assignments
+        if assignment.is_active and assignment.role and assignment.role.is_active
+        for rp in assignment.role.role_permissions
+        if rp.permission and rp.permission.is_active
+    }
+
+
+def user_has_scope(user: User, scope: str) -> bool:
+    """Check whether a loaded user has a scope through active role permissions."""
+    return _has_permission(permissions_for_user(user), scope)
+
+
 def require_scope(scope: str):
     """Dependency factory for scope checking using database permissions."""
 
@@ -314,15 +330,7 @@ def require_scope(scope: str):
                 detail="User not found or inactive",
             )
 
-        permissions = {
-            rp.permission.name
-            for assignment in user.role_assignments
-            if assignment.is_active and assignment.role and assignment.role.is_active
-            for rp in assignment.role.role_permissions
-            if rp.permission and rp.permission.is_active
-        }
-
-        if not _has_permission(permissions, scope):
+        if not user_has_scope(user, scope):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient privileges",

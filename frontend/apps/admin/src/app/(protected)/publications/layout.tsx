@@ -1,7 +1,5 @@
-"use client";
+import type { ReactNode } from "react";
 
-import { PortalShell } from "@/components/portals/portal-shell";
-
-export default function PublicationsLayout({ children }: { children: React.ReactNode }) {
-  return <PortalShell portalKey="publications">{children}</PortalShell>;
+export default function PublicationsLayout({ children }: { children: ReactNode }) {
+  return children;
 }

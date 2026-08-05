@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { contentAttachmentRoles } from "@/components/content/content-attachment-roles";
 import { ContentRecordInspector } from "@/components/content/content-record-inspector";
 import { AttachmentManager, MediaPicker, useCommitPendingAttachments, type PendingMediaAttachment } from "@/components/media";
-import { MainScopePicker, UserPicker } from "@/components/relationships";
+import { MainScopePicker } from "@/components/relationships";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { useRichTextAttachmentUpload } from "@/hooks/use-rich-text-attachment-upload";
@@ -51,15 +51,9 @@ const schema = z
     scope_type: z.string().max(32).optional(),
     scope_id: z.string().uuid().optional().or(z.literal("")),
     featured_media_id: z.string().uuid().optional().or(z.literal("")),
-    author_user_id: z.string().uuid().optional().or(z.literal("")),
-    is_published: z.boolean(),
     is_main: z.boolean(),
-    is_public: z.boolean(),
-    published_at: z.string().optional(),
     valid_from: z.string().optional(),
     valid_to: z.string().optional(),
-    archived_at: z.string().optional(),
-    status: z.string().max(32).optional(),
     display_order: z.coerce.number().int().min(0),
     meta_title: z.string().max(255).optional(),
     meta_description: z.string().max(500).optional(),
@@ -88,15 +82,9 @@ const defaultValues: FormValues = {
   scope_type: "",
   scope_id: "",
   featured_media_id: "",
-  author_user_id: "",
-  is_published: false,
   is_main: false,
-  is_public: true,
-  published_at: "",
   valid_from: "",
   valid_to: "",
-  archived_at: "",
-  status: "draft",
   display_order: 100,
   meta_title: "",
   meta_description: "",
@@ -116,15 +104,9 @@ const announcementPayloadFieldMap = {
   scope_type: ["scope_type"],
   scope_id: ["scope_id"],
   featured_media_id: ["featured_media_id"],
-  author_user_id: ["author_user_id"],
-  is_published: ["is_published", "status", "published_at"],
   is_main: ["is_main"],
-  is_public: ["is_public"],
-  published_at: ["published_at"],
   valid_from: ["valid_from"],
   valid_to: ["valid_to"],
-  archived_at: ["archived_at"],
-  status: ["status"],
   display_order: ["display_order"],
   meta_title: ["meta_title"],
   meta_description: ["meta_description"],
@@ -180,15 +162,9 @@ function announcementValues(announcement: Announcement): FormValues {
     scope_type: announcement.scope_type ?? "",
     scope_id: announcement.scope_id ?? "",
     featured_media_id: announcement.featured_media_id ?? "",
-    author_user_id: announcement.author_user_id ?? "",
-    is_published: announcement.is_published ?? false,
     is_main: announcement.is_main ?? false,
-    is_public: announcement.is_public ?? true,
-    published_at: toDateTimeInput(announcement.published_at),
     valid_from: toDateTimeInput(announcement.valid_from),
     valid_to: toDateTimeInput(announcement.valid_to),
-    archived_at: toDateTimeInput(announcement.archived_at),
-    status: announcement.status ?? (announcement.is_published ? "published" : "draft"),
     display_order: announcement.display_order ?? 100,
     meta_title: announcement.meta_title ?? "",
     meta_description: announcement.meta_description ?? "",
@@ -220,10 +196,6 @@ export default function AnnouncementEditorPage() {
 
   const onSubmit = async (values: FormValues) => {
     const cleanBody = sanitizeRichText(values.plain_text);
-    const publishedAt =
-      fromDateTimeInput(values.published_at) ??
-      (values.is_published ? announcement?.published_at ?? new Date().toISOString() : null);
-    const status = values.status || (values.is_published ? "published" : "draft");
     const payload: Partial<Announcement> = {
       title: values.title,
       slug: values.slug || slugify(values.title),
@@ -236,15 +208,9 @@ export default function AnnouncementEditorPage() {
       scope_type: values.scope_type || null,
       scope_id: values.scope_id || null,
       featured_media_id: values.featured_media_id || null,
-      author_user_id: values.author_user_id || null,
-      is_published: values.is_published,
       is_main: values.is_main,
-      is_public: values.is_public,
-      published_at: publishedAt,
       valid_from: fromDateTimeInput(values.valid_from),
       valid_to: fromDateTimeInput(values.valid_to),
-      archived_at: isNew ? undefined : fromDateTimeInput(values.archived_at),
-      status,
       display_order: values.display_order,
       meta_title: values.meta_title || null,
       meta_description: values.meta_description || null,
@@ -418,9 +384,9 @@ export default function AnnouncementEditorPage() {
               </Card>
 
               <Card>
-                <CardHeader><CardTitle>Publishing</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Placement</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  {(["is_published", "is_main", "is_public"] as const).map((name) => (
+                  {(["is_main"] as const).map((name) => (
                     <FormField key={name} control={form.control} name={name} render={({ field }) => (
                       <FormItem className="flex items-center justify-between rounded-lg border p-3">
                         <FormLabel className="cursor-pointer">{name.replace("is_", "").replace("_", " ")}</FormLabel>
@@ -428,14 +394,8 @@ export default function AnnouncementEditorPage() {
                       </FormItem>
                     )} />
                   ))}
-                  <FormField control={form.control} name="status" render={({ field }) => (
-                    <FormItem><FormLabel>Status</FormLabel><FormControl><Input placeholder="draft" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
                   <FormField control={form.control} name="display_order" render={({ field }) => (
                     <FormItem><FormLabel>Display order</FormLabel><FormControl><Input type="number" min={0} {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={form.control} name="published_at" render={({ field }) => (
-                    <FormItem><FormLabel>Published at</FormLabel><FormControl><Input type="datetime-local" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="valid_from" render={({ field }) => (
                     <FormItem><FormLabel>Valid from</FormLabel><FormControl><Input type="datetime-local" {...field} /></FormControl><FormMessage /></FormItem>
@@ -443,11 +403,6 @@ export default function AnnouncementEditorPage() {
                   <FormField control={form.control} name="valid_to" render={({ field }) => (
                     <FormItem><FormLabel>Valid to</FormLabel><FormControl><Input type="datetime-local" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
-                  {!isNew ? (
-                    <FormField control={form.control} name="archived_at" render={({ field }) => (
-                      <FormItem><FormLabel>Archived at</FormLabel><FormControl><Input type="datetime-local" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                  ) : null}
                 </CardContent>
               </Card>
 
@@ -465,18 +420,6 @@ export default function AnnouncementEditorPage() {
                           form.setValue("scope_type", value.type, { shouldDirty: true, shouldValidate: true });
                           form.setValue("scope_id", value.id, { shouldDirty: true, shouldValidate: true });
                         }}
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="author_user_id" render={({ field }) => (
-                    <FormItem>
-                      <UserPicker
-                        value={field.value}
-                        onChange={(value) => field.onChange(value)}
-                        filters={{ is_active: true }}
-                        label="Author"
-                        placeholder="Select author"
                       />
                       <FormMessage />
                     </FormItem>

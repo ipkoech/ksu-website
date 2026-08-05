@@ -60,3 +60,49 @@ class MainReferenceValidator:
                     if mode == "strict":
                         raise ReferenceValidationError(f"Could not validate {field} against main service") from exc
                     logger.warning("Reference validation skipped for %s=%s kind=%s: %s", field, value, kind, exc)
+
+    @staticmethod
+    async def validate_department_school(
+        school_id: uuid.UUID,
+        department_id: uuid.UUID | None,
+    ) -> None:
+        """Confirm a department is owned by the JWT-derived school."""
+        if department_id is None:
+            return
+        settings = get_settings()
+        mode = settings.REFERENCE_VALIDATION_MODE.lower()
+        if mode == "disabled":
+            return
+        try:
+            async with httpx.AsyncClient(
+                base_url=settings.MAIN_SERVICE_URL.rstrip("/"),
+                headers={"X-Internal-Key": settings.INTERNAL_API_KEY},
+                timeout=httpx.Timeout(settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS),
+            ) as client:
+                response = await client.get(
+                    f"/api/v1/internal/schools/{school_id}/departments/{department_id}"
+                )
+                if response.status_code == 404:
+                    raise ReferenceValidationError(
+                        "department_id does not belong to the assigned school"
+                    )
+                response.raise_for_status()
+        except ReferenceValidationError:
+            if mode == "strict":
+                raise
+            logger.warning(
+                "Department-school validation failed for school=%s department=%s",
+                school_id,
+                department_id,
+            )
+        except Exception as exc:
+            if mode == "strict":
+                raise ReferenceValidationError(
+                    "Could not validate department ownership against main service"
+                ) from exc
+            logger.warning(
+                "Department-school validation skipped for school=%s department=%s: %s",
+                school_id,
+                department_id,
+                exc,
+            )

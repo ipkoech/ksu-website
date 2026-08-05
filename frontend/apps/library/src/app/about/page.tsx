@@ -47,17 +47,7 @@ export default async function LibraryAboutPage() {
             <SecondaryLink href="/services">View services</SecondaryLink>
           </>
         }
-      >
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-            Public branches
-          </p>
-          <p className="mt-3 text-4xl font-bold sm:text-5xl">{branches.data.length}</p>
-          <p className="mt-2 text-sm leading-6 text-white/75">
-            Active access points published for the university community.
-          </p>
-        </div>
-      </LibraryHero>
+      />
 
       {errors.map((error) => (
         <section key={error} className="px-4 pt-6 sm:px-6 lg:px-8">
@@ -80,12 +70,12 @@ export default async function LibraryAboutPage() {
             directionItems.map((item) => (
               <article
                 key={item.label}
-                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                className="rounded-lg border border-border bg-white p-5 shadow-sm"
               >
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
                   {item.label}
                 </p>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">
                   {compactText(item.value)}
                 </p>
               </article>
@@ -99,7 +89,7 @@ export default async function LibraryAboutPage() {
             </div>
           </div>
           <SidePanel title="Library contact" eyebrow="Main desk">
-            <dl className="grid gap-3 text-sm text-slate-600">
+            <dl className="grid gap-3 text-sm text-muted-foreground">
               <Meta label="Location" value={primaryBranch?.address} />
               <Meta label="Phone" value={primaryBranch?.phone} />
               <Meta label="Email" value={primaryBranch?.email} />
@@ -125,19 +115,19 @@ export default async function LibraryAboutPage() {
           {branches.data.map((branch) => (
             <article
               key={branch.id}
-              className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+              className="rounded-lg border border-border bg-white p-5 shadow-sm"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
                 {formatLabel(branch.library_type ?? "library")}
               </p>
-              <h2 className="mt-3 text-xl font-semibold text-slate-950">
+              <h2 className="mt-3 text-xl font-semibold text-foreground">
                 {branch.name}
               </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">
                 {compactText(branch.description) ||
                   "Branch details are being updated."}
               </p>
-              <dl className="mt-5 grid gap-3 text-sm text-slate-600">
+              <dl className="mt-5 grid gap-3 text-sm text-muted-foreground">
                 <Meta label="Location" value={branch.address} />
                 <Meta label="Phone" value={branch.phone} />
                 <Meta label="Email" value={branch.email} />
@@ -160,7 +150,7 @@ function Meta({
   if (!compactText(value)) return null;
   return (
     <div>
-      <dt className="font-semibold text-slate-950">{label}</dt>
+      <dt className="font-semibold text-foreground">{label}</dt>
       <dd className="mt-1">{value}</dd>
     </div>
   );

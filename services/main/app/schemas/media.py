@@ -9,6 +9,13 @@ from typing import Any
 from pydantic import Field
 
 from .base import BaseReadSchema, BaseSchema, SlugStr
+from ..models.media import MEDIA_ATTACHMENT_ROLES
+
+
+ATTACHMENT_ROLE_SCHEMA = {
+    "examples": sorted(MEDIA_ATTACHMENT_ROLES),
+    "description": "Standard roles are cover, gallery, logo, video, document, poster, cv, brochure, and attachment. Specialized roles remain supported.",
+}
 
 
 class MediaFolderCreate(BaseSchema):
@@ -128,7 +135,7 @@ class MediaLinkCreate(BaseSchema):
     media_id: uuid.UUID
     entity_type: str = Field(min_length=1, max_length=64)
     entity_id: uuid.UUID
-    role: str = Field(default="attachment", max_length=64)
+    role: str = Field(default="attachment", max_length=64, json_schema_extra=ATTACHMENT_ROLE_SCHEMA)
     folder_id: uuid.UUID | None = None
     display_order: int = 100
     is_public: bool = True
@@ -138,15 +145,28 @@ class MediaLinkUpdate(BaseSchema):
     media_id: uuid.UUID | None = None
     entity_type: str | None = Field(default=None, min_length=1, max_length=64)
     entity_id: uuid.UUID | None = None
-    role: str | None = Field(default=None, max_length=64)
+    role: str | None = Field(default=None, max_length=64, json_schema_extra=ATTACHMENT_ROLE_SCHEMA)
     folder_id: uuid.UUID | None = None
     display_order: int | None = None
     is_public: bool | None = None
 
 
+class MediaAttachmentSummary(BaseSchema):
+    id: uuid.UUID
+    title: str | None = None
+    filename: str
+    original_filename: str
+    mime_type: str
+    media_type: str
+    file_size: int
+    thumbnail_url: str | None = None
+    is_public: bool
+    url: str
+
+
 class MediaLinkRead(BaseReadSchema):
     media_id: uuid.UUID
-    media: dict[str, Any] | None = None
+    media: MediaAttachmentSummary | None = None
     entity_type: str
     entity_id: uuid.UUID
     role: str
@@ -154,4 +174,13 @@ class MediaLinkRead(BaseReadSchema):
     folder: dict[str, Any] | None = None
     display_order: int
     is_public: bool
+    is_published: bool = False
+    status: str = "draft"
+    workflow_status: str = "draft"
+    owner_portal: str | None = None
+    owner_scope_type: str | None = None
+    owner_scope_id: uuid.UUID | None = None
+    submitted_at: datetime | None = None
+    approved_at: datetime | None = None
+    published_at: datetime | None = None
     deleted_at: datetime | None = None

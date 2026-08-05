@@ -11,6 +11,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ksu_common.models.base import Base
 
+from .content import WorkflowMetadataMixin
+
 if TYPE_CHECKING:
     from .academic import Department
     from .media import Media
@@ -47,7 +49,7 @@ class Policy(Base):
     pdf_file: Mapped[Optional["Media"]] = relationship("Media", foreign_keys=[pdf_file_id])
 
 
-class Document(Base):
+class Document(Base, WorkflowMetadataMixin):
     __tablename__ = "documents"
 
     title: Mapped[str] = mapped_column(sa.String(255), nullable=False)
@@ -62,6 +64,15 @@ class Document(Base):
     is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"), index=True)
     requires_login: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"), index=True)
     download_count: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("0"))
+    is_published: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"), index=True)
+    published_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True, index=True)
+    archived_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    author_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="draft", index=True)
     is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"), index=True)
     display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
 

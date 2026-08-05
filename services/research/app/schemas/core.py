@@ -129,9 +129,25 @@ class ResearchFarmCreate(ResearchFarmBase, StatusMixin):
 class ResearchFarmUpdate(BaseSchema):
     name: str | None = Field(None, max_length=255)
     slug: SlugStr | None = None
+    code: str | None = Field(None, max_length=32)
     center_id: uuid.UUID | None = None
     farm_type: str | None = None
     about: str | None = None
+    activities: str | None = None
+    products: str | None = None
+    facilities: str | None = None
+    size_hectares: Decimal | None = None
+    capacity_info: str | None = None
+    location: str | None = Field(None, max_length=255)
+    county: str | None = Field(None, max_length=128)
+    address: str | None = None
+    gps_latitude: float | None = None
+    gps_longitude: float | None = None
+    manager_name: str | None = Field(None, max_length=255)
+    email: EmailField | None = None
+    phone: PhoneStr | None = None
+    cover_image_url: UrlStr | None = None
+    gallery: list[dict] | None = None
     is_active: bool | None = None
     is_public: bool | None = None
 
@@ -214,6 +230,7 @@ class ResearchProjectBase(BaseSchema, SlugMixin, SEOFieldsMixin):
     code: str | None = Field(None, max_length=32)
     program_id: uuid.UUID | None = None
     center_id: uuid.UUID | None = None
+    farm_id: uuid.UUID | None = None
     pi_id: uuid.UUID | None = None
     project_type: str = Field(default="applied", max_length=32)
     start_date: date | None = None
@@ -243,18 +260,45 @@ class ResearchProjectCreate(ResearchProjectBase, StatusMixin):
 class ResearchProjectUpdate(BaseSchema):
     title: str | None = Field(None, max_length=500)
     slug: SlugStr | None = None
+    code: str | None = Field(None, max_length=32)
+    program_id: uuid.UUID | None = None
+    center_id: uuid.UUID | None = None
+    farm_id: uuid.UUID | None = None
     pi_id: uuid.UUID | None = None
+    project_type: str | None = Field(None, max_length=32)
+    start_date: date | None = None
+    end_date: date | None = None
+    summary: str | None = None
+    abstract: str | None = None
+    background: str | None = None
+    objectives: str | None = None
+    methodology: str | None = None
+    expected_outcomes: str | None = None
+    impact: str | None = None
+    deliverables: str | None = None
+    budget: Decimal | None = None
+    currency: str | None = Field(None, max_length=3)
+    grant_id: uuid.UUID | None = None
+    cover_image_id: uuid.UUID | None = None
+    gallery_media_ids: list[uuid.UUID] | None = None
+    attachment_media_ids: list[uuid.UUID] | None = None
+    document_media_ids: list[uuid.UUID] | None = None
+    meta_title: str | None = Field(None, max_length=255)
+    meta_description: str | None = Field(None, max_length=500)
+    keywords: dict | None = None
     status: str | None = None
     progress_percentage: int | None = Field(None, ge=0, le=100)
     is_active: bool | None = None
     is_featured: bool | None = None
     is_public: bool | None = None
+    display_order: int | None = None
 
 
 class ResearchProjectRead(ResearchProjectBase, BaseReadSchema, StatusMixin):
     is_public: bool
     program: dict[str, Any] | None = None
     center: dict[str, Any] | None = None
+    farm: dict[str, Any] | None = None
     team_members: list[dict[str, Any]] | None = None
 
 

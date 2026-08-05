@@ -13,7 +13,16 @@ from ksu_common.schemas.responses import success
 
 from ...deps import DbSession
 from ...helpers.storage import get_media_public_url
-from ...models import Board, Department, Division, Media, Person, School, UniversityInfo, Wing
+from ...models import (
+    Board,
+    Department,
+    Division,
+    Media,
+    Person,
+    School,
+    UniversityInfo,
+    Wing,
+)
 from ...services import PersonService
 
 router = APIRouter()
@@ -39,6 +48,8 @@ PUBLIC_PERSON_FIELDS = (
     "research_interests",
     "teaching_areas",
     "publications_count",
+    "publication_records",
+    "research_grants_won",
     "h_index",
     "office_location",
     "office_hours",
@@ -70,12 +81,18 @@ def _public_email(value: str | None) -> str | None:
     return value
 
 
-async def _assignment_entity_payload(db: DbSession, assignment: Any) -> dict[str, Any] | None:
+async def _assignment_entity_payload(
+    db: DbSession, assignment: Any
+) -> dict[str, Any] | None:
     entity_type = assignment.entity_type
     entity_id = assignment.entity_id
 
     if entity_type == "university":
-        result = await db.execute(select(UniversityInfo).where(UniversityInfo.is_active.is_(True)).order_by(UniversityInfo.created_at.asc()))
+        result = await db.execute(
+            select(UniversityInfo)
+            .where(UniversityInfo.is_active.is_(True))
+            .order_by(UniversityInfo.created_at.asc())
+        )
         entity = result.scalars().first()
         return {
             "entity_type": "university",
@@ -105,7 +122,9 @@ async def _assignment_entity_payload(db: DbSession, assignment: Any) -> dict[str
         "id": getattr(entity, "id", entity_id),
         "name": getattr(entity, "name", None),
         "slug": getattr(entity, "slug", None),
-        "kind": getattr(entity, "department_type", None) or getattr(entity, "division_type", None) or getattr(entity, "board_type", None),
+        "kind": getattr(entity, "department_type", None)
+        or getattr(entity, "division_type", None)
+        or getattr(entity, "board_type", None),
     }
 
 
@@ -141,15 +160,29 @@ async def _person_photo_url(db: DbSession, person: Person) -> str | None:
     return get_media_public_url(photo)
 
 
+async def _person_cv_url(db: DbSession, person: Person) -> str | None:
+    cv_file = getattr(person, "cv_file", None)
+    if cv_file is None and person.cv_file_id:
+        result = await db.execute(select(Media).where(Media.id == person.cv_file_id))
+        cv_file = result.scalar_one_or_none()
+    if cv_file is None:
+        return None
+    return get_media_public_url(cv_file)
+
+
 async def _safe_person_payload(db: DbSession, person: Person) -> dict[str, Any]:
     payload = {field: getattr(person, field, None) for field in PUBLIC_PERSON_FIELDS}
     payload["email"] = _public_email(payload.get("email"))
     payload["slug"] = payload.get("slug") or str(person.id)
     payload["photo_url"] = await _person_photo_url(db, person)
+    payload["cv_file_url"] = await _person_cv_url(db, person)
+    payload["publications"] = payload.pop("publication_records", None)
     payload["assignments"] = [
         await _safe_assignment_payload(db, assignment)
         for assignment in person.assignments
-        if assignment.status == "active" and assignment.is_public and assignment.deleted_at is None
+        if assignment.status == "active"
+        and assignment.is_public
+        and assignment.deleted_at is None
     ]
     return payload
 

@@ -5,6 +5,9 @@ from ksu_common.models.base import SEOMixin, PolymorphicMixin
 
 from .base import Base
 
+from .ask_ai import ResearchAIConversation, ResearchAIMessage
+from .media import PublicMedia
+
 # Core Research
 from .core import (
     ResearchCenter,
@@ -47,6 +50,10 @@ from .funding import (
 # Innovation & Output
 from .innovation import (
     Innovation,
+    StartupVenture,
+    IncubationRecord,
+    InnovationCompetitionEntry,
+    TechnologyTransferCase,
     ResearchOutput,
     innovation_sponsors,
 )
@@ -99,31 +106,22 @@ from .donation import (
     DonationStory,
 )
 
-# Content
-from .content import (
-    ResearchNews,
-    ResearchArticle,
-    ResearchEvent,
-    ResearchSlider,
-)
-
 # Support
 from .support import (
-    ResearchOffice,
-    ResearchOfficeStaff,
     ResearchResource,
     ResearchService,
     ResearchGuideline,
-    ResearchBoard,
-    BoardMember,
 )
 
 __all__ = [
     # Base
     "Base",
+    "ResearchAIConversation",
+    "ResearchAIMessage",
     "AuditLog",
     "SEOMixin",
     "PolymorphicMixin",
+    "PublicMedia",
     # Core
     "ResearchCenter",
     "ResearchFarm",
@@ -156,6 +154,10 @@ __all__ = [
     "center_partners",
     # Innovation
     "Innovation",
+    "StartupVenture",
+    "IncubationRecord",
+    "InnovationCompetitionEntry",
+    "TechnologyTransferCase",
     "ResearchOutput",
     "innovation_sponsors",
     # Publication
@@ -188,17 +190,8 @@ __all__ = [
     "DonationSettings",
     "DonationImpact",
     "DonationStory",
-    # Content
-    "ResearchNews",
-    "ResearchArticle",
-    "ResearchEvent",
-    "ResearchSlider",
     # Support
-    "ResearchOffice",
-    "ResearchOfficeStaff",
     "ResearchResource",
     "ResearchService",
     "ResearchGuideline",
-    "ResearchBoard",
-    "BoardMember",
 ]

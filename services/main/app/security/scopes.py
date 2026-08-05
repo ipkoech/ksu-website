@@ -125,6 +125,70 @@ RESEARCH_ASSIGNMENT_PERMISSIONS = frozenset(
     }
 )
 
+CLUB_ASSIGNMENT_PERMISSIONS = frozenset(
+    {
+        "clubs.view",
+        "clubs.manage_own",
+        "clubs.content_submit",
+        "clubs.events_manage",
+        "clubs.stories_manage",
+        "media.upload",
+        "media.manage",
+        "media:upload",
+        "media:manage",
+    }
+)
+
+SCHOOL_PORTAL_PERMISSION_NAMES = (
+    "school.audit.view",
+    "school.content.bulk",
+    "school.content.manage",
+    "school.content.submit",
+    "school.content.view",
+    "school.dashboard.view",
+    "school.departments.bulk",
+    "school.departments.manage",
+    "school.departments.view",
+    "school.inquiries.manage",
+    "school.inquiries.reply",
+    "school.inquiries.view",
+    "school.media.bulk",
+    "school.media.manage",
+    "school.media.view",
+    "school.notifications.manage",
+    "school.notifications.view",
+    "school.profile.manage",
+    "school.profile.view",
+    "school.programmes.bulk",
+    "school.programmes.manage",
+    "school.programmes.view",
+    "school.publications.manage",
+    "school.publications.submit",
+    "school.publications.view",
+    "school.team.bulk",
+    "school.team.manage",
+    "school.team.roles",
+    "school.team.view",
+)
+
+SCHOOL_PORTAL_VIEW_PERMISSION_NAMES = tuple(
+    permission
+    for permission in SCHOOL_PORTAL_PERMISSION_NAMES
+    if permission.endswith(".view")
+)
+
+GOVERNANCE_PERMISSIONS = frozenset(
+    {
+        "governance.manage_roles",
+        "governance.manage_members",
+        "governance.manage_order",
+        "governance.review",
+        "governance.approve",
+        "governance.publish",
+        "governance.archive",
+    }
+)
+
 
 @dataclass(frozen=True)
 class ScopedGrant:
@@ -146,6 +210,8 @@ def normalize_assignment_role(value: str | None) -> str:
 
 
 def assignment_permissions(scope_type: str, role: str) -> frozenset[str]:
+    if scope_type == "club":
+        return CLUB_ASSIGNMENT_PERMISSIONS
     if scope_type == "library" and role in LIBRARY_LEADERSHIP_SCOPE_ROLES:
         return LIBRARY_ASSIGNMENT_PERMISSIONS
     if scope_type == "research" and role in RESEARCH_LEADERSHIP_SCOPE_ROLES:

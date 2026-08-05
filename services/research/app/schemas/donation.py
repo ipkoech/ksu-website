@@ -72,6 +72,7 @@ class DonationBase(BaseSchema):
     currency: str = Field(default="KES", max_length=3)
     amount_usd: Decimal | None = None
     donation_type: str = Field(default="one_time", max_length=32)
+    recurring_frequency: str | None = Field(None, max_length=32)
     designation: str = Field(default="unrestricted", max_length=32)
     purpose: str | None = Field(None, max_length=255)
     fund_id: uuid.UUID | None = None
@@ -116,6 +117,7 @@ class PublicDonationSubmission(BaseSchema):
     amount: Decimal = Field(gt=0)
     currency: str = Field(default="KES", min_length=3, max_length=3)
     donation_type: str = Field(default="one_time", max_length=32)
+    recurring_frequency: str | None = Field(None, max_length=32)
     designation: str = Field(default="unrestricted", max_length=32)
     purpose: str | None = Field(None, max_length=255)
     fund_id: uuid.UUID | None = None
@@ -138,6 +140,7 @@ class PublicDonationSubmissionRead(BaseSchema):
     amount: Decimal
     currency: str
     donation_type: str
+    recurring_frequency: str | None = None
     designation: str
     payment_method: str | None
 
@@ -148,6 +151,7 @@ class DonationUpdate(BaseSchema):
     receipt_sent: bool | None = None
     receipt_sent_at: datetime | None = None
     status: str | None = None
+    recurring_frequency: str | None = Field(None, max_length=32)
     notes: str | None = None
 
 
@@ -163,6 +167,7 @@ class DonationList(BaseReadSchema):
     amount: Decimal
     currency: str
     donation_type: str
+    recurring_frequency: str | None = None
     donation_date: date
     status: str
     is_public: bool

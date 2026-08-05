@@ -1,377 +1,420 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  BookOpenCheck,
-  ChevronRight,
   ClipboardCheck,
-  Compass,
-  ExternalLink,
-  History,
-  Landmark,
+  Download,
+  FileText,
   ShieldCheck,
-  Users,
+  Sparkles,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import {
-  accreditations,
-  quickNavigation,
-  serviceCharterUrl,
-} from "@/lib/about-data";
-import {
-  AboutIllustration,
-  aboutIllustrations,
-} from "@/components/about/AboutIllustration";
-import { ScrollReveal } from "@ksu/ui/components";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
+import { getQualityAssuranceData } from "@/lib/about-data";
+import { publicFileUrl } from "@/lib/public-media";
 
-type RouteCard = {
+type ResourceDocument = {
+  id: string;
   title: string;
-  href: string;
-  description: string;
-  action: string;
-  icon: LucideIcon;
+  description?: string | null;
+  file_id: string;
+  category?: string | null;
+  document_type?: string | null;
 };
 
-const routeMeta: Record<string, RouteCard> = {
-  "/about": {
-    title: "About Overview",
-    href: "/about",
-    description: "Return to the About overview.",
-    action: "Back to overview",
-    icon: History,
-  },
-  "/about/history": {
-    title: "History",
-    href: "/about/history",
-    description:
-      "Follow the dated institutional journey from teacher training roots to chartered university status.",
-    action: "View history",
-    icon: History,
-  },
-  "/about/mission-vision": {
-    title: "Mission, Vision & Values",
-    href: "/about/mission-vision",
-    description: "Read the official institutional statements.",
-    action: "View statements",
-    icon: Compass,
-  },
-  "/about/governance": {
-    title: "Governance",
-    href: "/about/governance",
-    description:
-      "Review the public governance bodies responsible for oversight, academic authority, and implementation.",
-    action: "View governance",
-    icon: Landmark,
-  },
-  "/about/university-management": {
-    title: "University Management",
-    href: "/about/university-management",
-    description:
-      "Review the published management board and senior office responsibilities.",
-    action: "View management",
-    icon: Users,
-  },
-  "/about/service-charter": {
-    title: "Our Service Charter",
-    href: "/about/service-charter",
-    description:
-      "Open the public service charter access point for service commitments and accountability information.",
-    action: "Open charter",
-    icon: ClipboardCheck,
-  },
-};
-
-const frameworkCards = [
-  {
-    title: "Charter and CUE context",
-    body: "The About data records Kisii University's charter granted on February 6, 2013 under the Universities Act 2012 framework.",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Strategic plan priorities",
-    body: "The current strategic plan identifies quality in education, training, and learning as a key result area.",
-    icon: BookOpenCheck,
-  },
-  {
-    title: "Service accountability",
-    body: "The public service charter remains the direct access point for service commitments and accountability information.",
-    icon: ClipboardCheck,
-  },
-  {
-    title: "Governance and administration",
-    body: "Governance and administrative structures connect public oversight with day-to-day implementation.",
-    icon: Landmark,
-  },
-];
-
-const accountabilityPath = [
-  routeMeta["/about/mission-vision"],
-  routeMeta["/about/governance"],
-  routeMeta["/about/service-charter"],
-];
-
-export default function QualityAssurancePage() {
-  const navigationLinks = quickNavigation.filter(
-    (item) => item.href !== "/about/quality-assurance",
+function EmptyState({ label }: { label: string }) {
+  return (
+    <div
+      data-backend-empty-state
+      className="rounded-lg border border-dashed border-border bg-white/70 p-5 text-sm leading-6 text-muted-foreground"
+    >
+      {label} has not been published yet.
+    </div>
   );
-  const referenceCards = accreditations.map((item) => ({
-    ...item,
-    href:
-      item.acronym === "QMS"
-        ? "/about/strategic-plan"
-        : item.acronym === "SC"
-          ? serviceCharterUrl
-          : undefined,
-    action:
-      item.acronym === "QMS"
-        ? "Open strategic plan page"
-        : item.acronym === "SC"
-          ? "Open service charter"
-          : "Read charter context",
-  }));
+}
+
+function documentText(document: ResourceDocument) {
+  return [document.category, document.document_type, document.title]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function documentMatches(document: ResourceDocument, term: string) {
+  return documentText(document).includes(term);
+}
+
+export default async function QualityAssurancePage() {
+  const data = await getQualityAssuranceData();
+  const planDocuments = data.documents.filter((document) =>
+    documentMatches(document, "strategic"),
+  );
+  const serviceDocuments = data.documents.filter((document) =>
+    documentMatches(document, "service"),
+  );
+  const qualityDocuments = data.documents.filter(
+    (document) =>
+      !planDocuments.some((item) => item.id === document.id) &&
+      !serviceDocuments.some((item) => item.id === document.id),
+  );
+
+  const resourceCards = [
+    {
+      title: "Quality Assurance",
+      kicker: "Continuous improvement",
+      body: "Policies, frameworks, and evidence records that support academic quality review.",
+      icon: ClipboardCheck,
+      documents: qualityDocuments,
+      emptyLabel: "Quality assurance documents",
+    },
+    {
+      title: "Strategic Plan",
+      kicker: "Institutional priorities",
+      body: "Planning documents and priorities used to align university performance.",
+      icon: FileText,
+      documents: planDocuments,
+      emptyLabel: "Strategic plan document",
+    },
+    {
+      title: "Service Charter",
+      kicker: "Service accountability",
+      body:
+        data.overview?.charter_summary ??
+        "Published service commitments appear here when the charter record is available.",
+      icon: ShieldCheck,
+      documents: serviceDocuments,
+      emptyLabel: "Service charter document",
+    },
+  ];
+
+  const commitmentSteps = [
+    {
+      title: "Publish the commitment",
+      body:
+        data.overview?.charter_summary ??
+        "The service charter summary is loaded from the university information record.",
+    },
+    {
+      title: "Attach the evidence",
+      body: data.documents.length
+        ? `${data.documents.length} backend document record${
+            data.documents.length === 1 ? "" : "s"
+          } currently support this page.`
+        : "Backend quality, strategic plan, and service charter documents will appear here after publication.",
+    },
+    {
+      title: "Review against priorities",
+      body: data.strategicPriorities.length
+        ? "Strategic priorities guide the quality assurance and service review cycle."
+        : "Strategic priorities will appear here after the university information record is updated.",
+    },
+  ];
 
   return (
     <PageShell>
       <AboutPageLenis>
-        <section className="relative overflow-hidden border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_44%,#eef4ff_100%)] px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
-          <div className="relative w-full">
-            <BreadcrumbTrail
-              items={[
-                { label: "Home", href: "/" },
-                { label: "About", href: "/about" },
-                { label: "Quality Assurance" },
-              ]}
+        <main className="max-w-none bg-white">
+          <section className="relative isolate overflow-hidden bg-brand-overlay text-white">
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-[url('/images/about/about-quality-assurance-branded.webp')] bg-cover bg-center opacity-55 mix-blend-luminosity"
             />
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-r from-brand-overlay via-brand-overlay/88 to-primary/70"
+            />
+            <div className="relative px-4 py-8 sm:px-6 lg:px-8">
+              <div className="mx-auto w-full max-w-none">
+                <BreadcrumbTrail
+                  items={[
+                    { label: "Home", href: "/" },
+                    { label: "About", href: "/about" },
+                    { label: "Quality Assurance" },
+                  ]}
+                />
 
-            <div className="mt-5 grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_340px] xl:items-start">
-              <nav
-                aria-label="About section links"
-                className="rounded-[1.5rem] border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur xl:sticky xl:top-28"
-              >
-                <p className="px-2 text-xs font-semibold uppercase text-secondary">
-                  Explore About
-                </p>
-                <ul className="mt-3 space-y-2">
-                  {navigationLinks.slice(0, 6).map((item) => (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        className="group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
-                      >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
-                          <ChevronRight aria-hidden className="h-4 w-4" />
-                        </span>
-                        <span className="min-w-0 flex-1">{item.title}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-
-              <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)]">
-                <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_260px]">
-                  <div className="px-6 py-6 sm:px-8 lg:px-8 lg:py-7">
-                    <p className="text-sm font-semibold uppercase text-secondary">
+                <div className="grid min-h-[560px] items-end gap-10 py-14 lg:grid-cols-[minmax(0,1fr)_360px] lg:py-20">
+                  <div className="max-w-4xl">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
                       Quality Assurance
                     </p>
-                    <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.08] text-slate-950 sm:text-5xl">
-                      Quality, standards, and service accountability
+                    <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
+                      Quality, planning, and service accountability
                     </h1>
-                    <p className="mt-4 text-base leading-7 text-slate-600">
-                      Quality assurance is presented through the university
-                      charter, strategic plan, service charter, governance
-                      structure, and administrative accountability.
+                    {data.overview?.charter_summary ? (
+                      <p className="mt-6 max-w-3xl text-base leading-8 text-white/82 sm:text-lg">
+                        {data.overview.charter_summary}
+                      </p>
+                    ) : (
+                      <div className="mt-6 max-w-2xl">
+                        <EmptyState label="Quality assurance summary" />
+                      </div>
+                    )}
+                  </div>
+
+                  <aside className="rounded-lg border border-white/15 bg-white/[0.08] p-5 shadow-2xl backdrop-blur">
+                    <ShieldCheck aria-hidden className="h-6 w-6 text-secondary" />
+                    <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-white/60">
+                      Backend Records
                     </p>
-                    <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                      <a
-                        href={serviceCharterUrl}
-                        className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-                      >
-                        Open Service Charter
-                        <ExternalLink aria-hidden className="h-4 w-4" />
-                      </a>
-                      <Link
-                        href="/about/strategic-plan"
-                        className="inline-flex items-center justify-center gap-2 rounded-full border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
-                      >
-                        View Strategic Plan
-                        <ArrowRight aria-hidden className="h-4 w-4" />
-                      </Link>
-                      <Link
-                        href="/about/governance"
-                        className="inline-flex items-center justify-center gap-2 rounded-full border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
-                      >
-                        Open Governance
-                        <ArrowRight aria-hidden className="h-4 w-4" />
-                      </Link>
+                    <div className="mt-5 grid grid-cols-2 gap-3">
+                      <MetricCard
+                        value={data.strategicPriorities.length}
+                        label="Priorities"
+                      />
+                      <MetricCard value={data.documents.length} label="Documents" />
                     </div>
-
-                  </div>
-
-                  <div className="border-t border-slate-200 bg-slate-950 p-4 lg:border-l lg:border-t-0">
-                    <AboutIllustration
-                      src={aboutIllustrations.qualityAssurance}
-                      alt="Academic quality review workshop with standards and planning materials"
-                      priority
-                      sizes="(min-width: 1280px) 260px, (min-width: 1024px) 24vw, 100vw"
-                      className="aspect-[4/3] min-h-[240px] shadow-none"
-                    />
-                  </div>
+                  </aside>
                 </div>
               </div>
-
-              <aside className="space-y-5">
-                <nav
-                  aria-label="Related quality assurance pages"
-                  className="rounded-[1.5rem] border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur"
-                >
-                  <p className="px-2 text-xs font-semibold uppercase text-secondary">
-                    Related Pages
-                  </p>
-                  <ul className="mt-3 space-y-2">
-                    {accountabilityPath.slice(1).map((item) => {
-                      const Icon = item.icon;
-
-                      return (
-                        <li key={item.href}>
-                          <Link
-                            href={item.href}
-                            className="group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-sm font-semibold text-slate-700 transition hover:border-primary/20 hover:bg-primary/5 hover:text-slate-950"
-                          >
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-primary transition group-hover:bg-primary group-hover:text-white">
-                              <Icon aria-hidden className="h-4 w-4" />
-                            </span>
-                            <span className="min-w-0 flex-1">{item.title}</span>
-                            <ChevronRight
-                              aria-hidden
-                              className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary"
-                            />
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </nav>
-              </aside>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <ScrollReveal
-          as="section"
-          className="bg-white px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
-        >
-          <div className="grid w-full gap-10 xl:grid-cols-[380px_minmax(0,1fr)] xl:items-start">
-            <div className="xl:sticky xl:top-28">
-              <p className="text-sm font-semibold uppercase text-secondary">
-                Quality Framework
-              </p>
-              <h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
-                Public references that explain quality and accountability
-              </h2>
-              <p className="mt-5 text-base leading-8 text-slate-600">
-                These references show where standards, planning, service
-                commitments, and institutional accountability are documented.
-              </p>
+          <section className="bg-surface-subtle px-4 py-12 sm:px-6 lg:px-8">
+            <div className="mx-auto w-full max-w-none">
+              <div className="grid gap-4 lg:grid-cols-3">
+                {resourceCards.map((card) => (
+                  <QualityResourceCard key={card.title} {...card} />
+                ))}
+              </div>
             </div>
+          </section>
 
-            <div className="grid gap-5 md:grid-cols-2">
-              {frameworkCards.map((card) => {
-                const Icon = card.icon;
-
-                return (
-                  <article
-                    key={card.title}
-                    className="min-h-[250px] rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6 shadow-sm"
-                  >
-                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
-                      <Icon aria-hidden className="h-5 w-5" />
-                    </span>
-                    <h3 className="mt-6 text-2xl font-semibold text-slate-950">
-                      {card.title}
-                    </h3>
-                    <p className="mt-4 text-sm leading-7 text-slate-600">
-                      {card.body}
-                    </p>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-        </ScrollReveal>
-
-        <ScrollReveal
-          as="section"
-          className="border-y border-slate-200 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
-        >
-          <div className="w-full">
-            <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
+          <section className="bg-white px-4 py-14 sm:px-6 lg:px-8">
+            <div className="mx-auto grid w-full max-w-none gap-8 lg:grid-cols-[360px_minmax(0,1fr)]">
               <div>
-                <p className="text-sm font-semibold uppercase text-secondary">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                  Strategic Plan Highlights
+                </p>
+                <h2 className="mt-3 text-3xl font-semibold text-foreground">
+                  Priorities that shape quality review
+                </h2>
+                <p className="mt-4 text-sm leading-7 text-muted-foreground">
+                  These priorities are rendered from the university information
+                  record and remain empty until backend content is published.
+                </p>
+              </div>
+
+              {data.strategicPriorities.length ? (
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {data.strategicPriorities.map((priority, index) => (
+                    <StrategicHighlightCard
+                      key={priority.title}
+                      index={index + 1}
+                      title={priority.title}
+                      body={priority.body}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState label="Strategic priorities" />
+              )}
+            </div>
+          </section>
+
+          <section className="bg-primary px-4 py-14 text-white sm:px-6 lg:px-8">
+            <div className="mx-auto grid w-full max-w-none gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                  Service Commitments
+                </p>
+                <h2 className="mt-3 text-3xl font-semibold">
+                  From charter to evidence
+                </h2>
+                <p className="mt-4 text-sm leading-7 text-white/78">
+                  The page connects the service charter summary, official
+                  backend documents, and strategic priorities into one public
+                  accountability view.
+                </p>
+              </div>
+              <div className="grid gap-3">
+                {commitmentSteps.map((step, index) => (
+                  <ServiceCommitmentStep
+                    key={step.title}
+                    index={index + 1}
+                    title={step.title}
+                    body={step.body}
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="border-t border-border bg-white px-4 py-12 sm:px-6 lg:px-8">
+            <div className="mx-auto grid w-full max-w-none gap-8 lg:grid-cols-[360px_minmax(0,1fr)]">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
                   Official References
                 </p>
-                <h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-slate-950">
-                  Public quality context
+                <h2 className="mt-3 text-3xl font-semibold text-foreground">
+                  Backend-published downloads
                 </h2>
-              </div>
-              <p className="text-base leading-8 text-slate-600">
-                These are the available public references for quality,
-                standards, and accountability.
-              </p>
-            </div>
-
-            <div className="mt-10 grid gap-6 lg:grid-cols-3">
-              {referenceCards.map((item) => (
-                <article
-                  key={item.acronym}
-                  className="flex min-h-[310px] flex-col rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40"
+                <Link
+                  href="/about/governance"
+                  className="mt-6 inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-primary"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-sm font-semibold uppercase tracking-[0.16em] text-white">
-                      {item.acronym}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-slate-950">
-                        {item.title}
-                      </h3>
-                      <p className="mt-3 text-base leading-7 text-slate-600">
-                        {item.body}
-                      </p>
-                    </div>
-                  </div>
-                  {item.href?.startsWith("/") ? (
-                    <Link
-                      href={item.href}
-                      className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-primary"
-                    >
-                      {item.action}
-                      <ArrowRight aria-hidden className="h-4 w-4" />
-                    </Link>
-                  ) : item.href ? (
-                    <a
-                      href={item.href}
-                      className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-primary"
-                    >
-                      {item.action}
-                      <ExternalLink aria-hidden className="h-4 w-4" />
-                    </a>
-                  ) : (
-                    <Link
-                      href="/about"
-                      className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-primary"
-                    >
-                      {item.action}
-                      <ArrowRight aria-hidden className="h-4 w-4" />
-                    </Link>
-                  )}
-                </article>
-              ))}
-            </div>
-          </div>
-        </ScrollReveal>
+                  View governance context
+                  <ArrowRight aria-hidden className="h-4 w-4" />
+                </Link>
+              </div>
 
+              {data.documents.length ? (
+                <DocumentList documents={data.documents} />
+              ) : (
+                <EmptyState label="Official quality assurance references" />
+              )}
+            </div>
+          </section>
+        </main>
       </AboutPageLenis>
     </PageShell>
+  );
+}
+
+function MetricCard({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.06] p-4">
+      <p className="text-3xl font-semibold leading-none">{value}</p>
+      <p className="mt-2 text-xs font-medium text-white/65">{label}</p>
+    </div>
+  );
+}
+
+function QualityResourceCard({
+  title,
+  kicker,
+  body,
+  icon: Icon,
+  documents,
+  emptyLabel,
+}: {
+  title: string;
+  kicker: string;
+  body: string;
+  icon: LucideIcon;
+  documents: ResourceDocument[];
+  emptyLabel: string;
+}) {
+  return (
+    <article className="flex min-h-[360px] flex-col rounded-lg border border-border bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between gap-4">
+        <div className="rounded-lg bg-primary/10 p-3 text-primary">
+          <Icon aria-hidden className="h-5 w-5" />
+        </div>
+        <span className="text-xs font-bold uppercase tracking-[0.12em] text-secondary">
+          {kicker}
+        </span>
+      </div>
+      <h2 className="mt-5 text-2xl font-semibold text-foreground">{title}</h2>
+      <p className="mt-3 text-sm leading-7 text-muted-foreground">{body}</p>
+      <div className="mt-auto pt-6">
+        {documents.length ? (
+          <DocumentList documents={documents} compact />
+        ) : (
+          <EmptyState label={emptyLabel} />
+        )}
+      </div>
+    </article>
+  );
+}
+
+function StrategicHighlightCard({
+  index,
+  title,
+  body,
+}: {
+  index: number;
+  title: string;
+  body: string;
+}) {
+  return (
+    <article className="rounded-lg border border-border bg-surface-subtle p-5">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-sm font-bold text-foreground">
+        {String(index).padStart(2, "0")}
+      </div>
+      <h3 className="mt-5 text-base font-bold text-foreground">{title}</h3>
+      <p className="mt-3 text-sm leading-7 text-muted-foreground">{body}</p>
+    </article>
+  );
+}
+
+function ServiceCommitmentStep({
+  index,
+  title,
+  body,
+}: {
+  index: number;
+  title: string;
+  body: string;
+}) {
+  return (
+    <article className="grid gap-4 rounded-lg border border-white/15 bg-white/[0.08] p-5 backdrop-blur sm:grid-cols-[64px_minmax(0,1fr)]">
+      <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-secondary text-base font-bold text-foreground">
+        {index}
+      </div>
+      <div>
+        <h3 className="text-base font-bold text-white">{title}</h3>
+        <p className="mt-2 text-sm leading-7 text-white/76">{body}</p>
+      </div>
+    </article>
+  );
+}
+
+function DocumentList({
+  documents,
+  compact = false,
+}: {
+  documents: ResourceDocument[];
+  compact?: boolean;
+}) {
+  return (
+    <div className={compact ? "grid gap-2" : "grid gap-3 md:grid-cols-2"}>
+      {documents.map((document) => {
+        const href = publicFileUrl(document.file_id);
+        const body = document.description ?? document.document_type ?? document.category;
+        const className =
+          "group rounded-lg border border-border bg-white px-4 py-3 transition hover:border-primary/35 hover:shadow-sm";
+
+        return href ? (
+          <a key={document.id} href={href} className={className}>
+            <span className="flex items-start justify-between gap-3">
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-foreground">
+                  {document.title}
+                </span>
+                {body ? (
+                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                    {body}
+                  </span>
+                ) : null}
+              </span>
+              <Download
+                aria-hidden
+                className="mt-0.5 h-4 w-4 shrink-0 text-primary transition group-hover:translate-y-0.5"
+              />
+            </span>
+          </a>
+        ) : (
+          <div key={document.id} className={className}>
+            <span className="flex items-start gap-3">
+              <Sparkles
+                aria-hidden
+                className="mt-0.5 h-4 w-4 shrink-0 text-secondary"
+              />
+              <span>
+                <span className="block text-sm font-semibold text-foreground">
+                  {document.title}
+                </span>
+                {body ? (
+                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                    {body}
+                  </span>
+                ) : null}
+              </span>
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }

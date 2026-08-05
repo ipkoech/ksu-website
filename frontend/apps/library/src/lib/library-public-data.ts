@@ -22,6 +22,7 @@ import type { PublicStatsResponse } from "@ksu/api-client";
 
 export type PublicLibraryData<T> = {
   data: T[];
+  meta: { total: number; page: number; per_page: number; pages: number } | null;
   error: string | null;
 };
 
@@ -153,15 +154,19 @@ const editorialFields =
 type OpeningHoursMap = Record<string, string>;
 
 async function safeList<T>(
-  load: () => Promise<{ data?: T[] }>,
+  load: () => Promise<{ data?: T[]; meta?: unknown }>,
 ): Promise<PublicLibraryData<T>> {
   const request = load()
-    .then((response) => ({ data: response.data ?? [], error: null }))
-    .catch(() => ({ data: [], error: unavailableMessage }));
+    .then((response) => ({
+      data: response.data ?? [],
+      meta: (response.meta as PublicLibraryData<T>["meta"]) ?? null,
+      error: null,
+    }))
+    .catch(() => ({ data: [], meta: null, error: unavailableMessage }));
 
   const timeout = new Promise<PublicLibraryData<T>>((resolve) => {
     setTimeout(
-      () => resolve({ data: [], error: unavailableMessage }),
+      () => resolve({ data: [], meta: null, error: unavailableMessage }),
       PUBLIC_LIBRARY_TIMEOUT_MS,
     );
   });
@@ -337,11 +342,13 @@ export async function getCatalogSearchData(
     query?: string;
     resourceType?: string;
     status?: string;
+    page?: number;
   } = {},
 ): Promise<CatalogSearchData> {
   const query = options.query?.trim() ?? "";
   const resourceType = options.resourceType?.trim() ?? "";
   const status = options.status?.trim() ?? "";
+  const page = options.page ?? 1;
   const branches = await getPublicBranches();
   const selectedLibraryId =
     branches.data.find((branch) => branch.id === options.libraryId)?.id ??
@@ -351,7 +358,7 @@ export async function getCatalogSearchData(
   if (!selectedLibraryId) {
     return {
       branches,
-      resources: { data: [], error: branches.error },
+      resources: { data: [], meta: null, error: branches.error },
       selectedLibraryId,
       query,
       resourceType,
@@ -367,7 +374,7 @@ export async function getCatalogSearchData(
         q: query || undefined,
         resource_type: resourceType || undefined,
         status: status || undefined,
-        page: 1,
+        page,
         per_page: 100,
       }),
     ),
@@ -390,8 +397,10 @@ export function getElectronicResources(
     resourceType?: string;
     accessLevel?: string;
     featured?: boolean;
+    page?: number;
   } = {},
 ) {
+  const page = options.page ?? 1;
   return safeList<LibraryElectronicResource>(() =>
     libraryServiceApi.databases.list({
       fields: electronicFields,
@@ -399,7 +408,7 @@ export function getElectronicResources(
       resource_type: options.resourceType?.trim() || undefined,
       access_level: options.accessLevel?.trim() || undefined,
       featured: options.featured,
-      page: 1,
+      page,
       per_page: 100,
     }),
   ).then((result) => normalizeList(result, normalizeElectronicResource));
@@ -432,7 +441,7 @@ async function getBranchHours(branches: LibraryBranch[]) {
     ).then((result) =>
       result.data.length > 0
         ? result
-        : { data: openingHoursToRows(branch), error: result.error },
+        : { data: openingHoursToRows(branch), meta: result.meta ?? null, error: result.error },
     ),
   );
   return results.map((item) => ({ branch: item.branch, hours: item.result }));
@@ -478,7 +487,7 @@ async function getBranchStaff(branches: LibraryBranch[]) {
 export async function getLibraryServices() {
   const branches = await getPublicBranches();
   if (branches.data.length === 0) {
-    return { data: [], error: branches.error };
+    return { data: [], meta: null, error: branches.error };
   }
 
   const grouped = await getBranchServices(branches.data);
@@ -490,6 +499,7 @@ export async function getLibraryServices() {
 
   return {
     data,
+    meta: null,
     error: errors[0] ?? null,
   };
 }
@@ -547,7 +557,7 @@ export async function getLibraryOverviewData(): Promise<LibraryOverviewData> {
             per_page: 6,
           }),
         ).then((result) => normalizeList(result, normalizeResource))
-      : Promise.resolve({ data: [], error: branches.error }),
+      : Promise.resolve({ data: [], meta: null, error: branches.error }),
     getElectronicResources(),
     getLibraryServices(),
     safeList<LibraryRegulation>(() =>
@@ -678,9 +688,11 @@ export async function getLibraryLeadershipData(): Promise<
 export async function getLibraryNewsData({
   query,
   perPage = 12,
+  page = 1,
 }: {
   query?: string;
   perPage?: number;
+  page?: number;
 } = {}): Promise<LibraryContentData<News>> {
   let records = await safeList<News>(() =>
     newsApi.list({
@@ -688,7 +700,7 @@ export async function getLibraryNewsData({
       scope_type: "library",
       is_published: true,
       search: query?.trim() || undefined,
-      page: 1,
+      page,
       per_page: perPage,
     }),
   );
@@ -698,7 +710,7 @@ export async function getLibraryNewsData({
         fields: editorialFields,
         is_published: true,
         search: query?.trim() || undefined,
-        page: 1,
+        page,
         per_page: perPage,
       }),
     );
@@ -713,9 +725,11 @@ export async function getLibraryNewsData({
 export async function getLibraryEventsData({
   query,
   perPage = 12,
+  page = 1,
 }: {
   query?: string;
   perPage?: number;
+  page?: number;
 } = {}): Promise<LibraryContentData<Event>> {
   let records = await safeList<Event>(() =>
     eventsApi.list({
@@ -723,7 +737,7 @@ export async function getLibraryEventsData({
       scope_type: "library",
       is_published: true,
       search: query?.trim() || undefined,
-      page: 1,
+      page,
       per_page: perPage,
     }),
   );
@@ -733,7 +747,7 @@ export async function getLibraryEventsData({
         fields: editorialFields,
         is_published: true,
         search: query?.trim() || undefined,
-        page: 1,
+        page,
         per_page: perPage,
       }),
     );
@@ -748,9 +762,11 @@ export async function getLibraryEventsData({
 export async function getLibraryArticlesData({
   query,
   perPage = 12,
+  page = 1,
 }: {
   query?: string;
   perPage?: number;
+  page?: number;
 } = {}): Promise<LibraryContentData<Blog>> {
   let records = await safeList<Blog>(() =>
     blogsApi.list({
@@ -758,7 +774,7 @@ export async function getLibraryArticlesData({
       scope_type: "library",
       is_published: true,
       search: query?.trim() || undefined,
-      page: 1,
+      page,
       per_page: perPage,
     }),
   );
@@ -768,7 +784,7 @@ export async function getLibraryArticlesData({
         fields: editorialFields,
         is_published: true,
         search: query?.trim() || undefined,
-        page: 1,
+        page,
         per_page: perPage,
       }),
     );
@@ -802,7 +818,7 @@ export async function getLibrarySearchData(
             per_page: 10,
           }),
         ).then((result) => normalizeList(result, normalizeResource))
-      : Promise.resolve({ data: [], error: branches.error }),
+      : Promise.resolve({ data: [], meta: null, error: branches.error }),
     getElectronicResources(query),
   ]);
   const unified = query

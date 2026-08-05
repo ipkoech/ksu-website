@@ -1,1 +1,4 @@
-export { default } from "@/app/(dashboard)/organization/governance/[id]/page";
+export {
+  default,
+  generateStaticParams,
+} from "@/app/(dashboard)/organization/governance/[id]/page";

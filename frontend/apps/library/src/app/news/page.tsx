@@ -1,4 +1,6 @@
 import {
+  LibraryFilterSubmit,
+  LibraryFilterTextInput,
   LibraryHero,
   LibrarySection,
   LibraryShell,
@@ -7,6 +9,7 @@ import {
   SecondaryLink,
   StatusMessage,
 } from "../../components/library-ui";
+import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
 import {
   formatDate,
   getLibraryNewsData,
@@ -21,15 +24,22 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 type NewsPageProps = {
-  searchParams?: Promise<{ q?: string }>;
+  searchParams?: Promise<{ q?: string; page?: string }>;
 };
 
 export default async function LibraryNewsPage({ searchParams }: NewsPageProps) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
   const { records, query, errors } = await getLibraryNewsData({
     query: params.q,
     perPage: 18,
+    page,
   });
+
+  const totalPages = records.meta
+    ? Math.ceil(records.meta.total / records.meta.per_page)
+    : 1;
+  const newsBaseHref = buildBaseHref("/news", params);
 
   return (
     <LibraryShell>
@@ -44,15 +54,7 @@ export default async function LibraryNewsPage({ searchParams }: NewsPageProps) {
             <SecondaryLink href="/articles">Read articles</SecondaryLink>
           </>
         }
-      >
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-          Published updates
-        </p>
-        <p className="mt-3 text-4xl font-bold sm:text-5xl">{records.data.length}</p>
-        <p className="mt-2 text-sm leading-6 text-white/75">
-          Library-scoped records are shown first, with university records used as a fallback.
-        </p>
-      </LibraryHero>
+      />
 
       {errors.map((error) => (
         <section key={error} className="px-4 pt-6 sm:px-6 lg:px-8">
@@ -70,21 +72,15 @@ export default async function LibraryNewsPage({ searchParams }: NewsPageProps) {
       >
         <form
           action="/news"
-          className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end"
+          className="grid gap-4 rounded-lg border border-border bg-surface-subtle p-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end"
         >
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-slate-900">Search news</span>
-            <input
-              name="q"
-              type="search"
-              defaultValue={query}
-              placeholder="Resource update, training, repository, access"
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </label>
-          <button className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90">
-            Search news
-          </button>
+          <LibraryFilterTextInput
+            name="q"
+            label="Search News"
+            value={query}
+            placeholder="Resource update, training, repository, access"
+          />
+          <LibraryFilterSubmit>Search News</LibraryFilterSubmit>
         </form>
       </LibrarySection>
 
@@ -96,21 +92,43 @@ export default async function LibraryNewsPage({ searchParams }: NewsPageProps) {
         {records.data.length === 0 ? (
           <StatusMessage>No published news records are available yet.</StatusMessage>
         ) : (
-          <div className="grid gap-5 lg:grid-cols-2">
-            {records.data.map((item) => (
-              <RecordListItem
-                key={item.id}
-                eyebrow={item.category ?? "News"}
-                title={item.title}
-                body={shortText(item.summary ?? item.plain_text ?? item.rich_text ?? item.content)}
-                meta={[formatDate(item.published_at ?? item.created_at), item.is_featured ? "Featured" : null]}
-                href={`/news/${item.slug}`}
-                action="Read update"
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-5 lg:grid-cols-2">
+              {records.data.map((item) => (
+                <RecordListItem
+                  key={item.id}
+                  eyebrow={item.category ?? "News"}
+                  title={item.title}
+                  body={shortText(item.summary ?? item.plain_text ?? item.rich_text ?? item.content)}
+                  meta={[formatDate(item.published_at ?? item.created_at), item.is_featured ? "Featured" : null]}
+                  href={`/news/${item.slug}`}
+                  action="Read update"
+                />
+              ))}
+            </div>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              total={records.meta?.total ?? records.data.length}
+              perPage={records.meta?.per_page ?? 18}
+              baseHref={newsBaseHref}
+            />
+          </>
         )}
       </LibrarySection>
     </LibraryShell>
   );
+}
+
+function buildBaseHref(
+  path: string,
+  params: Record<string, string | string[] | undefined>,
+) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (key === "page") continue;
+    if (typeof value === "string" && value) search.set(key, value);
+  }
+  const qs = search.toString();
+  return qs ? `${path}?${qs}` : path;
 }

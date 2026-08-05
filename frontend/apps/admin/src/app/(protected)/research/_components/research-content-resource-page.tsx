@@ -1,7 +1,19 @@
 "use client";
 
-import { EditableServiceResourcePage, type EditableField } from "@/components/dashboard/editable-service-resource-page";
+import {
+  EditableServiceResourcePage,
+  type EditableField,
+  type EditableListFilter,
+  type EditableRecordColumn,
+  type EditableRecordWorkflowAction,
+} from "@/components/dashboard/editable-service-resource-page";
 import { usePermissions } from "@ksu/auth";
+import type { ReactNode } from "react";
+import {
+  getResearchGuidance,
+  ResearchSectionGuide,
+} from "./research-guidance";
+import { withResearchFieldHelp } from "./research-resource-page";
 
 type ContentRecord = Record<string, any> & {
   id: string;
@@ -28,8 +40,23 @@ interface ResearchContentResourcePageProps {
   fields: EditableField[];
   emptyMessage: string;
   defaults?: Record<string, any>;
+  listParams?: Record<string, string | number | boolean | undefined>;
+  listFilters?: EditableListFilter[];
+  recordColumns?: Array<EditableRecordColumn<ContentRecord>>;
+  summarySlot?: ReactNode;
   manageScopes?: string[];
   metaFields?: string[];
+  getRecordWorkflowActions?: (
+    record: ContentRecord,
+  ) => Array<EditableRecordWorkflowAction<ContentRecord, Record<string, any>>>;
+  getRecordDetailHref?: (record: ContentRecord) => string | null | undefined;
+  editorMode?: "dialog" | "sheet" | "auto";
+  hideHeader?: boolean;
+  renderMobileRecord?: (record: ContentRecord, actions: ReactNode) => ReactNode;
+  buildPayload?: (
+    values: Record<string, any>,
+    editingRecord?: ContentRecord | null,
+  ) => Record<string, any>;
 }
 
 function recordTitle(record: ContentRecord) {
@@ -50,6 +77,49 @@ function recordMeta(record: ContentRecord, fields: string[]) {
     .join(" · ");
 }
 
+function withDefaultSearchFilter(filters: EditableListFilter[] = []) {
+  if (filters.some((filter) => filter.name === "search")) return filters;
+  return [
+    { name: "search", label: "Search", type: "text" as const, placeholder: "Search content records" },
+    ...filters,
+  ];
+}
+
+const defaultContentSortOptions = [
+  { label: "Recently updated", sort: "updated_at", order: "desc" as const },
+  { label: "Oldest updated", sort: "updated_at", order: "asc" as const },
+  { label: "Title A-Z", sort: "title", order: "asc" as const },
+];
+
+function ContentMobileRecordCard({
+  record,
+  actions,
+  metaFields,
+}: {
+  record: ContentRecord;
+  actions: ReactNode;
+  metaFields: string[];
+}) {
+  const meta = recordMeta(record, metaFields);
+  const status = labelValue(record.status ?? record.is_published ?? record.is_active);
+
+  return (
+    <div className="rounded-lg border bg-background p-3 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{recordTitle(record)}</p>
+          {meta ? <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{meta}</p> : null}
+        </div>
+        <div className="shrink-0">{actions}</div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+        {status ? <span className="rounded-md border px-2 py-1 capitalize">{status}</span> : null}
+        {record.updated_at ? <span className="rounded-md border px-2 py-1">Updated {String(record.updated_at).slice(0, 10)}</span> : null}
+      </div>
+    </div>
+  );
+}
+
 export function ResearchContentResourcePage({
   title,
   description,
@@ -58,11 +128,22 @@ export function ResearchContentResourcePage({
   fields,
   emptyMessage,
   defaults = {},
+  listParams = {},
+  listFilters,
+  recordColumns,
+  summarySlot,
   manageScopes = ["content.manage", "content.write", "research:write"],
   metaFields = ["category", "status"],
+  getRecordWorkflowActions,
+  getRecordDetailHref,
+  editorMode = "auto",
+  hideHeader = true,
+  renderMobileRecord,
+  buildPayload,
 }: ResearchContentResourcePageProps) {
   const { hasScope } = usePermissions();
   const canManage = manageScopes.some((scope) => hasScope(scope));
+  const guidance = getResearchGuidance("Research Content");
 
   return (
     <EditableServiceResourcePage<ContentRecord, Record<string, any>>
@@ -70,8 +151,13 @@ export function ResearchContentResourcePage({
       description={description}
       backHref="/research/content"
       queryKey={queryKey}
-      fields={fields}
-      list={async () => resource.list({ page: 1, per_page: 50, scope_type: "research" })}
+      hideHeader={hideHeader}
+      fields={withResearchFieldHelp(fields)}
+      listFilters={withDefaultSearchFilter(listFilters)}
+      recordColumns={recordColumns}
+      summarySlot={summarySlot}
+      toolbarSlot={<ResearchSectionGuide title="Research Content" className="sm:ml-auto" />}
+      list={async (filters) => resource.list({ page: 1, per_page: 50, scope_type: "research", ...listParams, ...filters })}
       create={(payload) => resource.create({ ...payload, scope_type: "research" })}
       update={(id, payload) => resource.update(id, { ...payload, scope_type: "research" })}
       delete={(id) => resource.delete(id)}
@@ -80,8 +166,24 @@ export function ResearchContentResourcePage({
       canDelete={canManage}
       getRecordTitle={recordTitle}
       getRecordMeta={(record) => recordMeta(record, metaFields)}
+      getRecordWorkflowActions={getRecordWorkflowActions}
+      getRecordDetailHref={getRecordDetailHref}
+      editorMode={editorMode}
+      tableLayout="compact"
+      actionsInMenuOnly
+      defaultSort={defaultContentSortOptions[0]}
+      sortOptions={defaultContentSortOptions}
+      renderMobileRecord={
+        renderMobileRecord ??
+        ((record, actions) => <ContentMobileRecordCard record={record} actions={actions} metaFields={metaFields} />)
+      }
       emptyMessage={emptyMessage}
-      buildPayload={(values) => ({ ...defaults, ...values, scope_type: "research" })}
+      emptyState={guidance?.emptyState}
+      buildPayload={(values, editingRecord) => ({
+        ...defaults,
+        ...(buildPayload ? buildPayload(values, editingRecord) : values),
+        scope_type: "research",
+      })}
     />
   );
 }

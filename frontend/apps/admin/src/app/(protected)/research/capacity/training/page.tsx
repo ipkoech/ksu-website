@@ -1,6 +1,7 @@
 "use client";
 
 import { ResearchResourcePage, researchServiceApi } from "../../_components/research-resource-page";
+import { CapacityWorkspaceHeader, statusFilter, trainingColumns } from "../_components/capacity-workspace";
 
 export default function TrainingProgramsPage() {
   return (
@@ -10,6 +11,10 @@ export default function TrainingProgramsPage() {
       queryKey={["research", "training"]}
       resource={researchServiceApi.training}
       manageScopes={["training_program.manage", "research:write"]}
+      summarySlot={<CapacityWorkspaceHeader />}
+      listFilters={[{ name: "search", label: "Search", type: "text", placeholder: "Search training programs" }, statusFilter]}
+      recordColumns={trainingColumns}
+      editorMode="sheet"
       fields={[
         { name: "title", label: "Title", required: true },
         { name: "slug", label: "Slug" },
@@ -51,6 +56,8 @@ export default function TrainingProgramsPage() {
       ]}
       defaults={{ program_type: "workshop", delivery_mode: "in_person", currency: "KES", is_free: true, status: "draft" }}
       emptyMessage="No training programs were returned by the research service."
+      importResource="research-training"
+      detailHref={(record) => `/research/capacity/training/${record.id}`}
     />
   );
 }

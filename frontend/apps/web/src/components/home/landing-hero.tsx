@@ -4,7 +4,6 @@ import { type FocusEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@ksu/ui/components";
 import { ArtDirectedImage } from "@/components/public/art-directed-image";
 import type { LandingHeroData, LandingHeroSlide } from "@/lib/landing-data";
 
@@ -39,7 +38,6 @@ export function LandingHero({
   autoPlayDurationMs = fallbackHeroSettings.autoPlayDurationMs,
   showNavigationDots = fallbackHeroSettings.showNavigationDots,
   showArrows = fallbackHeroSettings.showArrows,
-  transitionEffect = fallbackHeroSettings.transitionEffect,
 }: LandingHeroProps) {
   const slides = useMemo(
     () => (providedSlides.length ? providedSlides : [fallbackSlide]),
@@ -51,12 +49,7 @@ export function LandingHero({
   const activeSlide = slides[activeIndex] ?? fallbackSlide;
   const hasMultipleSlides = slides.length > 1;
   const shouldAutoPlay =
-    autoPlay &&
-    hasMultipleSlides &&
-    !isPaused &&
-    !prefersReducedMotion;
-  const transitionMode = (transitionEffect ?? "fade").toLowerCase();
-  const useSlideTransition = transitionMode.includes("slide");
+    autoPlay && hasMultipleSlides && !isPaused && !prefersReducedMotion;
   const shouldShowControls = hasMultipleSlides && showNavigationDots;
   const shouldShowArrows = hasMultipleSlides && showArrows;
 
@@ -94,7 +87,7 @@ export function LandingHero({
 
   return (
     <section
-      className="relative overflow-hidden bg-primary"
+      className="relative h-[50vh] min-h-[400px] max-h-[640px] overflow-hidden bg-primary sm:h-[55vh] lg:h-[60vh]"
       aria-roledescription="carousel"
       aria-label="Featured Kisii University updates"
       onMouseEnter={() => setIsPaused(true)}
@@ -107,19 +100,9 @@ export function LandingHero({
           <motion.div
             key={activeSlide.id}
             className="absolute inset-0 h-full w-full"
-            initial={
-              prefersReducedMotion
-                ? false
-                : { opacity: 0 }
-            }
-            animate={
-              prefersReducedMotion ? undefined : { opacity: 1 }
-            }
-            exit={
-              prefersReducedMotion
-                ? undefined
-                : { opacity: 0 }
-            }
+            initial={prefersReducedMotion ? false : { opacity: 0 }}
+            animate={prefersReducedMotion ? undefined : { opacity: 1 }}
+            exit={prefersReducedMotion ? undefined : { opacity: 0 }}
             transition={{
               duration: prefersReducedMotion ? 0 : 0.7,
               ease: "easeOut",
@@ -130,160 +113,130 @@ export function LandingHero({
               mobileSrc={activeSlide.mobileImageUrl}
               alt={activeSlide.imageAlt}
               priority={activeIndex === 0}
-              imageClassName="h-full w-full object-cover object-[45%_50%] opacity-90 lg:object-[58%_50%]"
+              imageClassName="h-full w-full object-cover"
             />
           </motion.div>
         </AnimatePresence>
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.86)_0%,rgba(2,20,49,0.68)_34%,rgba(2,20,49,0.18)_78%,rgba(2,20,49,0.06)_100%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-950/30 to-transparent" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.72)_0%,rgba(2,20,49,0.28)_55%,rgba(2,20,49,0.04)_100%)]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-overlay/55 via-transparent to-transparent" />
       </div>
-
-      <div className="relative min-h-[430px] w-full px-4 sm:min-h-[480px] sm:px-6 lg:min-h-[520px] lg:px-8 xl:px-10 2xl:px-12">
-        <div className="flex min-h-[430px] max-w-[470px] flex-col justify-center py-10 sm:min-h-[480px] lg:min-h-[520px] lg:max-w-[760px] lg:py-12">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeSlide.id}
-              aria-live={isPaused ? "polite" : "off"}
-              initial={
-                prefersReducedMotion
-                  ? false
-                  : {
-                      opacity: 0,
-                      y: useSlideTransition ? 0 : 12,
-                      x: useSlideTransition ? 18 : 0,
-                    }
-              }
-              animate={
-                prefersReducedMotion ? undefined : { opacity: 1, y: 0, x: 0 }
-              }
-              exit={
-                prefersReducedMotion
-                  ? undefined
-                  : {
-                      opacity: 0,
-                      y: useSlideTransition ? 0 : -8,
-                      x: useSlideTransition ? -12 : 0,
-                    }
-              }
-              transition={{
-                duration: prefersReducedMotion ? 0 : 0.35,
-                ease: "easeOut",
-              }}
-            >
-              <p className="mb-4 inline-flex w-fit items-center rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-white/90 backdrop-blur-sm">
-                {activeSlide.eyebrow}
-              </p>
-              <h1 className="max-w-[520px] text-balance font-[family-name:var(--font-display)] text-4xl font-bold leading-tight text-white min-[360px]:text-5xl sm:text-6xl lg:max-w-[760px] lg:text-[66px]">
-                {activeSlide.title}
-              </h1>
-              <p className="mt-5 max-w-xl text-base font-medium leading-7 text-white/90 sm:text-lg">
-                {activeSlide.body}
-              </p>
-            </motion.div>
-          </AnimatePresence>
-
-          <div className="mt-7 flex flex-col gap-3 xs:flex-row">
-            <Button
-              asChild
-              size="lg"
-              className="min-h-11 rounded-md bg-secondary px-7 text-base font-semibold text-white hover:bg-secondary/90 sm:min-h-12 lg:min-h-11 lg:px-6 lg:text-sm"
-            >
-              <Link
-                href={activeSlide.primaryHref}
-                target={activeSlide.primaryExternal ? "_blank" : undefined}
-                rel={
-                  activeSlide.primaryExternal
-                    ? "noopener noreferrer"
-                    : undefined
-                }
-              >
-                {activeSlide.primaryLabel}
-                <ArrowRight className="h-5 w-5" aria-hidden />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="min-h-11 rounded-md border-white/80 bg-white px-7 text-base font-semibold text-primary hover:bg-white/90 sm:min-h-12 lg:min-h-11 lg:px-6 lg:text-sm"
-            >
-              <Link href="/academics/programmes">
-                Explore Programmes
-                <ArrowRight className="h-5 w-5" aria-hidden />
-              </Link>
-            </Button>
-          </div>
-
-        </div>
-
-        <div className="absolute bottom-10 right-4 hidden max-w-[300px] rounded-md border border-white/20 bg-slate-950/35 p-4 text-white shadow-2xl shadow-slate-950/20 backdrop-blur-md lg:block xl:right-10">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/70">
-            Institutional gateway
-          </p>
-          <div className="mt-3 grid gap-2">
-            {["Admissions", "Academic programmes", "Research & innovation"].map(
-              (item) => (
-                <span
-                  key={item}
-                  className="flex items-center justify-between gap-3 rounded-md bg-white/10 px-3 py-2 text-sm font-semibold"
-                >
-                  {item}
-                  <ArrowRight className="h-3.5 w-3.5 text-secondary" aria-hidden />
-                </span>
-              ),
-            )}
-          </div>
-        </div>
-      </div>
-
-      {shouldShowControls ? (
-        <div
-          className="absolute inset-x-0 bottom-1 z-10 flex justify-center"
-          aria-label="Hero slides"
-        >
-          <div className="flex items-center gap-2 rounded-full bg-slate-950/25 px-3 py-2 backdrop-blur-sm">
-            {slides.map((slide, index) => (
-              <button
-                key={slide.id}
-                type="button"
-                onClick={() => setActiveIndex(index)}
-                className="group flex h-5 w-5 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
-                aria-label={`Show slide ${index + 1}: ${slide.title}`}
-                aria-current={index === activeIndex ? "true" : undefined}
-              >
-                <span
-                  className={
-                    index === activeIndex
-                      ? "h-2.5 w-2.5 rounded-full bg-secondary ring-2 ring-white/80"
-                      : "h-2.5 w-2.5 rounded-full bg-white/60 transition group-hover:bg-white"
-                  }
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
 
       {shouldShowArrows ? (
-        <div className="pointer-events-none absolute inset-y-0 left-0 right-0 z-10 hidden items-center justify-between px-4 sm:flex lg:px-8 xl:px-10 2xl:px-12">
+        <>
           <button
             type="button"
             onClick={showPreviousSlide}
-            className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-slate-950/35 text-white ring-1 ring-white/30 backdrop-blur-sm transition hover:bg-slate-950/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+            className="absolute left-3 top-1/2 z-20 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-brand-overlay/30 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-brand-overlay/50 sm:h-12 sm:w-12"
             aria-label="Show previous hero slide"
           >
-            <ChevronLeft className="h-5 w-5" aria-hidden />
+            <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
           </button>
           <button
             type="button"
             onClick={showNextSlide}
-            className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-slate-950/35 text-white ring-1 ring-white/30 backdrop-blur-sm transition hover:bg-slate-950/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+            className="absolute right-3 top-1/2 z-20 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-brand-overlay/30 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-brand-overlay/50 sm:h-12 sm:w-12"
             aria-label="Show next hero slide"
           >
-            <ChevronRight className="h-5 w-5" aria-hidden />
+            <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
           </button>
+        </>
+      ) : null}
+
+      <div className="relative z-10 flex h-full w-full items-end px-4 pb-12 sm:px-6 sm:pb-14 lg:px-8 lg:pb-16 xl:px-10 2xl:px-12">
+        <AnimatePresence mode="wait">
+          <HeroEditorialPanel
+            key={activeSlide.id}
+            slide={activeSlide}
+            isPaused={isPaused}
+            prefersReducedMotion={Boolean(prefersReducedMotion)}
+          />
+        </AnimatePresence>
+      </div>
+
+      {shouldShowControls ? (
+        <div
+          className="absolute inset-x-0 bottom-3 z-20 flex justify-center gap-2 md:hidden"
+          aria-label="Hero slides"
+        >
+          {slides.map((slide, index) => (
+            <button
+              key={slide.id}
+              type="button"
+              onClick={() => setActiveIndex(index)}
+              className="group flex h-5 w-5 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-1 focus-visible:ring-offset-primary"
+              aria-label={`Show slide ${index + 1}: ${slide.title}`}
+              aria-current={index === activeIndex ? "true" : undefined}
+            >
+              <span
+                className={
+                  index === activeIndex
+                    ? "h-2 w-2 rounded-full bg-secondary"
+                    : "h-2 w-2 rounded-full bg-white/50 transition group-hover:bg-white/80"
+                }
+              />
+            </button>
+          ))}
         </div>
       ) : null}
     </section>
+  );
+}
+
+function HeroEditorialPanel({
+  slide,
+  isPaused,
+  prefersReducedMotion,
+}: {
+  slide: LandingHeroSlide;
+  isPaused: boolean;
+  prefersReducedMotion: boolean;
+}) {
+  const hasPrimaryCta = Boolean(slide.primaryHref && slide.primaryLabel);
+  const hasSecondaryCta = Boolean(slide.secondaryHref && slide.secondaryLabel);
+
+  return (
+    <motion.div
+      aria-live={isPaused ? "polite" : "off"}
+      className="max-w-[720px] text-white"
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+      animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+      exit={prefersReducedMotion ? undefined : { opacity: 0, y: -12 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.4, ease: "easeOut" }}
+    >
+      <p className="mb-3 inline-flex w-fit items-center rounded-full border border-white/25 bg-white/8 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white/90 backdrop-blur-sm sm:text-xs">
+        {slide.eyebrow}
+      </p>
+      <h1 className="max-w-[720px] text-balance font-[family-name:var(--font-display)] text-3xl font-bold leading-[1.15] text-white sm:text-4xl lg:text-5xl">
+        {slide.title}
+      </h1>
+      <p className="mt-4 line-clamp-3 max-w-xl text-sm leading-7 text-white/85 sm:text-base sm:leading-8">
+        {slide.body}
+      </p>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        {hasPrimaryCta ? (
+          <Link
+            href={slide.primaryHref}
+            target={slide.primaryExternal ? "_blank" : undefined}
+            rel={slide.primaryExternal ? "noopener noreferrer" : undefined}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+          >
+            {slide.primaryLabel}
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+        ) : null}
+        {hasSecondaryCta ? (
+          <Link
+            href={slide.secondaryHref!}
+            target={slide.secondaryExternal ? "_blank" : undefined}
+            rel={slide.secondaryExternal ? "noopener noreferrer" : undefined}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+          >
+            {slide.secondaryLabel}
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+        ) : null}
+      </div>
+    </motion.div>
   );
 }

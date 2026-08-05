@@ -1,4 +1,10 @@
-import { clubsApi, departmentsApi, divisionsApi, schoolsApi } from "@ksu/api-client";
+import {
+  clubsApi,
+  departmentsApi,
+  divisionsApi,
+  schoolsApi,
+  wingsApi,
+} from "@ksu/api-client";
 import type {
   MegaMenuData,
   NavAdminUnit,
@@ -19,7 +25,7 @@ export async function getNavData(): Promise<MegaMenuData> {
         per_page: 50,
       }),
       departmentsApi.list({
-        fields: "id,name,slug,school_id,department_type",
+        fields: "id,name,slug,code,school_id,department_type",
         department_type: "administrative",
         per_page: 100,
       }),
@@ -32,8 +38,8 @@ export async function getNavData(): Promise<MegaMenuData> {
   if (
     schoolsResult.status === "rejected" ||
     divisionsResult.status === "rejected" ||
-    adminDepartmentsResult.status === "rejected"
-    || clubsResult.status === "rejected"
+    adminDepartmentsResult.status === "rejected" ||
+    clubsResult.status === "rejected"
   ) {
     console.error("Failed to fetch some nav data:", {
       schools:
@@ -61,34 +67,71 @@ export async function getNavData(): Promise<MegaMenuData> {
 
   const divisions: NavAdminUnit[] =
     divisionsResult.status === "fulfilled"
-      ? (divisionsResult.value.data ?? [])
-          .filter((division) => division.division_type === "division")
-          .map((division) => ({
-            id: division.id,
-            name: division.name,
-            slug: division.slug,
-          }))
+      ? uniqueNavUnits(
+          (divisionsResult.value.data ?? [])
+            .filter((division) => division.division_type === "division")
+            .map((division) => ({
+              id: division.id,
+              name: division.name,
+              slug: division.slug,
+            })),
+        )
       : [];
+
+  const wingsResult = await Promise.allSettled(
+    divisions.map((division) =>
+      wingsApi.listByDivision(division.id, {
+        fields: "id,name,slug,code,wing_type",
+        is_active: true,
+      }),
+    ),
+  );
+
+  if (wingsResult.some((result) => result.status === "rejected")) {
+    console.error("Failed to fetch some nav data:", {
+      wings: wingsResult
+        .filter((result) => result.status === "rejected")
+        .map((result) => result.reason),
+    });
+  }
+
+  const wings: NavAdminUnit[] = uniqueNavUnits(
+    wingsResult.flatMap((result) =>
+      result.status === "fulfilled"
+        ? (result.value.data ?? []).map((wing) => ({
+            id: wing.id,
+            name: wing.name,
+            slug: wing.slug,
+            code: wing.code,
+          }))
+        : [],
+    ),
+  );
 
   const adminUnits: NavAdminUnit[] =
     adminDepartmentsResult.status === "fulfilled"
-      ? (adminDepartmentsResult.value.data ?? []).map((department) => ({
-          id: department.id,
-          name: department.name,
-          slug: department.slug,
-        }))
+      ? uniqueNavUnits(
+          (adminDepartmentsResult.value.data ?? []).map((department) => ({
+            id: department.id,
+            name: department.name,
+            slug: department.slug,
+            code: department.code,
+          })),
+        )
       : [];
 
   const departments: NavDepartment[] =
     adminDepartmentsResult.status === "fulfilled"
-      ? (adminDepartmentsResult.value.data ?? [])
-          .map((department) => ({
+      ? uniqueNavUnits(
+          (adminDepartmentsResult.value.data ?? []).map((department) => ({
             id: department.id,
             name: department.name,
             slug: department.slug,
+            code: department.code,
             school_id: department.school_id ?? undefined,
             department_type: department.department_type ?? undefined,
-          }))
+          })),
+        )
       : [];
 
   const clubs: NavClub[] =
@@ -104,9 +147,24 @@ export async function getNavData(): Promise<MegaMenuData> {
     schools,
     departments,
     divisions,
+    wings,
     adminUnits,
     clubs,
   };
+}
+
+function uniqueNavUnits<T extends { id: string; slug: string }>(
+  items: T[],
+): T[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const key = item.id || item.slug;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
 }
 
 export function emptyNavData(): MegaMenuData {
@@ -114,6 +172,7 @@ export function emptyNavData(): MegaMenuData {
     schools: [],
     departments: [],
     divisions: [],
+    wings: [],
     adminUnits: [],
     clubs: [],
   };

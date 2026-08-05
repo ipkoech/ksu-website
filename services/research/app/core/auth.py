@@ -148,4 +148,34 @@ def require_scoped_record(
         )
 
 
+def resolve_exact_school_grant(user: TokenPayload, permission: str) -> uuid.UUID:
+    """Resolve one school from a structured grant carrying ``permission``.
+
+    School portal endpoints deliberately do not fall back to flat permissions:
+    the server must derive ownership from exactly one signed school grant.
+    """
+    matching_ids: set[uuid.UUID] = set()
+    for grant in user.raw.get("scope_grants", []) or []:
+        if not isinstance(grant, dict) or not _grant_matches_permission(grant, permission):
+            continue
+        if str(grant.get("scope_type") or "").strip().lower() != "school":
+            continue
+        try:
+            matching_ids.add(uuid.UUID(str(grant.get("scope_id"))))
+        except (TypeError, ValueError):
+            continue
+
+    if not matching_ids:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="A school-scoped assignment is required",
+        )
+    if len(matching_ids) != 1:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Select one school assignment before continuing",
+        )
+    return next(iter(matching_ids))
+
+
 CurrentUser = TokenPayload

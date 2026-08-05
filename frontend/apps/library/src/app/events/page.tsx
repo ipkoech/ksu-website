@@ -1,4 +1,6 @@
 import {
+  LibraryFilterSubmit,
+  LibraryFilterTextInput,
   LibraryHero,
   LibrarySection,
   LibraryShell,
@@ -45,15 +47,7 @@ export default async function LibraryEventsPage({ searchParams }: EventsPageProp
             <SecondaryLink href="/news">Library news</SecondaryLink>
           </>
         }
-      >
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-          Published events
-        </p>
-        <p className="mt-3 text-4xl font-bold sm:text-5xl">{records.data.length}</p>
-        <p className="mt-2 text-sm leading-6 text-white/75">
-          Upcoming and recent event records from the public content service.
-        </p>
-      </LibraryHero>
+      />
 
       {errors.map((error) => (
         <section key={error} className="px-4 pt-6 sm:px-6 lg:px-8">
@@ -71,21 +65,15 @@ export default async function LibraryEventsPage({ searchParams }: EventsPageProp
       >
         <form
           action="/events"
-          className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end"
+          className="grid gap-4 rounded-lg border border-border bg-surface-subtle p-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end"
         >
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-slate-900">Search events</span>
-            <input
-              name="q"
-              type="search"
-              defaultValue={query}
-              placeholder="Training, database, citation, repository"
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </label>
-          <button className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90">
-            Search events
-          </button>
+          <LibraryFilterTextInput
+            name="q"
+            label="Search Events"
+            value={query}
+            placeholder="Training, database, citation, repository"
+          />
+          <LibraryFilterSubmit>Search Events</LibraryFilterSubmit>
         </form>
       </LibrarySection>
 

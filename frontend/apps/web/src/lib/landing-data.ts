@@ -31,6 +31,9 @@ export interface LandingHeroSlide {
   primaryLabel: string;
   primaryHref: string;
   primaryExternal?: boolean;
+  secondaryLabel?: string;
+  secondaryHref?: string;
+  secondaryExternal?: boolean;
 }
 
 export interface LandingHeroData {
@@ -67,6 +70,10 @@ const defaultHeroSettings: Omit<LandingHeroData, "slides"> = {
 
 const homepageHeroLocations = new Set(["home.hero", "homepage.hero", "landing.hero"]);
 const homepageHeroSlugs = new Set(["homepage-hero", "home-hero", "landing-hero"]);
+
+function isAbortError(error: unknown) {
+  return error instanceof Error && error.name === "AbortError";
+}
 
 const sliderGroupFields = [
   "id",
@@ -137,17 +144,6 @@ const announcementFields = [
   "is_main",
 ].join(",");
 
-const fallbackAnnouncements: LandingAnnouncement[] = [
-  {
-    id: "admissions-guidance",
-    message: "Admissions, programmes, and services are available online.",
-    linkText: "Open",
-    linkHref: "/admissions/how-to-apply",
-    variant: "warning",
-    dismissible: false,
-  },
-];
-
 function plainText(value?: string | null) {
   const decoded = (value ?? "")
     .replace(/&nbsp;/g, " ")
@@ -209,6 +205,9 @@ function normalizeSlider(slider: SliderWithMedia): LandingHeroSlide {
     primaryLabel: slider.link_text || (slider.external_url ? "Learn more" : "View Admissions Guide"),
     primaryHref,
     primaryExternal: slider.open_in_new_tab || isExternalHref(primaryHref),
+    secondaryLabel: (slider as unknown as Record<string, unknown>).secondary_label as string | undefined,
+    secondaryHref: (slider as unknown as Record<string, unknown>).secondary_url as string | undefined,
+    secondaryExternal: (slider as unknown as Record<string, unknown>).secondary_open_in_new_tab as boolean | undefined,
   };
 }
 
@@ -320,7 +319,9 @@ export async function getLandingHeroData(): Promise<LandingHeroData> {
         .map(normalizeSlider),
     };
   } catch (error) {
-    console.error("Failed to fetch landing sliders:", error);
+    if (!isAbortError(error)) {
+      console.error("Failed to fetch landing sliders:", error);
+    }
     return { ...defaultHeroSettings, slides: [] };
   }
 }
@@ -353,10 +354,11 @@ export async function getLandingAnnouncements(): Promise<LandingAnnouncement[]> 
   try {
     const mainAnnouncements = await listMainAnnouncements();
     const announcements = mainAnnouncements.length ? mainAnnouncements : await listLatestAnnouncements();
-    const normalized = announcements.slice(0, 5).map(normalizeAnnouncement);
-    return normalized.length ? normalized : fallbackAnnouncements;
+    return announcements.slice(0, 5).map(normalizeAnnouncement);
   } catch (error) {
-    console.error("Failed to fetch landing announcements:", error);
-    return fallbackAnnouncements;
+    if (!isAbortError(error)) {
+      console.error("Failed to fetch landing announcements:", error);
+    }
+    return [];
   }
 }

@@ -11,6 +11,8 @@ const withPath = (baseUrl: string, path: string) =>
   `${baseUrl.replace(/\/$/, "")}${path}`;
 
 const nextConfig: NextConfig = {
+  distDir: process.env.NEXT_DIST_DIR || ".next",
+  output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../.."),
   transpilePackages: ["@ksu/ui", "@ksu/api-client"],
   async redirects() {
@@ -161,6 +163,16 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/library",
+        destination: libraryFrontendUrl,
+        permanent: true,
+      },
+      {
+        source: "/library/:path*",
+        destination: withPath(libraryFrontendUrl, "/:path*"),
+        permanent: true,
+      },
+      {
         source: "/research",
         destination: researchFrontendUrl,
         permanent: true,
@@ -233,6 +245,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "i.ytimg.com",
       },
     ],
   },

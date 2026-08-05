@@ -1,7 +1,8 @@
-import Link from "next/link";
 import type { LibraryElectronicResource } from "@ksu/api-client";
 import {
   ExternalAnchor,
+  LibraryActionLink,
+  LibraryBadge,
   LibraryHero,
   LibrarySection,
   MetricStrip,
@@ -13,6 +14,8 @@ import {
   SidePanel,
   StatusMessage,
 } from "../../components/library-ui";
+import { LibraryFilterToolbar } from "../../components/library-filter-toolbar";
+import { ListPagination, pageFromSearchParams } from "@ksu/ui/components";
 import {
   compactText,
   formatLabel,
@@ -64,10 +67,12 @@ export default async function ElectronicResourcesPage({
   const resourceType = params.type?.trim() ?? "";
   const accessLevel = params.access?.trim() ?? "";
   const featuredOnly = params.featured === "true";
+  const page = pageFromSearchParams(params);
   const resources = await getElectronicResources(query, {
     resourceType,
     accessLevel,
     featured: featuredOnly || undefined,
+    page,
   });
   const featured = resources.data.filter((item) => item.is_featured).slice(0, 3);
   const grouped = groupByLetter(resources.data);
@@ -78,7 +83,11 @@ export default async function ElectronicResourcesPage({
   const offCampusCount = resources.data.filter(
     (item) => item.access_type === "off_campus" || item.access_type === "both",
   ).length;
-  const hasFilters = Boolean(query || resourceType || accessLevel || featuredOnly);
+
+  const totalPages = resources.meta
+    ? Math.ceil(resources.meta.total / resources.meta.per_page)
+    : 1;
+  const electronicBaseHref = buildBaseHref("/electronic", params);
 
   return (
     <main id="library-main" className="min-h-screen bg-white">
@@ -97,17 +106,7 @@ export default async function ElectronicResourcesPage({
             <SecondaryLink href="/services">Access support</SecondaryLink>
           </>
         }
-      >
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-            E-resource records
-          </p>
-          <p className="mt-3 text-4xl font-bold sm:text-5xl">{resources.data.length}</p>
-          <p className="mt-2 text-sm leading-6 text-white/75">
-            Active databases and online platforms published for library users.
-          </p>
-        </div>
-      </LibraryHero>
+      />
 
       <LibraryContentBand>
         <SearchPanel>
@@ -116,98 +115,35 @@ export default async function ElectronicResourcesPage({
             title="Find an electronic resource"
             body="Search by database name, provider, subject, access level, or platform type."
           />
-        <form
-          action="/electronic"
-          className="grid gap-4 xl:grid-cols-[minmax(260px,1fr)_220px_220px_auto_auto] xl:items-end"
-        >
-          <div className="space-y-2">
-            <label
-              className="text-sm font-semibold text-slate-900"
-              htmlFor="electronic-query"
-            >
-              Search resources
-            </label>
-            <input
-              id="electronic-query"
-              name="q"
-              type="search"
-              defaultValue={query}
-              placeholder="Database, provider, subject, or access type"
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label
-              className="text-sm font-semibold text-slate-900"
-              htmlFor="electronic-type"
-            >
-              Resource type
-            </label>
-            <select
-              id="electronic-type"
-              name="type"
-              defaultValue={resourceType}
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              {resourceTypeOptions.map((option) => (
-                <option key={option.value || "all-types"} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label
-              className="text-sm font-semibold text-slate-900"
-              htmlFor="electronic-access"
-            >
-              Audience
-            </label>
-            <select
-              id="electronic-access"
-              name="access"
-              defaultValue={accessLevel}
-              className="flex h-11 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              {accessLevelOptions.map((option) => (
-                <option key={option.value || "all-access"} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <label className="inline-flex min-h-11 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
-            <input
-              type="checkbox"
-              name="featured"
-              value="true"
-              defaultChecked={featuredOnly}
-              className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-ring"
-            />
-            Featured only
-          </label>
-
-          <button
-            type="submit"
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-          >
-            Search resources
-          </button>
-        </form>
-
-        {hasFilters ? (
-          <div className="mt-4">
-            <Link
-              href="/electronic"
-              className="inline-flex min-h-11 items-center rounded-full px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10"
-            >
-              Clear search and filters
-            </Link>
-          </div>
-        ) : null}
+        <LibraryFilterToolbar
+          actionUrl="/electronic"
+          resetHref="/electronic"
+          searchValue={query}
+          searchPlaceholder="Database, provider, subject, or access type"
+          searchLabel="Search Resources"
+          selects={[
+            {
+              name: "type",
+              label: "Resource Type",
+              value: resourceType,
+              options: resourceTypeOptions,
+              allLabel: "All types",
+            },
+            {
+              name: "access",
+              label: "Audience",
+              value: accessLevel,
+              options: accessLevelOptions,
+              allLabel: "All audiences",
+            },
+          ]}
+          checkbox={{
+            name: "featured",
+            label: "Featured",
+            checked: featuredOnly,
+            filterLabel: "Featured only",
+          }}
+        />
         </SearchPanel>
 
         {resources.error ? (
@@ -247,7 +183,7 @@ export default async function ElectronicResourcesPage({
             <a
               key={letter}
               href={`#letter-${letter}`}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:border-primary/30 hover:text-primary"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-white text-sm font-semibold text-muted-foreground hover:border-primary/30 hover:text-primary"
             >
               {letter}
             </a>
@@ -263,45 +199,54 @@ export default async function ElectronicResourcesPage({
             <AccessHelp />
           </div>
         ) : (
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="space-y-8">
-              {grouped.map(([letter, items]) => (
-                <section key={letter} aria-labelledby={`letter-${letter}`}>
-                  <h2
-                    id={`letter-${letter}`}
-                    className="mb-4 border-b border-slate-200 pb-2 text-2xl font-semibold text-slate-950"
-                  >
-                    {letter}
-                  </h2>
-                  <div className="grid gap-5 lg:grid-cols-2">
-                    {items.map((resource) => (
-                      <ResourceCard key={resource.id} resource={resource} />
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
+          <>
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="flex flex-col gap-8">
+                {grouped.map(([letter, items]) => (
+                  <section key={letter} aria-labelledby={`letter-${letter}`}>
+                    <h2
+                      id={`letter-${letter}`}
+                      className="mb-4 border-b border-border pb-2 text-2xl font-semibold text-foreground"
+                    >
+                      {letter}
+                    </h2>
+                    <div className="grid gap-5 lg:grid-cols-2">
+                      {items.map((resource) => (
+                        <ResourceCard key={resource.id} resource={resource} />
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
 
-            <aside className="space-y-5">
-              <MetricStrip
-                items={[
-                  { label: "Returned", value: resources.data.length },
-                  { label: "Off campus", value: offCampusCount },
-                  { label: "VPN required", value: vpnCount },
-                ]}
-              />
-              <SidePanel title="Remote access" eyebrow="Support">
-                <p className="text-sm leading-7 text-slate-600">
-                  Some platforms require campus network access, VPN, or a personal account.
-                  Use the access notes on each record before opening the provider site.
-                </p>
-                <p className="mt-3 text-sm font-semibold text-slate-950">
-                  {registrationCount} resources require registration.
-                </p>
-              </SidePanel>
-              <AccessHelp />
-            </aside>
-          </div>
+              <aside className="flex flex-col gap-5">
+                <MetricStrip
+                  items={[
+                    { label: "Returned", value: resources.data.length },
+                    { label: "Off campus", value: offCampusCount },
+                    { label: "VPN required", value: vpnCount },
+                  ]}
+                />
+                <SidePanel title="Remote access" eyebrow="Support">
+                  <p className="text-sm leading-7 text-muted-foreground">
+                    Some platforms require campus network access, VPN, or a personal account.
+                    Use the access notes on each record before opening the provider site.
+                  </p>
+                  <p className="mt-3 text-sm font-semibold text-foreground">
+                    {registrationCount} resources require registration.
+                  </p>
+                </SidePanel>
+                <AccessHelp />
+              </aside>
+            </div>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              total={resources.meta?.total ?? resources.data.length}
+              perPage={resources.meta?.per_page ?? 100}
+              baseHref={electronicBaseHref}
+            />
+          </>
         )}
       </LibraryContentBand>
     </main>
@@ -336,44 +281,34 @@ function ResourceCard({
       className={
         featured
           ? "rounded-lg border border-primary/30 bg-white p-5 shadow-sm"
-          : "rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+          : "rounded-lg border border-border bg-white p-5 shadow-sm"
       }
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+        <LibraryBadge>
           {formatLabel(resource.resource_type ?? "database")}
-        </span>
-        <span
-          className={
-            resource.requires_vpn
-              ? "rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-white"
-              : "rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white"
-          }
-        >
+        </LibraryBadge>
+        <LibraryBadge tone={resource.requires_vpn ? "secondary" : "primary"}>
           {resource.requires_vpn
             ? "VPN required"
             : formatLabel(resource.access_level ?? "library access")}
-        </span>
+        </LibraryBadge>
         {resource.requires_registration ? (
-          <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">
-            Registration
-          </span>
+          <LibraryBadge tone="muted">Registration</LibraryBadge>
         ) : null}
         {featured ? (
-          <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-            Featured
-          </span>
+          <LibraryBadge tone="primary">Featured</LibraryBadge>
         ) : null}
       </div>
-      <h3 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
+      <h3 className="mt-4 text-xl font-semibold leading-7 text-foreground">
         {resource.name ?? "Untitled resource"}
       </h3>
-      <p className="mt-3 text-sm leading-7 text-slate-600">
+      <p className="mt-3 text-sm leading-7 text-muted-foreground">
         {compactText(resource.description) ||
           compactText(resource.provider) ||
           "Access details are managed by the library team."}
       </p>
-      <dl className="mt-5 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+      <dl className="mt-5 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
         <Meta label="Provider" value={resource.provider} />
         <Meta label="Audience" value={formatLabel(resource.access_level)} />
         <Meta label="Access" value={formatLabel(resource.access_type)} />
@@ -383,17 +318,12 @@ function ResourceCard({
       {subjects.length > 0 ? (
         <div className="mt-5 flex flex-wrap gap-2">
           {subjects.slice(0, 5).map((subject: string) => (
-            <span
-              key={subject}
-              className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600"
-            >
-              {subject}
-            </span>
+            <LibraryBadge key={subject}>{subject}</LibraryBadge>
           ))}
         </div>
       ) : null}
       {notes ? (
-        <p className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-600">
+        <p className="mt-5 rounded-md border border-border bg-surface-subtle p-3 text-sm leading-6 text-muted-foreground">
           {notes}
         </p>
       ) : null}
@@ -402,7 +332,7 @@ function ResourceCard({
           <ExternalAnchor href={accessUrl}>Open resource</ExternalAnchor>
         </div>
       ) : (
-        <p className="mt-6 text-sm text-slate-500">
+        <p className="mt-6 text-sm text-muted-foreground">
           Access link pending library verification.
         </p>
       )}
@@ -412,20 +342,17 @@ function ResourceCard({
 
 function AccessHelp() {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-950">Access help</h2>
-      <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-lg font-semibold text-foreground">Access help</h2>
+      <ul className="mt-4 flex flex-col gap-3 text-sm leading-6 text-muted-foreground">
         <li>Use your university network or approved off-campus access method.</li>
         <li>Check resource badges for VPN or registration requirements.</li>
         <li>Contact the library team when a subscription link does not open.</li>
       </ul>
       <div className="mt-5">
-        <Link
-          href="/services#services-heading"
-          className="inline-flex min-h-11 items-center rounded-full px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10"
-        >
+        <LibraryActionLink href="/services#services-heading">
           Get access support
-        </Link>
+        </LibraryActionLink>
       </div>
     </section>
   );
@@ -464,8 +391,21 @@ function Meta({
 
   return (
     <div>
-      <dt className="font-semibold text-slate-950">{label}</dt>
+      <dt className="font-semibold text-foreground">{label}</dt>
       <dd className="mt-1">{value}</dd>
     </div>
   );
+}
+
+function buildBaseHref(
+  path: string,
+  params: Record<string, string | string[] | undefined>,
+) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (key === "page") continue;
+    if (typeof value === "string" && value) search.set(key, value);
+  }
+  const qs = search.toString();
+  return qs ? `${path}?${qs}` : path;
 }

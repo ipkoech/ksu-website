@@ -2,11 +2,13 @@ import type { LibraryBranch, LibraryServiceRecord } from "@ksu/api-client";
 import {
   IconCard,
   ExternalAnchor,
+  LibraryBadge,
   LibraryHero,
   LibrarySection,
   PillNav,
   PrimaryLink,
   SecondaryLink,
+  SidePanel,
   StatusMessage,
 } from "../../components/library-ui";
 import {
@@ -63,21 +65,11 @@ export default async function LibraryServicesPage() {
             <SecondaryLink href="/ask">Ask a librarian</SecondaryLink>
           </>
         }
-      >
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-            Public branches
-          </p>
-          <p className="mt-3 text-4xl font-bold sm:text-5xl">{branches.data.length}</p>
-          <p className="mt-2 text-sm leading-6 text-white/75">
-            Branch records with contacts and service listings.
-          </p>
-        </div>
-      </LibraryHero>
+      />
 
       {errors.length > 0 ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-[1320px] space-y-3">
+          <div className="mx-auto flex max-w-[1680px] flex-col gap-3">
             {errors.map((error) => (
               <StatusMessage key={error} tone="error">
                 {error}
@@ -149,18 +141,15 @@ export default async function LibraryServicesPage() {
               value={regulations.data.length}
             />
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-              Best starting point
-            </p>
-            <h3 className="mt-3 text-lg font-semibold text-slate-950">
+          <SidePanel title="Best starting point" eyebrow="Service route">
+            <h3 className="text-lg font-semibold text-foreground">
               {supportService?.name ?? "Contact a branch desk"}
             </h3>
-            <p className="mt-3 text-sm leading-7 text-slate-600">
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
               {compactText(supportService?.description) ||
                 "Use the branch cards below to identify the most relevant library desk for service support."}
             </p>
-            <dl className="mt-5 grid gap-3 text-sm text-slate-600">
+            <dl className="mt-5 grid gap-3 text-sm text-muted-foreground">
               <Meta
                 label="Branch"
                 value={supportService?.branch?.name ?? branches.data[0]?.name}
@@ -171,7 +160,7 @@ export default async function LibraryServicesPage() {
                 value={supportService?.how_to_access}
               />
             </dl>
-          </aside>
+          </SidePanel>
         </div>
       </LibrarySection>
 
@@ -208,15 +197,15 @@ export default async function LibraryServicesPage() {
             {branchContacts.map((branch) => (
               <article
                 key={branch.id}
-                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                className="rounded-lg border border-border bg-white p-5 shadow-sm"
               >
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
                   {formatLabel(branch.library_type ?? "library")}
                 </p>
-                <h3 className="mt-3 text-lg font-semibold leading-7 text-slate-950">
+                <h3 className="mt-3 text-lg font-semibold leading-7 text-foreground">
                   {branch.name}
                 </h3>
-                <dl className="mt-5 grid gap-3 text-sm text-slate-600">
+                <dl className="mt-5 grid gap-3 text-sm text-muted-foreground">
                   <Meta label="Phone" value={branch.phone} />
                   <Meta label="Email" value={branch.email} />
                   <Meta label="Location" value={branch.address} />
@@ -241,26 +230,24 @@ export default async function LibraryServicesPage() {
             branches.data.map((branch) => (
               <article
                 key={branch.id}
-                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                className="rounded-lg border border-border bg-white p-5 shadow-sm"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+                  <LibraryBadge>
                     {formatLabel(branch.library_type ?? "library")}
-                  </span>
+                  </LibraryBadge>
                   {branch.is_public ? (
-                    <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">
-                      Public
-                    </span>
+                    <LibraryBadge tone="primary">Public</LibraryBadge>
                   ) : null}
                 </div>
-                <h2 className="mt-4 text-2xl font-semibold text-slate-950">
+                <h2 className="mt-4 text-2xl font-semibold text-foreground">
                   {branch.name}
                 </h2>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">
                   {compactText(branch.description) ||
                     "Branch details are being updated by the library team."}
                 </p>
-                <dl className="mt-5 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+                <dl className="mt-5 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
                   <Meta label="Address" value={branch.address} />
                   <Meta label="Phone" value={branch.phone} />
                   <Meta label="Email" value={branch.email} />
@@ -277,21 +264,18 @@ export default async function LibraryServicesPage() {
             ))
           )}
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-              Branch map
-            </p>
-            <div className="mt-4 aspect-[4/3] rounded-md border border-slate-200 bg-slate-50 p-4">
+          <SidePanel title="Branch map" eyebrow="Library network">
+            <div className="aspect-[4/3] rounded-md border border-border bg-surface-subtle p-4">
               <div className="grid h-full place-items-center text-center">
                 <div>
-                  <p className="text-lg font-semibold text-slate-950">Kisii University Library Network</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                  <p className="text-lg font-semibold text-foreground">Kisii University Library Network</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     Map coordinates can be connected when branch location data is published.
                   </p>
                 </div>
               </div>
             </div>
-          </aside>
+          </SidePanel>
         </div>
       </LibrarySection>
 
@@ -300,25 +284,25 @@ export default async function LibraryServicesPage() {
         title="Services by branch"
         body="These are branch-scoped service records, including borrowing, printing, scanning, reference support, inter-library loan, and training."
       >
-        <div id="services-heading" className="space-y-8">
+        <div id="services-heading" className="flex flex-col gap-8">
           {groupedServices.length === 0 && !branches.error ? (
             <StatusMessage>No branch services are available yet.</StatusMessage>
           ) : (
             groupedServices.map(({ branch, services }) => (
               <section key={branch.id} aria-labelledby={`services-${branch.id}`}>
-                <div className="mb-4 flex flex-col justify-between gap-2 border-b border-slate-200 pb-3 sm:flex-row sm:items-end">
+                <div className="mb-4 flex flex-col justify-between gap-2 border-b border-border pb-3 sm:flex-row sm:items-end">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
                       Branch services
                     </p>
                     <h2
                       id={`services-${branch.id}`}
-                      className="mt-1 text-2xl font-semibold text-slate-950"
+                      className="mt-1 text-2xl font-semibold text-foreground"
                     >
                       {branch.name}
                     </h2>
                   </div>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-muted-foreground">
                     {services.length} service{services.length === 1 ? "" : "s"}
                   </p>
                 </div>
@@ -331,19 +315,19 @@ export default async function LibraryServicesPage() {
                     {services.map((service) => (
                       <article
                         key={service.id}
-                        className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                        className="rounded-lg border border-border bg-white p-5 shadow-sm"
                       >
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
                           {formatLabel(service.service_type ?? "service")}
                         </p>
-                        <h3 className="mt-3 text-lg font-semibold leading-7 text-slate-950">
+                        <h3 className="mt-3 text-lg font-semibold leading-7 text-foreground">
                           {service.name ?? "Library service"}
                         </h3>
-                        <p className="mt-3 text-sm leading-7 text-slate-600">
+                        <p className="mt-3 text-sm leading-7 text-muted-foreground">
                           {compactText(service.description) ||
                             "Contact the branch desk for service details."}
                         </p>
-                        <dl className="mt-5 grid gap-3 text-sm text-slate-600">
+                        <dl className="mt-5 grid gap-3 text-sm text-muted-foreground">
                           <Meta label="Branch" value={branch.name} />
                           <Meta label="Eligibility" value={service.eligibility} />
                           <Meta
@@ -376,15 +360,15 @@ export default async function LibraryServicesPage() {
               {regulations.data.map((regulation) => (
                 <article
                   key={regulation.id}
-                  className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                  className="rounded-lg border border-border bg-white p-5 shadow-sm"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
                     {formatLabel(regulation.category ?? "regulation")}
                   </p>
-                  <h3 className="mt-3 text-xl font-semibold text-slate-950">
+                  <h3 className="mt-3 text-xl font-semibold text-foreground">
                     {regulation.title ?? "Library regulation"}
                   </h3>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                  <p className="mt-3 text-sm leading-7 text-muted-foreground">
                     {compactText(regulation.content) ||
                       "Regulation details are being updated."}
                   </p>
@@ -392,35 +376,29 @@ export default async function LibraryServicesPage() {
               ))}
             </div>
           )}
-          <aside className="space-y-5">
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="text-lg font-semibold text-slate-950">
-                Before you visit
-              </h3>
-              <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+          <aside className="flex flex-col gap-5">
+            <SidePanel title="Before you visit">
+              <ul className="flex flex-col gap-3 text-sm leading-6 text-muted-foreground">
                 <li>Confirm the branch that offers the service you need.</li>
                 <li>Check eligibility and access notes on the service card.</li>
                 <li>Use active regulations for borrowing, conduct, and fee guidance.</li>
               </ul>
-            </section>
+            </SidePanel>
             {featuredRegulations.length > 0 ? (
-              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <h3 className="text-lg font-semibold text-slate-950">
-                  Key regulations
-                </h3>
-                <div className="mt-4 divide-y divide-slate-200">
+              <SidePanel title="Key regulations">
+                <div className="divide-y divide-slate-200">
                   {featuredRegulations.map((regulation) => (
                     <article key={regulation.id} className="py-3 first:pt-0">
-                      <p className="text-sm font-semibold text-slate-950">
+                      <p className="text-sm font-semibold text-foreground">
                         {regulation.title ?? "Library regulation"}
                       </p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
                         {formatLabel(regulation.category ?? "regulation")}
                       </p>
                     </article>
                   ))}
                 </div>
-              </section>
+              </SidePanel>
             ) : null}
           </aside>
         </div>
@@ -451,12 +429,12 @@ function SummaryCard({
   body?: string;
 }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="rounded-lg border border-border bg-white p-5 shadow-sm">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
         {label}
       </p>
-      <p className="mt-3 text-3xl font-bold text-slate-950 sm:text-4xl">{value}</p>
-      {body ? <p className="mt-2 text-sm text-slate-600">{body}</p> : null}
+      <p className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">{value}</p>
+      {body ? <p className="mt-2 text-sm text-muted-foreground">{body}</p> : null}
     </article>
   );
 }
@@ -472,7 +450,7 @@ function Meta({
 
   return (
     <div>
-      <dt className="font-semibold text-slate-950">{label}</dt>
+      <dt className="font-semibold text-foreground">{label}</dt>
       <dd className="mt-1">{value}</dd>
     </div>
   );

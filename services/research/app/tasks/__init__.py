@@ -1,1 +1,5 @@
-"""Research Celery tasks — populated in Phase 2."""
+"""Research Celery tasks."""
+
+from .celery_app import celery_app
+
+__all__ = ["celery_app"]

@@ -1,23 +1,36 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpenCheck, Building2, FlaskConical, GraduationCap, Sprout } from "lucide-react";
-import { ResearchClusterHero } from "../../components/research-cluster";
-import { ResearchFilterForm } from "../../components/research-listing";
+import { pageFromSearchParams } from "@ksu/ui/components";
+import { ProgramTableControls } from "../programs/program-table-controls";
+import { ResearchListPagination } from "../../components/research-list-pagination";
+import {
+  ResearchPortfolioHero,
+  ResearchPortfolioShell,
+} from "../../components/research-portfolio";
 import {
   Badge,
   ResearchSection,
+  FilledBadge,
   StatusMessage,
 } from "../../components/research-ui";
 import {
   compactText,
   formatLabel,
   getCenters,
+  getFacilities,
   getFacilitiesFiltered,
   getServices,
 } from "../../lib/research-public-data";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import {
+  filterRecordsByMonth,
+  getListPageSize,
+  getRecordMonths,
+  getRecordTitle,
+  getRecordYears,
+} from "../../lib/research-page-model";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Facilities & Labs",
@@ -27,43 +40,33 @@ export const metadata: Metadata = {
 type FacilitySearchParams = {
   q?: string;
   type?: string;
+  status?: string;
+  active?: string;
   center?: string;
+  year?: string;
+  month?: string;
   sort?: string;
+  page?: string;
 };
 
 const farmTypes = ["crop", "livestock", "aquaculture", "mixed", "demonstration", "experimental"];
-
-const discoveryLinks = [
-  {
-    label: "Projects",
-    href: "/projects",
-    description: "Browse funded, applied, action, and collaborative work.",
-    icon: FlaskConical,
-  },
-  {
-    label: "Programs",
-    href: "/programs",
-    description: "See long-term research pathways and related projects.",
-    icon: BookOpenCheck,
-  },
-  {
-    label: "Centers",
-    href: "/centers",
-    description: "Find the institutional homes for research activity.",
-    icon: Building2,
-  },
-  {
-    label: "Facilities",
-    href: "/facilities",
-    description: "Explore farms, labs, and practical research infrastructure.",
-    icon: Sprout,
-  },
-  {
-    label: "Capacity",
-    href: "/capacity",
-    description: "Training, mentorship, and scholarship support.",
-    icon: GraduationCap,
-  },
+const facilityStatuses = ["active", "inactive", "maintenance", "planned", "closed"];
+const activeStates = [
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
+  { label: "Featured", value: "featured" },
+];
+const sortOptions = [
+  { value: "display_order", label: "Featured order" },
+  { value: "name", label: "Name A-Z" },
+  { value: "created_at", label: "Newest" },
+  { value: "updated_at", label: "Recently updated" },
+];
+const quickLinks = [
+  { label: "Centers", href: "/centers", body: "Institutional owners and anchors" },
+  { label: "Services", href: "/services", body: "Support available to researchers" },
+  { label: "Farm", href: "/farm", body: "Research farm profiles" },
+  { label: "Resources", href: "/resources-tools", body: "Tools and access material" },
 ];
 
 export default async function FacilitiesPage({
@@ -72,50 +75,64 @@ export default async function FacilitiesPage({
   searchParams?: Promise<FacilitySearchParams>;
 }) {
   const params = (await searchParams) ?? {};
-  const [facilities, centers, services] = await Promise.all([
+  const page = pageFromSearchParams(params);
+  const perPage = getListPageSize(12);
+  const activeFlags = getActiveFlags(params.active);
+  const [facilities, allFacilities, centers, services] = await Promise.all([
     getFacilitiesFiltered({
       search: params.q,
       farmType: params.type,
+      status: params.status,
       centerId: params.center,
+      year: params.year,
       sort: params.sort || "display_order",
       order: params.sort === "name" ? "asc" : "desc",
+      page,
+      perPage,
+      ...activeFlags,
     }),
+    getFacilities(),
     getCenters(),
     getServices(),
   ]);
+  const years = getRecordYears(allFacilities.data);
+  const months = getRecordMonths(allFacilities.data, params.year);
+  const visibleFacilities = filterRecordsByMonth(facilities.data, params.year, params.month);
+  const totalPages = Math.ceil(
+    (params.month ? visibleFacilities.length : facilities.total) / facilities.perPage,
+  );
 
   return (
-    <main id="research-main" className="min-h-screen bg-white">
-      <ResearchClusterHero
-        eyebrow="Discovery"
-        title="Facilities, labs, farms, and research infrastructure."
-        body="Find research infrastructure, access points, services, and facilities that support discovery and extension."
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Discovery", href: "/projects" },
-          { label: "Facilities" },
-        ]}
-        imageSrc="/images/research/research-workflows.png"
-        imageAlt="Research farm, laboratory, and field infrastructure supporting discovery"
-        links={discoveryLinks}
-        primaryAction={{ label: "View centers", href: "/centers" }}
-        stats={[
-          { label: "Facility results", value: facilities.data.length },
-          { label: "Centers", value: centers.data.length },
-          { label: "Support services", value: services.data.length },
-          { label: "Facility types", value: farmTypes.length },
-        ]}
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
+      <ResearchPortfolioHero
+        eyebrow="Research infrastructure"
+        title="Facilities & Labs"
+        body="Facilities, farms, laboratories, and practical infrastructure that support field trials, experiments, services, and training."
+        primary={{ label: "Explore facilities", href: "#facility-portfolio" }}
+        secondary={{ label: "View centers", href: "/centers" }}
+        illustration="facilities"
       />
 
-      <ResearchSection
-        eyebrow="Infrastructure"
-        title="Facilities and research farms"
-        body="Browse facilities by type, center, availability, location, and activity area."
-        tone="white"
+      <ResearchPortfolioShell
+        id="facility-portfolio"
+        title="Facility Portfolio"
+        body="Search, filter, sort, and open published infrastructure profiles."
+        quickLinks={quickLinks}
+        controls={<FacilityFilters params={params} centers={centers.data} years={years} months={months} />}
+        footer={
+          visibleFacilities.length > 0 ? (
+            <ResearchListPagination
+              page={page}
+              totalPages={totalPages}
+              total={params.month ? visibleFacilities.length : facilities.total}
+              perPage={facilities.perPage}
+              path="/facilities"
+              params={params}
+            />
+          ) : null
+        }
       >
-        <FacilityFilters params={params} centers={centers.data} />
-
-        {[facilities.error, centers.error]
+        {[facilities.error, allFacilities.error, centers.error]
           .filter(Boolean)
           .map((error) => (
             <div key={error} className="mt-5">
@@ -123,18 +140,27 @@ export default async function FacilitiesPage({
             </div>
           ))}
 
-        {facilities.data.length > 0 ? (
-          <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {facilities.data.map((facility) => (
-              <FacilityCard key={facility.id} facility={facility} />
-            ))}
-          </div>
+        {visibleFacilities.length > 0 ? (
+          <>
+            <div className="mt-6 overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+              <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-border bg-surface-subtle px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground md:grid">
+                <span>Facility</span>
+                <span>Type</span>
+                <span>Status</span>
+              </div>
+              <div className="divide-y divide-slate-200">
+                {visibleFacilities.map((facility) => (
+                  <FacilityRow key={facility.id} facility={facility} />
+                ))}
+              </div>
+            </div>
+          </>
         ) : (
           <div className="mt-7">
             <StatusMessage>No facilities match the current filters.</StatusMessage>
           </div>
         )}
-      </ResearchSection>
+      </ResearchPortfolioShell>
 
       <ResearchSection
         eyebrow="Support"
@@ -147,19 +173,19 @@ export default async function FacilitiesPage({
             <Link
               key={service.id}
               href={service.slug ? `/services/${service.slug}` : "/services"}
-              className="block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30"
+              className="block rounded-lg border border-border bg-white p-5 shadow-sm transition hover:border-primary/30"
             >
               <Badge>{formatLabel(service.service_type ?? service.type ?? "service")}</Badge>
-              <h3 className="mt-4 text-xl font-semibold text-slate-950">
+              <h3 className="mt-4 text-xl font-semibold text-foreground">
                 {service.name ?? service.title}
               </h3>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">
                 {compactText(service.summary) ||
                   compactText(service.description) ||
                   compactText(service.how_to_access) ||
                   "Service details will appear when published."}
               </p>
-              <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
+              <p className="mt-5 rounded-md bg-surface-subtle p-3 text-sm font-semibold text-muted-foreground">
                 {compactText(service.turnaround_time) ||
                   compactText(service.contact_email) ||
                   "Access details not published"}
@@ -175,53 +201,67 @@ export default async function FacilitiesPage({
 function FacilityFilters({
   params,
   centers,
+  years,
+  months,
 }: {
   params: FacilitySearchParams;
   centers: ResearchGenericRecord[];
+  years: string[];
+  months: Array<{ value: string; label: string }>;
 }) {
   return (
-    <ResearchFilterForm
+    <ProgramTableControls
       action="/facilities"
       resetHref="/facilities"
       searchValue={params.q}
-      searchPlaceholder="Facility name, activities, location"
-      selects={[{ name: "type", label: "Type", value: params.type, options: farmTypes }]}
+      searchPlaceholder="Search facilities by name, activity, location..."
+      filterTitle="Filter facilities"
+      sortTitle="Sort facilities"
+      filterSelects={[
+        { name: "type", label: "Type", value: params.type, options: farmTypes },
+        { name: "active", label: "Active state", value: params.active, options: activeStates },
+        { name: "status", label: "Status", value: params.status, options: facilityStatuses },
+        { name: "year", label: "Year", value: params.year, options: years },
+        { name: "month", label: "Month", value: params.month, options: months },
+      ]}
       centers={centers}
       centerValue={params.center}
       sortValue={params.sort}
-      sortOptions={[
-        { value: "display_order", label: "Featured order" },
-        { value: "name", label: "Name" },
-        { value: "created_at", label: "Newest" },
-      ]}
+      sortOptions={sortOptions}
     />
   );
 }
 
-function FacilityCard({ facility }: { facility: ResearchGenericRecord }) {
+function FacilityRow({ facility }: { facility: ResearchGenericRecord }) {
+  const href = facility.slug ? `/farm/${facility.slug}` : "/farm";
+  const title = getRecordTitle(facility, "Research facility");
+  const type = formatLabel(compactText(facility.farm_type) || "facility");
+  const status = formatLabel(compactText(facility.status) || (facility.is_active === false ? "inactive" : "active"));
+
   return (
     <Link
-      href={facility.slug ? `/farm/${facility.slug}` : "/farm"}
-      className="group block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
+      href={href}
+      className="group grid gap-2 px-4 py-3 transition hover:bg-surface-subtle/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
     >
-      <div className="flex flex-wrap gap-2">
-        <Badge>{formatLabel(facility.farm_type ?? "facility")}</Badge>
-        {facility.county ? <Badge>{facility.county}</Badge> : null}
+      <div className="min-w-0">
+        <h2 className="truncate text-sm font-semibold leading-6 text-foreground transition group-hover:text-primary">
+          {title}
+        </h2>
+        {facility.code ? (
+          <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">{compactText(facility.code)}</p>
+        ) : null}
       </div>
-      <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-        {facility.name ?? facility.title}
-      </h2>
-      <p className="mt-3 text-sm leading-7 text-slate-600">
-        {compactText(facility.about) ||
-          compactText(facility.activities) ||
-          compactText(facility.facilities) ||
-          "Facility profile will appear when published by the research office."}
-      </p>
-      <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
-        {compactText(facility.location) ||
-          compactText(facility.manager_name) ||
-          "Location details not published"}
-      </p>
+      <div className="text-xs font-medium text-muted-foreground md:text-sm">{type}</div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge>{status}</Badge>
+        {facility.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
+      </div>
     </Link>
   );
+}
+
+function getActiveFlags(value?: string) {
+  if (value === "inactive") return { isActive: false };
+  if (value === "featured") return { isActive: true, isFeatured: true };
+  return { isActive: true };
 }

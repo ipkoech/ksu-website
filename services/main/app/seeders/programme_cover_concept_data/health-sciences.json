@@ -1,0 +1,170 @@
+[
+  {
+    "programme_name": "Bachelor of Medicine and Bachelor of Surgery",
+    "department_code": "MED",
+    "visual_family": "medicine and surgery",
+    "subject": "a stethoscope encircling a simplified anatomical heart beside a surgical instrument tray and an open clinical reference volume",
+    "alt_text": "Illustration of a stethoscope, anatomical heart, surgical instruments, and clinical reference volume",
+    "distinctiveness": "Comprehensive physician training represented by integrated diagnosis, anatomy, surgery, and clinical scholarship"
+  },
+  {
+    "programme_name": "PhD in Biomedical Sciences",
+    "department_code": "AHS",
+    "visual_family": "biomedical research",
+    "subject": "a layered molecular pathway with a DNA helix, cultured cell forms, and a precision research microscope arranged around a central discovery node",
+    "alt_text": "Illustration of a molecular pathway, DNA helix, cells, and research microscope",
+    "distinctiveness": "Doctoral-level original research represented by a complex interconnected discovery pathway"
+  },
+  {
+    "programme_name": "MSc in Biomedical Sciences",
+    "department_code": "AHS",
+    "visual_family": "biomedical research",
+    "subject": "a research microscope focused on a clean cell sample, flanked by a DNA segment and two analytical laboratory vessels",
+    "alt_text": "Illustration of a microscope examining cells beside DNA and laboratory vessels",
+    "distinctiveness": "Master's-level advanced laboratory analysis represented by a focused experimental composition"
+  },
+  {
+    "programme_name": "Master of Public Health",
+    "department_code": "PUBH",
+    "visual_family": "population health",
+    "subject": "a county-scale health network linking a clinic, clean water droplet, vaccination shield, and epidemiological trend markers around a population map",
+    "alt_text": "Illustration of a population health network connecting a clinic, clean water, vaccination, and epidemiology",
+    "distinctiveness": "Graduate public-health leadership represented by systems analysis and coordinated population prevention"
+  },
+  {
+    "programme_name": "MSc in Nutrition",
+    "department_code": "FND",
+    "visual_family": "nutrition science",
+    "subject": "a molecular nutrient diagram flowing from a balanced plate into a laboratory assay vessel and metabolic pathway nodes",
+    "alt_text": "Illustration of a balanced plate connected to a nutrient assay and metabolic pathway",
+    "distinctiveness": "Master's-level nutrition research represented by the link between diet, laboratory analysis, and metabolism"
+  },
+  {
+    "programme_name": "Bachelor of Science in Clinical Medicine and Surgery (Upgrading)",
+    "department_code": "CLMED",
+    "visual_family": "clinical medicine",
+    "subject": "an advanced clinical case portfolio rising in steps toward a diagnostic stethoscope, examination light, and compact surgical toolkit",
+    "alt_text": "Illustration of a clinical case portfolio progressing toward diagnostic and surgical tools",
+    "distinctiveness": "Upgrading pathway represented by visible progression from established practice to advanced clinical competence"
+  },
+  {
+    "programme_name": "Bachelor of Science in Nursing (Upgrading)",
+    "department_code": "NURS",
+    "visual_family": "nursing practice",
+    "subject": "a layered nursing care plan ascending toward an advanced monitoring panel, medication tray, and protective care shield",
+    "alt_text": "Illustration of a nursing care plan progressing toward advanced monitoring and medication tools",
+    "distinctiveness": "Upgrading nursing education represented by progression from bedside foundations to advanced coordinated care"
+  },
+  {
+    "programme_name": "Bachelor of Science in Nursing (Direct Entry)",
+    "department_code": "NURS",
+    "visual_family": "nursing practice",
+    "subject": "a caring shield containing a pulse waveform, stethoscope, medication cup, and neatly organized bedside observation chart without writing",
+    "alt_text": "Illustration of a care shield with pulse waveform, stethoscope, medication cup, and observation chart",
+    "distinctiveness": "Direct-entry nursing pathway represented by an integrated foundation in safe bedside assessment and care"
+  },
+  {
+    "programme_name": "Bachelor of Food Nutrition and Dietetics",
+    "department_code": "FND",
+    "visual_family": "dietetics practice",
+    "subject": "a segmented balanced plate of grains, legumes, vegetables, and fruit beside measuring tools and a clinical diet-planning clipboard without writing",
+    "alt_text": "Illustration of a balanced meal, measuring tools, and diet-planning clipboard",
+    "distinctiveness": "Professional dietetics represented by food composition, portion assessment, and practical nutrition planning"
+  },
+  {
+    "programme_name": "Bachelor of Biomedical Science and Technology",
+    "department_code": "AHS",
+    "visual_family": "biomedical technology",
+    "subject": "a microscope connected to a biosensor chip, DNA helix, cell sample, and digital laboratory analysis nodes",
+    "alt_text": "Illustration of a microscope connected to a biosensor, DNA, cells, and analysis nodes",
+    "distinctiveness": "Biomedical technology represented by the integration of biological samples with precision instrumentation"
+  },
+  {
+    "programme_name": "Bachelor of Science in Public Health",
+    "department_code": "PUBH",
+    "visual_family": "population health",
+    "subject": "a prevention shield linking clean water, sanitation, vaccination vial, and disease-surveillance markers around a small community grid",
+    "alt_text": "Illustration of a prevention shield connecting clean water, sanitation, vaccination, and surveillance",
+    "distinctiveness": "Undergraduate public health represented by core prevention, environmental health, and surveillance functions"
+  },
+  {
+    "programme_name": "Bachelor of Science in Community Health and Development",
+    "department_code": "CHD",
+    "visual_family": "community health",
+    "subject": "a rural community cluster connected by pathways to a local clinic, clean-water point, nutrition garden, and upward development markers",
+    "alt_text": "Illustration of a community connected to a clinic, clean water, nutrition garden, and development markers",
+    "distinctiveness": "Community-centred health development represented through locally connected services and sustainable wellbeing"
+  },
+  {
+    "programme_name": "Bachelor of Science in Medical Laboratory Science",
+    "department_code": "MLS",
+    "visual_family": "diagnostic laboratory science",
+    "subject": "a diagnostic microscope examining a blood-cell slide beside a specimen tube rack, pipette, and quality-control analyzer",
+    "alt_text": "Illustration of a microscope, blood-cell slide, specimen tubes, pipette, and laboratory analyzer",
+    "distinctiveness": "Degree-level diagnostic science represented by the complete specimen-to-analysis laboratory workflow"
+  },
+  {
+    "programme_name": "Bachelor of Science in Clinical Medicine and Surgery (Direct Entry)",
+    "department_code": "CLMED",
+    "visual_family": "clinical medicine",
+    "subject": "a clinical examination arrangement with stethoscope, diagnostic light, reflex hammer, patient chart without writing, and a restrained minor-surgery instrument set",
+    "alt_text": "Illustration of clinical examination and minor-surgery instruments around a blank patient chart",
+    "distinctiveness": "Direct-entry clinical training represented by foundational examination, diagnosis, and procedural practice"
+  },
+  {
+    "programme_name": "Bachelor of Pharmacy",
+    "department_code": "PHARM",
+    "visual_family": "pharmaceutical sciences",
+    "subject": "a mortar and pestle centered among molecular structures, capsule and tablet forms, a measured liquid vessel, and a dispensing tray",
+    "alt_text": "Illustration of a mortar and pestle with medicine forms, molecules, measuring vessel, and dispensing tray",
+    "distinctiveness": "Comprehensive pharmacy education represented by formulation science, medicines, measurement, and dispensing"
+  },
+  {
+    "programme_name": "Diploma in Clinical Medicine and Surgery",
+    "department_code": "CLMED",
+    "visual_family": "clinical medicine",
+    "subject": "a compact practical clinical kit containing a stethoscope, thermometer, examination light, bandage roll, and basic instrument tray",
+    "alt_text": "Illustration of a practical clinical kit with assessment and basic procedure tools",
+    "distinctiveness": "Diploma-level clinical preparation represented by a concise toolkit for assessment and essential procedures"
+  },
+  {
+    "programme_name": "Diploma in Medical Laboratory Sciences",
+    "department_code": "MLS",
+    "visual_family": "diagnostic laboratory science",
+    "subject": "a bench-top microscope beside a labelled-free specimen rack, glass slide, pipette, and simple centrifuge arranged as a practical laboratory station",
+    "alt_text": "Illustration of a practical laboratory station with microscope, specimens, slide, pipette, and centrifuge",
+    "distinctiveness": "Diploma-level laboratory training represented by essential bench skills and routine diagnostic equipment"
+  },
+  {
+    "programme_name": "Diploma in Pharmaceutical Technology",
+    "department_code": "PHARM",
+    "visual_family": "pharmaceutical technology",
+    "subject": "a formulation bench with mortar and pestle, capsule tray, measured powder vessel, dropper bottle, and precision balance without markings",
+    "alt_text": "Illustration of a pharmaceutical formulation bench with compounding and measuring tools",
+    "distinctiveness": "Technical diploma training represented by practical medicine compounding, dosage preparation, and measurement"
+  },
+  {
+    "programme_name": "Diploma in Community Health and Development",
+    "department_code": "CHD",
+    "visual_family": "community health",
+    "subject": "a community outreach toolkit linking a small clinic, clean-water container, first-aid case, home garden, and simple service pathway",
+    "alt_text": "Illustration of a community outreach toolkit connecting clinic, clean water, first aid, and nutrition garden",
+    "distinctiveness": "Diploma-level community work represented by practical outreach services and household health support"
+  },
+  {
+    "programme_name": "Diploma in Health Records and Information Technology",
+    "department_code": "PUBH",
+    "visual_family": "health information systems",
+    "subject": "a secure digital health-record folder connected to a database cylinder, analytics tiles, shield, and interoperable clinic nodes without readable symbols",
+    "alt_text": "Illustration of a secure digital health record connected to a database, analytics, and clinic nodes",
+    "distinctiveness": "Health-records technology represented by secure structured data, analysis, and connected clinical information"
+  },
+  {
+    "programme_name": "Diploma in Community Nutrition and Dietetics",
+    "department_code": "FND",
+    "visual_family": "community nutrition",
+    "subject": "a practical community nutrition basket of grains, legumes, vegetables, and fruit beside a portion bowl, measuring tape, and outreach meal-plan cards without writing",
+    "alt_text": "Illustration of nutritious foods, portion tools, and community meal-planning cards",
+    "distinctiveness": "Diploma-level community nutrition represented by locally available foods, practical measurement, and outreach planning"
+  }
+]

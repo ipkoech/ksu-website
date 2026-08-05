@@ -1,34 +1,32 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   ArrowRight,
   Banknote,
   BookOpen,
   GraduationCap,
   HandHeart,
-  HeartHandshake,
   Landmark,
   Sprout,
 } from "lucide-react";
-import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
-import { ResearchClusterHero } from "../../components/research-cluster";
+import { researchServiceApi, type ResearchGenericRecord, type ResearchProject } from "@ksu/api-client";
 import { Badge, ResearchSection, StatusMessage } from "../../components/research-ui";
+import { FundingIllustratedHero, fundingIcons } from "../../components/funding-ui";
 import {
   compactText,
-  formatDate,
   formatLabel,
   getCenters,
   getDonationImpacts,
   getDonationSettings,
-  getDonationStories,
   getEndowments,
   getProjects,
   getScholarships,
   getSustainability,
 } from "../../lib/research-public-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Donate to Research",
@@ -36,42 +34,89 @@ export const metadata: Metadata = {
 };
 
 const defaultAmounts = [1000, 2500, 5000, 10000];
-const workflow = [
-  "Choose a giving priority",
-  "Select one-time or recurring gift",
-  "Share donor details",
-  "Continue through the configured giving channel",
-  "Receive acknowledgement and follow published impact",
-];
 
-const donateLinks = [
-  {
-    label: "Giving Priorities",
-    href: "/donate#priorities",
-    description: "Choose projects, scholarships, centers, sustainability, or endowments.",
-    icon: HandHeart,
-  },
-  {
-    label: "Make a Gift",
-    href: "/donate#make-a-gift",
-    description: "Start a donor and gift request.",
-    icon: HeartHandshake,
-  },
-  {
-    label: "Endowments",
-    href: "/endowments",
-    description: "Explore permanent funds and long-term giving pathways.",
-    icon: Banknote,
-  },
-  {
-    label: "Contact",
-    href: "/connect#get-in-touch",
-    description: "Reach the research office for major gifts or assistance.",
-    icon: Landmark,
-  },
-];
+async function submitDonation(formData: FormData) {
+  "use server";
 
-export default async function DonatePage() {
+  const amount = getDonationAmount(formData);
+  if (!amount) redirect("/donate?error=amount");
+
+  const designationValue = getFormString(formData, "designation") || "unrestricted:general";
+  const binding = getDonationBinding(designationValue);
+  const donationType = getFormString(formData, "donation_type") || "one_time";
+
+  let donationReference: string;
+  try {
+    const response = await researchServiceApi.submitDonation({
+      donor_type: getFormString(formData, "donor_type") || "individual",
+      display_name: getFormString(formData, "display_name"),
+      organization_name: getFormString(formData, "organization_name"),
+      is_anonymous: getFormString(formData, "is_anonymous") === "true",
+      email: getFormString(formData, "email"),
+      phone: getFormString(formData, "phone"),
+      amount,
+      currency: getFormString(formData, "currency") || "KES",
+      donation_type: donationType,
+      recurring_frequency: donationType === "recurring" ? getFormString(formData, "recurring_frequency") : undefined,
+      designation: binding.designation,
+      purpose: getFormString(formData, "purpose"),
+      project_id: binding.project_id,
+      center_id: binding.center_id,
+      scholarship_id: binding.scholarship_id,
+      fund_id: binding.fund_id,
+      preferred_payment_method: getFormString(formData, "preferred_payment_method"),
+      message: getFormString(formData, "message"),
+      dedication: getFormString(formData, "dedication"),
+      is_tribute: getFormString(formData, "is_tribute") === "true",
+      tribute_type: getFormString(formData, "tribute_type"),
+      tribute_name: getFormString(formData, "tribute_name"),
+      recognition_public: getFormString(formData, "recognition_public") === "true",
+    });
+    donationReference = response.data.donation_id;
+  } catch {
+    redirect("/donate?error=submit");
+  }
+  redirect(`/donate?submitted=${donationReference}`);
+}
+
+function getDonationAmount(formData: FormData) {
+  const customAmount = Number(getFormString(formData, "custom_amount"));
+  if (Number.isFinite(customAmount) && customAmount > 0) return customAmount;
+  const selectedAmount = Number(getFormString(formData, "amount"));
+  return Number.isFinite(selectedAmount) && selectedAmount > 0 ? selectedAmount : 0;
+}
+
+function getDonationBinding(value: string) {
+  const [kind, id] = value.split(":");
+  const binding = {
+    designation: kind || "unrestricted",
+    project_id: null as string | null,
+    center_id: null as string | null,
+    scholarship_id: null as string | null,
+    fund_id: null as string | null,
+  };
+
+  if (!id) return binding;
+  if (kind === "project") binding.project_id = id;
+  if (kind === "center") binding.center_id = id;
+  if (kind === "scholarship") binding.scholarship_id = id;
+  if (kind === "fund") binding.fund_id = id;
+  return binding;
+}
+
+function getFormString(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+type DonateSearchParams = { submitted?: string; error?: string };
+
+export default async function DonatePage({
+  searchParams,
+}: {
+  searchParams?: Promise<DonateSearchParams>;
+}) {
+  const params = (await searchParams) ?? {};
   const [
     settings,
     projects,
@@ -80,7 +125,6 @@ export default async function DonatePage() {
     endowments,
     sustainability,
     impacts,
-    stories,
   ] = await Promise.all([
     getDonationSettings(),
     getProjects(),
@@ -89,7 +133,6 @@ export default async function DonatePage() {
     getEndowments(),
     getSustainability(),
     getDonationImpacts(),
-    getDonationStories(),
   ]);
 
   const donationSettings = buildDonationSettings(settings.data);
@@ -101,43 +144,42 @@ export default async function DonatePage() {
     sustainability: sustainability.data,
   });
   const featuredImpact = impacts.data[0];
-  const featuredStory = stories.data[0];
-  const formAction = donationSettings.onlineGivingUrl || donationSettings.contactHref;
 
   return (
-    <main id="research-main" className="min-h-screen bg-white">
-      <ResearchClusterHero
-        eyebrow="Research Giving"
-        title="Support research that serves communities."
-        body="Give to research projects, student discovery, innovation, community extension, sustainability work, facilities, or permanent endowment funds."
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Research", href: "/" },
-          { label: "Donate" },
-        ]}
-        imageSrc="/images/research/research-hero-imagegen.png"
-        imageAlt="Researchers, students, and community partners supported by research giving"
-        links={donateLinks}
-        primaryAction={{ label: "Give now", href: "/donate#make-a-gift" }}
-        stats={[
-          { label: "Giving priorities", value: priorities.length },
-          { label: "Impact reports", value: impacts.data.length },
-          { label: "Donor stories", value: stories.data.length },
-          { label: "Currency", value: donationSettings.currency },
-        ]}
+    <main id="research-main" className="min-h-screen bg-surface-subtle">
+      <DonateMasthead
+        priorityCount={priorities.length}
+        impactCount={impacts.data.length}
+        currency={donationSettings.currency}
+        contactHref={donationSettings.contactHref}
       />
+
+      {params.submitted ? (
+        <section className="px-4 pt-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+          <div className="mx-auto max-w-[1680px]">
+            <DonationSuccessPanel
+              referenceCode={params.submitted}
+              bank={donationSettings.bank}
+              contactEmail={donationSettings.contactEmail}
+            />
+          </div>
+        </section>
+      ) : null}
+      {params.error ? (
+        <section className="px-4 pt-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+          <div className="mx-auto max-w-[1680px]">
+            <StatusMessage tone="error">Donation request could not be submitted. Please check the amount and required donor details.</StatusMessage>
+          </div>
+        </section>
+      ) : null}
 
       <ResearchSection
         eyebrow="Giving Priorities"
-        title="Choose where your gift should make a difference"
-        body="Giving priorities are assembled from published research records, so donors can connect support to real projects, scholarships, centers, sustainability work, and endowments."
+        title="Choose what to support"
+        body="Giving priorities are assembled from published research records and kept compact so donors can move quickly to the form."
         tone="white"
       >
-        <div id="priorities" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {priorities.map((priority) => (
-            <PriorityCard key={priority.id} priority={priority} />
-          ))}
-        </div>
+        <PrioritySelector priorities={priorities} />
         {[settings.error, projects.error, scholarships.error, centers.error, endowments.error, sustainability.error]
           .filter(Boolean)
           .map((error) => (
@@ -148,107 +190,69 @@ export default async function DonatePage() {
       </ResearchSection>
 
       <ResearchSection
-        eyebrow="How Giving Moves"
-        title="A clear donation workflow"
-        body="The page explains the donor journey from giving priority to confirmation, receipt, impact reporting, and stories."
-      >
-        <div className="grid gap-4 md:grid-cols-5">
-          {workflow.map((step, index) => (
-            <article key={step} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-sm font-semibold text-white">
-                {index + 1}
-              </span>
-              <h2 className="mt-4 text-base font-semibold leading-6 text-slate-950">{step}</h2>
-            </article>
-          ))}
-        </div>
-      </ResearchSection>
-
-      <ResearchSection
         eyebrow="Make a Gift"
         title="Start a donation"
-        body="This form collects the information needed to prepare a gift request. Approved giving channels are shown from the published donation settings."
-        tone="white"
+        body="Submit a pending gift request for admin tracking, then continue through the configured giving channel when available."
       >
-        <div id="make-a-gift" className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_520px]">
-          <div className="min-w-0 space-y-5">
-            <ImpactFeature impact={featuredImpact} />
-            <StoryFeature story={featuredStory} />
-          </div>
+        <div id="make-a-gift" className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
           <DonationForm
-            action={formAction}
             currency={donationSettings.currency}
             amounts={donationSettings.amounts}
             priorities={priorities}
             contactEmail={donationSettings.contactEmail}
+            onlineGivingUrl={donationSettings.onlineGivingUrl}
           />
-        </div>
-      </ResearchSection>
-
-      <ResearchSection
-        eyebrow="Impact Published Back"
-        title="Impact reports and donor stories"
-        body="Donation impact and stories appear here when they are published for public view."
-      >
-        {[impacts.error, stories.error].filter(Boolean).map((error) => (
-          <div key={error} className="mb-5">
-            <StatusMessage tone="error">{error}</StatusMessage>
+          <div className="grid gap-5">
+            <DonationAccountPanel bank={donationSettings.bank} contactEmail={donationSettings.contactEmail} />
+            {featuredImpact ? <ImpactFeature impact={featuredImpact} /> : null}
           </div>
-        ))}
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {[...impacts.data.slice(0, 3), ...stories.data.slice(0, 3)].slice(0, 6).map((record) => (
-            <ImpactCard key={record.id} record={record} />
-          ))}
         </div>
       </ResearchSection>
 
       <ResearchSection
-        eyebrow="Endowments & Major Gifts"
-        title="Long-term giving and institutional support"
-        body="Endowments and major gifts need a more guided conversation. The page keeps those pathways visible without mixing them into quick giving."
+        eyebrow="Major Gifts"
+        title="Major gifts and endowments"
+        body="Named funds, equipment support, corporate giving, and planned giving are handled through a guided conversation with the research office."
         tone="white"
       >
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="grid gap-5 md:grid-cols-2">
-            {endowments.data.slice(0, 4).map((fund) => (
-              <article key={fund.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <Badge>{formatLabel(fund.fund_type ?? fund.status ?? "endowment")}</Badge>
-                <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-                  {fund.name ?? fund.title}
-                </h2>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {compactText(fund.purpose) ||
-                    compactText(fund.summary) ||
-                    compactText(fund.description) ||
-                    "Endowment details will appear when published."}
-                </p>
-                {fund.slug ? (
-                  <Link href={`/endowments/${fund.slug}`} className="mt-4 inline-flex text-sm font-semibold text-primary">
-                    View fund
-                  </Link>
-                ) : null}
-              </article>
-            ))}
+        {impacts.error ? (
+          <div className="mb-5">
+            <StatusMessage tone="error">{impacts.error}</StatusMessage>
           </div>
-          <aside className="rounded-lg border border-secondary/30 bg-secondary/10 p-6 shadow-sm">
-            <Landmark aria-hidden className="h-10 w-10 text-secondary" />
-            <h2 className="mt-5 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-              Discuss a major gift
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-slate-700">
-              For named funds, institutional gifts, equipment support, corporate giving,
-              or planned giving, contact the research office before submitting payment.
-            </p>
-            <a
-              href={donationSettings.contactHref}
-              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-secondary px-5 py-3 text-sm font-semibold text-secondary-foreground"
-            >
-              Contact giving office
-            </a>
-          </aside>
-        </div>
+        ) : null}
+        <MajorGiftPanel contactHref={donationSettings.contactHref} />
       </ResearchSection>
     </main>
+  );
+}
+
+function DonateMasthead({
+  priorityCount,
+  impactCount,
+  currency,
+  contactHref,
+}: {
+  priorityCount: number;
+  impactCount: number;
+  currency: string;
+  contactHref: string;
+}) {
+  return (
+    <FundingIllustratedHero
+      eyebrow="Research Giving"
+      title="Support Research"
+      body="Give to published projects, student discovery, innovation, community extension, sustainability work, facilities, or endowment funds."
+      tone="donate"
+      actions={[
+        { label: "Give now", href: "/donate#make-a-gift" },
+        { label: "Discuss major gift", href: contactHref, variant: "secondary" },
+      ]}
+      facts={[
+        { label: "Giving priorities", value: priorityCount || "", icon: fundingIcons.check },
+        { label: "Impact reports", value: impactCount || "", icon: fundingIcons.award },
+        { label: "Currency", value: currency, icon: fundingIcons.money },
+      ]}
+    />
   );
 }
 
@@ -258,6 +262,16 @@ type DonationSettings = {
   onlineGivingUrl: string;
   contactEmail: string;
   contactHref: string;
+  bank: DonationBankDetails;
+};
+
+type DonationBankDetails = {
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  swiftCode: string;
+  branch: string;
+  instructions: string;
 };
 
 function buildDonationSettings(records: ResearchGenericRecord[]): DonationSettings {
@@ -285,7 +299,23 @@ function buildDonationSettings(records: ResearchGenericRecord[]): DonationSettin
     onlineGivingUrl,
     contactEmail,
     contactHref: `mailto:${contactEmail}?subject=Research%20Donation%20Inquiry`,
+    bank: {
+      bankName: getSettingValue(settings, ["bank_name", "donation_bank_name"]),
+      accountName: getSettingValue(settings, ["account_name", "bank_account_name", "donation_account_name"]),
+      accountNumber: getSettingValue(settings, ["account_number", "bank_account_number", "donation_account_number"]),
+      swiftCode: getSettingValue(settings, ["swift_code", "bank_swift_code"]),
+      branch: getSettingValue(settings, ["bank_branch", "branch"]),
+      instructions: getSettingValue(settings, ["payment_instructions", "bank_transfer_instructions", "donation_instructions"]),
+    },
   };
+}
+
+function getSettingValue(settings: Map<string, ResearchGenericRecord>, keys: string[]) {
+  for (const key of keys) {
+    const value = compactText(settings.get(key)?.value) || compactText(settings.get(key)?.description);
+    if (value) return value;
+  }
+  return "";
 }
 
 function getSuggestedAmounts(record?: ResearchGenericRecord) {
@@ -305,6 +335,64 @@ function getSuggestedAmounts(record?: ResearchGenericRecord) {
     if (amounts.length > 0) return amounts;
   }
   return defaultAmounts;
+}
+
+function DonationSuccessPanel({
+  referenceCode,
+  bank,
+  contactEmail,
+}: {
+  referenceCode: string;
+  bank: DonationBankDetails;
+  contactEmail: string;
+}) {
+  const accountRows = [
+    { label: "Bank", value: bank.bankName },
+    { label: "Account name", value: bank.accountName },
+    { label: "Account number", value: bank.accountNumber },
+    { label: "SWIFT code", value: bank.swiftCode },
+    { label: "Branch", value: bank.branch },
+  ].filter((row) => row.value);
+  const hasAccountDetails = accountRows.length > 0;
+
+  return (
+    <section className="rounded-lg border border-primary/25 bg-primary/[0.04] p-5 shadow-sm">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(320px,0.65fr)]">
+        <div>
+          <Badge>Donation submitted</Badge>
+          <h2 className="mt-4 text-2xl font-semibold leading-8 text-foreground">
+            Thank you for your generosity.
+          </h2>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">
+            Your donation request has been recorded for admin follow-up. Use this reference when completing payment or contacting the research office.
+          </p>
+          <div className="mt-5 rounded-md border border-primary/20 bg-white p-4">
+            <p className="text-xs font-semibold uppercase text-muted-foreground">Reference code</p>
+            <p className="mt-1 break-all font-mono text-lg font-semibold text-primary">{referenceCode}</p>
+          </div>
+          <p className="mt-4 text-sm leading-6 text-muted-foreground">
+            The request is visible under admin donation records as a pending donation.
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-white p-4">
+          <h3 className="text-base font-semibold text-foreground">Donation account details</h3>
+          {hasAccountDetails ? (
+            <dl className="mt-4 divide-y divide-slate-200">
+              {accountRows.map((row) => (
+                <div key={row.label} className="grid gap-1 py-3 sm:grid-cols-[130px_1fr]">
+                  <dt className="text-xs font-semibold uppercase text-muted-foreground">{row.label}</dt>
+                  <dd className="break-words text-sm font-semibold text-foreground">{row.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+          <p className="mt-4 text-sm leading-6 text-muted-foreground">
+            {bank.instructions || `For payment instructions, contact ${contactEmail}.`}
+          </p>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 type Priority = {
@@ -394,61 +482,55 @@ function buildPriorities({
   ];
 }
 
-function PriorityCard({ priority }: { priority: Priority }) {
-  const Icon = priority.icon;
-
+function PrioritySelector({ priorities }: { priorities: Priority[] }) {
   return (
-    <article className="group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]">
-      <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary text-white">
-        <Icon aria-hidden className="h-5 w-5" />
-      </span>
-      <Badge>{priority.type}</Badge>
-      <h2 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold leading-8 text-slate-950">
-        {priority.title}
-      </h2>
-      <p className="mt-3 text-sm leading-7 text-slate-600">{priority.body}</p>
-      <div className="mt-5 flex flex-wrap gap-3">
-        <a
-          href="#make-a-gift"
-          className="inline-flex min-h-10 items-center rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white"
-        >
-          Support this area
-        </a>
-        <Link
-          href={priority.href}
-          className="inline-flex min-h-10 items-center rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary/40 hover:text-primary"
-        >
-          View details
-        </Link>
-      </div>
-    </article>
+    <div id="priorities" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      {priorities.map((priority, index) => {
+        const Icon = priority.icon;
+        return (
+          <a
+            key={priority.id}
+            href="#make-a-gift"
+            className={
+              index === 0
+                ? "rounded-lg border border-primary bg-primary/[0.04] p-4 shadow-sm"
+                : "rounded-lg border border-border bg-white p-4 shadow-sm transition hover:border-primary/30"
+            }
+          >
+            <span className={index === 0 ? "inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary text-white" : "inline-flex h-10 w-10 items-center justify-center rounded-md bg-surface-muted text-primary"}>
+              <Icon aria-hidden className="h-5 w-5" />
+            </span>
+            <h2 className="mt-3 text-base font-semibold leading-6 text-foreground">{priority.title}</h2>
+            <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">{priority.body}</p>
+          </a>
+        );
+      })}
+    </div>
   );
 }
 
 function DonationForm({
-  action,
   currency,
   amounts,
   priorities,
   contactEmail,
+  onlineGivingUrl,
 }: {
-  action: string;
   currency: string;
   amounts: number[];
   priorities: Priority[];
   contactEmail: string;
+  onlineGivingUrl: string;
 }) {
   return (
     <form
-      action={action}
-      method={action.startsWith("mailto:") ? "post" : "get"}
-      encType={action.startsWith("mailto:") ? "text/plain" : undefined}
-      className="rounded-lg border border-slate-200 bg-slate-50 p-5 shadow-sm"
+      action={submitDonation}
+      className="rounded-lg border border-border bg-white p-5 shadow-sm"
     >
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-secondary">Make a Gift</p>
-          <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950">
+          <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground">
             Giving details
           </h2>
         </div>
@@ -456,11 +538,10 @@ function DonationForm({
       </div>
 
       <input type="hidden" name="currency" value={currency} />
-      <input type="hidden" name="donation_date" value={new Date().toISOString().slice(0, 10)} />
-      <input type="hidden" name="status" value="pending" />
+      <input type="hidden" name="preferred_payment_method" value={onlineGivingUrl ? "online" : "inquiry"} />
 
       <fieldset className="mt-6">
-        <legend className="text-xs font-semibold uppercase text-slate-500">Amount</legend>
+        <legend className="text-xs font-semibold uppercase text-muted-foreground">Amount</legend>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {amounts.slice(0, 4).map((amount, index) => (
             <label key={amount} className="cursor-pointer">
@@ -471,25 +552,25 @@ function DonationForm({
                 defaultChecked={index === 1}
                 className="peer sr-only"
               />
-              <span className="flex min-h-11 items-center justify-center rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
+              <span className="flex min-h-11 items-center justify-center rounded-md border border-border bg-white px-3 text-sm font-semibold text-muted-foreground transition peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
                 {currency} {amount.toLocaleString()}
               </span>
             </label>
           ))}
         </div>
         <label className="mt-3 block">
-          <span className="text-xs font-semibold uppercase text-slate-500">Custom amount</span>
+          <span className="text-xs font-semibold uppercase text-muted-foreground">Custom amount</span>
           <input
             name="custom_amount"
             inputMode="decimal"
             placeholder={`${currency} custom amount`}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
         </label>
       </fieldset>
 
       <fieldset className="mt-5">
-        <legend className="text-xs font-semibold uppercase text-slate-500">Gift type</legend>
+        <legend className="text-xs font-semibold uppercase text-muted-foreground">Gift type</legend>
         <div className="mt-3 grid grid-cols-3 gap-3">
           {[
             ["one_time", "One-time"],
@@ -504,7 +585,7 @@ function DonationForm({
                 defaultChecked={index === 0}
                 className="peer sr-only"
               />
-              <span className="flex min-h-11 items-center justify-center rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
+              <span className="flex min-h-11 items-center justify-center rounded-md border border-border bg-white px-3 text-sm font-semibold text-muted-foreground transition peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
                 {label}
               </span>
             </label>
@@ -512,13 +593,13 @@ function DonationForm({
         </div>
       </fieldset>
 
-      <div className="mt-5 grid gap-4">
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">
         <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Giving area</span>
+          <span className="text-xs font-semibold uppercase text-muted-foreground">Giving area</span>
           <select
             name="designation"
             defaultValue={priorities[0]?.value}
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {priorities.map((priority) => (
               <option key={priority.value} value={priority.value}>
@@ -527,28 +608,20 @@ function DonationForm({
             ))}
           </select>
         </label>
-        <label>
-          <span className="text-xs font-semibold uppercase text-slate-500">Purpose or note</span>
-          <input
-            name="purpose"
-            placeholder="Optional purpose, fund, project, or scholarship note"
-            className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          />
-        </label>
       </div>
 
-      <div className="mt-6 border-t border-slate-200 pt-5">
-        <h3 className="text-base font-semibold text-slate-950">Donor details</h3>
+      <div className="mt-6 border-t border-border pt-5">
+        <h3 className="text-base font-semibold text-foreground">Donor details</h3>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <InputField name="display_name" label="Name" placeholder="Your name" required />
           <InputField name="email" label="Email" placeholder="you@example.com" type="email" required />
           <InputField name="phone" label="Phone" placeholder="Phone number" />
           <label>
-            <span className="text-xs font-semibold uppercase text-slate-500">Donor type</span>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Donor type</span>
             <select
               name="donor_type"
               defaultValue="individual"
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="individual">Individual</option>
               <option value="alumni">Alumni</option>
@@ -557,38 +630,156 @@ function DonationForm({
               <option value="partner">Partner</option>
             </select>
           </label>
+        </div>
+      </div>
+
+      <details className="mt-5 rounded-lg border border-border bg-surface-subtle p-4">
+        <summary className="cursor-pointer text-sm font-semibold text-foreground">Additional details</summary>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <InputField name="organization_name" label="Organization" placeholder="Optional organization" />
           <label>
-            <span className="text-xs font-semibold uppercase text-slate-500">Recognition</span>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Recurring frequency</span>
             <select
-              name="is_public"
+              name="recurring_frequency"
+              defaultValue="monthly"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <option value="monthly">Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </label>
+          <label>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Recognition</span>
+            <select
+              name="recognition_public"
               defaultValue="false"
-              className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="false">Keep private</option>
               <option value="true">May be recognized publicly</option>
             </select>
           </label>
+          <label>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Anonymous giving</span>
+            <select
+              name="is_anonymous"
+              defaultValue="false"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <option value="false">Use my name internally</option>
+              <option value="true">Keep me anonymous</option>
+            </select>
+          </label>
+          <label>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Tribute gift</span>
+            <select
+              name="is_tribute"
+              defaultValue="false"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <option value="false">No tribute</option>
+              <option value="true">In honor or memory</option>
+            </select>
+          </label>
+          <label>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Tribute type</span>
+            <select
+              name="tribute_type"
+              defaultValue="in_honor"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <option value="in_honor">In honor</option>
+              <option value="in_memory">In memory</option>
+            </select>
+          </label>
+          <InputField name="tribute_name" label="Tribute name" placeholder="Optional tribute name" />
+          <label className="sm:col-span-2">
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Purpose or note</span>
+            <input
+              name="purpose"
+              placeholder="Optional purpose, fund, project, or scholarship note"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+          </label>
+          <label className="sm:col-span-2">
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Message</span>
+            <textarea
+              name="message"
+              rows={3}
+              placeholder="Optional donor message or pledge note"
+              className="mt-2 w-full rounded-md border border-border bg-white px-3 py-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+          </label>
+          <label className="sm:col-span-2">
+            <span className="text-xs font-semibold uppercase text-muted-foreground">Dedication</span>
+            <textarea
+              name="dedication"
+              rows={3}
+              placeholder="Optional dedication text"
+              className="mt-2 w-full rounded-md border border-border bg-white px-3 py-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+          </label>
         </div>
-        <label className="mt-4 block">
-          <span className="text-xs font-semibold uppercase text-slate-500">Message or dedication</span>
-          <textarea
-            name="message"
-            rows={4}
-            placeholder="Optional donor message, dedication, or pledge note"
-            className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          />
-        </label>
-      </div>
+      </details>
 
-      <button className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90">
+      <button className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90">
         Continue to giving channel
         <ArrowRight aria-hidden className="h-4 w-4" />
       </button>
-      <p className="mt-3 text-xs leading-5 text-slate-500">
-        If the online giving channel is unavailable, this request opens a donation inquiry to {contactEmail}.
+      <p className="mt-3 text-xs leading-5 text-muted-foreground">
+        This creates a pending donation record for admin follow-up. {onlineGivingUrl ? "The giving office can reconcile it with the configured online channel." : `The giving office will respond through ${contactEmail}.`}
       </p>
     </form>
+  );
+}
+
+function DonationAccountPanel({
+  bank,
+  contactEmail,
+}: {
+  bank: DonationBankDetails;
+  contactEmail: string;
+}) {
+  const accountRows = [
+    { label: "Bank", value: bank.bankName },
+    { label: "Account name", value: bank.accountName },
+    { label: "Account number", value: bank.accountNumber },
+    { label: "SWIFT code", value: bank.swiftCode },
+    { label: "Branch", value: bank.branch },
+  ].filter((row) => row.value);
+
+  if (accountRows.length === 0 && !bank.instructions && !contactEmail) return null;
+
+  return (
+    <aside className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <div className="flex items-start gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <Banknote aria-hidden className="h-5 w-5" />
+        </span>
+        <div>
+          <Badge>Payment details</Badge>
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-8 text-foreground">
+            Donation account details
+          </h2>
+        </div>
+      </div>
+      {accountRows.length > 0 ? (
+        <dl className="mt-5 divide-y divide-slate-200">
+          {accountRows.map((row) => (
+            <div key={row.label} className="grid gap-1 py-3 first:pt-0 sm:grid-cols-[128px_1fr]">
+              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{row.label}</dt>
+              <dd className="break-words text-sm font-semibold text-foreground">{row.value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+      {bank.instructions || contactEmail ? (
+        <p className="mt-4 rounded-md bg-surface-subtle p-3 text-sm leading-6 text-muted-foreground">
+          {bank.instructions || `For payment instructions, contact ${contactEmail}.`}
+        </p>
+      ) : null}
+    </aside>
   );
 }
 
@@ -607,13 +798,13 @@ function InputField({
 }) {
   return (
     <label>
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
+      <span className="text-xs font-semibold uppercase text-muted-foreground">{label}</span>
       <input
         name={name}
         type={type}
         required={required}
         placeholder={placeholder}
-        className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       />
     </label>
   );
@@ -621,10 +812,10 @@ function InputField({
 
 function ImpactFeature({ impact }: { impact?: ResearchGenericRecord }) {
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <article className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
       <div className="relative aspect-[16/7] min-h-[150px] sm:min-h-[220px]">
         <Image
-          src="/images/research/research-workflows.png"
+          src="/images/research/research-events-hero.svg"
           alt="Donation impact reporting and research outcomes"
           fill
           sizes="(min-width: 1024px) 50vw, 100vw"
@@ -633,13 +824,12 @@ function ImpactFeature({ impact }: { impact?: ResearchGenericRecord }) {
       </div>
       <div className="p-5">
         <Badge>{formatLabel(impact?.impact_type ?? "impact")}</Badge>
-        <h2 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-slate-950">
-          {impact?.title ?? "Impact published back to donors"}
+        <h2 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+          {impact?.title ?? impact?.name ?? "Research impact"}
         </h2>
-        <p className="mt-3 text-sm leading-7 text-slate-600">
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">
           {compactText(impact?.summary) ||
-            compactText(impact?.description) ||
-            "Donation impact reports show how gifts support projects, students, facilities, and community outcomes."}
+            compactText(impact?.description)}
         </p>
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <MiniFact label="Raised" value={formatMoney(impact?.total_raised, impact?.currency)} />
@@ -647,63 +837,58 @@ function ImpactFeature({ impact }: { impact?: ResearchGenericRecord }) {
           <MiniFact label="Year" value={compactText(impact?.reporting_year)} />
         </div>
       </div>
-    </article>
-  );
-}
-
-function StoryFeature({ story }: { story?: ResearchGenericRecord }) {
-  return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-start gap-4">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-secondary text-secondary-foreground">
-          <HeartHandshake aria-hidden className="h-5 w-5" />
-        </span>
-        <div>
-          <Badge>{formatLabel(story?.status ?? "story")}</Badge>
-          <h2 className="mt-3 text-xl font-semibold leading-7 text-slate-950">
-            {story?.title ?? "Donor stories"}
-          </h2>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            {compactText(story?.summary) ||
-              compactText(story?.quote) ||
-              "Donor and beneficiary stories explain why giving matters and what support makes possible."}
-          </p>
-        </div>
+      <div className="border-t border-border px-5 py-4">
+        <Link href="/community-impact" className="inline-flex text-sm font-semibold text-primary">
+          View impact reports
+        </Link>
       </div>
     </article>
   );
 }
 
-function ImpactCard({ record }: { record: ResearchGenericRecord }) {
+function MajorGiftPanel({ contactHref }: { contactHref: string }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <Badge>{formatLabel(record.impact_type ?? record.status ?? "impact")}</Badge>
-      <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-        {record.title ?? record.name}
-      </h2>
-      <p className="mt-3 text-sm leading-7 text-slate-600">
-        {compactText(record.summary) ||
-          compactText(record.description) ||
-          compactText(record.story) ||
-          compactText(record.impact_witnessed) ||
-          "Impact details will appear when published."}
-      </p>
-      {record.period_start || record.period_end || record.reporting_year ? (
-        <p className="mt-4 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
-          {[formatDate(record.period_start), formatDate(record.period_end), compactText(record.reporting_year)]
-            .filter(Boolean)
-            .join(" - ")}
-        </p>
-      ) : null}
-    </article>
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div className="flex items-start gap-4">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-secondary text-secondary-foreground">
+            <Landmark aria-hidden className="h-5 w-5" />
+          </span>
+          <div>
+            <Badge>Major gifts</Badge>
+            <h2 className="mt-3 text-2xl font-semibold leading-8 text-foreground">
+              Discuss endowments, named funds, and institutional support
+            </h2>
+            <p className="mt-2 max-w-4xl text-sm leading-7 text-muted-foreground">
+              For named funds, equipment support, corporate giving, planned giving, or major endowment support, contact the research office before submitting payment.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <a
+            href={contactHref}
+            className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90"
+          >
+            Contact giving office
+          </a>
+          <Link
+            href="/endowments"
+            className="inline-flex min-h-11 items-center justify-center rounded-md border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
+          >
+            View endowments
+          </Link>
+        </div>
+      </div>
+    </section>
   );
 }
 
 function MiniFact({ label, value }: { label: string; value: string }) {
+  if (!value) return null;
   return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
-      <p className="mt-1 font-semibold text-slate-950">{value || "Not published"}</p>
+    <div className="rounded-md bg-surface-subtle p-3">
+      <p className="text-xs font-semibold uppercase text-muted-foreground">{label}</p>
+      <p className="mt-1 font-semibold text-foreground">{value}</p>
     </div>
   );
 }

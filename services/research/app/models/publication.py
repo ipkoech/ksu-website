@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date
+from datetime import date, datetime
 from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa
@@ -34,6 +34,16 @@ class Publication(Base, SEOMixin, CoverImageRefMixin):
         server_default="journal_article",
         index=True,
     )  # journal_article | conference_paper | book | book_chapter | thesis | report | working_paper | preprint
+
+    # Main-service ownership. These remain nullable so existing publications
+    # continue to work while school-authored records opt into strict scoping.
+    school_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True)
+    department_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True)
+    submitted_by_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True)
+    submitted_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    withdrawn_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    reviewer_comments: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
 
     # Source
     project_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
@@ -127,6 +137,10 @@ class Publication(Base, SEOMixin, CoverImageRefMixin):
         cascade="all, delete-orphan",
         lazy="selectin",
         order_by="PublicationAuthor.author_order",
+    )
+
+    __table_args__ = (
+        sa.Index("ix_publications_school_status", "school_id", "status"),
     )
 
     def __repr__(self) -> str:

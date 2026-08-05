@@ -1,27 +1,29 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client";
 import {
   ResearchDetailHero,
-  ResearchFact,
+  ResearchDetailSidebar,
   ResearchRecordPanel,
-  ResearchTextPanel,
 } from "../../../components/research-detail";
-import {
-  Badge,
-  ResearchSection,
-  StatusMessage,
-} from "../../../components/research-ui";
+import { ResearchSection, StatusMessage } from "../../../components/research-ui";
+import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import {
   compactText,
   formatDate,
-  formatLabel,
+  generateSlugParams,
   getRelatedOutputs,
   getSustainabilityActivities,
   getSustainabilityBySlug,
   getSustainabilityPartners,
 } from "../../../lib/research-public-data";
+import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return generateSlugParams(researchServiceApi.sustainability.list);
+}
 
 export default async function SustainabilityDetailPage({
   params,
@@ -33,22 +35,29 @@ export default async function SustainabilityDetailPage({
   if (!data) notFound();
 
   const initiative = data as ResearchGenericRecord;
+  const title = getRecordTitle(initiative, "Sustainability initiative");
+  const storySections = getNarrativeSections(initiative, [
+    { title: "Why This Matters", fields: ["summary", "description", "objectives"] },
+    { title: "How The Work Happens", fields: ["approach", "activities", "methodology"] },
+    { title: "Public Value", fields: ["impact", "outcomes", "community_impact"] },
+    { title: "Signals And Goals", fields: ["sdg_goals", "targets", "indicators"] },
+  ]);
   const [partners, activities, outputs] = await Promise.all([
     getSustainabilityPartners(),
     getSustainabilityActivities(),
-    initiative.project_id ? getRelatedOutputs({ projectId: initiative.project_id }) : Promise.resolve({ data: [], error: null }),
+    initiative.project_id ? getRelatedOutputs({ projectId: initiative.project_id }) : Promise.resolve({ data: [], total: 0, perPage: 100, error: null }),
   ]);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
       <ResearchDetailHero
         eyebrow="Sustainability"
-        title={initiative.name ?? initiative.title ?? "Sustainability initiative"}
-        body={compactText(initiative.summary) || compactText(initiative.description)}
+        title={title}
+        body={getRecordSummary(initiative)}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Sustainability", href: "/sustainability" },
-          { label: initiative.name ?? initiative.title ?? "Initiative" },
+          { label: title },
         ]}
         labels={[initiative.initiative_type ?? "sustainability", initiative.status]}
         facts={[
@@ -62,14 +71,14 @@ export default async function SustainabilityDetailPage({
           ...(compactText(initiative.website) ? [{ label: "Open website", href: compactText(initiative.website) }] : []),
           ...(compactText(initiative.contact_email) ? [{ label: "Contact initiative", href: `mailto:${compactText(initiative.contact_email)}`, variant: "secondary" as const }] : []),
         ]}
-        imageSrc="/images/research/research-workflows.png"
+        imageSrc="/images/research/sustainability-hero-imagegen.webp"
         imageAlt="Sustainability initiative activities, partnerships, and public impact"
       />
 
       {[error, partners.error, activities.error, outputs.error]
         .filter(Boolean)
-        .map((message) => (
-          <section key={message} className="px-4 pt-4 sm:px-6 lg:px-8">
+        .map((message, i) => (
+          <section key={i} className="px-4 pt-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-[1680px]">
               <StatusMessage tone="error">{message}</StatusMessage>
             </div>
@@ -83,37 +92,26 @@ export default async function SustainabilityDetailPage({
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
-            <ResearchTextPanel
-              title="Overview"
-              fields={[
-                ["Summary", initiative.summary],
-                ["Description", initiative.description],
-                ["Objectives", initiative.objectives],
-              ]}
-            />
-            <ResearchTextPanel
-              title="Approach and impact"
-              fields={[
-                ["Approach", initiative.approach],
-                ["Activities", initiative.activities],
-                ["Impact", initiative.impact],
-                ["SDG goals", Array.isArray(initiative.sdg_goals) ? initiative.sdg_goals.join(", ") : initiative.sdg_goals],
-              ]}
-            />
+          <div className="flex min-w-0 flex-col gap-5">
+            <SustainabilityStory sections={storySections} />
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{formatLabel(initiative.initiative_type ?? "sustainability")}</Badge>
-              {initiative.status ? <Badge>{formatLabel(initiative.status)}</Badge> : null}
-            </div>
-            <dl className="mt-5 grid gap-3 text-sm">
-              <ResearchFact label="Start" value={formatDate(initiative.start_date)} />
-              <ResearchFact label="End" value={formatDate(initiative.end_date)} />
-              <ResearchFact label="Contact" value={compactText(initiative.contact_email)} />
-              <ResearchFact label="Website" value={compactText(initiative.website)} />
-            </dl>
-          </aside>
+          <ResearchDetailSidebar
+            labels={[initiative.initiative_type ?? "sustainability", initiative.status]}
+            facts={[
+              { label: "Start", value: formatDate(initiative.start_date) },
+              { label: "End", value: formatDate(initiative.end_date) },
+              { label: "Contact", value: compactText(initiative.contact_email) },
+              { label: "Website", value: compactText(initiative.website) },
+            ]}
+            actions={[
+              ...(compactText(initiative.website)
+                ? [{ label: "Open website", href: compactText(initiative.website) }]
+                : []),
+              ...(compactText(initiative.contact_email)
+                ? [{ label: "Contact initiative", href: `mailto:${compactText(initiative.contact_email)}`, variant: "secondary" as const }]
+                : []),
+            ]}
+          />
         </div>
       </ResearchSection>
 
@@ -129,5 +127,14 @@ export default async function SustainabilityDetailPage({
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+function SustainabilityStory({ sections }: { sections: Array<{ title: string; body: string }> }) {
+  return (
+    <ResearchStoryAccordion
+      sections={sections}
+      empty="The sustainability story appears when objectives, approach, activity, impact, or SDG fields are published."
+    />
   );
 }

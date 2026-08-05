@@ -6,6 +6,9 @@ import { publicFileUrl, publicMediaUrl, resolvePublicMediaUrl } from "@/lib/publ
 const leaderInclude =
   "person(id,slug,title,first_name,middle_name,last_name,full_name,bio,leadership_message,photo_id,photo_url,photo(id,url,public_url,cdn_url,thumbnail_url,alt_text,title))";
 
+const viceChancellorInclude =
+  "person(full_name,title,photo(id,url,public_url,cdn_url,thumbnail_url))";
+
 type PersonWithMedia = Person & {
   photo?: Partial<Media> | null;
 };
@@ -52,15 +55,15 @@ function toLeader(
     title: assignment.title || (assignment.is_acting ? `Acting ${fallbackTitle}` : fallbackTitle),
     image: personImage(person),
     message: person.leadership_message || person.bio || null,
-    slug: person.slug,
+    slug: person.slug || person.id,
   } satisfies Leader;
 }
 
 export async function getViceChancellor(): Promise<Leader | null> {
   try {
     const response = await leadershipApi.getViceChancellor({
-      fields: "id,person_id,role,title,is_acting",
-      include: leaderInclude,
+      fields: "id,person_id,title,is_acting",
+      include: viceChancellorInclude,
     });
 
     return toLeader(response.data, "Vice Chancellor", "Vice Chancellor");

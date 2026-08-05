@@ -8,14 +8,18 @@ from datetime import datetime, timezone
 from string import Formatter
 from typing import Any
 
+import sqlalchemy as sa
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ksu_common import PaginatedResult
 
-from ..models import Notification, NotificationDelivery, NotificationTemplate, Person, Role, StaffAssignment, User, UserRole
-from ..tasks.celery_app import celery_app
+from ..models import Notification, NotificationDelivery, NotificationTemplate, Person, Role, StaffAssignment, User, UserPreference, UserRole
+from .domain_events import (
+    enqueue_celery_after_commit,
+    enqueue_domain_event,
+)
 from ._base import paginate_query
 
 
@@ -42,6 +46,85 @@ def _template_fields(template_text: str | None) -> set[str]:
     return {field_name for _, field_name, _, _ in formatter.parse(template_text) if field_name}
 
 
+NOTIFICATION_EVENT_POLICIES: dict[str, dict[str, Any]] = {
+    "school.content.submitted": {
+        "title": "Content submitted",
+        "message": "School content is ready for CoCMS review.",
+        "audience": "cocms",
+        "channels": ["in_app"],
+        "action_url": "/corporate-communication/review-queue",
+    },
+    "school.content.workflow_changed": {
+        "title": "Content review updated",
+        "message": "The editorial status of school content changed.",
+        "audience": "school",
+        "channels": ["in_app", "email"],
+        "action_url": "/schools/content",
+    },
+    "school.team.changed": {
+        "title": "School team updated",
+        "message": "A school team assignment changed.",
+        "audience": "school",
+        "channels": ["in_app"],
+        "action_url": "/schools/team",
+    },
+    "school.inquiry.created": {
+        "title": "New school inquiry",
+        "message": "A new contact inquiry needs attention.",
+        "audience": "school",
+        "channels": ["in_app", "email"],
+        "action_url": "/schools/inquiries",
+    },
+    "school.inquiry.reply_failed": {
+        "title": "Inquiry reply failed",
+        "message": "An inquiry reply could not be delivered and will be retried.",
+        "audience": "school",
+        "channels": ["in_app", "email"],
+        "action_url": "/schools/inquiries",
+    },
+    "school.import.completed": {
+        "title": "Import completed",
+        "message": "Your school import has completed.",
+        "audience": "actor",
+        "channels": ["in_app"],
+        "action_url": "/schools",
+    },
+    "school.upload.progress": {
+        "title": "Upload progress",
+        "message": "Your school upload made progress.",
+        "audience": "actor",
+        "channels": ["in_app"],
+        "action_url": "/schools/media",
+    },
+}
+
+
+def notification_policy_for_event(event_type: str) -> dict[str, Any] | None:
+    policy = NOTIFICATION_EVENT_POLICIES.get(event_type)
+    if policy is not None:
+        return dict(policy)
+    if event_type.startswith("school.inquiry.reply_"):
+        return dict(NOTIFICATION_EVENT_POLICIES["school.inquiry.reply_failed"])
+    if event_type.startswith("school.import."):
+        return dict(NOTIFICATION_EVENT_POLICIES["school.import.completed"])
+    if event_type.startswith("school.upload."):
+        return dict(NOTIFICATION_EVENT_POLICIES["school.upload.progress"])
+    if event_type.startswith("school.team."):
+        return dict(NOTIFICATION_EVENT_POLICIES["school.team.changed"])
+    return None
+
+
+def notification_channels_from_preferences(
+    policy: dict[str, Any],
+    preferences: dict[str, bool],
+) -> list[str]:
+    return [
+        channel
+        for channel in policy.get("channels", ["in_app"])
+        if preferences.get(channel, channel == "in_app")
+    ]
+
+
 class NotificationService:
     @staticmethod
     async def create(db: AsyncSession, **data) -> Notification:
@@ -49,6 +132,19 @@ class NotificationService:
         notification = Notification(**data)
         db.add(notification)
         await db.flush()
+        enqueue_domain_event(
+            db,
+            event_type="notification.created",
+            scope_type=notification.scope_type or "user",
+            scope_id=notification.scope_id or notification.user_id,
+            actor_id=None,
+            resource_type="notification",
+            resource_id=notification.id,
+            data={
+                "user_id": str(notification.user_id),
+                "notification_type": notification.notification_type,
+            },
+        )
         return notification
 
     @staticmethod
@@ -68,6 +164,8 @@ class NotificationService:
         page: int = 1,
         per_page: int = 20,
         unread_only: bool = False,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
         load_options=(),
     ) -> PaginatedResult:
         query = (
@@ -80,6 +178,10 @@ class NotificationService:
             query = query.options(*load_options)
         if unread_only:
             query = query.where(Notification.is_read.is_(False))
+        if scope_type:
+            query = query.where(Notification.scope_type == scope_type)
+        if scope_id:
+            query = query.where(Notification.scope_id == scope_id)
         return await paginate_query(db, query, page=page, per_page=per_page)
 
     @staticmethod
@@ -87,6 +189,93 @@ class NotificationService:
         notification.mark_as_read()
         await db.flush()
         return notification
+
+    @staticmethod
+    async def unread_count(db: AsyncSession, user_id: uuid.UUID) -> int:
+        result = await db.execute(
+            select(sa.func.count(Notification.id)).where(
+                Notification.user_id == user_id,
+                Notification.is_read.is_(False),
+                Notification.archived_at.is_(None),
+                Notification.deleted_at.is_(None),
+            )
+        )
+        return int(result.scalar_one())
+
+    @staticmethod
+    async def mark_all_as_read(
+        db: AsyncSession,
+        user_id: uuid.UUID,
+        *,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+    ) -> int:
+        query = select(Notification).where(
+                Notification.user_id == user_id,
+                Notification.is_read.is_(False),
+                Notification.archived_at.is_(None),
+                Notification.deleted_at.is_(None),
+            )
+        if scope_type:
+            query = query.where(Notification.scope_type == scope_type)
+        if scope_id:
+            query = query.where(Notification.scope_id == scope_id)
+        result = await db.execute(query)
+        items = list(result.scalars().all())
+        for item in items:
+            item.mark_as_read()
+        await db.flush()
+        return len(items)
+
+    @staticmethod
+    async def archive(db: AsyncSession, notification: Notification) -> Notification:
+        notification.mark_archived()
+        await db.flush()
+        return notification
+
+    @staticmethod
+    async def notification_preferences(
+        db: AsyncSession,
+        user_id: uuid.UUID,
+    ) -> dict[str, bool]:
+        result = await db.execute(
+            select(UserPreference).where(
+                UserPreference.user_id == user_id,
+                UserPreference.namespace == "notifications",
+                UserPreference.deleted_at.is_(None),
+            )
+        )
+        values = {"in_app": True, "email": True, "sms": False, "push": False}
+        for preference in result.scalars().all():
+            values[preference.key] = bool(preference.value)
+        return values
+
+    @staticmethod
+    async def update_notification_preferences(
+        db: AsyncSession,
+        user_id: uuid.UUID,
+        values: dict[str, bool],
+    ) -> dict[str, bool]:
+        result = await db.execute(
+            select(UserPreference).where(
+                UserPreference.user_id == user_id,
+                UserPreference.namespace == "notifications",
+                UserPreference.deleted_at.is_(None),
+            )
+        )
+        existing = {item.key: item for item in result.scalars().all()}
+        for channel, enabled in values.items():
+            if channel in existing:
+                existing[channel].value = enabled
+            else:
+                db.add(UserPreference(
+                    user_id=user_id,
+                    namespace="notifications",
+                    key=channel,
+                    value=enabled,
+                ))
+        await db.flush()
+        return await NotificationService.notification_preferences(db, user_id)
 
     @staticmethod
     async def delete(db: AsyncSession, notification: Notification):
@@ -286,7 +475,11 @@ class NotificationService:
         await db.flush()
 
         for delivery in deliveries:
-            celery_app.send_task("main.notifications.dispatch_delivery", args=[str(delivery.id)])
+            enqueue_celery_after_commit(
+                db,
+                "main.notifications.dispatch_delivery",
+                args=[str(delivery.id)],
+            )
 
         return deliveries
 

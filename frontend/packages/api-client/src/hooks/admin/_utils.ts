@@ -1,13 +1,10 @@
 import { ApiClientError } from "../../client";
 import { getStoredAccessToken, refreshStoredAccessToken } from "../../auth-tokens";
+import { getMainApiBaseUrl } from "../../service-urls";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-const MAIN_API_BASE_URL = (
-  process.env.NEXT_PUBLIC_MAIN_API_URL ||
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/v1\/?$/, "") ||
-  "http://localhost:8000"
-).replace(/\/$/, "");
+const MAIN_API_BASE_URL = getMainApiBaseUrl();
 
 function toBackendPath(path: string) {
   if (path.startsWith("/api/admin")) {

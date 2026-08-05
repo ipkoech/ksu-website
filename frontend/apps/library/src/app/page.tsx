@@ -1,10 +1,12 @@
 import { Children } from "react";
 import {
+  CompactRecord,
   IconCard,
   LibraryHero,
   LibrarySection,
   PrimaryLink,
   SecondaryLink,
+  SidePanel,
   StatusMessage,
 } from "../components/library-ui";
 import {
@@ -16,9 +18,8 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function LibraryPage() {
-  const { branches, catalog, electronic, services, regulations, stats, errors } =
+  const { branches, catalog, electronic, services, regulations, errors } =
     await getLibraryOverviewData();
-  const topStats = stats?.stats?.slice(0, 4) ?? [];
   const primaryBranch = branches.data[0];
   const branchContacts = branches.data
     .filter((branch) => branch.phone || branch.email || branch.address)
@@ -57,36 +58,7 @@ export default async function LibraryPage() {
             <SecondaryLink href="/ask">Ask a librarian</SecondaryLink>
           </>
         }
-      >
-        <div className="grid gap-3 text-white">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-            Library snapshot
-          </p>
-          {topStats.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3">
-              {topStats.map((item) => (
-                <div
-                  key={item.key}
-                  className="rounded-md border border-white/15 bg-white/10 p-4"
-                >
-                  <p className="text-3xl font-bold">
-                    {item.value}
-                    {item.suffix}
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-white/75">
-                    {item.label}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm leading-6 text-white/75">
-              Branch, catalog, and e-resource statistics appear here when
-              public library records are available.
-            </p>
-          )}
-        </div>
-      </LibraryHero>
+      />
 
       {errors.length > 0 ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8">
@@ -160,23 +132,20 @@ export default async function LibraryPage() {
               action="Ask a librarian"
             />
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-              Library contact point
-            </p>
-            <h3 className="mt-3 text-xl font-semibold text-slate-950">
+          <SidePanel title="Library contact point" eyebrow="Support desk">
+            <h3 className="text-xl font-semibold text-foreground">
               {primaryBranch?.name ?? "Kisii University Library"}
             </h3>
-            <p className="mt-3 text-sm leading-7 text-slate-600">
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
               {compactText(primaryBranch?.description) ||
                 "Branch and service information is maintained by the library team."}
             </p>
-            <dl className="mt-5 grid gap-3 text-sm text-slate-600">
+            <dl className="mt-5 grid gap-3 text-sm text-muted-foreground">
               <Meta label="Location" value={primaryBranch?.address} />
               <Meta label="Phone" value={primaryBranch?.phone} />
               <Meta label="Email" value={primaryBranch?.email} />
             </dl>
-          </aside>
+          </SidePanel>
         </div>
       </LibrarySection>
 
@@ -189,17 +158,13 @@ export default async function LibraryPage() {
         >
           <div className="grid gap-5 lg:grid-cols-3">
             {missionItems.map((item) => (
-              <article
+              <CompactRecord
                 key={item.label}
-                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-                  {item.label}
-                </p>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {compactText(item.value)}
-                </p>
-              </article>
+                icon="library"
+                eyebrow={item.label}
+                title={`Library ${item.label.toLowerCase()}`}
+                body={compactText(item.value)}
+              />
             ))}
           </div>
         </LibrarySection>
@@ -215,26 +180,17 @@ export default async function LibraryPage() {
         ) : (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {branches.data.slice(0, 6).map((branch) => (
-              <article
+              <CompactRecord
                 key={branch.id}
-                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-                  {formatLabel(branch.library_type ?? "library")}
-                </p>
-                <h3 className="mt-3 text-xl font-semibold text-slate-950">
-                  {branch.name}
-                </h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {compactText(branch.description) ||
-                    "Branch information is being updated by the library team."}
-                </p>
-                <dl className="mt-5 grid gap-2 text-sm text-slate-600">
-                  <Meta label="Location" value={branch.address} />
-                  <Meta label="Phone" value={branch.phone} />
-                  <Meta label="Email" value={branch.email} />
-                </dl>
-              </article>
+                icon="building"
+                eyebrow={formatLabel(branch.library_type ?? "library")}
+                title={branch.name ?? "Library branch"}
+                body={
+                  compactText(branch.description) ||
+                  "Branch information is being updated by the library team."
+                }
+                meta={[branch.address, branch.phone, branch.email]}
+              />
             ))}
           </div>
         )}
@@ -334,9 +290,9 @@ function RecordPanel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-4">
-        <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
+        <h3 className="text-lg font-semibold text-foreground">{title}</h3>
         <a href={href} className="text-sm font-semibold text-primary">
           Open
         </a>
@@ -345,7 +301,7 @@ function RecordPanel({
         {Children.count(children) > 0 ? (
           children
         ) : (
-          <p className="py-4 text-sm text-slate-600">No records available.</p>
+          <p className="py-4 text-sm text-muted-foreground">No records available.</p>
         )}
       </div>
     </section>
@@ -362,13 +318,13 @@ function OverviewList({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
+    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       <div className="mt-4 divide-y divide-slate-200">
         {Children.count(children) > 0 ? (
           children
         ) : (
-          <p className="py-4 text-sm text-slate-600">{empty}</p>
+          <p className="py-4 text-sm text-muted-foreground">{empty}</p>
         )}
       </div>
     </section>
@@ -386,9 +342,9 @@ function RecordRow({
 
   return (
     <article className="py-4">
-      <h4 className="text-sm font-semibold leading-6 text-slate-950">{title}</h4>
+      <h4 className="text-sm font-semibold leading-6 text-foreground">{title}</h4>
       {details.length > 0 ? (
-        <p className="mt-1 text-xs leading-5 text-slate-500">
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
           {details.join(" · ")}
         </p>
       ) : null}
@@ -407,7 +363,7 @@ function Meta({
 
   return (
     <div>
-      <dt className="font-semibold text-slate-950">{label}</dt>
+      <dt className="font-semibold text-foreground">{label}</dt>
       <dd className="mt-1">{value}</dd>
     </div>
   );

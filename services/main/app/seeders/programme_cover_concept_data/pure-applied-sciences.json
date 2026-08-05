@@ -1,0 +1,402 @@
+[
+  {
+    "programme_name": "PhD in Physics",
+    "department_code": "PHYS",
+    "visual_family": "advanced physics research",
+    "subject": "an experimental chamber centered on intersecting wave paths, a precision detector ring, crystalline sample, and layered field contours",
+    "alt_text": "Illustration of an experimental chamber with wave paths, detector ring, crystal, and field contours",
+    "distinctiveness": "Doctoral physics represented by original investigation linking matter, waves, detection, and theoretical fields"
+  },
+  {
+    "programme_name": "PhD in Mathematical Statistics",
+    "department_code": "MATHACT",
+    "visual_family": "statistical theory research",
+    "subject": "a complex probability landscape of nested distributions, branching sample paths, confidence bands, and a research lens isolating an extreme event",
+    "alt_text": "Illustration of nested probability distributions, branching sample paths, confidence bands, and a research lens",
+    "distinctiveness": "Doctoral statistics distinguished by deep probability theory, uncertainty structure, and rare-event inference"
+  },
+  {
+    "programme_name": "PhD in Applied Mathematics",
+    "department_code": "MATHACT",
+    "visual_family": "mathematical modelling research",
+    "subject": "a multiscale flow field passing through a geometric mesh, boundary curves, optimization nodes, and a converging computational model",
+    "alt_text": "Illustration of a multiscale flow field crossing a geometric mesh and converging optimization model",
+    "distinctiveness": "Doctoral applied mathematics represented by advanced modelling of dynamic systems across multiple scales"
+  },
+  {
+    "programme_name": "PhD in Pure Mathematics",
+    "department_code": "MATHACT",
+    "visual_family": "abstract mathematics research",
+    "subject": "an intricate topological surface unfolding through symmetry rings, linked proof nodes, and a central abstract structure examined by a research prism",
+    "alt_text": "Illustration of a topological surface, symmetry rings, proof nodes, and a research prism",
+    "distinctiveness": "Doctoral pure mathematics distinguished by original work in abstract structure, topology, symmetry, and proof"
+  },
+  {
+    "programme_name": "PhD in Analytical Chemistry",
+    "department_code": "CHEM",
+    "visual_family": "analytical chemistry research",
+    "subject": "a precision separation column feeding a mass-analysis chamber, spectral peak forms, molecular fragments, and a trace-sample vial",
+    "alt_text": "Illustration of a separation column, mass-analysis chamber, spectral peaks, molecules, and sample vial",
+    "distinctiveness": "Doctoral analytical chemistry represented by high-resolution separation, molecular identification, and trace measurement"
+  },
+  {
+    "programme_name": "PhD in Organic Chemistry",
+    "department_code": "CHEM",
+    "visual_family": "organic synthesis research",
+    "subject": "a branching molecular synthesis network surrounding a reaction vessel, catalyst structure, purification coil, and newly formed complex compound",
+    "alt_text": "Illustration of a molecular synthesis network with a reaction vessel, catalyst, purification coil, and complex compound",
+    "distinctiveness": "Doctoral organic chemistry distinguished by novel synthesis pathways, catalysis, and complex molecular construction"
+  },
+  {
+    "programme_name": "PhD in Parasitology",
+    "department_code": "BIO",
+    "visual_family": "parasite systems research",
+    "subject": "a magnified parasite life-cycle network connecting vector, host tissue, larval forms, and molecular intervention points around a research microscope",
+    "alt_text": "Illustration of a parasite life cycle connecting a vector, host tissue, larval forms, and intervention points",
+    "distinctiveness": "Doctoral parasitology represented by original investigation across parasite development, transmission, hosts, and control"
+  },
+  {
+    "programme_name": "MSc in Animal Physiology",
+    "department_code": "BIO",
+    "visual_family": "comparative physiology",
+    "subject": "a simplified animal silhouette revealing connected heart, lung, muscle, and nerve systems beside a homeostasis dial and monitoring sensor",
+    "alt_text": "Illustration of connected animal organ systems beside a homeostasis dial and monitoring sensor",
+    "distinctiveness": "Animal physiology distinguished by integrated organ function, regulation, and physiological measurement"
+  },
+  {
+    "programme_name": "MSc in Plant Pathology",
+    "department_code": "BIO",
+    "visual_family": "plant disease research",
+    "subject": "a leaf cross-section under a microscope showing fungal spores, damaged tissue, defensive cell barriers, and a healthy comparison branch",
+    "alt_text": "Illustration of a microscope examining fungal spores and plant tissue beside a healthy branch",
+    "distinctiveness": "Plant pathology represented by close study of infection, tissue response, diagnosis, and crop protection"
+  },
+  {
+    "programme_name": "MSc in Analytical Chemistry",
+    "department_code": "CHEM",
+    "visual_family": "instrumental chemical analysis",
+    "subject": "a laboratory sample moving through a chromatography column toward a clean spectrum display, calibration vessels, and a precision balance",
+    "alt_text": "Illustration of a sample passing through chromatography toward a spectrum beside calibration vessels and a balance",
+    "distinctiveness": "Master's analytical chemistry emphasizes applied instrumentation, calibrated measurement, and compound separation"
+  },
+  {
+    "programme_name": "MSc in Organic Chemistry",
+    "department_code": "CHEM",
+    "visual_family": "organic synthesis",
+    "subject": "a glass reaction assembly framed by carbon-ring structures, directional reaction pathways, a catalyst bead, and a purified crystal product",
+    "alt_text": "Illustration of a reaction assembly with carbon rings, reaction pathways, catalyst, and crystal product",
+    "distinctiveness": "Master's organic chemistry represented by controlled synthesis, reaction mechanisms, and product purification"
+  },
+  {
+    "programme_name": "MSc in Inorganic Chemistry",
+    "department_code": "CHEM",
+    "visual_family": "inorganic materials chemistry",
+    "subject": "a central metal complex linked to a crystal lattice, coordination geometry, mineral sample, and a high-temperature synthesis vessel",
+    "alt_text": "Illustration of a metal complex linked to a crystal lattice, mineral sample, and synthesis vessel",
+    "distinctiveness": "Inorganic chemistry distinguished by metal coordination, mineral structures, solid materials, and thermal synthesis"
+  },
+  {
+    "programme_name": "MSc in Pure Mathematics",
+    "department_code": "MATHACT",
+    "visual_family": "abstract mathematical analysis",
+    "subject": "a continuous surface transforming into discrete symmetry tiles, with a proof pathway linking axiomatic nodes and a compact infinity loop",
+    "alt_text": "Illustration of a continuous surface, symmetry tiles, linked proof nodes, and an infinity loop",
+    "distinctiveness": "Master's pure mathematics represented by rigorous relationships among analysis, algebraic symmetry, and proof"
+  },
+  {
+    "programme_name": "MSc in Applied Mathematics",
+    "department_code": "MATHACT",
+    "visual_family": "applied mathematical modelling",
+    "subject": "a differential flow model connecting a vibrating bridge form, heat contours, boundary mesh, and an optimization target",
+    "alt_text": "Illustration of a flow model connecting bridge vibration, heat contours, a mesh, and optimization target",
+    "distinctiveness": "Master's applied mathematics distinguished by using equations and computation to solve physical engineering problems"
+  },
+  {
+    "programme_name": "MSc in Parasitology",
+    "department_code": "BIO",
+    "visual_family": "parasite biology",
+    "subject": "a microscope focused on a parasite specimen slide beside a concise vector-to-host life cycle, diagnostic vial, and prevention shield",
+    "alt_text": "Illustration of a microscope, parasite specimen, vector-to-host life cycle, diagnostic vial, and prevention shield",
+    "distinctiveness": "Master's parasitology emphasizes laboratory identification, transmission cycles, diagnosis, and practical prevention"
+  },
+  {
+    "programme_name": "MSc in Mathematical Statistics",
+    "department_code": "MATHACT",
+    "visual_family": "statistical inference",
+    "subject": "overlapping probability curves rising from a sample grid, with an estimation target, uncertainty ribbon, and branching model-selection paths",
+    "alt_text": "Illustration of probability curves, a sample grid, uncertainty ribbon, and branching model paths",
+    "distinctiveness": "Master's mathematical statistics represented by probability modelling, estimation, uncertainty, and model selection"
+  },
+  {
+    "programme_name": "MSc in Physics",
+    "department_code": "PHYS",
+    "visual_family": "experimental and theoretical physics",
+    "subject": "a precision optics bench sending wave beams through a crystal toward a detector, bordered by magnetic field arcs and a compact theoretical model",
+    "alt_text": "Illustration of an optics bench, wave beams, crystal detector, magnetic fields, and theoretical model",
+    "distinctiveness": "Master's physics integrates advanced experimentation with wave, matter, electromagnetic, and theoretical analysis"
+  },
+  {
+    "programme_name": "MSc in Phytochemistry and Drug Development",
+    "department_code": "CHEM",
+    "visual_family": "plant-based drug discovery",
+    "subject": "a medicinal leaf feeding an extraction vessel and separation column, then resolving into a candidate molecule beside a formulation capsule",
+    "alt_text": "Illustration of a medicinal leaf moving through extraction and separation toward a candidate drug molecule",
+    "distinctiveness": "Phytochemistry and drug development uniquely follows plant material from chemical extraction to a therapeutic candidate"
+  },
+  {
+    "programme_name": "MSc in Medicinal Ethnobotany",
+    "department_code": "BIO",
+    "visual_family": "medicinal plant knowledge",
+    "subject": "a curated cluster of medicinal plants arranged around a field herbarium case, mortar, ecological map contours, and a research lens",
+    "alt_text": "Illustration of medicinal plants around a herbarium case, mortar, map contours, and research lens",
+    "distinctiveness": "Medicinal ethnobotany represented by systematic study of useful plants, traditional preparation, habitats, and documentation"
+  },
+  {
+    "programme_name": "MSc in Physical Chemistry",
+    "department_code": "CHEM",
+    "visual_family": "molecular physical chemistry",
+    "subject": "an energy landscape linking molecular collision paths, a thermodynamic vessel, phase boundary, and spectroscopic wave pattern",
+    "alt_text": "Illustration of an energy landscape with molecular collisions, thermodynamic vessel, phase boundary, and wave pattern",
+    "distinctiveness": "Physical chemistry distinguished by energy, kinetics, molecular motion, phase behaviour, and spectroscopy"
+  },
+  {
+    "programme_name": "MSc in Renewable Energy Physics",
+    "department_code": "PHYS",
+    "visual_family": "renewable energy systems",
+    "subject": "a solar cell cross-section and wind turbine feeding a shared energy-conversion coil, storage cell, and efficiency flow diagram",
+    "alt_text": "Illustration of a solar cell and wind turbine connected to energy conversion and storage",
+    "distinctiveness": "Renewable energy physics focuses on conversion mechanisms, material performance, generation, and energy storage"
+  },
+  {
+    "programme_name": "MSc in Environmental Physics",
+    "department_code": "PHYS",
+    "visual_family": "environmental measurement physics",
+    "subject": "an atmospheric sensing mast and radiation balance above layered soil and water profiles, connected to wave propagation and climate-monitoring nodes",
+    "alt_text": "Illustration of an atmospheric sensor above soil and water layers with radiation and climate-monitoring nodes",
+    "distinctiveness": "Environmental physics represented by physical measurement of atmosphere, radiation, soil, water, and climate processes"
+  },
+  {
+    "programme_name": "Bachelor of Science in Chemistry",
+    "department_code": "CHEM",
+    "visual_family": "general chemistry",
+    "subject": "a balanced laboratory arrangement of molecular models, reaction flasks, a crystalline solid, flame source, and measured liquid transfer",
+    "alt_text": "Illustration of molecular models, reaction flasks, a crystal, flame source, and measured liquid transfer",
+    "distinctiveness": "Broad undergraduate chemistry represented by matter, reactions, measurement, structure, and laboratory practice"
+  },
+  {
+    "programme_name": "Bachelor of Science in Physics",
+    "department_code": "PHYS",
+    "visual_family": "general physics",
+    "subject": "a pendulum, prism-split light beam, magnetic coil, orbital model, and wave field arranged around a central measurement dial",
+    "alt_text": "Illustration of a pendulum, prism beam, magnetic coil, orbital model, wave field, and measurement dial",
+    "distinctiveness": "Broad undergraduate physics represented through mechanics, optics, electromagnetism, matter, waves, and measurement"
+  },
+  {
+    "programme_name": "Bachelor of Science in Applied Statistics",
+    "department_code": "MATHACT",
+    "visual_family": "applied data analysis",
+    "subject": "a clean sample grid transforming into distribution curves, comparative bars, a trend line, and a decision target without labels",
+    "alt_text": "Illustration of a sample grid transforming into distributions, comparative bars, a trend line, and decision target",
+    "distinctiveness": "Applied statistics represented by turning observed samples into comparisons, trends, uncertainty, and practical decisions"
+  },
+  {
+    "programme_name": "Bachelor of Science in Mathematics with Computing",
+    "department_code": "MATHACT",
+    "visual_family": "computational mathematics",
+    "subject": "a geometric algorithm pathway flowing from a matrix grid through logic nodes into a processor chip and visualized mathematical surface",
+    "alt_text": "Illustration of a matrix grid and logic pathway flowing into a processor and mathematical surface",
+    "distinctiveness": "Mathematics with computing uniquely combines formal structures, algorithms, machine processing, and visualization"
+  },
+  {
+    "programme_name": "Bachelor of Science in Biometry and Informatics",
+    "department_code": "MATHACT",
+    "visual_family": "biological data science",
+    "subject": "a leaf, cell, and DNA sample feeding a structured data grid, statistical curves, and connected informatics nodes",
+    "alt_text": "Illustration of biological samples feeding a data grid, statistical curves, and informatics network",
+    "distinctiveness": "Biometry and informatics represented by measuring living systems and organizing their data for computational analysis"
+  },
+  {
+    "programme_name": "Bachelor of Science in Mathematics (Pure, Applied and Statistics)",
+    "department_code": "MATHACT",
+    "visual_family": "integrated mathematical sciences",
+    "subject": "three interlocking panels showing an abstract symmetry surface, a dynamic flow mesh, and a probability distribution around one shared reasoning core",
+    "alt_text": "Illustration of interlocking abstract mathematics, applied modelling, and probability panels",
+    "distinctiveness": "The combined degree is uniquely represented by equal integration of pure structures, applied models, and statistical inference"
+  },
+  {
+    "programme_name": "Bachelor of Science in Biology",
+    "department_code": "BIO",
+    "visual_family": "general biological sciences",
+    "subject": "a branching tree of life connecting a plant sprout, animal form, cell, microorganism, and ecosystem pool around a field microscope",
+    "alt_text": "Illustration of a tree of life connecting plants, animals, cells, microorganisms, and an ecosystem",
+    "distinctiveness": "Broad biology represented across cellular, organismal, microbial, plant, animal, and ecological scales"
+  },
+  {
+    "programme_name": "Bachelor of Science in Biochemistry",
+    "department_code": "BIO",
+    "visual_family": "biochemical pathways",
+    "subject": "a folded protein beside an enzyme binding pocket, metabolic pathway nodes, molecular substrate, and energy-transfer symbol without lettering",
+    "alt_text": "Illustration of a folded protein, enzyme pocket, molecular substrate, and metabolic pathway",
+    "distinctiveness": "Biochemistry distinguished by molecular mechanisms of enzymes, proteins, metabolism, and energy in living cells"
+  },
+  {
+    "programme_name": "Bachelor of Science in Microbiology",
+    "department_code": "BIO",
+    "visual_family": "microbial sciences",
+    "subject": "a microscope field containing distinct bacterial, fungal, and viral forms beside a culture dish, inoculation loop, and controlled growth chamber",
+    "alt_text": "Illustration of microbial forms under a microscope beside a culture dish and growth chamber",
+    "distinctiveness": "Microbiology represented by diverse microorganisms, cultivation, observation, and controlled laboratory growth"
+  },
+  {
+    "programme_name": "Bachelor of Science in Biotechnology",
+    "department_code": "BIO",
+    "visual_family": "biotechnology applications",
+    "subject": "a DNA strand passing through an engineering junction into cultured cells, a bioreactor, agricultural sprout, and useful biomaterial",
+    "alt_text": "Illustration of DNA engineering connected to cultured cells, a bioreactor, plant sprout, and biomaterial",
+    "distinctiveness": "Biotechnology uniquely emphasizes engineering biological systems into useful agricultural, industrial, and health products"
+  },
+  {
+    "programme_name": "Bachelor of Science in Cellular and Molecular Biology",
+    "department_code": "BIO",
+    "visual_family": "cellular molecular systems",
+    "subject": "a cutaway cell revealing nucleus, organelles, membrane channels, DNA replication, and molecular signalling paths under a precision lens",
+    "alt_text": "Illustration of a cutaway cell with organelles, membrane channels, DNA, and signalling pathways",
+    "distinctiveness": "Cellular and molecular biology focuses tightly on cell architecture, genetic processes, transport, and signalling"
+  },
+  {
+    "programme_name": "Bachelor of Science in Petroleum Chemistry",
+    "department_code": "CHEM",
+    "visual_family": "petroleum molecular processing",
+    "subject": "a hydrocarbon molecular chain flowing from a geological reservoir sample through a fractionation tower into separated fuel and material streams",
+    "alt_text": "Illustration of hydrocarbons moving from a reservoir sample through fractionation into separated products",
+    "distinctiveness": "Petroleum chemistry uniquely links subsurface hydrocarbons, molecular composition, refining, and derived materials"
+  },
+  {
+    "programme_name": "Bachelor of Science in Renewable Energy",
+    "department_code": "PHYS",
+    "visual_family": "applied renewable energy",
+    "subject": "a bright solar array, wind rotor, small water turbine, and biomass leaf feeding a shared clean-energy grid and storage unit",
+    "alt_text": "Illustration of solar, wind, water, and biomass sources connected to an energy grid and storage",
+    "distinctiveness": "The undergraduate renewable energy programme spans practical generation technologies, integration, and storage"
+  },
+  {
+    "programme_name": "Bachelor of Science in Industrial Chemistry",
+    "department_code": "CHEM",
+    "visual_family": "chemical manufacturing",
+    "subject": "a safe process plant cross-section linking reaction vessel, heat exchanger, separation column, quality sample, and finished material pellets",
+    "alt_text": "Illustration of a process plant linking reaction, heat exchange, separation, quality testing, and finished materials",
+    "distinctiveness": "Industrial chemistry represented by scaled chemical production, process control, quality assurance, and manufactured outputs"
+  },
+  {
+    "programme_name": "Bachelor of Science in Conservation Biology",
+    "department_code": "BIO",
+    "visual_family": "biodiversity conservation",
+    "subject": "a protected habitat mosaic linking forest, wetland, grassland, native plant, and animal silhouettes through an ecological corridor",
+    "alt_text": "Illustration of forest, wetland, grassland, plants, and animals linked by an ecological corridor",
+    "distinctiveness": "Conservation biology distinguished by biodiversity, habitat connectivity, species protection, and ecosystem resilience"
+  },
+  {
+    "programme_name": "Bachelor of Science in Forensic Biology",
+    "department_code": "BIO",
+    "visual_family": "biological forensic investigation",
+    "subject": "a secured evidence tray holding a hair strand and tissue swab beside a DNA profile pattern, microscope, and trace-comparison lens",
+    "alt_text": "Illustration of biological evidence, a DNA pattern, microscope, and trace-comparison lens",
+    "distinctiveness": "Forensic biology represented by biological trace recovery, DNA examination, microscopy, and evidence comparison"
+  },
+  {
+    "programme_name": "Bachelor of Science in Environmental Chemistry",
+    "department_code": "CHEM",
+    "visual_family": "environmental chemical analysis",
+    "subject": "air, river, and soil samples converging on a chemical analyzer, with contaminant molecules separating from a clean ecosystem branch",
+    "alt_text": "Illustration of air, water, and soil samples entering an analyzer beside contaminant molecules and a clean ecosystem",
+    "distinctiveness": "Environmental chemistry uniquely tracks chemicals across air, water, soil, pollution analysis, and remediation"
+  },
+  {
+    "programme_name": "Bachelor of Science in Analytical Chemistry",
+    "department_code": "CHEM",
+    "visual_family": "precision chemical measurement",
+    "subject": "a sample vial beside a titration vessel, chromatography path, calibration scale, and spectral peaks arranged as one measurement workflow",
+    "alt_text": "Illustration of a sample vial, titration, chromatography, calibration scale, and spectral peaks",
+    "distinctiveness": "Undergraduate analytical chemistry emphasizes the full foundation of sampling, separation, calibration, and precise measurement"
+  },
+  {
+    "programme_name": "Bachelor of Science in Natural Products",
+    "department_code": "CHEM",
+    "visual_family": "natural compound discovery",
+    "subject": "a leaf, seed, bark, and marine specimen feeding an extraction flask, separation spiral, and isolated molecular crystal",
+    "alt_text": "Illustration of plant and marine specimens moving through extraction and separation to an isolated molecule",
+    "distinctiveness": "Natural products chemistry represented by discovering and isolating useful compounds from diverse biological sources"
+  },
+  {
+    "programme_name": "Bachelor of Science in Geophysics and Mineralogy",
+    "department_code": "PHYS",
+    "visual_family": "earth physics and minerals",
+    "subject": "a layered earth cross-section with seismic wave arcs, magnetic survey lines, mineral crystal cluster, and a field sensing instrument",
+    "alt_text": "Illustration of earth layers, seismic waves, magnetic survey lines, mineral crystals, and a field sensor",
+    "distinctiveness": "Geophysics and mineralogy uniquely combines subsurface physical sensing with identification of earth materials"
+  },
+  {
+    "programme_name": "Bachelor of Science in Waste Management",
+    "department_code": "CHEM",
+    "visual_family": "circular waste systems",
+    "subject": "segregated material streams passing through sorting, safe treatment, composting, and recovery stages into a circular resource loop",
+    "alt_text": "Illustration of waste streams moving through sorting, treatment, composting, and material recovery",
+    "distinctiveness": "Waste management represented as an integrated system of segregation, treatment, recovery, and circular resource use"
+  },
+  {
+    "programme_name": "Bachelor of Actuarial Science",
+    "department_code": "MATHACT",
+    "visual_family": "actuarial risk modelling",
+    "subject": "a risk landscape combining a probability curve, lifespan arc, protected asset forms, reserve blocks, and branching financial scenarios",
+    "alt_text": "Illustration of a probability curve, lifespan arc, protected assets, reserves, and financial scenarios",
+    "distinctiveness": "Actuarial science uniquely applies probability and financial mathematics to longevity, uncertainty, protection, and reserves"
+  },
+  {
+    "programme_name": "Bachelor of Science in Laboratory Science and Technology",
+    "department_code": "BIO",
+    "visual_family": "laboratory systems technology",
+    "subject": "an organized multidisciplinary laboratory bench with microscope, centrifuge, pipette, incubator, specimen workflow, and safety station",
+    "alt_text": "Illustration of a laboratory bench with microscope, centrifuge, pipette, incubator, specimens, and safety station",
+    "distinctiveness": "Laboratory science and technology represented by comprehensive instrumentation, specimen handling, operations, and safety"
+  },
+  {
+    "programme_name": "Post Graduate Diploma in Sciences",
+    "department_code": "BIO",
+    "visual_family": "integrated advanced sciences",
+    "subject": "an advanced study portfolio connecting a cell model, molecular flask, mathematical surface, and wave apparatus around a research-methods compass",
+    "alt_text": "Illustration of biology, chemistry, mathematics, and physics tools around a research compass",
+    "distinctiveness": "The postgraduate diploma is distinguished by cross-disciplinary scientific consolidation and research-methods preparation"
+  },
+  {
+    "programme_name": "Diploma in E-Waste Management",
+    "department_code": "PHYS",
+    "visual_family": "electronic waste recovery",
+    "subject": "discarded circuit boards, cables, and a small device moving through safe dismantling, component sorting, material recovery, and hazard containment",
+    "alt_text": "Illustration of electronic waste moving through dismantling, sorting, recovery, and hazard containment",
+    "distinctiveness": "E-waste management focuses specifically on safe handling and recovery of electronic components and hazardous materials"
+  },
+  {
+    "programme_name": "Diploma in Forensic Biology",
+    "department_code": "BIO",
+    "visual_family": "practical biological forensics",
+    "subject": "a sealed evidence kit with swab, leaf fragment, hair strand, and fingerprint-free sample cards beside a compact microscope and DNA strand",
+    "alt_text": "Illustration of a sealed biological evidence kit beside a microscope and DNA strand",
+    "distinctiveness": "The diploma emphasizes practical collection, preservation, and preliminary examination of biological evidence"
+  },
+  {
+    "programme_name": "Diploma in Forensic Chemistry",
+    "department_code": "CHEM",
+    "visual_family": "practical chemical forensics",
+    "subject": "sealed trace-powder and liquid evidence vessels arranged beside a reagent dropper, chromatography strip without markings, and spectral comparison forms",
+    "alt_text": "Illustration of chemical evidence vessels, reagent dropper, chromatography strip, and spectral comparison",
+    "distinctiveness": "Forensic chemistry is distinguished by chemical trace testing, substance separation, and instrumental evidence comparison"
+  },
+  {
+    "programme_name": "Diploma in Science Laboratory Technology",
+    "department_code": "BIO",
+    "visual_family": "practical laboratory operations",
+    "subject": "a clean teaching laboratory station with specimen rack, measuring cylinder, microscope, balance, heating plate, and protective equipment",
+    "alt_text": "Illustration of a teaching laboratory station with specimens, measuring tools, microscope, balance, heater, and safety equipment",
+    "distinctiveness": "The diploma focuses on hands-on laboratory setup, routine measurement, specimen preparation, equipment use, and safety"
+  }
+]

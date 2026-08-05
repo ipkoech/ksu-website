@@ -11,6 +11,7 @@ import {
 } from "../backend";
 
 export function useAuth() {
+  const sessionExpiredHandledRef = useRef(false);
   const {
     user,
     isLoading,
@@ -52,6 +53,7 @@ export function useAuth() {
       setError(null);
 
       try {
+        sessionExpiredHandledRef.current = false;
         const data = await loginWithPassword(credentials);
         setUser(data.user);
 
@@ -74,8 +76,19 @@ export function useAuth() {
 
   const logout = useCallback(async () => {
     // Clear user state immediately - no token refresh attempts after this
+    sessionExpiredHandledRef.current = true;
     logoutStore();
     await logoutCurrentSession();
+  }, [logoutStore]);
+
+  useEffect(() => {
+    function handleSessionExpired() {
+      if (sessionExpiredHandledRef.current) return;
+      sessionExpiredHandledRef.current = true;
+      logoutStore();
+    }
+    window.addEventListener("ksu:session-expired", handleSessionExpired);
+    return () => window.removeEventListener("ksu:session-expired", handleSessionExpired);
   }, [logoutStore]);
 
   const switchService = useCallback(

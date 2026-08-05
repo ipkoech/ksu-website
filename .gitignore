@@ -20,7 +20,9 @@ node_modules/
 .next/
 .next.docker-owned-*/
 .next-codex/
+.next-codex-*/
 .next-build/
+**/tmp/ksu-*-next/
 out/
 dist/
 build/
@@ -73,6 +75,11 @@ AGENTS.md
 tmp/
 .scratch/
 .design-scratch/
+.superpowers/
+.playwright/
+.playwright-cli/
+**/superpowers/plans/
+*.test.mjs
 .worktrees/
 
 designs/
