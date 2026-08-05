@@ -23,14 +23,27 @@ Usage:
 from __future__ import annotations
 
 import hashlib
+import json
+import logging
 import secrets
 import time
+from collections import Counter
 from functools import wraps
-from typing import Callable
+from typing import Any, Awaitable, Callable
 
 from fastapi import HTTPException, Request, status
 
 from .cache import get_redis
+
+logger = logging.getLogger("ksu.rate_limit")
+_rate_limit_metrics = Counter()
+
+RedisProvider = Callable[[], Awaitable[Any]]
+
+
+def get_rate_limit_metrics() -> dict[str, int]:
+    """Return process-local rate-limit health metrics."""
+    return dict(_rate_limit_metrics)
 
 
 def _default_key(request: Request) -> str:
@@ -57,6 +70,17 @@ class RateLimitExceeded(HTTPException):
         )
 
 
+class RateLimitUnavailable(HTTPException):
+    """Raised when Redis cannot make a distributed rate-limit decision."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Rate limiting is temporarily unavailable. Retry shortly.",
+            headers={"Retry-After": "5"},
+        )
+
+
 class RateLimiter:
     """Token bucket rate limiter backed by Redis."""
 
@@ -65,15 +89,33 @@ class RateLimiter:
         requests: int = 100,
         window: int = 60,
         prefix: str = "rl",
+        *,
+        redis_provider: RedisProvider | None = None,
     ):
-        self.requests = requests
-        self.window = window
+        self.requests = max(1, int(requests))
+        self.window = max(1, int(window))
         self.prefix = prefix
+        self._redis_provider = redis_provider
 
     def _make_key(self, identifier: str, endpoint: str) -> str:
         """Create a unique Redis key for this limiter."""
         raw = f"{self.prefix}:{endpoint}:{identifier}"
         return f"ratelimit:{hashlib.sha256(raw.encode()).hexdigest()[:16]}"
+
+    def _record_backend_unavailable(self, endpoint: str) -> None:
+        _rate_limit_metrics["backend_unavailable"] += 1
+        logger.error(
+            json.dumps(
+                {
+                    "event": "rate_limit_backend_unavailable",
+                    "metric": "rate_limit_backend_unavailable_total",
+                    "prefix": self.prefix,
+                    "endpoint": endpoint,
+                },
+                separators=(",", ":"),
+            ),
+            exc_info=True,
+        )
 
     async def is_allowed(self, identifier: str, endpoint: str) -> tuple[bool, int, int]:
         """Check if request is allowed.
@@ -81,13 +123,14 @@ class RateLimiter:
         Returns:
             (allowed, remaining, retry_after)
         """
+        key = self._make_key(identifier, endpoint)
         try:
-            redis = await get_redis()
-            key = self._make_key(identifier, endpoint)
+            redis_provider = self._redis_provider or get_redis
+            redis = await redis_provider()
             now = int(time.time())
             window_start = now - self.window
 
-            pipe = redis.pipeline()
+            pipe = redis.pipeline(transaction=True)
             pipe.zremrangebyscore(key, 0, window_start)
             pipe.zadd(key, {f"{now}:{secrets.token_hex(4)}": now})
             pipe.zcard(key)
@@ -106,8 +149,9 @@ class RateLimiter:
 
             return True, remaining, 0
 
-        except Exception:
-            return True, self.requests, 0
+        except Exception as exc:
+            self._record_backend_unavailable(endpoint)
+            raise RateLimitUnavailable() from exc
 
     async def check(self, identifier: str, endpoint: str) -> dict[str, int]:
         """Check rate limit and raise if exceeded."""
@@ -126,6 +170,7 @@ def rate_limit(
     key_func: Callable[[Request], str] | None = None,
     by_user: bool = False,
     prefix: str = "rl",
+    max_body_bytes: int | None = None,
 ):
     """Decorator to apply rate limiting to an endpoint.
 
@@ -135,6 +180,7 @@ def rate_limit(
         key_func: Custom function to extract rate limit key from request
         by_user: If True, rate limit by user ID instead of IP
         prefix: Redis key prefix
+        max_body_bytes: Optional maximum request body size for this endpoint
     """
     limiter = RateLimiter(requests=requests, window=window, prefix=prefix)
 
@@ -150,6 +196,34 @@ def rate_limit(
 
             if request is None:
                 return await func(*args, **kwargs)
+
+            if max_body_bytes is not None:
+                content_length = request.headers.get("content-length")
+                if content_length is not None:
+                    try:
+                        declared_size = int(content_length)
+                    except ValueError as exc:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Invalid Content-Length header",
+                        ) from exc
+                    if declared_size > max_body_bytes:
+                        raise HTTPException(
+                            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                            detail="Request body is too large",
+                        )
+
+                try:
+                    body = await request.body()
+                except RuntimeError:
+                    # Direct endpoint unit calls do not provide an ASGI receive
+                    # channel. Real requests always have one and are checked.
+                    body = b""
+                if len(body) > max_body_bytes:
+                    raise HTTPException(
+                        status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                        detail="Request body is too large",
+                    )
 
             if key_func:
                 identifier = key_func(request)
