@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query
 
 from ksu_common import paginate
+from ksu_common.internal_client import internal_key_guard
 from ksu_common.models import AuditLog
 from ksu_common.schemas.responses import success
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,12 +16,12 @@ from ...core.config import get_settings
 from ...core.database import get_db
 
 router = APIRouter(prefix="/audit", tags=["Audit"])
-settings = get_settings()
 
 
-async def require_internal_api_key(x_internal_api_key: str | None = Header(default=None)) -> None:
-    if x_internal_api_key != settings.INTERNAL_API_KEY:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal API key")
+require_internal_api_key = internal_key_guard(
+    lambda: get_settings().INTERNAL_API_KEY,
+    allow_legacy_header=False,
+)
 
 
 @router.get("", dependencies=[Depends(require_internal_api_key)])

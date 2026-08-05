@@ -11,7 +11,7 @@ import logging
 import uuid
 from typing import Mapping
 
-import httpx
+from ksu_common.internal_client import internal_client
 
 from ..core.config import get_settings
 
@@ -40,10 +40,16 @@ class MainReferenceValidator:
         if not references:
             return
 
-        async with httpx.AsyncClient(
-            base_url=settings.MAIN_SERVICE_URL.rstrip("/"),
-            headers={"X-Internal-Key": settings.INTERNAL_API_KEY},
-            timeout=httpx.Timeout(settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS),
+        if not settings.MAIN_SERVICE_API_KEY:
+            if mode == "strict":
+                raise ReferenceValidationError("Main-service authentication is not configured")
+            logger.warning("Reference validation skipped because Main-service authentication is not configured")
+            return
+
+        async with internal_client(
+            settings.MAIN_SERVICE_URL,
+            settings.MAIN_SERVICE_API_KEY,
+            timeout=settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS,
         ) as client:
             for field, kind, value in references:
                 try:
@@ -73,11 +79,16 @@ class MainReferenceValidator:
         mode = settings.REFERENCE_VALIDATION_MODE.lower()
         if mode == "disabled":
             return
+        if not settings.MAIN_SERVICE_API_KEY:
+            if mode == "strict":
+                raise ReferenceValidationError("Main-service authentication is not configured")
+            logger.warning("Department-school validation skipped because Main-service authentication is not configured")
+            return
         try:
-            async with httpx.AsyncClient(
-                base_url=settings.MAIN_SERVICE_URL.rstrip("/"),
-                headers={"X-Internal-Key": settings.INTERNAL_API_KEY},
-                timeout=httpx.Timeout(settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS),
+            async with internal_client(
+                settings.MAIN_SERVICE_URL,
+                settings.MAIN_SERVICE_API_KEY,
+                timeout=settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS,
             ) as client:
                 response = await client.get(
                     f"/api/v1/internal/schools/{school_id}/departments/{department_id}"

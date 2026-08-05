@@ -16,5 +16,11 @@ dependencies = [
     "redis>=5.0.0",
 ]
 
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["ksu_common"]

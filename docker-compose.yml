@@ -2,6 +2,11 @@
 networks:
   ksu:
     driver: bridge
+  proxy:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.0.0/24
 
 # ── Named volumes ─────────────────────────────────────────────────────────────
 volumes:
@@ -12,7 +17,7 @@ volumes:
   frontend_pnpm_store:
 
 x-frontend-dev: &frontend-dev
-  image: node:22-alpine
+  image: node@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43bb9c86130c3e2
   working_dir: /app
   networks: [ksu]
   volumes:
@@ -56,7 +61,9 @@ services:
         condition: service_healthy
       library:
         condition: service_healthy
-    networks: [ksu]
+    networks:
+      proxy:
+        ipv4_address: 172.31.0.2
     restart: unless-stopped
 
   # ── PostgreSQL (shared DB, separate schemas) ──────────────────────────────────
@@ -102,6 +109,7 @@ services:
     env_file: ./services/main/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
+      INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
@@ -122,7 +130,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks: [ksu]
+    networks: [ksu, proxy]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
@@ -144,6 +152,8 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/2
       MAIN_SERVICE_URL: http://main:8000
+      MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
+      INTERNAL_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
       REFERENCE_VALIDATION_MODE: strict
       LOG_LEVEL: ${RESEARCH_LOG_LEVEL:-INFO}
       LOG_FORMAT: ${RESEARCH_LOG_FORMAT:-json}
@@ -159,7 +169,7 @@ services:
         condition: service_healthy
       main:
         condition: service_healthy
-    networks: [ksu]
+    networks: [ksu, proxy]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/api/v1/health"]
@@ -174,16 +184,16 @@ services:
     build:
       context: ./services
       dockerfile: heri_africa/Dockerfile
-    ports:
-      - "${HERI_SERVICE_PORT:-8003}:8003"
+    expose:
+      - "8003"
     env_file: ./services/heri_africa/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/3
       CELERY_BROKER_URL: redis://redis:6379/3
       CELERY_RESULT_BACKEND: redis://redis:6379/3
       RESEARCH_SERVICE_URL: ${HERI_RESEARCH_SERVICE_URL:-http://research:8001}
-      RESEARCH_SERVICE_API_KEY: ${HERI_RESEARCH_SERVICE_API_KEY:-}
+      RESEARCH_SERVICE_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
       LOG_LEVEL: ${HERI_LOG_LEVEL:-INFO}
       LOG_FORMAT: ${HERI_LOG_FORMAT:-json}
       LOG_DIR: /app/logs
@@ -195,7 +205,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks: [ksu]
+    networks: [ksu, proxy]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8003/api/v1/heri/health"]
@@ -219,6 +229,7 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/1
       MAIN_SERVICE_URL: http://main:8000
+      INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       LOG_LEVEL: ${LIBRARY_LOG_LEVEL:-INFO}
       LOG_FORMAT: ${LIBRARY_LOG_FORMAT:-json}
       LOG_DIR: /app/logs
@@ -231,7 +242,7 @@ services:
         condition: service_healthy
       main:
         condition: service_healthy
-    networks: [ksu]
+    networks: [ksu, proxy]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/api/v1/health"]
@@ -296,11 +307,13 @@ services:
     command: ./scripts/start-celery-worker.sh
     env_file: ./services/research/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/2
       CELERY_BROKER_URL: redis://redis:6379/2
       CELERY_RESULT_BACKEND: redis://redis:6379/2
       MAIN_SERVICE_URL: http://main:8000
+      MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
+      INTERNAL_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
       REFERENCE_VALIDATION_MODE: strict
       LOG_DIR: /app/logs
       EXPORT_DIR: /app/exports
@@ -325,7 +338,7 @@ services:
     command: ./scripts/start-celery-worker.sh
     env_file: ./services/heri_africa/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/3
       CELERY_BROKER_URL: redis://redis:6379/3
       CELERY_RESULT_BACKEND: redis://redis:6379/3

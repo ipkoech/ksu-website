@@ -15,14 +15,20 @@ def route_paths(app):
 
 def base_settings(**overrides):
     return {
-        "DATABASE_URL": "postgresql+asyncpg://user:pass@localhost:5432/ksu",
-        "JWT_SECRET_KEY": "test-secret",
+        "DATABASE_URL": "postgresql+asyncpg://user:pass@postgres:5432/ksu",
+        "JWT_SECRET_KEY": "j" * 32,
+        "REDIS_URL": "redis://redis:6379/2",
+        "MAIN_SERVICE_API_KEY": "m" * 32,
         **overrides,
     }
 
 
 def import_research_main():
     os.environ["LOG_DIR"] = "/tmp/ksu-research-test-logs"
+    os.environ["DATABASE_URL"] = "postgresql+asyncpg://user:pass@postgres:5432/ksu"
+    os.environ["JWT_SECRET_KEY"] = "j" * 32
+    os.environ["MAIN_SERVICE_API_KEY"] = "m" * 32
+    os.environ["INTERNAL_API_KEY"] = "r" * 32
     get_settings.cache_clear()
     sys.modules.pop("app.main", None)
     return importlib.import_module("app.main")
@@ -47,12 +53,33 @@ class SettingsTests(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "INTERNAL_API_KEY"):
             Settings(**base_settings(APP_ENV="production", INTERNAL_API_KEY="change-me-internal"))
 
+    def test_production_requires_a_distinct_main_service_key(self):
+        with self.assertRaisesRegex(ValidationError, "MAIN_SERVICE_API_KEY"):
+            Settings(
+                **base_settings(
+                    APP_ENV="production",
+                    MAIN_SERVICE_API_KEY=None,
+                    INTERNAL_API_KEY="r" * 32,
+                    REFERENCE_VALIDATION_MODE="strict",
+                )
+            )
+
+    def test_development_allows_main_service_key_to_be_unconfigured(self):
+        settings = Settings(
+            **base_settings(
+                APP_ENV="development",
+                MAIN_SERVICE_API_KEY=None,
+            )
+        )
+
+        self.assertIsNone(settings.MAIN_SERVICE_API_KEY)
+
     def test_non_strict_reference_validation_rejected_outside_development(self):
         with self.assertRaisesRegex(ValidationError, "REFERENCE_VALIDATION_MODE"):
             Settings(
                 **base_settings(
                     APP_ENV="production",
-                    INTERNAL_API_KEY="configured-key",
+                    INTERNAL_API_KEY="r" * 32,
                     REFERENCE_VALIDATION_MODE="disabled",
                 )
             )
@@ -61,7 +88,7 @@ class SettingsTests(unittest.TestCase):
             Settings(
                 **base_settings(
                     APP_ENV="production",
-                    INTERNAL_API_KEY="configured-key",
+                    INTERNAL_API_KEY="r" * 32,
                     REFERENCE_VALIDATION_MODE="warn",
                 )
             )
@@ -70,7 +97,7 @@ class SettingsTests(unittest.TestCase):
         settings = Settings(
             **base_settings(
                 APP_ENV="production",
-                INTERNAL_API_KEY="configured-key",
+                INTERNAL_API_KEY="r" * 32,
                 REFERENCE_VALIDATION_MODE="strict",
             )
         )
@@ -84,7 +111,7 @@ class SettingsTests(unittest.TestCase):
             research_main.settings = Settings(
                 **base_settings(
                     APP_ENV="production",
-                    INTERNAL_API_KEY="configured-key",
+                    INTERNAL_API_KEY="r" * 32,
                     REFERENCE_VALIDATION_MODE="strict",
                 )
             )
@@ -105,7 +132,7 @@ class SettingsTests(unittest.TestCase):
             research_main.settings = Settings(
                 **base_settings(
                     APP_ENV="production",
-                    INTERNAL_API_KEY="configured-key",
+                    INTERNAL_API_KEY="r" * 32,
                     REFERENCE_VALIDATION_MODE="strict",
                 )
             )

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 import httpx
 from uuid import UUID
 from ksu_common.auth import TokenPayload
+from ksu_common.internal_client import internal_headers
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,7 +24,13 @@ router = APIRouter(prefix="/admin", tags=["HERI Admin CRUD"])
 async def sync_partners_from_research(request: Request, db: AsyncSession = Depends(get_db), user: TokenPayload = Depends(require_permission("heri.content.write"))):
     """Refresh HERI partner projections from the canonical Research Service."""
     settings = get_settings()
-    headers = {"X-Internal-API-Key": settings.RESEARCH_SERVICE_API_KEY} if settings.RESEARCH_SERVICE_API_KEY else {}
+    try:
+        headers = internal_headers(settings.RESEARCH_SERVICE_API_KEY)
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Research integration is not configured",
+        ) from exc
     base = settings.RESEARCH_SERVICE_URL.rstrip("/")
     async with httpx.AsyncClient(timeout=15.0, headers=headers) as client:
         response = await client.get(f"{base}/api/v1/partners", params={"page": 1, "per_page": 100})

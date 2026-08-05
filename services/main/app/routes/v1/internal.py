@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from ksu_common.internal_client import internal_key_guard
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -22,9 +23,10 @@ router = APIRouter(tags=["Internal"])
 settings = get_settings()
 
 
-def verify_internal_key(x_internal_key: str = Header(...)) -> None:
-    if x_internal_key != settings.INTERNAL_API_KEY:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid internal key")
+verify_internal_key = internal_key_guard(
+    lambda: get_settings().INTERNAL_API_KEY,
+    allow_legacy_header=False,
+)
 
 
 class InternalEmailPayload(BaseModel):
