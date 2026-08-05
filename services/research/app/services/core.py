@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import uuid
 import logging
+import uuid
 from typing import Any
 
 from fastapi import HTTPException, status
-from ksu_common.internal_client import outbound_client
+from ksu_common.internal_client import get_integration_pool
 from ksu_common.models import AuditLog
 from sqlalchemy import delete, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -114,21 +114,21 @@ class MainScopedEventService:
     async def list(scope_type: str, scope_id: uuid.UUID, *, per_page: int = 20) -> list[dict[str, Any]]:
         settings = get_settings()
         try:
-            async with outbound_client(
-                base_url=settings.MAIN_SERVICE_URL.rstrip("/"),
+            response = await get_integration_pool().request(
+                "main-scoped-events",
+                settings.MAIN_SERVICE_URL.rstrip("/"),
+                "GET",
+                "/api/v1/events",
                 timeout=settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS,
-            ) as client:
-                response = await client.get(
-                    "/api/v1/events",
-                    params={
-                        "scope_type": scope_type,
-                        "scope_id": str(scope_id),
-                        "page": 1,
-                        "per_page": per_page,
-                        "fields": "id,title,slug,summary,start_date,end_date,location,status,scope_type,scope_id,updated_at",
-                    },
-                )
-                response.raise_for_status()
+                params={
+                    "scope_type": scope_type,
+                    "scope_id": str(scope_id),
+                    "page": 1,
+                    "per_page": per_page,
+                    "fields": "id,title,slug,summary,start_date,end_date,location,status,scope_type,scope_id,updated_at",
+                },
+            )
+            response.raise_for_status()
         except Exception as exc:
             logger.warning("Could not load main-service events for %s=%s: %s", scope_type, scope_id, exc)
             return []

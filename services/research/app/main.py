@@ -7,12 +7,17 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
-
 from ksu_common import (
     configure_service_logging,
     invalidate_prefix,
 )
-from ksu_common.runtime import AuditOptions, CorsConfig, ServiceAppConfig, create_service_app
+from ksu_common.internal_client import close_integration_pool
+from ksu_common.runtime import (
+    AuditOptions,
+    CorsConfig,
+    ServiceAppConfig,
+    create_service_app,
+)
 
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal
@@ -36,7 +41,10 @@ PUBLIC_CACHE_INVALIDATION_EXCLUDED_PREFIXES = (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    yield
+    try:
+        yield
+    finally:
+        await close_integration_pool()
 
 
 def create_app() -> FastAPI:

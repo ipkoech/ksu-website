@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-
+from ksu_common.internal_client import close_integration_pool
 from ksu_common.runtime import CorsConfig, ServiceAppConfig, create_service_app
 
 from .core.config import get_settings
@@ -12,7 +12,10 @@ from .routes import register_routers
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    yield
+    try:
+        yield
+    finally:
+        await close_integration_pool()
 
 
 def create_app() -> FastAPI:

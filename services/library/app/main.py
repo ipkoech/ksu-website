@@ -6,11 +6,16 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
-
 from ksu_common import (
     configure_service_logging,
 )
-from ksu_common.runtime import AuditOptions, CorsConfig, ServiceAppConfig, create_service_app
+from ksu_common.internal_client import close_integration_pool
+from ksu_common.runtime import (
+    AuditOptions,
+    CorsConfig,
+    ServiceAppConfig,
+    create_service_app,
+)
 
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal
@@ -28,8 +33,10 @@ configure_service_logging(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    yield
-    # Shutdown
+    try:
+        yield
+    finally:
+        await close_integration_pool()
 
 
 def create_app() -> FastAPI:
