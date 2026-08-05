@@ -298,6 +298,11 @@ interface EditableServiceResourcePageProps<
     primaryActionLabel?: string;
     secondaryAction?: ReactNode;
   };
+  /**
+   * Pre-populate filter values on mount. Useful for workspace wrappers that
+   * drive the status filter via URL params. Keys should match `listFilters`.
+   */
+  initialFilters?: RecordShape;
 }
 
 function defaultValue(field: EditableField) {
@@ -484,6 +489,7 @@ export function EditableServiceResourcePage<
   exportResource,
   importHref,
   emptyState,
+  initialFilters,
 }: EditableServiceResourcePageProps<TRecord, TPayload>) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -507,7 +513,7 @@ export function EditableServiceResourcePage<
     recordToValues(fields),
   );
   const [workflowValues, setWorkflowValues] = useState<RecordShape>({});
-  const [filterValues, setFilterValues] = useState<RecordShape>({});
+  const [filterValues, setFilterValues] = useState<RecordShape>(() => initialFilters ?? {});
   const [sortValue, setSortValue] = useState(() => serializeSort(defaultSort ?? sortOptions[0]));
   const [recordState, setRecordState] = useState<"active" | "archived" | "deleted">("active");
   const inRecoveryView = supportsRecovery && recordState !== "active";

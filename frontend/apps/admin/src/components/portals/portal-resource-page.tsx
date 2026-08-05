@@ -28,14 +28,17 @@ import {
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
 import { CalendarDays, FileText, Globe2, Image as ImageIcon, Loader2, UploadCloud } from "lucide-react";
+import { MediaBatchUploaderButton } from "@/components/corporate/media-batch-uploader";
 import { PageHeader } from "@/components/layout";
 
 interface PortalResourcePageProps {
   portalKey: string;
   resourceKey: string;
+  /** Pre-populate filter values (e.g. workflow_status from a workspace lane). */
+  initialFilters?: Record<string, unknown>;
 }
 
-export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePageProps) {
+export function PortalResourcePage({ portalKey, resourceKey, initialFilters }: PortalResourcePageProps) {
   const { hasAnyScope } = usePermissions();
   const portalAccessQuery = usePortalAccess();
   const resource = getPortalResource(portalKey, resourceKey);
@@ -257,10 +260,17 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
       }
       exportResource={scopedResource.exportResource}
       importHref={scopedResource.importHref}
+      initialFilters={initialFilters}
       toolbarSlot={
         <>
           {scopedResource.key === "media-assets" && canManage ? (
-            <MediaAssetsUploadButton queryKey={scopedResource.queryKey} />
+            <>
+              <MediaBatchUploaderButton
+                queryKey={scopedResource.queryKey}
+                folderId={typeof initialFilters?.folder_id === "string" ? initialFilters.folder_id : undefined}
+              />
+              <MediaAssetsUploadButton queryKey={scopedResource.queryKey} />
+            </>
           ) : null}
           {resource.portalScope && lockedAccessOptions.length > 1 ? (
             <ScopeSelector
