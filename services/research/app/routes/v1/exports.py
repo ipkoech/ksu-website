@@ -12,6 +12,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ksu_common.auth import TokenPayload
 from ksu_common.schemas.responses import success
 
 from ...core.auth import require_scope
@@ -75,6 +76,7 @@ async def queue_research_export(
     sort: str | None = Query(default=None, max_length=64),
     order: str | None = Query(default="desc", pattern="^(asc|desc)$"),
     limit: int = Query(default=5000, ge=1, le=10000),
+    user: TokenPayload = Depends(require_scope("research:write")),
 ):
     config = ResearchExportService.get_config(resource_key)
     if config is None:
@@ -83,6 +85,7 @@ async def queue_research_export(
     task = celery_app.send_task(
         "research.exports.generate",
         kwargs={
+            "requested_by": user.sub,
             "resource_key": resource_key,
             "options": _export_options(
                 format=format,
@@ -137,9 +140,29 @@ async def queue_research_export(
     )
 
 
-@router.get("/exports/jobs/{job_id}")
-async def get_research_export_job(job_id: str):
+def _owned_result(job_id: str, user: TokenPayload) -> AsyncResult:
+    """Fetch a job, refusing jobs queued by a different user.
+
+    Celery job ids are guessable enough that scope alone is not an authorization
+    boundary — without this any `research:write` holder could read another user's
+    export. Jobs queued before `requested_by` was recorded carry no owner and are
+    refused rather than shared.
+    """
     result = AsyncResult(job_id, app=celery_app)
+    if result.successful():
+        data = result.result
+        owner = data.get("requested_by") if isinstance(data, dict) else None
+        if not owner or str(owner) != str(user.sub):
+            raise HTTPException(status_code=404, detail="Export job not found")
+    return result
+
+
+@router.get("/exports/jobs/{job_id}")
+async def get_research_export_job(
+    job_id: str,
+    user: TokenPayload = Depends(require_scope("research:write")),
+):
+    result = _owned_result(job_id, user)
     result_data = result.result if result.successful() else {}
     error = str(result.result) if result.failed() else None
 
@@ -158,8 +181,11 @@ async def get_research_export_job(job_id: str):
 
 
 @router.get("/exports/jobs/{job_id}/download")
-async def download_research_export_job(job_id: str):
-    result = AsyncResult(job_id, app=celery_app)
+async def download_research_export_job(
+    job_id: str,
+    user: TokenPayload = Depends(require_scope("research:write")),
+):
+    result = _owned_result(job_id, user)
     if not result.successful():
         raise HTTPException(status_code=409, detail="Export is not ready")
     result_data = result.result

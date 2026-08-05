@@ -11,7 +11,7 @@ import logging
 import uuid
 from typing import Mapping
 
-import httpx
+from ksu_common.internal_client import internal_client
 
 from ..core.config import get_settings
 
@@ -40,10 +40,10 @@ class MainReferenceValidator:
         if not references:
             return
 
-        async with httpx.AsyncClient(
-            base_url=settings.MAIN_SERVICE_URL.rstrip("/"),
-            headers={"X-Internal-Key": settings.INTERNAL_API_KEY},
-            timeout=httpx.Timeout(settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS),
+        async with internal_client(
+            settings.MAIN_SERVICE_URL,
+            settings.INTERNAL_API_KEY,
+            timeout=settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS,
         ) as client:
             for field, kind, value in references:
                 try:
@@ -74,10 +74,10 @@ class MainReferenceValidator:
         if mode == "disabled":
             return
         try:
-            async with httpx.AsyncClient(
-                base_url=settings.MAIN_SERVICE_URL.rstrip("/"),
-                headers={"X-Internal-Key": settings.INTERNAL_API_KEY},
-                timeout=httpx.Timeout(settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS),
+            async with internal_client(
+                settings.MAIN_SERVICE_URL,
+                settings.INTERNAL_API_KEY,
+                timeout=settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS,
             ) as client:
                 response = await client.get(
                     f"/api/v1/internal/schools/{school_id}/departments/{department_id}"

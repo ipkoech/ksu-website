@@ -6,6 +6,7 @@ import uuid
 from typing import Any
 
 import httpx
+from ksu_common.internal_client import internal_client
 
 from ..core.config import get_settings
 
@@ -35,16 +36,14 @@ async def resolve_public_media(media_ids: list[uuid.UUID]) -> dict[uuid.UUID, di
         return {}
 
     settings = get_settings()
-    base_url = settings.MAIN_SERVICE_URL.rstrip("/")
     resolved: dict[uuid.UUID, dict[str, Any]] = {}
 
-    async with httpx.AsyncClient(base_url=base_url, timeout=_TIMEOUT) as client:
+    async with internal_client(
+        settings.MAIN_SERVICE_URL, settings.INTERNAL_API_KEY, timeout=_TIMEOUT
+    ) as client:
         for media_id in unique_ids:
             try:
-                response = await client.get(
-                    f"/api/v1/internal/media/{media_id}",
-                    headers={"X-Internal-Key": settings.INTERNAL_API_KEY},
-                )
+                response = await client.get(f"/api/v1/internal/media/{media_id}")
                 response.raise_for_status()
                 payload = response.json().get("data")
                 if isinstance(payload, dict):

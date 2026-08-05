@@ -40,6 +40,63 @@ from sqlalchemy.orm.attributes import NO_VALUE
 T = TypeVar("T", bound=BaseModel)
 
 
+# Never serialized into an API response, whatever the caller requests. Matched on
+# exact attribute name — substring matching would swallow innocent columns such as
+# secretary_general, keywords, key_achievements and credits_required.
+SENSITIVE_FIELD_NAMES: frozenset[str] = frozenset(
+    {
+        "password",
+        "new_password",
+        "old_password",
+        "current_password",
+        "password_confirmation",
+        "confirm_password",
+        "password_hash",
+        "hashed_password",
+        "salt",
+        "token",
+        "password_reset_token",
+        "email_verification_token",
+        "verification_token",
+        "code_hash",
+        "key_hash",
+        "session_hash",
+        "token_hash",
+        "continuation_token_hash",
+        "secret",
+        "mfa_secret",
+        "otp_secret",
+        "totp_secret",
+        "client_secret",
+        "webhook_secret",
+        "credentials",
+        "access_token",
+        "refresh_token",
+        "push_tokens",
+        "api_key",
+        "private_key",
+    }
+)
+
+
+def is_sensitive_field(name: str) -> bool:
+    """True when a field must never reach an API response."""
+    return name.lower() in SENSITIVE_FIELD_NAMES
+
+
+def scrub_sensitive(value: Any) -> Any:
+    """Recursively drop sensitive keys from already-serialized data."""
+    if isinstance(value, dict):
+        return {
+            key: scrub_sensitive(item)
+            for key, item in value.items()
+            if not (isinstance(key, str) and is_sensitive_field(key))
+        }
+    if isinstance(value, list):
+        return [scrub_sensitive(item) for item in value]
+    return value
+
+
 @dataclass(frozen=True)
 class _ModelMetadata:
     column_names: frozenset[str]
@@ -287,17 +344,17 @@ def filter_dict(
         always_include: Fields to always include (e.g., "id")
     """
     if selection.is_empty:
-        return data
+        return scrub_sensitive(data)
 
     always = always_include or set()
     result: dict[str, Any] = {}
 
     for key in selection.fields:
-        if key in data:
+        if key in data and not is_sensitive_field(key):
             result[key] = data[key]
 
     for key in always:
-        if key in data and key not in result:
+        if key in data and key not in result and not is_sensitive_field(key):
             result[key] = data[key]
 
     for nested_key, nested_selection in selection.nested.items():
@@ -365,6 +422,8 @@ def _serialize_object_fields(
             } | always
 
     for key in requested_fields:
+        if is_sensitive_field(key):
+            continue
         if metadata is not None and key not in column_names and key not in relationship_names:
             continue
         if key in unloaded:
@@ -451,9 +510,9 @@ def apply_field_selection(
 
     if selection.is_empty:
         if isinstance(data, BaseModel):
-            return data.model_dump()
+            return scrub_sensitive(data.model_dump())
         elif isinstance(data, list) and data and isinstance(data[0], BaseModel):
-            return [item.model_dump() for item in data]
+            return [scrub_sensitive(item.model_dump()) for item in data]
         elif isinstance(data, list) and data and not isinstance(data[0], dict):
             return [
                 _serialize_object_fields(item, selection, always_include=always_include)
@@ -461,7 +520,7 @@ def apply_field_selection(
             ]
         elif not isinstance(data, dict) and hasattr(data, "__dict__"):
             return _serialize_object_fields(data, selection, always_include=always_include)
-        return data  # type: ignore
+        return scrub_sensitive(data)  # type: ignore
 
     always = always_include or set()
 

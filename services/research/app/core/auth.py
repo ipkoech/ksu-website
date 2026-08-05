@@ -61,6 +61,7 @@ async def get_current_user(
             token,
             secret=settings.JWT_SECRET_KEY,
             algorithm=settings.JWT_ALGORITHM,
+            expected_type="access",
         )
     except Exception as exc:  # pragma: no cover - fast fail around shared jwt lib
         raise HTTPException(

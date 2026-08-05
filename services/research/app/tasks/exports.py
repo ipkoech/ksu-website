@@ -15,11 +15,24 @@ from .celery_app import celery_app
 
 
 @celery_app.task(name="research.exports.generate", bind=True)
-def generate_export(self, resource_key: str, options: dict[str, Any]) -> dict[str, Any]:
-    return asyncio.run(_generate_export(self.request.id, resource_key, options))
+def generate_export(
+    self,
+    resource_key: str,
+    options: dict[str, Any],
+    requested_by: str | None = None,
+) -> dict[str, Any]:
+    return asyncio.run(
+        _generate_export(self.request.id, resource_key, options, requested_by=requested_by)
+    )
 
 
-async def _generate_export(job_id: str, resource_key: str, options: dict[str, Any]) -> dict[str, Any]:
+async def _generate_export(
+    job_id: str,
+    resource_key: str,
+    options: dict[str, Any],
+    *,
+    requested_by: str | None = None,
+) -> dict[str, Any]:
     config = ResearchExportService.get_config(resource_key)
     if config is None:
         raise ValueError("Research export resource not found")
@@ -61,6 +74,7 @@ async def _generate_export(job_id: str, resource_key: str, options: dict[str, An
         "format": export_format,
         "media_type": media_type,
         "total_rows": len(rows),
+        "requested_by": requested_by,
     }
 
 

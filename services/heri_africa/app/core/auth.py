@@ -28,7 +28,7 @@ async def get_current_user(
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or missing token", headers={"WWW-Authenticate": "Bearer"})
     try:
-        payload = decode_token(token, secret=get_settings().JWT_SECRET_KEY, algorithm=get_settings().JWT_ALGORITHM)
+        payload = decode_token(token, secret=get_settings().JWT_SECRET_KEY, algorithm=get_settings().JWT_ALGORITHM, expected_type="access")
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or missing token", headers={"WWW-Authenticate": "Bearer"}) from exc
     return TokenPayload(sub=payload["sub"], jti=payload["jti"], roles=payload.get("roles", []), raw=payload)

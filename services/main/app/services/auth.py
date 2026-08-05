@@ -63,7 +63,18 @@ class AuthService:
     """Authentication operations."""
 
     @staticmethod
-    async def login(db: AsyncSession, email: str, password: str) -> tuple[User, str, str]:
+    async def login(
+        db: AsyncSession,
+        email: str,
+        password: str,
+        *,
+        ip_address: str | None = None,
+    ) -> tuple[User, str, str]:
+        # Runs before the user lookup so credential stuffing and email enumeration
+        # are throttled even for addresses that do not exist. Per-account lockout
+        # (AUTH_LOGIN_MAX_ATTEMPTS) still applies on top of this.
+        await AuthService._enforce_login_rate_limit(email=email, ip_address=ip_address)
+
         user = await UserService.get_by_email(db, email)
         if user is None:
             raise PermissionError("Invalid credentials")
@@ -214,6 +225,23 @@ class AuthService:
         await db.flush()
         queue_verification_email.delay(user.email, token)
         return token
+
+    @staticmethod
+    async def _enforce_login_rate_limit(*, email: str, ip_address: str | None = None) -> None:
+        client = await get_redis()
+        window = settings.LOGIN_RATE_LIMIT_WINDOW_SECONDS
+        limit = settings.LOGIN_RATE_LIMIT_COUNT
+        email_hash = sha256(email.lower().encode()).hexdigest()[:24]
+        keys = [f"auth:login:email:{email_hash}"]
+        if ip_address:
+            keys.append(f"auth:login:ip:{ip_address}")
+
+        for key in keys:
+            current = await client.incr(key)
+            if current == 1:
+                await client.expire(key, window)
+            if current > limit:
+                raise PermissionError("Too many login attempts. Please try again later.")
 
     @staticmethod
     async def _enforce_password_reset_rate_limit(*, email: str, ip_address: str | None = None) -> None:

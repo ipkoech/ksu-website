@@ -23,14 +23,31 @@ def verify_password(password_hash: str, candidate: str) -> bool:
         return False
 
 
-def decode_token(token: str, *, secret: str, algorithm: str = "HS256") -> dict:
-    """Decode and validate a JWT. Raises jwt.PyJWTError on failure."""
-    return jwt.decode(
+def decode_token(
+    token: str,
+    *,
+    secret: str,
+    algorithm: str = "HS256",
+    expected_type: str | None = None,
+) -> dict:
+    """Decode and validate a JWT. Raises jwt.PyJWTError on failure.
+
+    Access, refresh and socket-ticket tokens are all signed with the same secret,
+    so callers must pass expected_type to stop one kind being replayed as another.
+    """
+    payload = jwt.decode(
         token,
         secret,
         algorithms=[algorithm],
         options={"require": ["exp", "iat", "nbf", "jti", "sub"]},
     )
+
+    if expected_type is not None and payload.get("type") != expected_type:
+        raise jwt.InvalidTokenError(
+            f"expected {expected_type!r} token, got {payload.get('type')!r}"
+        )
+
+    return payload
 
 
 def generate_access_token(

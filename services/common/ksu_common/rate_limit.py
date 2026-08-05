@@ -23,6 +23,7 @@ Usage:
 from __future__ import annotations
 
 import hashlib
+import logging
 import secrets
 import time
 from functools import wraps
@@ -31,6 +32,8 @@ from typing import Callable
 from fastapi import HTTPException, Request, status
 
 from .cache import get_redis
+
+logger = logging.getLogger(__name__)
 
 
 def _default_key(request: Request) -> str:
@@ -57,6 +60,17 @@ class RateLimitExceeded(HTTPException):
         )
 
 
+class RateLimitUnavailable(HTTPException):
+    """Raised when the limiter cannot reach Redis and is configured to fail closed."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Rate limiting is temporarily unavailable. Retry shortly.",
+            headers={"Retry-After": "5"},
+        )
+
+
 class RateLimiter:
     """Token bucket rate limiter backed by Redis."""
 
@@ -65,10 +79,13 @@ class RateLimiter:
         requests: int = 100,
         window: int = 60,
         prefix: str = "rl",
+        *,
+        fail_open: bool = False,
     ):
         self.requests = requests
         self.window = window
         self.prefix = prefix
+        self.fail_open = fail_open
 
     def _make_key(self, identifier: str, endpoint: str) -> str:
         """Create a unique Redis key for this limiter."""
@@ -107,7 +124,12 @@ class RateLimiter:
             return True, remaining, 0
 
         except Exception:
-            return True, self.requests, 0
+            # A backend outage must not silently disable abuse protection, so the
+            # default is to fail closed and let the caller surface a 503.
+            logger.exception("rate limiter backend unavailable for endpoint %s", endpoint)
+            if self.fail_open:
+                return True, self.requests, 0
+            raise RateLimitUnavailable()
 
     async def check(self, identifier: str, endpoint: str) -> dict[str, int]:
         """Check rate limit and raise if exceeded."""
@@ -126,6 +148,7 @@ def rate_limit(
     key_func: Callable[[Request], str] | None = None,
     by_user: bool = False,
     prefix: str = "rl",
+    fail_open: bool = False,
 ):
     """Decorator to apply rate limiting to an endpoint.
 
@@ -135,8 +158,11 @@ def rate_limit(
         key_func: Custom function to extract rate limit key from request
         by_user: If True, rate limit by user ID instead of IP
         prefix: Redis key prefix
+        fail_open: Serve the request when Redis is unreachable instead of
+            returning 503. Only for endpoints where availability matters more
+            than abuse protection — never for auth or public write endpoints.
     """
-    limiter = RateLimiter(requests=requests, window=window, prefix=prefix)
+    limiter = RateLimiter(requests=requests, window=window, prefix=prefix, fail_open=fail_open)
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)

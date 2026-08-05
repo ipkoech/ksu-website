@@ -34,6 +34,23 @@ RESOURCE_MODELS: dict[str, type[Any]] = {
 
 READ_ONLY_RESOURCES = {"analytics"}
 
+#: Columns the generic CRUD must never accept from a client because another
+#: pipeline owns them — the upload endpoint writes media file identity, and the
+#: public submission endpoint writes what the visitor actually sent.
+SERVER_MANAGED_FIELDS: dict[type[Any], frozenset[str]] = {
+    MediaAsset: frozenset(
+        {"storage_path", "file_hash", "file_size", "mime_type", "file_name", "public_url"}
+    ),
+}
+
+#: Resources where only an explicit allowlist is writable. Submissions are a
+#: record of what a visitor sent, so staff may triage them but not rewrite them.
+WRITABLE_ALLOWLIST: dict[type[Any], frozenset[str]] = {
+    Submission: frozenset({"status", "internal_notes"}),
+}
+
+_ALWAYS_PROTECTED = frozenset({"id", "created_at", "updated_at", "deleted_at"})
+
 
 def model_for_resource(resource: str) -> type[Any]:
     try:
@@ -43,4 +60,9 @@ def model_for_resource(resource: str) -> type[Any]:
 
 
 def writable_fields(model: type[Any]) -> set[str]:
-    return {column.name for column in model.__table__.columns if column.name not in {"id", "created_at", "updated_at", "deleted_at"}}
+    allowlist = WRITABLE_ALLOWLIST.get(model)
+    columns = {column.name for column in model.__table__.columns}
+    if allowlist is not None:
+        return columns & allowlist
+    protected = _ALWAYS_PROTECTED | SERVER_MANAGED_FIELDS.get(model, frozenset())
+    return columns - protected

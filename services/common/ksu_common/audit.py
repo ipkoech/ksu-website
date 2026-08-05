@@ -27,6 +27,7 @@ import jwt
 from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from .field_selection import scrub_sensitive
 from .models import AuditLog
 from .security import decode_token
 
@@ -282,7 +283,7 @@ def _semantic_action(request: Request) -> str:
 async def _extract_request_details(request: Request) -> dict[str, Any] | None:
     details: dict[str, Any] = {}
     if request.query_params:
-        details["query"] = dict(request.query_params)
+        details["query"] = scrub_sensitive(dict(request.query_params))
 
     if request.method.upper() in {"POST", "PUT", "PATCH", "DELETE"}:
         content_type = request.headers.get("content-type", "")
@@ -292,7 +293,9 @@ async def _extract_request_details(request: Request) -> dict[str, Any] | None:
             except Exception:
                 body = None
             if body is not None:
-                details["request_body"] = body
+                # Login and password-reset bodies land here verbatim otherwise,
+                # which wrote plaintext credentials into the audit table.
+                details["request_body"] = scrub_sensitive(body)
 
     return details or None
 
@@ -309,8 +312,7 @@ def request_actor_id(request: Request) -> uuid.UUID | None:
         return None
 
 
-async def persist_audit_log(
-    session_factory: async_sessionmaker[AsyncSession],
+async def build_audit_payload(
     *,
     service_name: str,
     request: Request,
@@ -318,8 +320,14 @@ async def persist_audit_log(
     error_message: str | None = None,
     details: dict[str, Any] | None = None,
     changes: dict[str, Any] | None = None,
-) -> None:
-    """Persist a request audit log entry."""
+) -> dict[str, Any]:
+    """Extract everything the audit row needs from a live Request.
+
+    This is the only part that must run inside the request, because the Request
+    (and its body) is gone afterwards. The result is plain JSON-serializable data
+    so the actual write can be handed to a background worker — see
+    :func:`persist_audit_payload`.
+    """
     payload = _extract_optional_token(request) or {}
     resource_type, resource_id = _resource_from_path(request.url.path)
     route = request.scope.get("route")
@@ -339,32 +347,92 @@ async def persist_audit_log(
             user_id = None
 
     status_value = "success" if status_code < 400 else "failure"
-    entry = AuditLog(
-        service_name=service_name,
-        action=_semantic_action(request),
-        resource_type=resource_type,
-        resource_id=resource_id,
-        request_method=request.method,
-        request_path=str(request.url.path),
-        route_name=route_name,
-        status_code=status_code,
-        status=status_value,
-        user_id=user_id,
-        session_jti=payload.get("jti"),
-        ip_address=request.client.host if request.client else None,
-        user_agent=request.headers.get("user-agent"),
-        error_message=error_message,
-        details=extracted_details,
-        changes=changes,
-        happened_at=datetime.now(timezone.utc),
-    )
+    return {
+        "service_name": service_name,
+        "action": _semantic_action(request),
+        "resource_type": resource_type,
+        "resource_id": str(resource_id) if resource_id is not None else None,
+        "request_method": request.method,
+        "request_path": str(request.url.path),
+        "route_name": route_name,
+        "status_code": status_code,
+        "status": status_value,
+        "user_id": str(user_id) if user_id is not None else None,
+        "session_jti": payload.get("jti"),
+        "ip_address": request.client.host if request.client else None,
+        "user_agent": request.headers.get("user-agent"),
+        "error_message": error_message,
+        "details": extracted_details,
+        "changes": changes,
+        "happened_at": datetime.now(timezone.utc).isoformat(),
+    }
 
+
+def _audit_log_from_payload(payload: dict[str, Any]) -> AuditLog:
+    data = dict(payload)
+    raw_user_id = data.pop("user_id", None)
+    raw_happened_at = data.pop("happened_at", None)
+
+    user_id = None
+    if raw_user_id:
+        try:
+            user_id = uuid.UUID(str(raw_user_id))
+        except ValueError:
+            user_id = None
+
+    happened_at = datetime.now(timezone.utc)
+    if isinstance(raw_happened_at, datetime):
+        happened_at = raw_happened_at
+    elif raw_happened_at:
+        try:
+            happened_at = datetime.fromisoformat(str(raw_happened_at))
+        except ValueError:
+            pass
+
+    return AuditLog(**data, user_id=user_id, happened_at=happened_at)
+
+
+async def persist_audit_payload(
+    session_factory: async_sessionmaker[AsyncSession],
+    payload: dict[str, Any],
+) -> None:
+    """Write a payload built by :func:`build_audit_payload`.
+
+    Safe to run outside the request — in a Celery task or any background worker.
+    """
+    entry = _audit_log_from_payload(payload)
     async with session_factory() as session:
         try:
             session.add(entry)
             await session.commit()
         except Exception:
             await session.rollback()
+            logger.exception("failed to persist audit entry for %s", payload.get("request_path"))
+
+
+async def persist_audit_log(
+    session_factory: async_sessionmaker[AsyncSession],
+    *,
+    service_name: str,
+    request: Request,
+    status_code: int,
+    error_message: str | None = None,
+    details: dict[str, Any] | None = None,
+    changes: dict[str, Any] | None = None,
+) -> None:
+    """Build and write an audit entry inline.
+
+    Kept for callers that have not moved the write off the request path.
+    """
+    payload = await build_audit_payload(
+        service_name=service_name,
+        request=request,
+        status_code=status_code,
+        error_message=error_message,
+        details=details,
+        changes=changes,
+    )
+    await persist_audit_payload(session_factory, payload)
 
 
 def should_skip_audit(path: str) -> bool:

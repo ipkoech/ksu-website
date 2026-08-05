@@ -7,6 +7,7 @@ from decimal import Decimal
 from typing import Any
 
 import httpx
+from ksu_common.internal_client import internal_headers
 
 from ..core.config import get_settings
 from .celery_app import celery_app
@@ -22,7 +23,7 @@ def _post_main_internal(path: str, payload: dict[str, Any]) -> dict[str, Any]:
     settings = get_settings()
     response = httpx.post(
         _main_internal_url(path),
-        headers={"x-internal-key": settings.INTERNAL_API_KEY},
+        headers=internal_headers(settings.INTERNAL_API_KEY),
         json=payload,
         timeout=10,
     )

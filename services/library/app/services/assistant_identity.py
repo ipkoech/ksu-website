@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import quote
 
-import httpx
+from ksu_common.internal_client import internal_client
 import sqlalchemy as sa
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -163,10 +163,11 @@ async def send_verification_email(
         f"<p>Or enter this six-digit code: <strong>{code}</strong></p>"
         "<p>This link and code expire soon and can only be used once.</p>"
     )
-    async with httpx.AsyncClient(timeout=10) as client:
+    async with internal_client(
+        settings.MAIN_SERVICE_URL, settings.INTERNAL_API_KEY, timeout=10
+    ) as client:
         response = await client.post(
-            f"{settings.MAIN_SERVICE_URL.rstrip('/')}/api/v1/internal/email/send",
-            headers={"X-Internal-Key": settings.INTERNAL_API_KEY},
+            "/api/v1/internal/email/send",
             json={"to_email": email, "subject": "Continue your Library conversation", "text_body": text, "html_body": html},
         )
         response.raise_for_status()

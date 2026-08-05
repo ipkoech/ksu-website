@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 SERVICE_DIR = Path(__file__).resolve().parents[2]
@@ -38,6 +38,23 @@ class HeriSettings(BaseSettings):
         if not value.startswith("postgresql+asyncpg"):
             raise ValueError("DATABASE_URL must use postgresql+asyncpg driver")
         return value
+
+    @field_validator("CELERY_BROKER_URL", "CELERY_RESULT_BACKEND")
+    @classmethod
+    def validate_celery_urls(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        valid_prefixes = ("redis://", "rediss://", "amqp://", "rpc://")
+        if not v.startswith(valid_prefixes):
+            raise ValueError("Celery broker/backend must use redis, rediss, amqp, or rpc URL")
+        return v
+
+    @model_validator(mode="after")
+    def reject_insecure_production_defaults(self) -> "HeriSettings":
+        if self.APP_ENV.lower() not in {"development", "dev", "local", "test", "testing"}:
+            if self.JWT_SECRET_KEY == "change-me-local":
+                raise ValueError("JWT_SECRET_KEY must be configured outside local development")
+        return self
 
 
 @lru_cache

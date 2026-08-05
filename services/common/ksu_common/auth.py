@@ -51,6 +51,7 @@ async def get_current_user(
             credentials.credentials,
             secret=_get_jwt_secret(),
             algorithm=_get_jwt_algorithm(),
+            expected_type="access",
         )
     except jwt.PyJWTError:
         raise exc
