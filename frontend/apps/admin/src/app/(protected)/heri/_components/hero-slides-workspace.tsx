@@ -253,7 +253,7 @@ export function HeroSlidesWorkspace() {
         <div className="overflow-hidden rounded-2xl bg-[#003c39] shadow-sm">
           <div className="relative min-h-[360px] p-8 text-white">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_15%,rgba(199,217,0,.35),transparent_35%),linear-gradient(120deg,#003c39,#006b62)]" />
-            {draft?.image_url && (
+            {draft?.image_url ? (
               <Image
                 src={String(draft.image_url)}
                 alt=""
@@ -261,7 +261,7 @@ export function HeroSlidesWorkspace() {
                 unoptimized
                 className="object-cover opacity-45"
               />
-            )}
+            ) : null}
             <div className="relative z-10 max-w-lg">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-lime-300">
                 {String(draft?.eyebrow ?? "HOSTED BY KISII UNIVERSITY")}
