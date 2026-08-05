@@ -15,9 +15,18 @@ class _Models:
         return type("Response", (), {"text": " grounded answer "})()
 
 
+class _AsyncModels:
+    def __init__(self, models: _Models) -> None:
+        self.models = models
+
+    async def generate_content(self, **kwargs):
+        return self.models.generate_content(**kwargs)
+
+
 class _Client:
     def __init__(self) -> None:
         self.models = _Models()
+        self.aio = type("AsyncClient", (), {"models": _AsyncModels(self.models)})()
         self.closed = False
 
     def close(self) -> None:

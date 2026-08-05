@@ -127,7 +127,13 @@ def close_worker_async_runtime(
         _worker_async_runtime = None
     if runtime is not None:
         async def _shutdown() -> None:
-            operations = [_close_common_worker_resources(), *(hook() for hook in shutdown_hooks)]
+            async def run_hook(hook: Callable[[], Awaitable[None]]) -> None:
+                await hook()
+
+            operations = [
+                _close_common_worker_resources(),
+                *(run_hook(hook) for hook in shutdown_hooks),
+            ]
             results = await asyncio.gather(*operations, return_exceptions=True)
             errors = [result for result in results if isinstance(result, BaseException)]
             if errors:

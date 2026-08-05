@@ -6,7 +6,6 @@ import asyncio
 import inspect
 import threading
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from .observability import Metrics
@@ -35,10 +34,6 @@ class GeminiTransport:
         self._client_factory = client_factory or self._default_client_factory
         self._client: Any | None = None
         self._client_lock = threading.Lock()
-        self._executor = ThreadPoolExecutor(
-            max_workers=4,
-            thread_name_prefix="ksu-gemini",
-        )
 
     def _default_client_factory(self, api_key: str) -> Any:
         from google import genai
@@ -96,41 +91,12 @@ class GeminiTransport:
     ) -> str:
         client = self._get_client()
         aio_models = getattr(getattr(client, "aio", None), "models", None)
-        if aio_models is not None and callable(getattr(aio_models, "generate_content", None)):
-            from google.genai import types
+        if aio_models is None or not callable(getattr(aio_models, "generate_content", None)):
+            raise RuntimeError("Gemini async client is unavailable")
 
-            response = await aio_models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    temperature=temperature,
-                    max_output_tokens=max_output_tokens,
-                    response_mime_type=response_mime_type,
-                ),
-            )
-            text = getattr(response, "text", "")
-            return text.strip() if isinstance(text, str) else ""
-
-        loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(
-            self._executor,
-            self._generate_sync,
-            prompt,
-            temperature,
-            max_output_tokens,
-            response_mime_type,
-        )
-
-    def _generate_sync(
-        self,
-        prompt: str,
-        temperature: float,
-        max_output_tokens: int,
-        response_mime_type: str,
-    ) -> str:
         from google.genai import types
 
-        response = self._get_client().models.generate_content(
+        response = await aio_models.generate_content(
             model=self.model,
             contents=prompt,
             config=types.GenerateContentConfig(
@@ -146,9 +112,9 @@ class GeminiTransport:
         client = self._client
         self._client = None
         if client is None:
-            self._executor.shutdown(wait=True, cancel_futures=True)
             return
-        aio_close = getattr(getattr(client, "aio", None), "close", None)
+        aio_close = getattr(getattr(client, "aio", None), "aclose", None)
+        aio_close = aio_close or getattr(getattr(client, "aio", None), "close", None)
         if callable(aio_close):
             result = aio_close()
             if inspect.isawaitable(result):
@@ -156,7 +122,6 @@ class GeminiTransport:
         close = getattr(client, "close", None)
         if callable(close):
             await asyncio.to_thread(close)
-        self._executor.shutdown(wait=True, cancel_futures=True)
 
 
 _transports: dict[tuple[str, str, float], GeminiTransport] = {}
