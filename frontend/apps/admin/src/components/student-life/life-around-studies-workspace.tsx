@@ -25,18 +25,23 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
+  Archive,
   CheckCircle2,
   Eye,
+  FileEdit,
   Film,
   Lock,
   Plus,
   RefreshCw,
   Save,
+  Send,
   Sparkles,
   Trash2,
+  Undo2,
 } from "lucide-react";
 import { toast } from "@ksu/ui";
 import {
@@ -58,6 +63,7 @@ import {
   Skeleton,
   Textarea,
 } from "@ksu/ui/components";
+import { cn } from "@ksu/ui/lib/utils";
 import { usePermissions } from "@ksu/auth";
 import { PageTransition } from "@/lib/animations";
 import {
@@ -154,14 +160,40 @@ function draftsEqual(a: Draft, b: Draft): boolean {
   return keys.every((key) => (a[key] ?? "") === (b[key] ?? ""));
 }
 
+type StatusLane = "all" | SectionItemStatus;
+
+const STATUS_LANES: { value: StatusLane; label: string; color: string }[] = [
+  { value: "all", label: "All", color: "bg-muted-foreground" },
+  { value: "draft", label: "Draft", color: "bg-amber-500" },
+  { value: "in_review", label: "In review", color: "bg-sky-500" },
+  { value: "published", label: "Published", color: "bg-emerald-500" },
+  { value: "archived", label: "Archived", color: "bg-zinc-500" },
+];
+
 export function LifeAroundStudiesWorkspace() {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { hasAnyScope } = usePermissions();
 
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [baselineDrafts, setBaselineDrafts] = useState<Draft[]>([]);
   const [failedIndices, setFailedIndices] = useState<Set<number>>(new Set());
   const [removeTarget, setRemoveTarget] = useState<{ index: number; title: string } | null>(null);
+  const [reviewAction, setReviewAction] = useState<{ index: number; action: "approve" | "return" } | null>(null);
+
+  // URL-synced lane filter
+  const activeLane = (searchParams.get("lane") as StatusLane) || "all";
+  const setActiveLane = (lane: StatusLane) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (lane === "all") {
+      params.delete("lane");
+    } else {
+      params.set("lane", lane);
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   const canManage = hasAnyScope([
     "life_around_studies.manage",
@@ -386,6 +418,53 @@ export function LifeAroundStudiesWorkspace() {
     [drafts],
   );
 
+  // Status lane counts
+  const laneCounts = useMemo(() => {
+    const counts: Record<StatusLane, number> = {
+      all: drafts.length,
+      draft: 0,
+      in_review: 0,
+      published: 0,
+      archived: 0,
+    };
+    for (const d of drafts) {
+      const s = (d.status ?? "published") as SectionItemStatus;
+      if (s in counts) counts[s] += 1;
+    }
+    return counts;
+  }, [drafts]);
+
+  // Filtered drafts based on active lane
+  const filteredDrafts = useMemo(() => {
+    if (activeLane === "all") return drafts;
+    return drafts.filter((d) => (d.status ?? "published") === activeLane);
+  }, [drafts, activeLane]);
+
+  // Per-item review capability
+  const canReviewItems = hasAnyScope([
+    "life_around_studies.review",
+    "life_around_studies.publish",
+    "homepage.manage",
+    "admin:*",
+  ]);
+
+  // Execute review action (approve or return to draft)
+  const executeReviewAction = () => {
+    if (!reviewAction) return;
+    const { index, action } = reviewAction;
+    const realIndex = drafts.findIndex((d) => d === filteredDrafts[index]);
+    if (realIndex === -1) return;
+
+    if (action === "approve") {
+      updateDraft(realIndex, { status: "published" });
+    } else {
+      updateDraft(realIndex, { status: "draft" });
+    }
+    setReviewAction(null);
+    // Note: actual save happens when user clicks "Save Life Around Studies"
+    toast.info("Status changed. Save to apply.");
+  };
+
   const workflowActions = section
     ? {
         submit: section.status === "draft" || section.status === "changes_requested",
@@ -406,32 +485,32 @@ export function LifeAroundStudiesWorkspace() {
 
   const metrics: PortalMetric[] = [
     {
-      label: "Total Items",
-      value: drafts.length,
-      detail: "Editorial items in this section",
-      icon: Sparkles,
-      tone: "primary",
+      label: "Draft",
+      value: laneCounts.draft,
+      detail: "Work in progress",
+      icon: FileEdit,
+      tone: "warning",
     },
     {
-      label: "Enabled",
-      value: enabledCount,
-      detail: "Visible on homepage",
-      icon: Eye,
-      tone: "success",
-    },
-    {
-      label: "Featured",
-      value: featuredCount,
-      detail: "Highlighted prominently",
-      icon: Sparkles,
+      label: "In Review",
+      value: laneCounts.in_review,
+      detail: "Awaiting approval",
+      icon: Send,
       tone: "info",
     },
     {
-      label: "Failed Saves",
-      value: failedIndices.size,
-      detail: failedIndices.size > 0 ? "Retry required" : "All synced",
-      icon: AlertTriangle,
-      tone: failedIndices.size > 0 ? "danger" : "success",
+      label: "Published",
+      value: laneCounts.published,
+      detail: "Live on homepage",
+      icon: CheckCircle2,
+      tone: "success",
+    },
+    {
+      label: "Archived",
+      value: laneCounts.archived,
+      detail: "Hidden from view",
+      icon: Archive,
+      tone: "danger",
     },
   ];
 
@@ -513,6 +592,42 @@ export function LifeAroundStudiesWorkspace() {
 
         <PortalMetricGrid items={metrics} />
 
+        {/* Status lane filter pills */}
+        <section aria-label="Filter by status" className="flex flex-wrap gap-2">
+          {STATUS_LANES.map((lane) => {
+            const isActive = activeLane === lane.value;
+            const count = laneCounts[lane.value];
+            return (
+              <button
+                key={lane.value}
+                type="button"
+                onClick={() => setActiveLane(lane.value)}
+                aria-pressed={isActive}
+                aria-label={`Filter by ${lane.label} (${count} items)`}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all duration-200",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  isActive
+                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                    : "border-border bg-background hover:border-primary/40 hover:bg-muted/50",
+                )}
+              >
+                <span className={cn("size-2 rounded-full", lane.color)} aria-hidden="true" />
+                {lane.label}
+                <Badge
+                  variant={isActive ? "secondary" : "outline"}
+                  className={cn(
+                    "ml-0.5 h-5 min-w-5 justify-center px-1.5 text-xs",
+                    isActive && "bg-primary-foreground/20 text-primary-foreground",
+                  )}
+                >
+                  {count}
+                </Badge>
+              </button>
+            );
+          })}
+        </section>
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <div>
@@ -589,41 +704,103 @@ export function LifeAroundStudiesWorkspace() {
           </CardHeader>
           <CardContent className="space-y-5">
             {drafts.length === 0 ? (
-              <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-                Add the first editorial item.
-              </p>
+              <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed p-10 text-center">
+                <Sparkles className="size-8 text-muted-foreground" />
+                <p className="text-sm font-medium">No editorial items yet</p>
+                <p className="text-xs text-muted-foreground">Add the first item to curate Life Around Studies content.</p>
+              </div>
+            ) : filteredDrafts.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed p-10 text-center">
+                {activeLane === "draft" ? <FileEdit className="size-8 text-amber-500" /> : null}
+                {activeLane === "in_review" ? <Send className="size-8 text-sky-500" /> : null}
+                {activeLane === "published" ? <CheckCircle2 className="size-8 text-emerald-500" /> : null}
+                {activeLane === "archived" ? <Archive className="size-8 text-muted-foreground" /> : null}
+                <p className="text-sm font-medium">No {statusLabels[activeLane as SectionItemStatus] || activeLane} items</p>
+                <p className="text-xs text-muted-foreground">
+                  {activeLane === "draft" && "Items being worked on will appear here."}
+                  {activeLane === "in_review" && "Items awaiting approval will appear here."}
+                  {activeLane === "published" && "Published items visible on the homepage will appear here."}
+                  {activeLane === "archived" && "Archived items hidden from view will appear here."}
+                </p>
+                <Button variant="outline" size="sm" onClick={() => setActiveLane("all")}>
+                  View all items
+                </Button>
+              </div>
             ) : null}
-            {drafts.map((draft, index) => {
+            {filteredDrafts.map((draft, filteredIndex) => {
+              const realIndex = drafts.indexOf(draft);
               const itemStatus = (draft.status ?? "published") as SectionItemStatus;
               const isLocked = itemStatus === "published" && !draft.unlocked;
+              const isInReview = itemStatus === "in_review";
+              const showReviewActions = isInReview && canReviewItems && activeLane === "in_review";
               return (
               <article
-                key={draft.id ?? `new-${index}`}
-                className={`rounded-xl border bg-muted/10 p-4 ${failedIndices.has(index) ? "border-destructive/50 bg-destructive/5" : ""}`}
+                key={draft.id ?? `new-${realIndex}`}
+                className={cn(
+                  "rounded-xl border bg-muted/10 p-4 transition-colors duration-200",
+                  failedIndices.has(realIndex) && "border-destructive/50 bg-destructive/5",
+                  itemStatus === "draft" && "border-amber-500/20",
+                  itemStatus === "in_review" && "border-sky-500/20",
+                  itemStatus === "published" && "border-emerald-500/20",
+                  itemStatus === "archived" && "border-muted-foreground/20 opacity-60",
+                )}
               >
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-sm font-medium">
-                    <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      {index + 1}
+                    <span className={cn(
+                      "flex size-7 items-center justify-center rounded-full",
+                      itemStatus === "draft" && "bg-amber-500/10 text-amber-600",
+                      itemStatus === "in_review" && "bg-sky-500/10 text-sky-600",
+                      itemStatus === "published" && "bg-emerald-500/10 text-emerald-600",
+                      itemStatus === "archived" && "bg-muted text-muted-foreground",
+                    )}>
+                      {realIndex + 1}
                     </span>
                     {draft.title || "Untitled item"}
                     <Badge variant={statusBadgeVariants[itemStatus]} className="ml-1">
                       {statusLabels[itemStatus]}
                     </Badge>
-                    {failedIndices.has(index) ? (
+                    {failedIndices.has(realIndex) ? (
                       <Badge variant="destructive" className="ml-2">
                         Save failed
                       </Badge>
                     ) : null}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => confirmRemove(index)}
-                    aria-label="Remove item"
-                  >
-                    <Trash2 className="size-4 text-destructive" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    {/* Review quick actions for in_review items */}
+                    {showReviewActions ? (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-700"
+                          onClick={() => setReviewAction({ index: filteredIndex, action: "approve" })}
+                          aria-label={`Approve and publish "${draft.title || "Untitled item"}"`}
+                        >
+                          <CheckCircle2 className="mr-1.5 size-4" />
+                          Approve
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-foreground"
+                          onClick={() => setReviewAction({ index: filteredIndex, action: "return" })}
+                          aria-label={`Return "${draft.title || "Untitled item"}" to draft`}
+                        >
+                          <Undo2 className="mr-1.5 size-4" />
+                          Return
+                        </Button>
+                      </>
+                    ) : null}
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => confirmRemove(realIndex)}
+                      aria-label={`Remove "${draft.title || "Untitled item"}"`}
+                    >
+                      <Trash2 className="size-4 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
                 {isLocked && canManage ? (
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
@@ -635,7 +812,7 @@ export function LifeAroundStudiesWorkspace() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => updateDraft(index, { unlocked: true, status: "draft" })}
+                      onClick={() => updateDraft(realIndex, { unlocked: true, status: "draft" })}
                     >
                       Unlock to edit
                     </Button>
@@ -647,7 +824,7 @@ export function LifeAroundStudiesWorkspace() {
                     Title
                     <Input
                       value={draft.title ?? ""}
-                      onChange={(e) => updateDraft(index, { title: e.target.value })}
+                      onChange={(e) => updateDraft(realIndex, { title: e.target.value })}
                       placeholder="Student clubs, sports and recreation"
                     />
                   </label>
@@ -655,7 +832,7 @@ export function LifeAroundStudiesWorkspace() {
                     Subtitle
                     <Input
                       value={draft.subtitle ?? ""}
-                      onChange={(e) => updateDraft(index, { subtitle: e.target.value })}
+                      onChange={(e) => updateDraft(realIndex, { subtitle: e.target.value })}
                       placeholder="A short editorial label"
                     />
                   </label>
@@ -664,7 +841,7 @@ export function LifeAroundStudiesWorkspace() {
                     <Textarea
                       rows={3}
                       value={draft.body_text ?? ""}
-                      onChange={(e) => updateDraft(index, { body_text: e.target.value })}
+                      onChange={(e) => updateDraft(realIndex, { body_text: e.target.value })}
                       placeholder="What should this audience understand?"
                     />
                   </label>
@@ -674,7 +851,7 @@ export function LifeAroundStudiesWorkspace() {
                       className="flex h-10 w-full rounded-md border bg-background px-3 text-sm"
                       value={draft.audience ?? "all"}
                       onChange={(e) =>
-                        updateDraft(index, {
+                        updateDraft(realIndex, {
                           audience: e.target.value as LifeAroundStudiesAudience,
                         })
                       }
@@ -692,7 +869,7 @@ export function LifeAroundStudiesWorkspace() {
                       className="flex h-10 w-full rounded-md border bg-background px-3 text-sm"
                       value={itemStatus}
                       onChange={(e) =>
-                        updateDraft(index, { status: e.target.value as SectionItemStatus })
+                        updateDraft(realIndex, { status: e.target.value as SectionItemStatus })
                       }
                     >
                       {SECTION_ITEM_STATUSES.map((value) => {
@@ -714,7 +891,7 @@ export function LifeAroundStudiesWorkspace() {
                       className="flex h-10 w-full rounded-md border bg-background px-3 text-sm"
                       value={draft.source_type ?? "manual"}
                       onChange={(e) =>
-                        updateDraft(index, {
+                        updateDraft(realIndex, {
                           source_type: e.target.value as LifeAroundStudiesSourceType,
                         })
                       }
@@ -730,7 +907,7 @@ export function LifeAroundStudiesWorkspace() {
                     Source record ID
                     <Input
                       value={draft.source_id ?? ""}
-                      onChange={(e) => updateDraft(index, { source_id: e.target.value })}
+                      onChange={(e) => updateDraft(realIndex, { source_id: e.target.value })}
                       placeholder="UUID of a club, activity, sport, or story"
                     />
                   </label>
@@ -740,7 +917,7 @@ export function LifeAroundStudiesWorkspace() {
                       type="number"
                       value={draft.display_order ?? 0}
                       onChange={(e) =>
-                        updateDraft(index, { display_order: Number(e.target.value) })
+                        updateDraft(realIndex, { display_order: Number(e.target.value) })
                       }
                     />
                   </label>
@@ -748,7 +925,7 @@ export function LifeAroundStudiesWorkspace() {
                     CTA label
                     <Input
                       value={draft.cta_label ?? ""}
-                      onChange={(e) => updateDraft(index, { cta_label: e.target.value })}
+                      onChange={(e) => updateDraft(realIndex, { cta_label: e.target.value })}
                       placeholder="Explore student life"
                     />
                   </label>
@@ -756,7 +933,7 @@ export function LifeAroundStudiesWorkspace() {
                     CTA URL
                     <Input
                       value={draft.cta_url ?? ""}
-                      onChange={(e) => updateDraft(index, { cta_url: e.target.value })}
+                      onChange={(e) => updateDraft(realIndex, { cta_url: e.target.value })}
                       placeholder="/campus-life/clubs"
                     />
                   </label>
@@ -765,7 +942,7 @@ export function LifeAroundStudiesWorkspace() {
                     <Input
                       value={draft.poster_media_id ?? ""}
                       onChange={(e) =>
-                        updateDraft(index, { poster_media_id: e.target.value })
+                        updateDraft(realIndex, { poster_media_id: e.target.value })
                       }
                       placeholder="Optional media UUID"
                     />
@@ -774,7 +951,7 @@ export function LifeAroundStudiesWorkspace() {
                     Video URL
                     <Input
                       value={draft.video_url ?? ""}
-                      onChange={(e) => updateDraft(index, { video_url: e.target.value })}
+                      onChange={(e) => updateDraft(realIndex, { video_url: e.target.value })}
                       placeholder="https://youtube.com/watch?v=..."
                     />
                   </label>
@@ -783,7 +960,7 @@ export function LifeAroundStudiesWorkspace() {
                     <Textarea
                       rows={3}
                       value={draft.transcript ?? ""}
-                      onChange={(e) => updateDraft(index, { transcript: e.target.value })}
+                      onChange={(e) => updateDraft(realIndex, { transcript: e.target.value })}
                       placeholder="Accessible transcript for embedded video"
                     />
                   </label>
@@ -793,7 +970,7 @@ export function LifeAroundStudiesWorkspace() {
                     <input
                       type="checkbox"
                       checked={Boolean(draft.is_featured)}
-                      onChange={(e) => updateDraft(index, { is_featured: e.target.checked })}
+                      onChange={(e) => updateDraft(realIndex, { is_featured: e.target.checked })}
                     />
                     Featured on homepage
                   </label>
@@ -801,7 +978,7 @@ export function LifeAroundStudiesWorkspace() {
                     <input
                       type="checkbox"
                       checked={draft.is_enabled !== false}
-                      onChange={(e) => updateDraft(index, { is_enabled: e.target.checked })}
+                      onChange={(e) => updateDraft(realIndex, { is_enabled: e.target.checked })}
                     />
                     Visible
                   </label>
@@ -863,6 +1040,47 @@ export function LifeAroundStudiesWorkspace() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Review action confirmation dialog */}
+      <AlertDialog open={!!reviewAction} onOpenChange={() => setReviewAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {reviewAction?.action === "approve"
+                ? `Approve and publish "${filteredDrafts[reviewAction?.index ?? 0]?.title || "Untitled item"}"?`
+                : `Return "${filteredDrafts[reviewAction?.index ?? 0]?.title || "Untitled item"}" to draft?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {reviewAction?.action === "approve"
+                ? "This item will be published and visible on the homepage once you save your changes."
+                : "This item will be returned to draft status for further editing. It will not be visible on the homepage until published again."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeReviewAction}
+              className={
+                reviewAction?.action === "approve"
+                  ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                  : ""
+              }
+            >
+              {reviewAction?.action === "approve" ? (
+                <>
+                  <CheckCircle2 className="mr-2 size-4" />
+                  Approve and publish
+                </>
+              ) : (
+                <>
+                  <Undo2 className="mr-2 size-4" />
+                  Return to draft
+                </>
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
