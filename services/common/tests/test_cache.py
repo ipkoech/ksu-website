@@ -113,6 +113,28 @@ class _LockFailRedis(_FakeRedis):
         raise cache_module.redis.RedisError("cache lock unavailable")
 
 
+class _ReadFailRedis(_FakeRedis):
+    async def get(self, _key):
+        raise cache_module.redis.RedisError("cache read unavailable")
+
+
+class _PollReadFailRedis(_FakeRedis):
+    def __init__(self):
+        super().__init__()
+        self.reads = 0
+
+    async def get(self, _key):
+        self.reads += 1
+        if self.reads == 1:
+            return None
+        raise cache_module.redis.RedisError("cache poll unavailable")
+
+    async def set(self, _key, _value, *, nx=False, px=None):
+        if nx:
+            return False
+        return await super().set(_key, _value, nx=nx, px=px)
+
+
 @pytest.mark.asyncio
 async def test_cached_public_caches_json_serializable_list_responses(monkeypatch):
     redis = _FakeRedis()
@@ -282,6 +304,144 @@ async def test_cached_public_falls_back_when_single_flight_lock_is_unavailable(m
 
     assert first == second == {"slug": "computer-science"}
     assert calls == 2
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("decorator_name", ["cached_public", "cache_response"])
+async def test_cache_decorators_fail_closed_in_production_when_redis_connect_fails(
+    monkeypatch,
+    decorator_name: str,
+):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("KSU_CACHE_REDIS_FAILURE_MODE", "fail_closed")
+    calls = 0
+    user = SimpleNamespace(sub="student-1")
+
+    async def endpoint(*, slug: str, user=None):
+        nonlocal calls
+        calls += 1
+        payload = {"slug": slug}
+        if user is not None:
+            payload["user"] = user.sub
+        return payload
+
+    async def fail_get_redis():
+        raise cache_module.redis.RedisError("cache connect unavailable")
+
+    monkeypatch.setattr(cache_module, "get_redis", fail_get_redis)
+    decorator = getattr(cache_module, decorator_name)(timeout=60, vary_on=("slug",))
+    cached_endpoint = decorator(endpoint)
+
+    with pytest.raises(cache_module.HTTPException, match="cache-unavailable") as exc_info:
+        if decorator_name == "cache_response":
+            await cached_endpoint(user=user, slug="computer-science")
+        else:
+            await cached_endpoint(slug="computer-science")
+
+    assert exc_info.value.status_code == 503
+    assert calls == 0
+
+
+@pytest.mark.asyncio
+async def test_cached_public_fails_closed_in_production_when_redis_read_fails(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("KSU_CACHE_REDIS_FAILURE_MODE", "fail_closed")
+    redis = _ReadFailRedis()
+    calls = 0
+
+    async def endpoint(*, slug: str):
+        nonlocal calls
+        calls += 1
+        return {"slug": slug}
+
+    monkeypatch.setattr(cache_module, "get_redis", lambda: _async_value(redis))
+    cached_endpoint = cache_module.cached_public(timeout=60, vary_on=("slug",))(endpoint)
+
+    with pytest.raises(cache_module.HTTPException, match="cache-unavailable") as exc_info:
+        await cached_endpoint(slug="computer-science")
+
+    assert exc_info.value.status_code == 503
+    assert calls == 0
+
+
+@pytest.mark.asyncio
+async def test_cached_public_fails_closed_in_production_when_lock_set_fails(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("KSU_CACHE_REDIS_FAILURE_MODE", "fail_closed")
+    redis = _LockFailRedis()
+    calls = 0
+
+    async def endpoint(*, slug: str):
+        nonlocal calls
+        calls += 1
+        return {"slug": slug}
+
+    monkeypatch.setattr(cache_module, "get_redis", lambda: _async_value(redis))
+    cached_endpoint = cache_module.cached_public(timeout=60, vary_on=("slug",))(endpoint)
+
+    with pytest.raises(cache_module.HTTPException, match="cache-unavailable") as exc_info:
+        await cached_endpoint(slug="computer-science")
+
+    assert exc_info.value.status_code == 503
+    assert calls == 0
+
+
+@pytest.mark.asyncio
+async def test_cached_public_fails_closed_in_production_when_poll_read_fails(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("KSU_CACHE_REDIS_FAILURE_MODE", "fail_closed")
+    redis = _PollReadFailRedis()
+    calls = 0
+
+    async def endpoint(*, slug: str):
+        nonlocal calls
+        calls += 1
+        return {"slug": slug}
+
+    monkeypatch.setattr(cache_module, "get_redis", lambda: _async_value(redis))
+    cached_endpoint = cache_module.cached_public(timeout=60, vary_on=("slug",))(endpoint)
+
+    with pytest.raises(cache_module.HTTPException, match="cache-unavailable") as exc_info:
+        await cached_endpoint(slug="computer-science")
+
+    assert exc_info.value.status_code == 503
+    assert calls == 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("decorator_name", ["cached_public", "cache_response"])
+async def test_cache_decorators_keep_uncached_fallback_in_development_when_redis_connect_fails(
+    monkeypatch,
+    decorator_name: str,
+):
+    monkeypatch.setenv("APP_ENV", "development")
+    monkeypatch.setenv("KSU_CACHE_REDIS_FAILURE_MODE", "fallback")
+    calls = 0
+    user = SimpleNamespace(sub="student-1")
+
+    async def endpoint(*, slug: str, user=None):
+        nonlocal calls
+        calls += 1
+        payload = {"slug": slug}
+        if user is not None:
+            payload["user"] = user.sub
+        return payload
+
+    async def fail_get_redis():
+        raise cache_module.redis.RedisError("cache connect unavailable")
+
+    monkeypatch.setattr(cache_module, "get_redis", fail_get_redis)
+    decorator = getattr(cache_module, decorator_name)(timeout=60, vary_on=("slug",))
+    cached_endpoint = decorator(endpoint)
+
+    if decorator_name == "cache_response":
+        result = await cached_endpoint(user=user, slug="computer-science")
+        assert result == {"slug": "computer-science", "user": "student-1"}
+    else:
+        result = await cached_endpoint(slug="computer-science")
+        assert result == {"slug": "computer-science"}
+
+    assert calls == 1
 
 
 @pytest.mark.asyncio

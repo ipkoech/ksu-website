@@ -31,12 +31,17 @@ from fastapi import HTTPException, Request, Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
+from .config import is_production_environment
+
 _redis_client: redis.Redis | None = None
 _cache_context: ContextVar[dict[str, Any] | None] = ContextVar("ksu_cache_context", default=None)
 _SINGLE_FLIGHT_LOCK_TTL_MS = 30_000
 _SINGLE_FLIGHT_RENEW_INTERVAL_SECONDS = 10.0
 _SINGLE_FLIGHT_WAIT_SECONDS = 60.0
 _SINGLE_FLIGHT_POLL_SECONDS = 0.025
+_CACHE_REDIS_FAILURE_MODE_ENV = "KSU_CACHE_REDIS_FAILURE_MODE"
+_CACHE_REDIS_FAILURE_MODE_FAIL_CLOSED = "fail_closed"
+_CACHE_REDIS_FAILURE_MODE_FALLBACK = "fallback"
 _LOCK_RELEASE_SCRIPT = """
 if redis.call('get', KEYS[1]) == ARGV[1] then
     return redis.call('del', KEYS[1])
@@ -59,6 +64,17 @@ return 0
 _CACHE_MISS = object()
 
 
+class CacheUnavailable(HTTPException):
+    """Raised when a decorated route cannot safely make a cache decision."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=503,
+            detail="cache-unavailable",
+            headers={"Retry-After": "5"},
+        )
+
+
 def begin_cache_context(request: Request) -> Token:
     """Provide decorators access to the current request without route coupling."""
     return _cache_context.set({"request": request, "status": None})
@@ -78,6 +94,29 @@ def _cache_result(value: Any, status: str) -> Any:
         context["status"] = status
         return value
     return JSONResponse(content=value, headers={"X-Cache": status})
+
+
+def _cache_redis_failure_mode() -> str:
+    configured_mode = os.getenv(_CACHE_REDIS_FAILURE_MODE_ENV, "").strip().lower()
+    if configured_mode in {
+        _CACHE_REDIS_FAILURE_MODE_FAIL_CLOSED,
+        _CACHE_REDIS_FAILURE_MODE_FALLBACK,
+    }:
+        return configured_mode
+
+    try:
+        if is_production_environment(os.getenv("APP_ENV", "development")):
+            return _CACHE_REDIS_FAILURE_MODE_FAIL_CLOSED
+    except ValueError:
+        pass
+
+    return _CACHE_REDIS_FAILURE_MODE_FALLBACK
+
+
+async def _handle_cache_backend_unavailable(loader: Callable[[], Any]) -> Any:
+    if _cache_redis_failure_mode() == _CACHE_REDIS_FAILURE_MODE_FAIL_CLOSED:
+        raise CacheUnavailable()
+    return await loader()
 
 
 async def get_redis() -> redis.Redis:
@@ -247,7 +286,7 @@ async def _cached_single_flight(
         if cached is not _CACHE_MISS:
             return cached
     except redis.RedisError:
-        return await loader()
+        return await _handle_cache_backend_unavailable(loader)
 
     lock_key = f"{cache_key}:single-flight"
     deadline = asyncio.get_running_loop().time() + _SINGLE_FLIGHT_WAIT_SECONDS
@@ -261,14 +300,14 @@ async def _cached_single_flight(
                 px=_SINGLE_FLIGHT_LOCK_TTL_MS,
             )
         except redis.RedisError:
-            return await loader()
+            return await _handle_cache_backend_unavailable(loader)
 
         if acquired:
             try:
                 cached = await _cached_value(client, cache_key)
             except redis.RedisError:
                 await _release_single_flight_lock(client, lock_key, token)
-                return await loader()
+                return await _handle_cache_backend_unavailable(loader)
             if cached is not _CACHE_MISS:
                 await _release_single_flight_lock(client, lock_key, token)
                 return cached
@@ -293,7 +332,7 @@ async def _cached_single_flight(
             if cached is not _CACHE_MISS:
                 return cached
         except redis.RedisError:
-            return await loader()
+            return await _handle_cache_backend_unavailable(loader)
 
 
 def _build_function_cache_key(
@@ -376,7 +415,7 @@ def cached_public(
                     else _build_function_cache_key(prefix, func, args, kwargs, vary_on)
                 )
             except redis.RedisError:
-                return await func(*args, **kwargs)
+                return await _handle_cache_backend_unavailable(lambda: func(*args, **kwargs))
 
             return await _cached_single_flight(
                 client,
@@ -424,7 +463,7 @@ def cache_response(
                     else _build_function_cache_key(prefix, func, args, kwargs, vary_on, user_id=user_id)
                 )
             except redis.RedisError:
-                return await func(*args, **kwargs)
+                return await _handle_cache_backend_unavailable(lambda: func(*args, **kwargs))
 
             return await _cached_single_flight(
                 client,
