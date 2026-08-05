@@ -69,7 +69,7 @@ export function VcVideoPlayer({
               ratio="fill"
               sizes="(min-width: 1024px) 55vw, 100vw"
               className="absolute inset-0"
-              imageClassName="opacity-95 transition duration-300 group-hover:opacity-85"
+              imageClassName="opacity-95 transition-opacity duration-300 group-hover:opacity-85"
             />
             <span className="absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,rgba(0,0,0,.46))]" />
             <span className="absolute inset-0 flex items-center justify-center">

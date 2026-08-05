@@ -209,7 +209,7 @@ export function PublicationRecordBrowser({
             return (
               <article
                 key={`${record.title}-${start + index}`}
-                className="flex min-h-[15rem] flex-col rounded-xl border border-border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md"
+                className="flex min-h-[15rem] flex-col rounded-xl border border-border bg-white p-4 shadow-sm transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-3">
                   <span
@@ -285,7 +285,7 @@ export function PublicationRecordBrowser({
               type="button"
               onClick={() => setPage((value) => Math.max(1, value - 1))}
               disabled={safePage === 1}
-              className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-white px-3 text-sm font-bold text-muted-foreground transition hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-white px-3 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronLeft aria-hidden className="h-4 w-4" />
               Previous
@@ -296,7 +296,7 @@ export function PublicationRecordBrowser({
                 setPage((value) => Math.min(totalPages, value + 1))
               }
               disabled={safePage === totalPages}
-              className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-white px-3 text-sm font-bold text-muted-foreground transition hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-white px-3 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next
               <ChevronRight aria-hidden className="h-4 w-4" />

@@ -286,14 +286,14 @@ function ProgrammeHero({
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link
               href="/admissions/how-to-apply"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-bold text-white shadow-sm transition hover:bg-primary/90"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-bold text-white shadow-sm transition-colors active:scale-[0.98] hover:bg-primary/90"
             >
               How to apply <ArrowRight aria-hidden className="h-4 w-4" />
             </Link>
             {brochureId ? (
               <a
                 href={publicFileUrl(brochureId) ?? undefined}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-primary/25 bg-white px-5 text-sm font-bold text-primary transition hover:bg-primary/[0.05]"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-primary/25 bg-white px-5 text-sm font-bold text-primary transition-colors active:scale-[0.98] hover:bg-primary/[0.05]"
               >
                 Programme brief <Download aria-hidden className="h-4 w-4" />
               </a>
@@ -485,7 +485,7 @@ function AdmissionDocuments({ documents }: { documents: AdmissionDocument[] }) {
                   rel={
                     href.startsWith("http") ? "noopener noreferrer" : undefined
                   }
-                  className="group border border-border p-4 transition hover:border-primary/30 hover:bg-primary/[0.03]"
+                  className="group border border-border p-4 transition-colors hover:border-primary/30 hover:bg-primary/[0.03]"
                 >
                   <p className="text-xs font-bold uppercase tracking-[0.08em] text-secondary">
                     {formatLabel(document.document_type)}
@@ -686,13 +686,13 @@ function ApplicationSupport() {
       <div className="mt-4 grid gap-2">
         <Link
           href="/admissions/how-to-apply"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white hover:bg-primary/90"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition-colors active:scale-[0.98] hover:bg-primary/90"
         >
           How to apply <ArrowRight aria-hidden className="h-4 w-4" />
         </Link>
         <Link
           href="/admissions/contact"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-primary/25 bg-white px-4 text-sm font-bold text-primary hover:bg-primary/[0.05]"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-primary/25 bg-white px-4 text-sm font-bold text-primary transition-colors active:scale-[0.98] hover:bg-primary/[0.05]"
         >
           Contact admissions
         </Link>
@@ -715,7 +715,7 @@ function RelatedProgrammes({
           <Link
             key={programme.id}
             href={`/academics/programmes/${programme.slug}`}
-            className="group flex min-w-0 items-center gap-3 rounded-2xl border border-border p-4 transition hover:border-primary/30 hover:bg-primary/[0.04]"
+            className="group flex min-w-0 items-center gap-3 rounded-2xl border border-border p-4 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
           >
             <GraduationCap
               aria-hidden
@@ -736,7 +736,7 @@ function RelatedProgrammes({
             </span>
             <ArrowRight
               aria-hidden
-              className="h-4 w-4 shrink-0 text-primary transition group-hover:translate-x-0.5"
+              className="h-4 w-4 shrink-0 text-primary transition-transform duration-150 group-hover:translate-x-0.5"
             />
           </Link>
         ))}

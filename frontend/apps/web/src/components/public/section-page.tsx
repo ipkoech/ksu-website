@@ -462,7 +462,7 @@ export function PublicSectionPage({
                                 </span>
                                 <ChevronRight
                                   aria-hidden
-                                  className="h-4 w-4 text-muted-foreground/70 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                                  className="h-4 w-4 text-muted-foreground/70 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary"
                                 />
                               </Link>
                             </li>

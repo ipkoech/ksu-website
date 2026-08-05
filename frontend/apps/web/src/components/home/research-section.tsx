@@ -57,7 +57,7 @@ export function ResearchSection() {
 
   return (
     <ParallaxSection
-      backgroundImage="/images/research/research-hero.jpg"
+      backgroundImage="/images/research/research-impact-bg.png"
       overlay="dark"
       overlayOpacity={0.75}
       speed={0.3}

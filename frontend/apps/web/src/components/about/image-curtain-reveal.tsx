@@ -51,7 +51,7 @@ export function ImageCurtainReveal({
   return (
     <div
       ref={ref}
-      className={`relative isolate overflow-hidden bg-[#dce8f7] ${className}`}
+      className={`relative isolate overflow-hidden bg-primary/10 ${className}`}
     >
       <div
         className={`absolute inset-0 transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none sm:duration-1000 ${visible ? "scale-100 opacity-100" : "scale-[1.025] opacity-70 sm:scale-[1.04]"}`}
@@ -60,11 +60,11 @@ export function ImageCurtainReveal({
       </div>
       <span
         aria-hidden
-        className={`pointer-events-none absolute inset-0 z-30 bg-[#b9d0ee]/95 transition-transform duration-700 ease-[cubic-bezier(.77,0,.18,1)] motion-reduce:hidden sm:duration-1000 ${visible ? exitClassName : "translate-x-0 translate-y-0"}`}
+        className={`pointer-events-none absolute inset-0 z-30 bg-[hsl(var(--primary)/0.25)] transition-transform duration-700 ease-[cubic-bezier(.77,0,.18,1)] motion-reduce:hidden sm:duration-1000 ${visible ? exitClassName : "translate-x-0 translate-y-0"}`}
       />
       <span
         aria-hidden
-        className={`pointer-events-none absolute inset-0 z-40 border-[#f3c96b] transition-transform duration-700 ease-[cubic-bezier(.77,0,.18,1)] motion-reduce:hidden sm:duration-1000 ${edgeClassName} ${visible ? exitClassName : "translate-x-0 translate-y-0"}`}
+        className={`pointer-events-none absolute inset-0 z-40 border-secondary transition-transform duration-700 ease-[cubic-bezier(.77,0,.18,1)] motion-reduce:hidden sm:duration-1000 ${edgeClassName} ${visible ? exitClassName : "translate-x-0 translate-y-0"}`}
       />
     </div>
   );

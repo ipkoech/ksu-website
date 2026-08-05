@@ -25,7 +25,7 @@ function SectionHeading({
 }) {
   return (
     <div>
-      <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+      <h1 className="font-[family-name:var(--font-display)] text-3xl font-normal tracking-tight leading-tight text-foreground sm:text-4xl">
         {title}
       </h1>
       <div className="mt-3 h-0.5 w-12 bg-secondary" />
@@ -48,8 +48,8 @@ function IdentityCard({
   body: string;
 }) {
   return (
-    <article className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <div className="flex h-12 w-12 items-center justify-center rounded-md border border-border bg-surface-subtle text-primary">
+    <article className="rounded-2xl ring-1 ring-primary/10 bg-white p-5">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl ring-1 ring-primary/10 bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] text-primary">
         <Icon aria-hidden className="h-6 w-6" />
       </div>
       <h2 className="mt-4 text-lg font-bold leading-tight text-foreground">
@@ -90,7 +90,7 @@ function BoardIdentityGrid({
   if (!items.length) return null;
 
   return (
-    <section className="border-t border-border bg-surface-subtle px-4 py-8 sm:px-6 lg:px-8">
+    <section className="border-t border-border bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] px-4 py-8 sm:px-6 lg:px-8">
       <div className="grid max-w-none gap-4 md:grid-cols-3">
         {items.map((item) => (
           <IdentityCard
@@ -128,22 +128,22 @@ export default async function GovernancePage() {
               ]}
             />
 
-            <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
+            <div className="mt-6 grid gap-8 ksu-gap-compact lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
               <SectionHeading title="Governance">
                 <p>
                   {councilDescription}
                 </p>
                 <Link
                   href="/about/university-council"
-                  className="mt-5 inline-flex rounded-md bg-primary px-4 py-3 text-sm font-bold text-white transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  className="mt-5 inline-flex rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-white transition-colors duration-200 hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98]"
                 >
                   View University Council
                 </Link>
               </SectionHeading>
 
-              <aside className="rounded-lg border border-border bg-surface-subtle p-5">
+              <aside className="rounded-2xl ring-1 ring-primary/10 bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] p-5">
                 <Landmark aria-hidden className="h-8 w-8 text-primary" />
-                <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                <p className="mt-4 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
                   University Council
                 </p>
                 <p className="mt-2 text-3xl font-semibold text-foreground">
@@ -160,7 +160,7 @@ export default async function GovernancePage() {
         <BoardIdentityGrid board={council} mandateTitle="Council mandate" />
 
         <section className="bg-white px-4 py-8 sm:px-6 lg:px-8">
-          <div className="max-w-none rounded-lg border border-border bg-white p-4 shadow-sm sm:p-6">
+          <div className="max-w-none rounded-2xl ring-1 ring-primary/10 bg-white p-4 sm:p-6">
             <GovernanceChart
               councilOnly
               title="University Council organogram"

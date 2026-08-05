@@ -3,7 +3,7 @@
 import { type FocusEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play, Volume2, VolumeX } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { cn } from "@ksu/ui/lib/utils";
 import { ArtDirectedImage } from "@/components/public/art-directed-image";
 import type { LandingHeroData, LandingHeroSlide } from "@/lib/landing-data";
@@ -17,7 +17,8 @@ const fallbackSlide: LandingHeroSlide = {
   desktopImageUrl: "/logos/ksu-bck5.jpg",
   mobileImageUrl: "/logos/ksu-bck5.jpg",
   imageAlt: "Kisii University",
-  videoUrl: "/videos/main-hero.mp4",
+  videoUrl: "/videos/main-hero-1080.mp4",
+  videoPosterUrl: "/videos/main-hero-poster.jpg",
   primaryLabel: "Study With Us",
   primaryHref: "/admissions/how-to-apply",
   secondaryLabel: "Explore Programmes",
@@ -54,10 +55,12 @@ export function LandingHero({
   const [isPaused, setIsPaused] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(true);
+  const [videoReady, setVideoReady] = useState(false);
+  const [isVideoLive, setIsVideoLive] = useState(false);
 
   const activeSlide = slides[activeIndex] ?? fallbackSlide;
   const hasVideo = Boolean(activeSlide.videoUrl);
+  const showVideo = hasVideo && !prefersReducedMotion && videoReady;
   const hasMultipleSlides = slides.length > 1;
   const shouldAutoPlay = autoPlay && hasMultipleSlides && !isPaused && !prefersReducedMotion;
   const shouldShowControls = hasMultipleSlides && showNavigationDots;
@@ -82,11 +85,42 @@ export function LandingHero({
     }
   }, []);
 
-  const toggleMute = useCallback(() => {
-    if (!videoRef.current) return;
-    videoRef.current.muted = !videoRef.current.muted;
-    setIsMuted(videoRef.current.muted);
-  }, []);
+  // Defer video download until the page has loaded and the browser is idle;
+  // the poster image carries the LCP. Skipped entirely for reduced motion
+  // and Save-Data connections.
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+    const connection = (
+      navigator as Navigator & { connection?: { saveData?: boolean } }
+    ).connection;
+    if (connection?.saveData) return;
+
+    let idleId: number | undefined;
+    let timeoutId: number | undefined;
+    const arm = () => {
+      if (typeof window.requestIdleCallback === "function") {
+        idleId = window.requestIdleCallback(() => setVideoReady(true), {
+          timeout: 4000,
+        });
+      } else {
+        timeoutId = window.setTimeout(() => setVideoReady(true), 1200);
+      }
+    };
+    if (document.readyState === "complete") {
+      arm();
+    } else {
+      window.addEventListener("load", arm, { once: true });
+    }
+    return () => {
+      window.removeEventListener("load", arm);
+      if (idleId !== undefined) window.cancelIdleCallback?.(idleId);
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+    };
+  }, [prefersReducedMotion]);
+
+  useEffect(() => {
+    setIsVideoLive(false);
+  }, [activeSlide.id]);
 
   useEffect(() => {
     if (!shouldAutoPlay) return;
@@ -118,7 +152,7 @@ export function LandingHero({
 
   return (
     <section
-      className="relative h-[50vh] min-h-[400px] max-h-[640px] overflow-hidden bg-primary sm:h-[55vh] lg:h-[60vh]"
+      className="relative h-[56svh] min-h-[440px] max-h-[760px] overflow-hidden bg-primary sm:h-[62svh] lg:h-[70svh]"
       aria-roledescription="carousel"
       aria-label="Featured Kisii University updates"
       onMouseEnter={() => setIsPaused(true)}
@@ -137,35 +171,49 @@ export function LandingHero({
             exit={prefersReducedMotion ? undefined : { opacity: 0 }}
             transition={{ duration: prefersReducedMotion ? 0 : 0.7, ease: "easeOut" }}
           >
-            {hasVideo && !prefersReducedMotion ? (
+            <div
+              className={cn(
+                "h-full w-full",
+                !hasVideo && "motion-safe:animate-ken-burns",
+              )}
+            >
+              <ArtDirectedImage
+                desktopSrc={activeSlide.desktopImageUrl ?? activeSlide.imageUrl}
+                mobileSrc={activeSlide.mobileImageUrl}
+                alt={activeSlide.imageAlt}
+                priority={activeIndex === 0}
+                imageClassName="h-full w-full object-cover"
+              />
+            </div>
+            {showVideo && (
               <video
                 ref={videoRef}
-                src={activeSlide.videoUrl}
-                poster={activeSlide.imageUrl}
+                poster={activeSlide.videoPosterUrl ?? activeSlide.imageUrl}
                 autoPlay
                 muted
                 loop
                 playsInline
-                className="h-full w-full object-cover motion-safe:animate-ken-burns"
+                onPlaying={() => setIsVideoLive(true)}
+                className={cn(
+                  "absolute inset-0 h-full w-full object-cover transition-opacity duration-700",
+                  isVideoLive ? "opacity-100" : "opacity-0",
+                )}
                 aria-hidden="true"
-              />
-            ) : (
-              <div className="h-full w-full motion-safe:animate-ken-burns">
-                <ArtDirectedImage
-                  desktopSrc={activeSlide.desktopImageUrl ?? activeSlide.imageUrl}
-                  mobileSrc={activeSlide.mobileImageUrl}
-                  alt={activeSlide.imageAlt}
-                  priority={activeIndex === 0}
-                  imageClassName="h-full w-full object-cover"
-                />
-              </div>
+              >
+                {activeSlide.videoWebmUrl && (
+                  <source src={activeSlide.videoWebmUrl} type="video/webm" />
+                )}
+                <source src={activeSlide.videoUrl} type="video/mp4" />
+              </video>
             )}
           </motion.div>
         </AnimatePresence>
 
-        {/* Overlays */}
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.72)_0%,rgba(2,20,49,0.28)_55%,rgba(2,20,49,0.04)_100%)]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-brand-overlay/55 via-transparent to-transparent" />
+        {/* Overlays: bottom-anchored scrim keeps the upper video clear while
+            grounding the typography; the light angled wash lifts contrast
+            behind the text column only. */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(2,20,49,0.82)_0%,rgba(2,20,49,0.40)_30%,rgba(2,20,49,0.08)_58%,transparent_78%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(105deg,rgba(2,20,49,0.35)_0%,rgba(2,20,49,0.12)_38%,transparent_60%)]" />
       </div>
 
       {/* Navigation Arrows */}
@@ -191,7 +239,7 @@ export function LandingHero({
       )}
 
       {/* Video Controls */}
-      {hasVideo && !prefersReducedMotion && (
+      {showVideo && (
         <div className="absolute bottom-4 right-4 z-20 flex gap-2 sm:bottom-6 sm:right-6">
           <button
             type="button"
@@ -203,18 +251,6 @@ export function LandingHero({
               <Pause className="h-5 w-5" aria-hidden />
             ) : (
               <Play className="ml-0.5 h-5 w-5" aria-hidden />
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={toggleMute}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white ring-1 ring-white/20 backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-            aria-label={isMuted ? "Unmute video" : "Mute video"}
-          >
-            {isMuted ? (
-              <VolumeX className="h-5 w-5" aria-hidden />
-            ) : (
-              <Volume2 className="h-5 w-5" aria-hidden />
             )}
           </button>
         </div>
@@ -249,7 +285,7 @@ export function LandingHero({
             >
               <span
                 className={cn(
-                  "rounded-full transition-all",
+                  "rounded-full transition-[width,height,background-color]",
                   index === activeIndex
                     ? "h-2.5 w-2.5 bg-secondary"
                     : "h-2 w-2 bg-white/50 group-hover:bg-white/80"
@@ -285,15 +321,15 @@ function HeroContent({
       exit={prefersReducedMotion ? undefined : { opacity: 0, y: -12 }}
       transition={{ duration: prefersReducedMotion ? 0 : 0.4, ease: "easeOut" }}
     >
-      <p className="mb-3 inline-flex w-fit items-center rounded-full border border-white/25 bg-white/8 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white/90 backdrop-blur-sm sm:text-xs">
+      <p className="mb-3 inline-flex w-fit items-center rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white/90 backdrop-blur-sm sm:text-xs">
         {slide.eyebrow}
       </p>
 
-      <h1 className="max-w-[720px] text-balance font-[family-name:var(--font-display)] text-3xl font-bold leading-[1.15] text-white sm:text-4xl lg:text-5xl">
+      <h1 className="max-w-[720px] text-balance font-[family-name:var(--font-display)] text-3xl font-bold leading-[1.15] text-white [text-shadow:0_2px_4px_rgba(2,20,49,0.45),0_8px_28px_rgba(2,20,49,0.35)] sm:text-4xl lg:text-5xl">
         {slide.title}
       </h1>
 
-      <p className="mt-4 line-clamp-3 max-w-xl text-sm leading-7 text-white/85 sm:text-base sm:leading-8">
+      <p className="mt-4 line-clamp-3 max-w-xl text-sm leading-7 text-white/90 [text-shadow:0_1px_3px_rgba(2,20,49,0.55)] sm:text-base sm:leading-8">
         {slide.body}
       </p>
 

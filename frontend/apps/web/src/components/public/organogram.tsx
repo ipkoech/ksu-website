@@ -197,7 +197,7 @@ function AssignmentCard({
           {email ? (
             <a
               href={`mailto:${email}`}
-              className="mt-1 inline-flex max-w-full items-center gap-1 text-xs font-semibold text-muted-foreground transition hover:text-primary"
+              className="mt-1 inline-flex max-w-full items-center gap-1 text-xs font-semibold text-muted-foreground transition-colors hover:text-primary"
             >
               <Mail aria-hidden className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{email}</span>

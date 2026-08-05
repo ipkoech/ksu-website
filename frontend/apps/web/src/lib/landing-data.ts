@@ -29,6 +29,8 @@ export interface LandingHeroSlide {
   mobileImageUrl?: string;
   imageAlt: string;
   videoUrl?: string;
+  videoWebmUrl?: string;
+  videoPosterUrl?: string;
   primaryLabel: string;
   primaryHref: string;
   primaryExternal?: boolean;
@@ -303,12 +305,17 @@ async function getLandingHeroGroup() {
   return chooseHeroGroup(groupsResponse.data ?? [], false) ?? null;
 }
 
-const MAIN_HERO_VIDEO_URL = "/videos/main-hero.mp4";
+const MAIN_HERO_VIDEO_URL = "/videos/main-hero-1080.mp4";
+const MAIN_HERO_VIDEO_POSTER_URL = "/videos/main-hero-poster.jpg";
 
 function withHeroVideo(slides: LandingHeroSlide[]): LandingHeroSlide[] {
   return slides.map((slide, index) =>
     index === 0 && !slide.videoUrl
-      ? { ...slide, videoUrl: MAIN_HERO_VIDEO_URL }
+      ? {
+          ...slide,
+          videoUrl: MAIN_HERO_VIDEO_URL,
+          videoPosterUrl: MAIN_HERO_VIDEO_POSTER_URL,
+        }
       : slide,
   );
 }

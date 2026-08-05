@@ -123,7 +123,7 @@ export function JourneyCtaSection() {
                   ratio="fill"
                   sizes="(min-width: 1024px) 33vw, 100vw"
                   className="absolute inset-0 h-full w-full"
-                  imageClassName="object-cover transition-transform duration-700 group-hover:scale-105"
+                  imageClassName="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
                 />
                 <div
                   className={cn(
@@ -141,7 +141,7 @@ export function JourneyCtaSection() {
                   <p className="mt-3 text-sm leading-relaxed text-white/85">
                     {route.description}
                   </p>
-                  <span className="mt-6 inline-flex min-h-12 w-fit items-center gap-2 rounded-lg bg-white px-5 text-sm font-semibold text-primary shadow-lg transition group-hover:bg-white/95">
+                  <span className="mt-6 inline-flex min-h-12 w-fit items-center gap-2 rounded-lg bg-white px-5 text-sm font-semibold text-primary shadow-lg transition-[background-color,transform] duration-150 group-hover:bg-white/95 group-active:scale-[0.98]">
                     {route.label}
                     <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" aria-hidden />
                   </span>

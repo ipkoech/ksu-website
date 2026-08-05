@@ -139,7 +139,7 @@ function RecordCard({
   return (
     <Link
       href={href}
-      className="group grid min-w-0 rounded-lg border border-border bg-white shadow-sm transition hover:border-primary/30 hover:shadow-[0_18px_50px_-38px_rgba(15,23,42,0.55)]"
+      className="group grid min-w-0 rounded-lg border border-border bg-white shadow-sm transition-[border-color,box-shadow] hover:border-primary/30 hover:shadow-[0_18px_50px_-38px_rgba(15,23,42,0.55)]"
     >
       <div
         className={
@@ -200,11 +200,11 @@ function EditorialMosaic({
           <Link
             key={`${keyPrefix}-${record.contentKind}-${record.id}`}
             href={recordHref(record)}
-            className={`group relative min-h-72 cursor-pointer overflow-hidden rounded-xl bg-surface-muted shadow-sm outline-none ring-primary/35 transition hover:shadow-[0_22px_55px_-34px_rgba(15,23,42,0.72)] focus-visible:ring-2 md:min-h-0 ${
+            className={`group relative min-h-72 cursor-pointer overflow-hidden rounded-xl bg-surface-muted shadow-sm outline-none ring-primary/35 transition-shadow hover:shadow-[0_22px_55px_-34px_rgba(15,23,42,0.72)] focus-visible:ring-2 md:min-h-0 ${
               editorialMosaicPattern[index % editorialMosaicPattern.length]
             }`}
           >
-            <div className="absolute inset-0 transition duration-300 group-hover:scale-[1.025]">
+            <div className="absolute inset-0 transition-transform duration-500 motion-safe:group-hover:scale-[1.03]">
               <ContentImage record={record} large={isLead} />
             </div>
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-transparent" />
@@ -262,12 +262,12 @@ function ListingHero({ data }: { data: ContentListingData }) {
             <Link
               key={item.href}
               href={item.href}
-              className="group flex min-h-11 items-center justify-between gap-3 rounded-lg border border-border px-3 text-sm font-semibold text-muted-foreground transition hover:border-primary/30 hover:text-primary"
+              className="group flex min-h-11 items-center justify-between gap-3 rounded-lg border border-border px-3 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
             >
               {item.label}
               <ArrowRight
                 aria-hidden
-                className="h-4 w-4 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                className="h-4 w-4 text-muted-foreground/60 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary"
               />
             </Link>
           ))}
@@ -281,7 +281,7 @@ function FeaturedRecord({ record }: { record: ContentRecord }) {
   return (
     <Link
       href={recordHref(record)}
-      className="group grid overflow-hidden rounded-lg border border-border bg-white shadow-sm transition hover:border-primary/30 lg:grid-cols-[minmax(0,1fr)_22rem]"
+      className="group grid overflow-hidden rounded-lg border border-border bg-white shadow-sm transition-colors hover:border-primary/30 lg:grid-cols-[minmax(0,1fr)_22rem]"
     >
       <div className="p-5 lg:p-6">
         <SectionKicker>{categoryLabel(record)}</SectionKicker>
@@ -362,7 +362,7 @@ function MediaDeskNav({
       <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 xl:grid-cols-6">
         <Link
           href="/media"
-          className={`flex min-h-11 items-center justify-between rounded-md px-3 text-sm font-bold transition ${
+          className={`flex min-h-11 items-center justify-between rounded-md px-3 text-sm font-bold transition-colors ${
             activeSection === "overview"
               ? "bg-primary text-white"
               : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
@@ -375,7 +375,7 @@ function MediaDeskNav({
           <Link
             key={item.id}
             href={item.href}
-            className={`flex min-h-11 items-center justify-between rounded-md px-3 text-sm font-bold transition ${
+            className={`flex min-h-11 items-center justify-between rounded-md px-3 text-sm font-bold transition-colors ${
               activeSection === item.id
                 ? "bg-primary text-white"
                 : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
@@ -412,7 +412,7 @@ function MediaDeskSections({ records }: { records: ContentRecord[] }) {
                 />
                 <Link
                   href={section.href}
-                  className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-full border border-primary/20 bg-white px-4 text-sm font-bold text-primary transition hover:bg-primary hover:text-white"
+                  className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-full border border-primary/20 bg-white px-4 text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-white"
                 >
                   View all gallery
                   <ArrowRight aria-hidden className="h-4 w-4" />
@@ -439,7 +439,7 @@ function MediaDeskSections({ records }: { records: ContentRecord[] }) {
                   </div>
                   <Link
                     href={section.href}
-                    className="inline-flex min-h-10 items-center gap-2 rounded-full border border-primary/20 px-4 text-sm font-bold text-primary transition hover:bg-primary hover:text-white"
+                    className="inline-flex min-h-10 items-center gap-2 rounded-full border border-primary/20 px-4 text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-white"
                   >
                     View all
                     <ArrowRight aria-hidden className="h-4 w-4" />
@@ -528,7 +528,7 @@ function MediaDeskStack({
               <Link
                 key={item.href}
                 href={item.href}
-                className="inline-flex min-h-8 items-center rounded-full border border-primary/20 bg-white px-3 text-xs font-bold text-primary transition hover:bg-primary hover:text-white"
+                className="inline-flex min-h-8 items-center rounded-full border border-primary/20 bg-white px-3 text-xs font-bold text-primary transition-colors hover:bg-primary hover:text-white"
               >
                 {item.label}
               </Link>
@@ -770,7 +770,7 @@ export function ContentListingPage({ data }: { data: ContentListingData }) {
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="inline-flex min-h-8 items-center rounded-full border border-primary/20 bg-white px-3 text-xs font-bold text-primary transition hover:bg-primary hover:text-white"
+                        className="inline-flex min-h-8 items-center rounded-full border border-primary/20 bg-white px-3 text-xs font-bold text-primary transition-colors hover:bg-primary hover:text-white"
                       >
                         {item.label}
                       </Link>
@@ -818,7 +818,7 @@ function EventAccess({ data }: { data: ContentDetailData }) {
   return (
     <a
       href={record.meeting_link}
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary/90"
+      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition-colors hover:bg-primary/90"
     >
       Open event link
       <ExternalLink aria-hidden className="h-4 w-4" />
@@ -835,7 +835,7 @@ function MediaDownload({ data }: { data: ContentDetailData }) {
   return (
     <a
       href={source}
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary/90"
+      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition-colors hover:bg-primary/90"
     >
       Open media
       <Download aria-hidden className="h-4 w-4" />
@@ -962,12 +962,12 @@ function GallerySection({ data }: { data: ContentDetailData }) {
             href={image.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="group relative overflow-hidden rounded-lg border border-border bg-surface-muted shadow-sm transition hover:shadow-md"
+            className="group relative overflow-hidden rounded-lg border border-border bg-surface-muted shadow-sm transition-shadow hover:shadow-md"
           >
             <img
               src={image.url}
               alt={image.alt || image.title || `Gallery image ${index + 1}`}
-              className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-105"
+              className="aspect-[4/3] w-full object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
             />
             {image.title ? (
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-brand-overlay/70 to-transparent p-3">
@@ -1030,7 +1030,7 @@ function SupportingMediaSection({ data }: { data: ContentDetailData }) {
                 href={asset.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex min-h-14 items-center gap-3 py-3 text-sm font-semibold text-foreground transition hover:text-primary"
+                className="flex min-h-14 items-center gap-3 py-3 text-sm font-semibold text-foreground transition-colors hover:text-primary"
               >
                 <FileText aria-hidden className="h-5 w-5 text-primary" />
                 <span className="min-w-0 flex-1 truncate">
@@ -1148,14 +1148,14 @@ function DetailSidebar({ data }: { data: ContentDetailData }) {
         <div className="mt-3 grid gap-2">
           <Link
             href={data.href}
-            className="inline-flex min-h-11 items-center justify-between gap-3 rounded-md border border-primary/15 px-3 text-sm font-bold text-primary transition hover:bg-primary hover:text-white"
+            className="inline-flex min-h-11 items-center justify-between gap-3 rounded-md border border-primary/15 px-3 text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-white"
           >
             More {kindLabel(data.kind).toLowerCase()}
             <ArrowRight aria-hidden className="h-4 w-4" />
           </Link>
           <Link
             href="/media"
-            className="inline-flex min-h-11 items-center justify-between gap-3 rounded-md border border-border px-3 text-sm font-bold text-muted-foreground transition hover:border-primary/30 hover:text-primary"
+            className="inline-flex min-h-11 items-center justify-between gap-3 rounded-md border border-border px-3 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
           >
             Media Desk
             <ArrowRight aria-hidden className="h-4 w-4" />
@@ -1170,7 +1170,7 @@ function DetailSidebar({ data }: { data: ContentDetailData }) {
               <a
                 key={item.href}
                 href={item.href}
-                className="group flex min-h-11 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold text-muted-foreground transition hover:border-primary/30 hover:text-primary"
+                className="group flex min-h-11 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
               >
                 <LinkIcon
                   aria-hidden
@@ -1179,7 +1179,7 @@ function DetailSidebar({ data }: { data: ContentDetailData }) {
                 <span className="min-w-0 flex-1">{item.label}</span>
                 <ExternalLink
                   aria-hidden
-                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60 group-hover:text-primary"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60 transition-colors group-hover:text-primary"
                 />
               </a>
             ))}

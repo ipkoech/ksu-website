@@ -28,7 +28,7 @@ const lifeCards: LifeCard[] = [
     title: "Clubs & Societies",
     description: "Connect with academic, professional, and student-interest groups that match your passions.",
     href: "/campus-life/clubs",
-    imageUrl: "/images/campus-life/clubs.jpg",
+    imageUrl: "/images/Home/OurKSU-82.jpg",
     icon: Users,
     featured: true,
   },
@@ -108,7 +108,7 @@ export function LifeAtKsuSection() {
               whileInView="visible"
               viewport={{ once: true, amount: 0.3 }}
               className={cn(
-                "group overflow-hidden rounded-xl border border-border bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg",
+                "group overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.98]",
                 card.featured && "lg:col-span-2"
               )}
             >
@@ -117,7 +117,7 @@ export function LifeAtKsuSection() {
                   <img
                     src={card.imageUrl}
                     alt=""
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="h-full w-full object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   <span className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-lg bg-white/90 text-primary shadow-sm">

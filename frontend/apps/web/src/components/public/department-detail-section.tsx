@@ -344,13 +344,13 @@ function ExploreMorePanel({ data }: { data: DepartmentDetailData }) {
             <li key={item.href}>
               <Link
                 href={item.href}
-                className="group flex min-h-10 items-center gap-3 py-2 text-sm font-medium text-muted-foreground transition hover:text-primary"
+                className="group flex min-h-10 items-center gap-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
               >
                 <Icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
                 <span className="min-w-0 flex-1">{item.label}</span>
                 <ArrowRight
                   aria-hidden
-                  className="h-4 w-4 shrink-0 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                  className="h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary"
                 />
               </Link>
             </li>
@@ -413,7 +413,7 @@ function ContactRow({
     return (
       <a
         href={href}
-        className="flex w-full min-w-0 gap-3 rounded-xl p-2 transition hover:bg-primary/5"
+        className="flex w-full min-w-0 gap-3 rounded-xl p-2 transition-colors hover:bg-primary/5"
       >
         {content}
       </a>
@@ -598,7 +598,7 @@ function LeadershipMessageCard({
           {message ? (
             <>
               <Quote aria-hidden className="mt-3 h-7 w-7 text-secondary" />
-              <p className="mt-2 text-sm leading-7 text-white/82 sm:text-base">
+              <p className="mt-2 text-sm leading-7 text-white/80 sm:text-base">
                 {message}
               </p>
             </>
@@ -783,7 +783,7 @@ function RegistrarPathways({
           <Link
             key={item.href}
             href={item.href}
-            className="group rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
+            className="group rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition-colors hover:border-primary/30 hover:bg-primary/[0.03]"
           >
             <div className="flex gap-3">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
@@ -799,7 +799,7 @@ function RegistrarPathways({
               </div>
               <ArrowRight
                 aria-hidden
-                className="h-4 w-4 shrink-0 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                className="h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary"
               />
             </div>
           </Link>
@@ -909,7 +909,7 @@ function ProgrammesSection({ data }: { data: DepartmentDetailData }) {
           </div>
           <button
             type="submit"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary/90"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-white transition-colors active:scale-[0.98] hover:bg-primary/90"
           >
             <Search aria-hidden className="h-4 w-4" />
             Search
@@ -917,7 +917,7 @@ function ProgrammesSection({ data }: { data: DepartmentDetailData }) {
           {hasSearch ? (
             <Link
               href="?"
-              className="inline-flex h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-bold text-muted-foreground transition hover:border-primary/30 hover:text-primary"
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
             >
               Clear
             </Link>
@@ -940,7 +940,7 @@ function ProgrammesSection({ data }: { data: DepartmentDetailData }) {
               <Link
                 key={programme.id}
                 href={`/academics/programmes/${programme.slug}`}
-                className="group flex min-h-[20rem] flex-col rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
+                className="group flex min-h-[20rem] flex-col rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition-colors hover:border-primary/30 hover:bg-primary/[0.03]"
               >
                 <div className="flex items-start gap-3">
                   <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
@@ -961,7 +961,7 @@ function ProgrammesSection({ data }: { data: DepartmentDetailData }) {
                   </div>
                   <ArrowRight
                     aria-hidden
-                    className="h-4 w-4 shrink-0 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                    className="h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary"
                   />
                 </div>
 
@@ -1224,7 +1224,7 @@ function DownloadsSection({ data }: { data: DepartmentDetailData }) {
               {fileId ? (
                 <a
                   href={publicFileUrl(fileId) ?? undefined}
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 text-primary transition hover:bg-primary hover:text-white"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 text-primary transition-colors hover:bg-primary hover:text-white"
                   aria-label={`Download ${document.title}`}
                 >
                   <Download aria-hidden className="h-4 w-4" />

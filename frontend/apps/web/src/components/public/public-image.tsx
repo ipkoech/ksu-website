@@ -113,7 +113,7 @@ export function ProgressiveImageCard({
         ratio="fill"
         className="absolute inset-0 h-full w-full"
         imageClassName={cn(
-          "transition duration-500 group-hover:scale-[1.03]",
+          "transition-transform duration-500 motion-safe:group-hover:scale-[1.03]",
           imageClassName,
         )}
       />

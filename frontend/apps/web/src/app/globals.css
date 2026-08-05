@@ -1,32 +1,19 @@
 @import "@ksu/ui/globals.css";
 
-.ksu-compact-public-page section[class*="py-16"],
-.ksu-compact-public-page section[class*="lg:py-20"] {
+/* Compact spacing for public pages — explicit utility classes */
+.ksu-compact-public-page .ksu-section-pad {
   padding-top: clamp(1.75rem, 3vw, 2.75rem);
   padding-bottom: clamp(1.75rem, 3vw, 2.75rem);
 }
 
-.ksu-compact-public-page [class*="mt-8"] {
+.ksu-compact-public-page .ksu-mt-compact {
   margin-top: clamp(1.25rem, 2.5vw, 2rem);
 }
 
-.ksu-compact-public-page [class*="gap-8"],
-.ksu-compact-public-page [class*="gap-9"] {
+.ksu-compact-public-page .ksu-gap-compact {
   gap: clamp(1rem, 2vw, 1.75rem);
 }
 
-@media (max-width: 1023px) {
-  .ksu-compact-public-page nav[aria-label*="About"],
-  .ksu-compact-public-page nav[aria-label*="Related"],
-  .ksu-compact-public-page nav[aria-label*="Admissions navigation"] {
-    display: none;
-  }
-
-  .ksu-compact-public-page img[class*="aspect-"],
-  .ksu-compact-public-page [class*="min-h-[240px]"] {
-    min-height: 0;
-  }
-}
 
 /* Homepage programme discovery: one light, search-led editorial mosaic. */
 .programme-result {
@@ -120,37 +107,7 @@
   }
 }
 
-.flowing-academics {
-  --flow-line: rgba(197, 164, 109, 0.72);
-}
-
 .flowing-academics a,
 .flowing-academics button {
   -webkit-tap-highlight-color: transparent;
-}
-
-.flowing-academics [class*="transition"] {
-  transition-duration: 220ms;
-}
-
-@media (min-width: 1024px) {
-  .flowing-academics section:nth-of-type(3) .border-l {
-    position: relative;
-  }
-
-  .flowing-academics section:nth-of-type(3) .border-l::before {
-    position: absolute;
-    top: 0;
-    left: -2px;
-    height: 5.5rem;
-    width: 3px;
-    background: var(--flow-line);
-    content: "";
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .flowing-academics [class*="transition"] {
-    transition-duration: 0ms !important;
-  }
 }

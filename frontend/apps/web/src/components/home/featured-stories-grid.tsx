@@ -98,7 +98,7 @@ export function FeaturedStoriesGrid({
                   fallbackSrc="/logos/ksu-bck1.jpg"
                   sizes="(min-width: 1024px) 58vw, 100vw"
                   className="absolute inset-0 h-full w-full"
-                  imageClassName="object-cover transition-transform duration-700 group-hover:scale-105"
+                  imageClassName="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
@@ -141,7 +141,7 @@ export function FeaturedStoriesGrid({
                   fallbackSrc="/logos/ksu-bck5.jpg"
                   sizes="(min-width: 1024px) 42vw, 100vw"
                   className="absolute inset-0 h-full w-full"
-                  imageClassName="object-cover transition-transform duration-500 group-hover:scale-105"
+                  imageClassName="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-5">
@@ -172,7 +172,7 @@ export function FeaturedStoriesGrid({
                   <Link
                     href={story.href}
                     className={cn(
-                      "block overflow-hidden rounded-xl border border-border bg-white shadow-sm transition hover:shadow-md",
+                      "block overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md active:scale-[0.98]",
                       focusVisibleStyles.default
                     )}
                   >
@@ -183,7 +183,7 @@ export function FeaturedStoriesGrid({
                       fallbackSrc="/logos/ksu-bck1.jpg"
                       sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                       className="h-36"
-                      imageClassName="object-cover transition-transform duration-500 group-hover:scale-105"
+                      imageClassName="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
                     />
                     <div className="p-4">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-secondary">

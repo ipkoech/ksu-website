@@ -16,7 +16,7 @@ const FALLBACK_CHANCELLOR_MESSAGE = [
 
 function SectionKicker({ children }: { children: ReactNode }) {
   return (
-    <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
+    <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
       {children}
     </p>
   );
@@ -89,13 +89,13 @@ export default async function LeadershipMessagePage() {
                 />
                 <div className="relative">
                   <SectionKicker>Office of the Chancellor</SectionKicker>
-                  <h1 className="mt-4 max-w-5xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-primary sm:text-5xl lg:text-6xl">
-                    {messageTitle}
+                  <h1 className="mt-4 max-w-5xl font-[family-name:var(--font-display)] text-4xl font-normal tracking-tight leading-tight text-primary sm:text-5xl lg:text-6xl">
+                    Message from the <em className="italic">Chancellor</em>
                   </h1>
-                  <div className="mt-8 h-0.5 w-20 bg-secondary" />
+                  <div className="mt-8 ksu-mt-compact h-0.5 w-20 bg-secondary" />
                 </div>
 
-                <div className="relative mt-10 grid gap-8 xl:grid-cols-[minmax(0,1fr)_260px]">
+                <div className="relative mt-10 grid gap-8 ksu-gap-compact xl:grid-cols-[minmax(0,1fr)_260px]">
                   <div className="space-y-6 text-base leading-8 text-muted-foreground lg:text-lg lg:leading-9">
                     {paragraphs.map((paragraph, index) => (
                       <p
@@ -112,7 +112,7 @@ export default async function LeadershipMessagePage() {
                   </div>
 
                   <div className="self-end border-t border-border pt-6 xl:border-l xl:border-t-0 xl:pl-8 xl:pt-0">
-                    <p className="font-[family-name:var(--font-display)] text-2xl font-semibold text-primary">
+                    <p className="font-[family-name:var(--font-display)] text-2xl font-normal tracking-tight text-primary">
                       Dr. Sara J. Ruto
                     </p>
                     <p className="mt-1 text-sm font-bold uppercase tracking-[0.14em] text-muted-foreground">

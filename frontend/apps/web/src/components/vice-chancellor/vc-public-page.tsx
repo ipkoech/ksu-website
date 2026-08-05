@@ -156,7 +156,7 @@ export function VcPublicPage({
           </p>
           <Link
             href={hub.professional_profile_url}
-            className="inline-flex min-h-12 shrink-0 items-center gap-3 border border-secondary px-6 font-semibold text-secondary transition-colors hover:bg-secondary hover:text-secondary-foreground"
+            className="inline-flex min-h-12 shrink-0 items-center gap-3 border border-secondary px-6 font-semibold text-secondary transition-colors duration-200 hover:bg-secondary hover:text-secondary-foreground active:scale-[0.98]"
           >
             View professional profile <ArrowRight className="size-4" />
           </Link>

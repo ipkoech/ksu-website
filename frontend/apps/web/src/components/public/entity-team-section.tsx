@@ -43,7 +43,7 @@ function TeamCard({
     <Link
       href={`/staff/${encodeURIComponent(profileId)}`}
       aria-label={`View ${member.name}, ${displayPosition}`}
-      className="group relative flex min-h-24 min-w-0 items-center gap-2.5 rounded-xl border border-border bg-white p-2.5 pr-8 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+      className="group relative flex min-h-24 min-w-0 items-center gap-2.5 rounded-xl border border-border bg-white p-2.5 pr-8 shadow-sm transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
     >
       <span className="block h-14 w-12 shrink-0 overflow-hidden rounded-lg bg-surface-muted sm:h-16 sm:w-14">
         {photoUrl ? (
@@ -52,7 +52,7 @@ function TeamCard({
             alt={member.name}
             ratio="profile"
             sizes="56px"
-            className="h-full w-full transition duration-300 group-hover:scale-105"
+            className="h-full w-full transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
           />
         ) : (
           <span className="flex h-full w-full items-center justify-center bg-primary/[0.08] font-[family-name:var(--font-display)] text-sm font-semibold text-primary">
@@ -75,7 +75,7 @@ function TeamCard({
       </span>
       <ArrowRight
         aria-hidden
-        className="absolute bottom-2.5 right-2.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/70 transition group-hover:translate-x-0.5 group-hover:text-primary"
+        className="absolute bottom-2.5 right-2.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/70 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary"
       />
     </Link>
   );
@@ -167,7 +167,7 @@ export function EntityTeamSection({
               type="button"
               aria-pressed={activeFilter === filter.key}
               onClick={() => setActiveFilter(filter.key)}
-              className={`min-h-10 border-b border-r border-border px-3 py-2 text-xs font-semibold transition last:border-r-0 sm:border-b-0 ${activeFilter === filter.key ? "bg-primary/[0.08] text-primary" : "bg-white text-foreground hover:bg-surface-subtle"}`}
+              className={`min-h-10 border-b border-r border-border px-3 py-2 text-xs font-semibold transition-colors last:border-r-0 sm:border-b-0 ${activeFilter === filter.key ? "bg-primary/[0.08] text-primary" : "bg-white text-foreground hover:bg-surface-subtle"}`}
             >
               {filter.label}
             </button>

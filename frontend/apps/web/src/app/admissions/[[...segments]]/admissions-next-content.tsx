@@ -318,7 +318,7 @@ function AdmissionsHero({ data }: { data: AdmissionsPageData }) {
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,28,68,.97)_0%,rgba(4,38,83,.88)_48%,rgba(4,38,83,.42)_100%)]" />
       <div className="relative mx-auto grid max-w-[1680px] gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.72fr)] lg:items-center lg:px-8 lg:py-14 xl:px-10 2xl:px-12">
         <div className="motion-safe:animate-[admissions-rise_.7s_ease-out_both]">
-          <nav aria-label="Breadcrumb" className="text-xs font-semibold text-white/72">
+          <nav aria-label="Breadcrumb" className="text-xs font-semibold text-white/70">
             <Link href="/" className="hover:text-white">
               Home
             </Link>
@@ -342,7 +342,7 @@ function AdmissionsHero({ data }: { data: AdmissionsPageData }) {
               href={officialLinks.onlineApplication}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-12 items-center gap-2 bg-secondary px-5 py-3 text-sm font-bold uppercase text-foreground transition hover:bg-amber-400"
+              className="inline-flex min-h-12 items-center gap-2 bg-secondary px-5 py-3 text-sm font-bold uppercase text-foreground transition-colors duration-200 hover:bg-amber-400 active:scale-[0.98]"
             >
               Apply online
               <ExternalLink className="h-4 w-4" aria-hidden />
@@ -351,7 +351,7 @@ function AdmissionsHero({ data }: { data: AdmissionsPageData }) {
               href={officialLinks.admissionCenter}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-12 items-center gap-2 border border-white/60 px-5 py-3 text-sm font-bold uppercase text-white transition hover:bg-white/10"
+              className="inline-flex min-h-12 items-center gap-2 border border-white/60 px-5 py-3 text-sm font-bold uppercase text-white transition-colors duration-200 hover:bg-white/10 active:scale-[0.98]"
             >
               Download admission letter
               <ExternalLink className="h-4 w-4" aria-hidden />
@@ -453,21 +453,21 @@ function PathwaySelector({
                 key={pathway.id}
                 href={`/admissions/${pathway.slug}`}
                 aria-current={active ? "page" : undefined}
-                className={`group relative flex min-h-24 flex-col items-center justify-center gap-2 overflow-hidden px-3 text-center text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-secondary ${
+                className={`group relative flex min-h-24 flex-col items-center justify-center gap-2 overflow-hidden px-3 text-center text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-secondary ${
                   active
                     ? "bg-white text-primary"
                     : "bg-primary text-white hover:bg-white/10"
                 }`}
               >
                 <span
-                  className={`absolute inset-x-0 top-0 h-1 transition ${
+                  className={`absolute inset-x-0 top-0 h-1 transition-colors duration-200 ${
                     active
                       ? "bg-secondary"
                       : "bg-white/0 group-hover:bg-secondary"
                   }`}
                 />
                 <span
-                  className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
+                  className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 ${
                     active
                       ? "bg-primary/10"
                       : "bg-white/10 group-hover:bg-white/15"
@@ -729,7 +729,7 @@ function HowToApplyPage({
             <Link
               key={pathway.id}
               href={`/admissions/${pathway.slug}`}
-              className="group relative overflow-hidden border border-border bg-white p-5 transition hover:-translate-y-1 hover:border-primary/30 hover:bg-primary/[0.03] hover:shadow-lg hover:shadow-primary/10"
+              className="group relative overflow-hidden border border-border bg-white p-5 transition-transform duration-200 hover:-translate-y-1 hover:border-primary/30 hover:bg-primary/[0.03] hover:shadow-lg hover:shadow-primary/10"
             >
               <span className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-primary/[0.08] text-primary">
                 {(() => {
@@ -892,7 +892,7 @@ function FeesGrid({
         return (
           <article
             key={fee.id}
-            className="group relative overflow-hidden border border-border bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10"
+            className="group relative overflow-hidden border border-border bg-white p-5 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10"
           >
             <span className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-primary/[0.08] text-primary">
               <FileText className="h-5 w-5" aria-hidden />
@@ -997,7 +997,7 @@ function DocumentCard({
       href={href}
       target={href.startsWith("http") ? "_blank" : undefined}
       rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
-      className={`group block overflow-hidden border border-border bg-white transition hover:-translate-y-1 hover:border-primary/30 hover:bg-primary/[0.03] hover:shadow-lg hover:shadow-primary/10 ${
+      className={`group block overflow-hidden border border-border bg-white transition-transform duration-200 hover:-translate-y-1 hover:border-primary/30 hover:bg-primary/[0.03] hover:shadow-lg hover:shadow-primary/10 ${
         compact ? "p-3" : "p-5 shadow-sm"
       }`}
     >
@@ -1119,7 +1119,7 @@ function JourneyList({ large = false }: { large?: boolean }) {
         {steps.map(([title, body, href], index) => (
           <li
             key={title}
-            className="relative overflow-hidden border border-border bg-white p-4 transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10"
+            className="relative overflow-hidden border border-border bg-white p-4 transition-transform duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10"
             style={{ animationDelay: `${index * 80}ms` }}
           >
             <span className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,hsl(var(--primary)),hsl(var(--secondary)))]" />
@@ -1215,7 +1215,7 @@ function AdmissionsMediaFrame({
           alt={title}
           ratio="fill"
           className="absolute inset-0 h-full w-full"
-          imageClassName="object-cover transition duration-700 group-hover:scale-[1.03]"
+          imageClassName="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
           sizes={
             tall
               ? "(min-width: 1024px) 42vw, 100vw"
@@ -1454,7 +1454,7 @@ function ButtonLink({
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener noreferrer" : undefined}
-      className={`inline-flex min-h-11 items-center gap-2 rounded-md px-5 py-3 text-sm font-bold transition ${
+      className={`inline-flex min-h-11 items-center gap-2 rounded-md px-5 py-3 text-sm font-bold transition-colors duration-200 active:scale-[0.98] ${
         primary
           ? "bg-primary text-white hover:bg-primary/90"
           : "border border-primary/20 bg-white text-primary hover:bg-primary/[0.05]"

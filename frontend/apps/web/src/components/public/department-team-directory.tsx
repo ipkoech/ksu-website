@@ -232,7 +232,7 @@ function MemberCard({
   directReports: number;
 }) {
   return (
-    <article className="min-w-0 rounded-lg border border-border bg-white p-4 shadow-sm transition hover:border-primary/25 hover:shadow-md">
+    <article className="min-w-0 rounded-lg border border-border bg-white p-4 shadow-sm transition-[border-color,box-shadow] hover:border-primary/25 hover:shadow-md">
       <div className="flex min-w-0 gap-3">
         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-surface-muted">
           <Avatar member={member} />

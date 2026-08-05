@@ -151,7 +151,7 @@ function ContactRow({
     return (
       <a
         href={href}
-        className="flex w-full min-w-0 gap-3 rounded-xl p-2 transition hover:bg-primary/5"
+        className="flex w-full min-w-0 gap-3 rounded-xl p-2 transition-colors hover:bg-primary/5"
       >
         {content}
       </a>
@@ -398,7 +398,7 @@ function FeaturedSchoolLinks({
       <SectionKicker>{title}</SectionKicker>
       <div className="mt-3 divide-y divide-slate-100">
         {items.map((item) => (
-          <Link key={item.id} href={item.href} className="group flex min-h-12 items-center gap-3 py-2.5">
+          <Link key={item.id} href={item.href} className="group flex min-h-12 items-center gap-3 py-2.5 transition-colors">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/[0.07] text-primary">
               <Icon aria-hidden className="h-4 w-4" />
             </span>
@@ -408,7 +408,7 @@ function FeaturedSchoolLinks({
               </span>
               {item.meta ? <span className="mt-0.5 block text-xs text-muted-foreground">{item.meta}</span> : null}
             </span>
-            <ArrowRight aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground/60 group-hover:text-primary" />
+            <ArrowRight aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground/60 transition-colors group-hover:text-primary" />
           </Link>
         ))}
       </div>

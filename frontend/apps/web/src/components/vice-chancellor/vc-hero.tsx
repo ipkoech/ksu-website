@@ -8,7 +8,7 @@ import vcOfficial from "../../../../../public/images/vc/vc-official.jpg";
 
 const heroTitle = "Meet Our Vice Chancellor";
 const heroStatement =
-  "Step inside the work of the Vice Chancellor—from decisions made at his desk to conversations shaping the University’s future.";
+  "Step inside the work of the Vice Chancellor. From decisions made at his desk to conversations shaping the University’s future.";
 
 function useReducedMotion() {
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -152,7 +152,7 @@ export function VcHero({
             {hasWelcomeVideo ? (
               <a
                 href="#vc-story"
-                className="inline-flex min-h-12 items-center gap-3 bg-secondary px-6 font-bold text-secondary-foreground shadow-lg transition-colors hover:bg-white hover:text-primary"
+                className="inline-flex min-h-12 items-center gap-3 bg-secondary px-6 font-bold text-secondary-foreground shadow-lg transition-colors duration-200 hover:bg-white hover:text-primary active:scale-[0.98]"
               >
                 <span className="grid size-6 place-items-center rounded-full bg-primary text-white">
                   <Play className="ml-0.5 size-3.5 fill-current" aria-hidden />
@@ -162,7 +162,7 @@ export function VcHero({
             ) : null}
             <Link
               href={professionalProfileUrl}
-              className="inline-flex min-h-12 items-center border border-white bg-black/35 px-6 font-semibold text-white shadow-lg transition-colors hover:bg-white hover:text-primary"
+              className="inline-flex min-h-12 items-center border border-white bg-black/35 px-6 font-semibold text-white shadow-lg transition-colors duration-200 hover:bg-white hover:text-primary active:scale-[0.98]"
             >
               Professional profile
             </Link>

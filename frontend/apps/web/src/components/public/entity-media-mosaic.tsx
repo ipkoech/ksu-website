@@ -116,13 +116,13 @@ export function EntityMediaMosaic({ items }: { items: EntityMediaRecord[] }) {
           <Link
             key={`${item.recordType}-${item.id}`}
             href={itemHref(item)}
-            className={`group relative min-h-72 cursor-pointer overflow-hidden rounded-[1.25rem] bg-primary shadow-sm outline-none ring-primary/35 transition hover:shadow-[0_22px_55px_-34px_rgba(15,23,42,0.72)] focus-visible:ring-2 md:min-h-0 ${
+            className={`group relative min-h-72 cursor-pointer overflow-hidden rounded-[1.25rem] bg-primary shadow-sm outline-none ring-primary/35 transition-shadow hover:shadow-[0_22px_55px_-34px_rgba(15,23,42,0.72)] focus-visible:ring-2 md:min-h-0 ${
               items.length === 1
                 ? "md:col-span-6 md:row-span-2"
                 : spanPattern[index % spanPattern.length]
             }`}
           >
-            <div className="absolute inset-0 transition duration-300 group-hover:scale-[1.025]">
+            <div className="absolute inset-0 transition-transform duration-500 motion-safe:group-hover:scale-[1.03]">
               {imageUrl ? (
                 <PublicImage
                   src={imageUrl}

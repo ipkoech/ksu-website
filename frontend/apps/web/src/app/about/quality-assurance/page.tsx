@@ -27,7 +27,7 @@ function EmptyState({ label }: { label: string }) {
   return (
     <div
       data-backend-empty-state
-      className="rounded-lg border border-dashed border-border bg-white/70 p-5 text-sm leading-6 text-muted-foreground"
+      className="rounded-2xl border border-dashed border-border bg-white/70 p-5 text-sm leading-6 text-muted-foreground"
     >
       {label} has not been published yet.
     </div>
@@ -136,16 +136,16 @@ export default async function QualityAssurancePage() {
                   ]}
                 />
 
-                <div className="grid min-h-[560px] items-end gap-10 py-14 lg:grid-cols-[minmax(0,1fr)_360px] lg:py-20">
+                <div className="grid min-h-[560px] items-end gap-10 py-14 ksu-section-pad lg:grid-cols-[minmax(0,1fr)_360px] lg:py-20">
                   <div className="max-w-4xl">
-                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
                       Quality Assurance
                     </p>
-                    <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
-                      Quality, planning, and service accountability
+                    <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-normal tracking-tight leading-tight text-white sm:text-5xl lg:text-6xl">
+                      Quality, planning, and service <em className="italic">accountability</em>
                     </h1>
                     {data.overview?.charter_summary ? (
-                      <p className="mt-6 max-w-3xl text-base leading-8 text-white/82 sm:text-lg">
+                      <p className="mt-6 max-w-3xl text-base leading-8 text-white/80 sm:text-lg">
                         {data.overview.charter_summary}
                       </p>
                     ) : (
@@ -155,7 +155,7 @@ export default async function QualityAssurancePage() {
                     )}
                   </div>
 
-                  <aside className="rounded-lg border border-white/15 bg-white/[0.08] p-5 shadow-2xl backdrop-blur">
+                  <aside className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
                     <ShieldCheck aria-hidden className="h-6 w-6 text-secondary" />
                     <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-white/60">
                       Backend Records
@@ -173,7 +173,7 @@ export default async function QualityAssurancePage() {
             </div>
           </section>
 
-          <section className="bg-surface-subtle px-4 py-12 sm:px-6 lg:px-8">
+          <section className="bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] px-4 py-12 sm:px-6 lg:px-8">
             <div className="mx-auto w-full max-w-none">
               <div className="grid gap-4 lg:grid-cols-3">
                 {resourceCards.map((card) => (
@@ -183,13 +183,13 @@ export default async function QualityAssurancePage() {
             </div>
           </section>
 
-          <section className="bg-white px-4 py-14 sm:px-6 lg:px-8">
-            <div className="mx-auto grid w-full max-w-none gap-8 lg:grid-cols-[360px_minmax(0,1fr)]">
+          <section className="bg-white px-4 py-14 ksu-section-pad sm:px-6 lg:px-8">
+            <div className="mx-auto grid w-full max-w-none gap-8 ksu-gap-compact lg:grid-cols-[360px_minmax(0,1fr)]">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
                   Strategic Plan Highlights
                 </p>
-                <h2 className="mt-3 text-3xl font-semibold text-foreground">
+                <h2 className="mt-3 text-3xl font-normal tracking-tight text-foreground">
                   Priorities that shape quality review
                 </h2>
                 <p className="mt-4 text-sm leading-7 text-muted-foreground">
@@ -215,16 +215,16 @@ export default async function QualityAssurancePage() {
             </div>
           </section>
 
-          <section className="bg-primary px-4 py-14 text-white sm:px-6 lg:px-8">
-            <div className="mx-auto grid w-full max-w-none gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+          <section className="bg-primary px-4 py-14 ksu-section-pad text-white sm:px-6 lg:px-8">
+            <div className="mx-auto grid w-full max-w-none gap-8 ksu-gap-compact lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
                   Service Commitments
                 </p>
-                <h2 className="mt-3 text-3xl font-semibold">
-                  From charter to evidence
+                <h2 className="mt-3 text-3xl font-normal tracking-tight">
+                  From charter to <em className="italic">evidence</em>
                 </h2>
-                <p className="mt-4 text-sm leading-7 text-white/78">
+                <p className="mt-4 text-sm leading-7 text-white/80">
                   The page connects the service charter summary, official
                   backend documents, and strategic priorities into one public
                   accountability view.
@@ -243,13 +243,13 @@ export default async function QualityAssurancePage() {
             </div>
           </section>
 
-          <section className="border-t border-border bg-white px-4 py-12 sm:px-6 lg:px-8">
-            <div className="mx-auto grid w-full max-w-none gap-8 lg:grid-cols-[360px_minmax(0,1fr)]">
+          <section className="border-t border-border bg-white px-4 py-12 ksu-section-pad sm:px-6 lg:px-8">
+            <div className="mx-auto grid w-full max-w-none gap-8 ksu-gap-compact lg:grid-cols-[360px_minmax(0,1fr)]">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
                   Official References
                 </p>
-                <h2 className="mt-3 text-3xl font-semibold text-foreground">
+                <h2 className="mt-3 text-3xl font-normal tracking-tight text-foreground">
                   Backend-published downloads
                 </h2>
                 <Link
@@ -276,7 +276,7 @@ export default async function QualityAssurancePage() {
 
 function MetricCard({ value, label }: { value: number; label: string }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.06] p-4">
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
       <p className="text-3xl font-semibold leading-none">{value}</p>
       <p className="mt-2 text-xs font-medium text-white/65">{label}</p>
     </div>
@@ -299,16 +299,16 @@ function QualityResourceCard({
   emptyLabel: string;
 }) {
   return (
-    <article className="flex min-h-[360px] flex-col rounded-lg border border-border bg-white p-6 shadow-sm">
+    <article className="flex min-h-[360px] flex-col rounded-2xl ring-1 ring-primary/10 bg-white p-6">
       <div className="flex items-center justify-between gap-4">
-        <div className="rounded-lg bg-primary/10 p-3 text-primary">
+        <div className="rounded-2xl bg-primary/10 p-3 text-primary">
           <Icon aria-hidden className="h-5 w-5" />
         </div>
-        <span className="text-xs font-bold uppercase tracking-[0.12em] text-secondary">
+        <span className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
           {kicker}
         </span>
       </div>
-      <h2 className="mt-5 text-2xl font-semibold text-foreground">{title}</h2>
+      <h2 className="mt-5 text-2xl font-normal tracking-tight text-foreground">{title}</h2>
       <p className="mt-3 text-sm leading-7 text-muted-foreground">{body}</p>
       <div className="mt-auto pt-6">
         {documents.length ? (
@@ -331,8 +331,8 @@ function StrategicHighlightCard({
   body: string;
 }) {
   return (
-    <article className="rounded-lg border border-border bg-surface-subtle p-5">
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-sm font-bold text-foreground">
+    <article className="rounded-2xl ring-1 ring-primary/10 bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] p-5">
+      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-secondary text-sm font-bold text-foreground">
         {String(index).padStart(2, "0")}
       </div>
       <h3 className="mt-5 text-base font-bold text-foreground">{title}</h3>
@@ -351,13 +351,13 @@ function ServiceCommitmentStep({
   body: string;
 }) {
   return (
-    <article className="grid gap-4 rounded-lg border border-white/15 bg-white/[0.08] p-5 backdrop-blur sm:grid-cols-[64px_minmax(0,1fr)]">
-      <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-secondary text-base font-bold text-foreground">
+    <article className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 sm:grid-cols-[64px_minmax(0,1fr)]">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary text-base font-bold text-foreground">
         {index}
       </div>
       <div>
         <h3 className="text-base font-bold text-white">{title}</h3>
-        <p className="mt-2 text-sm leading-7 text-white/76">{body}</p>
+        <p className="mt-2 text-sm leading-7 text-white/75">{body}</p>
       </div>
     </article>
   );
@@ -376,7 +376,7 @@ function DocumentList({
         const href = publicFileUrl(document.file_id);
         const body = document.description ?? document.document_type ?? document.category;
         const className =
-          "group rounded-lg border border-border bg-white px-4 py-3 transition hover:border-primary/35 hover:shadow-sm";
+          "group rounded-2xl ring-1 ring-primary/10 bg-white px-4 py-3 transition-[box-shadow] duration-200 hover:ring-primary/20 hover:shadow-sm";
 
         return href ? (
           <a key={document.id} href={href} className={className}>
@@ -393,7 +393,7 @@ function DocumentList({
               </span>
               <Download
                 aria-hidden
-                className="mt-0.5 h-4 w-4 shrink-0 text-primary transition group-hover:translate-y-0.5"
+                className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-transform duration-200 group-hover:translate-y-0.5"
               />
             </span>
           </a>

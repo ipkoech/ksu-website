@@ -123,7 +123,7 @@ export function AcademicsPathwaySection({
                   initial="hidden"
                   whileInView="visible"
                   viewport={{ once: true, amount: 0.3 }}
-                  className="group overflow-hidden rounded-lg border border-border bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md"
+                  className="group overflow-hidden rounded-lg border border-border bg-white shadow-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-md active:scale-[0.98]"
                 >
                   <Link href={school.href} className="block">
                     <PublicImage
@@ -134,7 +134,7 @@ export function AcademicsPathwaySection({
                       fallbackContent={<GraduationCap className="h-6 w-6" />}
                       sizes="(min-width: 1280px) 20vw, (min-width: 768px) 33vw, 50vw"
                       className="h-28"
-                      imageClassName="object-cover transition-transform duration-500 group-hover:scale-105"
+                      imageClassName="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
                     />
                     <div className="p-4">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-secondary">
@@ -175,7 +175,7 @@ export function AcademicsPathwaySection({
                         : step.href
                   }
                   className={cn(
-                    "group block rounded-lg border p-4 transition",
+                    "group block rounded-lg border p-4 transition-[background-color,transform] duration-150 active:scale-[0.98]",
                     step.accent
                       ? "border-secondary/50 bg-secondary/15 hover:bg-secondary/25"
                       : "border-white/10 bg-white/5 hover:bg-white/10"
@@ -218,7 +218,7 @@ export function AcademicsPathwaySection({
                 <Link
                   href={activeIntake?.href ?? "/admissions/how-to-apply"}
                   className={cn(
-                    "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90",
+                    "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition-[background-color,transform] duration-150 hover:bg-primary/90 active:scale-[0.98]",
                     focusVisibleStyles.default
                   )}
                 >
@@ -228,7 +228,7 @@ export function AcademicsPathwaySection({
                 <Link
                   href="/contact"
                   className={cn(
-                    "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-white px-4 text-sm font-semibold text-primary transition hover:bg-accent",
+                    "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-white px-4 text-sm font-semibold text-primary transition-[background-color,transform] duration-150 hover:bg-accent active:scale-[0.98]",
                     focusVisibleStyles.default
                   )}
                 >

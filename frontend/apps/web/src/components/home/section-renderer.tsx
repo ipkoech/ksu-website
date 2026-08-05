@@ -124,6 +124,7 @@ export function HomepageSections({
   featuredStories,
   socialLinks,
   vcHub,
+  suppressImplicitFeaturedStories = false,
 }: {
   sections: HomepageSection[];
   hero?: HomepageResolvedHero | null;
@@ -132,6 +133,7 @@ export function HomepageSections({
   featuredStories?: HomeCard[];
   socialLinks?: HomeSocialLinks;
   vcHub?: VcPublicHub | null;
+  suppressImplicitFeaturedStories?: boolean;
 }) {
   const orderedSections = orderHomepageSections(sections);
   const factsSection = sections.find(
@@ -191,7 +193,8 @@ export function HomepageSections({
               vcHub={vcHub}
             />
             {section.layout_variant === "programme_finder" &&
-            !hasExplicitFeaturedStories ? (
+            !hasExplicitFeaturedStories &&
+            !suppressImplicitFeaturedStories ? (
               <FeaturedStoriesSection stories={featuredStories} />
             ) : null}
           </Fragment>

@@ -44,7 +44,7 @@ function ImageStoryCard({
         alt={item.cover?.alt_text || item.title}
         ratio="fill"
         className="absolute inset-0"
-        imageClassName="transition duration-500 group-hover:scale-[1.025]"
+        imageClassName="transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
         sizes={
           featured
             ? "(min-width: 1024px) 80vw, 100vw"
@@ -72,7 +72,7 @@ function ImageStoryCard({
         </h3>
         {item.summary ? (
           <p
-            className={`mt-3 leading-6 text-white/88 ${featured ? "max-w-md text-sm sm:text-base" : "line-clamp-2 text-sm"}`}
+            className={`mt-3 leading-6 text-white/90 ${featured ? "max-w-md text-sm sm:text-base" : "line-clamp-2 text-sm"}`}
           >
             {item.summary}
           </p>
@@ -165,7 +165,7 @@ function PodiumListItem({
           </p>
         ) : null}
         {item.summary ? (
-          <p className="mt-2 line-clamp-2 text-xs leading-5 text-white/72">
+          <p className="mt-2 line-clamp-2 text-xs leading-5 text-white/70">
             {item.summary}
           </p>
         ) : null}
@@ -293,7 +293,7 @@ export function VcEventsSection({ items }: { items: VcPublicItem[] }) {
           </h2>
           <Link
             href="/events"
-            className="mt-8 inline-flex min-h-11 items-center gap-3 border border-primary px-5 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white"
+            className="mt-8 inline-flex min-h-11 items-center gap-3 border border-primary px-5 text-sm font-semibold text-primary transition-colors duration-200 hover:bg-primary hover:text-white active:scale-[0.98]"
           >
             View all events <ArrowRight className="size-4" />
           </Link>

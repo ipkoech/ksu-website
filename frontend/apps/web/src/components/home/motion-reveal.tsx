@@ -7,20 +7,20 @@ type RevealVariant = "fade" | "fade-up" | "fade-down" | "fade-left" | "fade-righ
 
 const offsets: Record<RevealVariant, { x?: number; y?: number }> = {
   fade: {},
-  "fade-up": { y: 24 },
-  "fade-down": { y: -24 },
-  "fade-left": { x: 24 },
-  "fade-right": { x: -24 },
+  "fade-up": { y: 12 },
+  "fade-down": { y: -12 },
+  "fade-left": { x: 12 },
+  "fade-right": { x: -12 },
 };
 
-const easeOut = [0, 0, 0.2, 1] as const;
+const easeOut = [0.16, 1, 0.3, 1] as const;
 
 export function Reveal({
   children,
   className,
   variant = "fade-up",
   delay = 0,
-  duration = 600,
+  duration = 400,
 }: {
   children: ReactNode;
   className?: string;
@@ -37,7 +37,7 @@ export function Reveal({
       className={className}
       initial={{ opacity: 0, x: offset.x ?? 0, y: offset.y ?? 0 }}
       whileInView={{ opacity: 1, x: 0, y: 0 }}
-      viewport={{ once: false, amount: 0.2, margin: "0px 0px -60px 0px" }}
+      viewport={{ once: true, amount: 0.2, margin: "0px 0px -60px 0px" }}
       transition={{
         duration: duration / 1000,
         delay: delay / 1000,
@@ -54,7 +54,7 @@ export function RevealGroup({
   className,
   variant = "fade-up",
   staggerDelay = 100,
-  duration = 600,
+  duration = 400,
 }: {
   children: ReactNode;
   className?: string;
@@ -73,7 +73,7 @@ export function RevealGroup({
       className={className}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: false, amount: 0.1, margin: "0px 0px -60px 0px" }}
+      viewport={{ once: true, amount: 0.1, margin: "0px 0px -60px 0px" }}
       variants={{
         hidden: {},
         visible: { transition: { staggerChildren: staggerDelay / 1000 } },

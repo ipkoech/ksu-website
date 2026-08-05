@@ -109,7 +109,7 @@ export function FeaturedStoriesSection({ stories }: { stories?: HomeCard[] }) {
                 fallbackContent={<Newspaper className="h-10 w-10" />}
                 sizes="(min-width: 1280px) 1280px, 100vw"
                 className="absolute inset-0 h-full w-full"
-                imageClassName="object-cover transition duration-700 group-hover:scale-[1.03]"
+                imageClassName="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
               />
             </div>
             <div
@@ -162,7 +162,7 @@ export function FeaturedStoriesSection({ stories }: { stories?: HomeCard[] }) {
                     fallbackContent={<Newspaper className="h-8 w-8" />}
                     sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                     className="h-full w-full"
-                    imageClassName="object-cover transition duration-500 group-hover:scale-105"
+                    imageClassName="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
                   />
                 </div>
                 <div className="mt-4">
@@ -190,7 +190,7 @@ export function FeaturedStoriesSection({ stories }: { stories?: HomeCard[] }) {
         <Reveal variant="fade-up" delay={150} className="mt-10 text-center">
           <Link
             href="/stories"
-            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-transform duration-150 hover:bg-secondary/90 active:scale-[0.98]"
           >
             Explore more stories
             <ArrowRight className="h-4 w-4" aria-hidden />
@@ -214,8 +214,7 @@ function _OldFeaturedStoriesSection({ stories }: { stories?: HomeCard[] }) {
       />
       <div className="mx-auto grid max-w-[1680px] gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(340px,0.55fr)] lg:px-8 xl:px-10 2xl:px-12">
         <div>
-          <SectionEyebrow value="Featured stories" />
-          <div className="mt-3 grid gap-5 md:grid-cols-[0.78fr_1fr] md:items-end">
+          <div className="grid gap-5 md:grid-cols-[0.78fr_1fr] md:items-end">
             <h2 className="font-[family-name:var(--font-display)] text-4xl font-bold leading-[0.95] text-primary sm:text-5xl">
               Voices and work shaping Kisii University.
             </h2>
@@ -240,7 +239,7 @@ function _OldFeaturedStoriesSection({ stories }: { stories?: HomeCard[] }) {
                   fallbackContent={<Newspaper className="h-10 w-10" />}
                   sizes="(min-width: 1024px) 48vw, 100vw"
                   className="absolute inset-0 h-full w-full"
-                  imageClassName="object-cover transition duration-700 group-hover:scale-[1.035]"
+                  imageClassName="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
                 />
                 <span className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-primary/40 to-transparent" />
               </ImageCurtainReveal>
@@ -283,7 +282,7 @@ function _OldFeaturedStoriesSection({ stories }: { stories?: HomeCard[] }) {
                     fallbackContent={<Newspaper className="h-5 w-5" />}
                     sizes="112px"
                     className="absolute inset-0 h-full w-full"
-                    imageClassName="object-cover transition duration-500 group-hover:scale-105"
+                    imageClassName="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
                   />
                 </ImageCurtainReveal>
                 <div>
@@ -451,14 +450,14 @@ const fallbackPartnershipChapters: PartnershipChapter[] = [
   {
     id: "fallback-initiative",
     title: "The initiative",
-    body: "HERI-Africa — Harnessing Education Research for Impact in Africa — is a Pan-African initiative bringing together collaborators from government, universities and civil society research organizations, working to raise the impact of education research on the continent from 3% to 30% by 2050.",
+    body: "HERI-Africa (Harnessing Education Research for Impact in Africa) is a Pan-African initiative bringing together collaborators from government, universities and civil society research organizations, working to raise the impact of education research on the continent from 3% to 30% by 2050.",
     values: [],
   },
   {
     id: "fallback-ksu-role",
     title: "Kisii University's role",
     subtitle: "The Research Chair in Language Education",
-    body: "A leading Africa-led Centre of Excellence in language education research — advancing foundational literacy, educational transformation, and global societal impact. The Chair advances impactful, policy-responsive, and practice-oriented research in language education and foundational literacy for educational transformation in Africa and beyond.",
+    body: "A leading Africa-led Centre of Excellence in language education research, advancing foundational literacy, educational transformation, and global societal impact. The Chair advances impactful, policy-responsive, and practice-oriented research in language education and foundational literacy for educational transformation in Africa and beyond.",
     values: [
       "Excellence",
       "Collaboration",
@@ -577,10 +576,7 @@ export function AdmissionsPanel({
           )}
         </span>
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/70">
-            Admissions update
-          </p>
-          <h2 className="mt-1 text-balance font-[family-name:var(--font-display)] text-xl font-semibold text-white">
+          <h2 className="text-balance font-[family-name:var(--font-display)] text-xl font-semibold text-white">
             {intakeName}
           </h2>
         </div>
@@ -670,7 +666,7 @@ function HeroActionLink({
       href={action.href}
       target={action.open_in_new_tab ? "_blank" : undefined}
       rel={action.open_in_new_tab ? "noopener noreferrer" : undefined}
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${
+      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-semibold transition-colors duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${
         fullWidth ? "w-full" : ""
       } ${
         ghost
@@ -1138,10 +1134,7 @@ export function FeaturedPartnershipSection({
               className="absolute bottom-5 left-5 max-w-[85%]"
             >
               <div className="rounded-xl bg-white/95 px-5 py-3 shadow-lg shadow-primary/15 backdrop-blur-sm">
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-secondary">
-                  Strategic partnership
-                </p>
-                <p className="mt-0.5 text-sm font-semibold text-primary">
+                <p className="text-sm font-semibold text-primary">
                   Building Africa together through research, enterprise and
                   community impact.
                 </p>
@@ -1196,7 +1189,7 @@ export function FeaturedPartnershipSection({
             <Reveal variant="fade-up" delay={500} className="mt-10">
               <Link
                 href={cta.cta_url}
-                className="inline-flex min-h-11 items-center gap-2 rounded-md bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90"
+                className="inline-flex min-h-11 items-center gap-2 rounded-md bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-transform duration-150 hover:bg-secondary/90 active:scale-[0.98]"
               >
                 Read more
                 <ArrowRight className="h-4 w-4" aria-hidden />
@@ -1252,10 +1245,7 @@ export function ProgrammeFinderSection({
           variant="fade-up"
           className="mx-auto max-w-3xl text-center"
         >
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
-            {section.subtitle ?? "Programmes and academic pathways"}
-          </p>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-white sm:text-4xl">
+          <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-white sm:text-4xl">
             {section.title ?? "Find the right programme. Build your future."}
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-white/85">
@@ -1335,7 +1325,7 @@ export function ProgrammeFinderSection({
               </div>
               <Link
                 href={activeIntake.href ?? "/admissions/how-to-apply"}
-                className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90"
+                className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-transform duration-150 hover:bg-secondary/90 active:scale-[0.98]"
               >
                 Apply Now
                 <ArrowRight className="h-4 w-4" aria-hidden />
@@ -1357,8 +1347,7 @@ export function DateTimelineSection({ section }: SectionVariantProps) {
     >
       <SectionFadeIn className="mx-auto grid max-w-[1680px] gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.36fr)_minmax(0,0.64fr)] lg:px-8 xl:px-10 2xl:px-12">
         <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
-          <SectionEyebrow value={section.subtitle ?? "Important dates"} />
-          <h2 className="mt-2 max-w-md font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+          <h2 className="max-w-md font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             {section.title ?? "Important academic dates"}
           </h2>
           <SectionBody value={section.description} className="mt-3 max-w-md" />
@@ -1412,10 +1401,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
       <SectionFadeIn className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         {/* Opening */}
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
-            {section.subtitle ?? "Life around studies"}
-          </p>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-primary sm:text-4xl">
+          <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-primary sm:text-4xl">
             {section.title ?? "Life Around Studies"}
           </h2>
           {section.description ? (
@@ -1458,7 +1444,7 @@ export function MediaMosaicSection({ section }: SectionVariantProps) {
         <div className="mt-10 text-center">
           <Link
             href={settingCtaHref(section) ?? "/campus-life"}
-            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-transform duration-150 hover:bg-secondary/90 active:scale-[0.98]"
           >
             {settingCtaLabel(section) ?? "Explore campus life"}
             <ArrowRight className="h-4 w-4" aria-hidden />
@@ -1491,7 +1477,7 @@ function CampusMosaicCard({
         alt={imageAlt}
         ratio="fill"
         className="absolute inset-0 h-full w-full"
-        imageClassName="object-cover transition duration-700 group-hover:scale-[1.04]"
+        imageClassName="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
         sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
       />
       <div
@@ -1608,8 +1594,7 @@ export function LeadershipActivitySection({
             </ImageCurtainReveal>
           </div>
           <div className="flex h-full min-h-0 flex-col px-5 py-6 sm:px-8 lg:overflow-hidden lg:px-8 lg:py-6 xl:px-10">
-            <SectionEyebrow value={section.title ?? "Leadership in action"} />
-            <p className="mt-3 text-xs font-bold uppercase tracking-[0.16em] text-primary">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
               {leaderTitle}
             </p>
             <h2 className="mt-2 max-w-md font-[family-name:var(--font-display)] text-3xl font-semibold leading-[1.05] text-foreground sm:text-4xl lg:text-[2rem] xl:text-4xl">
@@ -1688,11 +1673,7 @@ export function ResearchCardsSection({ section }: SectionVariantProps) {
 
       <SectionFadeIn className="mx-auto grid max-w-[1680px] gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.38fr)_minmax(0,0.62fr)] lg:items-end lg:px-8 xl:px-10 2xl:px-12">
         <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
-          <SectionEyebrow
-            value={section.subtitle ?? "Research and innovation"}
-            light
-          />
-          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
+          <h2 className="max-w-2xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
             {section.title ?? "Transforming Communities Through Research"}
           </h2>
           <SectionBody
@@ -1701,7 +1682,7 @@ export function ResearchCardsSection({ section }: SectionVariantProps) {
               "Kisii University research addresses practical challenges across health, agriculture, digital systems, governance, energy and community development."
             }
             light
-            className="mt-5 max-w-xl text-white/78"
+            className="mt-5 max-w-xl text-white/80"
           />
           <CtaLink
             item={{
@@ -1785,7 +1766,7 @@ function ResearchFocusArea({
   index: number;
 }) {
   const body = (
-    <article className="group border border-white/25 bg-brand-overlay/20 p-4 text-white transition duration-300 hover:-translate-y-0.5 hover:border-secondary/45 hover:bg-brand-overlay/32">
+    <article className="group border border-white/25 bg-brand-overlay/20 p-4 text-white transition-transform duration-150 hover:-translate-y-0.5 hover:border-secondary/45 hover:bg-brand-overlay/32">
       <div className="flex gap-4">
         <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-secondary">
           {String(index + 1).padStart(2, "0")}
@@ -1794,7 +1775,7 @@ function ResearchFocusArea({
           <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-tight text-white">
             {item.title}
           </h3>
-          <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/68">
+          <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/70">
             {item.body_text ?? item.cta_description}
           </p>
         </div>
@@ -1827,16 +1808,13 @@ export function NewsGridSection({
       <SectionFadeIn className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="mb-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
           <div>
-            <SectionEyebrow
-              value={section.subtitle ?? "Kisii University Updates"}
-            />
-            <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-bold leading-[0.95] text-primary sm:text-5xl lg:text-6xl">
+            <h2 className="font-[family-name:var(--font-display)] text-4xl font-bold leading-[0.95] text-primary sm:text-5xl lg:text-6xl">
               {section.title ?? "Stories, News & Events"}
             </h2>
             <SectionBody
               value={
                 section.description ??
-                "Discover what is happening across campus—partnerships that create impact, achievements that inspire, and events that bring us together."
+                "Discover what is happening across campus: partnerships that create impact, achievements that inspire, and events that bring us together."
               }
               className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground"
             />
@@ -2000,7 +1978,7 @@ function ComposedSocialMediaLinks({
 
   return (
     <div className={className}>
-      <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+      <p className="text-xs font-bold text-primary">
         Follow Kisii University
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -2048,7 +2026,7 @@ function FeaturedUpdateItem({ item }: { item: HomepageSectionItem }) {
           fallbackContent={<Newspaper className="h-10 w-10" aria-hidden />}
           sizes="(min-width: 1280px) 42vw, 100vw"
           className="absolute inset-0 h-full w-full"
-          imageClassName="object-cover transition duration-700 group-hover:scale-105"
+          imageClassName="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
         />
       </ImageCurtainReveal>
       <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05)_10%,rgba(0,53,37,0.88)_100%)]" />
@@ -2211,8 +2189,7 @@ export function EventsListSection({ section }: SectionVariantProps) {
     >
       <SectionFadeIn className="mx-auto grid max-w-[1680px] gap-7 px-4 sm:px-6 lg:grid-cols-[minmax(280px,0.3fr)_minmax(0,0.7fr)] lg:px-8 xl:px-10 2xl:px-12">
         <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
-          <SectionEyebrow value={section.subtitle ?? "Upcoming events"} />
-          <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+          <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             {section.title ?? "Upcoming events"}
           </h2>
           <SectionBody value={section.description} className="mt-3" />
@@ -2239,8 +2216,7 @@ export function LogoCarouselSection({ section }: SectionVariantProps) {
       <div className="pointer-events-none absolute right-0 top-0 -z-10 h-full w-1/2 bg-[radial-gradient(circle_at_70%_25%,rgba(3,71,52,.08),transparent_38%)]" />
       <SectionFadeIn className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="max-w-4xl motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4">
-          <SectionEyebrow value={section.subtitle ?? "Our partners"} />
-          <h2 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-primary sm:text-4xl lg:text-5xl">
+          <h2 className="max-w-4xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-primary sm:text-4xl lg:text-5xl">
             {section.title ??
               "A network advancing learning, research and community impact."}
           </h2>
@@ -2430,8 +2406,7 @@ export function AlumniStorySection({ section }: SectionVariantProps) {
             imageClassName="object-cover"
           />
           <div className="flex flex-col justify-center border border-border p-6 sm:p-8 lg:border-l-0 lg:p-10">
-            <SectionEyebrow value={section.subtitle ?? "Alumni impact"} />
-            <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+            <h2 className="max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
               {item?.title ?? section.title ?? "Alumni story"}
             </h2>
             <p className="mt-5 max-w-4xl border-l-4 border-secondary pl-5 font-[family-name:var(--font-display)] text-xl leading-8 text-muted-foreground">
@@ -2592,7 +2567,7 @@ function ImageArticleCard({
   const date = itemContentText(item, "date");
   const content = (
     <article
-      className={`group h-full overflow-hidden rounded-md border shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${dark ? "border-white/15 bg-white/10" : "border-border bg-white"}`}
+      className={`group h-full overflow-hidden rounded-md border shadow-sm transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-md ${dark ? "border-white/15 bg-white/10" : "border-border bg-white"}`}
     >
       <PublicImage
         src={itemImageUrl(item)}
@@ -2604,7 +2579,7 @@ function ImageArticleCard({
         }
         ratio="news"
         className={compact ? "min-h-32 rounded-none" : "rounded-none"}
-        imageClassName="transition duration-500 group-hover:scale-[1.04]"
+        imageClassName="transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
       />
       <div className={compact ? "p-4" : "p-5"}>
         <div className="flex items-center gap-2">
@@ -2758,14 +2733,14 @@ function FeaturedActivity({ item }: { item: HomepageSectionItem }) {
       href={href}
       className="group mt-5 block shrink-0 border-b border-primary/15 pb-4"
     >
-      <div className="relative h-[190px] overflow-hidden bg-primary/8 sm:h-[230px] lg:h-[180px] xl:h-[185px] 2xl:h-[200px]">
+      <div className="relative h-[190px] overflow-hidden bg-primary/10 sm:h-[230px] lg:h-[180px] xl:h-[185px] 2xl:h-[200px]">
         {imageUrl ? (
           <PublicImage
             src={imageUrl}
             alt={altText}
             ratio="fill"
             className="absolute inset-0 rounded-none"
-            imageClassName="object-cover object-top transition duration-700 group-hover:scale-[1.025]"
+            imageClassName="object-cover object-top transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
             sizes="(min-width: 1024px) 66vw, 100vw"
           />
         ) : (
@@ -2820,7 +2795,7 @@ function ActivityLineItem({
           alt={altText}
           ratio="fill"
           className="hidden h-16 rounded-none sm:block"
-          imageClassName="object-cover transition duration-500 group-hover:scale-[1.03]"
+          imageClassName="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
           sizes="116px"
         />
       ) : (
@@ -2856,7 +2831,7 @@ function EventLineItem({
   const date = itemContentText(item, "date") ?? item.subtitle;
   const venue = itemContentText(item, "venue") ?? item.cta_description;
   const body = (
-    <article className="group flex min-h-36 gap-4 border border-border bg-white p-4 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm">
+    <article className="group flex min-h-36 gap-4 border border-border bg-white p-4 transition-transform duration-150 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm">
       <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center bg-primary text-center text-white">
         <span className="text-xs font-bold uppercase tracking-[0.12em]">
           {date?.split(" ")[0] ?? String(index + 1).padStart(2, "0")}
@@ -2991,7 +2966,7 @@ function SectionBody({
     <p
       className={[
         "text-sm leading-7",
-        light ? "text-white/82" : "text-muted-foreground",
+        light ? "text-white/80" : "text-muted-foreground",
         className,
       ]
         .filter(Boolean)
@@ -3017,7 +2992,7 @@ function CtaLink({
     <LinkWrapper
       href={item.cta_url}
       className={[
-        "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-semibold transition",
+        "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-semibold transition-transform duration-150 active:scale-[0.98]",
         prominent
           ? "bg-secondary text-white hover:bg-secondary/90"
           : "bg-primary text-white hover:bg-primary/90",

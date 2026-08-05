@@ -542,7 +542,7 @@ function SideNav({ currentHref }: { currentHref: string }) {
   return (
     <nav
       aria-label="Admissions navigation"
-      className="border border-border bg-white p-2 shadow-sm lg:sticky lg:top-24"
+      className="max-lg:hidden border border-border bg-white p-2 shadow-sm lg:sticky lg:top-24"
     >
       <p className="px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-secondary">
         Admissions
@@ -556,7 +556,7 @@ function SideNav({ currentHref }: { currentHref: string }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`group flex min-h-12 items-center gap-2 border px-3 py-2 text-sm transition ${
+              className={`group flex min-h-12 items-center gap-2 border px-3 py-2 text-sm transition-colors duration-200 ${
                 active
                   ? "border-primary/30 bg-primary/5 text-foreground"
                   : "border-transparent text-muted-foreground hover:border-border hover:bg-surface-subtle hover:text-foreground"
@@ -704,7 +704,7 @@ function HeroActionLink({
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener noreferrer" : undefined}
-      className="group inline-flex min-h-10 items-center justify-between gap-3 border border-white/20 bg-white/15 px-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/25"
+      className="group inline-flex min-h-10 items-center justify-between gap-3 border border-white/20 bg-white/15 px-3 text-sm font-bold text-white backdrop-blur transition-colors duration-200 hover:bg-white/25"
     >
       <span className="inline-flex min-w-0 items-center gap-2">
         <Icon aria-hidden className="h-4 w-4 shrink-0 text-secondary" />
@@ -949,7 +949,7 @@ function AdmissionsJourneyMap({
         const content = (
           <>
             <div className="flex items-start justify-between gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center bg-primary/10 text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-white">
                 <Icon aria-hidden className="h-5 w-5" />
               </span>
               <span
@@ -979,7 +979,7 @@ function AdmissionsJourneyMap({
         );
 
         const className =
-          "group flex min-w-0 flex-col border border-border bg-white p-4 shadow-sm transition hover:border-primary/35 hover:bg-primary/5";
+          "group flex min-w-0 flex-col border border-border bg-white p-4 shadow-sm transition-colors duration-200 hover:border-primary/35 hover:bg-primary/5";
 
         return external ? (
           <a
@@ -1041,7 +1041,7 @@ function AdmissionsResourcePanel({ data }: { data: AdmissionsPageData }) {
               );
 
               const className =
-                "group min-w-0 border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5";
+                "group min-w-0 border border-border bg-white p-5 transition-colors duration-200 hover:border-primary/35 hover:bg-primary/5";
 
               return external ? (
                 <a
@@ -1082,7 +1082,7 @@ function AdmissionsResourcePanel({ data }: { data: AdmissionsPageData }) {
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group min-w-0 border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+                  className="group min-w-0 border border-border bg-white p-5 transition-colors duration-200 hover:border-primary/35 hover:bg-primary/5"
                 >
                   <Icon aria-hidden className="h-5 w-5 text-primary" />
                   <h3 className="mt-3 text-base font-semibold text-foreground">
@@ -1177,15 +1177,15 @@ function LinkPanel({
             href={item.href}
             className={
               dark
-                ? "group border border-white/10 bg-white/[0.04] p-5 transition hover:bg-white/[0.08]"
-                : "group border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+                ? "group border border-white/10 bg-white/[0.04] p-5 transition-colors duration-200 hover:bg-white/[0.08]"
+                : "group border border-border bg-white p-5 transition-colors duration-200 hover:border-primary/35 hover:bg-primary/5"
             }
           >
             <span
               className={
                 dark
                   ? "flex h-11 w-11 items-center justify-center bg-white/10 text-secondary"
-                  : "flex h-11 w-11 items-center justify-center bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white"
+                  : "flex h-11 w-11 items-center justify-center bg-primary/10 text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-white"
               }
             >
               <Icon aria-hidden className="h-5 w-5" />
@@ -1435,9 +1435,9 @@ function TaskCard({
   return (
     <Link
       href={href}
-      className="group flex min-h-[12rem] flex-col border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+      className="group flex min-h-[12rem] flex-col border border-border bg-white p-5 transition-colors duration-200 hover:border-primary/35 hover:bg-primary/5"
     >
-      <span className="flex h-12 w-12 items-center justify-center bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
+      <span className="flex h-12 w-12 items-center justify-center bg-primary/10 text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-white">
         <Icon aria-hidden className="h-5 w-5" />
       </span>
       <h3 className="mt-5 text-lg font-semibold text-foreground">{title}</h3>
@@ -2003,7 +2003,7 @@ function ResourceRecords({
                 <a
                   key={record.id}
                   href={href}
-                  className="border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+                  className="border border-border bg-white p-5 transition-colors duration-200 hover:border-primary/35 hover:bg-primary/5"
                 >
                   <RecordInner record={record} body={body} external />
                 </a>
@@ -2011,7 +2011,7 @@ function ResourceRecords({
                 <Link
                   key={record.id}
                   href={href}
-                  className="border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+                  className="border border-border bg-white p-5 transition-colors duration-200 hover:border-primary/35 hover:bg-primary/5"
                 >
                   <RecordInner record={record} body={body} />
                 </Link>

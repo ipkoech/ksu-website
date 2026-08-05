@@ -128,7 +128,7 @@ export default async function SupportKsuPage({
               <p>
                 Kisii University serves thousands of students, many of whom are the first in their
                 families to reach university. Tuition and public funding cover the basics of
-                teaching — but they rarely stretch to the things that transform an education:
+                teaching, but they rarely stretch to the things that transform an education:
                 keeping a bright student enrolled when their family hits hardship, equipping a
                 laboratory for hands-on discovery, or carrying research out of the campus and into
                 the communities of the Kisii region.
@@ -136,7 +136,7 @@ export default async function SupportKsuPage({
               <p>
                 That is the gap donor support fills. Gifts from alumni, friends, corporations, and
                 foundations let the university act where the need is most urgent and the impact is
-                most direct — quickly, and without diverting funds from core teaching.
+                most direct: quickly, and without diverting funds from core teaching.
               </p>
               <p>
                 Every gift is recorded against a reference code, directed to the priority you
@@ -261,7 +261,7 @@ export default async function SupportKsuPage({
                   </h2>
                   <p className="mt-3 max-w-3xl text-sm leading-7 text-white/80">
                     For named scholarships, equipment and facility support, corporate partnerships,
-                    planned giving, or endowment gifts, talk to the advancement office first — we
+                    planned giving, or endowment gifts, talk to the advancement office first. We
                     will structure the gift around your intent.
                   </p>
                 </div>
@@ -311,7 +311,7 @@ function SupportHero({ contactHref }: { contactHref: string }) {
           Support Kisii University
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-white/85 sm:text-base sm:leading-8">
-          Every gift — from scholarships to laboratories — helps students learn, researchers
+          Every gift, from scholarships to laboratories, helps students learn, researchers
           discover, and communities thrive. Choose a priority and give in minutes.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
@@ -553,7 +553,7 @@ function DonationAccountPanel({
 function WhyGivePanel() {
   const points = [
     "Every gift is recorded and acknowledged with an official reference.",
-    "You choose the priority — or leave it unrestricted for the greatest need.",
+    "You choose the priority, or leave it unrestricted for the greatest need.",
     "Gifts can honor a person, create a named fund, or recur automatically.",
   ];
 

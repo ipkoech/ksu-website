@@ -118,7 +118,7 @@ function _Records({
               </span>
             </span>
             <ArrowRight
-              className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1"
+              className="h-5 w-5 text-primary transition-transform duration-150 group-hover:translate-x-1"
               aria-hidden
             />
           </Link>
@@ -149,7 +149,7 @@ function _Records({
               <span className="mt-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-primary">
                 Open document{" "}
                 <ArrowRight
-                  className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1"
+                  className="h-3.5 w-3.5 transition-transform duration-150 group-hover:translate-x-1"
                   aria-hidden
                 />
               </span>
@@ -235,7 +235,7 @@ function AcademicHero({
       />
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,28,68,.97)_0%,rgba(4,38,83,.84)_44%,rgba(4,38,83,.18)_82%)]" />
       <div className="relative mx-auto flex min-h-[430px] w-full max-w-[1680px] flex-col justify-center px-4 py-8 sm:px-6 lg:px-8">
-        <nav aria-label="Breadcrumb" className="text-xs font-semibold text-white/72">
+        <nav aria-label="Breadcrumb" className="text-xs font-semibold text-white/70">
           {config.breadcrumb.map((item, index) => (
             <span key={`${item.label}-${index}`}>
               {index > 0 ? (
@@ -253,7 +253,7 @@ function AcademicHero({
             </span>
           ))}
         </nav>
-        <div className="mt-8 max-w-3xl">
+        <div className="mt-8 ksu-mt-compact max-w-3xl">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-secondary">
             {config.eyebrow}
           </p>
@@ -354,7 +354,7 @@ function SchoolsEditorial({
                 <span className="text-sm leading-6 text-muted-foreground">
                   {card.body}
                 </span>
-                <ArrowRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" aria-hidden />
+                <ArrowRight className="h-5 w-5 text-primary transition-transform duration-150 group-hover:translate-x-1" aria-hidden />
               </Link>
             ))}
           </div>
@@ -415,7 +415,7 @@ function ProgrammeFinder({
           <p className="mt-4 max-w-xl text-sm leading-7 text-muted-foreground">Search live programme records by name, level, school, or mode of study.</p>
           {filters ? (
             <PublicListFilterForm
-              className="mt-8 border-y border-border py-5"
+              className="mt-8 ksu-mt-compact border-y border-border py-5"
               searchName={filters.queryName ?? "q"}
               searchValue={filters.query}
               searchPlaceholder="Search programmes by name or keyword"
@@ -437,7 +437,7 @@ function ProgrammeFinder({
                   <span className="block font-semibold text-foreground group-hover:text-primary">{card.title}</span>
                   <span className="mt-1 block text-xs leading-5 text-muted-foreground">{card.body}</span>
                 </span>
-                <ArrowRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-1" aria-hidden />
+                <ArrowRight className="h-4 w-4 text-primary transition-transform duration-150 group-hover:translate-x-1" aria-hidden />
               </Link>
             ))}
           </div>
@@ -461,12 +461,12 @@ function ProgrammeFinder({
 function CalendarEditorial({ section }: { section: PublicPageSection }) {
   return (
     <section className="border-y border-border bg-[#faf8f3] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-      <div className="mx-auto grid w-full max-w-[1680px] gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+      <div className="mx-auto grid w-full max-w-[1680px] gap-8 ksu-gap-compact lg:grid-cols-[0.8fr_1.2fr]">
         <AboutReveal variant="left">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Academic calendar</p>
           <h2 className="mt-3 max-w-md font-[family-name:var(--font-display)] text-5xl font-semibold leading-[0.95] text-primary sm:text-6xl">Plan ahead.<br /><span className="text-secondary">Stay on track.</span></h2>
           <p className="mt-5 max-w-md text-sm leading-7 text-muted-foreground">A year of discovery, growth, and achievement. Your academic journey starts here.</p>
-          <div className="mt-8 overflow-hidden border border-primary/15 bg-primary text-white">
+          <div className="mt-8 ksu-mt-compact overflow-hidden border border-primary/15 bg-primary text-white">
             <div className="relative min-h-[220px]">
               <PublicImage
                 src="/images/backgrounds/KSUGreenLandscapingMay2026-3810.jpg"
@@ -498,7 +498,7 @@ function CalendarEditorial({ section }: { section: PublicPageSection }) {
             ))}
           </div>
           <div className="relative mt-6 border-t border-border pt-5 text-right">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Dates may change — check official updates</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Dates may change. Check official updates</span>
           </div>
         </AboutReveal>
       </div>
@@ -510,7 +510,7 @@ function ExaminationsEditorial({ section }: { section: PublicPageSection }) {
   return (
     <section className="border-y border-border bg-[#f5f2ea] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <div className="mx-auto w-full max-w-[1680px]">
-        <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-end">
+        <div className="grid gap-8 ksu-gap-compact lg:grid-cols-[0.75fr_1.25fr] lg:items-end">
           <ImageCurtainReveal direction="right" className="min-h-[280px] bg-primary text-white">
             <PublicImage
               src="/images/backgrounds/KSUGreenLandscapingMay2026-7456.jpg"
@@ -533,10 +533,10 @@ function ExaminationsEditorial({ section }: { section: PublicPageSection }) {
             <p className="mt-1 text-sm text-white/70">{section.cards[0]?.body ?? "Published examination dates will appear here."}</p>
           </AboutReveal>
         </div>
-        <AboutReveal delay={120} className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <AboutReveal delay={120} className="mt-8 ksu-mt-compact grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {section.cards.map((card) => (
-            <Link key={card.title} href={card.href ?? "#"} className="group flex min-h-32 flex-col justify-between border border-border bg-white p-5 text-brand-overlay transition hover:-translate-y-1 hover:border-secondary motion-reduce:transform-none">
-              <div className="flex items-start justify-between gap-3"><FileText className="h-5 w-5 text-secondary" aria-hidden /><Download className="h-4 w-4 text-primary transition-transform group-hover:translate-y-0.5" aria-hidden /></div>
+            <Link key={card.title} href={card.href ?? "#"} className="group flex min-h-32 flex-col justify-between border border-border bg-white p-5 text-brand-overlay transition-[border-color,transform] duration-200 hover:-translate-y-1 hover:border-secondary motion-reduce:transform-none">
+              <div className="flex items-start justify-between gap-3"><FileText className="h-5 w-5 text-secondary" aria-hidden /><Download className="h-4 w-4 text-primary transition-transform duration-150 group-hover:translate-y-0.5" aria-hidden /></div>
               <span><span className="mt-6 block font-semibold text-primary">{card.title}</span><span className="mt-1 block text-xs leading-5 text-slate-600">{card.body}</span></span>
             </Link>
           ))}
