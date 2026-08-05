@@ -1,0 +1,6 @@
+{
+  "endpoints": [
+    {"label": "main-health", "path": "/health", "expected_status": [200]},
+    {"label": "main-readiness", "path": "/ready", "expected_status": [200, 503]}
+  ]
+}
