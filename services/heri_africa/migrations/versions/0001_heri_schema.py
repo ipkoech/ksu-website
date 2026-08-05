@@ -16,9 +16,19 @@ depends_on = None
 
 def upgrade() -> None:
     op.execute("CREATE SCHEMA IF NOT EXISTS heri")
-    Base.metadata.create_all(bind=op.get_bind())
+    tables = [
+        table
+        for table_name, table in Base.metadata.tables.items()
+        if table_name != "heri.command_idempotency"
+    ]
+    Base.metadata.create_all(bind=op.get_bind(), tables=tables)
 
 
 def downgrade() -> None:
-    Base.metadata.drop_all(bind=op.get_bind())
+    tables = [
+        table
+        for table_name, table in Base.metadata.tables.items()
+        if table_name != "heri.command_idempotency"
+    ]
+    Base.metadata.drop_all(bind=op.get_bind(), tables=tables)
     op.execute("DROP SCHEMA IF EXISTS heri CASCADE")
