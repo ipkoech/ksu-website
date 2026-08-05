@@ -218,7 +218,7 @@ def enforce_response_model_coverage(
     *,
     production: bool,
 ) -> ResponseModelCoverage:
-    """Observe coverage without making production availability depend on rollout."""
+    """Validate response-model coverage, failing closed in production."""
 
     coverage = collect_response_model_coverage(routes)
     if coverage.missing or coverage.nonconcrete or coverage.invalid_exemptions:
@@ -231,6 +231,13 @@ def enforce_response_model_coverage(
             len(coverage.invalid_exemptions),
             coverage.baseline_missing,
         )
+        if production:
+            raise ResponseModelCoverageError(
+                "production response-model coverage is incomplete: "
+                f"missing={len(coverage.missing)} "
+                f"nonconcrete={len(coverage.nonconcrete)} "
+                f"invalid_exemptions={len(coverage.invalid_exemptions)}"
+            )
     return coverage
 
 

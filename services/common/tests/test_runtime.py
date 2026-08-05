@@ -11,7 +11,10 @@ from fastapi.testclient import TestClient
 from ksu_common.cache import cached_public
 from ksu_common.observability import PrometheusMetricsRegistry
 from ksu_common.rate_limit import install_request_body_limit_middleware
-from ksu_common.response_validation import allow_response_model_exemption
+from ksu_common.response_validation import (
+    ResponseModelCoverageError,
+    allow_response_model_exemption,
+)
 from ksu_common.runtime import (
     AuditOptions,
     CorsConfig,
@@ -327,7 +330,7 @@ def test_runtime_validates_cached_response_once_for_a_cache_miss_and_hit(monkeyp
     assert validation_calls == 2
 
 
-def test_runtime_observes_missing_and_permissive_public_schemas_in_production() -> None:
+def test_runtime_rejects_missing_and_permissive_public_schemas_in_production() -> None:
     def register_routes(app: FastAPI) -> None:
         @app.get("/public", response_model=None)
         async def public_route() -> dict[str, bool]:
@@ -355,30 +358,20 @@ def test_runtime_observes_missing_and_permissive_public_schemas_in_production() 
         nested_router.include_router(child_router)
         app.include_router(nested_router, prefix="/api")
 
-    registry = PrometheusMetricsRegistry()
-    app = create_service_app(
-        ServiceAppConfig(
-            service_name="test-service",
-            title="Test",
-            version="1.0.0",
-            environment="production",
-        ),
-        cors=CorsConfig(origins=("https://example.test",)),
-        register_routes=register_routes,
-        metrics_registry=registry,
-    )
-    coverage = app.state.response_model_coverage
-
-    assert coverage.missing == ("GET /public",)
-    assert coverage.nonconcrete == (
-        "GET /api/nested/any",
-        "GET /api/nested/object",
-        "GET /api/nested/list",
-        "GET /api/nested/dict",
-    )
-    assert coverage.baseline_missing == 907
-    assert "ksu_response_model_coverage_missing{service=\"test-service\"} 1" in registry.render()
-    assert "ksu_response_model_coverage_nonconcrete{service=\"test-service\"} 4" in registry.render()
+    with pytest.raises(
+        ResponseModelCoverageError,
+        match=r"missing=1 nonconcrete=4 invalid_exemptions=0",
+    ):
+        create_service_app(
+            ServiceAppConfig(
+                service_name="test-service",
+                title="Test",
+                version="1.0.0",
+                environment="production",
+            ),
+            cors=CorsConfig(origins=("https://example.test",)),
+            register_routes=register_routes,
+        )
 
 
 def test_runtime_rejects_invalid_exemption_paths_and_unauthenticated_internal_exemptions() -> None:
