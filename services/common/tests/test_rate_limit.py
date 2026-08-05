@@ -258,6 +258,14 @@ async def test_rate_limit_keys_separate_service_and_endpoint():
     )
 
 
+def test_client_ip_identifiers_are_distinct_for_gateway_forwarded_clients():
+    limiter = RateLimiter(requests=1, window=60, prefix="homepage")
+
+    assert limiter._make_key("203.0.113.10", "GET:/api/v1/homepage") != limiter._make_key(
+        "203.0.113.11", "GET:/api/v1/homepage"
+    )
+
+
 @pytest.mark.asyncio
 async def test_decorator_returns_503_when_redis_is_unavailable(monkeypatch):
     monkeypatch.setattr(rate_limit_module, "get_redis", _unavailable_redis)

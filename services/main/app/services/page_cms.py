@@ -898,6 +898,12 @@ class HomepageCompositionService:
             per_page=100,
         )
         sections = sorted(_coerce_items(sections_result), key=_section_display_order)
+        spotlights = await _list_active_partnership_spotlights(db)
+        spotlight_partner_ids = {
+            spotlight.source_id
+            for spotlight in spotlights
+            if spotlight.source_type == "research_partner" and spotlight.source_id is not None
+        }
         research_partners: list[dict[str, Any]] | None = None
         if any(
             section.layout_variant == "logo_carousel" and _should_attach_research_partners(section)
@@ -919,6 +925,13 @@ class HomepageCompositionService:
             for partner in research_partners or []
             if (partner_id := partner.get("id")) is not None
         }
+        if spotlight_partner_ids:
+            try:
+                partner_payloads_by_id.update(
+                    await ResearchPartnersProxyService.find_partners_by_ids(spotlight_partner_ids)
+                )
+            except Exception:
+                pass
         section_media_by_id = await group_media_links_for_entities(
             db,
             "page_section",
@@ -934,16 +947,9 @@ class HomepageCompositionService:
             for section in sections
         ]
 
-        spotlights = await _list_active_partnership_spotlights(db)
         spotlight_payloads = []
-        partner_cache: dict[uuid.UUID, dict[str, Any] | None] = {}
         for spotlight in spotlights:
-            partner_payload = partner_cache.get(spotlight.source_id)
-            if spotlight.source_id not in partner_cache:
-                partner_payload = partner_payloads_by_id.get(str(spotlight.source_id))
-                if partner_payload is None:
-                    partner_payload = await _get_research_partner_payload(spotlight.source_id)
-                partner_cache[spotlight.source_id] = partner_payload
+            partner_payload = partner_payloads_by_id.get(str(spotlight.source_id))
             spotlight_media = await group_media_links(db, "partnership_spotlight", spotlight.id)
             primary_cta = await _resolve_primary_cta(spotlight, partner_payload)
             spotlight_payloads.append(_serialize_spotlight(spotlight, spotlight_media, primary_cta))

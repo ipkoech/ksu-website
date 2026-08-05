@@ -69,6 +69,11 @@ class _FakeRedis:
         self.values[key] = value
 
 
+class _WriteFailRedis(_FakeRedis):
+    async def setex(self, key, timeout, value):
+        raise cache_module.redis.RedisError("cache write failed")
+
+
 @pytest.mark.asyncio
 async def test_cached_public_caches_json_serializable_list_responses(monkeypatch):
     redis = _FakeRedis()
@@ -91,4 +96,26 @@ async def test_cached_public_caches_json_serializable_list_responses(monkeypatch
     assert first.headers["X-Cache"] == "MISS"
     assert second.headers["X-Cache"] == "HIT"
     assert second.body == b'[{"slug":"computer-science"}]'
+    assert calls == 1
+
+
+@pytest.mark.asyncio
+async def test_cached_public_does_not_execute_endpoint_twice_when_cache_write_fails(monkeypatch):
+    redis = _WriteFailRedis()
+    calls = 0
+
+    async def endpoint(*, slug: str):
+        nonlocal calls
+        calls += 1
+        return {"slug": slug}
+
+    async def get_fake_redis():
+        return redis
+
+    monkeypatch.setattr(cache_module, "get_redis", get_fake_redis)
+    cached_endpoint = cache_module.cached_public(timeout=60, vary_on=("slug",))(endpoint)
+
+    response = await cached_endpoint(slug="computer-science")
+
+    assert response.headers["X-Cache"] == "MISS"
     assert calls == 1

@@ -72,6 +72,9 @@ class CRUDService(Generic[M]):
                     getattr(cls.model, "id") == project_focus_areas.c.project_id,
                 ).where(project_focus_areas.c.focus_area_id == value)
                 continue
+            if key == "id__in" and hasattr(cls.model, "id"):
+                query = query.where(getattr(cls.model, "id").in_(value))
+                continue
             if not hasattr(cls.model, key):
                 continue
             query = query.where(getattr(cls.model, key) == value)

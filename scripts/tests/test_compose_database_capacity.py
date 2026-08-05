@@ -63,3 +63,9 @@ def test_compose_default_database_capacity_stays_within_postgres_budget() -> Non
     assert total_possible_connections == 60
     assert total_possible_connections <= application_budget
     assert application_budget < postgres_max_connections
+
+
+def test_gateway_has_a_stable_api_network_identity_trusted_by_all_apis() -> None:
+    assert "subnet: 172.30.0.0/24" in COMPOSE
+    assert "ipv4_address: 172.30.0.2" in COMPOSE
+    assert COMPOSE.count('"--forwarded-allow-ips", "172.30.0.2"') == 4

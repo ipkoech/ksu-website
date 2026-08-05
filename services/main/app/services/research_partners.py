@@ -70,6 +70,36 @@ class ResearchPartnersProxyService:
         return payload
 
     @staticmethod
+    async def find_partners_by_ids(partner_ids: set[uuid.UUID]) -> dict[str, dict[str, Any]]:
+        """Resolve several Research partners with one bounded internal request."""
+        if not partner_ids:
+            return {}
+        response = await get_integration_pool().request_internal(
+            "research-partners-batch",
+            settings.RESEARCH_SERVICE_URL.rstrip("/"),
+            "GET",
+            "/api/v1/internal/partners",
+            api_key=settings.RESEARCH_SERVICE_API_KEY,
+            headers={"X-KSU-Proxy": "main-partners"},
+            params={
+                "partner_ids": [str(partner_id) for partner_id in sorted(partner_ids, key=str)],
+                "per_page": len(partner_ids),
+                "status": "active",
+                "is_active": True,
+            },
+        )
+        response.raise_for_status()
+        payload = response.json()
+        if not isinstance(payload, dict) or payload.get("status") != "success":
+            raise ValueError("Research service returned an unexpected partners payload")
+        partners = payload.get("data") or []
+        return {
+            str(partner.get("id")): partner
+            for partner in partners
+            if isinstance(partner, dict) and partner.get("id") is not None
+        }
+
+    @staticmethod
     async def find_partner_by_id(
         partner_id: uuid.UUID,
         *,

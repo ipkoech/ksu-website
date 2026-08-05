@@ -4,6 +4,9 @@ networks:
     driver: bridge
   api:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
   proxy:
     driver: bridge
     ipam:
@@ -81,6 +84,7 @@ services:
       proxy:
         ipv4_address: 172.31.0.2
       api:
+        ipv4_address: 172.30.0.2
     restart: unless-stopped
 
   # ── PostgreSQL (shared DB, separate schemas) ──────────────────────────────────
@@ -138,7 +142,7 @@ services:
     expose:
       - "8000"
     env_file: ./services/main/.env
-    command: ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "172.31.0.2", "--workers", "${API_WORKERS:-2}"]
+    command: ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "172.30.0.2", "--workers", "${API_WORKERS:-2}"]
     environment:
       <<: *backend-database-capacity
       APP_ENV: production
@@ -168,7 +172,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks: [ksu, api]
+    networks:
+      ksu:
+      api:
+        ipv4_address: 172.30.0.3
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
@@ -186,7 +193,7 @@ services:
     expose:
       - "8001"
     env_file: ./services/research/.env
-    command: ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8001", "--proxy-headers", "--forwarded-allow-ips", "172.31.0.2", "--workers", "${API_WORKERS:-2}"]
+    command: ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8001", "--proxy-headers", "--forwarded-allow-ips", "172.30.0.2", "--workers", "${API_WORKERS:-2}"]
     environment:
       <<: *backend-database-capacity
       APP_ENV: production
@@ -211,7 +218,10 @@ services:
         condition: service_healthy
       main:
         condition: service_healthy
-    networks: [ksu, api]
+    networks:
+      ksu:
+      api:
+        ipv4_address: 172.30.0.4
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/api/v1/health"]
@@ -229,7 +239,7 @@ services:
     expose:
       - "8003"
     env_file: ./services/heri_africa/.env
-    command: ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8003", "--proxy-headers", "--forwarded-allow-ips", "172.31.0.2", "--workers", "${API_WORKERS:-2}"]
+    command: ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8003", "--proxy-headers", "--forwarded-allow-ips", "172.30.0.2", "--workers", "${API_WORKERS:-2}"]
     environment:
       <<: *backend-database-capacity
       APP_ENV: production
@@ -251,7 +261,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks: [ksu, api]
+    networks:
+      ksu:
+      api:
+        ipv4_address: 172.30.0.6
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8003/api/v1/heri/health"]
@@ -269,7 +282,7 @@ services:
     expose:
       - "8002"
     env_file: ./services/library/.env
-    command: ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8002", "--proxy-headers", "--forwarded-allow-ips", "172.31.0.2", "--workers", "${API_WORKERS:-2}"]
+    command: ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8002", "--proxy-headers", "--forwarded-allow-ips", "172.30.0.2", "--workers", "${API_WORKERS:-2}"]
     environment:
       <<: *backend-database-capacity
       APP_ENV: production
@@ -293,7 +306,10 @@ services:
         condition: service_healthy
       main:
         condition: service_healthy
-    networks: [ksu, api]
+    networks:
+      ksu:
+      api:
+        ipv4_address: 172.30.0.5
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/api/v1/health"]
@@ -321,6 +337,8 @@ services:
       INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       RESEARCH_SERVICE_URL: http://research:8001
       LIBRARY_SERVICE_URL: http://library:8002
+      RESEARCH_SERVICE_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
+      LIBRARY_SERVICE_API_KEY: ${LIBRARY_INTERNAL_API_KEY:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-}
       SCHOOL_PORTAL_EVENTS_ENABLED: ${SCHOOL_PORTAL_EVENTS_ENABLED:-true}
       KSU_WORKER_METRICS_HOST: 0.0.0.0

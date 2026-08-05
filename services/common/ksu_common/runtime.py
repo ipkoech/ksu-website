@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .audit import persist_audit_log, should_skip_audit
+from .cache import begin_cache_context, end_cache_context, get_cache_context
 from .observability import (
     CompositeMetricsSink,
     Metrics,
@@ -170,6 +171,7 @@ def create_service_app(
         response: Response | None = None
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         error_type: str | None = None
+        cache_context_token = begin_cache_context(request)
         try:
             try:
                 response = await call_next(request)
@@ -199,6 +201,9 @@ def create_service_app(
                 )
             if after_response:
                 await _resolve_callback(after_response(request, response))
+            cache_status = (get_cache_context() or {}).get("status")
+            if cache_status:
+                response.headers["X-Cache"] = cache_status
             return response
         finally:
             if audit_enabled and audit and audit.finish_request:
@@ -216,5 +221,6 @@ def create_service_app(
                 route=getattr(request.scope.get("route"), "path", None),
             )
             end_request_observation(observation)
+            end_cache_context(cache_context_token)
 
     return app

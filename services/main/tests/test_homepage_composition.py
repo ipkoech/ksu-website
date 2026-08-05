@@ -261,6 +261,19 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
                     }
                 ),
             ),
+            patch(
+                "app.services.page_cms.ResearchPartnersProxyService.find_partners_by_ids",
+                AsyncMock(
+                    return_value={
+                        str(spotlight_source_id): {
+                            "id": str(spotlight_source_id),
+                            "slug": "international-collaboration",
+                            "website": "https://partner.example.test",
+                            "name": "Partner University",
+                        }
+                    }
+                ),
+            ),
         ):
             composition = await HomepageCompositionService.compose(object(), "homepage", "university")
 

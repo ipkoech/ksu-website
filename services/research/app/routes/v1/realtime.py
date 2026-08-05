@@ -50,7 +50,7 @@ async def get_research_realtime_config():
     return success(data=research_realtime_config())
 
 
-@router.get("/research/config")
+@router.get("/research/config", operation_id="get_research_realtime_config")
 @cached_public(timeout=300)
 async def _cached_research_realtime_config():
     return await get_research_realtime_config()

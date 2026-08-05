@@ -133,6 +133,7 @@ async def list_internal_partners(
     status: str | None = Query(default="active", max_length=32),
     is_active: bool | None = True,
     is_featured: bool | None = None,
+    partner_ids: list[uuid.UUID] | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
 ):
     result = await PartnerService.list_public(
@@ -144,6 +145,7 @@ async def list_internal_partners(
             "status": status,
             "is_active": is_active,
             "is_featured": is_featured,
+            "id__in": partner_ids,
         },
     )
     return success(data=result.items, meta=result.meta)
