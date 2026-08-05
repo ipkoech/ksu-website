@@ -93,6 +93,7 @@ from .about_content import (
 # System
 from .system import ApiKey, Setting, UserPreference, Webhook
 from .analytics import AnalyticsEvent
+from .idempotency import COMMAND_IDEMPOTENCY_STATES, CommandIdempotency
 from .outbox_event import OutboxEvent
 from .upload_batch import UploadBatch, UploadBatchFile
 
@@ -218,6 +219,8 @@ __all__ = [
     "ApiKey",
     "Webhook",
     "AnalyticsEvent",
+    "CommandIdempotency",
+    "COMMAND_IDEMPOTENCY_STATES",
     "OutboxEvent",
     "UploadBatch",
     "UploadBatchFile",
