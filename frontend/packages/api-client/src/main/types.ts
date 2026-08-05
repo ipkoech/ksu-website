@@ -2998,7 +2998,21 @@ export interface AuditLog {
   id: string;
   user_id?: string;
   action: string;
-  entity_type: string;
+  // Fields returned by GET /api/v1/admin/audit (ksu_common AuditLog model).
+  resource_type?: string;
+  resource_id?: string;
+  status?: string;
+  service_name?: string;
+  request_method?: string;
+  request_path?: string;
+  route_name?: string;
+  status_code?: number;
+  error_message?: string;
+  details?: Record<string, unknown>;
+  changes?: Record<string, unknown>;
+  happened_at?: string;
+  // Legacy field names kept for older consumers; not returned by the API.
+  entity_type?: string;
   entity_id?: string;
   old_values?: Record<string, unknown>;
   new_values?: Record<string, unknown>;

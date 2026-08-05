@@ -191,21 +191,16 @@ export function CorporateAuditPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const page = Number(searchParams.get("page") || 1);
-  const action = searchParams.get("action") || "";
   const resourceType = searchParams.get("resource_type") || "";
   const status = searchParams.get("status") || "";
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const auditQuery = useQuery({
-    queryKey: [
-      "corporate-audit",
-      { page, action, resourceType, status },
-    ],
+    queryKey: ["corporate-audit", { page, resourceType, status }],
     queryFn: () =>
       auditLogsApi.list({
         page,
         per_page: 25,
-        action: action || undefined,
         resource_type: resourceType || undefined,
         status: status || undefined,
       }),
@@ -241,12 +236,8 @@ export function CorporateAuditPage() {
           },
           {
             label: "Successful",
-            value:
-              entries.filter(
-                (item) =>
-                  !item.action?.toLowerCase().includes("fail") &&
-                  !item.action?.toLowerCase().includes("error")
-              ).length ?? 0,
+            value: entries.filter((item) => (item.status ?? "success") !== "failed")
+              .length,
             detail: "Completed on this page",
             icon: CircleCheck,
             tone: "success",
@@ -269,16 +260,9 @@ export function CorporateAuditPage() {
         ]}
       />
       <CorporateFilterBar label="Filter audit events">
-        <section className="grid gap-3 sm:grid-cols-3">
-          <Input
-            aria-label="Filter by action"
-            placeholder="Action"
-            defaultValue={action}
-            onKeyDown={(event) =>
-              event.key === "Enter" &&
-              updateUrl("action", event.currentTarget.value.trim())
-            }
-          />
+        {/* The backend audit list supports resource_type and status filters
+            only; an action filter would be silently ignored. */}
+        <section className="grid gap-3 sm:grid-cols-2">
           <Input
             aria-label="Filter by resource type"
             placeholder="Resource type"
@@ -332,9 +316,7 @@ export function CorporateAuditPage() {
             </header>
             <div className="divide-y">
               {entries.map((entry) => {
-                const successful =
-                  !entry.action?.toLowerCase().includes("fail") &&
-                  !entry.action?.toLowerCase().includes("error");
+                const successful = (entry.status ?? "success") !== "failed";
                 return (
                   <button
                     key={entry.id}
@@ -361,7 +343,7 @@ export function CorporateAuditPage() {
                         </Badge>
                       </span>
                       <span className="mt-1 block truncate text-xs text-muted-foreground">
-                        {entry.entity_type || "System"} ·{" "}
+                        {entry.resource_type || "System"} ·{" "}
                         {entry.user_id ? "User action" : "System process"}
                       </span>
                       <span className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
@@ -394,16 +376,12 @@ export function CorporateAuditPage() {
                   <div>
                     <Badge
                       variant={
-                        !selected.action?.toLowerCase().includes("fail") &&
-                        !selected.action?.toLowerCase().includes("error")
+                        (selected.status ?? "success") !== "failed"
                           ? "secondary"
                           : "destructive"
                       }
                     >
-                      {!selected.action?.toLowerCase().includes("fail") &&
-                      !selected.action?.toLowerCase().includes("error")
-                        ? "success"
-                        : "failed"}
+                      {selected.status ?? "success"}
                     </Badge>
                     <h2 className="mt-2 text-lg font-semibold">
                       {humanize(selected.action)}
@@ -421,8 +399,15 @@ export function CorporateAuditPage() {
                     <Detail
                       icon={Database}
                       label="Resource"
-                      value={`${selected.entity_type || "System"}${selected.entity_id ? ` · ${selected.entity_id}` : ""}`}
+                      value={`${selected.resource_type || "System"}${selected.resource_id ? ` · ${selected.resource_id}` : ""}`}
                     />
+                    {selected.request_method && selected.request_path ? (
+                      <Detail
+                        icon={Activity}
+                        label="Request"
+                        value={`${selected.request_method} ${selected.request_path}`}
+                      />
+                    ) : null}
                     <Detail
                       icon={Fingerprint}
                       label="Event ID"
@@ -436,7 +421,7 @@ export function CorporateAuditPage() {
                       />
                     ) : null}
                   </div>
-                  {selected.old_values || selected.new_values ? (
+                  {selected.details || selected.changes ? (
                     <div className="space-y-2">
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Recorded context
@@ -444,8 +429,8 @@ export function CorporateAuditPage() {
                       <pre className="max-h-64 overflow-auto rounded-lg bg-muted p-3 text-[11px] leading-5">
                         {JSON.stringify(
                           {
-                            old_values: selected.old_values,
-                            new_values: selected.new_values,
+                            details: selected.details,
+                            changes: selected.changes,
                           },
                           null,
                           2

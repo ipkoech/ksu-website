@@ -59,7 +59,7 @@ const CONTENT_CONFIG: Record<
     icon: Newspaper,
     resourceKey: "news",
     singularLabel: "news article",
-    listFn: (filters) => newsApi.listAdmin({ is_main: true, per_page: 500, ...filters }),
+    listFn: (filters) => newsApi.listAdmin({ is_main: true, per_page: 100, fields: "id,workflow_status,status", ...filters }),
   },
   "press-releases": {
     title: "Press Releases",
@@ -67,7 +67,7 @@ const CONTENT_CONFIG: Record<
     icon: Megaphone,
     resourceKey: "press-releases",
     singularLabel: "press release",
-    listFn: (filters) => blogsApi.listAdmin({ is_main: true, per_page: 500, ...filters }),
+    listFn: (filters) => blogsApi.listAdmin({ is_main: true, per_page: 100, fields: "id,workflow_status,status", ...filters }),
   },
   notices: {
     title: "Public Notices",
@@ -75,7 +75,7 @@ const CONTENT_CONFIG: Record<
     icon: Megaphone,
     resourceKey: "notices",
     singularLabel: "notice",
-    listFn: (filters) => announcementsApi.listAdmin({ is_main: true, per_page: 500, ...filters }),
+    listFn: (filters) => announcementsApi.listAdmin({ is_main: true, per_page: 100, fields: "id,workflow_status,status", ...filters }),
   },
   events: {
     title: "Events Calendar",
@@ -83,7 +83,7 @@ const CONTENT_CONFIG: Record<
     icon: CalendarDays,
     resourceKey: "events",
     singularLabel: "event",
-    listFn: (filters) => eventsApi.listAdmin({ is_main: true, per_page: 500, ...filters }),
+    listFn: (filters) => eventsApi.listAdmin({ is_main: true, per_page: 100, fields: "id,workflow_status,status", ...filters }),
   },
   stories: {
     title: "Stories",
@@ -91,7 +91,7 @@ const CONTENT_CONFIG: Record<
     icon: Sparkles,
     resourceKey: "stories",
     singularLabel: "story",
-    listFn: (filters) => storiesApi.listAdmin({ is_main: true, per_page: 500, ...filters }),
+    listFn: (filters) => storiesApi.listAdmin({ is_main: true, per_page: 100, fields: "id,workflow_status,status", ...filters }),
   },
 };
 
@@ -143,7 +143,8 @@ export function NewsroomWorkspace({ contentType, children }: NewsroomWorkspacePr
   const params = useSearchParams();
   const lane = params.get("lane") as WorkflowStatus | null;
 
-  // Lightweight count query: fetch all records without pagination to derive counts
+  // Lightweight count query: sparse fieldset, capped at the backend's
+  // per_page maximum (100) — counts beyond that read "100+".
   const countsQuery = useQuery({
     queryKey: ["newsroom", contentType, "counts"],
     queryFn: async () => {
