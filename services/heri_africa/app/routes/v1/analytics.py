@@ -1,6 +1,3 @@
-import hashlib
-import json
-
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from ksu_common.rate_limit import RateLimiter, rate_limit
 from sqlalchemy import select
@@ -14,27 +11,19 @@ router = APIRouter(tags=["HERI Analytics"])
 _ANALYTICS_SESSION_LIMITER = RateLimiter(requests=120, window=60, prefix="heri:analytics:session")
 
 
-def _event_identity(payload: AnalyticsEventPayload, request: Request) -> str:
+def _event_identity(payload: AnalyticsEventPayload, request: Request) -> str | None:
     supplied = request.headers.get("Idempotency-Key", "").strip()
     if supplied:
         if len(supplied) > 128:
             raise HTTPException(status_code=400, detail="Idempotency-Key is too long")
         return supplied
-    return hashlib.sha256(
-        json.dumps(
-            {
-                "event_name": payload.event_name,
-                "path": payload.path,
-                "session_id": payload.session_id,
-            },
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode()
-    ).hexdigest()
+    return None
 
 
 async def _event_is_duplicate(payload: AnalyticsEventPayload, request: Request, db: AsyncSession) -> bool:
     identity = _event_identity(payload, request)
+    if identity is None:
+        return False
     result = await db.execute(
         select(AnalyticsEvent)
         .where(AnalyticsEvent.event_name == payload.event_name)
@@ -54,11 +43,12 @@ async def track_event(payload: AnalyticsEventPayload, request: Request, db: Asyn
     )
     if await _event_is_duplicate(payload, request, db):
         return {"status": "accepted", "duplicate": True}
-    event_identity = _event_identity(payload, request)
     properties = {
         **payload.properties,
         "source_ip": request.client.host if request.client else None,
-        "idempotency_key": event_identity,
     }
+    event_identity = _event_identity(payload, request)
+    if event_identity is not None:
+        properties["idempotency_key"] = event_identity
     db.add(AnalyticsEvent(event_name=payload.event_name, path=payload.path, session_id=payload.session_id, properties=properties))
     return {"status": "accepted"}
