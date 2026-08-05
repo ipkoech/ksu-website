@@ -5,9 +5,10 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import selectinload
 
+from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ...deps import CurrentUser, DbSession, require_scope, user_has_scope
@@ -33,6 +34,7 @@ from ...services import (
     PartnershipSpotlightWorkflowService,
 )
 from ...services._base import apply_updates
+from ...core.config import public_content_rate_limit
 from ._scoped import can_access_scoped_record, require_scoped_record
 
 router = APIRouter()
@@ -418,7 +420,10 @@ def _workflow_action_scope(action: str) -> str:
 
 
 @router.get("/pages/{page_key}")
+@public_content_rate_limit
+@cached_public(timeout=300, vary_on=("page_key", "scope_type", "scope_id"))
 async def get_page_composition(
+    request: Request,
     page_key: str,
     db: DbSession,
     scope_type: str = Query("university"),
@@ -429,7 +434,10 @@ async def get_page_composition(
 
 
 @router.get("/homepage")
+@public_content_rate_limit
+@cached_public(timeout=300, vary_on=("scope_type", "scope_id"))
 async def get_homepage(
+    request: Request,
     db: DbSession,
     scope_type: str = Query("university"),
     scope_id: uuid.UUID | None = None,

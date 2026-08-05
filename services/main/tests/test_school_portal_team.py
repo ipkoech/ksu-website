@@ -28,14 +28,24 @@ from app.services.school_portal_team import (
 
 
 class _Db:
-    def __init__(self):
+    def __init__(self, scalar=None):
         self.added = []
+        self.scalar = scalar
 
     def add(self, item):
         self.added.append(item)
 
     async def flush(self):
         return None
+
+    async def execute(self, _statement):
+        scalar = self.scalar
+
+        class Result:
+            def scalar_one_or_none(self):
+                return scalar
+
+        return Result()
 
 
 def _context(*permissions):
@@ -143,7 +153,7 @@ class SchoolPortalTeamTests(unittest.IsolatedAsyncioTestCase):
                 AsyncMock(),
             ),
         ):
-            result = await create_school_team_member(_Db(), context, payload)
+            result = await create_school_team_member(_Db(person), context, payload)
 
         self.assertIs(assignment, result)
         self.assertEqual(context.school.id, assign.await_args.kwargs["entity_id"])

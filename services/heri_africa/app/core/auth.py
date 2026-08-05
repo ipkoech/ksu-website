@@ -3,22 +3,12 @@ from __future__ import annotations
 from fastapi import Cookie, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from ksu_common.auth import TokenPayload
-from ksu_common.roles import ROLE_DEFINITIONS
+from ksu_common.authorization import AuthorizationDecision, authorize_permission as evaluate_permission
 from ksu_common.security import decode_token
 
 from .config import get_settings
 
 _bearer = HTTPBearer(auto_error=False)
-
-HERI_ROLE_SCOPES = {
-    "heri-admin": {"heri:*"},
-    "heri-editor": {"heri.content.read", "heri.content.write", "heri.media.read", "heri.media.write"},
-    "heri-publisher": {"heri.content.read", "heri.content.write", "heri.workflow.publish", "heri.media.read"},
-    "heri-partnership-manager": {"heri.content.read", "heri.content.write", "heri.submissions.read", "heri.submissions.write"},
-    "heri-social-publisher": {"heri.content.read", "heri.social.read", "heri.social.write"},
-    "heri-viewer": {"heri.content.read", "heri.media.read", "heri.analytics.read"},
-}
-
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
@@ -34,15 +24,14 @@ async def get_current_user(
     return TokenPayload(sub=payload["sub"], jti=payload["jti"], roles=payload.get("roles", []), raw=payload)
 
 
+def authorize_permission(user: TokenPayload, permission: str) -> AuthorizationDecision:
+    """Evaluate one explicit HERI permission through the shared RBAC contract."""
+    return evaluate_permission(user, permission)
+
+
 def require_permission(permission: str):
     async def dependency(user: TokenPayload = Depends(get_current_user)) -> TokenPayload:
-        scopes = set(user.raw.get("scopes", []) or []) | set(user.raw.get("permissions", []) or [])
-        for role in user.roles:
-            scopes.update(HERI_ROLE_SCOPES.get(str(role).lower(), set()))
-            definition = ROLE_DEFINITIONS.get(role)
-            if definition:
-                scopes.update(definition.scopes)
-        if permission in scopes or "admin:*" in scopes or "heri:*" in scopes or "admin" in user.roles:
+        if authorize_permission(user, permission).allowed:
             return user
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient privileges")
 

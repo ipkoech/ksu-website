@@ -9,6 +9,8 @@ import re
 import uuid
 from typing import Any
 
+from ksu_common.gemini import get_gemini_transport
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -60,32 +62,21 @@ class GeminiResearchAIProvider:
         if not self.is_configured:
             return None
 
-        try:
-            from google import genai
-            from google.genai import types
-        except Exception:
-            return None
-
         prompt = self.build_prompt(message=message, context=context, service_exposure=service_exposure)
-
-        def _generate() -> str | None:
-            client = genai.Client(api_key=self.api_key)
-            response = client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    temperature=0.2,
-                    max_output_tokens=1200,
-                    response_mime_type="text/plain",
-                ),
-            )
-            text = getattr(response, "text", None)
-            return text.strip() if isinstance(text, str) and text.strip() else None
-
-        import asyncio
+        transport = get_gemini_transport(
+            api_key=self.api_key,
+            model=self.model,
+            timeout_seconds=self.timeout_seconds,
+        )
 
         try:
-            return await asyncio.wait_for(asyncio.to_thread(_generate), timeout=self.timeout_seconds)
+            answer = await transport.generate(
+                prompt,
+                temperature=0.2,
+                max_output_tokens=1200,
+                response_mime_type="text/plain",
+            )
+            return answer or None
         except Exception:
             return None
 

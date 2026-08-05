@@ -539,7 +539,7 @@ async def _populate_life_around_studies_links(db: AsyncSession) -> None:
             PageSection.deleted_at.is_(None),
         )
     )
-    section = result.scalar_one_or_none()
+    section = result.scalars().first()
     if section is None:
         return
 

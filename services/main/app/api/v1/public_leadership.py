@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ...deps import DbSession
@@ -35,7 +36,7 @@ async def get_leader_by_role(
             StaffAssignment.entity_type == entity_type,
             StaffAssignment.role.in_(roles),
             StaffAssignment.status == "active",
-            StaffAssignment.is_public == True,
+            StaffAssignment.is_public,
         )
     )
 
@@ -55,6 +56,7 @@ async def get_leader_by_role(
 
 
 @router.get("/vice-chancellor")
+@cached_public(timeout=300, vary_on=("fields", "include"))
 async def get_vice_chancellor(
     db: DbSession,
     fields: FieldSelection = FieldsDep,
@@ -76,6 +78,7 @@ async def get_vice_chancellor(
 
 
 @router.get("/chancellor")
+@cached_public(timeout=300, vary_on=("fields", "include"))
 async def get_chancellor(
     db: DbSession,
     fields: FieldSelection = FieldsDep,
@@ -97,6 +100,7 @@ async def get_chancellor(
 
 
 @router.get("/dean/{school_id}")
+@cached_public(timeout=300, vary_on=("school_id", "fields", "include"))
 async def get_dean(
     school_id: uuid.UUID,
     db: DbSession,
@@ -119,6 +123,7 @@ async def get_dean(
 
 
 @router.get("/hod/{department_id}")
+@cached_public(timeout=300, vary_on=("department_id", "fields", "include"))
 async def get_hod(
     department_id: uuid.UUID,
     db: DbSession,
@@ -141,6 +146,7 @@ async def get_hod(
 
 
 @router.get("/director/{division_id}")
+@cached_public(timeout=300, vary_on=("division_id", "fields", "include"))
 async def get_director(
     division_id: uuid.UUID,
     db: DbSession,
@@ -173,6 +179,7 @@ async def get_director(
 
 
 @router.get("/")
+@cached_public(timeout=300, vary_on=("role", "entity_type", "entity_id", "fields", "include"))
 async def get_leader(
     db: DbSession,
     role: str = Query(..., description="Role to search for (e.g., dean, hod, director)"),
@@ -197,6 +204,7 @@ async def get_leader(
 
 
 @router.get("/list")
+@cached_public(timeout=300, vary_on=("entity_type", "entity_id", "fields", "include"))
 async def list_leaders(
     db: DbSession,
     entity_type: str = Query(..., description="Entity type"),
@@ -212,7 +220,7 @@ async def list_leaders(
         .where(
             StaffAssignment.entity_type == entity_type,
             StaffAssignment.status == "active",
-            StaffAssignment.is_public == True,
+            StaffAssignment.is_public,
         )
     )
 

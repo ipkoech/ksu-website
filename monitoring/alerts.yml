@@ -1,0 +1,172 @@
+groups:
+  - name: ksu-availability
+    rules:
+      - alert: KsuHttpServiceDown
+        expr: up{job="ksu-http-services"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "KSU HTTP service is unreachable"
+          description: "{{ $labels.instance }} has not been scraped for more than two minutes."
+
+      - alert: KsuCeleryWorkerMetricsDown
+        expr: up{job="ksu-celery-workers"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          component: worker
+        annotations:
+          summary: "KSU Celery worker metrics endpoint is unreachable"
+          description: "{{ $labels.instance }} has not been scraped for more than five minutes."
+
+      - alert: KsuRedisExporterDown
+        expr: up{job="ksu-redis"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: redis
+        annotations:
+          summary: "KSU Redis exporter is unreachable"
+          description: "Prometheus cannot scrape the Redis exporter."
+
+      - alert: KsuPostgresExporterDown
+        expr: up{job="ksu-postgres"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "KSU PostgreSQL exporter is unreachable"
+          description: "Prometheus cannot scrape the PostgreSQL exporter."
+
+      - alert: KsuPostgresDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "KSU PostgreSQL is unavailable"
+          description: "The PostgreSQL exporter cannot connect to {{ $labels.instance }}."
+
+      - alert: KsuRedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: redis
+        annotations:
+          summary: "KSU Redis is unavailable"
+          description: "The Redis exporter cannot connect to Redis."
+
+  - name: ksu-http-performance
+    rules:
+      - alert: KsuHttpFiveXxRateHigh
+        expr: |
+          sum by (service) (rate(ksu_http_server_requests_total{status_code=~"5.."}[5m]))
+          /
+          clamp_min(sum by (service) (rate(ksu_http_server_requests_total[5m])), 0.1) > 0.05
+        for: 10m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "KSU HTTP 5xx rate exceeds 5%"
+          description: "{{ $labels.service }} has returned 5xx responses for more than 5% of requests for ten minutes."
+
+      - alert: KsuHttpP95LatencyHigh
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le, service) (rate(ksu_http_server_request_duration_seconds_bucket[5m]))
+          ) > 1
+        for: 10m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "KSU HTTP p95 latency exceeds one second"
+          description: "{{ $labels.service }} p95 request latency has exceeded one second for ten minutes."
+
+  - name: ksu-workers-and-data
+    rules:
+      - alert: KsuCeleryQueueBacklog
+        expr: sum by (queue) (ksu_celery_queue_depth) > 100
+        for: 10m
+        labels:
+          severity: warning
+          component: worker
+        annotations:
+          summary: "KSU Celery queue backlog is high"
+          description: "Queue {{ $labels.queue }} has more than 100 waiting tasks for ten minutes."
+
+      - alert: KsuCeleryQueueMetricsUnavailable
+        expr: min(ksu_celery_queue_depth_scrape_success) == 0
+        for: 5m
+        labels:
+          severity: warning
+          component: worker
+        annotations:
+          summary: "KSU Celery queue depth cannot be collected"
+          description: "At least one worker cannot read its Redis queue depth."
+
+      - alert: KsuCeleryTaskFailuresHigh
+        expr: sum by (task) (increase(ksu_celery_task_failure_total[15m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: worker
+        annotations:
+          summary: "KSU Celery task failures are elevated"
+          description: "Task {{ $labels.task }} has failed more than five times in fifteen minutes."
+
+      - alert: KsuPostgresConnectionUtilizationHigh
+        expr: ksu_postgres_connection_utilization_connection_utilization_ratio > 0.80
+        for: 10m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "KSU PostgreSQL connection utilization exceeds 80%"
+          description: "PostgreSQL connection utilization has exceeded 80% for ten minutes."
+
+      - alert: KsuPostgresSlowQuery
+        expr: ksu_postgres_active_query_active_query_max_seconds > 30
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "KSU PostgreSQL has a query running longer than 30 seconds"
+          description: "A non-idle PostgreSQL query has run for more than 30 seconds for five minutes."
+
+      - alert: KsuPostgresLockWait
+        expr: sum(ksu_postgres_lock_lock_count{granted="false"}) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "KSU PostgreSQL lock waits are present"
+          description: "One or more PostgreSQL locks have been waiting for five minutes."
+
+      - alert: KsuRedisMemoryHigh
+        expr: redis_memory_max_bytes > 0 and redis_memory_used_bytes / redis_memory_max_bytes > 0.80
+        for: 10m
+        labels:
+          severity: warning
+          component: redis
+        annotations:
+          summary: "KSU Redis memory utilization exceeds 80%"
+          description: "Redis memory utilization has exceeded 80% for ten minutes."
+
+      - alert: KsuRedisMemoryLimitNotConfigured
+        expr: redis_memory_max_bytes == 0
+        for: 30m
+        labels:
+          severity: warning
+          component: redis
+        annotations:
+          summary: "KSU Redis has no configured memory limit"
+          description: "Set REDIS_MAXMEMORY to a positive capacity so Redis memory utilization can be bounded and alerted on."

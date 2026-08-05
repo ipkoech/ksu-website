@@ -10,6 +10,9 @@ from typing import Literal
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from ksu_common.config import validate_cors_origins, validate_secret, validate_service_url
+from ksu_common.rate_limit import rate_limit
+
 FrontendService = Literal["web", "admin", "research", "library"]
 SERVICE_DIR = Path(__file__).resolve().parents[2]
 
@@ -53,6 +56,8 @@ class Settings(BaseSettings):
     FRONTEND_LIBRARY_URL: str
     RESEARCH_SERVICE_URL: str
     LIBRARY_SERVICE_URL: str
+    RESEARCH_SERVICE_API_KEY: str | None = None
+    LIBRARY_SERVICE_API_KEY: str | None = None
     PASSWORD_RESET_RATE_LIMIT_COUNT: int
     PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS: int
     AUTH_LOGIN_MAX_ATTEMPTS: int = 5
@@ -64,6 +69,14 @@ class Settings(BaseSettings):
     ANALYTICS_RATE_LIMIT_WINDOW_SECONDS: int = 60
     NEWSLETTER_RATE_LIMIT_COUNT: int = 10
     NEWSLETTER_RATE_LIMIT_WINDOW_SECONDS: int = 300
+    PUBLIC_CONTENT_RATE_LIMIT_COUNT: int = 120
+    PUBLIC_CONTENT_RATE_LIMIT_WINDOW_SECONDS: int = 60
+    PUBLIC_MEDIA_RATE_LIMIT_COUNT: int = 60
+    PUBLIC_MEDIA_RATE_LIMIT_WINDOW_SECONDS: int = 60
+    MEDIA_UPLOAD_RATE_LIMIT_COUNT: int = 30
+    MEDIA_UPLOAD_RATE_LIMIT_WINDOW_SECONDS: int = 60
+    HEALTH_RATE_LIMIT_COUNT: int = 30
+    HEALTH_RATE_LIMIT_WINDOW_SECONDS: int = 60
 
     SMS_PROVIDER: Literal["disabled", "webhook", "twilio"]
     SMS_WEBHOOK_URL: str | None
@@ -189,9 +202,23 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def reject_insecure_production_defaults(self) -> "Settings":
-        if self.APP_ENV.lower() not in {"development", "dev", "local", "test", "testing"}:
-            if self.INTERNAL_API_KEY == "change-me-internal":
-                raise ValueError("INTERNAL_API_KEY must be configured outside local development")
+        validate_secret(self.JWT_SECRET_KEY, field_name="JWT_SECRET_KEY", app_env=self.APP_ENV)
+        validate_secret(self.INTERNAL_API_KEY, field_name="INTERNAL_API_KEY", app_env=self.APP_ENV)
+        validate_service_url(self.DATABASE_URL, field_name="DATABASE_URL", app_env=self.APP_ENV)
+        validate_service_url(self.REDIS_URL, field_name="REDIS_URL", app_env=self.APP_ENV)
+        validate_service_url(self.RESEARCH_SERVICE_URL, field_name="RESEARCH_SERVICE_URL", app_env=self.APP_ENV)
+        validate_service_url(self.LIBRARY_SERVICE_URL, field_name="LIBRARY_SERVICE_URL", app_env=self.APP_ENV)
+        validate_secret(
+            self.RESEARCH_SERVICE_API_KEY,
+            field_name="RESEARCH_SERVICE_API_KEY",
+            app_env=self.APP_ENV,
+        )
+        validate_secret(
+            self.LIBRARY_SERVICE_API_KEY,
+            field_name="LIBRARY_SERVICE_API_KEY",
+            app_env=self.APP_ENV,
+        )
+        validate_cors_origins(self.CORS_ORIGINS, app_env=self.APP_ENV)
         return self
 
 
@@ -205,3 +232,27 @@ def get_settings() -> Settings:
     os.environ.setdefault("JWT_SECRET_KEY", settings.JWT_SECRET_KEY)
     os.environ.setdefault("JWT_ALGORITHM", settings.JWT_ALGORITHM)
     return settings
+
+
+_settings = get_settings()
+public_content_rate_limit = rate_limit(
+    requests=_settings.PUBLIC_CONTENT_RATE_LIMIT_COUNT,
+    window=_settings.PUBLIC_CONTENT_RATE_LIMIT_WINDOW_SECONDS,
+    prefix="main:public-content:ip",
+)
+public_media_rate_limit = rate_limit(
+    requests=_settings.PUBLIC_MEDIA_RATE_LIMIT_COUNT,
+    window=_settings.PUBLIC_MEDIA_RATE_LIMIT_WINDOW_SECONDS,
+    prefix="main:public-media:ip",
+)
+media_upload_rate_limit = rate_limit(
+    requests=_settings.MEDIA_UPLOAD_RATE_LIMIT_COUNT,
+    window=_settings.MEDIA_UPLOAD_RATE_LIMIT_WINDOW_SECONDS,
+    by_user=True,
+    prefix="main:media-upload:user-or-ip",
+)
+health_rate_limit = rate_limit(
+    requests=_settings.HEALTH_RATE_LIMIT_COUNT,
+    window=_settings.HEALTH_RATE_LIMIT_WINDOW_SECONDS,
+    prefix="main:health:ip",
+)

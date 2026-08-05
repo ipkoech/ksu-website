@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import Any, Callable, Mapping, Sequence, Type, TypeVar
+from typing import Any, Mapping, Sequence, Type, TypeVar
 
 from pydantic import BaseModel
 from sqlalchemy import inspect as sa_inspect

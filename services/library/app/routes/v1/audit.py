@@ -18,7 +18,11 @@ from ...core.database import get_db
 router = APIRouter(prefix="/audit", tags=["Audit"])
 settings = get_settings()
 
-require_internal_api_key = internal_key_guard(lambda: get_settings().INTERNAL_API_KEY)
+
+require_internal_api_key = internal_key_guard(
+    lambda: get_settings().INTERNAL_API_KEY,
+    allow_legacy_header=False,
+)
 
 
 @router.get("", dependencies=[Depends(require_internal_api_key)])

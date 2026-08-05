@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import uuid
 import re
 from typing import Any, Literal
 

@@ -13,6 +13,22 @@ x-frontend-healthcheck: &frontend-healthcheck
   retries: 3
 
 services:
+  main:
+    environment:
+      APP_ENV: production
+
+  research:
+    environment:
+      APP_ENV: production
+
+  library:
+    environment:
+      APP_ENV: production
+
+  heri:
+    environment:
+      APP_ENV: production
+
   edge:
     image: nginx:1.27-alpine
     ports:
@@ -36,8 +52,11 @@ services:
         condition: service_healthy
       library-web-prod:
         condition: service_healthy
-    networks: [ksu]
+    networks: [ksu, proxy]
     restart: unless-stopped
+
+  gateway:
+    ports: !reset []
 
   web-prod:
     image: ${FRONTEND_IMAGE_PREFIX:-ksu-frontend}/web-prod:${IMAGE_TAG:-local}

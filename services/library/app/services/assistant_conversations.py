@@ -14,8 +14,6 @@ from ..schemas.assistant_chat import (
     LibraryAssistantAnswer,
     LibraryAssistantAnswerRequest,
     LibraryAssistantCitation,
-    LibraryAssistantConversationOut,
-    LibraryAssistantMessageOut,
 )
 from . import assistant_contexts
 from .assistant_identity import (

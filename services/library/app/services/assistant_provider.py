@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 from dataclasses import dataclass
 from typing import Any, Protocol
+
+from ksu_common.gemini import get_gemini_transport
 
 from ..core.config import Settings, get_settings
 from ..schemas.assistant_chat import LibraryAssistantAnswerDraft
@@ -129,24 +130,16 @@ class GeminiLibraryAssistantProvider:
             escalation_guidance=escalation_guidance,
         )
 
-        def _generate() -> str:
-            from google import genai
-            from google.genai import types
-
-            client = genai.Client(api_key=self.api_key)
-            response = client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    temperature=0.2,
-                    max_output_tokens=1200,
-                    response_mime_type="application/json",
-                ),
-            )
-            text = getattr(response, "text", "")
-            return text.strip() if isinstance(text, str) else ""
-
-        raw = await asyncio.wait_for(asyncio.to_thread(_generate), timeout=self.timeout_seconds)
+        raw = await get_gemini_transport(
+            api_key=self.api_key,
+            model=self.model,
+            timeout_seconds=self.timeout_seconds,
+        ).generate(
+            prompt,
+            temperature=0.2,
+            max_output_tokens=1200,
+            response_mime_type="application/json",
+        )
         try:
             payload = json.loads(raw)
             return LibraryAssistantAnswerDraft.model_validate(payload)

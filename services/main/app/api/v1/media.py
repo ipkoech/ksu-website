@@ -6,7 +6,7 @@ import uuid
 from types import SimpleNamespace
 from typing import Literal
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 
 from ksu_common.schemas.responses import success
 
@@ -16,6 +16,7 @@ from ...security.scopes import can_access_scope
 from ...schemas import MediaFolderCreate, MediaFolderUpdate, MediaLinkCreate, MediaLinkUpdate, MediaUpdate
 from ...services import MediaService
 from ._fields import FieldSelection, FieldsDep, build_selector
+from ...core.config import media_upload_rate_limit
 
 router = APIRouter()
 
@@ -131,7 +132,9 @@ async def list_media(
 
 
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
+@media_upload_rate_limit
 async def upload_media(
+    request: Request,
     db: DbSession,
     user: CurrentUser,
     file: UploadFile = File(...),

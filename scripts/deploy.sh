@@ -232,6 +232,12 @@ deploy_local() {
     (cd frontend && pnpm build)
   fi
 
+  if [[ -f scripts/validate_database_capacity.py ]]; then
+    capacity_args=()
+    [[ -f .env ]] && capacity_args+=(--file .env)
+    python3 scripts/validate_database_capacity.py "${capacity_args[@]}"
+  fi
+
   local services=(postgres redis main research library heri celery-main celery-library celery-heri)
   if [[ "${with_gateway}" -eq 1 ]]; then
     services+=(gateway)
@@ -365,6 +371,12 @@ if [[ -f "\${REPO_PATH}/scripts/validate_production_env.py" ]]; then
   done
 else
   step "No production validation script found; skipping static env validation"
+fi
+
+if [[ -f "\${REPO_PATH}/scripts/validate_database_capacity.py" ]]; then
+  capacity_args=()
+  [[ -f "\${REPO_PATH}/.env" ]] && capacity_args+=(--file "\${REPO_PATH}/.env")
+  python3 "\${REPO_PATH}/scripts/validate_database_capacity.py" "\${capacity_args[@]}"
 fi
 
 ensure_swap() {

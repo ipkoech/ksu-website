@@ -20,6 +20,7 @@ import hashlib
 import inspect
 import json
 import os
+from contextvars import ContextVar, Token
 from functools import wraps
 from typing import Any, Callable, Sequence
 
@@ -29,6 +30,28 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 _redis_client: redis.Redis | None = None
+_cache_context: ContextVar[dict[str, Any] | None] = ContextVar("ksu_cache_context", default=None)
+
+
+def begin_cache_context(request: Request) -> Token:
+    """Provide decorators access to the current request without route coupling."""
+    return _cache_context.set({"request": request, "status": None})
+
+
+def end_cache_context(token: Token) -> None:
+    _cache_context.reset(token)
+
+
+def get_cache_context() -> dict[str, Any] | None:
+    return _cache_context.get()
+
+
+def _cache_result(value: Any, status: str) -> Any:
+    context = get_cache_context()
+    if context is not None:
+        context["status"] = status
+        return value
+    return JSONResponse(content=value, headers={"X-Cache": status})
 
 
 async def get_redis() -> redis.Redis:
@@ -79,6 +102,18 @@ def _normalize_cache_value(value: Any) -> Any:
         return jsonable_encoder(value)
     except Exception:
         return str(value)
+
+
+def _cacheable_json_value(value: Any) -> Any | None:
+    """Return a JSON-safe endpoint value, or ``None`` when it is not cacheable."""
+    if isinstance(value, Response):
+        return None
+    try:
+        encoded = jsonable_encoder(value)
+        json.dumps(encoded)
+    except (TypeError, ValueError):
+        return None
+    return encoded
 
 
 def _build_function_cache_key(
@@ -149,6 +184,9 @@ def cached_public(
                     if isinstance(arg, Request):
                         request = arg
                         break
+            if request is None:
+                context = get_cache_context()
+                request = context.get("request") if context else None
 
             try:
                 client = await get_redis()
@@ -157,27 +195,25 @@ def cached_public(
                     if request is not None
                     else _build_function_cache_key(prefix, func, args, kwargs, vary_on)
                 )
-
                 cached = await client.get(cache_key)
-                if cached:
-                    return JSONResponse(
-                        content=json.loads(cached),
-                        headers={"X-Cache": "HIT"},
-                    )
-
-                result = await func(*args, **kwargs)
-
-                if isinstance(result, dict):
-                    encoded_result = jsonable_encoder(result)
-                    await client.setex(cache_key, timeout, json.dumps(encoded_result))
-                    return JSONResponse(content=encoded_result, headers={"X-Cache": "MISS"})
-                elif isinstance(result, Response):
-                    return result
-
-                return result
-
             except redis.RedisError:
                 return await func(*args, **kwargs)
+
+            if cached:
+                return _cache_result(json.loads(cached), "HIT")
+
+            result = await func(*args, **kwargs)
+            encoded_result = _cacheable_json_value(result)
+            if encoded_result is None:
+                return result
+
+            try:
+                await client.setex(cache_key, timeout, json.dumps(encoded_result))
+            except redis.RedisError:
+                # The endpoint has already done its work. Do not execute it a
+                # second time just because the cache write failed.
+                pass
+            return _cache_result(encoded_result, "MISS")
 
         return wrapper
 
@@ -203,6 +239,9 @@ def cache_response(
                     if isinstance(arg, Request):
                         request = arg
                         break
+            if request is None:
+                context = get_cache_context()
+                request = context.get("request") if context else None
 
             user = kwargs.get("user") or kwargs.get("_user")
             user_id = getattr(user, "sub", None) if user else None
@@ -214,25 +253,23 @@ def cache_response(
                     if request is not None
                     else _build_function_cache_key(prefix, func, args, kwargs, vary_on, user_id=user_id)
                 )
-
                 cached = await client.get(cache_key)
-                if cached:
-                    return JSONResponse(
-                        content=json.loads(cached),
-                        headers={"X-Cache": "HIT"},
-                    )
-
-                result = await func(*args, **kwargs)
-
-                if isinstance(result, dict):
-                    encoded_result = jsonable_encoder(result)
-                    await client.setex(cache_key, timeout, json.dumps(encoded_result))
-                    return JSONResponse(content=encoded_result, headers={"X-Cache": "MISS"})
-
-                return result
-
             except redis.RedisError:
                 return await func(*args, **kwargs)
+
+            if cached:
+                return _cache_result(json.loads(cached), "HIT")
+
+            result = await func(*args, **kwargs)
+            encoded_result = _cacheable_json_value(result)
+            if encoded_result is None:
+                return result
+
+            try:
+                await client.setex(cache_key, timeout, json.dumps(encoded_result))
+            except redis.RedisError:
+                pass
+            return _cache_result(encoded_result, "MISS")
 
         return wrapper
 

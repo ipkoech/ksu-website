@@ -6,7 +6,13 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import field_validator, model_validator
+from ksu_common.config import (
+    validate_cors_origins,
+    validate_explicit_production_settings,
+    validate_secret,
+    validate_service_url,
+)
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 SERVICE_DIR = Path(__file__).resolve().parents[2]
@@ -21,6 +27,8 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str
     DB_SCHEMA: str = "library"
+    DB_POOL_SIZE: int = Field(default=10, ge=1)
+    DB_MAX_OVERFLOW: int = Field(default=20, ge=0)
 
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
@@ -30,7 +38,14 @@ class Settings(BaseSettings):
     CELERY_RESULT_BACKEND: str | None = None
 
     MAIN_SERVICE_URL: str = "http://main:8000"
+    # Credential used only when Library calls Main. Keep it separate from the
+    # inbound key used to authenticate callers into Library.
+    MAIN_SERVICE_API_KEY: str | None = None
     INTERNAL_API_KEY: str = "change-me-internal"
+    PUBLIC_CATALOG_RATE_LIMIT_COUNT: int = Field(default=60, ge=1)
+    PUBLIC_CATALOG_RATE_LIMIT_WINDOW_SECONDS: int = Field(default=60, ge=1)
+    HEALTH_RATE_LIMIT_COUNT: int = Field(default=30, ge=1)
+    HEALTH_RATE_LIMIT_WINDOW_SECONDS: int = Field(default=60, ge=1)
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: Literal["json", "text"] = "json"
     LOG_DIR: str = "/app/logs"
@@ -74,9 +89,22 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def reject_insecure_production_defaults(self) -> "Settings":
-        if self.APP_ENV.lower() not in {"development", "dev", "local", "test", "testing"}:
-            if self.INTERNAL_API_KEY == "change-me-internal":
-                raise ValueError("INTERNAL_API_KEY must be configured outside local development")
+        validate_explicit_production_settings(
+            configured_fields=self.model_fields_set,
+            required_fields=("APP_ENV", "MAIN_SERVICE_URL", "CORS_ORIGINS"),
+            app_env=self.APP_ENV,
+        )
+        validate_secret(self.JWT_SECRET_KEY, field_name="JWT_SECRET_KEY", app_env=self.APP_ENV)
+        validate_secret(
+            self.MAIN_SERVICE_API_KEY,
+            field_name="MAIN_SERVICE_API_KEY",
+            app_env=self.APP_ENV,
+        )
+        validate_secret(self.INTERNAL_API_KEY, field_name="INTERNAL_API_KEY", app_env=self.APP_ENV)
+        validate_service_url(self.DATABASE_URL, field_name="DATABASE_URL", app_env=self.APP_ENV)
+        validate_service_url(self.REDIS_URL, field_name="REDIS_URL", app_env=self.APP_ENV)
+        validate_service_url(self.MAIN_SERVICE_URL, field_name="MAIN_SERVICE_URL", app_env=self.APP_ENV)
+        validate_cors_origins(self.CORS_ORIGINS, app_env=self.APP_ENV)
         return self
 
 

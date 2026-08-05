@@ -6,24 +6,25 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
 
-import httpx
-from ksu_common.internal_client import internal_headers
+from ksu_common.internal_client import get_integration_pool
+from ksu_common.task_queue import run_worker_async
 
 from ..core.config import get_settings
 from .celery_app import celery_app
 
 
-def _main_internal_url(path: str) -> str:
-    settings = get_settings()
-    base_url = settings.MAIN_SERVICE_URL.rstrip("/")
-    return f"{base_url}/api/v1/internal/{path.lstrip('/')}"
-
-
 def _post_main_internal(path: str, payload: dict[str, Any]) -> dict[str, Any]:
+    return run_worker_async(_post_main_internal_async(path, payload))
+
+
+async def _post_main_internal_async(path: str, payload: dict[str, Any]) -> dict[str, Any]:
     settings = get_settings()
-    response = httpx.post(
-        _main_internal_url(path),
-        headers=internal_headers(settings.INTERNAL_API_KEY),
+    response = await get_integration_pool().request_internal(
+        "main-donation-notifications",
+        settings.MAIN_SERVICE_URL.rstrip("/"),
+        "POST",
+        f"/api/v1/internal/{path.lstrip('/')}",
+        api_key=settings.MAIN_SERVICE_API_KEY,
         json=payload,
         timeout=10,
     )
@@ -31,7 +32,7 @@ def _post_main_internal(path: str, payload: dict[str, Any]) -> dict[str, Any]:
     return response.json()
 
 
-def _format_money(amount: str | int | float | Decimal, currency: str) -> str:
+def _format_money(amount: str | float | Decimal, currency: str) -> str:
     return f"{currency} {Decimal(str(amount)):,.2f}"
 
 
@@ -49,9 +50,6 @@ def _next_reminder_eta(frequency: str) -> datetime:
 
 @celery_app.task(
     name="research.donations.notify_admins",
-    autoretry_for=(httpx.HTTPError,),
-    retry_backoff=True,
-    max_retries=3,
 )
 def notify_research_admins_of_donation(
     *,
@@ -85,9 +83,6 @@ def notify_research_admins_of_donation(
 
 @celery_app.task(
     name="research.donations.email_research_office",
-    autoretry_for=(httpx.HTTPError,),
-    retry_backoff=True,
-    max_retries=3,
 )
 def send_research_donation_request_email(
     *,
@@ -122,9 +117,6 @@ def send_research_donation_request_email(
 
 @celery_app.task(
     name="research.donations.email_submission_receipt",
-    autoretry_for=(httpx.HTTPError,),
-    retry_backoff=True,
-    max_retries=3,
 )
 def send_donation_submission_email(
     *,
@@ -156,9 +148,6 @@ def send_donation_submission_email(
 
 @celery_app.task(
     name="research.donations.email_appreciation",
-    autoretry_for=(httpx.HTTPError,),
-    retry_backoff=True,
-    max_retries=3,
 )
 def send_donation_appreciation_email(
     *,
@@ -188,9 +177,6 @@ def send_donation_appreciation_email(
 
 @celery_app.task(
     name="research.donations.email_recurring_reminder",
-    autoretry_for=(httpx.HTTPError,),
-    retry_backoff=True,
-    max_retries=3,
 )
 def send_recurring_donation_reminder(
     *,

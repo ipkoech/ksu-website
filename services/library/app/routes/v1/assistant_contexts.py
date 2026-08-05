@@ -10,13 +10,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.audit import audit_action
 from ksu_common.auth import TokenPayload
-from ksu_common.cache import cache_response, invalidate_prefix
+from ksu_common.cache import cached_public, invalidate_prefix
 from ksu_common.rbac import requires_scope
 from ksu_common.schemas.responses import success
 
 from ...core.auth import require_library_scope
 from ...core.database import get_db
-from ...models import LibraryAssistantContext
 from ...schemas import (
     LibraryAssistantContextCreate,
     LibraryAssistantContextOut,
@@ -29,7 +28,7 @@ router = APIRouter(prefix="/library/assistant-contexts", tags=["Library Assistan
 
 
 @router.get("/public", response_model=None)
-@cache_response(timeout=120, vary_on=("library_id",))
+@cached_public(timeout=120, vary_on=("library_id",))
 async def list_public_contexts(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],

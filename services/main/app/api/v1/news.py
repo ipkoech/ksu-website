@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Request, status
 
 from ksu_common import cached_public
 from ksu_common.schemas.responses import success
@@ -18,6 +18,7 @@ from ...models import News
 from ...schemas import NewsCreate, NewsUpdate
 from ...services import ContentWorkflowService, NewsService
 from .content_workflow import authorize_content_workflow_action
+from ...core.config import public_content_rate_limit
 
 router = APIRouter()
 
@@ -34,8 +35,10 @@ NEWS_MANAGE_PERMISSIONS = [
 
 
 @router.get("")
+@public_content_rate_limit
 @cached_public(timeout=300, vary_on=("page", "per_page", "scope_type", "scope_id", "is_main", "is_published", "search", "fields", "include"))
 async def list_news(
+    request: Request,
     db: DbSession,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -135,8 +138,9 @@ async def get_news_by_id(news_id: uuid.UUID, db: DbSession, user: CurrentUser, f
 
 
 @router.get("/{slug}")
+@public_content_rate_limit
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
-async def get_news(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
+async def get_news(request: Request, slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(News, fields)
     item = await NewsService.get_by_slug(db, slug, public_only=True, load_options=selector.load_options)
     if item is None:

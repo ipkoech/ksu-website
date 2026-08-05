@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import asyncio
 import uuid
 from typing import Any
+
+from ksu_common.task_queue import run_worker_async
 
 from ..core.database import AsyncSessionLocal
 from ..models import School, User
@@ -24,7 +25,7 @@ from .celery_app import celery_app
 
 @celery_app.task(name="main.imports.commit")
 def commit_import(resource_key: str, payload: dict[str, Any], user_id: str | None = None) -> dict[str, Any]:
-    return asyncio.run(_commit_import(resource_key, payload, user_id))
+    return run_worker_async(_commit_import(resource_key, payload, user_id))
 
 
 @celery_app.task(name="main.imports.school_team_commit")
@@ -33,7 +34,7 @@ def commit_school_team_import(
     school_id: str,
     actor_id: str,
 ) -> dict[str, Any]:
-    return asyncio.run(_commit_school_team_import(payload, school_id, actor_id))
+    return run_worker_async(_commit_school_team_import(payload, school_id, actor_id))
 
 
 def enqueue_school_import_progress(

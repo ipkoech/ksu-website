@@ -5,10 +5,11 @@ from __future__ import annotations
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.schemas.responses import success
+from ksu_common.rate_limit import rate_limit
 
 from ...core.config import get_settings
 from ...core.database import get_db
@@ -33,7 +34,9 @@ def _set_cookie(response: Response, name: str, value: str, max_age: int) -> None
 
 
 @router.post("/answer")
+@rate_limit(requests=3, window=600, prefix="library:assistant:ip", max_body_bytes=16 * 1024)
 async def answer_question(
+    request: Request,
     response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
     data: LibraryAssistantAnswerRequest,
@@ -93,7 +96,9 @@ async def list_messages(
 
 
 @router.post("/conversations/{conversation_id}/continue")
+@rate_limit(requests=20, window=600, prefix="library:assistant:continue:ip", max_body_bytes=16 * 1024)
 async def continue_conversation(
+    request: Request,
     conversation_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
     data: LibraryAssistantAnswerRequest,

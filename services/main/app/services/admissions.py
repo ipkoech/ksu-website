@@ -13,7 +13,6 @@ from ksu_common import PaginatedResult
 
 from ..helpers.slug import unique_slug
 from ..models import (
-    AcademicCalendar,
     AdmissionDocument,
     AdmissionFaq,
     AdmissionInfo,
@@ -27,7 +26,6 @@ from ..models import (
     ProgrammeFeeStructure,
     ProgrammeIntake,
     ProgrammeTutor,
-    School,
 )
 from ._base import apply_updates, ilike_any, paginate_query
 

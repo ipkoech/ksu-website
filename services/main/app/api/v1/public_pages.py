@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 
 from ksu_common import cached_public
 from ksu_common.schemas.responses import success
@@ -11,13 +11,16 @@ from ._fields import FieldSelection, FieldsDep, build_selector
 from ...deps import DbSession
 from ...models import PublicSitePage
 from ...services import PublicSitePageService
+from ...core.config import public_content_rate_limit
 
 router = APIRouter()
 
 
 @router.get("")
+@public_content_rate_limit
 @cached_public(timeout=300, vary_on=("page", "per_page", "page_type", "search", "fields", "include"))
 async def list_public_site_pages(
+    request: Request,
     db: DbSession,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -38,8 +41,10 @@ async def list_public_site_pages(
 
 
 @router.get("/{slug}")
+@public_content_rate_limit
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_public_site_page(
+    request: Request,
     slug: str,
     db: DbSession,
     fields: FieldSelection = FieldsDep,

@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from ksu_common.auth import TokenPayload
+from ksu_common.rbac import authorize_permission
 
 from ...core.auth import get_current_user, require_permission
 from ...core.database import get_db
@@ -20,8 +21,10 @@ router = APIRouter(prefix="/admin", tags=["HERI Admin Content"])
 @router.get("/news")
 async def list_news(page: int = Query(1, ge=1), per_page: int = Query(25, ge=1, le=100), search: str | None = Query(None, min_length=1, max_length=120), status_filter: str | None = Query(None, alias="status"), db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.content.read"))):
     filters = [NewsArticle.deleted_at.is_(None)]
-    if status_filter: filters.append(NewsArticle.status == status_filter)
-    if search: filters.append(NewsArticle.title.ilike(f"%{search}%"))
+    if status_filter:
+        filters.append(NewsArticle.status == status_filter)
+    if search:
+        filters.append(NewsArticle.title.ilike(f"%{search}%"))
     total = int((await db.execute(select(func.count()).select_from(NewsArticle).where(*filters))).scalar_one())
     records = (await db.execute(select(NewsArticle).where(*filters).order_by(NewsArticle.created_at.desc()).offset((page - 1) * per_page).limit(per_page))).scalars().all()
     return {"data": [NewsAdminResponse.model_validate(record) for record in records], "meta": {"page": page, "per_page": per_page, "total": total, "pages": max(1, (total + per_page - 1) // per_page)}}
@@ -55,12 +58,14 @@ async def transition_news(article_id: UUID, payload: TransitionRequest, request:
     record = await db.get(NewsArticle, article_id)
     if record is None or record.deleted_at is not None:
         raise HTTPException(status_code=404, detail="News article not found")
-    normalized_roles = {str(item).lower() for item in user.roles}
-    role = "administrator" if normalized_roles & {"admin", "administrator", "heri-admin"} else ("publisher" if normalized_roles & {"publisher", "heri-publisher"} else "editor")
+    workflow = WorkflowService()
     try:
-        target = WorkflowService().transition(record.status.value, payload.status, role)
+        required_permission = workflow.transition_permission(record.status.value, payload.status)
     except WorkflowError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if not authorize_permission(user, required_permission).allowed:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient privileges")
+    target = payload.status
     previous = record.status.value
     record.status = PublicationStatus(target)
     await record_audit(db, action="transition", entity_type="news_article", entity_id=str(record.id), actor_id=str(user.sub), previous_value={"status": previous}, new_value={"status": target, "note": payload.note}, ip_address=request.client.host if request.client else None)
@@ -70,8 +75,10 @@ async def transition_news(article_id: UUID, payload: TransitionRequest, request:
 @router.get("/events")
 async def list_events(page: int = Query(1, ge=1), per_page: int = Query(25, ge=1, le=100), search: str | None = Query(None, min_length=1, max_length=120), status_filter: str | None = Query(None, alias="status"), db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.content.read"))):
     filters = [Event.deleted_at.is_(None)]
-    if status_filter: filters.append(Event.status == status_filter)
-    if search: filters.append(Event.title.ilike(f"%{search}%"))
+    if status_filter:
+        filters.append(Event.status == status_filter)
+    if search:
+        filters.append(Event.title.ilike(f"%{search}%"))
     total = int((await db.execute(select(func.count()).select_from(Event).where(*filters))).scalar_one())
     records = (await db.execute(select(Event).where(*filters).order_by(Event.starts_at.asc()).offset((page - 1) * per_page).limit(per_page))).scalars().all()
     return {"data": records, "meta": {"page": page, "per_page": per_page, "total": total, "pages": max(1, (total + per_page - 1) // per_page)}}

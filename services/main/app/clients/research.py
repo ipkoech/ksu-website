@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import asyncio
 import uuid
 from typing import Any
 
-import httpx
+from ksu_common.internal_client import get_integration_pool
 
 
 class ResearchClient:
@@ -28,8 +27,6 @@ class ResearchClient:
         headers: dict[str, str] = {}
         if self.authorization:
             headers["Authorization"] = self.authorization
-        if self.request_id:
-            headers["X-Request-ID"] = self.request_id
         return headers
 
     async def _request_once(
@@ -40,19 +37,18 @@ class ResearchClient:
         params: dict[str, Any] | None = None,
         json: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        async with httpx.AsyncClient(
-            base_url=self.base_url,
-            timeout=httpx.Timeout(10.0, connect=2.0),
-        ) as client:
-            response = await client.request(
-                method,
-                path,
-                params=params,
-                json=json,
-                headers=self.headers,
-            )
-            response.raise_for_status()
-            return response.json()
+        response = await get_integration_pool().request_authenticated(
+            "research-school-publications",
+            self.base_url,
+            method,
+            path,
+            auth_headers=self.headers,
+            request_id=self.request_id,
+            params=params,
+            json=json,
+        )
+        response.raise_for_status()
+        return response.json()
 
     async def _request(
         self,
@@ -62,15 +58,9 @@ class ResearchClient:
         params: dict[str, Any] | None = None,
         json: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        attempts = 2 if method.upper() == "GET" else 1
-        for attempt in range(attempts):
-            try:
-                return await self._request_once(method, path, params=params, json=json)
-            except (httpx.ConnectError, httpx.ConnectTimeout, httpx.ReadTimeout):
-                if attempt + 1 >= attempts:
-                    raise
-                await asyncio.sleep(0)
-        raise RuntimeError("unreachable")
+        # The integration pool retries only safe reads (or mutations carrying an
+        # idempotency key), so this boundary keeps mutation behavior unchanged.
+        return await self._request_once(method, path, params=params, json=json)
 
     async def list_school_publications(
         self,

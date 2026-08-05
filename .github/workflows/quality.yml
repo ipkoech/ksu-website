@@ -22,7 +22,6 @@ jobs:
         run: |
           git diff --check
           python -m compileall -q scripts services/common/ksu_common
-          scripts/validate_migrations.sh
           detect-secrets scan --all-files --exclude-files '(^|/)(\.env|node_modules|\.pnpm-store|test-results|\.git/)' --baseline .secrets.baseline
           python scripts/ruff_baseline.py check --baseline .ruff-baseline.json --paths .
           pytest -q scripts/tests/test_tooling.py
@@ -52,14 +51,44 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ "${{ matrix.service }}" != common ]; then pip install -e ../common; fi
-          pip install -e . pytest ruff
-      - name: Compile and lint
+          pip install -e ".[test]" ruff pip-audit
+      - name: Compile
         working-directory: services/${{ matrix.service }}
-        run: |
-          python -m compileall -q .
+        run: python -m compileall -q .
+      - name: Ruff correctness checks
+        working-directory: services/${{ matrix.service }}
+        run: ruff check .
       - name: Tests
         working-directory: services/${{ matrix.service }}
-        run: pytest -q --disable-warnings
+        run: python -m pytest -q tests --asyncio-mode=auto
+      - name: Check installed dependencies
+        working-directory: services/${{ matrix.service }}
+        run: pip check
+      - name: Audit dependencies
+        working-directory: services/${{ matrix.service }}
+        run: pip-audit
+
+  migrations:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [main, research, library, heri_africa]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install service dependencies
+        working-directory: services/${{ matrix.service }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ../common
+          pip install -e .
+      - name: Validate migration history and source
+        run: scripts/validate_migrations.sh "${{ matrix.service }}"
 
   frontend:
     runs-on: ubuntu-latest

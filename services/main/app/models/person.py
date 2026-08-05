@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime
+from datetime import date
 from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa

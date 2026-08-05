@@ -1,11 +1,11 @@
 """Beat tasks that move scheduled/expiring content through the workflow."""
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import select
+from ksu_common.task_queue import run_worker_async
 
 from ..api.v1.content_workflow import CONTENT_MODELS
 from ..core.database import AsyncSessionLocal
@@ -98,7 +98,7 @@ def publish_due() -> int:
         async with AsyncSessionLocal() as db:
             return await publish_due_content(db)
 
-    return asyncio.run(_run())
+    return run_worker_async(_run())
 
 
 @celery_app.task(name="main.content.expire_due")
@@ -107,7 +107,7 @@ def expire_due() -> int:
         async with AsyncSessionLocal() as db:
             return await expire_due_content(db)
 
-    return asyncio.run(_run())
+    return run_worker_async(_run())
 
 
 __all__ = [

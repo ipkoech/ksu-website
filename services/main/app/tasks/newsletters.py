@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
 import re
-import smtplib
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -12,6 +10,7 @@ from html import escape
 from typing import Protocol
 
 from sqlalchemy import select
+from ksu_common.task_queue import run_worker_async
 
 from ..core.config import get_settings
 from ..core.database import AsyncSessionLocal
@@ -238,16 +237,10 @@ async def _send_newsletter(newsletter_id: str) -> int:
 
 
 @celery_app.task(
-    bind=True,
     name="main.newsletters.send",
-    autoretry_for=(smtplib.SMTPException, TimeoutError, OSError, ConnectionError),
-    retry_backoff=True,
-    retry_backoff_max=600,
-    retry_jitter=True,
-    max_retries=3,
 )
-def queue_newsletter_send(self, newsletter_id: str) -> int:
-    return asyncio.run(_send_newsletter(newsletter_id))
+def queue_newsletter_send(newsletter_id: str) -> int:
+    return run_worker_async(_send_newsletter(newsletter_id))
 
 
 @celery_app.task(name="main.newsletters.send_due")
@@ -256,7 +249,7 @@ def send_due_newsletters() -> int:
         async with AsyncSessionLocal() as db:
             return await enqueue_due_newsletters(db)
 
-    return asyncio.run(_send_due())
+    return run_worker_async(_send_due())
 
 
 __all__ = [

@@ -1,4 +1,3 @@
-import sqlalchemy as sa
 
 from app.models import (
     Base,

@@ -89,7 +89,7 @@ async def list_admin_wings(
 
 
 @router.get("/slug/{slug}")
-@cached_public(timeout=300, vary_on=("fields", "include"))
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_wing_by_slug(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Wing, fields)
     wing = await WingService.get_by_slug(db, slug, load_options=selector.load_options)
@@ -99,7 +99,7 @@ async def get_wing_by_slug(slug: str, db: DbSession, fields: FieldSelection = Fi
 
 
 @router.get("/{wing_id}")
-@cached_public(timeout=300, vary_on=("fields", "include"))
+@cached_public(timeout=300, vary_on=("wing_id", "fields", "include"))
 async def get_wing(wing_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Wing, fields)
     wing = await WingService.get_by_id(db, wing_id, load_options=selector.load_options)

@@ -28,6 +28,11 @@ const defaultQuickLinks: QuickLink[] = [
     external: true,
   },
   {
+    label: "Apply NACOSTI",
+    href: "https://research-portal.nacosti.go.ke/",
+    external: true,
+  },
+  {
     label: "HUDUMA BORA",
     href: "https://digital.kisiiuniversity.ac.ke/",
     external: true,

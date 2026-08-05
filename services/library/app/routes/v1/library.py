@@ -30,6 +30,7 @@ from ...schemas import (
 )
 from ...services import library as svc
 from ...services.media import attach_public_media
+from ._rate_limits import public_catalog_rate_limit
 
 # ── Library branches ──────────────────────────────────────────────────────────
 
@@ -41,6 +42,7 @@ async def invalidate_public_library_cache() -> None:
 
 
 @branches_router.get("/")
+@public_catalog_rate_limit
 async def list_libraries(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -70,6 +72,7 @@ async def list_libraries(
 
 
 @branches_router.get("/{library_id}")
+@public_catalog_rate_limit
 async def get_library(
     request: Request,
     library_id: uuid.UUID,
@@ -162,6 +165,7 @@ async def set_library_hours(
 
 
 @hours_router.get("/")
+@public_catalog_rate_limit
 @cached_public(timeout=300, vary_on=())
 async def get_library_hours(
     request: Request,
@@ -173,6 +177,7 @@ async def get_library_hours(
 
 
 @hours_router.get("/today")
+@public_catalog_rate_limit
 @cached_public(timeout=60, vary_on=("timezone",))
 async def get_library_today_hours(
     request: Request,
@@ -195,6 +200,7 @@ today_hours_router = APIRouter(
 
 
 @today_hours_router.get("/today")
+@public_catalog_rate_limit
 @cached_public(timeout=60, vary_on=("timezone",))
 async def list_today_hours(
     request: Request,
@@ -213,6 +219,7 @@ links_router = APIRouter(
 
 
 @links_router.get("/")
+@public_catalog_rate_limit
 async def list_external_links(
     request: Request,
     library_id: uuid.UUID,
@@ -316,6 +323,7 @@ files_router = APIRouter(
 
 
 @files_router.get("/")
+@public_catalog_rate_limit
 async def list_library_files(
     request: Request,
     library_id: uuid.UUID,

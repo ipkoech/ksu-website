@@ -47,7 +47,7 @@ def test_matching_library_grant_allows_branch_record():
     assert allowed_library_scope_ids(user, "library:write") == {str(library_id)}
 
 
-def test_write_grant_is_scoped_for_read_operations():
+def test_write_grant_does_not_imply_read_permission():
     library_id = uuid.uuid4()
     other_library_id = uuid.uuid4()
     user = _payload(
@@ -60,9 +60,9 @@ def test_write_grant_is_scoped_for_read_operations():
         ]
     )
 
-    assert can_access_library_scope(user, "library:read", library_id) is True
+    assert can_access_library_scope(user, "library:read", library_id) is False
     assert can_access_library_scope(user, "library:read", other_library_id) is False
-    assert allowed_library_scope_ids(user, "library:read") == {str(library_id)}
+    assert allowed_library_scope_ids(user, "library:read") == set()
 
 
 def test_other_library_grant_rejects_branch_record():

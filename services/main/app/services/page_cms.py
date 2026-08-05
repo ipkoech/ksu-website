@@ -280,18 +280,21 @@ def _should_attach_research_partners(section: PageSection) -> bool:
     return section.section_key == "partners" or settings.get("source") == "research_partners"
 
 
-async def _research_partner_section_items(section: PageSection) -> list[dict[str, Any]]:
+async def _research_partner_section_items(
+    section: PageSection,
+    partners: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
     if section.layout_variant != "logo_carousel" or not _should_attach_research_partners(section):
         return []
 
-    try:
-        payload = await ResearchPartnersProxyService.list_partners(per_page=24, status="active", is_active=True)
-    except Exception:
-        return []
-
-    partners = payload.get("data") if isinstance(payload, dict) else None
-    if not isinstance(partners, list):
-        return []
+    if partners is None:
+        try:
+            payload = await ResearchPartnersProxyService.list_partners(per_page=24, status="active", is_active=True)
+        except Exception:
+            return []
+        partners = payload.get("data") if isinstance(payload, dict) else None
+        if not isinstance(partners, list):
+            return []
 
     items: list[dict[str, Any]] = []
     for index, partner in enumerate(partners):
@@ -343,6 +346,7 @@ async def _serialize_section(
     db: AsyncSession,
     section: PageSection,
     media_groups: dict[str, list[dict[str, Any]]],
+    research_partners: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     public_items = sorted(
         (
@@ -356,7 +360,7 @@ async def _serialize_section(
         ),
         key=lambda item: (item.display_order, item.created_at or datetime.min.replace(tzinfo=timezone.utc)),
     )
-    partner_items = await _research_partner_section_items(section)
+    partner_items = await _research_partner_section_items(section, research_partners)
     section_items = partner_items or [
         {
             "id": item.id,
@@ -847,6 +851,40 @@ async def group_media_links(
     return grouped
 
 
+async def group_media_links_for_entities(
+    db: AsyncSession,
+    entity_type: str,
+    entity_ids: Sequence[uuid.UUID],
+) -> dict[uuid.UUID, dict[str, list[dict[str, Any]]]]:
+    """Load public media once and group it by owner entity and media role."""
+    if not entity_ids:
+        return {}
+
+    now = datetime.now(timezone.utc)
+    query = (
+        select(MediaLink)
+        .options(selectinload(MediaLink.media))
+        .join(Media, MediaLink.media_id == Media.id)
+        .where(
+            MediaLink.deleted_at.is_(None),
+            *_published_media_link_filter(now),
+            Media.deleted_at.is_(None),
+            Media.is_public.is_(True),
+            MediaLink.entity_type == entity_type,
+            MediaLink.entity_id.in_(entity_ids),
+        )
+        .order_by(MediaLink.entity_id.asc(), MediaLink.display_order.asc(), MediaLink.created_at.asc())
+    )
+    result = await db.execute(query)
+    grouped = {entity_id: _default_media_groups() for entity_id in entity_ids}
+    for link in result.scalars().all():
+        bucket = _normalize_role(link.role)
+        if bucket is None or link.entity_id not in grouped:
+            continue
+        grouped[link.entity_id][bucket].append(_serialize_media_link(link))
+    return grouped
+
+
 class HomepageCompositionService:
     """Compose page sections and partnership spotlights for public rendering."""
 
@@ -865,19 +903,58 @@ class HomepageCompositionService:
             per_page=100,
         )
         sections = sorted(_coerce_items(sections_result), key=_section_display_order)
-        section_payloads = []
-        for section in sections:
-            section_media = await group_media_links(db, "page_section", section.id)
-            section_payloads.append(await _serialize_section(db, section, section_media))
-
         spotlights = await _list_active_partnership_spotlights(db)
+        spotlight_partner_ids = {
+            spotlight.source_id
+            for spotlight in spotlights
+            if spotlight.source_type == "research_partner" and spotlight.source_id is not None
+        }
+        research_partners: list[dict[str, Any]] | None = None
+        if any(
+            section.layout_variant == "logo_carousel" and _should_attach_research_partners(section)
+            for section in sections
+        ):
+            try:
+                partner_response = await ResearchPartnersProxyService.list_partners(
+                    per_page=24,
+                    status="active",
+                    is_active=True,
+                )
+                candidate_partners = partner_response.get("data") if isinstance(partner_response, dict) else None
+                if isinstance(candidate_partners, list):
+                    research_partners = [partner for partner in candidate_partners if isinstance(partner, dict)]
+            except Exception:
+                research_partners = []
+        partner_payloads_by_id = {
+            str(partner_id): partner
+            for partner in research_partners or []
+            if (partner_id := partner.get("id")) is not None
+        }
+        if spotlight_partner_ids:
+            try:
+                partner_payloads_by_id.update(
+                    await ResearchPartnersProxyService.find_partners_by_ids(spotlight_partner_ids)
+                )
+            except Exception:
+                pass
+        section_media_by_id = await group_media_links_for_entities(
+            db,
+            "page_section",
+            [section.id for section in sections],
+        )
+        section_payloads = [
+            await _serialize_section(
+                db,
+                section,
+                section_media_by_id.get(section.id, _default_media_groups()),
+                research_partners,
+            )
+            for section in sections
+        ]
+
         spotlight_payloads = []
-        partner_cache: dict[uuid.UUID, dict[str, Any] | None] = {}
         for spotlight in spotlights:
-            partner_payload = partner_cache.get(spotlight.source_id)
-            if spotlight.source_id not in partner_cache:
-                partner_payload = await _get_research_partner_payload(spotlight.source_id)
-                partner_cache[spotlight.source_id] = partner_payload
+            partner_payload = partner_payloads_by_id.get(str(spotlight.source_id))
             spotlight_media = await group_media_links(db, "partnership_spotlight", spotlight.id)
             primary_cta = await _resolve_primary_cta(spotlight, partner_payload)
             spotlight_payloads.append(_serialize_spotlight(spotlight, spotlight_media, primary_cta))
@@ -899,4 +976,5 @@ __all__ = [
     "PartnershipSpotlightWorkflowService",
     "HomepageCompositionService",
     "group_media_links",
+    "group_media_links_for_entities",
 ]

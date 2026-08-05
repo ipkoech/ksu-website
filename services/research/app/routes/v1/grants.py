@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, status
+from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -44,11 +45,13 @@ router = APIRouter()
 
 
 @router.get("/grants/id/{grant_id}/projects", tags=["Grants"])
+@cached_public(timeout=300)
 async def list_grant_projects(grant_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await GrantRelationshipService.list_projects(db, grant_id))
 
 
 @router.get("/grants/id/{grant_id}/themes", tags=["Grants"])
+@cached_public(timeout=300)
 async def list_grant_themes(grant_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await GrantRelationshipService.list_themes(db, grant_id))
 
@@ -65,11 +68,13 @@ async def remove_grant_theme(grant_id: uuid.UUID, theme_id: uuid.UUID, db: Async
 
 
 @router.get("/funders/id/{funder_id}/projects", tags=["Funding Sources"])
+@cached_public(timeout=300)
 async def list_funder_projects(funder_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await FundingRelationshipService.list_projects(db, funder_id))
 
 
 @router.get("/funders/id/{funder_id}/grants", tags=["Funding Sources"])
+@cached_public(timeout=300)
 async def list_funder_grants(funder_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await FundingRelationshipService.list_grants(db, funder_id))
 

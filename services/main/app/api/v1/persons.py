@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import selectinload
 
+from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ._person_media import with_person_photo_urls
@@ -93,6 +94,7 @@ async def _validate_person_cv_media(
 
 
 @router.get("")
+@cached_public(timeout=300, vary_on=("page", "per_page", "search", "department_id", "school_id", "academic_rank", "employment_type", "is_researcher", "status", "fields", "include"))
 async def list_persons(
     db: DbSession,
     page: int = Query(1, ge=1),
@@ -169,6 +171,7 @@ async def list_admin_persons(
 
 
 @router.get("/{person_id}")
+@cached_public(timeout=300, vary_on=("person_id", "fields", "include"))
 async def get_person(person_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Person, fields)
     person = await PersonService.get_by_id(

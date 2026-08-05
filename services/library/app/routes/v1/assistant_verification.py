@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.schemas.responses import success
+from ksu_common.rate_limit import rate_limit
 
 from ...core.config import get_settings
 from ...core.database import get_db
@@ -39,7 +39,9 @@ def _set_cookie(response: Response, name: str, value: str, max_age: int) -> None
 
 
 @router.post("/guest/session")
+@rate_limit(requests=10, window=600, prefix="library:assistant:guest:ip")
 async def create_guest_session(
+    request: Request,
     response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
@@ -50,6 +52,7 @@ async def create_guest_session(
 
 
 @router.post("/verification/request")
+@rate_limit(requests=3, window=3600, prefix="library:assistant:verification:ip", max_body_bytes=8 * 1024)
 async def request_verification(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],

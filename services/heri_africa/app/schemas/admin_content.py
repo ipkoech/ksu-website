@@ -5,7 +5,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .collections import ResearchSummary
 
 
 class NewsCreate(BaseModel):

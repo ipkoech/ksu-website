@@ -1,6 +1,7 @@
 """API v1 route registration."""
 
 from fastapi import FastAPI
+from ksu_common import install_request_body_limit_middleware
 
 from ...core.config import get_settings
 from ...routes.v1.health import router as health_router
@@ -172,3 +173,4 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(public_inquiries_router, prefix="/api/v1/public", tags=["Public"])
     app.include_router(content_workflow_bulk_router, prefix="/api/v1/content-workflow", tags=["Content"])
     app.include_router(exports_router, prefix="/api/v1/exports", tags=["Exports"])
+    install_request_body_limit_middleware(app)

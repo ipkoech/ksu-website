@@ -2,49 +2,48 @@
 
 from __future__ import annotations
 
-import httpx
+from ksu_common.internal_client import get_integration_pool
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.config import get_settings
 from ..models import (
+    FAQ,
+    Alumni,
+    AlumniAssociation,
     Announcement,
     ArtsCulture,
     Blog,
+    Board,
     Campus,
     Club,
     ClubActivity,
     ContactDirectory,
     Department,
     DepartmentService,
+    Division,
     Document,
     Event,
-    FAQ,
+    ExchangeProgramme,
     Intake,
-    NewsletterSubscriber,
+    Media,
+    MediaLink,
     News,
+    NewsletterSubscriber,
+    PageSection,
+    PartnershipSpotlight,
     Person,
+    Policy,
     Programme,
     School,
+    Slider,
     SportsFacility,
     StaffAssignment,
     SupportTicket,
     User,
-    Division,
     Wing,
-    Board,
-    Alumni,
-    AlumniAssociation,
-    ExchangeProgramme,
-    Media,
-    MediaLink,
-    PageSection,
-    PartnershipSpotlight,
-    Policy,
-    Slider,
 )
 from ..schemas.stats import PortalStatsResponse, PublicStatItem, PublicStatsResponse
-
 
 # These names are the dashboard contract.  Main-service portals are calculated
 # below; service-owned portals use their matching research or library endpoint.
@@ -101,20 +100,22 @@ async def _count(db: AsyncSession, model, *conditions) -> int:
 async def _published_publications_count() -> int:
     """Read the public publication count from the owning Research service."""
 
-    async with httpx.AsyncClient(
-        base_url=settings.RESEARCH_SERVICE_URL.rstrip("/"),
-        timeout=httpx.Timeout(20.0, connect=5.0),
+    response = await get_integration_pool().request_internal(
+        "research-public-stats",
+        settings.RESEARCH_SERVICE_URL.rstrip("/"),
+        "GET",
+        "/api/v1/internal/stats",
+        api_key=settings.RESEARCH_SERVICE_API_KEY,
         headers={"X-KSU-Proxy": "main-stats"},
-    ) as client:
-        response = await client.get("/api/v1/stats")
-        response.raise_for_status()
-        payload = response.json()
+    )
+    response.raise_for_status()
+    payload = response.json()
 
     if not isinstance(payload, dict) or payload.get("status") != "success":
-        raise ValueError("Research service returned an unexpected stats payload")
+        raise TypeError("Research service returned an unexpected stats payload")
     data = payload.get("data")
     if not isinstance(data, dict) or not isinstance(data.get("stats"), list):
-        raise ValueError("Research service returned an unexpected stats payload")
+        raise TypeError("Research service returned an unexpected stats payload")
 
     for item in data["stats"]:
         if item.get("key") == "publications" and isinstance(item.get("value"), int):
@@ -126,20 +127,22 @@ async def _published_publications_count() -> int:
 async def _library_portal_stat_counts() -> dict[str, int]:
     """Read dashboard counters from the owning Library service."""
 
-    async with httpx.AsyncClient(
-        base_url=settings.LIBRARY_SERVICE_URL.rstrip("/"),
-        timeout=httpx.Timeout(20.0, connect=5.0),
+    response = await get_integration_pool().request_internal(
+        "library-admin-stats",
+        settings.LIBRARY_SERVICE_URL.rstrip("/"),
+        "GET",
+        "/api/v1/stats/internal/admin",
+        api_key=settings.LIBRARY_SERVICE_API_KEY,
         headers={"X-KSU-Proxy": "main-stats"},
-    ) as client:
-        response = await client.get("/api/v1/stats/admin")
-        response.raise_for_status()
-        payload = response.json()
+    )
+    response.raise_for_status()
+    payload = response.json()
 
     if not isinstance(payload, dict) or payload.get("status") != "success":
-        raise ValueError("Library service returned an unexpected stats payload")
+        raise TypeError("Library service returned an unexpected stats payload")
     data = payload.get("data")
     if not isinstance(data, dict) or not isinstance(data.get("stats"), list):
-        raise ValueError("Library service returned an unexpected stats payload")
+        raise TypeError("Library service returned an unexpected stats payload")
 
     service_values: dict[str, int] = {}
     for item in data["stats"]:
