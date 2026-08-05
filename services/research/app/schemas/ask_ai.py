@@ -3,29 +3,31 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import NotRequired
 from uuid import UUID
 
 from ksu_common.schemas.responses import SuccessResponse
 from pydantic import Field
+from typing_extensions import TypedDict
 
-from .base import BaseSchema
+from .base import JsonScalar, StrictSchema
 
 
-class ResearchAskAIContextRequest(BaseSchema):
+class ResearchAskAIContextRequest(StrictSchema):
     path: str = Field(default="/research", max_length=256)
     section: str | None = Field(default=None, max_length=64)
     resource_key: str | None = Field(default=None, max_length=96)
     record_id: str | None = Field(default=None, max_length=96)
 
 
-class ResearchAskAIReference(BaseSchema):
+class ResearchAskAIReference(StrictSchema):
     label: str
     type: str
     href: str
     resource_key: str | None = None
 
 
-class ResearchAskAIRequest(BaseSchema):
+class ResearchAskAIRequest(StrictSchema):
     conversation_id: UUID | None = None
     message: str = Field(min_length=1, max_length=2000)
     context: ResearchAskAIContextRequest = Field(default_factory=ResearchAskAIContextRequest)
@@ -34,14 +36,14 @@ class ResearchAskAIRequest(BaseSchema):
     references: list[ResearchAskAIReference] = Field(default_factory=list)
 
 
-class ResearchAskAIPrompt(BaseSchema):
+class ResearchAskAIPrompt(StrictSchema):
     id: str
     label: str
     text: str
     intent: str
 
 
-class ResearchAskAIContext(BaseSchema):
+class ResearchAskAIContext(StrictSchema):
     section_key: str
     section_label: str
     path: str
@@ -54,31 +56,87 @@ class ResearchAskAIContext(BaseSchema):
     references: list[ResearchAskAIReference] = Field(default_factory=list)
 
 
-class ResearchAIConversationRead(BaseSchema):
+class ResearchAskAIMessageMetadata(StrictSchema):
+    mode: str
+    provider: str | None = None
+    service_exposure_keys: list[str] = Field(default_factory=list)
+
+
+class ResearchAskAIServiceExposureResource(TypedDict):
+    key: str
+    label: str
+    route: str
+    search_fields: list[str]
+    metadata_fields: list[str]
+    exportable: bool
+
+
+class ResearchAskAIServiceExposureExport(TypedDict):
+    key: str
+    label: str
+    columns: list[str]
+    filename: str
+
+
+class ResearchAskAIServiceExposureSection(TypedDict):
+    key: str
+    label: str
+    href: str
+    resource_key: str | None
+    focus: str
+
+
+class ResearchAskAIServiceExposureStat(TypedDict):
+    key: str
+    label: str
+    value: int | float
+    suffix: str
+    description: str
+    href: str | None
+
+
+class ResearchAskAIRecordSampleGroup(TypedDict):
+    key: str
+    label: str
+    href: str
+    columns: list[str]
+    records: list[dict[str, JsonScalar]]
+
+
+class ResearchAskAIServiceExposure(TypedDict, total=False):
+    mode: str
+    resources: list[ResearchAskAIServiceExposureResource]
+    exports: list[ResearchAskAIServiceExposureExport]
+    sections: NotRequired[list[ResearchAskAIServiceExposureSection]]
+    admin_stats: NotRequired[list[ResearchAskAIServiceExposureStat]]
+    record_samples: NotRequired[list[ResearchAskAIRecordSampleGroup]]
+
+
+class ResearchAIConversationRead(StrictSchema):
     id: UUID
     title: str
     section_key: str | None = None
     resource_key: str | None = None
     record_id: str | None = None
-    context: dict | None = None
+    context: ResearchAskAIContext | None = None
     is_archived: bool = False
     created_at: datetime
     updated_at: datetime
 
 
-class ResearchAIMessageRead(BaseSchema):
+class ResearchAIMessageRead(StrictSchema):
     id: UUID
     conversation_id: UUID
     role: str
     content: str
     content_format: str = "markdown"
-    context_snapshot: dict | None = None
-    references: list[dict] | None = None
-    metadata: dict | None = None
+    context_snapshot: ResearchAskAIContext | None = None
+    references: list[ResearchAskAIReference] | None = None
+    metadata: ResearchAskAIMessageMetadata | None = None
     created_at: datetime
 
 
-class ResearchAskAIResponse(BaseSchema):
+class ResearchAskAIResponse(StrictSchema):
     mode: str = "read_only"
     conversation_id: UUID | None = None
     user_message_id: UUID | None = None
@@ -86,7 +144,16 @@ class ResearchAskAIResponse(BaseSchema):
     answer: str
     content_format: str = "markdown"
     context: ResearchAskAIContext
-    service_exposure: dict = Field(default_factory=dict)
+    service_exposure: ResearchAskAIServiceExposure = Field(
+        default_factory=lambda: {
+            "mode": "read_only",
+            "resources": [],
+            "exports": [],
+            "sections": [],
+            "admin_stats": [],
+            "record_samples": [],
+        }
+    )
     references: list[ResearchAskAIReference] = Field(default_factory=list)
     suggested_prompts: list[ResearchAskAIPrompt] = Field(default_factory=list)
 

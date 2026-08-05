@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from ksu_common.schemas.responses import SuccessResponse
-from pydantic import BaseModel
+
+from .base import JsonScalar, StrictSchema
 
 
-class ResearchExportJobRead(BaseModel):
+class ResearchExportJobRead(StrictSchema):
     job_id: str
     status: str
     resource: str | None = None
@@ -19,3 +20,7 @@ class ResearchExportJobRead(BaseModel):
 
 class ResearchExportJobSuccessResponse(SuccessResponse[ResearchExportJobRead]):
     """Concrete success envelope for queued and completed export jobs."""
+
+
+class ResearchExportJSONResponse(SuccessResponse[list[dict[str, JsonScalar]]]):
+    """Documented JSON envelope for mixed export responses."""

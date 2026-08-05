@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from ksu_common.schemas.responses import SuccessResponse
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from .base import JsonScalar, StrictSchema
 
 
-class ResearchSearchResult(BaseModel):
+class ResearchSearchResult(StrictSchema):
     id: str
     type: str
     title: str
@@ -17,10 +17,10 @@ class ResearchSearchResult(BaseModel):
     date: str | None = None
     status: str | None = None
     is_featured: bool = False
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, JsonScalar] = Field(default_factory=dict)
 
 
-class ResearchSearchResponse(BaseModel):
+class ResearchSearchResponse(StrictSchema):
     query: str
     total: int
     results: list[ResearchSearchResult]

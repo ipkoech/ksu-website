@@ -16,11 +16,17 @@ from ksu_common.schemas.responses import success
 
 from ...core.auth import require_scope
 from ...core.database import get_db
-from ...schemas.exports import ResearchExportJobRead, ResearchExportJobSuccessResponse
+from ...schemas.exports import (
+    ResearchExportJobRead,
+    ResearchExportJobSuccessResponse,
+    ResearchExportJSONResponse,
+)
 from ...services.exports import ResearchExportService
 from ...tasks.celery_app import celery_app
 
-router = APIRouter(tags=["Research Exports"], dependencies=[Depends(require_scope("research:write"))])
+RESEARCH_WRITE_SCOPE = require_scope("research:write")
+
+router = APIRouter(tags=["Research Exports"], dependencies=[Depends(RESEARCH_WRITE_SCOPE)])
 
 
 @router.post(
@@ -178,7 +184,25 @@ async def download_research_export_job(job_id: str):
     )
 
 
-@router.get("/exports/{resource_key}")
+@router.get(
+    "/exports/{resource_key}",
+    responses={
+        200: {
+            "description": "JSON export rows when format=json, or CSV file contents when format=csv.",
+            "content": {
+                "application/json": {
+                    "schema": ResearchExportJSONResponse.model_json_schema(),
+                },
+                "text/csv": {
+                    "schema": {
+                        "type": "string",
+                        "format": "binary",
+                    }
+                },
+            },
+        }
+    },
+)
 async def export_research_resource(
     resource_key: str,
     format: str = Query("csv", pattern="^(csv|json)$"),

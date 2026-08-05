@@ -29,6 +29,36 @@ def _paths(router, method: str, prefix: str = "") -> set[str]:
     return paths
 
 
+def _permissive_schema_paths(components: dict, schema_name: str) -> list[str]:
+    findings: list[str] = []
+    visited: set[str] = set()
+
+    def visit(node, path: str) -> None:
+        if isinstance(node, dict):
+            ref = node.get("$ref")
+            if isinstance(ref, str) and ref.startswith("#/components/schemas/"):
+                name = ref.rsplit("/", 1)[-1]
+                if name in visited:
+                    return
+                visited.add(name)
+                visit(components[name], f"{path}->$ref({name})")
+                return
+
+            if node.get("additionalProperties") is True:
+                findings.append(path)
+
+            for key, value in node.items():
+                visit(value, f"{path}.{key}")
+            return
+
+        if isinstance(node, list):
+            for index, value in enumerate(node):
+                visit(value, f"{path}[{index}]")
+
+    visit(components[schema_name], schema_name)
+    return findings
+
+
 class ResearchAskAIContractTests(unittest.TestCase):
     def test_ask_ai_route_is_registered_and_read_protected(self):
         route = _route(ask_ai_router, "/ask-ai", "POST")
@@ -167,6 +197,13 @@ class ResearchAskAIContractTests(unittest.TestCase):
         self.assertIn("read-only", response.answer.lower())
         self.assertTrue(response.suggested_prompts)
 
+    def test_ask_ai_openapi_schemas_do_not_expose_permissive_objects(self):
+        components = create_app().openapi()["components"]["schemas"]
+
+        self.assertEqual(_permissive_schema_paths(components, "ResearchAskAIResponse"), [])
+        self.assertEqual(_permissive_schema_paths(components, "ResearchAIConversationRead"), [])
+        self.assertEqual(_permissive_schema_paths(components, "ResearchAIMessageRead"), [])
+
     def test_advisor_response_does_not_echo_user_question(self):
         response = ResearchAskAIService.respond(
             message="Whats the 1st project all about?",
@@ -269,7 +306,7 @@ class ResearchAskAIContractTests(unittest.TestCase):
             context=response.context,
             service_exposure=response.service_exposure,
         )
-        serialized_exposure = json.dumps(response.service_exposure)
+        serialized_exposure = json.dumps(response.model_dump(mode="json")["service_exposure"])
         combined_output = "\n".join([response.answer, prompt, serialized_exposure])
 
         self.assertIn("Carbon Literacy for Youth Employability", response.answer)

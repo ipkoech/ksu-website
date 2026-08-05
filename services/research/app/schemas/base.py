@@ -10,6 +10,7 @@ from typing import Annotated, Any, Generic, TypeVar
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 T = TypeVar("T")
+JsonScalar = str | int | float | bool | None
 
 
 class BaseSchema(BaseModel):
@@ -19,6 +20,17 @@ class BaseSchema(BaseModel):
         from_attributes=True,
         populate_by_name=True,
         str_strip_whitespace=True,
+    )
+
+
+class StrictSchema(BaseSchema):
+    """Base schema for concrete response models that reject unknown fields."""
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        str_strip_whitespace=True,
+        extra="forbid",
     )
 
 

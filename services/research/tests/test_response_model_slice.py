@@ -48,7 +48,7 @@ def _inspected_routes(app: FastAPI):
     return {inspection.path: inspection for inspection in _iter_route_inspections(app.routes)}
 
 
-def test_selected_public_routes_reduce_coverage_to_only_dynamic_export_json(
+def test_selected_public_routes_keep_only_the_documented_mixed_export_gap(
     monkeypatch, tmp_path
 ) -> None:
     _configure_research_env(monkeypatch, tmp_path)
@@ -81,6 +81,11 @@ def test_selected_public_routes_declare_concrete_models_or_real_stream_file_resp
     for path in concrete_json_paths:
         assert routes[path].route.response_model is not None, path
 
+    export_operation = app.openapi()["paths"]["/api/v1/exports/{resource_key}"]["get"]
+    export_content = export_operation["responses"]["200"]["content"]
+
+    assert "application/json" in export_content
+    assert "text/csv" in export_content
     assert routes["/api/v1/ask-ai/stream"].response_class is StreamingResponse
     assert routes["/api/v1/exports/jobs/{job_id}/download"].response_class is FileResponse
     assert routes["/api/v1/exports/{resource_key}"].route.response_model is None

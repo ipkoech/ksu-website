@@ -59,6 +59,15 @@ class ResearchExportContractTests(unittest.TestCase):
         self.assertIn("/api/v1/exports/jobs/{job_id}", paths)
         self.assertIn("/api/v1/exports/jobs/{job_id}/download", paths)
 
+    def test_export_route_openapi_documents_json_and_csv_variants(self):
+        operation = create_app().openapi()["paths"]["/api/v1/exports/{resource_key}"]["get"]
+        content = operation["responses"]["200"]["content"]
+
+        self.assertIn("application/json", content)
+        self.assertIn("text/csv", content)
+        self.assertTrue(content["application/json"].get("schema") or content["application/json"].get("examples"))
+        self.assertTrue(content["text/csv"].get("schema") or content["text/csv"].get("examples"))
+
     def test_research_export_task_is_registered_with_celery_worker(self):
         imports = set(celery_app.conf.imports)
 
