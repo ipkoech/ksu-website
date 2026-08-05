@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator, Iterator, Mapping
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 from time import perf_counter
 from typing import Any
 
+from fastapi import HTTPException
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -20,6 +22,7 @@ from sqlalchemy.ext.asyncio import (
 from .observability import Metrics, get_prometheus_registry
 
 _query_count: ContextVar[int | None] = ContextVar("ksu_database_query_count", default=None)
+_query_budget: ContextVar[int | None] = ContextVar("ksu_database_query_budget", default=None)
 
 
 @dataclass
@@ -27,6 +30,26 @@ class QueryCountObservation:
     """Bounded per-context SQL execution count for request-level inspection."""
 
     count: int = 0
+
+
+class DatabaseConcurrencyLimitExceeded(HTTPException):
+    """Raised when a route cannot acquire its process-local database slot."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=503,
+            detail="Database concurrency limit exceeded; please retry shortly.",
+        )
+
+
+class QueryBudgetExceeded(HTTPException):
+    """Raised before a route exceeds its configured SQL execution budget."""
+
+    def __init__(self, max_queries: int) -> None:
+        super().__init__(
+            status_code=429,
+            detail=f"Database query budget of {max_queries} exceeded.",
+        )
 
 
 @contextmanager
@@ -48,10 +71,85 @@ def current_query_count() -> int:
     return _query_count.get() or 0
 
 
+@contextmanager
+def query_budget_context(max_queries: int) -> Iterator[QueryCountObservation]:
+    """Limit SQL executions while retaining the existing query-count scope.
+
+    When a request already has a :func:`query_count_context`, the budget uses
+    that counter. Otherwise it creates a short-lived counter so the primitive
+    is independently usable from a FastAPI dependency or middleware.
+    """
+    if max_queries < 1:
+        raise ValueError("max_queries must be at least 1")
+
+    count_token = None
+    if _query_count.get() is None:
+        count_token = _query_count.set(0)
+    budget_token = _query_budget.set(max_queries)
+    observation = QueryCountObservation()
+    try:
+        yield observation
+    finally:
+        observation.count = current_query_count()
+        _query_budget.reset(budget_token)
+        if count_token is not None:
+            _query_count.reset(count_token)
+
+
 def _record_query_count() -> None:
     count = _query_count.get()
     if count is not None:
-        _query_count.set(count + 1)
+        next_count = count + 1
+        max_queries = _query_budget.get()
+        if max_queries is not None and next_count > max_queries:
+            raise QueryBudgetExceeded(max_queries)
+        _query_count.set(next_count)
+
+
+@dataclass
+class DatabaseRequestBudget:
+    """Injectable, process-local database limits for one FastAPI route.
+
+    Create one instance during route setup and use ``dependency`` with
+    ``Depends`` or ``limit`` from middleware. Limits are intentionally local
+    to the process; database connection pools remain the cross-process guard.
+    """
+
+    max_concurrency: int = 16
+    max_queries: int = 100
+    acquire_timeout_seconds: float = 0.1
+    _semaphore: asyncio.BoundedSemaphore = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        if self.max_concurrency < 1:
+            raise ValueError("max_concurrency must be at least 1")
+        if self.max_queries < 1:
+            raise ValueError("max_queries must be at least 1")
+        if self.acquire_timeout_seconds < 0:
+            raise ValueError("acquire_timeout_seconds must be non-negative")
+        self._semaphore = asyncio.BoundedSemaphore(self.max_concurrency)
+
+    @asynccontextmanager
+    async def limit(self) -> AsyncIterator[QueryCountObservation]:
+        """Acquire a route slot and enforce its query budget for this scope."""
+        try:
+            await asyncio.wait_for(
+                self._semaphore.acquire(),
+                timeout=self.acquire_timeout_seconds,
+            )
+        except TimeoutError as exc:
+            raise DatabaseConcurrencyLimitExceeded() from exc
+
+        try:
+            with query_budget_context(self.max_queries) as observation:
+                yield observation
+        finally:
+            self._semaphore.release()
+
+    async def dependency(self) -> AsyncIterator[QueryCountObservation]:
+        """FastAPI-compatible async-generator dependency."""
+        async with self.limit() as observation:
+            yield observation
 
 
 @dataclass(frozen=True)

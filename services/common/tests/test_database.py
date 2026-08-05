@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
 from types import SimpleNamespace
 
 import pytest
+import ksu_common.database as database_module
 from ksu_common.database import (
     DatabaseConfig,
     DatabaseRuntime,
@@ -288,3 +290,58 @@ async def test_session_dependency_rolls_back_failed_work() -> None:
 
     assert session.commits == 0
     assert session.rollbacks == 1
+
+
+@pytest.mark.asyncio
+async def test_database_request_budget_rejects_concurrent_route_work() -> None:
+    budget = database_module.DatabaseRequestBudget(
+        max_concurrency=1,
+        max_queries=5,
+        acquire_timeout_seconds=0.01,
+    )
+    entered = asyncio.Event()
+    release = asyncio.Event()
+
+    async def hold_budget() -> None:
+        async with budget.limit():
+            entered.set()
+            await release.wait()
+
+    holder = asyncio.create_task(hold_budget())
+    await entered.wait()
+
+    with pytest.raises(database_module.DatabaseConcurrencyLimitExceeded) as exc_info:
+        async with budget.limit():
+            pass
+
+    assert exc_info.value.status_code == 503
+    assert "database concurrency" in exc_info.value.detail.lower()
+    release.set()
+    await holder
+
+
+def test_query_budget_raises_at_the_configured_query_boundary() -> None:
+    with pytest.raises(database_module.QueryBudgetExceeded) as exc_info:
+        with database_module.query_budget_context(max_queries=1) as observation:
+            database_module._record_query_count()
+            assert current_query_count() == 1
+            database_module._record_query_count()
+
+    assert exc_info.value.status_code == 429
+    assert "query budget" in exc_info.value.detail
+    assert observation.count == 1
+    assert current_query_count() == 0
+
+
+@pytest.mark.asyncio
+async def test_database_request_budget_dependency_scopes_query_count() -> None:
+    budget = database_module.DatabaseRequestBudget(max_concurrency=2, max_queries=2)
+    dependency = budget.dependency()
+
+    observation = await dependency.__anext__()
+    database_module._record_query_count()
+    database_module._record_query_count()
+    with pytest.raises(StopAsyncIteration):
+        await dependency.__anext__()
+
+    assert observation.count == 2

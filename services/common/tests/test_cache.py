@@ -1,3 +1,4 @@
+import asyncio
 from types import SimpleNamespace
 
 import pytest
@@ -61,6 +62,7 @@ def test_function_cache_key_ignores_infrastructure_arguments():
 class _FakeRedis:
     def __init__(self):
         self.values = {}
+        self.locks = {}
 
     async def get(self, key):
         return self.values.get(key)
@@ -68,10 +70,34 @@ class _FakeRedis:
     async def setex(self, key, timeout, value):
         self.values[key] = value
 
+    async def set(self, key, value, *, nx=False, px=None):
+        if nx:
+            if key in self.locks:
+                return False
+            self.locks[key] = value
+            return True
+        self.values[key] = value
+        return True
+
+    async def eval(self, _script, _num_keys, key, token):
+        if self.locks.get(key) == token:
+            del self.locks[key]
+            return 1
+        return 0
+
 
 class _WriteFailRedis(_FakeRedis):
     async def setex(self, key, timeout, value):
         raise cache_module.redis.RedisError("cache write failed")
+
+
+class _SingleFlightRedis(_FakeRedis):
+    pass
+
+
+class _LockFailRedis(_FakeRedis):
+    async def set(self, *_args, **_kwargs):
+        raise cache_module.redis.RedisError("cache lock unavailable")
 
 
 @pytest.mark.asyncio
@@ -119,3 +145,131 @@ async def test_cached_public_does_not_execute_endpoint_twice_when_cache_write_fa
 
     assert response.headers["X-Cache"] == "MISS"
     assert calls == 1
+
+
+@pytest.mark.asyncio
+async def test_cached_public_coalesces_concurrent_cache_misses(monkeypatch):
+    redis = _SingleFlightRedis()
+    calls = 0
+    loader_started = asyncio.Event()
+    release_loader = asyncio.Event()
+
+    async def endpoint(*, slug: str):
+        nonlocal calls
+        calls += 1
+        loader_started.set()
+        await release_loader.wait()
+        return {"slug": slug}
+
+    monkeypatch.setattr(cache_module, "get_redis", lambda: _async_value(redis))
+    cached_endpoint = cache_module.cached_public(timeout=60, vary_on=("slug",))(endpoint)
+
+    first = asyncio.create_task(cached_endpoint(slug="computer-science"))
+    await loader_started.wait()
+    second = asyncio.create_task(cached_endpoint(slug="computer-science"))
+    await asyncio.sleep(0)
+    release_loader.set()
+
+    first_response, second_response = await asyncio.gather(first, second)
+
+    assert calls == 1
+    assert {first_response.headers["X-Cache"], second_response.headers["X-Cache"]} == {
+        "MISS",
+        "HIT",
+    }
+    assert first_response.body == second_response.body == b'{"slug":"computer-science"}'
+    assert redis.locks == {}
+
+
+@pytest.mark.asyncio
+async def test_cache_response_coalesces_concurrent_cache_misses(monkeypatch):
+    redis = _SingleFlightRedis()
+    calls = 0
+    loader_started = asyncio.Event()
+    release_loader = asyncio.Event()
+    user = SimpleNamespace(sub="student-1")
+
+    async def endpoint(*, user, slug: str):
+        nonlocal calls
+        calls += 1
+        loader_started.set()
+        await release_loader.wait()
+        return {"slug": slug, "user": user.sub}
+
+    monkeypatch.setattr(cache_module, "get_redis", lambda: _async_value(redis))
+    cached_endpoint = cache_module.cache_response(timeout=60, vary_on=("slug",))(endpoint)
+
+    first = asyncio.create_task(cached_endpoint(user=user, slug="computer-science"))
+    await loader_started.wait()
+    second = asyncio.create_task(cached_endpoint(user=user, slug="computer-science"))
+    await asyncio.sleep(0)
+    release_loader.set()
+
+    first_response, second_response = await asyncio.gather(first, second)
+
+    assert calls == 1
+    assert {first_response.headers["X-Cache"], second_response.headers["X-Cache"]} == {
+        "MISS",
+        "HIT",
+    }
+    assert first_response.body == second_response.body == b'{"slug":"computer-science","user":"student-1"}'
+    assert redis.locks == {}
+
+
+@pytest.mark.asyncio
+async def test_cached_public_releases_single_flight_lock_after_loader_failure(monkeypatch):
+    redis = _SingleFlightRedis()
+    calls = 0
+    loader_started = asyncio.Event()
+    fail_loader = asyncio.Event()
+
+    async def endpoint(*, slug: str):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            loader_started.set()
+            await fail_loader.wait()
+            raise RuntimeError("loader failed")
+        return {"slug": slug}
+
+    monkeypatch.setattr(cache_module, "get_redis", lambda: _async_value(redis))
+    cached_endpoint = cache_module.cached_public(timeout=60, vary_on=("slug",))(endpoint)
+
+    failing_request = asyncio.create_task(cached_endpoint(slug="computer-science"))
+    await loader_started.wait()
+    waiting_request = asyncio.create_task(cached_endpoint(slug="computer-science"))
+    await asyncio.sleep(0)
+    assert not waiting_request.done()
+    fail_loader.set()
+
+    with pytest.raises(RuntimeError, match="loader failed"):
+        await failing_request
+    response = await waiting_request
+
+    assert calls == 2
+    assert response.headers["X-Cache"] == "MISS"
+    assert redis.locks == {}
+
+
+@pytest.mark.asyncio
+async def test_cached_public_falls_back_when_single_flight_lock_is_unavailable(monkeypatch):
+    redis = _LockFailRedis()
+    calls = 0
+
+    async def endpoint(*, slug: str):
+        nonlocal calls
+        calls += 1
+        return {"slug": slug}
+
+    monkeypatch.setattr(cache_module, "get_redis", lambda: _async_value(redis))
+    cached_endpoint = cache_module.cached_public(timeout=60, vary_on=("slug",))(endpoint)
+
+    first = await cached_endpoint(slug="computer-science")
+    second = await cached_endpoint(slug="computer-science")
+
+    assert first == second == {"slug": "computer-science"}
+    assert calls == 2
+
+
+async def _async_value(value):
+    return value

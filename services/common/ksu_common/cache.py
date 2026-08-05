@@ -16,10 +16,12 @@ Usage:
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import inspect
 import json
 import os
+import secrets
 from contextvars import ContextVar, Token
 from functools import wraps
 from typing import Any, Callable, Sequence
@@ -31,6 +33,16 @@ from fastapi.responses import JSONResponse
 
 _redis_client: redis.Redis | None = None
 _cache_context: ContextVar[dict[str, Any] | None] = ContextVar("ksu_cache_context", default=None)
+_SINGLE_FLIGHT_LOCK_TTL_MS = 30_000
+_SINGLE_FLIGHT_WAIT_SECONDS = 1.0
+_SINGLE_FLIGHT_POLL_SECONDS = 0.025
+_LOCK_RELEASE_SCRIPT = """
+if redis.call('get', KEYS[1]) == ARGV[1] then
+    return redis.call('del', KEYS[1])
+end
+return 0
+"""
+_CACHE_MISS = object()
 
 
 def begin_cache_context(request: Request) -> Token:
@@ -116,6 +128,102 @@ def _cacheable_json_value(value: Any) -> Any | None:
     return encoded
 
 
+async def _cached_value(client: redis.Redis, cache_key: str) -> Any:
+    cached = await client.get(cache_key)
+    if cached:
+        return _cache_result(json.loads(cached), "HIT")
+    return _CACHE_MISS
+
+
+async def _release_single_flight_lock(client: redis.Redis, lock_key: str, token: str) -> None:
+    """Release a lock only when this request still owns its token."""
+    try:
+        await client.eval(_LOCK_RELEASE_SCRIPT, 1, lock_key, token)
+    except redis.RedisError:
+        # A lease expiry bounds any lock left behind by a Redis failure.
+        pass
+
+
+async def _load_while_holding_single_flight_lock(
+    client: redis.Redis,
+    cache_key: str,
+    lock_key: str,
+    token: str,
+    timeout: int,
+    loader: Callable[[], Any],
+) -> Any:
+    try:
+        result = await loader()
+        encoded_result = _cacheable_json_value(result)
+        if encoded_result is None:
+            return result
+        try:
+            await client.setex(cache_key, timeout, json.dumps(encoded_result))
+        except redis.RedisError:
+            # The loader result is still valid when Redis is unavailable.
+            pass
+        return _cache_result(encoded_result, "MISS")
+    finally:
+        await _release_single_flight_lock(client, lock_key, token)
+
+
+async def _cached_single_flight(
+    client: redis.Redis,
+    cache_key: str,
+    timeout: int,
+    loader: Callable[[], Any],
+) -> Any:
+    """Serve a cached value or coalesce concurrent cache-miss loaders.
+
+    Redis failures deliberately degrade to the normal uncached endpoint path.
+    A bounded wait avoids deadlocking callers when a loader crashes or a lock
+    owner disappears before its lease is released.
+    """
+    try:
+        cached = await _cached_value(client, cache_key)
+        if cached is not _CACHE_MISS:
+            return cached
+    except redis.RedisError:
+        return await loader()
+
+    lock_key = f"{cache_key}:single-flight"
+    deadline = asyncio.get_running_loop().time() + _SINGLE_FLIGHT_WAIT_SECONDS
+    while True:
+        token = secrets.token_urlsafe(24)
+        try:
+            acquired = await client.set(
+                lock_key,
+                token,
+                nx=True,
+                px=_SINGLE_FLIGHT_LOCK_TTL_MS,
+            )
+        except redis.RedisError:
+            return await loader()
+
+        if acquired:
+            return await _load_while_holding_single_flight_lock(
+                client,
+                cache_key,
+                lock_key,
+                token,
+                timeout,
+                loader,
+            )
+
+        if asyncio.get_running_loop().time() >= deadline:
+            # The owner may be stuck until its lease expires. Do not make the
+            # request wait indefinitely; preserve the ordinary cache fallback.
+            return await loader()
+
+        await asyncio.sleep(_SINGLE_FLIGHT_POLL_SECONDS)
+        try:
+            cached = await _cached_value(client, cache_key)
+            if cached is not _CACHE_MISS:
+                return cached
+        except redis.RedisError:
+            return await loader()
+
+
 def _build_function_cache_key(
     prefix: str,
     func: Callable,
@@ -195,25 +303,15 @@ def cached_public(
                     if request is not None
                     else _build_function_cache_key(prefix, func, args, kwargs, vary_on)
                 )
-                cached = await client.get(cache_key)
             except redis.RedisError:
                 return await func(*args, **kwargs)
 
-            if cached:
-                return _cache_result(json.loads(cached), "HIT")
-
-            result = await func(*args, **kwargs)
-            encoded_result = _cacheable_json_value(result)
-            if encoded_result is None:
-                return result
-
-            try:
-                await client.setex(cache_key, timeout, json.dumps(encoded_result))
-            except redis.RedisError:
-                # The endpoint has already done its work. Do not execute it a
-                # second time just because the cache write failed.
-                pass
-            return _cache_result(encoded_result, "MISS")
+            return await _cached_single_flight(
+                client,
+                cache_key,
+                timeout,
+                lambda: func(*args, **kwargs),
+            )
 
         return wrapper
 
@@ -253,23 +351,15 @@ def cache_response(
                     if request is not None
                     else _build_function_cache_key(prefix, func, args, kwargs, vary_on, user_id=user_id)
                 )
-                cached = await client.get(cache_key)
             except redis.RedisError:
                 return await func(*args, **kwargs)
 
-            if cached:
-                return _cache_result(json.loads(cached), "HIT")
-
-            result = await func(*args, **kwargs)
-            encoded_result = _cacheable_json_value(result)
-            if encoded_result is None:
-                return result
-
-            try:
-                await client.setex(cache_key, timeout, json.dumps(encoded_result))
-            except redis.RedisError:
-                pass
-            return _cache_result(encoded_result, "MISS")
+            return await _cached_single_flight(
+                client,
+                cache_key,
+                timeout,
+                lambda: func(*args, **kwargs),
+            )
 
         return wrapper
 
