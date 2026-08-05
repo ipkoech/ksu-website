@@ -445,3 +445,30 @@ def should_skip_audit(path: str) -> bool:
         "/favicon.ico",
     )
     return path.startswith(excluded_prefixes)
+
+
+#: Cookie names that carry an authenticated session across the platform. A
+#: request bearing one of these is treated as authenticated for audit purposes
+#: even though the audit layer never validates it.
+AUTH_COOKIE_NAMES = ("ksu_access", "access_token")
+
+_READ_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+
+
+def is_anonymous_read(request: Request) -> bool:
+    """Return True for a safe-method request that carries no credential at all.
+
+    Public page views are the bulk of traffic on a university site and auditing
+    them turns every read into a database write while growing ``audit_logs``
+    once per visitor. Anything presenting a credential is still audited, as is
+    every unsafe method, so the accountability trail is unchanged.
+    """
+    if request.method.upper() not in _READ_METHODS:
+        return False
+    if request.headers.get("authorization"):
+        return False
+    if request.headers.get("x-internal-key") or request.headers.get("x-internal-api-key"):
+        return False
+    if request.headers.get("x-api-key"):
+        return False
+    return not any(name in request.cookies for name in AUTH_COOKIE_NAMES)

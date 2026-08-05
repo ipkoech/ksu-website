@@ -28,8 +28,8 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str
     DB_SCHEMA: str = "library"
-    DB_POOL_SIZE: int = Field(default=10, ge=1)
-    DB_MAX_OVERFLOW: int = Field(default=20, ge=0)
+    DB_POOL_SIZE: int = Field(default=5, ge=1)
+    DB_MAX_OVERFLOW: int = Field(default=0, ge=0)
     READ_DATABASE_URL: str | None = None
     READ_REPLICA_ENABLED: bool = False
     READ_REPLICA_APPROVED: bool = False
@@ -45,7 +45,9 @@ class Settings(BaseSettings):
     # Credential used only when Library calls Main. Keep it separate from the
     # inbound key used to authenticate callers into Library.
     MAIN_SERVICE_API_KEY: str | None = None
-    INTERNAL_API_KEY: str = "change-me-internal"
+    # Required, with no default: a shipped placeholder is a published credential
+    # for any environment where APP_ENV is not set to a production value.
+    INTERNAL_API_KEY: str
     PUBLIC_CATALOG_RATE_LIMIT_COUNT: int = Field(default=60, ge=1)
     PUBLIC_CATALOG_RATE_LIMIT_WINDOW_SECONDS: int = Field(default=60, ge=1)
     HEALTH_RATE_LIMIT_COUNT: int = Field(default=30, ge=1)

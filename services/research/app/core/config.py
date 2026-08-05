@@ -28,8 +28,8 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str
     DB_SCHEMA: str = "research"
-    DB_POOL_SIZE: int = Field(default=10, ge=1)
-    DB_MAX_OVERFLOW: int = Field(default=20, ge=0)
+    DB_POOL_SIZE: int = Field(default=5, ge=1)
+    DB_MAX_OVERFLOW: int = Field(default=0, ge=0)
     READ_DATABASE_URL: str | None = None
     READ_REPLICA_ENABLED: bool = False
     READ_REPLICA_APPROVED: bool = False
@@ -45,7 +45,9 @@ class Settings(BaseSettings):
     # Credential used only when Research calls Main.  Keep this separate from
     # INTERNAL_API_KEY, which authenticates callers into Research.
     MAIN_SERVICE_API_KEY: str | None = None
-    INTERNAL_API_KEY: str = "change-me-internal"
+    # Required, with no default: a shipped placeholder is a published credential
+    # for any environment where APP_ENV is not set to a production value.
+    INTERNAL_API_KEY: str
     REFERENCE_VALIDATION_MODE: str = "warn"  # disabled | warn | strict
     REFERENCE_VALIDATION_TIMEOUT_SECONDS: float = 5.0
     LOG_LEVEL: str = "INFO"

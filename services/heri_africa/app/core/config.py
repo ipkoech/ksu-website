@@ -25,8 +25,8 @@ class HeriSettings(BaseSettings):
     SERVICE_NAME: str = "heri-africa"
     DATABASE_URL: str = "postgresql+asyncpg://localhost/ksu_services_db"
     DB_SCHEMA: str = "heri"
-    DB_POOL_SIZE: int = Field(default=10, ge=1)
-    DB_MAX_OVERFLOW: int = Field(default=20, ge=0)
+    DB_POOL_SIZE: int = Field(default=5, ge=1)
+    DB_MAX_OVERFLOW: int = Field(default=0, ge=0)
     READ_DATABASE_URL: str | None = None
     READ_REPLICA_ENABLED: bool = False
     READ_REPLICA_APPROVED: bool = False

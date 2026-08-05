@@ -119,6 +119,7 @@ def test_database_runtime_preserves_service_engine_options(monkeypatch: pytest.M
     assert captured["options"] == {
         "echo": True,
         "pool_pre_ping": True,
+        "pool_recycle": 1800,
         "pool_size": 12,
         "max_overflow": 24,
         "connect_args": {"server_settings": {"search_path": "main,public"}},
@@ -128,6 +129,26 @@ def test_database_runtime_preserves_service_engine_options(monkeypatch: pytest.M
         "expire_on_commit": False,
         "autoflush": False,
     }
+
+
+def test_database_runtime_applies_configured_pool_recycle(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_create_engine(url: str, **options: object) -> object:
+        captured["options"] = options
+        return object()
+
+    monkeypatch.setattr("ksu_common.database.create_async_engine", fake_create_engine)
+    monkeypatch.setattr("ksu_common.database.async_sessionmaker", lambda **_: object())
+
+    create_database_runtime(
+        DatabaseConfig(url="postgresql+asyncpg://db/service", pool_recycle=600)
+    )
+
+    # Connections must be retired before an idle proxy or firewall kills them.
+    assert captured["options"]["pool_recycle"] == 600
 
 
 def test_database_runtime_instruments_query_count_and_latency(

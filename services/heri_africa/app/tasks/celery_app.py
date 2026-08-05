@@ -11,7 +11,7 @@ celery_app = create_celery_app(
         name="heri_africa",
         broker_url=settings.CELERY_BROKER_URL or settings.REDIS_URL,
         result_backend=settings.CELERY_RESULT_BACKEND or settings.REDIS_URL,
-        imports=("app.tasks.publication",),
+        imports=("app.tasks.audit", "app.tasks.publication"),
         shutdown_hooks=(database.engine.dispose,),
     ),
     task_packages=("app.tasks",),

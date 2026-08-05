@@ -35,6 +35,7 @@ from .services.change_tracking import (
     collected_audit_changes,
     reset_audit_context,
 )
+from .tasks.audit import dispatch_audit
 
 settings = get_settings()
 
@@ -79,6 +80,8 @@ def create_app() -> FastAPI:
             begin_request=_begin_request_audit,
             collect_changes=collected_audit_changes,
             finish_request=reset_audit_context,
+            dispatch=dispatch_audit,
+            skip_anonymous_reads=True,
         ),
         after_response=_after_response,
     )
@@ -127,6 +130,18 @@ def _register_service_routes(app: FastAPI) -> None:
 
         if media is None or not file_path.is_file():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Media not found")
+
+        # Authorization already happened above. Hand the byte streaming to the
+        # gateway when it is in front of us so a page full of images does not
+        # occupy a worker and a pooled connection per file.
+        if redirect_prefix := settings.MEDIA_INTERNAL_REDIRECT_PREFIX:
+            return Response(
+                status_code=status.HTTP_200_OK,
+                media_type=media.mime_type,
+                headers={
+                    "X-Accel-Redirect": f"{redirect_prefix.rstrip('/')}/{normalized_path}",
+                },
+            )
 
         return FileResponse(file_path, media_type=media.mime_type)
 

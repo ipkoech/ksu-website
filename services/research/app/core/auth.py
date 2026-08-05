@@ -69,6 +69,7 @@ async def get_optional_user(
             token,
             secret=settings.JWT_SECRET_KEY,
             algorithm=settings.JWT_ALGORITHM,
+            expected_type="access",
         )
     except Exception:
         return None

@@ -76,6 +76,8 @@ services:
       - "80"
     volumes:
       - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # Serves upload bytes after main authorizes them via X-Accel-Redirect.
+      - uploads_data:/var/www/uploads:ro
     depends_on:
       main:
         condition: service_healthy
@@ -130,8 +132,13 @@ services:
       - redis-server
       - --appendonly
       - "yes"
+      # Bounded so a cache-fill cannot consume the host. The policy stays
+      # noeviction on purpose: this one instance is both the cache and the
+      # Celery broker, and an eviction policy that can drop keys would silently
+      # discard queued tasks. Splitting cache and broker onto separate
+      # instances is the prerequisite for running the cache under allkeys-lru.
       - --maxmemory
-      - ${REDIS_MAXMEMORY:-0}
+      - ${REDIS_MAXMEMORY:-512mb}
       - --maxmemory-policy
       - ${REDIS_MAXMEMORY_POLICY:-noeviction}
     volumes:
@@ -160,6 +167,11 @@ services:
       DATABASE_URL: postgresql+asyncpg://${MAIN_DB_USER:-ksu_main}:${MAIN_DB_PASSWORD:?MAIN_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: main
       INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
+      # The gateway serves upload bytes from the shared volume; main only
+      # authorizes the request and points nginx at the file.
+      MEDIA_INTERNAL_REDIRECT_PREFIX: /internal-uploads
+      AUDIT_LOG_RETENTION_DAYS: ${AUDIT_LOG_RETENTION_DAYS:-180}
+      OUTBOX_RETENTION_DAYS: ${OUTBOX_RETENTION_DAYS:-7}
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0

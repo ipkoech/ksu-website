@@ -164,6 +164,96 @@ def test_runtime_redacts_secret_like_exception_detail(monkeypatch) -> None:
     assert persisted[-1]["error_message"] == "upstream Authorization: Bearer [REDACTED] failed"
 
 
+def _audit_app(register_routes, **audit_kwargs) -> FastAPI:
+    return create_service_app(
+        ServiceAppConfig(service_name="test-service", title="Test", version="1.0.0"),
+        cors=CorsConfig(origins=("https://example.test",)),
+        register_routes=register_routes,
+        audit=AuditOptions(
+            session_factory=object(),
+            service_name="test-service",
+            **audit_kwargs,
+        ),
+    )
+
+
+def _ok_route(app: FastAPI) -> None:
+    @app.get("/ok")
+    async def ok() -> dict[str, bool]:
+        return {"ok": True}
+
+    @app.post("/write")
+    async def write() -> dict[str, bool]:
+        return {"ok": True}
+
+
+def test_runtime_dispatches_audit_payload_instead_of_writing_inline(monkeypatch) -> None:
+    dispatched: list[dict[str, Any]] = []
+    inline: list[dict[str, Any]] = []
+
+    async def capture_inline(*args, **kwargs):
+        inline.append(kwargs)
+
+    monkeypatch.setattr("ksu_common.runtime.persist_audit_log", capture_inline)
+
+    app = _audit_app(_ok_route, dispatch=dispatched.append)
+
+    assert TestClient(app).post("/write").status_code == 200
+
+    assert inline == []
+    assert len(dispatched) == 1
+    assert dispatched[0]["request_path"] == "/write"
+    assert dispatched[0]["request_method"] == "POST"
+    # The payload must be plain JSON so a broker can carry it.
+    json.dumps(dispatched[0])
+
+
+def test_runtime_falls_back_to_inline_write_when_dispatch_fails(monkeypatch) -> None:
+    persisted: list[dict[str, Any]] = []
+
+    async def capture_payload(_session_factory, payload):
+        persisted.append(payload)
+
+    monkeypatch.setattr("ksu_common.runtime.persist_audit_payload", capture_payload)
+
+    def exploding_dispatch(_payload):
+        raise RuntimeError("broker unavailable")
+
+    app = _audit_app(_ok_route, dispatch=exploding_dispatch)
+
+    # A broker outage must not turn into a failed request.
+    assert TestClient(app).post("/write").status_code == 200
+    assert len(persisted) == 1
+    assert persisted[0]["request_path"] == "/write"
+
+
+def test_runtime_skips_audit_for_anonymous_reads_when_enabled(monkeypatch) -> None:
+    dispatched: list[dict[str, Any]] = []
+
+    app = _audit_app(_ok_route, dispatch=dispatched.append, skip_anonymous_reads=True)
+    client = TestClient(app)
+
+    assert client.get("/ok").status_code == 200
+    assert dispatched == []
+
+    # An unsafe method is always audited, even without a credential.
+    assert client.post("/write").status_code == 200
+    assert [entry["request_path"] for entry in dispatched] == ["/write"]
+
+    # A credentialed read is still audited.
+    assert client.get("/ok", headers={"Authorization": "Bearer token"}).status_code == 200
+    assert [entry["request_path"] for entry in dispatched] == ["/write", "/ok"]
+
+
+def test_runtime_audits_anonymous_reads_by_default(monkeypatch) -> None:
+    dispatched: list[dict[str, Any]] = []
+
+    app = _audit_app(_ok_route, dispatch=dispatched.append)
+
+    assert TestClient(app).get("/ok").status_code == 200
+    assert [entry["request_path"] for entry in dispatched] == ["/ok"]
+
+
 def test_runtime_exposes_prometheus_http_metrics_without_raw_urls() -> None:
     client = TestClient(_app(), raise_server_exceptions=False)
 

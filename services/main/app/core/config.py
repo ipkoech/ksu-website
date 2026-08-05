@@ -7,7 +7,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from ksu_common.config import (
@@ -70,6 +70,16 @@ class Settings(BaseSettings):
     PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS: int
     AUTH_LOGIN_MAX_ATTEMPTS: int = 5
     AUTH_LOGIN_LOCKOUT_MINUTES: int = 15
+
+    # Retention for the two tables that grow with traffic rather than content.
+    # Set either to 0 to disable pruning and keep rows indefinitely.
+    AUDIT_LOG_RETENTION_DAYS: int = Field(default=180, ge=0)
+    OUTBOX_RETENTION_DAYS: int = Field(default=7, ge=0)
+
+    # When set, /uploads/ answers with an X-Accel-Redirect into this internal
+    # nginx location instead of streaming the file through Python. Leave unset
+    # when running the API without the gateway in front, e.g. local uvicorn.
+    MEDIA_INTERNAL_REDIRECT_PREFIX: str | None = None
     LOGIN_RATE_LIMIT_COUNT: int = 10
     LOGIN_RATE_LIMIT_WINDOW_SECONDS: int = 60
     API_KEY_RATE_LIMIT_WINDOW_SECONDS: int = 60

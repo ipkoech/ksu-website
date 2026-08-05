@@ -20,6 +20,7 @@ celery_app = create_celery_app(
         task_routes={
             "library.maintenance.expire_reservations": {"queue": "library.maintenance"},
             "library.maintenance.mark_overdue_loans": {"queue": "library.maintenance"},
+            "library.audit.persist": {"queue": "library.audit"},
         },
         shutdown_hooks=(database.engine.dispose,),
         beat_schedule={

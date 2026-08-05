@@ -58,4 +58,31 @@ create_service_role "${RESEARCH_DB_USER:-ksu_research}" "${RESEARCH_DB_PASSWORD:
 create_service_role "${LIBRARY_DB_USER:-ksu_library}" "${LIBRARY_DB_PASSWORD:?LIBRARY_DB_PASSWORD is required}" library
 create_service_role "${HERI_DB_USER:-ksu_heri}" "${HERI_DB_PASSWORD:?HERI_DB_PASSWORD is required}" heri
 
+# ksu_common.models.AuditLog is pinned to main.audit_logs and every service
+# writes its request audit trail there, so the non-main roles need narrow
+# cross-schema access to that one table. Without it both the audit write and
+# the per-service audit list endpoints fail with permission denied.
+#
+# main.audit_logs is created by main's Alembic bootstrap, which runs after an
+# initdb hook, so the table grant is skipped on a brand new volume. Re-run
+# scripts/provision-database-ownership.sh once migrations have been applied to
+# complete it; the grant below is idempotent and safe to repeat.
+grant_shared_audit_access() {
+  local role="$1"
+
+  PGPASSWORD="$DATABASE_ADMIN_PASSWORD" psql "${PSQL_ARGS[@]}" \
+    --set=ON_ERROR_STOP=1 \
+    --set=role="$role" <<'SQL'
+SELECT format('GRANT USAGE ON SCHEMA main TO %I', :'role')\gexec
+
+SELECT format('GRANT SELECT, INSERT ON main.audit_logs TO %I', :'role')
+FROM pg_catalog.pg_tables
+WHERE schemaname = 'main' AND tablename = 'audit_logs'\gexec
+SQL
+}
+
+grant_shared_audit_access "${RESEARCH_DB_USER:-ksu_research}"
+grant_shared_audit_access "${LIBRARY_DB_USER:-ksu_library}"
+grant_shared_audit_access "${HERI_DB_USER:-ksu_heri}"
+
 echo "Database service roles and schemas are ready."

@@ -18,8 +18,9 @@ celery_app = create_celery_app(
         task_routes={
             "research.exports.generate": {"queue": "research.exports"},
             "research.donations.*": {"queue": "research.donations"},
+            "research.audit.persist": {"queue": "research.audit"},
         },
-        imports=("app.tasks.exports", "app.tasks.donations"),
+        imports=("app.tasks.audit", "app.tasks.exports", "app.tasks.donations"),
         shutdown_hooks=(database.engine.dispose,),
     ),
     task_packages=("app.tasks",),

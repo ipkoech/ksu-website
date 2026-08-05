@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import logging
 import os
 import re
 from collections.abc import Awaitable, Callable, Sequence
@@ -14,7 +15,13 @@ from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .audit import persist_audit_log, should_skip_audit
+from .audit import (
+    build_audit_payload,
+    is_anonymous_read,
+    persist_audit_log,
+    persist_audit_payload,
+    should_skip_audit,
+)
 from .cache import begin_cache_context, end_cache_context, get_cache_context
 from .database import DatabaseBudgetRegistry
 from .observability import (
@@ -33,6 +40,8 @@ from .response_validation import (
     enforce_response_model_coverage,
     install_strict_response_validation,
 )
+
+logger = logging.getLogger("ksu_common.runtime")
 
 STANDARD_CORS_METHODS = ("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
 STANDARD_CORS_HEADERS = ("Authorization", "Content-Type", "X-Internal-Key")
@@ -90,6 +99,13 @@ class AuditOptions:
     begin_request: Callable[[Request], object] | None = None
     collect_changes: Callable[[], dict[str, Any] | None] | None = None
     finish_request: Callable[[object], None] | None = None
+    #: Hand the built payload to a background worker instead of writing it on
+    #: the request path. Receives the JSON-serializable dict from
+    #: :func:`build_audit_payload`. When None the write stays inline.
+    dispatch: Callable[[dict[str, Any]], Awaitable[None] | None] | None = None
+    #: Skip safe-method requests that carry no credential. Public reads are the
+    #: bulk of traffic and auditing them turns every page view into a write.
+    skip_anonymous_reads: bool = False
 
 
 async def _resolve_callback(value: Awaitable[Any] | Any) -> Any:
@@ -196,6 +212,45 @@ def create_service_app(
         "response_model_coverage.baseline_delta", coverage.baseline_delta, tags=coverage_tags
     )
 
+    async def _write_audit(
+        options: AuditOptions,
+        request: Request,
+        status_code: int,
+        *,
+        error_message: str | None = None,
+    ) -> None:
+        """Record one audit entry, off the request path when a dispatcher exists."""
+
+        changes = options.collect_changes() if options.collect_changes else None
+        if options.dispatch is None:
+            await persist_audit_log(
+                options.session_factory,
+                service_name=options.service_name,
+                request=request,
+                status_code=status_code,
+                error_message=error_message,
+                changes=changes,
+            )
+            return
+
+        # Building the payload must happen here — the Request is gone afterwards.
+        # Only the database write is handed off.
+        payload = await build_audit_payload(
+            service_name=options.service_name,
+            request=request,
+            status_code=status_code,
+            error_message=error_message,
+            changes=changes,
+        )
+        try:
+            await _resolve_callback(options.dispatch(payload))
+        except Exception:  # pragma: no cover - a broker outage must not fail the request
+            logger.exception(
+                "failed to dispatch audit entry for %s; falling back to inline write",
+                payload.get("request_path"),
+            )
+            await persist_audit_payload(options.session_factory, payload)
+
     # Register this last so body-limit middleware installed by route registrars
     # is inside the shared observation boundary. Header-only rejections still
     # receive correlation and latency headers and are timed consistently.
@@ -204,6 +259,8 @@ def create_service_app(
         observation = begin_request_observation(request, service_name=config.service_name)
         audit_state: object | None = None
         audit_enabled = audit is not None and not audit.skip_path(request.url.path)
+        if audit_enabled and audit and audit.skip_anonymous_reads and is_anonymous_read(request):
+            audit_enabled = False
         if audit_enabled and audit and audit.begin_request:
             audit_state = await _resolve_callback(audit.begin_request(request))
 
@@ -219,26 +276,16 @@ def create_service_app(
             except Exception as exc:
                 error_type = type(exc).__name__
                 if audit_enabled and audit:
-                    changes = audit.collect_changes() if audit.collect_changes else None
-                    await persist_audit_log(
-                        audit.session_factory,
-                        service_name=audit.service_name,
-                        request=request,
-                        status_code=status_code,
+                    await _write_audit(
+                        audit,
+                        request,
+                        status_code,
                         error_message=_safe_exception_detail(exc),
-                        changes=changes,
                     )
                 raise
 
             if audit_enabled and audit:
-                changes = audit.collect_changes() if audit.collect_changes else None
-                await persist_audit_log(
-                    audit.session_factory,
-                    service_name=audit.service_name,
-                    request=request,
-                    status_code=status_code,
-                    changes=changes,
-                )
+                await _write_audit(audit, request, status_code)
             if after_response:
                 await _resolve_callback(after_response(request, response))
             cache_status = (get_cache_context() or {}).get("status")

@@ -4,10 +4,17 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from ksu_common.internal_client import close_integration_pool
-from ksu_common.runtime import CorsConfig, ServiceAppConfig, create_service_app
+from ksu_common.runtime import (
+    AuditOptions,
+    CorsConfig,
+    ServiceAppConfig,
+    create_service_app,
+)
 
 from .core.config import get_settings
+from .core.database import AsyncSessionLocal
 from .routes import register_routers
+from .tasks.audit import dispatch_audit
 
 
 @asynccontextmanager
@@ -31,4 +38,10 @@ def create_app() -> FastAPI:
         ),
         cors=CorsConfig(origins=settings.CORS_ORIGINS),
         register_routes=register_routers,
+        audit=AuditOptions(
+            session_factory=AsyncSessionLocal,
+            service_name=settings.SERVICE_NAME,
+            dispatch=dispatch_audit,
+            skip_anonymous_reads=True,
+        ),
     )

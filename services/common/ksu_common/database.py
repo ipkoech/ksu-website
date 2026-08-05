@@ -252,6 +252,12 @@ class DatabaseConfig:
     pool_pre_ping: bool = True
     pool_size: int | None = None
     max_overflow: int | None = None
+    #: Retire pooled connections after this many seconds. Without it a pooled
+    #: connection lives forever and is eventually killed out from under the
+    #: pool by an idle timeout on a proxy, firewall, or Postgres itself.
+    #: pool_pre_ping catches that, but only at the cost of a round trip per
+    #: checkout on a connection that was already dead.
+    pool_recycle: int = 1800
     connect_args: Mapping[str, Any] = field(default_factory=dict)
 
 
@@ -347,6 +353,7 @@ def create_database_runtime(
     engine_options: dict[str, Any] = {
         "echo": config.echo,
         "pool_pre_ping": config.pool_pre_ping,
+        "pool_recycle": config.pool_recycle,
     }
     if config.pool_size is not None:
         engine_options["pool_size"] = config.pool_size

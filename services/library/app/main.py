@@ -21,6 +21,7 @@ from ksu_common.runtime import (
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal
 from .routes import register_routers
+from .tasks.audit import dispatch_audit
 
 settings = get_settings()
 configure_service_logging(
@@ -59,5 +60,7 @@ def create_app() -> FastAPI:
         audit=AuditOptions(
             session_factory=AsyncSessionLocal,
             service_name=settings.SERVICE_NAME,
+            dispatch=dispatch_audit,
+            skip_anonymous_reads=True,
         ),
     )

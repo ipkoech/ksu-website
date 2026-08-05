@@ -24,6 +24,7 @@ from .core.config import get_settings
 from .core.database import AsyncSessionLocal
 from .routes import register_routers
 from .services.idempotency import install_idempotency_guards
+from .tasks.audit import dispatch_audit
 
 settings = get_settings()
 configure_service_logging(
@@ -66,6 +67,8 @@ def create_app() -> FastAPI:
         audit=AuditOptions(
             session_factory=AsyncSessionLocal,
             service_name=settings.SERVICE_NAME,
+            dispatch=dispatch_audit,
+            skip_anonymous_reads=True,
         ),
         after_response=_after_response,
     )

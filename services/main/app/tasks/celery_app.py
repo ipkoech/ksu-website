@@ -42,6 +42,9 @@ celery_app = create_celery_app(
             "main.notifications.consume_event": {"queue": "main.notifications"},
             "main.content.publish_due": {"queue": "main.maintenance"},
             "main.content.expire_due": {"queue": "main.maintenance"},
+            "main.audit.persist": {"queue": "main.audit"},
+            "main.audit.prune": {"queue": "main.maintenance"},
+            "main.outbox.prune": {"queue": "main.maintenance"},
         },
         beat_schedule={
             "expire-notifications-every-15-minutes": {
@@ -72,8 +75,17 @@ celery_app = create_celery_app(
                 "task": "main.outbox.publish_pending",
                 "schedule": 10.0,
             },
+            "prune-audit-logs-daily": {
+                "task": "main.audit.prune",
+                "schedule": crontab(hour=3, minute=20),
+            },
+            "prune-published-outbox-events-daily": {
+                "task": "main.outbox.prune",
+                "schedule": crontab(hour=3, minute=40),
+            },
         },
         imports=(
+            "app.tasks.audit",
             "app.tasks.email",
             "app.tasks.imports",
             "app.tasks.newsletters",
@@ -83,6 +95,7 @@ celery_app = create_celery_app(
             "app.tasks.media",
             "app.tasks.inquiries",
             "app.tasks.outbox",
+            "app.tasks.retention",
         ),
         shutdown_hooks=(_shutdown_main_resources,),
     ),
