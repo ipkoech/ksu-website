@@ -58,14 +58,14 @@ export function FundingIllustratedHero({
       <FundingHeroArtwork tone={tone} />
       <div className="relative mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] lg:items-end">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-secondary">
+          <p className="text-sm font-semibold uppercase tracking-eyebrow text-white">
             {eyebrow}
           </p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight sm:text-4xl">
+          <h1 className="mt-3 max-w-5xl text-balance font-display text-3xl font-semibold leading-tight sm:text-4xl">
             {title}
           </h1>
           {body ? (
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-white/82 sm:text-base">
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-white/[0.82] sm:text-base">
               {body}
             </p>
           ) : null}
@@ -78,7 +78,7 @@ export function FundingIllustratedHero({
                   className={
                     action.variant === "secondary"
                       ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/35 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-                      : "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
+                      : "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
                   }
                 >
                   {action.label}
@@ -94,7 +94,7 @@ export function FundingIllustratedHero({
               const Icon = fact.icon ?? CircleDollarSign;
               return (
                 <div key={fact.label} className="rounded-md border border-white/10 bg-white/10 p-3">
-                  <dt className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/65">
+                  <dt className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-white/65">
                     <Icon aria-hidden className="h-3.5 w-3.5 text-secondary" />
                     {fact.label}
                   </dt>
@@ -110,15 +110,22 @@ export function FundingIllustratedHero({
 }
 
 export function FundingHeroArtwork({ tone }: { tone: "grant" | "scholarship" | "endowment" | "donate" }) {
-  const accent = tone === "scholarship" ? "#0f56b3" : tone === "endowment" ? "#b77900" : tone === "donate" ? "#0f766e" : "hsl(var(--primary)/.62)";
+  const accent =
+    tone === "scholarship"
+      ? "hsl(var(--primary))"
+      : tone === "endowment"
+        ? "hsl(var(--secondary))"
+        : tone === "donate"
+          ? "hsl(var(--success))"
+          : "hsl(var(--primary)/.62)";
   return (
     <div aria-hidden className="absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0 bg-[linear-gradient(105deg,rgba(6,26,54,0.98)_0%,rgba(6,26,54,0.88)_48%,rgba(0,88,61,0.5)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(105deg,hsl(var(--brand-overlay)/0.98)_0%,hsl(var(--brand-overlay)/0.88)_48%,hsl(var(--success)/0.5)_100%)]" />
       <svg className="absolute right-0 top-0 h-full w-[58%] min-w-[720px] opacity-45" viewBox="0 0 900 360" fill="none">
         <defs>
           <linearGradient id={`funding-${tone}`} x1="0" x2="900" y1="0" y2="360">
             <stop stopColor={accent} stopOpacity="0.82" />
-            <stop offset="1" stopColor="#f59e0b" stopOpacity="0.68" />
+            <stop offset="1" stopColor="hsl(var(--secondary))" stopOpacity="0.68" />
           </linearGradient>
         </defs>
         <path d="M55 290C180 180 250 244 350 142C462 28 590 78 690 148C768 203 815 192 875 136" stroke={`url(#funding-${tone})`} strokeWidth="2" />
@@ -166,10 +173,10 @@ export function FundingToolbar({
             name="q"
             defaultValue={searchValue}
             placeholder={placeholder}
-            className="h-11 w-full rounded-md border border-border bg-white pl-10 pr-3 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
+            className="h-11 w-full rounded-md border border-border bg-white pl-10 pr-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring"
           />
         </label>
-        <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90">
+        <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
           Search
         </button>
         {children}
@@ -189,9 +196,9 @@ export function DeadlineStatusBadge({ deadline, large = false }: { deadline: Dea
     deadline.tone === "closed"
       ? "border-border bg-surface-muted text-muted-foreground"
       : deadline.tone === "urgent"
-        ? "border-red-300 bg-red-50 text-red-700"
+        ? "border-destructive/30 bg-destructive/10 text-destructive"
         : deadline.tone === "soon"
-          ? "border-amber-300 bg-amber-50 text-amber-800"
+          ? "border-secondary/30 bg-secondary/10 text-secondary"
           : "border-primary/30 bg-primary/[0.08] text-primary";
   return (
     <span className={`inline-flex shrink-0 items-center gap-2 rounded-md border font-semibold ${toneClass} ${large ? "px-4 py-2 text-sm" : "px-2.5 py-1 text-xs"}`}>
@@ -229,7 +236,7 @@ export function CompactFactGrid({ facts }: { facts: FundingFact[] }) {
         const Icon = fact.icon ?? FileText;
         return (
           <div key={fact.label} className="rounded-lg border border-border bg-white p-4 shadow-sm">
-            <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <Icon aria-hidden className="h-4 w-4 text-primary" />
               {fact.label}
             </dt>
@@ -254,11 +261,11 @@ export function FundingInfoSection({
   if (entries.length === 0) return null;
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{title}</h2>
-      <div className="mt-4 divide-y divide-slate-200">
+      <h2 className="font-display text-xl font-semibold text-foreground">{title}</h2>
+      <div className="mt-4 divide-y divide-border">
         {entries.map((entry) => (
           <div key={entry.label} className="py-4 first:pt-0 last:pb-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{entry.label}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{entry.label}</p>
             <p className="mt-2 whitespace-pre-line text-sm leading-7 text-muted-foreground">{entry.value}</p>
           </div>
         ))}
@@ -278,8 +285,8 @@ export function DocumentListPanel({
   if (visibleRecords.length === 0) return null;
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{title}</h2>
-      <div className="mt-4 divide-y divide-slate-200">
+      <h2 className="font-display text-xl font-semibold text-foreground">{title}</h2>
+      <div className="mt-4 divide-y divide-border">
         {visibleRecords.map((record, index) => {
           const href = getResearchRecordDownloadHref(record);
           return (
@@ -287,11 +294,11 @@ export function DocumentListPanel({
               <p className="text-sm font-semibold text-foreground">
                 {textValue(record.title) || textValue(record.document_name) || textValue(record.name)}
               </p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {formatLabel(textValue(record.guideline_type) || textValue(record.type) || textValue(record.category) || "document")}
               </p>
               {href ? (
-                <a href={href} className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                <a href={href} className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline">
                   Download <ExternalLink aria-hidden className="h-3.5 w-3.5" />
                 </a>
               ) : null}
@@ -322,7 +329,7 @@ export function FundingSidebar({
 
   return (
     <aside className="h-fit rounded-lg border border-border bg-white p-5 shadow-sm lg:sticky lg:top-24">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{title}</h2>
+      <h2 className="font-display text-xl font-semibold text-foreground">{title}</h2>
       {visibleLabels.length > 0 ? (
         <div className="mt-4 flex flex-wrap gap-2">
           {visibleLabels.map((label) => (
@@ -333,10 +340,10 @@ export function FundingSidebar({
         </div>
       ) : null}
       {visibleFacts.length > 0 ? (
-        <dl className="mt-5 divide-y divide-slate-200">
+        <dl className="mt-5 divide-y divide-border">
           {visibleFacts.map((fact) => (
             <div key={fact.label} className="py-3 first:pt-0 last:pb-0">
-              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{fact.label}</dt>
+              <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{fact.label}</dt>
               <dd className="mt-1 break-words text-sm font-semibold text-foreground">{compactText(fact.value)}</dd>
             </div>
           ))}
@@ -350,8 +357,8 @@ export function FundingSidebar({
               href={action.href}
               className={
                 action.variant === "secondary"
-                  ? "inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-primary/25 px-4 text-sm font-semibold text-primary transition hover:bg-primary/5"
-                  : "inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
+                  ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-background px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
+                  : "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
               }
             >
               {action.label}

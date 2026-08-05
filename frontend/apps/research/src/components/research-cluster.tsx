@@ -40,10 +40,10 @@ export function ResearchClusterHero({
         <div className="mx-auto grid w-full max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
           <div className="min-w-0">
             <ClusterBreadcrumbs items={breadcrumbs} />
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
+            <p className="text-sm font-semibold uppercase tracking-eyebrow text-secondary">
               {eyebrow}
             </p>
-            <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+            <h1 className="mt-3 max-w-5xl text-balance font-display text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
               {title}
             </h1>
             <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">
@@ -52,7 +52,7 @@ export function ResearchClusterHero({
             {primaryAction ? (
               <Link
                 href={primaryAction.href}
-                className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
               >
                 {primaryAction.label}
                 <ArrowRight aria-hidden className="h-4 w-4" />
@@ -103,7 +103,7 @@ export function ResearchPathwayNav({
               <Link
                 key={item.href}
                 href={item.href}
-                className="group flex min-w-[220px] items-center gap-3 rounded-lg border border-border bg-white p-3 shadow-sm transition hover:border-primary/25 hover:shadow-[0_16px_45px_-38px_rgba(15,23,42,0.5)]"
+                className="group flex min-w-[220px] items-center gap-3 rounded-lg border border-border bg-card p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
                   <Icon aria-hidden className="h-4 w-4" />
@@ -172,8 +172,8 @@ export function ClusterFeaturePanel({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
+    <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+      <h2 className="font-display text-2xl font-semibold leading-tight text-foreground">
         {title}
       </h2>
       {body ? <p className="mt-2 text-sm leading-7 text-muted-foreground">{body}</p> : null}

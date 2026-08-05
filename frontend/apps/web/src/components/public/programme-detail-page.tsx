@@ -2,13 +2,16 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import {
   ArrowRight,
+  BadgeCheck,
   BookOpenCheck,
   BriefcaseBusiness,
   CalendarDays,
   CheckCircle2,
   ClipboardCheck,
   Download,
+  ExternalLink,
   GraduationCap,
+  Quote,
   ReceiptText,
   Users,
 } from "lucide-react";
@@ -213,9 +216,17 @@ function accreditationLabel(value?: string | null) {
   );
 }
 
+function parseLinkedLabel(value?: string | null) {
+  const text = present(value);
+  if (!text) return null;
+  const match = text.match(/^(.*?)\s*\((https?:\/\/[^)]+)\)\s*$/);
+  if (!match) return { label: text, href: null };
+  return { label: match[1].trim() || match[2], href: match[2] };
+}
+
 function SectionKicker({ children }: { children: string }) {
   return (
-    <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
+    <p className="text-xs font-bold uppercase tracking-[0.1em] text-secondary">
       {children}
     </p>
   );
@@ -223,25 +234,24 @@ function SectionKicker({ children }: { children: string }) {
 
 function QuickFacts({ facts }: { facts: FactItem[] }) {
   return (
-    <dl className="grid grid-cols-2 divide-x divide-y divide-border border-t border-border sm:grid-cols-4 sm:divide-y-0">
+    <dl className="grid grid-cols-1 divide-y divide-border rounded-2xl border border-border bg-white shadow-sm sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-4">
       {facts.map((fact) => {
         const Icon = fact.icon;
         return (
           <div
             key={fact.label}
-            className="flex min-w-0 gap-3 px-4 py-4 sm:px-5"
+            className="flex min-w-0 items-center gap-4 px-5 py-4"
           >
-            <Icon
-              aria-hidden
-              className="mt-0.5 h-5 w-5 shrink-0 text-secondary"
-            />
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-secondary/10 text-secondary ring-1 ring-secondary/15">
+              <Icon aria-hidden className="h-5 w-5" />
+            </span>
             <div className="min-w-0">
-              <dt className="text-[0.68rem] font-bold uppercase tracking-[0.06em] text-muted-foreground">
-                {fact.label}
-              </dt>
-              <dd className="mt-1 break-words text-sm font-bold text-primary">
+              <dd className="break-words text-sm font-bold text-primary sm:text-base">
                 {fact.value}
               </dd>
+              <dt className="mt-0.5 text-xs font-medium text-muted-foreground">
+                {fact.label}
+              </dt>
             </div>
           </div>
         );
@@ -264,34 +274,34 @@ function ProgrammeHero({
   facts: FactItem[];
 }) {
   return (
-    <section className="min-w-0 overflow-hidden rounded-[1.75rem] border border-border bg-white shadow-sm">
-      <div className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,0.48fr)]">
-        <div className="min-w-0 px-5 py-6 sm:px-7 lg:px-8 lg:py-7">
+    <section className="min-w-0">
+      <div className="grid min-w-0 overflow-hidden rounded-[1.75rem] border border-primary/10 bg-[linear-gradient(120deg,#ffffff_0%,hsl(var(--surface-subtle))_58%,rgba(255,255,255,0.88)_100%)] shadow-sm lg:grid-cols-[minmax(0,1fr)_minmax(24rem,0.52fr)]">
+        <div className="min-w-0 px-5 py-7 sm:px-7 lg:px-8 lg:py-10">
           <SectionKicker>Programme Overview</SectionKicker>
-          <h1 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-foreground sm:text-5xl">
+          <h1 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.03] text-primary sm:text-5xl lg:text-6xl">
             {title}
           </h1>
-          <p className="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-foreground/80 sm:text-base">
             {summary}
           </p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link
               href="/admissions/how-to-apply"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-white transition hover:bg-primary/90"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-bold text-white shadow-sm transition-colors active:scale-[0.98] hover:bg-primary/90"
             >
               How to apply <ArrowRight aria-hidden className="h-4 w-4" />
             </Link>
             {brochureId ? (
               <a
                 href={publicFileUrl(brochureId) ?? undefined}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-primary/25 px-5 text-sm font-bold text-primary transition hover:bg-primary/[0.05]"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-primary/25 bg-white px-5 text-sm font-bold text-primary transition-colors active:scale-[0.98] hover:bg-primary/[0.05]"
               >
                 Programme brief <Download aria-hidden className="h-4 w-4" />
               </a>
             ) : null}
           </div>
         </div>
-        <div className="min-h-52 border-t border-border bg-surface-subtle lg:border-l lg:border-t-0">
+        <div className="min-h-56 bg-white/35 lg:min-h-72">
           <PublicImage
             src={imageUrl}
             alt={`Illustration representing ${title}`}
@@ -301,12 +311,14 @@ function ProgrammeHero({
             className="h-full min-h-52"
             imageClassName="object-cover object-center"
             fallbackContent={
-              <BookOpenCheck aria-hidden className="h-28 w-28 stroke-[1.15]" />
+              <BookOpenCheck aria-hidden className="h-28 w-28 stroke-[1.15] text-primary/70" />
             }
           />
         </div>
       </div>
-      <QuickFacts facts={facts} />
+      <div className="-mt-5 px-4 sm:px-6">
+        <QuickFacts facts={facts} />
+      </div>
     </section>
   );
 }
@@ -323,13 +335,13 @@ function ContentCard({
   fallback: string;
 }) {
   return (
-    <section className="min-w-0 rounded-[1.5rem] border border-border bg-white p-5 shadow-sm sm:p-6">
+    <section className="min-w-0 rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
       <div className="flex gap-4">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.08] text-primary ring-1 ring-primary/10">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-sm">
           <Icon aria-hidden className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-primary">
             {title}
           </h2>
           <RichTextRenderer
@@ -349,19 +361,19 @@ function ContentCard({
 
 function FeesTable({ rows }: { rows: FeeRow[] }) {
   return (
-    <section className="min-w-0 rounded-[1.5rem] border border-border bg-white p-5 shadow-sm sm:p-6">
+    <section className="min-w-0 rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
       <div className="flex gap-4">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.08] text-primary ring-1 ring-primary/10">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-sm">
           <ReceiptText aria-hidden className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-primary">
             Fees structure
           </h2>
           {rows.length ? (
             <div className="mt-4 overflow-x-auto rounded-xl border border-border">
               <table className="w-full min-w-[34rem] border-collapse text-left text-sm">
-                <thead className="bg-surface-subtle text-xs uppercase tracking-[0.05em] text-primary">
+                <thead className="bg-primary text-xs uppercase tracking-[0.05em] text-white">
                   <tr>
                     <th className="px-4 py-3">Fee item</th>
                     <th className="px-4 py-3">Amount</th>
@@ -474,7 +486,7 @@ function AdmissionDocuments({ documents }: { documents: AdmissionDocument[] }) {
                   rel={
                     href.startsWith("http") ? "noopener noreferrer" : undefined
                   }
-                  className="group border border-border p-4 transition hover:border-primary/30 hover:bg-primary/[0.03]"
+                  className="group border border-border p-4 transition-colors hover:border-primary/30 hover:bg-primary/[0.03]"
                 >
                   <p className="text-xs font-bold uppercase tracking-[0.08em] text-secondary">
                     {formatLabel(document.document_type)}
@@ -495,6 +507,73 @@ function AdmissionDocuments({ documents }: { documents: AdmissionDocument[] }) {
   );
 }
 
+function AccreditationCard({
+  accreditation,
+  accreditingBody,
+}: {
+  accreditation: string;
+  accreditingBody?: string | null;
+}) {
+  const body = parseLinkedLabel(accreditingBody);
+  const isAccredited = accreditation === "Accredited";
+  return (
+    <section className="min-w-0 rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
+      <div className="flex gap-4">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-sm">
+          <BadgeCheck aria-hidden className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-primary">
+            Accreditation
+          </h2>
+          <div
+            className={`mt-4 rounded-2xl border p-4 ${
+              isAccredited
+                ? "border-emerald-200 bg-emerald-50/70"
+                : "border-amber-200 bg-amber-50/70"
+            }`}
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span
+                className={`inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold ring-1 ${
+                  isAccredited
+                    ? "bg-white text-emerald-700 ring-emerald-200"
+                    : "bg-white text-amber-800 ring-amber-200"
+                }`}
+              >
+                <CheckCircle2 aria-hidden className="h-4 w-4" />
+                {accreditation}
+              </span>
+              {body ? (
+                body.href ? (
+                  <a
+                    href={body.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm font-bold text-primary underline-offset-4 hover:underline"
+                  >
+                    {body.label}
+                    <ExternalLink aria-hidden className="h-4 w-4" />
+                  </a>
+                ) : (
+                  <span className="text-sm font-bold text-foreground">
+                    {body.label}
+                  </span>
+                )
+              ) : null}
+            </div>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              Confirm accreditation status and any programme-specific
+              professional requirements with the accrediting body or the
+              University before applying.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function DetailRow({
   label,
   children,
@@ -503,7 +582,7 @@ function DetailRow({
   children: ReactNode;
 }) {
   return (
-    <div className="grid gap-1 border-b border-border py-3 last:border-0 sm:grid-cols-[7rem_minmax(0,1fr)]">
+    <div className="grid gap-1 border-b border-border py-3 last:border-0 sm:grid-cols-[8rem_minmax(0,1fr)]">
       <dt className="text-xs font-bold text-muted-foreground">{label}</dt>
       <dd className="break-words text-sm font-semibold text-foreground">
         {children}
@@ -516,20 +595,34 @@ function ProgrammeDetails({
   code,
   departmentName,
   departmentHref,
+  level,
+  mode,
+  duration,
+  intake,
   accreditation,
+  accreditingBody,
 }: {
   code: string;
   departmentName: string;
   departmentHref?: string;
+  level: string;
+  mode: string;
+  duration: string;
+  intake: string;
   accreditation: string;
+  accreditingBody?: string | null;
 }) {
+  const body = parseLinkedLabel(accreditingBody);
   const badgeClass =
     accreditation === "Accredited"
       ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
       : "bg-amber-50 text-amber-800 ring-amber-200";
   return (
-    <section className="rounded-[1.5rem] border border-border bg-white p-5 shadow-sm">
-      <SectionKicker>Programme details</SectionKicker>
+    <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-primary">
+        Programme details
+      </h2>
+      <div className="mt-2 h-0.5 w-16 bg-secondary" aria-hidden />
       <dl className="mt-2">
         <DetailRow label="Programme code">{code}</DetailRow>
         <DetailRow label="Department">
@@ -544,6 +637,10 @@ function ProgrammeDetails({
             departmentName
           )}
         </DetailRow>
+        <DetailRow label="Programme level">{level}</DetailRow>
+        <DetailRow label="Mode of study">{mode}</DetailRow>
+        <DetailRow label="Duration">{duration}</DetailRow>
+        <DetailRow label="Intake">{intake}</DetailRow>
         <DetailRow label="Accreditation status">
           <span
             className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ring-1 ${badgeClass}`}
@@ -552,6 +649,23 @@ function ProgrammeDetails({
             {accreditation}
           </span>
         </DetailRow>
+        {body ? (
+          <DetailRow label="Accrediting body">
+            {body.href ? (
+              <a
+                href={body.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-primary hover:underline"
+              >
+                {body.label}
+                <ExternalLink aria-hidden className="h-3.5 w-3.5" />
+              </a>
+            ) : (
+              body.label
+            )}
+          </DetailRow>
+        ) : null}
       </dl>
     </section>
   );
@@ -559,7 +673,7 @@ function ProgrammeDetails({
 
 function ApplicationSupport() {
   return (
-    <section className="rounded-[1.5rem] border border-primary/10 bg-primary/[0.06] p-5 shadow-sm">
+    <section className="rounded-2xl border border-primary/10 bg-primary/[0.06] p-5 shadow-sm">
       <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-primary ring-1 ring-primary/15">
         <Users aria-hidden className="h-5 w-5" />
       </span>
@@ -573,16 +687,93 @@ function ApplicationSupport() {
       <div className="mt-4 grid gap-2">
         <Link
           href="/admissions/how-to-apply"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-4 text-sm font-bold text-white hover:bg-primary/90"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition-colors active:scale-[0.98] hover:bg-primary/90"
         >
           How to apply <ArrowRight aria-hidden className="h-4 w-4" />
         </Link>
         <Link
           href="/admissions/contact"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-primary/25 bg-white px-4 text-sm font-bold text-primary hover:bg-primary/[0.05]"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-primary/25 bg-white px-4 text-sm font-bold text-primary transition-colors active:scale-[0.98] hover:bg-primary/[0.05]"
         >
           Contact admissions
         </Link>
+      </div>
+    </section>
+  );
+}
+
+function voiceInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+}
+
+function voiceTypeLabel(value?: string | null) {
+  const type = present(value)?.toLowerCase();
+  if (type === "alumni") return "Alumni voice";
+  if (type === "staff") return "Staff voice";
+  return "Student voice";
+}
+
+function ProgrammeVoices({
+  testimonials,
+}: {
+  testimonials: ProgrammeDetailData["testimonials"];
+}) {
+  if (!testimonials.length) return null;
+  return (
+    <section className="mt-4 rounded-[1.5rem] border border-primary/10 bg-primary/[0.04] p-5 shadow-sm sm:p-6">
+      <SectionKicker>Student voices</SectionKicker>
+      <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-primary">
+        From students and graduates of this school
+      </h2>
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {testimonials.slice(0, 3).map((item) => {
+          const photoUrl = publicFileUrl(item.photo_id);
+          return (
+            <figure
+              key={item.id}
+              className="flex min-w-0 flex-col rounded-2xl border border-border bg-white p-5 shadow-sm"
+            >
+              <Quote aria-hidden className="h-5 w-5 text-secondary" />
+              <blockquote className="mt-3 flex-1 text-sm leading-6 text-foreground/85">
+                &ldquo;{item.quote}&rdquo;
+              </blockquote>
+              <figcaption className="mt-4 flex items-center gap-3 border-t border-border pt-4">
+                {photoUrl ? (
+                  <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-primary/10">
+                    <PublicImage
+                      src={photoUrl}
+                      alt={item.name}
+                      ratio="fill"
+                      sizes="40px"
+                      className="absolute inset-0 h-full w-full"
+                      imageClassName="object-cover"
+                    />
+                  </span>
+                ) : (
+                  <span
+                    aria-hidden
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary"
+                  >
+                    {voiceInitials(item.name)}
+                  </span>
+                )}
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-foreground">
+                    {item.name}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    {item.role ?? voiceTypeLabel(item.testimonial_type)}
+                  </span>
+                </span>
+              </figcaption>
+            </figure>
+          );
+        })}
       </div>
     </section>
   );
@@ -602,7 +793,7 @@ function RelatedProgrammes({
           <Link
             key={programme.id}
             href={`/academics/programmes/${programme.slug}`}
-            className="group flex min-w-0 items-center gap-3 rounded-2xl border border-border p-4 transition hover:border-primary/30 hover:bg-primary/[0.04]"
+            className="group flex min-w-0 items-center gap-3 rounded-2xl border border-border p-4 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
           >
             <GraduationCap
               aria-hidden
@@ -623,7 +814,7 @@ function RelatedProgrammes({
             </span>
             <ArrowRight
               aria-hidden
-              className="h-4 w-4 shrink-0 text-primary transition group-hover:translate-x-0.5"
+              className="h-4 w-4 shrink-0 text-primary transition-transform duration-150 group-hover:translate-x-0.5"
             />
           </Link>
         ))}
@@ -646,25 +837,30 @@ export function ProgrammeDetailPage({ data }: { data: ProgrammeDetailData }) {
   const summary =
     excerpt(about) ||
     "Explore this programme's academic focus, entry requirements, career opportunities, fees, and intake information.";
+  const programmeLevel = formatLevel(programme?.level, title);
+  const studyMode = formatMode(programme?.mode_of_study);
+  const duration = present(programme?.duration) ?? "Confirm with admissions";
+  const intake = formatIntakes(programme?.intake_months);
+  const accreditation = accreditationLabel(programme?.accreditation_status);
   const quickFacts: FactItem[] = [
     {
-      label: "Level",
-      value: formatLevel(programme?.level, title),
+      label: "Programme level",
+      value: programmeLevel,
       icon: GraduationCap,
     },
     {
       label: "Mode of study",
-      value: formatMode(programme?.mode_of_study),
+      value: studyMode,
       icon: Users,
     },
     {
       label: "Duration",
-      value: present(programme?.duration) ?? "Confirm with admissions",
+      value: duration,
       icon: CalendarDays,
     },
     {
-      label: "Intake months",
-      value: formatIntakes(programme?.intake_months),
+      label: "Intake",
+      value: intake,
       icon: CalendarDays,
     },
   ];
@@ -703,7 +899,7 @@ export function ProgrammeDetailPage({ data }: { data: ProgrammeDetailData }) {
           </div>
 
           <div className="mt-4 grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_20rem] xl:items-start">
-            <main className="grid min-w-0 gap-4">
+            <div className="grid min-w-0 gap-4">
               <ContentCard
                 title="About the programme"
                 icon={BookOpenCheck}
@@ -724,21 +920,30 @@ export function ProgrammeDetailPage({ data }: { data: ProgrammeDetailData }) {
                 fallback="Career and further-study pathways will be published here."
               />
               <FeesTable rows={feeRows} />
+              <AccreditationCard
+                accreditation={accreditation}
+                accreditingBody={programme?.accrediting_body}
+              />
               <AdmissionDocuments documents={admissionDocuments} />
-            </main>
+            </div>
 
             <aside className="grid gap-4 xl:sticky xl:top-28">
               <ProgrammeDetails
                 code={present(programme?.code) ?? "To be confirmed"}
                 departmentName={departmentName}
                 departmentHref={departmentHref}
-                accreditation={accreditationLabel(
-                  programme?.accreditation_status,
-                )}
+                level={programmeLevel}
+                mode={studyMode}
+                duration={duration}
+                intake={intake}
+                accreditation={accreditation}
+                accreditingBody={programme?.accrediting_body}
               />
               <ApplicationSupport />
             </aside>
           </div>
+
+          <ProgrammeVoices testimonials={data.testimonials} />
 
           <RelatedProgrammes programmes={data.relatedProgrammes} />
         </section>

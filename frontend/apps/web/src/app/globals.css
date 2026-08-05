@@ -1,32 +1,19 @@
 @import "@ksu/ui/globals.css";
 
-.ksu-compact-public-page section[class*="py-16"],
-.ksu-compact-public-page section[class*="lg:py-20"] {
+/* Compact spacing for public pages — explicit utility classes */
+.ksu-compact-public-page .ksu-section-pad {
   padding-top: clamp(1.75rem, 3vw, 2.75rem);
   padding-bottom: clamp(1.75rem, 3vw, 2.75rem);
 }
 
-.ksu-compact-public-page [class*="mt-8"] {
+.ksu-compact-public-page .ksu-mt-compact {
   margin-top: clamp(1.25rem, 2.5vw, 2rem);
 }
 
-.ksu-compact-public-page [class*="gap-8"],
-.ksu-compact-public-page [class*="gap-9"] {
+.ksu-compact-public-page .ksu-gap-compact {
   gap: clamp(1rem, 2vw, 1.75rem);
 }
 
-@media (max-width: 1023px) {
-  .ksu-compact-public-page nav[aria-label*="About"],
-  .ksu-compact-public-page nav[aria-label*="Related"],
-  .ksu-compact-public-page nav[aria-label*="Admissions navigation"] {
-    display: none;
-  }
-
-  .ksu-compact-public-page img[class*="aspect-"],
-  .ksu-compact-public-page [class*="min-h-[240px]"] {
-    min-height: 0;
-  }
-}
 
 /* Homepage programme discovery: one light, search-led editorial mosaic. */
 .programme-result {
@@ -64,6 +51,31 @@
   }
 }
 
+.programme-celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+}
+
+.programme-celebration-particle {
+  position: absolute;
+  width: 0.55rem;
+  height: 0.85rem;
+  border-radius: 999px 999px 0.15rem 999px;
+  opacity: 0;
+  transform: translate3d(0, 0, 0) rotate(0deg) scale(0.35);
+  animation: programme-celebration-pop 600ms cubic-bezier(.2,.8,.25,1) forwards;
+}
+
+@keyframes programme-celebration-pop {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0deg) scale(0.35); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--particle-x), var(--particle-y), 0) rotate(240deg) scale(1); }
+}
+
 @media (min-width: 1024px) {
   @supports (animation-timeline: view()) {
     .programme-mosaic-search,
@@ -85,6 +97,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .programme-result,
+  .programme-celebration-particle,
   .programme-mosaic-search,
   .programme-mosaic-image,
   .programme-mosaic-results,
@@ -92,4 +105,9 @@
   .programme-journey-line {
     animation: none !important;
   }
+}
+
+.flowing-academics a,
+.flowing-academics button {
+  -webkit-tap-highlight-color: transparent;
 }

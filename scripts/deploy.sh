@@ -232,7 +232,13 @@ deploy_local() {
     (cd frontend && pnpm build)
   fi
 
-  local services=(postgres redis main research library celery-main celery-library)
+  if [[ -f scripts/validate_database_capacity.py ]]; then
+    capacity_args=()
+    [[ -f .env ]] && capacity_args+=(--file .env)
+    python3 scripts/validate_database_capacity.py "${capacity_args[@]}"
+  fi
+
+  local services=(postgres redis main research library heri celery-main celery-library celery-heri)
   if [[ "${with_gateway}" -eq 1 ]]; then
     services+=(gateway)
   fi
@@ -356,6 +362,23 @@ if ! "\${DOCKER[@]}" compose version >/dev/null 2>&1; then
   exit 1
 fi
 
+section "Validate production configuration"
+if [[ -f "\${REPO_PATH}/scripts/validate_production_env.py" ]]; then
+  for service_env in services/main/.env services/research/.env services/library/.env; do
+    [[ -f "\${REPO_PATH}/\${service_env}" ]] || continue
+    service_name="\$(basename "\$(dirname "\${service_env}")")"
+    python3 "\${REPO_PATH}/scripts/validate_production_env.py" --env "\${ENV_NAME}" --service "\${service_name}" --file "\${REPO_PATH}/\${service_env}"
+  done
+else
+  step "No production validation script found; skipping static env validation"
+fi
+
+if [[ -f "\${REPO_PATH}/scripts/validate_database_capacity.py" ]]; then
+  capacity_args=()
+  [[ -f "\${REPO_PATH}/.env" ]] && capacity_args+=(--file "\${REPO_PATH}/.env")
+  python3 "\${REPO_PATH}/scripts/validate_database_capacity.py" "\${capacity_args[@]}"
+fi
+
 ensure_swap() {
   local min_swap_mb=4096
   local swap_file="/swapfile"
@@ -444,7 +467,7 @@ if [[ "\${MODE}" = "status" || "\${MODE}" = "logs" ]]; then
       default_services=(postgres redis "\${default_services[@]}")
     fi
   else
-    default_services=(main research library celery-main celery-research celery-library web-prod admin-prod research-web-prod library-web-prod gateway edge)
+    default_services=(main research library heri celery-main celery-research celery-library celery-heri web-prod admin-prod research-web-prod library-web-prod heri-web-prod gateway edge)
     if [[ "\${external_data}" -eq 0 ]]; then
       default_services+=(postgres redis)
     fi
@@ -556,6 +579,9 @@ APP_ENV=\${ENV_NAME}
 IMAGE_TAG=\${IMAGE_TAG}
 BACKEND_IMAGE_PREFIX=\${BACKEND_IMAGE_PREFIX}
 FRONTEND_IMAGE_PREFIX=\${FRONTEND_IMAGE_PREFIX}
+POSTGRES_DB=\${POSTGRES_DB:-ksu_services_db}
+POSTGRES_USER=\${POSTGRES_USER:-ksu_service_user}
+POSTGRES_PASSWORD=\${POSTGRES_PASSWORD:-compose-interpolation-only}
 EDGE_HTTP_PORT=\${EDGE_HTTP_PORT}
 PUBLIC_SERVER_NAME=\${PUBLIC_HOST}
 API_SERVER_NAME=\${API_SERVER_NAME}
@@ -578,6 +604,9 @@ KSU_LIBRARY_API_URL=http://library:8002
 EOF
 
 required_env_files=(services/main/.env services/research/.env services/library/.env)
+if [[ -f services/heri_africa/Dockerfile ]]; then
+  required_env_files+=(services/heri_africa/.env)
+fi
 
 missing_env=()
 for env_file in "\${required_env_files[@]}"; do
@@ -606,6 +635,10 @@ if [[ -f .deploy/docker-compose.external-data.yml ]]; then
     printf 'RESEARCH_REDIS_URL=%s\n' "\$(read_env_value services/research/.env REDIS_URL)"
     printf 'LIBRARY_DATABASE_URL=%s\n' "\$(read_env_value services/library/.env DATABASE_URL)"
     printf 'LIBRARY_REDIS_URL=%s\n' "\$(read_env_value services/library/.env REDIS_URL)"
+    if [[ -f services/heri_africa/.env ]]; then
+      printf 'HERI_DATABASE_URL=%s\n' "\$(read_env_value services/heri_africa/.env DATABASE_URL)"
+      printf 'HERI_REDIS_URL=%s\n' "\$(read_env_value services/heri_africa/.env REDIS_URL)"
+    fi
   } >> "\${COMPOSE_ENV_FILE}"
 fi
 
@@ -629,8 +662,8 @@ backup_database() {
   if "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps --status running postgres --format '{{.Service}}' | grep -qx postgres; then
     "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T postgres pg_dump -U ksu -d ksu | gzip -9 > "\${output}"
   else
-    echo "warning: postgres container is not running; skipping database backup" >&2
-    return 0
+    echo "error: postgres container is not running; refusing to deploy without a backup" >&2
+    return 1
   fi
 
   chmod 600 "\${output}"
@@ -654,8 +687,8 @@ if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
   backend_services=(main research library)
   worker_services=(celery-main celery-research celery-library)
 else
-  backend_services=(main research library)
-  worker_services=(celery-main celery-research celery-library)
+  backend_services=(main research library heri)
+  worker_services=(celery-main celery-research celery-library celery-heri)
 fi
 core_services=("\${backend_services[@]}" "\${worker_services[@]}")
 if [[ "\${external_data}" -eq 0 ]]; then
@@ -675,7 +708,7 @@ if [[ "\${SKIP_FRONTEND}" -eq 0 ]]; then
     frontend_services+=(admin-prod research-web-prod)
     proxy_services+=(research-edge)
   else
-    frontend_services+=(web-prod admin-prod research-web-prod library-web-prod)
+    frontend_services+=(web-prod admin-prod research-web-prod library-web-prod heri-web-prod)
     proxy_services+=(edge)
   fi
 fi
@@ -738,6 +771,17 @@ fi
 echo
 "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${core_services[@]}"
 
+section "Run reviewed migrations"
+if [[ "\${ENV_NAME}" != "dev" || "\${RUN_MIGRATIONS}" -eq 1 ]]; then
+  for service in "\${backend_services[@]}"; do
+    step "Running committed migrations for \${service}"
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T "\${service}" alembic upgrade head
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T "\${service}" alembic current --check-heads
+  done
+else
+  step "Development deployment: migrations were not requested"
+fi
+
 wait_for_backend_health() {
   local timeout_seconds="\${1:-420}"
   local deadline=\$((SECONDS + timeout_seconds))
@@ -774,14 +818,6 @@ wait_for_backend_health() {
 }
 
 wait_for_backend_health 420
-
-if [[ "\${RUN_MIGRATIONS}" -eq 1 ]]; then
-  section "Run backend migrations"
-  for service in "\${backend_services[@]}"; do
-    step "Running migrations for \${service}"
-    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T "\${service}" alembic upgrade head
-  done
-fi
 
 restart_existing_proxy_services() {
   local services=(gateway research-gateway edge research-edge)
@@ -1235,7 +1271,7 @@ deploy_vm() {
     if [[ "${deploy_scope}" = "research" ]]; then
       inspect_services="main research library celery-main celery-research celery-library admin-prod research-web-prod research-gateway research-edge"
     else
-      inspect_services="main research library celery-main celery-research celery-library edge gateway"
+      inspect_services="main research library heri celery-main celery-research celery-library celery-heri web-prod admin-prod research-web-prod library-web-prod heri-web-prod edge gateway"
     fi
   fi
 

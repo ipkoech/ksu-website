@@ -1,0 +1,254 @@
+export const ACCESSIBILITY_STORAGE_KEY = "ksu:accessibility:v1";
+
+export type AccessibilityPreset =
+  | "low_vision"
+  | "reduced_motion"
+  | "reading_support"
+  | "motor_assistance";
+
+export type AccessibilityPreferences = {
+  version: 1;
+  preset: AccessibilityPreset | null;
+  textScale: "default" | "large" | "larger" | "largest";
+  contrast: "default" | "increased" | "high";
+  saturation: "default" | "low" | "high";
+  readableFont: boolean;
+  lineHeight: "default" | "relaxed";
+  letterSpacing: "default" | "increased";
+  wordSpacing: "default" | "increased";
+  textAlign: "default" | "left" | "center" | "right";
+  emphasizeLinks: boolean;
+  grayscale: boolean;
+  hideImages: boolean;
+  readingGuide: boolean;
+  showTooltips: boolean;
+  largeTargets: boolean;
+  largeCursor: boolean;
+  strongFocus: boolean;
+  reduceMotion: boolean;
+  pauseMotion: boolean;
+  widgetSize: "standard" | "oversized";
+  widgetPosition: "right" | "left";
+};
+
+export const DEFAULT_ACCESSIBILITY_PREFERENCES: AccessibilityPreferences = {
+  version: 1,
+  preset: null,
+  textScale: "default",
+  contrast: "default",
+  saturation: "default",
+  readableFont: false,
+  lineHeight: "default",
+  letterSpacing: "default",
+  wordSpacing: "default",
+  textAlign: "default",
+  emphasizeLinks: false,
+  grayscale: false,
+  hideImages: false,
+  readingGuide: false,
+  showTooltips: true,
+  largeTargets: false,
+  largeCursor: false,
+  strongFocus: false,
+  reduceMotion: false,
+  pauseMotion: false,
+  widgetSize: "standard",
+  widgetPosition: "right",
+};
+
+export const ACCESSIBILITY_PRESETS = {
+  low_vision: {
+    label: "Low vision",
+    description:
+      "Larger text, stronger contrast, emphasized links, and larger controls.",
+    preferences: {
+      preset: "low_vision",
+      textScale: "larger",
+      contrast: "increased",
+      emphasizeLinks: true,
+      largeTargets: true,
+      strongFocus: true,
+      largeCursor: true,
+      widgetSize: "oversized",
+    },
+  },
+  reduced_motion: {
+    label: "Reduced motion",
+    description:
+      "Stops non-essential animation and automatically moving content.",
+    preferences: {
+      preset: "reduced_motion",
+      reduceMotion: true,
+      pauseMotion: true,
+    },
+  },
+  reading_support: {
+    label: "Reading support",
+    description:
+      "Uses a readable font with more line, letter, and word spacing.",
+    preferences: {
+      preset: "reading_support",
+      readableFont: true,
+      lineHeight: "relaxed",
+      letterSpacing: "increased",
+      wordSpacing: "increased",
+      textAlign: "left",
+    },
+  },
+  motor_assistance: {
+    label: "Motor assistance",
+    description:
+      "Provides larger controls and pauses automatically moving content.",
+    preferences: {
+      preset: "motor_assistance",
+      largeTargets: true,
+      largeCursor: true,
+      strongFocus: true,
+      pauseMotion: true,
+    },
+  },
+} as const satisfies Record<
+  AccessibilityPreset,
+  {
+    label: string;
+    description: string;
+    preferences: Partial<AccessibilityPreferences>;
+  }
+>;
+
+const PRESETS: readonly AccessibilityPreset[] = [
+  "low_vision",
+  "reduced_motion",
+  "reading_support",
+  "motor_assistance",
+];
+const TEXT_SCALES: readonly AccessibilityPreferences["textScale"][] = [
+  "default",
+  "large",
+  "larger",
+  "largest",
+];
+const CONTRASTS: readonly AccessibilityPreferences["contrast"][] = [
+  "default",
+  "increased",
+  "high",
+];
+const SATURATIONS: readonly AccessibilityPreferences["saturation"][] = [
+  "default",
+  "low",
+  "high",
+];
+const LINE_HEIGHTS: readonly AccessibilityPreferences["lineHeight"][] = [
+  "default",
+  "relaxed",
+];
+const LETTER_SPACINGS: readonly AccessibilityPreferences["letterSpacing"][] = [
+  "default",
+  "increased",
+];
+const WORD_SPACINGS: readonly AccessibilityPreferences["wordSpacing"][] = [
+  "default",
+  "increased",
+];
+const TEXT_ALIGNS: readonly AccessibilityPreferences["textAlign"][] = [
+  "default",
+  "left",
+  "center",
+  "right",
+];
+const WIDGET_SIZES: readonly AccessibilityPreferences["widgetSize"][] = [
+  "standard",
+  "oversized",
+];
+const WIDGET_POSITIONS: readonly AccessibilityPreferences["widgetPosition"][] =
+  ["right", "left"];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function includesValue<T extends string>(
+  values: readonly T[],
+  value: unknown,
+): value is T {
+  return typeof value === "string" && values.includes(value as T);
+}
+
+function booleanOrDefault(value: unknown, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+export function parseStoredPreferences(
+  raw: string | null | undefined,
+): AccessibilityPreferences {
+  if (!raw) return { ...DEFAULT_ACCESSIBILITY_PREFERENCES };
+
+  try {
+    const stored: unknown = JSON.parse(raw);
+    if (!isRecord(stored) || stored.version !== 1) {
+      return { ...DEFAULT_ACCESSIBILITY_PREFERENCES };
+    }
+
+    return {
+      version: 1,
+      preset:
+        stored.preset === null || includesValue(PRESETS, stored.preset)
+          ? stored.preset
+          : null,
+      textScale: includesValue(TEXT_SCALES, stored.textScale)
+        ? stored.textScale
+        : "default",
+      contrast: includesValue(CONTRASTS, stored.contrast)
+        ? stored.contrast
+        : "default",
+      saturation: includesValue(SATURATIONS, stored.saturation)
+        ? stored.saturation
+        : "default",
+      readableFont: booleanOrDefault(stored.readableFont, false),
+      lineHeight: includesValue(LINE_HEIGHTS, stored.lineHeight)
+        ? stored.lineHeight
+        : "default",
+      letterSpacing: includesValue(LETTER_SPACINGS, stored.letterSpacing)
+        ? stored.letterSpacing
+        : "default",
+      wordSpacing: includesValue(WORD_SPACINGS, stored.wordSpacing)
+        ? stored.wordSpacing
+        : "default",
+      textAlign: includesValue(TEXT_ALIGNS, stored.textAlign)
+        ? stored.textAlign
+        : "default",
+      emphasizeLinks: booleanOrDefault(stored.emphasizeLinks, false),
+      grayscale: booleanOrDefault(stored.grayscale, false),
+      hideImages: booleanOrDefault(stored.hideImages, false),
+      readingGuide: booleanOrDefault(stored.readingGuide, false),
+      showTooltips: booleanOrDefault(stored.showTooltips, true),
+      largeTargets: booleanOrDefault(stored.largeTargets, false),
+      largeCursor: booleanOrDefault(stored.largeCursor, false),
+      strongFocus: booleanOrDefault(stored.strongFocus, false),
+      reduceMotion: booleanOrDefault(stored.reduceMotion, false),
+      pauseMotion: booleanOrDefault(stored.pauseMotion, false),
+      widgetSize: includesValue(WIDGET_SIZES, stored.widgetSize)
+        ? stored.widgetSize
+        : "standard",
+      widgetPosition: includesValue(WIDGET_POSITIONS, stored.widgetPosition)
+        ? stored.widgetPosition
+        : "right",
+    };
+  } catch {
+    return { ...DEFAULT_ACCESSIBILITY_PREFERENCES };
+  }
+}
+
+export function mergeAccessibilityPreferences(
+  current: AccessibilityPreferences,
+  patch: Partial<AccessibilityPreferences>,
+): AccessibilityPreferences {
+  return {
+    ...current,
+    ...patch,
+    version: 1,
+    preset: Object.prototype.hasOwnProperty.call(patch, "preset")
+      ? (patch.preset ?? null)
+      : null,
+  };
+}

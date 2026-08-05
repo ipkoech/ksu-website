@@ -148,7 +148,7 @@ export default async function FacilitiesPage({
                 <span>Type</span>
                 <span>Status</span>
               </div>
-              <div className="divide-y divide-slate-200">
+              <div className="divide-y divide-border">
                 {visibleFacilities.map((facility) => (
                   <FacilityRow key={facility.id} facility={facility} />
                 ))}

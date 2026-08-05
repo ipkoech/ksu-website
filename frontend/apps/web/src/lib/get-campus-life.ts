@@ -6,6 +6,8 @@ import {
   faqsApi,
   sportsFacilitiesApi,
   studentGovernanceApi,
+  testimonialsApi,
+  mainApi,
   type Accommodation,
   type ArtsCulture,
   type Club,
@@ -13,6 +15,7 @@ import {
   type FAQ,
   type SportsFacility,
   type StudentGovernance,
+  type Testimonial,
 } from "@ksu/api-client";
 
 type ListEnvelope<T> = { data?: T[] };
@@ -40,6 +43,8 @@ const faqFields =
   "id,question,answer,answer_plain_text,category,display_order,is_main,is_public,status";
 const contactFields =
   "id,name,contact_type,email,phone,extension,physical_address,building,room_number,operating_hours,is_main,is_public,status";
+const testimonialFields =
+  "id,name,role,quote,testimonial_type,photo_id,is_featured,display_order";
 
 export interface CampusLifePageData {
   clubs: Club[];
@@ -49,6 +54,7 @@ export interface CampusLifePageData {
   governance: StudentGovernance[];
   faqs: FAQ[];
   contacts: ContactDirectory[];
+  testimonials: Testimonial[];
   detail?: {
     club?: Club | null;
     accommodation?: Accommodation | null;
@@ -64,6 +70,36 @@ export interface CampusLifePageData {
     governance?: number;
   };
   page?: number;
+  editorial?: LifeAroundStudiesEditorial | null;
+}
+
+export interface LifeAroundStudiesEditorial {
+  section: {
+    title?: string | null;
+    subtitle?: string | null;
+    description?: string | null;
+    items?: Array<{
+      id: string;
+      title?: string | null;
+      subtitle?: string | null;
+      body_text?: string | null;
+      cta_label?: string | null;
+      cta_url?: string | null;
+      audience?: string | null;
+      source_type?: string | null;
+      is_featured?: boolean;
+      content?: Record<string, unknown> | null;
+    }>;
+  };
+  stats: Record<string, number>;
+  clubs: Array<Record<string, unknown>>;
+  sports: Array<Record<string, unknown>>;
+  accommodation: Array<Record<string, unknown>>;
+  arts: Array<Record<string, unknown>>;
+  governance: Array<Record<string, unknown>>;
+  activities: Array<Record<string, unknown>>;
+  faqs: Array<Record<string, unknown>>;
+  contacts: Array<Record<string, unknown>>;
 }
 
 async function safeList<T>(promise: Promise<ListEnvelope<T>>): Promise<T[]> {
@@ -186,6 +222,7 @@ export async function getCampusLifeData(
     governanceResult,
     faqs,
     contacts,
+    testimonials,
   ] = await Promise.all([
     fetchArea("clubs", 24, clubListFields, clubsApi.list.bind(clubsApi), "club_type"),
     fetchArea("accommodation", 16, accommodationFields, accommodationsApi.list.bind(accommodationsApi), "accommodation_type"),
@@ -206,9 +243,26 @@ export async function getCampusLifeData(
         fields: contactFields,
       }),
     ),
+    area
+      ? Promise.resolve<Testimonial[]>([])
+      : safeList(
+          testimonialsApi.list({
+            per_page: 6,
+            fields: testimonialFields,
+          }),
+        ),
   ]);
 
   const detail: CampusLifePageData["detail"] = {};
+  let editorial: LifeAroundStudiesEditorial | null = null;
+  if (!area) {
+    try {
+      const response = await mainApi.get<{ data?: LifeAroundStudiesEditorial }>("/api/v1/campus-life/homepage");
+      editorial = response.data ?? null;
+    } catch (error) {
+      console.warn("Failed to fetch Life Around Studies composition:", error);
+    }
+  }
 
   if (area === "clubs" && slug) {
     detail.club = await safeRecord(
@@ -248,6 +302,7 @@ export async function getCampusLifeData(
     governance: governanceResult.data,
     faqs,
     contacts,
+    testimonials,
     detail,
     totals: {
       clubs: clubsResult.total,
@@ -257,5 +312,6 @@ export async function getCampusLifeData(
       governance: governanceResult.total,
     },
     page,
+    editorial,
   };
 }

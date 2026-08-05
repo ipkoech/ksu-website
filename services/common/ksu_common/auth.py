@@ -9,7 +9,7 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from .security import decode_token
+from .security import decode_token, validate_secret
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -26,7 +26,11 @@ def _get_jwt_secret() -> str:
     secret = os.getenv("JWT_SECRET_KEY")
     if not secret:
         raise RuntimeError("JWT_SECRET_KEY env var is not set")
-    return secret
+    return validate_secret(
+        secret,
+        field_name="JWT_SECRET_KEY",
+        app_env=os.getenv("APP_ENV", "development"),
+    ) or secret
 
 
 def _get_jwt_algorithm() -> str:
@@ -51,6 +55,7 @@ async def get_current_user(
             credentials.credentials,
             secret=_get_jwt_secret(),
             algorithm=_get_jwt_algorithm(),
+            expected_type="access",
         )
     except jwt.PyJWTError:
         raise exc

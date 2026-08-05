@@ -1,10 +1,9 @@
 """Innovation pathway endpoints."""
 
-from __future__ import annotations
-
 import uuid
 
 from fastapi import APIRouter, Body, Depends, HTTPException
+from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -35,6 +34,8 @@ from ...services import (
     TechnologyTransferCaseService,
 )
 from ._crud import build_crud_router
+from ._fields import serialize_full_record
+from ...schemas.base import JsonObject, SuccessEnvelope
 
 router = APIRouter()
 
@@ -56,7 +57,7 @@ async def _get_authorized_action_item(
 
 
 def _include_common_action_routes(prefix: str, service, tag: str, write_scope: str) -> None:
-    @router.post(f"{prefix}/id/{{item_id}}/approve", tags=[tag], dependencies=[Depends(require_scope(write_scope))])
+    @router.post(f"{prefix}/id/{{item_id}}/approve", tags=[tag], dependencies=[Depends(require_scope(write_scope))], response_model=SuccessEnvelope[JsonObject])
     async def approve_item(
         item_id: uuid.UUID,
         data: PathwayActionNote | None = Body(default=None),
@@ -65,9 +66,9 @@ def _include_common_action_routes(prefix: str, service, tag: str, write_scope: s
     ):
         await _get_authorized_action_item(service, item_id, write_scope, db, user)
         item = await InnovationPathwayAdminActionService.approve(db, service, item_id, actor_id=user.sub)
-        return success(data=item, message=f"{tag.rstrip('s')} approved")
+        return success(data=serialize_full_record(service.model, item), message=f"{tag.rstrip('s')} approved")
 
-    @router.post(f"{prefix}/id/{{item_id}}/publish", tags=[tag], dependencies=[Depends(require_scope(write_scope))])
+    @router.post(f"{prefix}/id/{{item_id}}/publish", tags=[tag], dependencies=[Depends(require_scope(write_scope))], response_model=SuccessEnvelope[JsonObject])
     async def publish_item(
         item_id: uuid.UUID,
         data: PathwayActionNote | None = Body(default=None),
@@ -76,9 +77,9 @@ def _include_common_action_routes(prefix: str, service, tag: str, write_scope: s
     ):
         await _get_authorized_action_item(service, item_id, write_scope, db, user)
         item = await InnovationPathwayAdminActionService.publish(db, service, item_id, actor_id=user.sub)
-        return success(data=item, message=f"{tag.rstrip('s')} published")
+        return success(data=serialize_full_record(service.model, item), message=f"{tag.rstrip('s')} published")
 
-    @router.post(f"{prefix}/id/{{item_id}}/unpublish", tags=[tag], dependencies=[Depends(require_scope(write_scope))])
+    @router.post(f"{prefix}/id/{{item_id}}/unpublish", tags=[tag], dependencies=[Depends(require_scope(write_scope))], response_model=SuccessEnvelope[JsonObject])
     async def unpublish_item(
         item_id: uuid.UUID,
         data: PathwayActionNote | None = Body(default=None),
@@ -87,9 +88,9 @@ def _include_common_action_routes(prefix: str, service, tag: str, write_scope: s
     ):
         await _get_authorized_action_item(service, item_id, write_scope, db, user)
         item = await InnovationPathwayAdminActionService.unpublish(db, service, item_id, actor_id=user.sub)
-        return success(data=item, message=f"{tag.rstrip('s')} unpublished")
+        return success(data=serialize_full_record(service.model, item), message=f"{tag.rstrip('s')} unpublished")
 
-    @router.post(f"{prefix}/id/{{item_id}}/archive", tags=[tag], dependencies=[Depends(require_scope(write_scope))])
+    @router.post(f"{prefix}/id/{{item_id}}/archive", tags=[tag], dependencies=[Depends(require_scope(write_scope))], response_model=SuccessEnvelope[JsonObject])
     async def archive_item(
         item_id: uuid.UUID,
         data: PathwayActionNote | None = Body(default=None),
@@ -98,9 +99,9 @@ def _include_common_action_routes(prefix: str, service, tag: str, write_scope: s
     ):
         await _get_authorized_action_item(service, item_id, write_scope, db, user)
         item = await InnovationPathwayAdminActionService.archive(db, service, item_id, actor_id=user.sub)
-        return success(data=item, message=f"{tag.rstrip('s')} archived")
+        return success(data=serialize_full_record(service.model, item), message=f"{tag.rstrip('s')} archived")
 
-    @router.post(f"{prefix}/id/{{item_id}}/feature", tags=[tag], dependencies=[Depends(require_scope(write_scope))])
+    @router.post(f"{prefix}/id/{{item_id}}/feature", tags=[tag], dependencies=[Depends(require_scope(write_scope))], response_model=SuccessEnvelope[JsonObject])
     async def feature_item(
         item_id: uuid.UUID,
         data: PathwayActionNote | None = Body(default=None),
@@ -109,9 +110,9 @@ def _include_common_action_routes(prefix: str, service, tag: str, write_scope: s
     ):
         await _get_authorized_action_item(service, item_id, write_scope, db, user)
         item = await InnovationPathwayAdminActionService.set_featured(db, service, item_id, True, actor_id=user.sub)
-        return success(data=item, message=f"{tag.rstrip('s')} featured")
+        return success(data=serialize_full_record(service.model, item), message=f"{tag.rstrip('s')} featured")
 
-    @router.post(f"{prefix}/id/{{item_id}}/unfeature", tags=[tag], dependencies=[Depends(require_scope(write_scope))])
+    @router.post(f"{prefix}/id/{{item_id}}/unfeature", tags=[tag], dependencies=[Depends(require_scope(write_scope))], response_model=SuccessEnvelope[JsonObject])
     async def unfeature_item(
         item_id: uuid.UUID,
         data: PathwayActionNote | None = Body(default=None),
@@ -120,25 +121,29 @@ def _include_common_action_routes(prefix: str, service, tag: str, write_scope: s
     ):
         await _get_authorized_action_item(service, item_id, write_scope, db, user)
         item = await InnovationPathwayAdminActionService.set_featured(db, service, item_id, False, actor_id=user.sub)
-        return success(data=item, message=f"{tag.rstrip('s')} unfeatured")
+        return success(data=serialize_full_record(service.model, item), message=f"{tag.rstrip('s')} unfeatured")
 
 
-@router.get("/innovations/id/{innovation_id}/startups", tags=["Innovations"])
+@router.get("/innovations/id/{innovation_id}/startups", tags=["Innovations"], response_model=SuccessEnvelope[list[JsonObject]])
+@cached_public(timeout=300)
 async def list_innovation_startups(innovation_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await InnovationPathwayRelationshipService.list_startups(db, innovation_id))
 
 
-@router.get("/innovations/id/{innovation_id}/incubation-records", tags=["Innovations"])
+@router.get("/innovations/id/{innovation_id}/incubation-records", tags=["Innovations"], response_model=SuccessEnvelope[list[JsonObject]])
+@cached_public(timeout=300)
 async def list_innovation_incubation_records(innovation_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await InnovationPathwayRelationshipService.list_incubation_records(db, innovation_id))
 
 
-@router.get("/innovations/id/{innovation_id}/competition-entries", tags=["Innovations"])
+@router.get("/innovations/id/{innovation_id}/competition-entries", tags=["Innovations"], response_model=SuccessEnvelope[list[JsonObject]])
+@cached_public(timeout=300)
 async def list_innovation_competition_entries(innovation_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await InnovationPathwayRelationshipService.list_competition_entries(db, innovation_id))
 
 
-@router.get("/innovations/id/{innovation_id}/technology-transfer-cases", tags=["Innovations"])
+@router.get("/innovations/id/{innovation_id}/technology-transfer-cases", tags=["Innovations"], response_model=SuccessEnvelope[list[JsonObject]])
+@cached_public(timeout=300)
 async def list_innovation_technology_transfer_cases(innovation_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await InnovationPathwayRelationshipService.list_technology_transfer_cases(db, innovation_id))
 
@@ -154,7 +159,7 @@ _include_common_action_routes(
 )
 
 
-@router.post("/startups/id/{item_id}/stage", tags=["Startup Ventures"], dependencies=[Depends(require_scope("innovation.manage_startups"))])
+@router.post("/startups/id/{item_id}/stage", tags=["Startup Ventures"], dependencies=[Depends(require_scope("innovation.manage_startups"))], response_model=SuccessEnvelope[JsonObject])
 async def set_startup_stage(
     item_id: uuid.UUID,
     data: StartupStageAction,
@@ -174,10 +179,10 @@ async def set_startup_stage(
         updates,
         actor_id=user.sub,
     )
-    return success(data=item, message="Startup venture stage updated")
+    return success(data=serialize_full_record(StartupVentureService.model, item), message="Startup venture stage updated")
 
 
-@router.post("/incubation-records/id/{item_id}/stage", tags=["Incubation Records"], dependencies=[Depends(require_scope("innovation.manage_startups"))])
+@router.post("/incubation-records/id/{item_id}/stage", tags=["Incubation Records"], dependencies=[Depends(require_scope("innovation.manage_startups"))], response_model=SuccessEnvelope[JsonObject])
 async def set_incubation_stage(
     item_id: uuid.UUID,
     data: IncubationStageAction,
@@ -192,10 +197,10 @@ async def set_incubation_stage(
         {"stage": data.stage, "status": data.status},
         actor_id=user.sub,
     )
-    return success(data=item, message="Incubation stage updated")
+    return success(data=serialize_full_record(IncubationRecordService.model, item), message="Incubation stage updated")
 
 
-@router.post("/incubation-records/id/{item_id}/assign-mentors", tags=["Incubation Records"], dependencies=[Depends(require_scope("innovation.manage_startups"))])
+@router.post("/incubation-records/id/{item_id}/assign-mentors", tags=["Incubation Records"], dependencies=[Depends(require_scope("innovation.manage_startups"))], response_model=SuccessEnvelope[JsonObject])
 async def assign_incubation_mentors(
     item_id: uuid.UUID,
     data: MentorAssignmentAction,
@@ -209,10 +214,10 @@ async def assign_incubation_mentors(
         data.mentor_ids,
         actor_id=user.sub,
     )
-    return success(data=item, message="Incubation mentors assigned")
+    return success(data=serialize_full_record(IncubationRecordService.model, item), message="Incubation mentors assigned")
 
 
-@router.post("/competition-entries/id/{item_id}/entry-status", tags=["Competition Entries"], dependencies=[Depends(require_scope("innovation.manage_competitions"))])
+@router.post("/competition-entries/id/{item_id}/entry-status", tags=["Competition Entries"], dependencies=[Depends(require_scope("innovation.manage_competitions"))], response_model=SuccessEnvelope[JsonObject])
 async def set_competition_entry_status(
     item_id: uuid.UUID,
     data: CompetitionEntryStatusAction,
@@ -232,10 +237,10 @@ async def set_competition_entry_status(
         },
         actor_id=user.sub,
     )
-    return success(data=item, message="Competition entry status updated")
+    return success(data=serialize_full_record(CompetitionEntryService.model, item), message="Competition entry status updated")
 
 
-@router.post("/technology-transfer-cases/id/{item_id}/transfer-status", tags=["Technology Transfer Cases"], dependencies=[Depends(require_scope("innovation.manage_transfers"))])
+@router.post("/technology-transfer-cases/id/{item_id}/transfer-status", tags=["Technology Transfer Cases"], dependencies=[Depends(require_scope("innovation.manage_transfers"))], response_model=SuccessEnvelope[JsonObject])
 async def set_technology_transfer_status(
     item_id: uuid.UUID,
     data: TechnologyTransferStatusAction,
@@ -254,7 +259,7 @@ async def set_technology_transfer_status(
         },
         actor_id=user.sub,
     )
-    return success(data=item, message="Technology transfer status updated")
+    return success(data=serialize_full_record(TechnologyTransferCaseService.model, item), message="Technology transfer status updated")
 
 
 router.include_router(

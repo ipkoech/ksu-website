@@ -7,25 +7,26 @@ import io
 import json
 import uuid
 import xml.etree.ElementTree as ET
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import date
 from types import NoneType, UnionType
-from typing import Any, Awaitable, Callable, Union, get_args, get_origin
+from typing import Any, Union, get_args, get_origin
 from zipfile import BadZipFile, ZipFile
 
-import httpx
+from ksu_common.internal_client import get_integration_pool
 from pydantic import BaseModel, ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.config import get_settings
 from ..models import (
+    FAQ,
     AcademicCalendar,
     Board,
     Campus,
     Department,
     Division,
-    FAQ,
     Intake,
     Person,
     Programme,
@@ -62,7 +63,6 @@ from .organization import DivisionService, WingService
 from .person import PersonService
 from .staff import StaffService
 from .support import FAQService
-
 
 CreateFunc = Callable[[AsyncSession, dict[str, Any]], Awaitable[Any]]
 PrepareFunc = Callable[[AsyncSession, dict[str, Any], dict[str, Any], list[str]], Awaitable[dict[str, Any]]]
@@ -248,13 +248,16 @@ def _make_research_create(api_path: str) -> CreateFunc:
     """Factory that creates records by POSTing to the research service."""
 
     async def _create(db: AsyncSession, payload: dict[str, Any]) -> None:
-        async with httpx.AsyncClient(
-            base_url=_settings.RESEARCH_SERVICE_URL.rstrip("/"),
-            timeout=httpx.Timeout(30.0, connect=5.0),
+        response = await get_integration_pool().request_internal(
+            "research-imports",
+            _settings.RESEARCH_SERVICE_URL.rstrip("/"),
+            "POST",
+            f"/api/v1/internal/imports/{api_path.rsplit('/', 1)[-1]}",
+            api_key=_settings.RESEARCH_SERVICE_API_KEY,
             headers={"X-KSU-Proxy": "main-imports"},
-        ) as client:
-            response = await client.post(api_path, json=payload)
-            response.raise_for_status()
+            json=payload,
+        )
+        response.raise_for_status()
 
     return _create
 

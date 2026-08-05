@@ -105,16 +105,16 @@ export default async function GalleryDetailPage({
                 href={mediaSource ?? data.heroImage ?? "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
+                className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25"
               >
                 <Download aria-hidden className="h-4 w-4" />
-                Open media
+                Open media in new tab
               </a>
             ) : null}
 
             <Link
               href="/media/gallery"
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-md border border-border bg-white px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-surface-subtle"
+              className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-border bg-white px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-surface-subtle focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25"
             >
               <ArrowLeft aria-hidden className="h-4 w-4" />
               Back to gallery

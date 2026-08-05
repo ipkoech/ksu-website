@@ -274,6 +274,8 @@ export function PublicSectionPage({
   showHero = true,
   heroSize = "default",
   academicLeadership,
+  landingContent,
+  hideScopeCards = false,
 }: {
   config: PublicPageConfig;
   header?: ReactNode;
@@ -281,6 +283,8 @@ export function PublicSectionPage({
   showHero?: boolean;
   heroSize?: "default" | "compact";
   academicLeadership?: AcademicOrganization | null;
+  landingContent?: ReactNode;
+  hideScopeCards?: boolean;
 }) {
   const continueItems = config.continueItems ?? config.navItems;
   const compactHero = heroSize === "compact";
@@ -383,7 +387,7 @@ export function PublicSectionPage({
                   ) : null}
                   {heroContent}
 
-                  {config.scopeCards?.length ? (
+                  {!hideScopeCards && config.scopeCards?.length ? (
                     <div
                       className={
                         compactHero
@@ -458,7 +462,7 @@ export function PublicSectionPage({
                                 </span>
                                 <ChevronRight
                                   aria-hidden
-                                  className="h-4 w-4 text-muted-foreground/70 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                                  className="h-4 w-4 text-muted-foreground/70 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary"
                                 />
                               </Link>
                             </li>
@@ -473,16 +477,20 @@ export function PublicSectionPage({
           </section>
         ) : null}
 
+        {landingContent}
+
         {academicLeadership ? (
           <AcademicLeadershipStructure data={academicLeadership} />
         ) : null}
 
-        {config.sections.map((section) => (
-          <SectionBlock
-            key={`${config.currentHref}-${section.eyebrow}`}
-            section={section}
-          />
-        ))}
+        {landingContent
+          ? null
+          : config.sections.map((section) => (
+              <SectionBlock
+                key={`${config.currentHref}-${section.eyebrow}`}
+                section={section}
+              />
+            ))}
 
         {config.hideContinue ? null : (
           <ScrollReveal

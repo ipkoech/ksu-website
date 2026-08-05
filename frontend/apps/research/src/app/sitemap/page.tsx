@@ -100,18 +100,18 @@ const groupedSections = [
 
 export default function SitemapPage() {
   return (
-    <main id="research-main" className="min-h-screen bg-[hsl(var(--surface-muted))]">
-      <section className="border-b border-border bg-white px-4 py-8 sm:px-6 lg:px-8 lg:py-10 xl:px-10 2xl:px-12">
+    <main id="research-main" className="min-h-screen bg-surface-muted">
+      <section className="border-b border-border bg-white px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <ScrollReveal className="mx-auto max-w-[1680px]">
           <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
             <Link href="/" className="transition hover:text-primary">Home</Link>
             <span className="text-muted-foreground/60">/</span>
             <span className="text-foreground">Sitemap</span>
           </nav>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
+          <p className="text-sm font-semibold uppercase tracking-eyebrow text-secondary">
             Sitemap
           </p>
-          <h1 className="mt-3 max-w-5xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
+          <h1 className="mt-3 max-w-5xl font-display text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             Research portal sitemap
           </h1>
           <p className="mt-4 max-w-4xl text-base leading-8 text-muted-foreground">
@@ -120,7 +120,7 @@ export default function SitemapPage() {
         </ScrollReveal>
       </section>
 
-      <article className="mx-auto max-w-[1680px] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 xl:px-10 2xl:px-12">
+      <article className="mx-auto max-w-[1680px] px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <ScrollRevealGroup className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" staggerDelay={70}>
           {mainSections.map((item) => (
             <SitemapPrimaryLink key={item.href} item={item} />
@@ -130,7 +130,7 @@ export default function SitemapPage() {
         <ScrollRevealGroup className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3" staggerDelay={85}>
           {groupedSections.map((section) => (
             <section key={section.title} className="rounded-lg border border-border bg-white p-5 shadow-sm">
-              <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">
+              <h2 className="font-display text-xl font-semibold text-foreground">
                 {section.title}
               </h2>
               <div className="mt-4 grid gap-2">

@@ -397,7 +397,7 @@ function LeadershipCard({
 }) {
   return (
     <article
-      className={`relative min-w-0 rounded-lg border border-border bg-white shadow-sm transition hover:border-primary/25 hover:shadow-md ${
+      className={`relative min-w-0 rounded-lg border border-border bg-white shadow-sm transition-[border-color,box-shadow] hover:border-primary/25 hover:shadow-md ${
         top ? "mx-auto w-full max-w-sm p-4" : "p-3"
       }`}
     >
@@ -441,7 +441,7 @@ function LeadershipCard({
 
 function MiniMemberCard({ member }: { member: TeamMember }) {
   return (
-    <article className="min-w-0 rounded-lg border border-border bg-white p-3 shadow-sm transition hover:border-primary/25 hover:shadow-md">
+    <article className="min-w-0 rounded-lg border border-border bg-white p-3 shadow-sm transition-[border-color,box-shadow] hover:border-primary/25 hover:shadow-md">
       <div className="flex min-w-0 gap-3">
         <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-muted">
           <Avatar member={member} />
@@ -512,7 +512,7 @@ function LeadershipFeature({ member }: { member: TeamMember }) {
         </div>
         <Link
           href={`/staff/${member.assignment.person_id}`}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary/90"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition-colors active:scale-[0.98] hover:bg-primary/90"
         >
           View profile
           <ArrowRight aria-hidden className="h-4 w-4" />

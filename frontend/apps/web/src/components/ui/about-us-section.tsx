@@ -181,7 +181,7 @@ export default function AboutUsSection({
       className="relative w-full overflow-hidden bg-gradient-to-b from-surface-subtle via-white to-surface-muted px-4 py-20 text-foreground sm:px-6 lg:px-8"
     >
       <motion.div
-        className="absolute left-10 top-16 h-64 w-64 rounded-full bg-primary/8 blur-3xl"
+        className="absolute left-10 top-16 h-64 w-64 rounded-full bg-primary/10 blur-3xl"
         style={{ y: y1, rotate: rotate1 }}
       />
       <motion.div
@@ -269,7 +269,7 @@ export default function AboutUsSection({
                   <div className="mt-6 flex flex-wrap gap-3">
                     <Link
                       href="/about/university-management"
-                      className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface-muted"
+                      className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-foreground transition-colors duration-200 hover:bg-surface-muted active:scale-[0.98]"
                     >
                       University Management
                       <ArrowRight className="h-4 w-4" />
@@ -415,7 +415,7 @@ function ServiceItem({
         transition={{ duration: 0.55, delay: delay + 0.12 }}
       >
         <motion.div
-          className="relative rounded-xl bg-primary/10 p-3 text-primary transition-colors duration-300 group-hover:bg-primary/15"
+          className="relative rounded-xl bg-primary/10 p-3 text-primary transition-colors duration-200 group-hover:bg-primary/15"
           whileHover={{
             rotate: [0, -8, 8, -4, 0],
             transition: { duration: 0.45 },
@@ -424,7 +424,7 @@ function ServiceItem({
           {icon}
           {secondaryIcon}
         </motion.div>
-        <h3 className="text-xl font-semibold text-foreground transition-colors duration-300 group-hover:text-primary">
+        <h3 className="text-xl font-semibold text-foreground transition-colors duration-200 group-hover:text-primary">
           {title}
         </h3>
       </motion.div>
@@ -479,7 +479,7 @@ function StatCounter({ icon, value, label, suffix, delay }: StatCounterProps) {
 
   return (
     <motion.div
-      className="group rounded-[1.5rem] border border-border bg-white p-6 text-center shadow-lg shadow-primary/30 transition-colors duration-300 hover:bg-surface-subtle"
+      className="group rounded-[1.5rem] border border-border bg-white p-6 text-center shadow-lg shadow-primary/30 transition-colors duration-200 hover:bg-surface-subtle"
       variants={{
         hidden: { opacity: 0, y: 20 },
         visible: {
@@ -491,7 +491,7 @@ function StatCounter({ icon, value, label, suffix, delay }: StatCounterProps) {
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
     >
       <motion.div
-        className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary/15"
+        className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors duration-200 group-hover:bg-primary/15"
         whileHover={{ rotate: 360, transition: { duration: 0.7 } }}
       >
         {icon}
@@ -504,7 +504,7 @@ function StatCounter({ icon, value, label, suffix, delay }: StatCounterProps) {
         <span>{suffix}</span>
       </motion.div>
       <p className="mt-1 text-sm text-muted-foreground">{label}</p>
-      <motion.div className="mx-auto mt-3 h-0.5 w-10 bg-secondary transition-all duration-300 group-hover:w-16" />
+      <motion.div className="mx-auto mt-3 h-0.5 w-10 bg-secondary transition-[width] duration-200 group-hover:w-16" />
     </motion.div>
   );
 }

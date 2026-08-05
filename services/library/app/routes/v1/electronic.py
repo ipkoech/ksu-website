@@ -28,7 +28,6 @@ from ...schemas import (
     ElectronicResourceGuideUpdate,
     ElectronicResourceOut,
     ElectronicResourceUpdate,
-    PublicationResult,
     PublicationSearchQuery,
     SavedPublicationCreate,
     SavedPublicationOut,
@@ -55,6 +54,7 @@ from ...services.electronic import (
     update_resource,
     update_saved,
 )
+from ._rate_limits import public_catalog_rate_limit
 
 # ── Electronic resources router ───────────────────────────────────────────────
 
@@ -68,6 +68,7 @@ async def invalidate_public_library_cache() -> None:
 
 
 @resources_router.get("/az")
+@public_catalog_rate_limit
 @cached_public(timeout=3600, vary_on=())
 async def list_resources_az(request: Request, db: AsyncSession = Depends(get_db)):
     """Get all electronic resources grouped by first letter (A-Z listing)."""
@@ -80,6 +81,7 @@ async def list_resources_az(request: Request, db: AsyncSession = Depends(get_db)
 
 
 @resources_router.get("/slug/{slug}")
+@public_catalog_rate_limit
 async def get_resource_by_slug_route(
     request: Request,
     slug: str,
@@ -101,6 +103,7 @@ async def get_resource_by_slug_route(
 
 
 @resources_router.get("/{resource_id}")
+@public_catalog_rate_limit
 async def get_resource_detail(
     request: Request,
     resource_id: uuid.UUID,
@@ -122,6 +125,7 @@ async def get_resource_detail(
 
 
 @resources_router.get("/")
+@public_catalog_rate_limit
 async def list_resources_route(
     request: Request,
     library_id: Optional[uuid.UUID] = Query(None),
@@ -233,6 +237,7 @@ guides_router = APIRouter(
 
 
 @guides_router.get("/")
+@public_catalog_rate_limit
 @cached_public(timeout=300, vary_on=())
 async def list_guides_route(
     request: Request,
@@ -318,7 +323,7 @@ publications_router = APIRouter(
 
 
 @publications_router.get("/search")
-@rate_limit(requests=30, window=60, by_user=False)
+@public_catalog_rate_limit
 @cached_public(
     timeout=60, vary_on=("q", "author", "year", "source", "page", "per_page")
 )

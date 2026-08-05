@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import asyncio
 import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+from ksu_common.task_queue import run_worker_async
 
 from ..core.database import AsyncSessionLocal
 from ..helpers.email import send_email
@@ -15,25 +15,19 @@ from ..models import ContactInquiryMessage
 from ..services.domain_events import enqueue_domain_event
 from .celery_app import celery_app
 
-MAX_REPLY_ATTEMPTS = 6
-
-
 def _event_name(inquiry, action: str) -> str:
     prefix = "school" if inquiry.owner_scope_type == "school" else "entity"
     return f"{prefix}.inquiry.{action}"
 
 
-@celery_app.task(bind=True, name="main.inquiries.send_reply", max_retries=5)
-def queue_inquiry_reply(self, message_id: str) -> str:
+@celery_app.task(name="main.inquiries.send_reply")
+def queue_inquiry_reply(message_id: str) -> str:
     message_uuid = uuid.UUID(message_id)
     try:
-        return asyncio.run(_deliver_reply(message_uuid))
+        return run_worker_async(_deliver_reply(message_uuid))
     except Exception as exc:
-        final_attempt = self.request.retries + 1 >= MAX_REPLY_ATTEMPTS
-        asyncio.run(_mark_delivery_failure(message_uuid, str(exc), dead_letter=final_attempt))
-        if final_attempt:
-            raise
-        raise self.retry(exc=exc, countdown=min(300, 2 ** self.request.retries)) from exc
+        run_worker_async(_mark_delivery_failure(message_uuid, str(exc), dead_letter=True))
+        raise
 
 
 async def _deliver_reply(message_id: uuid.UUID) -> str:

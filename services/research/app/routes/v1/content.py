@@ -1,7 +1,5 @@
 """Content and support endpoints."""
 
-from __future__ import annotations
-
 import uuid
 from typing import Annotated, Any
 
@@ -22,6 +20,8 @@ from ...schemas import (
     ResearchServiceUpdate,
 )
 from ...services import GuidelineService, ResourceService, SupportService
+from ...schemas.base import JsonObject, SuccessEnvelope
+from ksu_common.response_validation import allow_response_model_exemption
 from ._crud import build_crud_router
 
 router = APIRouter()
@@ -96,7 +96,7 @@ async def _public_record_by_id(db: AsyncSession, service: Any, item_id: uuid.UUI
     return result.scalar_one_or_none()
 
 
-@router.get("/resources/{item_id}/download")
+@router.get("/resources/{item_id}/download", response_model=SuccessEnvelope[JsonObject], response_class=RedirectResponse)
 async def download_resource(item_id: uuid.UUID, db: DbSession):
     item = await _public_record_by_id(db, ResourceService, item_id)
     if item is None:
@@ -107,7 +107,7 @@ async def download_resource(item_id: uuid.UUID, db: DbSession):
     return RedirectResponse(url=url, status_code=302)
 
 
-@router.get("/guidelines/{item_id}/download")
+@router.get("/guidelines/{item_id}/download", response_model=SuccessEnvelope[JsonObject], response_class=RedirectResponse)
 async def download_guideline(item_id: uuid.UUID, db: DbSession):
     item = await _public_record_by_id(db, GuidelineService, item_id)
     if item is None:

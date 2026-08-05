@@ -9,7 +9,8 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..deps import _has_permission
+from ksu_common.rbac import AuthorizationDecision, authorize_permission
+
 from ..models import Department, Programme, User, Wing
 
 
@@ -279,7 +280,7 @@ def user_scoped_grants(user: User) -> list[ScopedGrant]:
 
 
 def grant_has_permission(grant: ScopedGrant, permission: str) -> bool:
-    return _has_permission(set(grant.permissions), permission)
+    return authorize_permission(grant.permissions, permission).allowed
 
 
 def has_global_permission(user: User, permission: str) -> bool:
@@ -344,10 +345,35 @@ async def can_access_scope(
     *,
     scope_contains: ScopeResolver = default_scope_contains,
 ) -> bool:
+    return (
+        await authorize_scope(
+            db,
+            user,
+            permission,
+            target_scope_type,
+            target_scope_id,
+            scope_contains=scope_contains,
+        )
+    ).allowed
+
+
+async def authorize_scope(
+    db: AsyncSession | None,
+    user: User,
+    permission: str,
+    target_scope_type: str,
+    target_scope_id: uuid.UUID | None,
+    *,
+    scope_contains: ScopeResolver = default_scope_contains,
+) -> AuthorizationDecision:
+    """Return the common decision for a portal record and its local scope tree."""
     target_scope_type = normalize_scope_type(target_scope_type)
+    permission_decision: AuthorizationDecision | None = None
     for grant in user_scoped_grants(user):
-        if not grant_has_permission(grant, permission):
+        decision = authorize_permission(grant.permissions, permission)
+        if not decision.allowed:
             continue
+        permission_decision = decision
         if await scope_contains(
             db,
             grant.scope_type,
@@ -355,8 +381,10 @@ async def can_access_scope(
             target_scope_type,
             target_scope_id,
         ):
-            return True
-    return False
+            return decision
+    if permission_decision is not None:
+        return AuthorizationDecision(False, "scope_mismatch")
+    return AuthorizationDecision(False, "missing_permission")
 
 
 async def filter_records_for_scope(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query, status
 
@@ -78,6 +79,7 @@ async def list_admin_announcements(
     scheduled_from: datetime | None = None,
     scheduled_to: datetime | None = None,
     search: str | None = None,
+    record_state: Literal["active", "archived", "deleted"] = "active",
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(Announcement, fields)
@@ -97,6 +99,7 @@ async def list_admin_announcements(
         scheduled_from=scheduled_from,
         scheduled_to=scheduled_to,
         search=search,
+        record_state=record_state,
         load_options=selector.load_options,
     )
     items = []

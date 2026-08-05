@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
 import re
-import smtplib
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -12,6 +10,7 @@ from html import escape
 from typing import Protocol
 
 from sqlalchemy import select
+from ksu_common.task_queue import run_worker_async
 
 from ..core.config import get_settings
 from ..core.database import AsyncSessionLocal
@@ -49,7 +48,16 @@ def _newsletter_url(item: NewsletterLike) -> str:
     return f"{settings.frontend_url_for('web').rstrip('/')}/media/newsletters/{item.slug}"
 
 
-def render_newsletter_email(item: NewsletterLike) -> NewsletterEmailMessage:
+def unsubscribe_url_for_token(token: str) -> str:
+    """Absolute one-click unsubscribe URL for a subscriber's verification token."""
+    return f"{settings.PUBLIC_API_BASE_URL.rstrip('/')}/api/v1/newsletters/unsubscribe/{token}"
+
+
+def render_newsletter_email(
+    item: NewsletterLike,
+    *,
+    unsubscribe_url: str | None = None,
+) -> NewsletterEmailMessage:
     """Render a public newsletter into SMTP-ready text and HTML bodies."""
     subject = item.title
     summary = _strip_html(item.summary)
@@ -67,7 +75,19 @@ def render_newsletter_email(item: NewsletterLike) -> NewsletterEmailMessage:
         "",
         "You are receiving this email because you subscribed to Kisii University updates.",
     ]
+    if unsubscribe_url:
+        text_parts.append(f"Unsubscribe: {unsubscribe_url}")
     text_body = "\n".join(part for part in text_parts if part is not None)
+
+    unsubscribe_html = (
+        (
+            ' <a href="'
+            + escape(unsubscribe_url, quote=True)
+            + '" style="color:#637169;text-decoration:underline;">Unsubscribe</a>'
+        )
+        if unsubscribe_url
+        else ""
+    )
 
     html_body = (
         "<!doctype html>"
@@ -94,6 +114,7 @@ def render_newsletter_email(item: NewsletterLike) -> NewsletterEmailMessage:
         "</section>"
         '<footer style="padding:20px 32px;border-top:1px solid #e4e0d6;color:#637169;font-size:12px;line-height:1.6;">'
         "You are receiving this email because you subscribed to Kisii University updates."
+        f"{unsubscribe_html}"
         "</footer>"
         "</main>"
         "</body></html>"
@@ -101,16 +122,20 @@ def render_newsletter_email(item: NewsletterLike) -> NewsletterEmailMessage:
     return NewsletterEmailMessage(subject=subject, text_body=text_body, html_body=html_body)
 
 
-async def _active_subscriber_emails(db) -> list[str]:
+async def _active_subscribers(db) -> list[tuple[str, str | None]]:
+    """Return (email, verification_token) pairs for active subscribers, deduped by email."""
     result = await db.execute(
-        select(NewsletterSubscriber.email)
+        select(NewsletterSubscriber.email, NewsletterSubscriber.verification_token)
         .where(
             NewsletterSubscriber.status == "active",
             NewsletterSubscriber.unsubscribed_at.is_(None),
         )
         .order_by(NewsletterSubscriber.subscribed_at.asc())
     )
-    return list(dict.fromkeys(result.scalars().all()))
+    seen: dict[str, str | None] = {}
+    for email, token in result.all():
+        seen.setdefault(email, token)
+    return list(seen.items())
 
 
 async def enqueue_due_newsletters(db, *, now: datetime | None = None) -> int:
@@ -154,8 +179,6 @@ async def _send_newsletter(newsletter_id: str) -> int:
         item.send_error = None
         await db.commit()
 
-    message = render_newsletter_email(item)
-
     async with AsyncSessionLocal() as db:
         result = await db.execute(
             select(Newsletter).where(
@@ -166,11 +189,17 @@ async def _send_newsletter(newsletter_id: str) -> int:
         item = result.scalar_one_or_none()
         if item is None:
             return 0
-        recipients = await _active_subscriber_emails(db)
+        recipients = await _active_subscribers(db)
+        item.recipients_count = len(recipients)
+        await db.commit()
 
     sent_count = 0
     try:
-        for email in recipients:
+        for email, token in recipients:
+            message = render_newsletter_email(
+                item,
+                unsubscribe_url=unsubscribe_url_for_token(token) if token else None,
+            )
             await send_email(
                 to_email=email,
                 subject=message.subject,
@@ -187,6 +216,7 @@ async def _send_newsletter(newsletter_id: str) -> int:
             if item is not None:
                 item.send_status = "failed"
                 item.send_error = str(exc)
+                item.sent_count = sent_count
             await db.commit()
         raise
 
@@ -199,22 +229,18 @@ async def _send_newsletter(newsletter_id: str) -> int:
             item.send_status = "sent"
             item.sent_at = datetime.now(timezone.utc)
             item.send_error = None
+            item.sent_count = sent_count
+            item.recipients_count = len(recipients)
         await db.commit()
 
     return sent_count
 
 
 @celery_app.task(
-    bind=True,
     name="main.newsletters.send",
-    autoretry_for=(smtplib.SMTPException, TimeoutError, OSError, ConnectionError),
-    retry_backoff=True,
-    retry_backoff_max=600,
-    retry_jitter=True,
-    max_retries=3,
 )
-def queue_newsletter_send(self, newsletter_id: str) -> int:
-    return asyncio.run(_send_newsletter(newsletter_id))
+def queue_newsletter_send(newsletter_id: str) -> int:
+    return run_worker_async(_send_newsletter(newsletter_id))
 
 
 @celery_app.task(name="main.newsletters.send_due")
@@ -223,7 +249,7 @@ def send_due_newsletters() -> int:
         async with AsyncSessionLocal() as db:
             return await enqueue_due_newsletters(db)
 
-    return asyncio.run(_send_due())
+    return run_worker_async(_send_due())
 
 
 __all__ = [
@@ -232,4 +258,5 @@ __all__ = [
     "queue_newsletter_send",
     "render_newsletter_email",
     "send_due_newsletters",
+    "unsubscribe_url_for_token",
 ]

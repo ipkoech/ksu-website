@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+import re
 import secrets
 import uuid
 from datetime import datetime, timezone
@@ -16,7 +18,15 @@ from ksu_common import PaginatedResult
 from ..helpers.slug import unique_slug
 from ..models import Announcement, Blog, Event, News, Role, Slider, SliderGroup, Story, StoryContributorAccountRequest, UserRole
 from ._base import apply_updates, ilike_any, paginate_query
+from .change_tracking import track_update
 from .user import UserService
+
+
+def calculate_story_reading_minutes(content: str | None) -> int:
+    """Estimate story reading time using a 200-word-per-minute pace."""
+    text = re.sub(r"<[^>]+>", " ", content or "")
+    word_count = len(text.split())
+    return max(1, math.ceil(word_count / 200))
 
 
 def _apply_scope_filters(query, model, *, scope_type=None, scope_id=None, is_public=None, is_main=None):
@@ -28,6 +38,21 @@ def _apply_scope_filters(query, model, *, scope_type=None, scope_id=None, is_pub
         query = query.where(model.is_public.is_(is_public))
     if is_main is not None and hasattr(model, "is_main"):
         query = query.where(model.is_main.is_(is_main))
+    return query
+
+
+def _record_state_query(model, record_state: str):
+    """Base admin-list query honoring the requested record lifecycle state.
+
+    - ``active`` (default): soft-deleted rows are hidden.
+    - ``archived``: not deleted, but moved to the archived workflow state.
+    - ``deleted``: only soft-deleted rows, so they can be restored.
+    """
+    if record_state == "deleted":
+        return select(model).where(model.deleted_at.is_not(None))
+    query = model.active_query()
+    if record_state == "archived":
+        query = query.where(model.workflow_status == "archived")
     return query
 
 
@@ -151,6 +176,7 @@ class _RichContentService:
     async def update(cls, db: AsyncSession, instance, **data):
         if data.get("title") and not data.get("slug"):
             data["slug"] = await unique_slug(db, cls.model, data["title"], exclude_id=instance.id)
+        track_update(instance, data)
         apply_updates(instance, **data)
         await db.flush()
         return instance
@@ -219,9 +245,10 @@ class _RichContentService:
         scheduled_from: datetime | None = None,
         scheduled_to: datetime | None = None,
         search: str | None = None,
+        record_state: str = "active",
         load_options: Sequence = (),
     ) -> PaginatedResult:
-        query = cls.model.active_query().order_by(cls.model.created_at.desc())
+        query = _record_state_query(cls.model, record_state).order_by(cls.model.created_at.desc())
         if load_options:
             query = query.options(*load_options)
         query = _apply_scope_filters(
@@ -261,6 +288,24 @@ class BlogService(_RichContentService):
 
 class StoryService(_RichContentService):
     model = Story
+
+    @classmethod
+    async def create(cls, db: AsyncSession, **data):
+        if data.get("reading_minutes") is None:
+            data["reading_minutes"] = calculate_story_reading_minutes(
+                data.get("rich_text") or data.get("plain_text")
+            )
+        return await super().create(db, **data)
+
+    @classmethod
+    async def update(cls, db: AsyncSession, instance, **data):
+        if "reading_minutes" not in data and (
+            "rich_text" in data or "plain_text" in data
+        ):
+            data["reading_minutes"] = calculate_story_reading_minutes(
+                data.get("rich_text") or data.get("plain_text")
+            )
+        return await super().update(db, instance, **data)
 
     @classmethod
     async def list(
@@ -321,9 +366,10 @@ class StoryService(_RichContentService):
         story_type: str | None = None,
         category: str | None = None,
         contributor_user_id: uuid.UUID | None = None,
+        record_state: str = "active",
         load_options: Sequence = (),
     ) -> PaginatedResult:
-        query = cls.model.active_query().order_by(cls.model.updated_at.desc(), cls.model.created_at.desc())
+        query = _record_state_query(cls.model, record_state).order_by(cls.model.updated_at.desc(), cls.model.created_at.desc())
         if load_options:
             query = query.options(*load_options)
         query = _apply_scope_filters(query, cls.model, scope_type=scope_type, scope_id=scope_id, is_public=None, is_main=is_main)
@@ -486,6 +532,7 @@ class EventService:
     async def update(db: AsyncSession, event: Event, **data) -> Event:
         if data.get("title") and not data.get("slug"):
             data["slug"] = await unique_slug(db, Event, data["title"], exclude_id=event.id)
+        track_update(event, data)
         apply_updates(event, **data)
         await db.flush()
         return event
@@ -556,10 +603,11 @@ class EventService:
         scheduled_from: datetime | None = None,
         scheduled_to: datetime | None = None,
         search: str | None = None,
+        record_state: str = "active",
         load_options: Sequence = (),
     ) -> PaginatedResult:
         now = datetime.now(timezone.utc)
-        query = Event.active_query().order_by(Event.start_date.asc(), Event.display_order.asc())
+        query = _record_state_query(Event, record_state).order_by(Event.start_date.asc(), Event.display_order.asc())
         if load_options:
             query = query.options(*load_options)
         query = _apply_scope_filters(
@@ -630,6 +678,7 @@ class SliderGroupService:
     async def update(db: AsyncSession, group: SliderGroup, **data) -> SliderGroup:
         if data.get("name") and not data.get("slug"):
             data["slug"] = await unique_slug(db, SliderGroup, data["name"], exclude_id=group.id)
+        track_update(group, data)
         apply_updates(group, **data)
         await db.flush()
         return group
@@ -650,6 +699,35 @@ class SliderGroupService:
         query = query.where(SliderGroup.is_active.is_(True)).order_by(SliderGroup.name.asc())
         result = await db.execute(query)
         return list(result.scalars().unique().all())
+
+    @staticmethod
+    async def list_admin(
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+        is_active: bool | None = None,
+        is_public: bool | None = None,
+        is_main: bool | None = None,
+        search: str | None = None,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        """Admin listing: every non-deleted group, regardless of visibility flags."""
+        query = select(SliderGroup).options(selectinload(SliderGroup.sliders)).where(SliderGroup.deleted_at.is_(None))
+        if load_options:
+            query = query.options(*load_options)
+        query = _apply_scope_filters(
+            query, SliderGroup, scope_type=scope_type, scope_id=scope_id,
+            is_public=is_public, is_main=is_main,
+        )
+        if is_active is not None:
+            query = query.where(SliderGroup.is_active.is_(is_active))
+        if search:
+            query = query.where(ilike_any(search, SliderGroup.name, SliderGroup.slug, SliderGroup.location))
+        query = query.order_by(SliderGroup.name.asc())
+        return await paginate_query(db, query, page=page, per_page=per_page)
 
     @staticmethod
     async def delete(db: AsyncSession, group: SliderGroup):
@@ -675,6 +753,7 @@ class SliderService:
 
     @staticmethod
     async def update(db: AsyncSession, slider: Slider, **data) -> Slider:
+        track_update(slider, data)
         apply_updates(slider, **data)
         await db.flush()
         return slider
@@ -716,16 +795,24 @@ class SliderService:
     async def list_admin(
         db: AsyncSession,
         *,
+        page: int = 1,
+        per_page: int = 50,
         slider_group_id: uuid.UUID | None = None,
         scope_type: str | None = None,
         scope_id: uuid.UUID | None = None,
         is_main: bool | None = None,
         status: str | None = None,
+        workflow_status: str | None = None,
+        is_active: bool | None = None,
+        search: str | None = None,
+        record_state: str = "active",
         load_options: Sequence = (),
-    ) -> list[Slider]:
-        query = select(Slider).where(Slider.deleted_at.is_(None))
+    ) -> PaginatedResult:
+        query = _record_state_query(Slider, record_state)
         if load_options:
             query = query.options(*load_options)
+        if search:
+            query = query.where(ilike_any(search, Slider.title, Slider.subtitle))
         if slider_group_id:
             query = query.where(Slider.slider_group_id == slider_group_id)
         query = _apply_scope_filters(
@@ -742,9 +829,12 @@ class SliderService:
             query = query.where(Slider.is_active.is_(False))
         elif status == "archived":
             query = query.where(Slider.archived_at.is_not(None))
+        if workflow_status:
+            query = query.where(Slider.workflow_status == workflow_status)
+        if is_active is not None:
+            query = query.where(Slider.is_active.is_(is_active))
         query = query.order_by(Slider.display_order.asc(), Slider.created_at.desc())
-        result = await db.execute(query)
-        return list(result.scalars().all())
+        return await paginate_query(db, query, page=page, per_page=per_page)
 
     @staticmethod
     async def delete(db: AsyncSession, slider: Slider):

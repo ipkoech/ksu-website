@@ -1,34 +1,167 @@
 import Link from "next/link";
 import { ArrowRight, Quote } from "lucide-react";
-import type { StaffAssignment, VcPublicHub } from "@ksu/api-client";
+import type {
+  StaffAssignment,
+  VcPublicHub,
+  VcPublicMedia,
+} from "@ksu/api-client";
 import { PublicImage } from "@/components/public/public-image";
-import { BreadcrumbTrail } from "@/components/site-shell";
-import { VcPublicSection } from "./vc-public-sections";
+import {
+  VcActivitiesSection,
+  VcEventsSection,
+  VcGallerySection,
+  VcPodiumSection,
+} from "./vc-public-sections";
+import { VcHero } from "./vc-hero";
 import { VcVideoPlayer } from "./vc-video-player";
 
-export function VcPublicPage({ hub, assignment }: { hub: VcPublicHub; assignment: StaffAssignment | null }) {
+const navigation = [
+  { section: "story", label: "Story", href: "#vc-story" },
+  { section: "activities", label: "In Action", href: "#vc-activities" },
+  { section: "speeches", label: "Speeches", href: "#vc-speeches" },
+  { section: "gallery", label: "Gallery", href: "#vc-gallery" },
+  { section: "events", label: "Events", href: "#vc-events" },
+] as const;
+
+export function VcPublicPage({
+  hub,
+  assignment,
+  galleryMedia = [],
+}: {
+  hub: VcPublicHub;
+  assignment: StaffAssignment | null;
+  galleryMedia?: VcPublicMedia[];
+}) {
   const person = assignment?.person;
   const name = person?.full_name || "The Vice Chancellor";
+  const role = assignment?.title || "Vice Chancellor";
   const portrait = hub.hero_media?.url || person?.photo_url;
+  const activities = hub.sections.activities || [];
+  const speeches = hub.sections.speeches || [];
+  const videos = hub.sections.videos || [];
+  const events = hub.sections.events || [];
+  const galleries = hub.sections.gallery || [];
+  const isVisible = (section: keyof VcPublicHub["section_visibility"]) =>
+    hub.section_visibility[section] !== false;
+  const visibleNavigation = navigation.filter(({ section }) => {
+    if (!isVisible(section)) return false;
+    if (section === "story") return true;
+    if (section === "activities") return activities.length > 0;
+    if (section === "speeches")
+      return speeches.length > 0 || (isVisible("videos") && videos.length > 0);
+    if (section === "gallery") return galleries.length > 0;
+    return events.length > 0;
+  });
+
   return (
     <>
-      <section className="relative overflow-hidden bg-primary text-white">
-        <div className="absolute inset-0 opacity-15 [background-image:radial-gradient(circle_at_20%_10%,white_0,transparent_35%),radial-gradient(circle_at_80%_90%,hsl(var(--secondary))_0,transparent_30%)]" />
-        <div className="container relative py-6"><BreadcrumbTrail items={[{ label: "Home", href: "/" }, { label: "About", href: "/about" }, { label: "Meet the Vice Chancellor" }]} /></div>
-        <div className="container relative grid min-h-[680px] items-center gap-10 pb-16 pt-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] lg:pb-20">
-          <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-secondary">{hub.eyebrow}</p>
-            <h1 className="mt-5 font-[family-name:var(--font-display)] text-5xl font-semibold leading-[0.98] sm:text-6xl lg:text-7xl xl:text-8xl">{hub.title}</h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/80">{hub.introduction || `Meet ${name} and explore the ideas, engagements, and moments shaping Kisii University's next chapter.`}</p>
-            <div className="mt-8 flex flex-wrap gap-3"><Link href={hub.professional_profile_url} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-secondary px-6 font-bold text-white transition-colors hover:bg-white hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/60">Professional profile <ArrowRight className="size-4" /></Link><a href="#vc-story" className="inline-flex min-h-12 items-center rounded-full border border-white/35 px-6 font-semibold text-white transition-colors hover:bg-white/10">Explore the story</a></div>
+      <VcHero
+        professionalProfileUrl={hub.professional_profile_url}
+        hasWelcomeVideo={Boolean(hub.welcome_video)}
+      />
+
+      <nav
+        aria-label="Vice Chancellor page sections"
+        className="sticky top-0 z-30 border-b border-border bg-white/95 shadow-sm backdrop-blur-sm"
+      >
+        <div className="container overflow-x-auto">
+          <ul className="flex min-w-max items-center justify-center gap-8 sm:gap-14">
+            {visibleNavigation.map((item, index) => (
+              <li key={item.section}>
+                <a
+                  href={item.href}
+                  className={`relative inline-flex min-h-14 items-center px-1 text-sm font-medium transition-colors hover:text-primary ${
+                    index === 0
+                      ? "text-primary after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-secondary"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </nav>
+
+      <section id="vc-story" className="scroll-mt-24 bg-white py-14 sm:py-20">
+        <div className="container grid gap-9 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,.85fr)] lg:items-center">
+          <div>
+            {hub.welcome_video ? (
+              <VcVideoPlayer
+                title={hub.welcome_video.title}
+                embedUrl={hub.welcome_video.embed_url}
+                posterUrl={
+                  hub.welcome_video.cover?.url ||
+                  hub.welcome_video.thumbnail_url
+                }
+              />
+            ) : (
+              <PublicImage
+                src={portrait}
+                alt={`${name} in conversation`}
+                ratio="news"
+                imageClassName="object-top"
+                sizes="(min-width: 1024px) 58vw, 100vw"
+              />
+            )}
           </div>
-          <div className="relative mx-auto w-full max-w-[500px]"><div className="absolute -inset-4 rounded-[2.5rem] border border-white/15" /><PublicImage src={portrait} alt={hub.hero_media?.alt_text || name} ratio="profile" priority sizes="(min-width: 1024px) 42vw, 90vw" className="min-h-[480px] rounded-[2rem] border border-white/15" imageClassName="object-cover object-top" /><div className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/20 bg-primary/90 p-5 backdrop-blur"><p className="font-[family-name:var(--font-display)] text-2xl font-semibold">{name}</p><p className="mt-1 text-sm uppercase tracking-[0.16em] text-secondary">{assignment?.title || "Vice Chancellor"}</p></div></div>
+          <div className="px-1 sm:px-5 lg:pl-8">
+            <h2 className="max-w-sm font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.02] text-primary sm:text-5xl">
+              {hub.welcome_title || "A conversation with the VC"}
+            </h2>
+            <blockquote className="relative mt-7 border-l-2 border-secondary pl-7">
+              <Quote
+                className="absolute -left-3 -top-2 size-6 fill-white text-secondary"
+                aria-hidden
+              />
+              <p className="text-base leading-8 text-foreground">
+                {hub.welcome_message ||
+                  person?.leadership_message ||
+                  "Together, we are building knowledge, shaping character and transforming lives."}
+              </p>
+            </blockquote>
+            <div className="mt-8 pl-7">
+              <p className="font-[family-name:var(--font-display)] text-2xl italic text-primary">
+                {name}
+              </p>
+              <p className="mt-2 text-[0.7rem] font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                {role}
+              </p>
+              <span className="mt-3 block h-0.5 w-12 bg-secondary" />
+            </div>
+          </div>
         </div>
       </section>
 
-      <section id="vc-story" className="bg-white py-16 sm:py-24"><div className="container grid gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-center"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">A welcome from the office</p><h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold text-primary sm:text-5xl">{hub.welcome_title || "A conversation about our shared future"}</h2></div><blockquote className="relative rounded-[2rem] bg-surface-subtle p-8 text-lg leading-8 text-foreground sm:p-10"><Quote className="absolute right-7 top-7 size-16 text-primary/10" /><p className="relative">{hub.welcome_message || person?.leadership_message || "Kisii University advances through a community committed to academic excellence, research, innovation, integrity, and service."}</p></blockquote></div>{hub.welcome_video ? <div className="container mt-12"><VcVideoPlayer title={hub.welcome_video.title} embedUrl={hub.welcome_video.embed_url} posterUrl={hub.welcome_video.thumbnail_url} className="mx-auto max-w-5xl" /></div> : null}</section>
+      {isVisible("activities") ? (
+        <VcActivitiesSection items={activities} />
+      ) : null}
+      {isVisible("speeches") || isVisible("videos") ? (
+        <VcPodiumSection
+          speeches={isVisible("speeches") ? speeches : []}
+          videos={isVisible("videos") ? videos : []}
+        />
+      ) : null}
+      {isVisible("events") ? <VcEventsSection items={events} /> : null}
+      {isVisible("gallery") ? (
+        <VcGallerySection albums={galleries} media={galleryMedia} />
+      ) : null}
 
-      {hub.section_order.map((section) => hub.section_visibility[section] !== false ? <VcPublicSection key={section} section={section} items={hub.sections[section] || []} /> : null)}
+      <section className="bg-primary py-8 text-white">
+        <div className="container flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+          <p className="max-w-xl font-[family-name:var(--font-display)] text-xl leading-snug sm:text-2xl">
+            For formal credentials, career details and academic leadership
+            record, visit the official professional profile.
+          </p>
+          <Link
+            href={hub.professional_profile_url}
+            className="inline-flex min-h-12 shrink-0 items-center gap-3 border border-secondary px-6 font-semibold text-secondary transition-colors duration-200 hover:bg-secondary hover:text-secondary-foreground active:scale-[0.98]"
+          >
+            View professional profile <ArrowRight className="size-4" />
+          </Link>
+        </div>
+      </section>
     </>
   );
 }

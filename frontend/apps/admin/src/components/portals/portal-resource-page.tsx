@@ -8,7 +8,7 @@ import {
 } from "@/components/dashboard/editable-service-resource-page";
 import { getPortalResource } from "@/lib/portals/registry";
 import type { PortalPayload, PortalResourceConfig } from "@/lib/portals/types";
-import { usePortalAccess, useUploadMedia, type PortalAccess } from "@ksu/api-client";
+import { recordRecoveryApi, usePortalAccess, useUploadMedia, type PortalAccess } from "@ksu/api-client";
 import { usePermissions } from "@ksu/auth";
 import {
   Badge,
@@ -28,14 +28,17 @@ import {
 } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
 import { CalendarDays, FileText, Globe2, Image as ImageIcon, Loader2, UploadCloud } from "lucide-react";
+import { MediaBatchUploaderButton } from "@/components/corporate/media-batch-uploader";
 import { PageHeader } from "@/components/layout";
 
 interface PortalResourcePageProps {
   portalKey: string;
   resourceKey: string;
+  /** Pre-populate filter values (e.g. workflow_status from a workspace lane). */
+  initialFilters?: Record<string, unknown>;
 }
 
-export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePageProps) {
+export function PortalResourcePage({ portalKey, resourceKey, initialFilters }: PortalResourcePageProps) {
   const { hasAnyScope } = usePermissions();
   const portalAccessQuery = usePortalAccess();
   const resource = getPortalResource(portalKey, resourceKey);
@@ -225,6 +228,7 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
       create={scopedResource.create}
       update={scopedResource.update}
       delete={scopedResource.delete}
+      beforeDelete={scopedResource.beforeDelete}
       getRecordTitle={scopedResource.getRecordTitle}
       getRecordMeta={scopedResource.getRecordMeta}
       getRecordDetailHref={scopedResource.getRecordDetailHref}
@@ -236,6 +240,9 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
       canCreate={canCreate}
       canEdit={canEdit}
       canDelete={canDelete}
+      allowActionsWithoutEdit={
+        canManage && scopedResource.allowActionsWithoutEdit === true
+      }
       readOnlyMessage={scopedResource.readOnlyMessage}
       viewInEditor={scopedResource.viewInEditor}
       primaryActionLabel={primaryActionLabel(scopedResource)}
@@ -244,10 +251,30 @@ export function PortalResourcePage({ portalKey, resourceKey }: PortalResourcePag
       tableLayout={displayOptions.tableLayout}
       actionsInMenuOnly={displayOptions.actionsInMenuOnly}
       editorMode={displayOptions.editorMode}
+      supportsRecovery={scopedResource.supportsRecovery}
+      recoveryStates={scopedResource.recoveryStates}
+      restoreRecord={
+        scopedResource.supportsRecovery && scopedResource.recoveryContentType
+          ? (record: { id: string }) =>
+              recordRecoveryApi.restore(scopedResource.recoveryContentType!, record.id)
+          : undefined
+      }
+      historyContentType={
+        scopedResource.hasWorkflowHistory ? scopedResource.recoveryContentType : undefined
+      }
+      exportResource={scopedResource.exportResource}
+      importHref={scopedResource.importHref}
+      initialFilters={initialFilters}
       toolbarSlot={
         <>
           {scopedResource.key === "media-assets" && canManage ? (
-            <MediaAssetsUploadButton queryKey={scopedResource.queryKey} />
+            <>
+              <MediaBatchUploaderButton
+                queryKey={scopedResource.queryKey}
+                folderId={typeof initialFilters?.folder_id === "string" ? initialFilters.folder_id : undefined}
+              />
+              <MediaAssetsUploadButton queryKey={scopedResource.queryKey} />
+            </>
           ) : null}
           {resource.portalScope && lockedAccessOptions.length > 1 ? (
             <ScopeSelector

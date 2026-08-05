@@ -55,7 +55,6 @@ export default async function TrainingDetailPage({ params }: { params: Promise<{
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
             <TrainingStory sections={storySections} />
-            <ResearchRecordPanel title="Materials" records={materials} empty="No training materials are published yet." />
           </div>
           <ResearchDetailSidebar
             labels={[training.program_type ?? "training", training.delivery_mode ?? training.status, training.offers_certificate ? "certificate" : null]}

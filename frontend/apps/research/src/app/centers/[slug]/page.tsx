@@ -95,7 +95,7 @@ export default async function CenterDetailPage({
       {[error, programs.error, projects.error, publications.error, outputs.error]
         .filter(Boolean)
         .map((message, i) => (
-          <section key={i} className="px-4 pt-4 sm:px-6 lg:px-8">
+          <section key={i} className="px-4 pt-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
             <div className="mx-auto max-w-[1680px]">
               <StatusMessage tone="error">{message}</StatusMessage>
             </div>
@@ -119,7 +119,7 @@ export default async function CenterDetailPage({
             />
           </div>
           <ResearchDetailSidebar
-            labels={[center.center_type ?? "research center", center.status ?? "active", center.is_featured ? "Featured" : null]}
+            labels={[center.center_type, center.status, center.is_featured ? "Featured" : null]}
             facts={[
               { label: "Location", value: compactText(center.location) },
               { label: "Email", value: contactEmail },
@@ -179,8 +179,8 @@ function CenterStory({ sections }: { sections: Array<{ title: string; body: stri
 function ProjectPanel({ records }: { records: ResearchProject[] }) {
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-foreground">Research projects</h2>
-      <div className="mt-4 divide-y divide-slate-200">
+      <h2 className="font-display text-xl font-semibold text-foreground">Research projects</h2>
+      <div className="mt-4 divide-y divide-border">
         {records.slice(0, 6).map((record) => (
           <article key={record.id} className="py-4 first:pt-0 last:pb-0">
             <div className="flex flex-wrap gap-2">
@@ -210,8 +210,8 @@ function ProjectPanel({ records }: { records: ResearchProject[] }) {
 function PublicationPanel({ records }: { records: ResearchPublication[] }) {
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-foreground">Publications</h2>
-      <div className="mt-4 divide-y divide-slate-200">
+      <h2 className="font-display text-xl font-semibold text-foreground">Publications</h2>
+      <div className="mt-4 divide-y divide-border">
         {records.slice(0, 6).map((record) => (
           <article key={record.id} className="py-4 first:pt-0 last:pb-0">
             <h3 className="text-base font-semibold text-foreground">
@@ -247,7 +247,7 @@ function ExploreCenter({ center }: { center: ResearchGenericRecord }) {
 
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-foreground">Explore next</h2>
+      <h2 className="font-display text-xl font-semibold text-foreground">Explore next</h2>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {links.map((link) => (
           <Link

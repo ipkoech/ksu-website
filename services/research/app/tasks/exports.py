@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 from pathlib import Path
 from typing import Any
 from uuid import UUID
+
+from ksu_common.task_queue import run_worker_async
 
 from ..core.config import get_settings
 from ..core.database import AsyncSessionLocal
@@ -16,7 +17,7 @@ from .celery_app import celery_app
 
 @celery_app.task(name="research.exports.generate", bind=True)
 def generate_export(self, resource_key: str, options: dict[str, Any]) -> dict[str, Any]:
-    return asyncio.run(_generate_export(self.request.id, resource_key, options))
+    return run_worker_async(_generate_export(self.request.id, resource_key, options))
 
 
 async def _generate_export(job_id: str, resource_key: str, options: dict[str, Any]) -> dict[str, Any]:

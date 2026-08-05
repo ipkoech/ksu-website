@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Request, status
 
 from ksu_common import cached_public
 from ksu_common.schemas.responses import success
@@ -15,13 +15,16 @@ from ...deps import CurrentUser, DbSession
 from ...models import Document
 from ...schemas import DocumentCreate, DocumentUpdate
 from ...services import DocumentService
+from ...core.config import public_content_rate_limit
 
 router = APIRouter()
 
 
 @router.get("")
+@public_content_rate_limit
 @cached_public(timeout=300, vary_on=("page", "per_page", "q", "document_type", "category", "scope_type", "scope_id", "fields", "include"))
 async def list_documents(
+    request: Request,
     db: DbSession,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -58,11 +61,24 @@ async def list_admin_documents(
     category: str | None = None,
     scope_type: str | None = None,
     scope_id: uuid.UUID | None = None,
+    is_public: bool | None = None,
+    is_active: bool | None = None,
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(Document, fields)
-    result = await DocumentService.list(
+
+    async def _is_visible(candidate_scope_type: str | None, candidate_scope_id: uuid.UUID | None) -> bool:
+        return await can_access_scoped_record(
+            db,
+            user,
+            ["office.view", "policy.view", "content.view"],
+            candidate_scope_type,
+            candidate_scope_id,
+        )
+
+    result = await DocumentService.list_admin_authorized(
         db,
+        is_visible=_is_visible,
         page=page,
         per_page=per_page,
         q=q,
@@ -70,27 +86,17 @@ async def list_admin_documents(
         category=category,
         scope_type=scope_type,
         scope_id=scope_id,
-        public_only=False,
+        is_public=is_public,
+        is_active=is_active,
         load_options=selector.load_options,
     )
-    items = []
-    for item in result.items:
-        if await can_access_scoped_record(
-            db,
-            user,
-            ["office.view", "policy.view", "content.view"],
-            item.scope_type,
-            item.scope_id,
-        ):
-            items.append(item)
-    meta = dict(result.meta)
-    meta["total"] = len(items)
-    return success(data=selector.apply(items), meta=meta)
+    return success(data=selector.apply(result.items), meta=result.meta)
 
 
 @router.get("/{slug}")
+@public_content_rate_limit
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
-async def get_document(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
+async def get_document(request: Request, slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Document, fields)
     item = await DocumentService.get_by_slug(db, slug, load_options=selector.load_options)
     if item is None:

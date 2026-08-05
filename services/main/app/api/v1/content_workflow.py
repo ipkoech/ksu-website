@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import math
 import uuid
+from collections import Counter
 from datetime import date, datetime, time, timedelta, timezone
 from typing import Any
 
@@ -223,6 +225,22 @@ def build_content_workflow_queue_items(
                         "keywords": getattr(record, "keywords", None),
                     },
                 },
+                # Contributor attribution + consent for externally submitted
+                # records (stories); reviewers must see consent state before
+                # publishing.
+                "contributor": (
+                    {
+                        "name": getattr(record, "contributor_name_snapshot", None),
+                        "email": getattr(record, "contributor_email_snapshot", None),
+                        "affiliation": getattr(record, "contributor_affiliation_snapshot", None),
+                        "show_name": getattr(record, "show_contributor_name", None),
+                        "consent_to_publish": getattr(record, "consent_to_publish", None),
+                        "source_type": getattr(record, "source_type", None),
+                    }
+                    if getattr(record, "contributor_user_id", None)
+                    or getattr(record, "contributor_name_snapshot", None)
+                    else None
+                ),
             })
 
     return sorted(
@@ -230,6 +248,37 @@ def build_content_workflow_queue_items(
         key=lambda item: item["submitted_at"].timestamp() if item["submitted_at"] else float("-inf"),
         reverse=True,
     )
+
+
+def paginate_queue_items(
+    items: list[dict[str, Any]],
+    *,
+    q: str | None = None,
+    page: int = 1,
+    per_page: int | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Apply free-text title search, then paginate the normalized queue.
+
+    Returns the visible slice plus a meta dict whose ``status_counts`` and
+    ``total`` always describe the full (searched) queue, not the slice. When
+    ``per_page`` is omitted the full list is returned so existing bare-list
+    callers keep their behavior.
+    """
+    needle = q.strip().casefold() if q else ""
+    if needle:
+        items = [item for item in items if needle in str(item["title"]).casefold()]
+    total = len(items)
+    meta: dict[str, Any] = {
+        "total": total,
+        "status_counts": dict(Counter(item["status"] for item in items)),
+    }
+    if per_page is not None:
+        meta["page"] = page
+        meta["per_page"] = per_page
+        meta["pages"] = max(1, math.ceil(total / per_page))
+        start = (page - 1) * per_page
+        items = items[start : start + per_page]
+    return items, meta
 
 
 async def _workflow_queue_actor_labels(db: DbSession, records_by_type: dict[str, list[Any]]) -> dict[uuid.UUID, str]:
@@ -260,8 +309,16 @@ async def list_content_workflow_queue(
     submitted_date: date | None = Query(default=None),
     scheduled_date: date | None = Query(default=None),
     reviewer: str | None = Query(default=None),
+    q: str | None = Query(default=None, description="Free-text search over item titles"),
+    page: int = Query(default=1, ge=1),
+    per_page: int | None = Query(default=None, ge=1, le=100),
 ):
-    """Return reviewable public content in a single CoCMS-oriented queue."""
+    """Return reviewable public content in a single CoCMS-oriented queue.
+
+    Pagination is opt-in (pass ``per_page``); the bare-list response shape is
+    unchanged and ``meta`` carries totals plus per-status counts for the whole
+    filtered queue.
+    """
     authorize_content_workflow_queue_access(permissions_for_user(user))
     if content_type and content_type not in CONTENT_MODELS:
         raise HTTPException(status_code=400, detail="Unsupported content type")
@@ -308,7 +365,8 @@ async def list_content_workflow_queue(
         scheduled_date=scheduled_date,
         reviewer=reviewer,
     )
-    return success(data=items, message="Content workflow queue retrieved")
+    items, meta = paginate_queue_items(items, q=q, page=page, per_page=per_page)
+    return success(data=items, meta=meta, message="Content workflow queue retrieved")
 
 
 def authorize_content_workflow_action(user, content, action: str, permissions: set[str]) -> None:

@@ -456,6 +456,42 @@ class ContentWorkflowTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(link.is_public)
         self.assertTrue(link.media.is_public)
 
+    async def test_withdraw_from_submitted_returns_to_draft_and_logs(self):
+        db = _FakeDb()
+        actor_id = uuid.uuid4()
+        item = _content(status="submitted")
+        item.workflow_status = "submitted"
+        item.submitted_by_id = actor_id
+        item.submitted_at = datetime.now(timezone.utc)
+
+        await ContentWorkflowService.transition(db, item, "news", "withdraw", actor_id)
+
+        self.assertEqual("draft", item.workflow_status)
+        self.assertIsNone(item.submitted_by_id)
+        self.assertIsNone(item.submitted_at)
+        self.assertEqual(1, len(db.added))
+        log = db.added[0]
+        self.assertEqual("withdraw", log.action)
+        self.assertEqual("submitted", log.from_status)
+        self.assertEqual("draft", log.to_status)
+
+    def test_every_loggable_action_is_permitted_by_the_check_constraint(self):
+        """Every action the service writes must pass ck_content_workflow_logs_action."""
+        from app.models.content_workflow import CONTENT_WORKFLOW_ACTIONS
+        from app.services.content_workflow import ALLOWED_TRANSITIONS
+
+        loggable = {
+            action
+            for transitions in ALLOWED_TRANSITIONS.values()
+            for action in transitions
+        }
+        loggable |= {"edit_reset", "review_edit"}
+
+        self.assertTrue(
+            loggable.issubset(set(CONTENT_WORKFLOW_ACTIONS)),
+            f"actions missing from CHECK: {sorted(loggable - set(CONTENT_WORKFLOW_ACTIONS))}",
+        )
+
     def test_club_media_workflow_uses_action_specific_permissions(self):
         with self.assertRaises(HTTPException):
             authorize_club_media_workflow_action("publish", {"content.review"})

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { ksuSans, ksuDisplay } from "@ksu/ui/fonts";
+import { AccessibilityInitScript, AccessibilityShell } from "@ksu/ui";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -52,12 +54,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${ksuSans.variable} ${ksuDisplay.variable}`}
+    >
       <body
         suppressHydrationWarning
         className="font-sans antialiased"
       >
-        {children}
+        <AccessibilityInitScript />
+        <AccessibilityShell mainContentId="main-content">
+          {children}
+        </AccessibilityShell>
       </body>
     </html>
   );

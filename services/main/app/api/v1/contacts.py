@@ -209,3 +209,32 @@ async def update_contact(contact_id: uuid.UUID, data: ContactDirectoryUpdate, db
     except ContactReferenceError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return success(data=item, message="Contact updated")
+
+
+async def _get_managed_contact(db: DbSession, user: CurrentUser, contact_id: uuid.UUID) -> ContactDirectory:
+    item = await ContactService.get_by_id(db, contact_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    await require_scoped_record(
+        db,
+        user,
+        CONTACT_MANAGE_PERMISSIONS,
+        item.scope_type,
+        item.scope_id,
+        resource_name="contact",
+    )
+    return item
+
+
+@router.post("/admin/{contact_id}/archive")
+async def archive_contact(contact_id: uuid.UUID, db: DbSession, user: CurrentUser):
+    item = await _get_managed_contact(db, user, contact_id)
+    item = await ContactService.update(db, item, status="archived", is_public=False)
+    return success(data=item, message="Contact archived")
+
+
+@router.post("/admin/{contact_id}/unarchive")
+async def unarchive_contact(contact_id: uuid.UUID, db: DbSession, user: CurrentUser):
+    item = await _get_managed_contact(db, user, contact_id)
+    item = await ContactService.update(db, item, status="active")
+    return success(data=item, message="Contact restored")

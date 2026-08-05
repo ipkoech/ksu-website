@@ -1,0 +1,655 @@
+{
+  "description": "Legacy Ruff findings. New occurrences fail the baseline check.",
+  "finding_counts": [
+    {
+      "code": "E402",
+      "count": 2,
+      "filename": "services/common/ksu_common/rbac.py",
+      "message": "Module level import not at top of file"
+    },
+    {
+      "code": "F821",
+      "count": 1,
+      "filename": "services/library/app/models/electronic.py",
+      "message": "Undefined name `Library`"
+    },
+    {
+      "code": "F821",
+      "count": 2,
+      "filename": "services/library/app/models/engagement.py",
+      "message": "Undefined name `Library`"
+    },
+    {
+      "code": "F821",
+      "count": 1,
+      "filename": "services/library/app/models/library.py",
+      "message": "Undefined name `ElectronicResource`"
+    },
+    {
+      "code": "F821",
+      "count": 1,
+      "filename": "services/library/app/models/library.py",
+      "message": "Undefined name `LibraryCharge`"
+    },
+    {
+      "code": "F821",
+      "count": 1,
+      "filename": "services/library/app/models/library.py",
+      "message": "Undefined name `LibraryInquiry`"
+    },
+    {
+      "code": "F821",
+      "count": 1,
+      "filename": "services/library/app/models/library.py",
+      "message": "Undefined name `LibraryRegulation`"
+    },
+    {
+      "code": "F821",
+      "count": 1,
+      "filename": "services/library/app/models/library.py",
+      "message": "Undefined name `LibraryResource`"
+    },
+    {
+      "code": "F821",
+      "count": 1,
+      "filename": "services/library/app/models/library.py",
+      "message": "Undefined name `LibraryService`"
+    },
+    {
+      "code": "F821",
+      "count": 1,
+      "filename": "services/library/app/models/library.py",
+      "message": "Undefined name `LibraryStaff`"
+    },
+    {
+      "code": "F821",
+      "count": 1,
+      "filename": "services/library/app/models/library.py",
+      "message": "Undefined name `LibraryStatistics`"
+    },
+    {
+      "code": "F821",
+      "count": 2,
+      "filename": "services/library/app/models/resources.py",
+      "message": "Undefined name `Library`"
+    },
+    {
+      "code": "F821",
+      "count": 2,
+      "filename": "services/library/app/models/services.py",
+      "message": "Undefined name `Library`"
+    },
+    {
+      "code": "F821",
+      "count": 1,
+      "filename": "services/library/app/models/staff.py",
+      "message": "Undefined name `Library`"
+    },
+    {
+      "code": "E741",
+      "count": 1,
+      "filename": "services/library/app/services/electronic.py",
+      "message": "Ambiguous variable name: `l`"
+    },
+    {
+      "code": "E741",
+      "count": 1,
+      "filename": "services/library/app/services/resources.py",
+      "message": "Ambiguous variable name: `l`"
+    },
+    {
+      "code": "F821",
+      "count": 4,
+      "filename": "services/library/app/services/resources.py",
+      "message": "Undefined name `LibraryResourceOut`"
+    },
+    {
+      "code": "E712",
+      "count": 2,
+      "filename": "services/main/app/api/v1/public_leadership.py",
+      "message": "Avoid equality comparisons to `True`; use `StaffAssignment.is_public:` for truth checks"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/models/__init__.py",
+      "message": "`.admissions.ADMISSION_APPLICANT_TYPES` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/models/__init__.py",
+      "message": "`.admissions.ADMISSION_DOCUMENT_TYPES` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/models/__init__.py",
+      "message": "`.admissions.ADMISSION_PAGE_KEYS` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/models/__init__.py",
+      "message": "`.admissions.AdmissionDocument` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/models/__init__.py",
+      "message": "`.admissions.AdmissionFaq` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/models/__init__.py",
+      "message": "`.admissions.AdmissionPageSection` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/models/__init__.py",
+      "message": "`.admissions.AdmissionPathway` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/models/__init__.py",
+      "message": "`.admissions.AdmissionRequirement` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/models/__init__.py",
+      "message": "`.admissions.ProgrammeFeeStructure` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F821",
+      "count": 7,
+      "filename": "services/main/app/models/content.py",
+      "message": "Undefined name `Media`"
+    },
+    {
+      "code": "F821",
+      "count": 9,
+      "filename": "services/main/app/models/content.py",
+      "message": "Undefined name `User`"
+    },
+    {
+      "code": "F821",
+      "count": 1,
+      "filename": "services/main/app/models/notification.py",
+      "message": "Undefined name `User`"
+    },
+    {
+      "code": "F821",
+      "count": 1,
+      "filename": "services/main/app/models/organization.py",
+      "message": "Undefined name `School`"
+    },
+    {
+      "code": "F821",
+      "count": 1,
+      "filename": "services/main/app/models/support.py",
+      "message": "Undefined name `Person`"
+    },
+    {
+      "code": "F821",
+      "count": 2,
+      "filename": "services/main/app/models/support.py",
+      "message": "Undefined name `User`"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.AdmissionDocumentCreate` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.AdmissionDocumentRead` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.AdmissionDocumentUpdate` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.AdmissionFaqCreate` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.AdmissionFaqRead` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.AdmissionFaqUpdate` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.AdmissionPageSectionCreate` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.AdmissionPageSectionRead` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.AdmissionPageSectionUpdate` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.AdmissionPathwayCreate` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.AdmissionPathwayRead` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.AdmissionPathwayUpdate` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.AdmissionRequirementCreate` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.AdmissionRequirementRead` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.AdmissionRequirementUpdate` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.ProgrammeFeeStructureCreate` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.ProgrammeFeeStructureRead` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.admissions.ProgrammeFeeStructureUpdate` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.content.StoryContributorAccountRequestCreate` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.content.StoryContributorAccountRequestRead` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.content.StoryContributorAccountRequestReview` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.content.StoryCreate` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.content.StoryRead` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.content.StorySubmissionCreate` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.content.StoryUpdate` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.school_portal.SchoolPortalCapabilitiesResponse` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.school_portal.SchoolPortalContextResponse` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.school_portal.SchoolPortalDepartmentSummary` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.school_portal.SchoolPortalEntitySummary` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.school_portal.SchoolPortalMediaSummary` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.school_portal.SchoolPortalPersonSummary` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.school_portal.SchoolPortalSchoolSummary` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/__init__.py",
+      "message": "`.school_portal.SchoolPortalUserSummary` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
+    },
+    {
+      "code": "F841",
+      "count": 1,
+      "filename": "services/main/app/seeders/seed_staff_assignments.py",
+      "message": "Local variable `finance_assignment` is assigned to but never used"
+    },
+    {
+      "code": "F841",
+      "count": 1,
+      "filename": "services/main/app/seeders/seed_staff_assignments.py",
+      "message": "Local variable `ovc` is assigned to but never used"
+    },
+    {
+      "code": "F841",
+      "count": 1,
+      "filename": "services/main/app/seeders/seed_staff_assignments.py",
+      "message": "Local variable `registrar_admin_assignment` is assigned to but never used"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/migrations/versions/ed2320d646d1_merge_youtube_url_and_date_heads.py",
+      "message": "`alembic.op` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/migrations/versions/ed2320d646d1_merge_youtube_url_and_date_heads.py",
+      "message": "`sqlalchemy` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/research/app/models/core.py",
+      "message": "`.classification.FocusArea` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/research/app/models/core.py",
+      "message": "`.classification.ResearchTheme` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/research/app/models/core.py",
+      "message": "`.funding.Funding` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/research/app/models/core.py",
+      "message": "`.funding.Grant` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/research/app/models/core.py",
+      "message": "`.impact.SuccessStory` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/research/app/models/core.py",
+      "message": "`.impact.Sustainability` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/research/app/models/core.py",
+      "message": "`.innovation.Innovation` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/research/app/models/core.py",
+      "message": "`.innovation.ResearchOutput` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/research/app/models/core.py",
+      "message": "`.partnership.Partner` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/research/app/models/core.py",
+      "message": "`.publication.Publication` imported but unused"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .analytics import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .ask_ai import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .base import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .capacity import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .classification import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .core import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .donation import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .funding import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .impact import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .innovation import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .innovation_partnership import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .partnership import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .publication import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .search import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .stats import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .support import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/services/__init__.py",
+      "message": "`from .capacity import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/services/__init__.py",
+      "message": "`from .classification import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/services/__init__.py",
+      "message": "`from .core import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/services/__init__.py",
+      "message": "`from .donation import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/services/__init__.py",
+      "message": "`from .funding import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/services/__init__.py",
+      "message": "`from .impact import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/services/__init__.py",
+      "message": "`from .innovation import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/services/__init__.py",
+      "message": "`from .innovation_partnership import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/services/__init__.py",
+      "message": "`from .partnership import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/services/__init__.py",
+      "message": "`from .publication import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/services/__init__.py",
+      "message": "`from .support import *` used; unable to detect undefined names"
+    }
+  ],
+  "schema_version": 1,
+  "total_findings": 131
+}

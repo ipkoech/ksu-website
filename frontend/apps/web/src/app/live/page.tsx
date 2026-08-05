@@ -31,11 +31,16 @@ export default async function LivePage() {
   } | null = null;
 
   try {
-    const response = await announcementsApi.list({
-      is_published: true,
-      per_page: 5,
-      fields: "id,title,slug,youtube_url",
-    });
+    const response = await announcementsApi.list(
+      {
+        is_published: true,
+        per_page: 5,
+        fields: "id,title,slug,youtube_url",
+      },
+      // Livestream status must stay near-real-time; skip the default
+      // 5-minute public data cache.
+      { next: { revalidate: 30 } },
+    );
 
     const active = (response.data ?? []).find(
       (item) => item.youtube_url,

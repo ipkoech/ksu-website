@@ -58,13 +58,6 @@ export function ResearchHeader({
 
   return (
     <>
-      <a
-        href="#research-main"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary focus:shadow-md focus:outline-none focus:ring-2 focus:ring-ring"
-      >
-        Skip to research content
-      </a>
-
       <div
         className={cn(
           "hidden border-b border-white/10 bg-primary text-xs text-white transition-all duration-300 xl:block",
@@ -121,7 +114,7 @@ export function ResearchHeader({
             </div>
             <button
               onClick={() => setSearchOpen(true)}
-              className="hidden p-1.5 rounded-md transition-colors hover:bg-white/10"
+              className="inline-flex p-1.5 rounded-md transition-colors hover:bg-white/10"
               aria-label="Search research"
             >
               <Search className="h-4 w-4" />
@@ -159,8 +152,8 @@ export function ResearchHeader({
               />
             </motion.div>
             <div className="flex min-w-0 flex-col">
-              <p className="truncate font-[family-name:var(--font-display)] text-base font-black uppercase tracking-[0.08em] text-foreground sm:text-xl sm:tracking-[0.1em]">
-                Kisii University
+              <p className="truncate font-[family-name:var(--app-font-display)] text-base font-normal uppercase tracking-tight text-foreground sm:text-xl">
+                Kisii <em className="italic">University</em>
               </p>
               <p className="hidden max-w-[230px] text-[8px] font-bold uppercase leading-4 tracking-[0.1em] text-primary sm:block sm:text-[9px]">
                 Research, Extension, Innovation & Resource Mobilization
@@ -241,15 +234,15 @@ export function ResearchHeader({
                         index > 2 ? "right-0" : "left-1/2 -translate-x-1/2",
                       )}
                     >
-                      <div className="overflow-hidden rounded-xl border border-border bg-white shadow-2xl">
+                      <div className="overflow-hidden rounded-2xl ring-1 ring-primary/10 bg-white shadow-2xl">
                         <div className="grid grid-cols-1 md:grid-cols-[280px_1fr]">
                           {/* Featured panel */}
-                          <div className="flex flex-col justify-between border-b border-border bg-surface-subtle p-6 md:border-b-0 md:border-r">
+                          <div className="flex flex-col justify-between border-b border-border bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] p-6 md:border-b-0 md:border-r">
                             <div>
-                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-inner">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] text-primary ring-1 ring-primary/10">
                                 <item.icon className="h-6 w-6" />
                               </div>
-                              <h3 className="mt-4 text-lg font-bold text-foreground">
+                              <h3 className="mt-4 font-[family-name:var(--app-font-display)] text-lg font-normal tracking-tight text-foreground">
                                 {item.title}
                               </h3>
                               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -269,7 +262,7 @@ export function ResearchHeader({
                           <div className="grid gap-6 p-6 sm:grid-cols-2 min-w-[400px] lg:min-w-[500px]">
                             {item.columns.map((col, colIdx) => (
                               <div key={col.heading} className="space-y-1">
-                                <h4 className="border-b border-border pb-3 mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">
+                                <h4 className="border-b border-border pb-3 mb-2 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
                                   {col.heading}
                                 </h4>
                                 {col.items.map((sub, sIdx) => (
@@ -385,13 +378,16 @@ export function ResearchHeader({
                     aria-label="Mobile research navigation"
                   >
                     {/* Mobile Search */}
-                    <div className="relative">
+                    <form action="/search" role="search" className="relative">
                       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
                       <Input
+                        name="q"
+                        type="search"
+                        aria-label="Search research"
                         placeholder="Search publications, projects..."
                         className="h-9 border-border bg-surface-subtle pl-9 text-sm text-foreground placeholder:text-muted-foreground/70"
                       />
-                    </div>
+                    </form>
 
                     <div>
                       <p className="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">
@@ -499,14 +495,17 @@ export function ResearchHeader({
         <DialogContent className="max-w-[580px] border border-border bg-white p-0 shadow-2xl">
           <DialogTitle className="sr-only">Search Research</DialogTitle>
           <div className="p-8">
-            <div className="relative">
+            <form action="/search" role="search" className="relative">
               <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground/70" />
               <Input
+                name="q"
+                type="search"
+                aria-label="Search research"
                 placeholder="Search publications, projects, grants..."
                 className="h-12 rounded-lg border-border bg-surface-subtle pl-12 text-base placeholder:text-muted-foreground/70 focus:border-primary"
                 autoFocus
               />
-            </div>
+            </form>
             <div className="mt-8">
               <h4 className="mb-4 text-[11px] font-black uppercase tracking-widest text-muted-foreground/70">
                 Popular Searches

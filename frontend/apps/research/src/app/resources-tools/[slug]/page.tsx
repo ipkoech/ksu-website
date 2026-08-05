@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { researchServiceApi } from "@ksu/api-client";
-import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordGrid, ResearchRecordPanel } from "../../../components/research-detail";
+import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordPanel } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import { getResearchRecordDownloadHref } from "../../../lib/research-downloads";
@@ -55,7 +55,6 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
           />
         </div>
       </ResearchSection>
-      <ResearchSection eyebrow="Downloads" title="Resource files" body="File cards are shown only when backend attachments exist."><ResearchRecordGrid records={attachments} /></ResearchSection>
     </main>
   );
 }

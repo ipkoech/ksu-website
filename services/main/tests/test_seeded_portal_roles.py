@@ -58,48 +58,79 @@ async def _assert_reseed_convergence():
 
     async with AsyncSessionLocal() as db:
         try:
-            legacy_permission = Permission(
-                id=uuid.uuid4(),
-                name="seed_test.legacy_portal_authority",
-                description="Legacy portal authority used by reseed regression coverage.",
-                resource="seed_test",
-                action="legacy_portal_authority",
-                is_active=True,
-            )
-            legacy_roles = [
-                Role(
+            legacy_permission = (
+                await db.execute(
+                    select(Permission).where(Permission.name == "seed_test.legacy_portal_authority")
+                )
+            ).scalar_one_or_none()
+            if legacy_permission is None:
+                legacy_permission = Permission(
                     id=uuid.uuid4(),
-                    name=name,
-                    display_name=name,
-                    description="Legacy seeded portal role.",
-                    is_system=True,
+                    name="seed_test.legacy_portal_authority",
+                    description="Legacy portal authority used by reseed regression coverage.",
+                    resource="seed_test",
+                    action="legacy_portal_authority",
                     is_active=True,
                 )
-                for name in legacy_role_names
-            ]
-            db.add(legacy_permission)
-            db.add_all(legacy_roles)
-            await db.flush()
-            db.add_all(
-                RolePermission(
-                    id=uuid.uuid4(),
-                    role_id=role.id,
-                    permission_id=legacy_permission.id,
-                )
-                for role in legacy_roles
-            )
+                db.add(legacy_permission)
 
-            legacy_users = [
-                User(
-                    id=uuid.uuid4(),
-                    email=email,
-                    password_hash="legacy-seed-password-hash",
-                    full_name="Legacy Seeded Portal User",
-                    is_active=True,
-                )
-                for email in legacy_user_emails
-            ]
-            db.add_all(legacy_users)
+            legacy_roles = []
+            for name in legacy_role_names:
+                role = (
+                    await db.execute(select(Role).where(Role.name == name))
+                ).scalar_one_or_none()
+                if role is None:
+                    role = Role(
+                        id=uuid.uuid4(),
+                        name=name,
+                        display_name=name,
+                        description="Legacy seeded portal role.",
+                        is_system=True,
+                        is_active=True,
+                    )
+                    db.add(role)
+                else:
+                    role.is_active = True
+                    role.deleted_at = None
+                legacy_roles.append(role)
+            await db.flush()
+
+            for role in legacy_roles:
+                existing_assignment = (
+                    await db.execute(
+                        select(RolePermission).where(
+                            RolePermission.role_id == role.id,
+                            RolePermission.permission_id == legacy_permission.id,
+                        )
+                    )
+                ).scalar_one_or_none()
+                if existing_assignment is None:
+                    db.add(
+                        RolePermission(
+                            id=uuid.uuid4(),
+                            role_id=role.id,
+                            permission_id=legacy_permission.id,
+                        )
+                    )
+
+            legacy_users = []
+            for email in legacy_user_emails:
+                user = (
+                    await db.execute(select(User).where(User.email == email))
+                ).scalar_one_or_none()
+                if user is None:
+                    user = User(
+                        id=uuid.uuid4(),
+                        email=email,
+                        password_hash="legacy-seed-password-hash",
+                        full_name="Legacy Seeded Portal User",
+                        is_active=True,
+                    )
+                    db.add(user)
+                else:
+                    user.is_active = True
+                    user.deleted_at = None
+                legacy_users.append(user)
             await db.flush()
             db.add_all(
                 UserRole(

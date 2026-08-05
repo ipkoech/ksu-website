@@ -19,9 +19,22 @@ class JsonFormatter(logging.Formatter):
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
+            "event": record.getMessage(),
         }
+        for field_name in (
+            "service",
+            "request_id",
+            "correlation_id",
+            "method",
+            "path",
+            "status_code",
+            "duration_ms",
+            "error_type",
+        ):
+            if hasattr(record, field_name):
+                payload[field_name] = getattr(record, field_name)
         if record.exc_info:
-            payload["exception"] = self.formatException(record.exc_info)
+            payload["exception_type"] = record.exc_info[0].__name__
         if record.stack_info:
             payload["stack"] = self.formatStack(record.stack_info)
         return json.dumps(payload, default=str, separators=(",", ":"))

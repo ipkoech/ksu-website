@@ -28,12 +28,18 @@ export interface LandingHeroSlide {
   desktopImageUrl?: string;
   mobileImageUrl?: string;
   imageAlt: string;
+  videoUrl?: string;
+  videoWebmUrl?: string;
+  videoPosterUrl?: string;
   primaryLabel: string;
   primaryHref: string;
   primaryExternal?: boolean;
   secondaryLabel?: string;
   secondaryHref?: string;
   secondaryExternal?: boolean;
+  tertiaryLabel?: string;
+  tertiaryHref?: string;
+  tertiaryExternal?: boolean;
 }
 
 export interface LandingHeroData {
@@ -299,6 +305,21 @@ async function getLandingHeroGroup() {
   return chooseHeroGroup(groupsResponse.data ?? [], false) ?? null;
 }
 
+const MAIN_HERO_VIDEO_URL = "/videos/main-hero-1080.mp4";
+const MAIN_HERO_VIDEO_POSTER_URL = "/videos/main-hero-poster.jpg";
+
+function withHeroVideo(slides: LandingHeroSlide[]): LandingHeroSlide[] {
+  return slides.map((slide, index) =>
+    index === 0 && !slide.videoUrl
+      ? {
+          ...slide,
+          videoUrl: MAIN_HERO_VIDEO_URL,
+          videoPosterUrl: MAIN_HERO_VIDEO_POSTER_URL,
+        }
+      : slide,
+  );
+}
+
 export async function getLandingHeroData(): Promise<LandingHeroData> {
   try {
     const group = await getLandingHeroGroup();
@@ -306,17 +327,21 @@ export async function getLandingHeroData(): Promise<LandingHeroData> {
       const sliders = await listGroupSliders(group.id);
       return {
         ...heroSettingsFromGroup(group),
-        slides: sliders.slice(0, maxSlidesFromGroup(group)).map(normalizeSlider),
+        slides: withHeroVideo(
+          sliders.slice(0, maxSlidesFromGroup(group)).map(normalizeSlider),
+        ),
       };
     }
 
     const mainSliders = await listMainSliders();
     return {
       ...defaultHeroSettings,
-      slides: mainSliders
-        .filter((slider) => !slider.scope_type && !slider.scope_id)
-        .slice(0, 5)
-        .map(normalizeSlider),
+      slides: withHeroVideo(
+        mainSliders
+          .filter((slider) => !slider.scope_type && !slider.scope_id)
+          .slice(0, 5)
+          .map(normalizeSlider),
+      ),
     };
   } catch (error) {
     if (!isAbortError(error)) {

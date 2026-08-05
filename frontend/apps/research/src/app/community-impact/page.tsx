@@ -100,7 +100,7 @@ function CommunityImpactHero({
       </div>
       <div className="relative mx-auto grid min-h-[260px] max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,0.45fr)_minmax(460px,0.55fr)] lg:items-center">
         <div className="relative z-10">
-          <h1 className="max-w-3xl text-balance font-[family-name:var(--font-display)] text-5xl font-semibold leading-none text-foreground sm:text-6xl">
+          <h1 className="max-w-3xl text-balance font-[family-name:var(--app-font-display)] text-5xl font-semibold leading-none text-foreground sm:text-6xl">
             Community Impact
           </h1>
           <div className="mt-4 h-1 w-14 rounded-full bg-secondary" />
@@ -148,7 +148,7 @@ function FeaturedImpactStory({ story }: { story: ResearchGenericRecord }) {
         <div className="flex flex-wrap gap-2">
           <Badge>{formatLabel(compactText(story.story_type) || "impact")}</Badge>
         </div>
-        <h2 className="mt-4 text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground lg:text-4xl">
+        <h2 className="mt-4 text-balance font-[family-name:var(--app-font-display)] text-3xl font-semibold leading-tight text-foreground lg:text-4xl">
           {title}
         </h2>
         <dl className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
@@ -157,9 +157,6 @@ function FeaturedImpactStory({ story }: { story: ResearchGenericRecord }) {
           <MiniFact label="Story date" value={formatDate(story.story_date ?? story.published_at)} />
         </dl>
         {summary ? <p className="mt-4 line-clamp-4 text-sm leading-7 text-muted-foreground">{summary}</p> : null}
-        <Link href="/community-impact" className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-semibold text-primary">
-          Read full story <ArrowRight aria-hidden className="h-4 w-4 transition group-hover:translate-x-1" />
-        </Link>
       </div>
     </article>
   );
@@ -176,8 +173,8 @@ function OutcomeStack({ story }: { story: ResearchGenericRecord }) {
 
   return (
     <section className="rounded-lg border border-border bg-white p-4 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">What changed</h2>
-      <div className="mt-4 divide-y divide-slate-200 rounded-lg border border-border">
+      <h2 className="font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">What changed</h2>
+      <div className="mt-4 divide-y divide-border rounded-lg border border-border">
       {items.map((item) => {
         const Icon = item.icon;
         return (
@@ -203,7 +200,7 @@ function SustainabilityInitiativesPanel({ records }: { records: ResearchGenericR
   return (
     <section className="rounded-lg border border-border bg-white p-4 shadow-sm">
       <div className="mb-4 flex items-end justify-between gap-4">
-        <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">Sustainability initiatives</h2>
+        <h2 className="font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">Sustainability initiatives</h2>
         <Link href="/sustainability" className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
           View all <ArrowRight aria-hidden className="h-4 w-4" />
         </Link>
@@ -255,7 +252,7 @@ function DonationImpactPanel({ records }: { records: ResearchGenericRecord[] }) 
   return (
     <section className="rounded-lg border border-border bg-white p-4 shadow-sm">
       <div className="mb-4 flex items-end justify-between gap-4">
-        <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">Donation impact</h2>
+        <h2 className="font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">Donation impact</h2>
         <Link href="/donate" className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
           View all <ArrowRight aria-hidden className="h-4 w-4" />
         </Link>
@@ -299,7 +296,7 @@ function PublicEngagementEvents({ events }: { events: ResearchGenericRecord[] })
     <section className="rounded-lg border border-border bg-white p-4 shadow-sm">
       <div className="mb-4 flex items-end justify-between gap-4">
         <div>
-          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">Public engagement events</h2>
+          <h2 className="font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">Public engagement events</h2>
         </div>
         <Link href="/news?tab=-events" className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
           View all <ArrowRight aria-hidden className="h-4 w-4" />
@@ -330,29 +327,44 @@ function PublicEngagementEvents({ events }: { events: ResearchGenericRecord[] })
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
-        <LegendDot className="bg-primary" label="Upcoming" />
-        <LegendDot className="bg-secondary" label="Ongoing" />
-        <LegendDot className="bg-surface-muted" label="Completed" />
+        <LegendDot className="bg-primary" label="Event day" />
       </div>
     </section>
   );
 }
 
 function MiniCalendar({ events }: { events: ResearchGenericRecord[] }) {
-  const activeDays = new Set(events.map((event) => getEventDateParts(event).day).filter(Boolean));
-  const days = Array.from({ length: 35 }, (_, index) => index + 1);
+  const anchor = events.map(getEventDate).find((date) => date !== null) ?? null;
+  if (!anchor) return null;
+  const year = anchor.getFullYear();
+  const month = anchor.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstWeekday = new Date(year, month, 1).getDay();
+  const activeDays = new Set(
+    events
+      .map(getEventDate)
+      .filter(
+        (date): date is Date =>
+          date !== null && date.getFullYear() === year && date.getMonth() === month,
+      )
+      .map((date) => date.getDate()),
+  );
+  const monthLabel = anchor.toLocaleString("en-GB", { month: "long", year: "numeric" });
   return (
     <div className="rounded-lg border border-border p-4">
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-lg font-semibold text-foreground">May 2025</span>
+        <span className="text-lg font-semibold text-foreground">{monthLabel}</span>
         <CalendarDays aria-hidden className="h-5 w-5 text-primary" />
       </div>
       <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-muted-foreground">
         {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => <span key={`${day}-${index}`}>{day}</span>)}
       </div>
       <div className="mt-2 grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
-        {days.map((day) => (
-          <span key={day} className={`flex h-7 items-center justify-center rounded-full ${activeDays.has(String(day).padStart(2, "0")) || day === 20 ? "bg-primary text-white" : ""}`}>
+        {Array.from({ length: firstWeekday }, (_, index) => (
+          <span key={`pad-${index}`} aria-hidden />
+        ))}
+        {Array.from({ length: daysInMonth }, (_, index) => index + 1).map((day) => (
+          <span key={day} className={`flex h-7 items-center justify-center rounded-full ${activeDays.has(day) ? "bg-primary text-white" : ""}`}>
             {day}
           </span>
         ))}
@@ -373,8 +385,8 @@ function LegendDot({ className, label }: { className: string; label: string }) {
 function CommunityQuickLinks() {
   return (
     <aside className="rounded-lg border border-border bg-white p-5 shadow-sm xl:sticky xl:top-28 xl:self-start">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">Explore more</h2>
-      <div className="mt-3 divide-y divide-slate-200">
+      <h2 className="font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">Explore more</h2>
+      <div className="mt-3 divide-y divide-border">
         {quickLinks.map((link) => (
           <Link key={link.href} href={link.href} className="group flex items-center justify-between gap-4 py-3">
             <span>
@@ -424,9 +436,14 @@ function formatCompactNumber(value: string) {
   return String(numeric);
 }
 
-function getEventDateParts(event: ResearchGenericRecord) {
+function getEventDate(event: ResearchGenericRecord) {
   const date = new Date(String(event.start_date ?? event.event_date ?? event.published_at ?? ""));
-  if (Number.isNaN(date.getTime())) return { month: "MAY", day: "" };
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getEventDateParts(event: ResearchGenericRecord) {
+  const date = getEventDate(event);
+  if (!date) return { month: "", day: "" };
   return {
     month: date.toLocaleString("en-US", { month: "short" }).toUpperCase(),
     day: String(date.getDate()).padStart(2, "0"),

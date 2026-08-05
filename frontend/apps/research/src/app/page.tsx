@@ -13,7 +13,8 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
+import { AmbientPageBackground, ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
+import { SectionFadeIn } from "../components/section-fade-in";
 import { richTextToPlainText } from "@ksu/ui/rich-text-renderer";
 import type {
   FAQ,
@@ -121,30 +122,32 @@ export default async function ResearchPage() {
     Boolean(stats);
 
   return (
-    <main id="research-main" className="min-h-screen bg-background text-foreground">
+    <main id="research-main" className="min-h-screen text-foreground">
       <ResearchLandingHero
         slides={heroSliders.data}
       />
 
-      {errors.length > 0 && !hasHomepageRecords ? (
-        <section className="px-4 pt-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="mx-auto flex max-w-[1680px] flex-col gap-3">
-            {errors.slice(0, 3).map((error, i) => (
-              <StatusMessage key={`${error}-${i}`} tone="error">
-                {error}
-              </StatusMessage>
-            ))}
-          </div>
-        </section>
-      ) : null}
+      <AmbientPageBackground as="div" variant="academic" intensity="soft">
+        {errors.length > 0 && !hasHomepageRecords ? (
+          <section className="px-4 pt-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+            <div className="mx-auto flex max-w-[1680px] flex-col gap-3">
+              {errors.slice(0, 3).map((error, i) => (
+                <StatusMessage key={`${error}-${i}`} tone="error">
+                  {error}
+                </StatusMessage>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
-      <AboutResearchSection headProfile={headProfile} siteContext={siteContext} />
-      <ResearchFocusServicesSection items={focusItems} />
-      <FeaturedWorkSection items={featuredWork} />
-      <ResearchPartnersSection partners={partnerItems} />
-      <ResourceToolsSection items={resourceToolItems} />
-      <NewsEventsArticlesSection items={newsItems} />
-      <ResearchFaqSection items={faqItems} />
+        <AboutResearchSection headProfile={headProfile} siteContext={siteContext} />
+        <ResearchFocusServicesSection items={focusItems} />
+        <FeaturedWorkSection items={featuredWork} />
+        <ResearchPartnersSection partners={partnerItems} />
+        <ResourceToolsSection items={resourceToolItems} />
+        <NewsEventsArticlesSection items={newsItems} />
+        <ResearchFaqSection items={faqItems} />
+      </AmbientPageBackground>
     </main>
   );
 }
@@ -180,22 +183,21 @@ function ResearchLandingHero({
         fill
         priority
         sizes="100vw"
-        className="object-cover"
+        className="object-cover motion-safe:animate-ken-burns"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-brand-overlay/88 via-brand-overlay/38 to-brand-overlay/6" />
-      <div className="absolute inset-0 bg-gradient-to-t from-brand-overlay/70 via-brand-overlay/8 to-brand-overlay/14" />
-      <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-background via-background/40 to-transparent" />
-      <div className="relative mx-auto flex min-h-[435px] max-w-[1920px] items-end px-4 pb-10 pt-24 sm:min-h-[475px] sm:px-6 sm:pb-12 lg:min-h-[505px] lg:px-8 lg:pb-14 xl:px-10 2xl:px-12">
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--brand-overlay)/0.72)_0%,hsl(var(--brand-overlay)/0.28)_55%,hsl(var(--brand-overlay)/0.04)_100%)]" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+      <div className="relative mx-auto flex min-h-[435px] max-w-[1920px] items-end px-4 pb-12 pt-24 sm:min-h-[475px] sm:px-6 sm:pb-14 lg:min-h-[505px] lg:px-8 lg:pb-16 xl:px-10 2xl:px-12">
         <ScrollReveal className="relative max-w-5xl">
-          <div aria-hidden className="absolute -inset-x-5 -inset-y-8 -z-10 rounded-[2rem] bg-brand-overlay/24 blur-2xl sm:-inset-x-8 lg:-inset-x-12 lg:bg-brand-overlay/18" />
-          <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary drop-shadow-[0_2px_10px_rgba(0,0,0,0.65)] sm:mb-4">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-eyebrow text-secondary sm:mb-4">
             Research & Innovation
+            <span aria-hidden className="mt-2 block h-0.5 w-7 bg-secondary" />
           </p>
-          <h1 className="max-w-5xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[0.98] text-white drop-shadow-[0_6px_24px_rgba(0,0,0,0.55)] sm:text-5xl lg:text-6xl 2xl:text-7xl">
+          <h1 className="max-w-5xl font-display text-4xl font-normal leading-tight tracking-tight text-balance text-white drop-shadow-[0_6px_24px_rgba(0,0,0,0.55)] sm:text-5xl">
             {heroTitle}
-            {heroAccent ? <span className="block text-secondary">{heroAccent}</span> : null}
+            {heroAccent ? <em className="block italic text-secondary">{heroAccent}</em> : null}
           </h1>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-white/88 drop-shadow-[0_2px_12px_rgba(0,0,0,0.72)] sm:mt-5 sm:text-base sm:leading-8 lg:max-w-3xl">
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-white/85 sm:mt-5 sm:text-base sm:leading-8 lg:max-w-3xl">
             {heroBody}
           </p>
           <div className="mt-6 flex flex-wrap gap-3 sm:mt-7">
@@ -209,31 +211,9 @@ function ResearchLandingHero({
               </ActionLink>
             ))}
           </div>
-          <div className="mt-6 flex items-center gap-2 sm:mt-7">
-            {(activeSlides.length > 0 ? activeSlides : [{ id: "default" }]).slice(0, 5).map((item, index) => (
-              <span
-                key={String(item.id ?? index)}
-                className={`h-2 rounded-full transition-all ${index === 0 ? "w-9 bg-secondary" : "w-2 bg-white/45"}`}
-              />
-            ))}
-          </div>
         </ScrollReveal>
       </div>
     </section>
-  );
-}
-
-function ResearchAnimatedBackdrop({ dark = false }: { dark?: boolean }) {
-  const tone = dark ? "research-animated-backdrop-dark" : "";
-
-  return (
-    <div aria-hidden className={`research-animated-backdrop ${tone}`}>
-      <span className="research-signal-dot left-[12%] top-[22%]" />
-      <span className="research-signal-dot left-[42%] top-[16%]" style={{ animationDelay: "1.4s" }} />
-      <span className="research-signal-dot right-[18%] top-[34%]" style={{ animationDelay: "2.1s" }} />
-      <span className="research-signal-dot bottom-[22%] left-[32%]" style={{ animationDelay: "3s" }} />
-      <span className="research-signal-dot bottom-[18%] right-[28%]" style={{ animationDelay: "4.2s" }} />
-    </div>
   );
 }
 
@@ -257,12 +237,13 @@ function AboutResearchSection({ headProfile, siteContext }: { headProfile: Resea
     "Our mandate is to create an enabling environment where every scholar, student, and partner can turn knowledge into public value.";
 
   return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
-      <div className="relative mx-auto grid max-w-[1680px] gap-3 rounded-xl border border-white bg-white p-4 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:p-5 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.78fr)] lg:p-8">
-        <article className="rounded-lg bg-card p-6 lg:p-8">
+    <SectionFadeIn>
+      <section className="border-b border-border px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mx-auto grid max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.78fr)]">
+        <article>
           <SectionKicker>About Research</SectionKicker>
-          <h2 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-            {compactText(stringish(researchEntity?.name)) || "Research, Extension, Innovation and Resource Mobilization"}
+          <h2 className="mt-3 max-w-3xl font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+            {compactText(stringish(researchEntity?.name)) || "Research, Extension, Innovation and Resource"} <em className="italic">Mobilization</em>
           </h2>
           <div className="mt-5">
             <ResearchRichText
@@ -281,8 +262,8 @@ function AboutResearchSection({ headProfile, siteContext }: { headProfile: Resea
             {quickLinks.map((link) => {
               const Icon = link.icon;
               return (
-                <Link key={link.href} href={link.href} className="group rounded-md border border-border bg-white p-4 transition hover:border-primary/30 hover:shadow-sm">
-                  <span className={`inline-flex h-10 w-10 items-center justify-center rounded-md ${link.tone === "secondary" ? "bg-secondary/10 text-secondary" : "bg-primary/10 text-primary"}`}>
+                <Link key={link.href} href={link.href} className="group rounded-lg border border-border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
+                  <span className={`inline-flex h-10 w-10 items-center justify-center rounded-md ring-1 ring-border ${link.tone === "secondary" ? "bg-secondary/10 text-secondary" : "bg-accent text-primary"}`}>
                     <Icon aria-hidden className="h-5 w-5" />
                   </span>
                   <span className="mt-3 block text-sm font-bold text-foreground transition group-hover:text-primary">
@@ -297,9 +278,10 @@ function AboutResearchSection({ headProfile, siteContext }: { headProfile: Resea
           </nav>
         </article>
 
-        <article className="research-glass-panel research-border-sheen relative rounded-lg p-6 lg:p-8">
+        <article className="relative overflow-hidden rounded-md bg-brand-overlay p-6 text-white lg:p-8">
+          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_12%,hsl(var(--primary)/0.35),transparent_42%)]" />
           {headProfile?.photoUrl ? (
-            <div className="research-image-fallback absolute right-5 top-5 h-[20%] min-h-24 w-[20%] min-w-24 overflow-hidden rounded-md border border-white shadow-sm">
+            <div className="research-image-fallback absolute right-5 top-5 h-[20%] min-h-24 w-[20%] min-w-24 overflow-hidden rounded-md border border-white/20 shadow-sm">
               <Image
                 src={headProfile.photoUrl}
                 alt={headName}
@@ -309,45 +291,48 @@ function AboutResearchSection({ headProfile, siteContext }: { headProfile: Resea
               />
             </div>
           ) : null}
-          <div className={headProfile?.photoUrl ? "max-w-[76%]" : "max-w-xl"}>
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary text-white">
+          <div className={`relative ${headProfile?.photoUrl ? "max-w-[76%]" : "max-w-xl"}`}>
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20">
               <Users aria-hidden className="h-5 w-5" />
             </span>
             <SectionKicker className="mt-5">Message from the Head</SectionKicker>
           </div>
-          <blockquote className="mt-6 max-w-xl text-lg font-medium leading-8 text-foreground">
+          <blockquote className="relative mt-6 max-w-xl text-lg font-medium leading-8 text-white">
             “{headMessage}”
           </blockquote>
-          <p className="mt-5 text-sm font-semibold text-foreground">
+          <p className="relative mt-5 text-sm font-semibold text-white">
             {headTitle}
           </p>
           {headProfile?.name ? (
-            <p className="mt-1 text-sm text-muted-foreground">{headProfile.name}</p>
+            <p className="relative mt-1 text-sm text-white/70">{headProfile.name}</p>
           ) : null}
-          <div className="mt-6 flex flex-wrap gap-3">
-            <ActionLink href="/connect" variant="outline">Contact REIRM</ActionLink>
+          <div className="relative mt-6 flex flex-wrap gap-3">
+            <ActionLink href="/connect" variant="light">Contact REIRM</ActionLink>
           </div>
         </article>
-      </div>
-    </ScrollReveal>
+        </div>
+      </section>
+    </SectionFadeIn>
   );
 }
 
 function ResearchFocusServicesSection({ items }: { items: FocusItem[] }) {
   return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
-      <div className="relative mx-auto max-w-[1680px] border-t border-border bg-card px-4 py-8 sm:px-6 lg:px-8">
-        <SectionHeader
-          eyebrow="Research Focus / Services"
-          title="Support pathways for research, innovation, extension, and resource mobilization."
-        />
-        <ScrollRevealGroup className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4" staggerDelay={70}>
-          {items.map((item) => (
-            <FocusServiceCard key={item.title} item={item} />
-          ))}
-        </ScrollRevealGroup>
-      </div>
-    </ScrollReveal>
+    <SectionFadeIn>
+      <section className="border-b border-border px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mx-auto max-w-[1680px]">
+          <SectionHeader
+            eyebrow="Research Focus / Services"
+            title="Support pathways for research, innovation, extension, and resource mobilization."
+          />
+          <ScrollRevealGroup className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4" staggerDelay={70}>
+            {items.map((item) => (
+              <FocusServiceCard key={item.title} item={item} />
+            ))}
+          </ScrollRevealGroup>
+        </div>
+      </section>
+    </SectionFadeIn>
   );
 }
 
@@ -356,9 +341,9 @@ function FocusServiceCard({ item }: { item: FocusItem }) {
   return (
     <Link
       href={item.href}
-      className="group flex min-h-[170px] flex-col rounded-lg border border-border bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
+      className="group flex min-h-[170px] flex-col rounded-lg border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
     >
-      <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
+      <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/5 text-primary ring-1 ring-primary/10">
         <Icon aria-hidden className="h-5 w-5" />
       </span>
       <h3 className="mt-4 text-base font-semibold leading-6 text-foreground">
@@ -381,13 +366,13 @@ function FeaturedWorkSection({ items }: { items: FeaturedWorkItem[] }) {
   }
 
   return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
-      <div className="relative mx-auto max-w-[1680px] px-4 py-8 sm:px-6 lg:px-10">
-        <div className="grid gap-8 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start">
+    <SectionFadeIn>
+      <section className="border-b border-border px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mx-auto max-w-[1680px] grid gap-8 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start">
           <div>
             <SectionKicker>Featured Projects / Grants</SectionKicker>
-            <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-              Research work and funding records.
+            <h2 className="mt-4 font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+              Research work and funding <em className="italic">records.</em>
             </h2>
             <p className="mt-5 text-sm leading-7 text-muted-foreground">
               Active projects, published outputs, innovations, and grants from
@@ -401,8 +386,8 @@ function FeaturedWorkSection({ items }: { items: FeaturedWorkItem[] }) {
             ))}
           </ScrollRevealGroup>
         </div>
-      </div>
-    </ScrollReveal>
+      </section>
+    </SectionFadeIn>
   );
 }
 
@@ -440,31 +425,32 @@ function NewsEventsArticlesSection({ items }: { items: NewsItem[] }) {
   }
 
   return (
-    <ScrollReveal as="section" className="research-surface-grid relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
-      <ResearchAnimatedBackdrop />
-      <div className="relative mx-auto max-w-[1680px] rounded-lg border border-white bg-white px-4 py-6 shadow-[0_14px_50px_rgba(15,23,42,0.05)] sm:px-6 lg:px-8">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div>
-            <SectionKicker>News, events & articles</SectionKicker>
-            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
-              Latest research updates.
-            </h2>
+    <SectionFadeIn>
+      <section className="border-b border-border px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mx-auto max-w-[1680px]">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <SectionKicker>News, events & articles</SectionKicker>
+              <h2 className="mt-3 font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+                Latest research <em className="italic">updates.</em>
+              </h2>
+            </div>
+            <Link
+              href="/news"
+              className="inline-flex min-h-11 items-center gap-2 rounded-md border border-primary/25 bg-background px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
+            >
+              All updates
+              <ArrowRight aria-hidden className="h-4 w-4" />
+            </Link>
           </div>
-          <Link
-            href="/news"
-            className="inline-flex min-h-9 items-center gap-2 rounded-md border border-primary/20 px-3 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
-          >
-            All updates
-            <ArrowRight aria-hidden className="h-4 w-4" />
-          </Link>
+          <ScrollRevealGroup className={`mt-8 grid gap-5 ${groups.length === 1 ? "lg:grid-cols-1" : groups.length === 2 ? "lg:grid-cols-2" : "lg:grid-cols-3"}`} staggerDelay={80}>
+            {groups.map((group) => (
+              <UpdateGroupCard key={group.kind} group={group} wide={groups.length === 1} />
+            ))}
+          </ScrollRevealGroup>
         </div>
-        <ScrollRevealGroup className={`mt-5 grid gap-3 ${groups.length === 1 ? "lg:grid-cols-1" : groups.length === 2 ? "lg:grid-cols-2" : "lg:grid-cols-3"}`} staggerDelay={80}>
-          {groups.map((group) => (
-            <UpdateGroupCard key={group.kind} group={group} wide={groups.length === 1} />
-          ))}
-        </ScrollRevealGroup>
-      </div>
-    </ScrollReveal>
+      </section>
+    </SectionFadeIn>
   );
 }
 
@@ -482,13 +468,13 @@ function UpdateGroupCard({
   wide?: boolean;
 }) {
   return (
-    <section className="rounded-md border border-border bg-surface-subtle p-3">
+    <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-secondary">
             {group.eyebrow}
           </p>
-          <h3 className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold leading-6 text-foreground">
+          <h3 className="mt-1 font-display text-lg font-normal leading-6 tracking-tight text-foreground">
             {group.title}
           </h3>
         </div>
@@ -514,25 +500,31 @@ function ResearchPartnersSection({ partners }: { partners: ResearchGenericRecord
     return null;
   }
 
+  const marqueePartners = [...partners, ...partners];
+
   return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
-      <div className="relative mx-auto max-w-[1680px] border-t border-border bg-card px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col justify-between gap-3 px-4 sm:flex-row sm:items-end sm:px-6 lg:px-8">
-          <div>
-            <SectionKicker>Partners</SectionKicker>
-            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
-              Our Partners
-            </h2>
+    <SectionFadeIn>
+      <section className="border-b border-border bg-white px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mx-auto max-w-[1680px]">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+            <div>
+              <SectionKicker>Partners</SectionKicker>
+              <h2 className="mt-3 font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+                Our <em className="italic">Partners</em>
+              </h2>
+            </div>
+            <TextLink href="/partners">View all partners</TextLink>
           </div>
-          <TextLink href="/partners">View all partners</TextLink>
         </div>
-        <ScrollRevealGroup className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6" staggerDelay={60}>
-          {partners.slice(0, 12).map((partner) => (
-            <PartnerLogoCard key={partner.id} partner={partner} />
-          ))}
-        </ScrollRevealGroup>
-      </div>
-    </ScrollReveal>
+        <div className="relative mt-6 overflow-hidden bg-white py-2">
+          <div className="animate-research-marquee flex w-max gap-8 px-3 hover:[animation-play-state:paused]">
+            {marqueePartners.map((partner, index) => (
+              <PartnerLogoCard key={`${partner.id}-${index}`} partner={partner} />
+            ))}
+          </div>
+        </div>
+      </section>
+    </SectionFadeIn>
   );
 }
 
@@ -543,15 +535,15 @@ function PartnerLogoCard({ partner }: { partner: ResearchGenericRecord }) {
   return (
     <Link
       href={partner.slug ? `/partners/${partner.slug}` : "/partners"}
-      className="group flex min-h-24 flex-col items-center justify-center rounded-lg border border-border bg-white p-4 text-center text-sm font-semibold text-muted-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary hover:shadow-md"
+      className="group flex h-20 w-48 shrink-0 flex-col items-center justify-center gap-2 bg-white text-center text-xs font-semibold text-muted-foreground transition hover:text-primary"
     >
       {logo ? (
-        <span className="relative mb-3 h-10 w-28 shrink-0 overflow-hidden bg-white">
+        <span className="relative h-10 w-32 shrink-0 overflow-hidden bg-white">
           <Image
             src={logo}
             alt=""
             fill
-            sizes="112px"
+            sizes="128px"
             className="object-contain"
           />
         </span>
@@ -567,20 +559,22 @@ function ResourceToolsSection({ items }: { items: ResourceToolItem[] }) {
   }
 
   return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
-      <div className="relative mx-auto max-w-[1680px] border-t border-border bg-card px-4 py-8 sm:px-6 lg:px-8">
-        <SectionHeader
-          eyebrow="Resources & Tools"
-          title="Policies, forms, downloads, and services for research work."
-          action={{ href: "/resources-tools", label: "View all resources" }}
-        />
-        <ScrollRevealGroup className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4" staggerDelay={70}>
-          {items.map((item) => (
-            <ResourceToolCard key={item.href} item={item} />
-          ))}
-        </ScrollRevealGroup>
-      </div>
-    </ScrollReveal>
+    <SectionFadeIn>
+      <section className="border-b border-border px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mx-auto max-w-[1680px]">
+          <SectionHeader
+            eyebrow="Resources & Tools"
+            title="Policies, forms, downloads, and services for research work."
+            action={{ href: "/resources-tools", label: "View all resources" }}
+          />
+          <ScrollRevealGroup className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4" staggerDelay={70}>
+            {items.map((item) => (
+              <ResourceToolCard key={item.href} item={item} />
+            ))}
+          </ScrollRevealGroup>
+        </div>
+      </section>
+    </SectionFadeIn>
   );
 }
 
@@ -589,9 +583,9 @@ function ResourceToolCard({ item }: { item: ResourceToolItem }) {
   return (
     <Link
       href={item.href}
-      className="group flex min-h-[165px] flex-col rounded-lg border border-border bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
+      className="group flex min-h-[165px] flex-col rounded-lg border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
     >
-      <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
+      <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/5 text-primary ring-1 ring-primary/10">
         <Icon aria-hidden className="h-5 w-5" />
       </span>
       <h3 className="mt-4 text-base font-semibold leading-6 text-foreground">
@@ -614,22 +608,23 @@ function ResearchFaqSection({ items }: { items: FaqItem[] }) {
   }
 
   return (
-    <ScrollReveal as="section" className="relative isolate overflow-hidden bg-background px-3 py-3 sm:px-4">
-      <div className="relative mx-auto grid max-w-[1680px] gap-6 rounded-xl border border-white bg-white px-4 py-12 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:px-6 lg:grid-cols-[360px_minmax(0,1fr)] lg:px-10">
+    <SectionFadeIn>
+      <section className="px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="mx-auto grid max-w-[1680px] gap-8 lg:grid-cols-[360px_minmax(0,1fr)]">
         <div>
           <SectionKicker>Research FAQs</SectionKicker>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-            Common research support questions.
+          <h2 className="mt-3 font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+            Common research support <em className="italic">questions.</em>
           </h2>
           <p className="mt-4 text-sm leading-7 text-muted-foreground">
             Quick answers for research office contacts, policies, approvals, projects, and funding support.
           </p>
           <TextLink href="/resources-tools">Open resources and policies</TextLink>
         </div>
-        <ScrollRevealGroup className="divide-y divide-slate-200 overflow-hidden rounded-lg border border-border" staggerDelay={60}>
+        <ScrollRevealGroup className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card shadow-sm" staggerDelay={60}>
           {items.slice(0, 6).map((item, index) => (
             <details key={item.id} className="group bg-white open:bg-surface-subtle" open={index === 0}>
-              <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold text-foreground marker:hidden">
+              <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
                 <span>{item.question}</span>
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/20 text-primary transition group-open:rotate-45 group-open:bg-primary group-open:text-white">
                   +
@@ -641,8 +636,9 @@ function ResearchFaqSection({ items }: { items: FaqItem[] }) {
             </details>
           ))}
         </ScrollRevealGroup>
-      </div>
-    </ScrollReveal>
+        </div>
+      </section>
+    </SectionFadeIn>
   );
 }
 
@@ -650,22 +646,22 @@ function FeaturedWorkCard({ item }: { item: FeaturedWorkItem }) {
   return (
     <Link
       href={item.href}
-      className="group overflow-hidden rounded-lg border border-border bg-white shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
+      className="group h-full overflow-hidden rounded-lg border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
     >
-      <div className="research-image-fallback relative aspect-[16/8.5]">
+      <div className="research-image-fallback relative aspect-[16/8.5] overflow-hidden">
         <Image
           src={item.image}
           alt=""
           fill
           sizes="(min-width: 1536px) 25vw, (min-width: 1024px) 50vw, 100vw"
-          className="object-cover"
+          className="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
         />
         <div className="absolute left-3 top-3">
           <FilledBadge>Featured {item.type}</FilledBadge>
         </div>
       </div>
       <div className="p-5">
-        <h3 className="mt-4 font-[family-name:var(--font-display)] text-xl font-semibold leading-7 text-foreground">
+        <h3 className="mt-4 font-display text-xl font-normal leading-7 tracking-tight text-foreground">
           {item.title}
         </h3>
         {item.summary ? (
@@ -698,26 +694,26 @@ function EditorialUpdateCard({
         : item.kind === "Article"
         ? "border-primary/20 bg-primary/5"
         : item.kind === "Announcement"
-          ? "border-amber-200 bg-amber-50/60"
+          ? "border-secondary/20 bg-secondary/5"
           : "border-border bg-surface-subtle";
 
   return (
     <Link
       href={item.href}
-      className={`group grid gap-3 rounded-md border p-3 transition hover:border-primary/30 hover:bg-white hover:shadow-sm ${
+      className={`group grid gap-3 rounded-lg border p-3 transition hover:border-primary/30 hover:bg-card hover:shadow-sm ${
         compact
           ? `min-h-[88px] ${tone}`
           : "min-h-[92px] border-border bg-surface-subtle sm:min-h-[118px] sm:grid-cols-[92px_minmax(0,1fr)] xl:block xl:min-h-[190px]"
       }`}
     >
       {!compact ? (
-        <div className="research-image-fallback relative hidden min-h-24 overflow-hidden rounded-md sm:block xl:aspect-[16/7] xl:min-h-0">
+        <div className="research-image-fallback relative hidden min-h-24 overflow-hidden rounded-2xl sm:block xl:aspect-[16/7] xl:min-h-0">
           <Image
             src={item.image}
             alt=""
             fill
             sizes="(min-width: 1280px) 18vw, 92px"
-            className="object-cover"
+            className="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
           />
         </div>
       ) : null}
@@ -726,7 +722,7 @@ function EditorialUpdateCard({
           <Badge>{label}</Badge>
           {item.date ? <Badge>{item.date}</Badge> : null}
         </div>
-        <h3 className="mt-2 line-clamp-2 font-[family-name:var(--font-display)] text-base font-semibold leading-5 text-foreground">
+        <h3 className="mt-2 line-clamp-2 font-display text-base font-normal leading-5 tracking-tight text-foreground">
           {item.title}
         </h3>
         <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
@@ -757,7 +753,7 @@ function SectionHeader({
     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
       <div className="max-w-4xl">
         <SectionKicker>{eyebrow}</SectionKicker>
-        <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+        <h2 className="mt-3 font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
           {title}
         </h2>
       </div>
@@ -774,8 +770,9 @@ function SectionKicker({
   className?: string;
 }) {
   return (
-    <p className={`text-xs font-bold uppercase tracking-[0.08em] text-primary ${className}`}>
+    <p className={`text-sm font-semibold uppercase tracking-eyebrow text-secondary ${className}`}>
       {children}
+      <span aria-hidden className="mt-2 block h-0.5 w-7 bg-secondary" />
     </p>
   );
 }
@@ -793,14 +790,14 @@ function ActionLink({
     variant === "light"
       ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/40 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
       : variant === "glass"
-        ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/45 bg-white/10 px-5 py-3 text-sm font-semibold text-white shadow-sm backdrop-blur transition hover:bg-white/18"
+        ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/45 bg-white/10 px-5 py-3 text-sm font-semibold text-white shadow-sm backdrop-blur transition hover:bg-white/20"
         : variant === "impact"
           ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/35 bg-primary/80 px-5 py-3 text-sm font-semibold text-white shadow-sm backdrop-blur transition hover:bg-primary"
       : variant === "secondary"
-        ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-secondary/20 bg-white px-5 py-3 text-sm font-semibold text-secondary transition hover:border-secondary hover:bg-secondary/5"
+        ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-secondary/20 bg-background px-5 py-3 text-sm font-semibold text-secondary transition hover:border-secondary hover:bg-secondary/5"
         : variant === "outline"
-          ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
-          : "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90";
+          ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-background px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
+          : "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90";
 
   return (
     <Link href={href} className={className}>

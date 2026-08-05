@@ -1,7 +1,5 @@
 """School Portal façade for Research-owned publications."""
 
-from __future__ import annotations
-
 import uuid
 
 from fastapi import APIRouter, HTTPException, Query, Request, status

@@ -38,10 +38,12 @@ async function fetchResearchContext(): Promise<PublicResearchContextResponse | n
     });
     return response.data ?? null;
   } catch (error) {
-    if (error instanceof ApiClientError) {
-      return null;
+    if (!(error instanceof ApiClientError)) {
+      // Network-level failure (gateway unreachable): degrade instead of
+      // failing the whole build/request — pages render their fallbacks.
+      console.error("Failed to fetch research site context:", error);
     }
-    throw error;
+    return null;
   }
 }
 

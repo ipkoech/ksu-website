@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 
-from ksu_common import cached_public
+from ksu_common import cached_public, rate_limit
 from ksu_common.field_selection import parse_field_selection
 from ksu_common.schemas.responses import success
 
@@ -19,6 +19,7 @@ router = APIRouter()
 
 
 @router.get("")
+@rate_limit(requests=30, window=60, prefix="main:search:ip")
 @cached_public(
     timeout=120,
     vary_on=(
@@ -43,6 +44,7 @@ router = APIRouter()
     ),
 )
 async def search(
+    request: Request,
     db: DbSession,
     q: str = Query(..., min_length=2),
     limit_per_type: int = Query(5, ge=1, le=20),

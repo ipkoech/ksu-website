@@ -7,7 +7,6 @@ from logging.config import fileConfig
 from typing import Any
 
 from alembic import context
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.core.config import get_settings
@@ -78,7 +77,6 @@ async def run_migrations_online() -> None:
     engine = create_async_engine(settings.DATABASE_URL)
     async with engine.connect() as conn:
         async with conn.begin():
-            await conn.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{TARGET_SCHEMA}"'))
             await conn.run_sync(
                 lambda sync_conn: context.configure(
                     connection=sync_conn,

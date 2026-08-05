@@ -56,7 +56,7 @@ export default async function GuidelinesPage({ searchParams }: { searchParams?: 
         {visibleGuidelines.length ? (
           <>
             {featuredGuideline ? <div className="mt-6"><FeaturedGuideline item={featuredGuideline} /></div> : null}
-            <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-border bg-white shadow-sm">{rowGuidelines.map((item) => <GuidelineRow key={item.id} item={item} hrefBase="/guidelines" />)}</div>
+            <div className="mt-6 divide-y divide-border rounded-lg border border-border bg-white shadow-sm">{rowGuidelines.map((item) => <GuidelineRow key={item.id} item={item} hrefBase="/guidelines" />)}</div>
           </>
         ) : <div className="mt-7"><StatusMessage>No guidelines match the current filters.</StatusMessage></div>}
       </ResearchSection>
@@ -87,7 +87,7 @@ function GuidelinesMasthead({ resultCount, publishedCount, grantGuidanceCount, c
             <span className="text-foreground">Guidelines</span>
           </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Research Support</p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">Controlled documents for research policy, procedure, grant work, and compliance</h1>
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--app-font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">Controlled documents for research policy, procedure, grant work, and compliance</h1>
           <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">Scan active guidance by version, effective date, review window, status, and mandatory flag.</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <PrimaryLink href="/forms">Open forms</PrimaryLink>

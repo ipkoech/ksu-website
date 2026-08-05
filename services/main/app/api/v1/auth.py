@@ -90,8 +90,13 @@ def _serialize_auth_user(user: User) -> dict:
 
 
 @router.post("/login")
-async def login(data: UserLogin, db: DbSession, response: Response):
-    user, access_token, refresh_token = await AuthService.login(db, data.email, data.password)
+async def login(data: UserLogin, db: DbSession, response: Response, request: Request):
+    user, access_token, refresh_token = await AuthService.login(
+        db,
+        data.email,
+        data.password,
+        ip_address=request.client.host if request.client else None,
+    )
     _set_auth_cookies(response, access_token, refresh_token)
     return success(
         data=TokenResponse(access_token=access_token, refresh_token=refresh_token).model_dump()

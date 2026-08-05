@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime, timezone
 
+from ksu_common.task_queue import run_worker_async
 from sqlalchemy import select
 
 from ..core.database import AsyncSessionLocal
@@ -50,9 +50,9 @@ async def _mark_overdue_loans() -> int:
 
 @celery_app.task(name="library.maintenance.expire_reservations")
 def expire_reservations() -> int:
-    return asyncio.run(_expire_reservations())
+    return run_worker_async(_expire_reservations())
 
 
 @celery_app.task(name="library.maintenance.mark_overdue_loans")
 def mark_overdue_loans() -> int:
-    return asyncio.run(_mark_overdue_loans())
+    return run_worker_async(_mark_overdue_loans())

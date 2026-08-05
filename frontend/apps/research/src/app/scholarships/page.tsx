@@ -69,7 +69,7 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams?
         {visibleScholarships.length > 0 ? (
           <>
             {featuredScholarship ? <div className="mt-6"><FeaturedScholarship item={featuredScholarship} /></div> : null}
-            <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-border bg-white shadow-sm">
+            <div className="mt-6 divide-y divide-border rounded-lg border border-border bg-white shadow-sm">
               {rowScholarships.map((item) => <ScholarshipRow key={item.id} item={item} />)}
             </div>
           </>

@@ -96,7 +96,7 @@ async def seed_programmes(db: AsyncSession, ctx: SeedContext) -> None:
             late_application_end=date(2026, 4, 30),
             max_students=3000,
             is_active=True,
-            is_open=True,
+            is_open=False,
         ),
         "September": await upsert_intake(
             db,
@@ -138,20 +138,20 @@ async def seed_programmes(db: AsyncSession, ctx: SeedContext) -> None:
             db,
             ctx,
             name=str(spec["name"]),
-            code=programme_code(str(spec["name"]), str(spec["level"])),
+            code=str(spec.get("code") or programme_code(str(spec["name"]), str(spec["level"]))),
             slug=programme_slug,
             level=str(spec["level"]),
             mode_of_study=str(spec.get("mode_of_study", "full_time")),
             duration=str(spec["duration"]),
             credits_required=spec.get("credits_required"),
             department_id=department.id,
-            about=(
+            about=spec.get("about") or (
                 f"{spec['name']} is published in the official Kisii University course brochure "
                 f"and is associated here with {department.name} under {department.school.name if department.school else 'the university academic structure'}."
             ),
             objectives=spec.get("objectives"),
             career_prospects=spec.get("career_prospects"),
-            curriculum_overview=(
+            curriculum_overview=spec.get("curriculum_overview") or (
                 f"Programme published in the official Kisii University course brochure under {department.name}. "
                 f"Source: {BROCHURE_URL}"
             ),

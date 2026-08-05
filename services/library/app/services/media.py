@@ -6,6 +6,7 @@ import uuid
 from typing import Any
 
 import httpx
+from ksu_common.internal_client import get_integration_pool
 
 from ..core.config import get_settings
 
@@ -38,19 +39,23 @@ async def resolve_public_media(media_ids: list[uuid.UUID]) -> dict[uuid.UUID, di
     base_url = settings.MAIN_SERVICE_URL.rstrip("/")
     resolved: dict[uuid.UUID, dict[str, Any]] = {}
 
-    async with httpx.AsyncClient(base_url=base_url, timeout=_TIMEOUT) as client:
-        for media_id in unique_ids:
-            try:
-                response = await client.get(
-                    f"/api/v1/internal/media/{media_id}",
-                    headers={"X-Internal-Key": settings.INTERNAL_API_KEY},
-                )
-                response.raise_for_status()
-                payload = response.json().get("data")
-                if isinstance(payload, dict):
-                    resolved[media_id] = payload
-            except (httpx.HTTPError, ValueError, KeyError):
-                continue
+    pool = get_integration_pool()
+    for media_id in unique_ids:
+        try:
+            response = await pool.request_internal(
+                "main-public-media",
+                base_url,
+                "GET",
+                f"/api/v1/internal/media/{media_id}",
+                api_key=settings.MAIN_SERVICE_API_KEY,
+                timeout=_TIMEOUT,
+            )
+            response.raise_for_status()
+            payload = response.json().get("data")
+            if isinstance(payload, dict):
+                resolved[media_id] = payload
+        except (httpx.HTTPError, ValueError, KeyError):
+            continue
 
     return resolved
 

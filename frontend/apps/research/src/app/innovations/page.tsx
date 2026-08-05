@@ -215,7 +215,7 @@ export default async function InnovationsPage({
             {visibleInnovations.length > 0 ? (
               <>
                 <div className="mt-5 flex items-center justify-between gap-4">
-                  <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">
+                  <h2 className="font-[family-name:var(--app-font-display)] text-xl font-semibold text-foreground">
                     All innovations
                   </h2>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -267,7 +267,7 @@ function InnovationHero() {
       <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--brand-overlay))]/92 via-[hsl(var(--brand-overlay))]/64 to-[hsl(var(--brand-overlay))]/8" />
       <div className="relative mx-auto flex min-h-[210px] max-w-[1680px] items-center py-2">
         <div className="max-w-2xl">
-          <h1 className="font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-white sm:text-5xl">
+          <h1 className="font-[family-name:var(--app-font-display)] text-4xl font-semibold leading-none text-white sm:text-5xl">
             Innovation Portfolio
           </h1>
           <p className="mt-3 max-w-xl text-pretty text-base leading-7 text-white/92">
@@ -425,7 +425,7 @@ function FeaturedInnovation({
           <ReadinessTrail innovation={innovation} className="mt-7" />
         </div>
         <div className="grid content-between gap-4 p-5">
-          <dl className="divide-y divide-slate-200 text-sm">
+          <dl className="divide-y divide-border text-sm">
             <StoryFact label="Problem it solves" value={problem} />
             <StoryFact label="Current readiness" value={readiness} />
             <StoryFact label="Linked project" value={projectName} />
@@ -595,7 +595,7 @@ function InnovationAside() {
     <aside className="grid gap-4 xl:sticky xl:top-24">
       <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-primary">Innovation pathways</h2>
-        <div className="mt-3 divide-y divide-slate-200">
+        <div className="mt-3 divide-y divide-border">
           {pathwayLinks.map((link) => {
             const Icon = link.icon;
             return (

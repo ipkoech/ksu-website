@@ -1,174 +1,87 @@
 import {
-  IconCard,
   LibraryHero,
   LibrarySection,
   PrimaryLink,
   SecondaryLink,
-  SidePanel,
   StatusMessage,
 } from "../../components/library-ui";
-import {
-  compactText,
-  formatLabel,
-  getPublicBranches,
-} from "../../lib/library-public-data";
-import { AskLibrarianForm } from "./ask-librarian-form";
+import { getPublicAssistantContexts, getPublicBranches } from "../../lib/library-public-data";
+import { AskLibraryClient } from "./ask-library-client";
 
 export const metadata = {
-  title: "Ask a Librarian",
+  title: "Ask the Library",
   description:
-    "Send a question to Kisii University Library for catalog, e-resource, borrowing, and research support.",
+    "Ask the Kisii University Library assistant a question, find grounded guidance, and continue with a librarian.",
 };
 
 export const dynamic = "force-dynamic";
 
 export default async function AskLibrarianPage() {
-  const branches = await getPublicBranches();
-  const contactBranches = branches.data
-    .filter((branch) => branch.phone || branch.email || branch.address)
-    .slice(0, 3);
+  const [contexts, branches] = await Promise.all([
+    getPublicAssistantContexts(),
+    getPublicBranches(),
+  ]);
 
   return (
-    <main id="library-main" className="min-h-screen bg-white">
+    <main id="library-main" className="min-h-screen bg-background">
       <LibraryHero
-        eyebrow="Ask a Librarian"
-        title="Send your question to the library team."
-        body="Use this form for catalog help, database access, borrowing guidance, research support, training requests, and questions about library rules."
+        imageSrc="/images/library/reading-veranda.jpg"
+        imageAlt="Students studying on the veranda of the Kisii University Library"
+        eyebrow="Ask the Library"
+        title="Start with a question. Continue with a person when you need one."
+        body="The Library assistant searches approved Kisii University Library guidance and shows its sources. You get one free answer, then an email-verified conversation you can return to later."
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Library", href: "/" },
-          { label: "Ask a Librarian" },
+          { label: "Ask the Library" },
         ]}
         actions={
           <>
-            <PrimaryLink href="#ask-form">Send question</PrimaryLink>
-            <SecondaryLink href="/services">View services</SecondaryLink>
+            <PrimaryLink href="#assistant">Ask a question</PrimaryLink>
+            <SecondaryLink href="/services">Explore services</SecondaryLink>
           </>
         }
       />
 
-      {branches.error ? (
+      {contexts.error ? (
         <section className="px-4 pt-6 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-[1320px]">
-            <StatusMessage tone="error">{branches.error}</StatusMessage>
+            <StatusMessage tone="error">{contexts.error}</StatusMessage>
           </div>
         </section>
       ) : null}
 
       <LibrarySection
-        eyebrow="Inquiry"
-        title="Ask a library question"
-        body="Choose a branch if your question belongs to a specific service point. For general catalog, electronic resource, or research questions, the general library desk option is fine."
+        title="Find the next useful step"
+        body="Ask naturally about a resource, service, database, policy, branch, or research task. The assistant will use the Library’s published knowledge and explain when a librarian should take over."
         tone="white"
       >
-        <div
-          id="ask-form"
-          className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]"
-        >
-          <AskLibrarianForm branches={branches.data} />
-
-          <aside className="flex flex-col gap-5">
-            <SidePanel title="Good questions include">
-              <ul className="flex flex-col gap-3 text-sm leading-6 text-muted-foreground">
-                <li>Resource title, database name, ISBN, or call number.</li>
-                <li>The branch or service desk you already contacted.</li>
-                <li>Any deadline, access error, or course context.</li>
-              </ul>
-            </SidePanel>
-
-            <SidePanel title="Response route">
-              <p className="text-sm leading-7 text-muted-foreground">
-                The library team replies using the email address you submit.
-                Urgent branch-specific requests should also use the published
-                branch contacts below.
-              </p>
-            </SidePanel>
-          </aside>
+        <div id="assistant">
+          <AskLibraryClient contexts={contexts.data} />
         </div>
       </LibrarySection>
 
-      <LibrarySection
-        eyebrow="Support Areas"
-        title="What you can ask about"
-        body="The inquiry form is for library support questions that need a staff response."
-      >
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          <IconCard
-            icon="search"
-            title="Catalog help"
-            body="Ask about finding items, reading catalog records, call numbers, and availability."
-            href="/catalog"
-            action="Search first"
-          />
-          <IconCard
-            icon="database"
-            title="E-resource access"
-            body="Report database access issues or ask how to use electronic journals, e-books, and platforms."
-            href="/electronic"
-            action="Browse platforms"
-          />
-          <IconCard
-            icon="book"
-            title="Borrowing"
-            body="Ask about circulation, renewals, reference-only items, and branch service desks."
-            href="/services"
-            action="View services"
-          />
-          <IconCard
-            icon="help"
-            title="Research support"
-            body="Request help with searching, training, research tools, and using library resources for coursework."
-            href="#ask-form"
-            action="Ask now"
-          />
-        </div>
-      </LibrarySection>
-
-      {contactBranches.length > 0 ? (
-        <LibrarySection
-          eyebrow="Branch Contacts"
-          title="Published branch contact points"
-          body="Use these contacts when your question is urgent or tied to a specific branch visit."
-          tone="white"
-        >
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {contactBranches.map((branch) => (
-              <article
-                key={branch.id}
-                className="rounded-lg border border-border bg-white p-5 shadow-sm"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-                  {formatLabel(branch.library_type ?? "library")}
-                </p>
-                <h2 className="mt-3 text-xl font-semibold text-foreground">
-                  {branch.name}
-                </h2>
-                <dl className="mt-5 grid gap-3 text-sm text-muted-foreground">
-                  <Meta label="Phone" value={branch.phone} />
-                  <Meta label="Email" value={branch.email} />
-                  <Meta label="Location" value={branch.address} />
-                </dl>
-              </article>
-            ))}
+      <section className="bg-primary px-4 py-14 text-white sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-[1320px] flex-col justify-between gap-7 sm:flex-row sm:items-end">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Human support</p>
+            <h2 className="mt-3 max-w-2xl text-3xl font-semibold sm:text-4xl">Your question can continue beyond the assistant.</h2>
+            <p className="mt-3 max-w-xl text-white/75">Verify your email to keep the thread, or contact a branch directly for urgent help.</p>
           </div>
-        </LibrarySection>
-      ) : null}
-    </main>
-  );
-}
+          <div className="flex flex-wrap gap-3">
+            <a href="/contact#contact-form" className="inline-flex min-h-11 items-center gap-2 rounded-md bg-secondary px-5 py-3 text-sm font-semibold text-white hover:bg-secondary/90">Contact the Library</a>
+            <a href="/contact#hours" className="inline-flex min-h-11 items-center gap-2 rounded-md border border-white/35 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10">View opening hours</a>
+          </div>
+        </div>
+      </section>
 
-function Meta({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string | number | null;
-}) {
-  if (!compactText(value)) return null;
-  return (
-    <div>
-      <dt className="font-semibold text-foreground">{label}</dt>
-      <dd className="mt-1">{value}</dd>
-    </div>
+      <section className="bg-background px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1320px] border-t border-border pt-7">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Privacy by design</p>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">Your first question is held temporarily for the preview. We only create a persistent conversation after you verify your email. Do not share passwords, payment details, or confidential personal information.</p>
+          {branches.data.length > 0 ? <p className="mt-4 text-sm font-semibold text-primary">For urgent branch support, use the contacts published on the <a href="/contact" className="underline underline-offset-4">Contact the Library</a> page.</p> : null}
+        </div>
+      </section>
+    </main>
   );
 }

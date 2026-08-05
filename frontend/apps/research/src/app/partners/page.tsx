@@ -106,7 +106,7 @@ export default async function PartnersPage({
             <div className="mb-4 grid gap-3 md:grid-cols-[280px_minmax(0,1fr)] md:items-end">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Partner Directory</p>
-                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">Published partner records</h2>
+                <h2 className="mt-2 font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">Published partner records</h2>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">Search and filter real partner records from the research backend.</p>
               </div>
               <PartnerFilters params={params} />
@@ -165,7 +165,7 @@ function PartnerHero() {
       <div className="relative mx-auto flex min-h-[230px] max-w-[1680px] items-center">
         <div className="max-w-3xl">
           <p className="inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white">Innovation & Partnerships</p>
-          <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-white sm:text-5xl">Research Partners</h1>
+          <h1 className="mt-4 font-[family-name:var(--app-font-display)] text-4xl font-semibold leading-none text-white sm:text-5xl">Research Partners</h1>
           <p className="mt-3 max-w-2xl text-base leading-7 text-white/90">A connected network of institutions, industry, funders, communities, and public agencies helping university research move into use.</p>
           <div className="mt-5 flex flex-wrap gap-3">
             <HeroButton href="/partners/how-to-partner" primary>How to partner</HeroButton>
@@ -340,7 +340,7 @@ function PartnerSidebar() {
     <aside className="grid gap-4 xl:sticky xl:top-24">
       <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-primary">Partnership pathways</h2>
-        <div className="mt-3 divide-y divide-slate-200">
+        <div className="mt-3 divide-y divide-border">
           {links.map((link) => (
             <Link key={link.href} href={link.href} className="group grid grid-cols-[34px_minmax(0,1fr)_auto] gap-3 py-3">
               <span className="grid h-9 w-9 place-items-center rounded-md bg-primary/10 text-primary">{link.icon}</span>

@@ -377,7 +377,7 @@ function DonationSuccessPanel({
         <div className="rounded-lg border border-border bg-white p-4">
           <h3 className="text-base font-semibold text-foreground">Donation account details</h3>
           {hasAccountDetails ? (
-            <dl className="mt-4 divide-y divide-slate-200">
+            <dl className="mt-4 divide-y divide-border">
               {accountRows.map((row) => (
                 <div key={row.label} className="grid gap-1 py-3 sm:grid-cols-[130px_1fr]">
                   <dt className="text-xs font-semibold uppercase text-muted-foreground">{row.label}</dt>
@@ -530,7 +530,7 @@ function DonationForm({
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-secondary">Make a Gift</p>
-          <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground">
+          <h2 className="mt-2 font-[family-name:var(--app-font-display)] text-3xl font-semibold text-foreground">
             Giving details
           </h2>
         </div>
@@ -552,7 +552,7 @@ function DonationForm({
                 defaultChecked={index === 1}
                 className="peer sr-only"
               />
-              <span className="flex min-h-11 items-center justify-center rounded-md border border-border bg-white px-3 text-sm font-semibold text-muted-foreground transition peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
+              <span className="flex min-h-11 items-center justify-center rounded-md border border-border bg-white px-3 text-sm font-semibold text-muted-foreground transition peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2">
                 {currency} {amount.toLocaleString()}
               </span>
             </label>
@@ -562,7 +562,11 @@ function DonationForm({
           <span className="text-xs font-semibold uppercase text-muted-foreground">Custom amount</span>
           <input
             name="custom_amount"
+            type="number"
             inputMode="decimal"
+            min="1"
+            step="0.01"
+            autoComplete="off"
             placeholder={`${currency} custom amount`}
             className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
@@ -585,7 +589,7 @@ function DonationForm({
                 defaultChecked={index === 0}
                 className="peer sr-only"
               />
-              <span className="flex min-h-11 items-center justify-center rounded-md border border-border bg-white px-3 text-sm font-semibold text-muted-foreground transition peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
+              <span className="flex min-h-11 items-center justify-center rounded-md border border-border bg-white px-3 text-sm font-semibold text-muted-foreground transition peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2">
                 {label}
               </span>
             </label>
@@ -615,7 +619,12 @@ function DonationForm({
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <InputField name="display_name" label="Name" placeholder="Your name" required />
           <InputField name="email" label="Email" placeholder="you@example.com" type="email" required />
-          <InputField name="phone" label="Phone" placeholder="Phone number" />
+          <InputField
+            name="phone"
+            label="Phone"
+            placeholder="Phone number"
+            type="tel"
+          />
           <label>
             <span className="text-xs font-semibold uppercase text-muted-foreground">Donor type</span>
             <select
@@ -723,7 +732,7 @@ function DonationForm({
         </div>
       </details>
 
-      <button className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90">
+      <button type="submit" className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
         Continue to giving channel
         <ArrowRight aria-hidden className="h-4 w-4" />
       </button>
@@ -759,13 +768,13 @@ function DonationAccountPanel({
         </span>
         <div>
           <Badge>Payment details</Badge>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-8 text-foreground">
+          <h2 className="mt-3 font-[family-name:var(--app-font-display)] text-2xl font-semibold leading-8 text-foreground">
             Donation account details
           </h2>
         </div>
       </div>
       {accountRows.length > 0 ? (
-        <dl className="mt-5 divide-y divide-slate-200">
+        <dl className="mt-5 divide-y divide-border">
           {accountRows.map((row) => (
             <div key={row.label} className="grid gap-1 py-3 first:pt-0 sm:grid-cols-[128px_1fr]">
               <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{row.label}</dt>
@@ -796,6 +805,17 @@ function InputField({
   type?: string;
   required?: boolean;
 }) {
+  const autoComplete =
+    name === "display_name"
+      ? "name"
+      : name === "email"
+        ? "email"
+        : name === "phone"
+          ? "tel"
+          : name === "organization_name"
+            ? "organization"
+            : "off";
+
   return (
     <label>
       <span className="text-xs font-semibold uppercase text-muted-foreground">{label}</span>
@@ -803,6 +823,8 @@ function InputField({
         name={name}
         type={type}
         required={required}
+        autoComplete={autoComplete}
+        spellCheck={type === "email" ? false : undefined}
         placeholder={placeholder}
         className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm transition focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       />
@@ -824,7 +846,7 @@ function ImpactFeature({ impact }: { impact?: ResearchGenericRecord }) {
       </div>
       <div className="p-5">
         <Badge>{formatLabel(impact?.impact_type ?? "impact")}</Badge>
-        <h2 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+        <h2 className="mt-4 font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">
           {impact?.title ?? impact?.name ?? "Research impact"}
         </h2>
         <p className="mt-3 text-sm leading-7 text-muted-foreground">
@@ -867,13 +889,13 @@ function MajorGiftPanel({ contactHref }: { contactHref: string }) {
         <div className="flex flex-wrap gap-3">
           <a
             href={contactHref}
-            className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90"
+            className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Contact giving office
           </a>
           <Link
             href="/endowments"
-            className="inline-flex min-h-11 items-center justify-center rounded-md border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
+            className="inline-flex min-h-11 items-center justify-center rounded-md border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             View endowments
           </Link>

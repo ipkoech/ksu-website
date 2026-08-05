@@ -1,6 +1,14 @@
 import Link from "next/link";
-import { ArrowRight, Eye, Keyboard, Monitor, Phone } from "lucide-react";
-import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import {
+  Accessibility,
+  ArrowRight,
+  Eye,
+  Keyboard,
+  Monitor,
+  Phone,
+} from "lucide-react";
+import { CampusPageHeader } from "@ksu/ui/components";
+import { PageShell } from "@/components/site-shell";
 
 export const metadata = {
   title: "Accessibility",
@@ -10,30 +18,16 @@ export const metadata = {
 export default function AccessibilityPage() {
   return (
     <PageShell>
+      <CampusPageHeader
+        title="Accessibility and inclusive access"
+        eyebrow="Accessibility"
+        description="Kisii University is committed to providing accessible public information and services for all users, including people with disabilities. This statement outlines our approach and how to get help."
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Accessibility" }]}
+        seed="/accessibility"
+      />
+
       <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <BreadcrumbTrail
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Accessibility" },
-          ]}
-        />
-
-        <div className="mt-8">
-          <p className="text-sm font-semibold uppercase text-secondary">
-            Accessibility
-          </p>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
-            Accessibility and inclusive access
-          </h1>
-          <p className="mt-4 text-base leading-8 text-muted-foreground">
-            Kisii University is committed to providing accessible public
-            information and services for all users, including people with
-            disabilities. This statement outlines our approach and how to get
-            help.
-          </p>
-        </div>
-
-        <div className="mt-10 space-y-8">
+        <div className="space-y-8">
           <section>
             <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Our commitment
@@ -42,9 +36,28 @@ export default function AccessibilityPage() {
               We aim to ensure that this website and the public services it
               describes are perceivable, operable, understandable, and robust
               for the widest possible audience. We work toward conformance
-              with the Web Content Accessibility Guidelines (WCAG) 2.1 at
-              Level AA as the standard for public digital information.
+              with the Web Content Accessibility Guidelines (WCAG) 2.2 at
+              Level AA. This is a continuing improvement target, not a claim
+              that every page has already been certified.
             </p>
+          </section>
+
+          <section>
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+              Use the accessibility tools
+            </h2>
+            <div className="mt-3 flex items-start gap-3 text-base leading-8 text-muted-foreground">
+              <Accessibility
+                aria-hidden
+                className="mt-1.5 h-5 w-5 shrink-0 text-primary"
+              />
+              <p>
+                Open the floating button named “Accessibility” to adjust text
+                size, contrast, reading spacing, link emphasis, control size,
+                and motion. Preferences are saved only in this browser and can
+                be changed or reset at any time.
+              </p>
+            </div>
           </section>
 
           <section>
@@ -103,7 +116,7 @@ export default function AccessibilityPage() {
                 href={item.href}
                 target={external ? "_blank" : undefined}
                 rel={external ? "noopener noreferrer" : undefined}
-                className="group rounded-[1.25rem] border border-border bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md"
+                className="group rounded-[1.25rem] border border-border bg-white p-5 shadow-sm transition-[border-color,box-shadow] hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none"
               >
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <Icon aria-hidden className="h-5 w-5" />
@@ -116,7 +129,7 @@ export default function AccessibilityPage() {
                 </p>
                 <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
                   Open page
-                  <ArrowRight aria-hidden className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+                  <ArrowRight aria-hidden className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none motion-reduce:transition-none" />
                 </span>
               </Link>
             );
@@ -139,7 +152,7 @@ export default function AccessibilityPage() {
               </p>
               <Link
                 href="/contact"
-                className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-secondary"
+                className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-sm text-sm font-semibold text-primary hover:text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 Report an issue
                 <ArrowRight aria-hidden className="h-4 w-4" />

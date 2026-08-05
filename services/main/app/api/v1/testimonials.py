@@ -112,6 +112,7 @@ async def list_admin_testimonials(
     department_id: uuid.UUID | None = None,
     programme_id: uuid.UUID | None = None,
     featured_only: bool = False,
+    search: str | None = None,
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(Testimonial, fields)
@@ -124,6 +125,7 @@ async def list_admin_testimonials(
         department_id=department_id,
         programme_id=programme_id,
         featured_only=featured_only,
+        search=search,
         public_only=False,
         load_options=selector.load_options,
     )

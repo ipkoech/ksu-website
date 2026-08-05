@@ -26,6 +26,7 @@ const inquiryTopics = [
 
 const fieldControlClass =
   "min-h-11 w-full rounded-md border border-border bg-white px-3 py-2 text-sm font-medium text-foreground outline-none ring-primary/20 transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4 disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-muted-foreground";
+const FORM_STATUS_ID = "ask-librarian-form-status";
 
 export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,11 +43,40 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
     const formData = new FormData(form);
     const payload = buildPayload(formData);
 
-    if (!payload.sender_name || !payload.sender_email || !payload.subject || !payload.message) {
+    for (const field of form.querySelectorAll("[aria-invalid='true']")) {
+      field.removeAttribute("aria-invalid");
+      field.removeAttribute("aria-describedby");
+    }
+
+    const firstInvalidField = form.querySelector<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >(":invalid");
+    if (
+      firstInvalidField ||
+      !payload.sender_name ||
+      !payload.sender_email ||
+      !payload.subject ||
+      !payload.message
+    ) {
       setStatus({
         type: "error",
-        message: "Add your name, email, subject, and question before sending.",
+        message:
+          "Complete the required fields and enter valid contact details before sending.",
       });
+      const firstMissingName = [
+        ["sender_name", payload.sender_name],
+        ["sender_email", payload.sender_email],
+        ["subject", payload.subject],
+        ["message", payload.message],
+      ].find(([, value]) => !value)?.[0];
+      const fieldToFocus =
+        firstInvalidField ??
+        (firstMissingName ? form.elements.namedItem(firstMissingName) : null);
+      if (fieldToFocus instanceof HTMLElement) {
+        fieldToFocus.setAttribute("aria-invalid", "true");
+        fieldToFocus.setAttribute("aria-describedby", FORM_STATUS_ID);
+        fieldToFocus.focus();
+      }
       return;
     }
 
@@ -74,6 +104,8 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
+      noValidate
+      aria-busy={isSubmitting}
       className="rounded-lg border border-border bg-white p-5 shadow-sm"
     >
       <div className="grid gap-5 lg:grid-cols-2">
@@ -178,12 +210,14 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
 
       {status.message ? (
         <p
+          id={FORM_STATUS_ID}
           className={
             status.type === "success"
               ? "mt-5 rounded-md border border-primary/20 bg-primary/5 p-3 text-sm leading-6 text-primary"
               : "mt-5 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm leading-6 text-destructive"
           }
           role={status.type === "error" ? "alert" : "status"}
+          aria-live={status.type === "error" ? "assertive" : "polite"}
         >
           {status.message}
         </p>
@@ -197,14 +231,18 @@ export function AskLibrarianForm({ branches }: AskLibrarianFormProps) {
         <button
           type="submit"
           disabled={isSubmitting}
+          aria-busy={isSubmitting}
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isSubmitting ? (
-            <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
+            <Loader2
+              aria-hidden
+              className="h-4 w-4 animate-spin motion-reduce:animate-none"
+            />
           ) : (
             <Send aria-hidden className="h-4 w-4" />
           )}
-          {isSubmitting ? "Sending..." : "Send question"}
+          {isSubmitting ? "Sending…" : "Send question"}
         </button>
       </div>
     </form>

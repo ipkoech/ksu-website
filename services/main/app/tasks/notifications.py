@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import asyncio
 import smtplib
 import uuid
 from datetime import datetime, timezone
 
-from celery.exceptions import MaxRetriesExceededError
+from ksu_common.task_queue import run_worker_async
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
@@ -91,19 +90,15 @@ async def _dispatch_delivery(delivery_id: str) -> None:
 
 
 @celery_app.task(
-    bind=True,
     name="main.notifications.dispatch_delivery",
-    autoretry_for=(smtplib.SMTPException, TimeoutError, OSError, ConnectionError),
-    retry_backoff=True,
-    retry_backoff_max=600,
-    retry_jitter=True,
-    max_retries=5,
 )
-def dispatch_notification_delivery(self, delivery_id: str) -> None:
+def dispatch_notification_delivery(delivery_id: str) -> None:
     try:
-        asyncio.run(_dispatch_delivery(delivery_id))
+        run_worker_async(_dispatch_delivery(delivery_id))
     except (smtplib.SMTPException, TimeoutError, OSError, ConnectionError) as exc:
-        async def _mark_retry() -> None:
+        error_message = str(exc)
+
+        async def _mark_failed() -> None:
             async with AsyncSessionLocal() as db:
                 result = await db.execute(
                     select(NotificationDelivery).where(
@@ -113,33 +108,15 @@ def dispatch_notification_delivery(self, delivery_id: str) -> None:
                 )
                 delivery = result.scalar_one_or_none()
                 if delivery is not None:
-                    delivery.status = "retrying"
-                    delivery.error_message = str(exc)
-                    delivery.next_retry_at = datetime.now(timezone.utc)
+                    delivery.status = "dead_letter"
+                    delivery.error_message = error_message
+                    delivery.failed_at = datetime.now(timezone.utc)
+                    delivery.dead_lettered_at = datetime.now(timezone.utc)
+                    delivery.dead_letter_reason = error_message
                     await db.commit()
 
-        asyncio.run(_mark_retry())
-        try:
-            raise self.retry(exc=exc)
-        except MaxRetriesExceededError:
-            async def _dead_letter() -> None:
-                async with AsyncSessionLocal() as db:
-                    result = await db.execute(
-                        select(NotificationDelivery).where(
-                            NotificationDelivery.id == uuid.UUID(delivery_id),
-                            NotificationDelivery.deleted_at.is_(None),
-                        )
-                    )
-                    delivery = result.scalar_one_or_none()
-                    if delivery is not None:
-                        delivery.status = "dead_letter"
-                        delivery.failed_at = datetime.now(timezone.utc)
-                        delivery.dead_lettered_at = datetime.now(timezone.utc)
-                        delivery.dead_letter_reason = str(exc)
-                        await db.commit()
-
-            asyncio.run(_dead_letter())
-            raise
+        run_worker_async(_mark_failed())
+        raise
 
 
 @celery_app.task(name="main.notifications.expire")
@@ -150,7 +127,7 @@ def expire_notifications() -> int:
             await db.commit()
             return count
 
-    return asyncio.run(_expire())
+    return run_worker_async(_expire())
 
 
 async def _consume_event(event_id: uuid.UUID) -> int:
@@ -219,4 +196,4 @@ async def _consume_event(event_id: uuid.UUID) -> int:
 
 @celery_app.task(name="main.notifications.consume_event")
 def consume_event_notifications(event_id: str) -> int:
-    return asyncio.run(_consume_event(uuid.UUID(event_id)))
+    return run_worker_async(_consume_event(uuid.UUID(event_id)))

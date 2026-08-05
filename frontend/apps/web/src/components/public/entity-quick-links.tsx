@@ -147,7 +147,7 @@ export function QuickLinksPanel({
                   <span className="min-w-0 flex-1">{item.label}</span>
                   <ArrowRight
                     aria-hidden
-                    className="h-4 w-4 shrink-0 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                    className="h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary"
                   />
                 </Link>
               </li>

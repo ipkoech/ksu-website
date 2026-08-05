@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -10,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import and_, or_, select
 
 from ksu_common.cache import get_redis
+from ksu_common.task_queue import run_worker_async
 
 from ..core.database import AsyncSessionLocal
 from ..models import OutboxEvent
@@ -119,7 +119,7 @@ async def _publish_one(event_id: uuid.UUID) -> str:
 
 @celery_app.task(name="main.outbox.publish_one")
 def publish_one_outbox_event(event_id: str) -> str:
-    return asyncio.run(_publish_one(uuid.UUID(event_id)))
+    return run_worker_async(_publish_one(uuid.UUID(event_id)))
 
 
 @celery_app.task(name="main.outbox.publish_pending")
@@ -156,4 +156,4 @@ def publish_pending_outbox(batch_size: int = 100) -> int:
             celery_app.send_task("main.outbox.publish_one", args=[str(event_id)])
         return len(ids)
 
-    return asyncio.run(_dispatch())
+    return run_worker_async(_dispatch())

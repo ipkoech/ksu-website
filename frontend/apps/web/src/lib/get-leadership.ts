@@ -15,7 +15,15 @@ type PersonWithMedia = Person & {
 
 function personName(person: Person, fallback: string) {
   const fullName = person.full_name?.trim();
-  if (fullName) return fullName;
+  if (fullName) {
+    const honorific = person.title?.trim();
+    // full_name from the API omits the honorific (Prof., Dr., …) — prepend it
+    // unless it is already part of the stored name.
+    if (honorific && !fullName.toLowerCase().startsWith(honorific.toLowerCase())) {
+      return `${honorific} ${fullName}`;
+    }
+    return fullName;
+  }
 
   const name = [
     person.title,

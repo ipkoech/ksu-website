@@ -1,7 +1,5 @@
 """School Portal bootstrap and capability endpoints."""
 
-from __future__ import annotations
-
 from fastapi import APIRouter
 
 from ksu_common.schemas.responses import success

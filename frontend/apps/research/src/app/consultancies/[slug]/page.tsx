@@ -122,7 +122,6 @@ export default async function ConsultancyDetailPage({
           <ContextCard title="Partner" record={partner} hrefBase="/partners" empty="No public partner is linked." />
           <ContextCard title="Center" record={center} hrefBase="/centers" empty="No public center is linked." />
           {team.length > 0 ? <ResearchRecordPanel title="Team" records={team} /> : null}
-          {documents.length > 0 ? <ResearchRecordPanel title="Documents" records={documents} /> : null}
         </div>
       </ResearchSection>
     </main>

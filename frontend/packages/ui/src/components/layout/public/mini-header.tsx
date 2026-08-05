@@ -21,8 +21,15 @@ interface MiniHeaderProps {
 
 const defaultQuickLinks: QuickLink[] = [
   {
-    label: "HERI",
-    href: "https://kisiiuniversity.ac.ke/event/heri-africa-launch",
+    label: "HERI AFRICA",
+    href:
+      process.env.NEXT_PUBLIC_HERI_AFRICA_FRONTEND_URL ||
+      "https://heri-africa.kisiiuniversity.ac.ke",
+    external: true,
+  },
+  {
+    label: "Apply NACOSTI",
+    href: "https://research-portal.nacosti.go.ke/",
     external: true,
   },
   {
@@ -43,6 +50,16 @@ const defaultQuickLinks: QuickLink[] = [
   {
     label: "CONFERENCES",
     href: "https://digital.kisiiuniversity.ac.ke/conferences",
+    external: true,
+  },
+  {
+    label: "TENDERS",
+    href: "https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders",
+    external: true,
+  },
+  {
+    label: "HELP DESK",
+    href: "https://digital.kisiiuniversity.ac.ke/ksu_customer_care_centerr",
     external: true,
   },
 ];

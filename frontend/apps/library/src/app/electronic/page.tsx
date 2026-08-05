@@ -1,5 +1,6 @@
 import type { LibraryElectronicResource } from "@ksu/api-client";
 import {
+  CompactRecord,
   ExternalAnchor,
   LibraryActionLink,
   LibraryBadge,
@@ -20,6 +21,8 @@ import {
   compactText,
   formatLabel,
   getElectronicResources,
+  getLibraryDownloadsData,
+  getLibraryLinksData,
   safeExternalUrl,
 } from "../../lib/library-public-data";
 
@@ -68,12 +71,26 @@ export default async function ElectronicResourcesPage({
   const accessLevel = params.access?.trim() ?? "";
   const featuredOnly = params.featured === "true";
   const page = pageFromSearchParams(params);
-  const resources = await getElectronicResources(query, {
-    resourceType,
-    accessLevel,
-    featured: featuredOnly || undefined,
-    page,
-  });
+  const [resources, linksData, downloadsData] = await Promise.all([
+    getElectronicResources(query, {
+      resourceType,
+      accessLevel,
+      featured: featuredOnly || undefined,
+      page,
+    }),
+    getLibraryLinksData(),
+    getLibraryDownloadsData(),
+  ]);
+  const externalLinks = linksData.groupedLinks
+    .flatMap(({ branch, links }) => links.map((link) => ({ ...link, branch })))
+    .filter((link) =>
+      ["repository", "opac", "myloft", "database", "ejournal"].includes(
+        link.link_type,
+      ),
+    );
+  const downloadFiles = downloadsData.groupedFiles.flatMap(({ branch, files }) =>
+    files.map((file) => ({ ...file, branch })),
+  );
   const featured = resources.data.filter((item) => item.is_featured).slice(0, 3);
   const grouped = groupByLetter(resources.data);
   const vpnCount = resources.data.filter((item) => item.requires_vpn).length;
@@ -90,8 +107,10 @@ export default async function ElectronicResourcesPage({
   const electronicBaseHref = buildBaseHref("/electronic", params);
 
   return (
-    <main id="library-main" className="min-h-screen bg-white">
+    <main id="library-main" className="min-h-screen bg-background">
       <LibraryHero
+        imageSrc="/images/library/shelves.jpg"
+        imageAlt="Rows of shelved books in the Kisii University Library"
         eyebrow="Electronic Resources"
         title="Access databases, e-books, journals, and research tools."
         body="Browse the A-Z list of subscribed and recommended electronic resources. Records include provider, access conditions, registration notes, VPN requirements, and direct access links."
@@ -111,7 +130,6 @@ export default async function ElectronicResourcesPage({
       <LibraryContentBand>
         <SearchPanel>
           <LibrarySectionHeading
-            eyebrow="Search"
             title="Find an electronic resource"
             body="Search by database name, provider, subject, access level, or platform type."
           />
@@ -157,7 +175,6 @@ export default async function ElectronicResourcesPage({
         <LibrarySection
           eyebrow="Featured"
           title="Frequently used platforms"
-          body="These resources are marked as featured by the library team."
         >
           <div className="grid gap-5 lg:grid-cols-3">
             {featured.map((resource) => (
@@ -169,7 +186,6 @@ export default async function ElectronicResourcesPage({
 
       <LibraryContentBand tone="soft">
         <LibrarySectionHeading
-          eyebrow="A-Z Listing"
           title={query ? `Results for "${query}"` : "Browse all e-resources"}
           body={resultSummary({
           count: resources.data.length,
@@ -179,7 +195,7 @@ export default async function ElectronicResourcesPage({
           })}
         />
         <div className="mb-6 flex flex-wrap gap-2">
-          {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => (
+          {grouped.map(([letter]) => (
             <a
               key={letter}
               href={`#letter-${letter}`}
@@ -249,6 +265,59 @@ export default async function ElectronicResourcesPage({
           </>
         )}
       </LibraryContentBand>
+
+      <div id="external-links" className="scroll-mt-24">
+        <LibrarySection
+          eyebrow="Repository"
+          title="OPAC and off-campus access points"
+          tone="white"
+        >
+          {externalLinks.length === 0 ? (
+            <StatusMessage>No public repository or external access links are available yet.</StatusMessage>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {externalLinks.map((link) => (
+                <CompactRecord
+                  key={link.id}
+                  icon="database"
+                  eyebrow={formatLabel(link.link_type)}
+                  title={link.label}
+                  body={compactText(link.description) || "Access link details are maintained by the library team."}
+                  meta={[link.branch.name]}
+                  href={safeExternalUrl(link.url) ?? undefined}
+                  action="Open link"
+                />
+              ))}
+            </div>
+          )}
+        </LibrarySection>
+      </div>
+
+      <div id="downloads" className="scroll-mt-24">
+        <LibrarySection
+          eyebrow="Downloads"
+          title="Library documents and forms"
+        >
+          {downloadFiles.length === 0 ? (
+            <StatusMessage>No public library downloads are available yet.</StatusMessage>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {downloadFiles.map((file) => (
+                <CompactRecord
+                  key={file.id}
+                  icon="file"
+                  eyebrow={formatLabel(file.file_category ?? "file")}
+                  title={file.title}
+                  body={compactText(file.description) || "Document details are being updated."}
+                  meta={[file.branch.name, formatLabel(file.access_level)]}
+                  href={file.file_url ?? undefined}
+                  action="Download"
+                />
+              ))}
+            </div>
+          )}
+        </LibrarySection>
+      </div>
     </main>
   );
 }
@@ -280,8 +349,8 @@ function ResourceCard({
     <article
       className={
         featured
-          ? "rounded-lg border border-primary/30 bg-white p-5 shadow-sm"
-          : "rounded-lg border border-border bg-white p-5 shadow-sm"
+          ? "rounded-2xl bg-card p-5 ring-1 ring-primary/30"
+          : "rounded-2xl bg-card p-5 ring-1 ring-primary/10"
       }
     >
       <div className="flex flex-wrap items-center gap-2">

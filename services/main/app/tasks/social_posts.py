@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import asyncio
 import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+from ksu_common.task_queue import run_worker_async
 
 from ..core.database import AsyncSessionLocal
 from ..helpers import get_social_adapter
@@ -104,7 +104,7 @@ async def _publish_social_post(post_id: str, *, dry_run: bool = False) -> None:
 
 @celery_app.task(name="main.social.queue_publish")
 def queue_social_post_publish(post_id: str, dry_run: bool = False) -> None:
-    asyncio.run(_publish_social_post(post_id, dry_run=dry_run))
+    run_worker_async(_publish_social_post(post_id, dry_run=dry_run))
 
 
 @celery_app.task(name="main.social.publish_due")
@@ -126,7 +126,7 @@ def publish_due_social_posts() -> int:
             queue_social_post_publish.delay(post_id)
         return len(post_ids)
 
-    return asyncio.run(_publish_due())
+    return run_worker_async(_publish_due())
 
 
 __all__ = [

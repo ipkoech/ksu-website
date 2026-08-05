@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, Query, Request
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.auth import TokenPayload, get_optional_user
@@ -15,6 +17,7 @@ from ksu_common.cache import cache_response, invalidate_prefix
 from ksu_common.audit import audit_action
 from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelector
 from ksu_common.rate_limit import rate_limit
+from ksu_common.rate_limit import RateLimiter
 
 from ...core.auth import require_library_scope
 from ...core.database import get_db
@@ -24,6 +27,8 @@ from ...models import (
     LibraryRegulation,
     LibrarySpecialist,
     LibraryWorkflow,
+    LibraryInquiry,
+    SupportTicket,
 )
 from ...schemas import (
     LibraryGuideCreate,
@@ -50,6 +55,40 @@ from ...schemas import (
     SupportTicketUpdate,
 )
 from ...services import engagement as svc
+
+_LIBRARY_INQUIRY_EMAIL_LIMITER = RateLimiter(
+    requests=10, window=3600, prefix="library:inquiries:email"
+)
+_LIBRARY_TICKET_EMAIL_LIMITER = RateLimiter(
+    requests=10, window=3600, prefix="library:tickets:email"
+)
+
+
+async def _find_duplicate_inquiry(db: AsyncSession, data: LibraryInquiryCreate):
+    result = await db.execute(
+        select(LibraryInquiry)
+        .where(
+            LibraryInquiry.sender_email == str(data.sender_email).strip().lower(),
+            LibraryInquiry.subject == data.subject,
+            LibraryInquiry.message == data.message,
+            LibraryInquiry.created_at >= datetime.now(timezone.utc) - timedelta(hours=24),
+        )
+        .order_by(LibraryInquiry.created_at.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
+
+
+async def _find_duplicate_ticket(db: AsyncSession, data: SupportTicketCreate):
+    filters = [
+        SupportTicket.subject == data.subject,
+        SupportTicket.description == data.description,
+        SupportTicket.created_at >= datetime.now(timezone.utc) - timedelta(hours=24),
+    ]
+    if data.requester_email:
+        filters.append(SupportTicket.requester_email == str(data.requester_email).strip().lower())
+    result = await db.execute(select(SupportTicket).where(*filters).order_by(SupportTicket.created_at.desc()).limit(1))
+    return result.scalar_one_or_none()
 
 # ── Library Inquiries (Ask Librarian) ─────────────────────────────────────────
 
@@ -99,7 +138,13 @@ async def get_inquiry(
 
 
 @inquiries_router.post("/")
-@rate_limit(requests=5, window=60, by_user=False)
+@rate_limit(
+    requests=5,
+    window=300,
+    by_user=False,
+    prefix="library:inquiries:ip",
+    max_body_bytes=32 * 1024,
+)
 @audit_action("inquiry.submit", target_type="LibraryInquiry", include_body=True)
 async def submit_inquiry(
     request: Request,
@@ -107,6 +152,16 @@ async def submit_inquiry(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
 ):
+    await _LIBRARY_INQUIRY_EMAIL_LIMITER.check(
+        str(data.sender_email).strip().lower(),
+        f"{request.method}:{request.url.path}:email",
+    )
+    duplicate = await _find_duplicate_inquiry(db, data)
+    if duplicate is not None:
+        return success(
+            data=LibraryInquiryOut.model_validate(duplicate).model_dump(),
+            message="Inquiry already submitted",
+        )
     person_id = uuid.UUID(user.sub) if user else None
     ip_address = request.client.host if request.client else None
     user_agent = request.headers.get("user-agent")
@@ -226,7 +281,13 @@ async def get_ticket(
 
 
 @tickets_router.post("/")
-@rate_limit(requests=5, window=60, by_user=False)
+@rate_limit(
+    requests=5,
+    window=300,
+    by_user=False,
+    prefix="library:tickets:ip",
+    max_body_bytes=32 * 1024,
+)
 @audit_action("ticket.create", target_type="SupportTicket", include_body=True)
 async def create_ticket(
     request: Request,
@@ -234,6 +295,17 @@ async def create_ticket(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
 ):
+    if data.requester_email:
+        await _LIBRARY_TICKET_EMAIL_LIMITER.check(
+            str(data.requester_email).strip().lower(),
+            f"{request.method}:{request.url.path}:email",
+        )
+    duplicate = await _find_duplicate_ticket(db, data)
+    if duplicate is not None:
+        return success(
+            data=SupportTicketOut.model_validate(duplicate).model_dump(),
+            message="Support ticket already submitted",
+        )
     person_id = uuid.UUID(user.sub) if user else None
     ticket = await svc.create_ticket(db, data, person_id=person_id)
     return success(

@@ -1,5 +1,5 @@
-import { PortalResourcePage } from "@/components/portals/portal-resource-page";
+import { ClubReviewWorkspace } from "@/components/corporate/club-review-workspace";
 
 export default function CorporateCommunicationClubSubmissionsPage() {
-  return <PortalResourcePage portalKey="corporate-communication" resourceKey="student-clubs" />;
+  return <ClubReviewWorkspace />;
 }

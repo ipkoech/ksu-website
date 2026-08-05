@@ -48,6 +48,13 @@ center_partners = sa.Table(
     Base.metadata,
     sa.Column("center_id", sa.Uuid, sa.ForeignKey(f"{SCHEMA}.research_centers.id", ondelete="CASCADE"), primary_key=True),
     sa.Column("partner_id", sa.Uuid, sa.ForeignKey(f"{SCHEMA}.partners.id", ondelete="CASCADE"), primary_key=True),
+    sa.Column("partnership_type", sa.String(64), nullable=True),
+    sa.Column("partnership_level", sa.String(32), nullable=True),
+    sa.Column("mou_start_date", sa.Date, nullable=True),
+    sa.Column("mou_end_date", sa.Date, nullable=True),
+    sa.Column("status", sa.String(32), nullable=False, server_default="active"),
+    sa.Column("collaboration_areas", JSONB, nullable=True),
+    sa.Column("notes", sa.Text, nullable=True),
     schema=SCHEMA,
 )
 

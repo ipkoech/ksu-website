@@ -1,15 +1,25 @@
-"""Central administration for non-school public inquiry conversations."""
+"""Central administration for non-school public inquiry conversations.
+
+Access model: full admins (``admin:*``) keep unrestricted access, including
+the ability to peek at school-owned threads via ``include_school_owned``.
+Corporate Communication holders (``content.manage`` or
+``support.manage_contacts``) get the same inbox and conversation actions but
+are always confined to non-school-owned inquiries — mirroring how the school
+portal confines its holders to their own school.
+"""
 
 from __future__ import annotations
 
 import uuid
+from dataclasses import dataclass
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from ksu_common.schemas.responses import success
 
-from ....deps import CurrentUser, DbSession, require_scope
+from ....deps import DbSession, get_current_active_user, user_has_scope
+from ....models import User
 from ....schemas.contact_inquiry import (
     InquiryAssign,
     InquiryNoteCreate,
@@ -21,24 +31,59 @@ from ....services.contact_inquiry import (
     InquiryActionContext,
 )
 
-router = APIRouter(dependencies=[Depends(require_scope("admin:*"))])
+#: Non-admin scopes that grant access to the central (non-school) inbox.
+#: Kept in sync with the Corporate Communication portal registry and
+#: ``corporate_portal_context`` — both real permissions seeded in seed_rbac.
+CORPORATE_INQUIRY_SCOPES = ("content.manage", "support.manage_contacts")
+
+
+@dataclass(frozen=True)
+class InquiryActor:
+    """Authenticated inquiry operator plus their authority level."""
+
+    user: User
+    is_admin: bool
+
+
+async def get_inquiry_actor(
+    user: Annotated[User, Depends(get_current_active_user)],
+) -> InquiryActor:
+    """Authorize central-inbox access for admins or corporate scope holders."""
+    if user_has_scope(user, "admin:*"):
+        return InquiryActor(user=user, is_admin=True)
+    if any(user_has_scope(user, scope) for scope in CORPORATE_INQUIRY_SCOPES):
+        return InquiryActor(user=user, is_admin=False)
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Insufficient privileges to manage public inquiries",
+    )
+
+
+InquiryActorDep = Annotated[InquiryActor, Depends(get_inquiry_actor)]
+
+router = APIRouter()
 
 Page = Annotated[int, Query(ge=1)]
 PerPage = Annotated[int, Query(ge=1, le=100)]
 
 
-def _context(user, inquiry) -> InquiryActionContext:
+def _context(actor: InquiryActor, inquiry) -> InquiryActionContext:
     return InquiryActionContext(
-        user=user,
+        user=actor.user,
         scope_type=inquiry.owner_scope_type,
         scope_id=inquiry.owner_scope_id,
     )
 
 
+def _school_visibility(actor: InquiryActor, include_school_owned: bool) -> bool:
+    """Only full admins may widen the inbox to school-owned threads."""
+    return include_school_owned and actor.is_admin
+
+
 @router.get("")
 async def list_inquiries(
     db: DbSession,
-    _: CurrentUser,
+    actor: InquiryActorDep,
     page: Page = 1,
     per_page: PerPage = 20,
     status_filter: Annotated[str | None, Query(alias="status")] = None,
@@ -64,7 +109,7 @@ async def list_inquiries(
         target_entity_type=target_entity_type,
         owner_scope_type=owner_scope_type,
         owner_scope_id=owner_scope_id,
-        include_school_owned=include_school_owned,
+        include_school_owned=_school_visibility(actor, include_school_owned),
         search=search,
         created_from=created_from,
         created_to=created_to,
@@ -76,14 +121,14 @@ async def list_inquiries(
 async def get_inquiry(
     inquiry_id: uuid.UUID,
     db: DbSession,
-    _: CurrentUser,
+    actor: InquiryActorDep,
     include_school_owned: bool = False,
 ):
     return success(
         data=await ContactInquiryService.get_for_admin(
             db,
             inquiry_id,
-            include_school_owned=include_school_owned,
+            include_school_owned=_school_visibility(actor, include_school_owned),
         )
     )
 
@@ -93,14 +138,14 @@ async def assign_inquiry(
     inquiry_id: uuid.UUID,
     data: InquiryAssign,
     db: DbSession,
-    user: CurrentUser,
+    actor: InquiryActorDep,
 ):
     inquiry = await ContactInquiryService.get_for_admin(db, inquiry_id)
     return success(
         data=await ContactInquiryService.assign(
             db,
             inquiry,
-            _context(user, inquiry),
+            _context(actor, inquiry),
             data.assigned_to_user_id,
         )
     )
@@ -111,7 +156,7 @@ async def update_inquiry_status(
     inquiry_id: uuid.UUID,
     data: InquiryStatusUpdate,
     db: DbSession,
-    _: CurrentUser,
+    _: InquiryActorDep,
 ):
     inquiry = await ContactInquiryService.get_for_admin(db, inquiry_id)
     return success(
@@ -124,14 +169,14 @@ async def add_inquiry_note(
     inquiry_id: uuid.UUID,
     data: InquiryNoteCreate,
     db: DbSession,
-    user: CurrentUser,
+    actor: InquiryActorDep,
 ):
     inquiry = await ContactInquiryService.get_for_admin(db, inquiry_id)
     return success(
         data=await ContactInquiryService.add_note(
             db,
             inquiry,
-            _context(user, inquiry),
+            _context(actor, inquiry),
             data.body,
         )
     )
@@ -142,14 +187,14 @@ async def reply_to_inquiry(
     inquiry_id: uuid.UUID,
     data: InquiryReplyCreate,
     db: DbSession,
-    user: CurrentUser,
+    actor: InquiryActorDep,
 ):
     inquiry = await ContactInquiryService.get_for_admin(db, inquiry_id)
     return success(
         data=await ContactInquiryService.reply(
             db,
             inquiry,
-            _context(user, inquiry),
+            _context(actor, inquiry),
             data,
         )
     )
@@ -160,7 +205,7 @@ async def retry_inquiry_reply(
     inquiry_id: uuid.UUID,
     message_id: uuid.UUID,
     db: DbSession,
-    _: CurrentUser,
+    _: InquiryActorDep,
 ):
     inquiry = await ContactInquiryService.get_for_admin(db, inquiry_id)
     return success(

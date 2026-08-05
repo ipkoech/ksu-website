@@ -73,7 +73,7 @@ function LeaderPortrait({
   }
 
   return (
-    <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-[linear-gradient(135deg,#dbeafe,#bfdbfe_55%,#f8fafc)] font-[family-name:var(--font-display)] text-3xl text-primary">
+    <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] font-[family-name:var(--font-display)] text-3xl text-primary">
       {initialsFromName(name)}
     </div>
   );
@@ -90,7 +90,7 @@ export function LeaderCard({
 }) {
   return (
     <article
-      className={`rounded-[1.75rem] border border-border bg-white p-6 shadow-lg shadow-primary/50 ${
+      className={`rounded-2xl ring-1 ring-primary/10 bg-white p-6 ${
         featured ? "md:p-8" : ""
       }`}
     >
@@ -120,7 +120,7 @@ export function LeaderCard({
           {href ? (
             <Link
               href={href}
-              className="mt-6 inline-flex min-h-8 items-center text-sm font-semibold text-primary transition hover:translate-x-1"
+              className="mt-6 inline-flex min-h-8 items-center text-sm font-semibold text-primary transition-transform duration-200 hover:translate-x-1"
             >
               View profile
             </Link>

@@ -59,7 +59,8 @@ def db():
                 scope_id UUID,
                 is_main BOOLEAN NOT NULL DEFAULT 0,
                 is_public BOOLEAN NOT NULL DEFAULT 1,
-                status VARCHAR(32) NOT NULL DEFAULT 'active'
+                status VARCHAR(32) NOT NULL DEFAULT 'active',
+                updated_by_id UUID
             )
             """
         )

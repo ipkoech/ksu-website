@@ -5,16 +5,25 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Request, status
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
-
-from ksu_common import configure_service_logging, invalidate_prefix, persist_audit_log, should_skip_audit
+from ksu_common import (
+    configure_service_logging,
+    invalidate_prefix,
+)
+from ksu_common.gemini import close_gemini_transports
+from ksu_common.internal_client import close_integration_pool
+from ksu_common.runtime import (
+    AuditOptions,
+    CorsConfig,
+    ServiceAppConfig,
+    create_service_app,
+)
 
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal
 from .routes import register_routers
+from .services.idempotency import install_idempotency_guards
 
 settings = get_settings()
 configure_service_logging(
@@ -34,69 +43,33 @@ PUBLIC_CACHE_INVALIDATION_EXCLUDED_PREFIXES = (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    yield
+    try:
+        yield
+    finally:
+        await close_gemini_transports()
+        await close_integration_pool()
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(
-        title="KSU Research API",
-        version=settings.APP_VERSION,
-        docs_url="/api/docs" if settings.APP_ENV != "production" else None,
-        redoc_url="/api/redoc" if settings.APP_ENV != "production" else None,
-        openapi_url="/api/openapi.json" if settings.APP_ENV != "production" else None,
-        lifespan=lifespan,
-    )
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
-    @app.exception_handler(ValueError)
-    async def value_error_handler(request: Request, exc: ValueError):
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={"status": "error", "message": str(exc), "code": "bad_request"},
-        )
-
-    @app.exception_handler(PermissionError)
-    async def permission_error_handler(request: Request, exc: PermissionError):
-        return JSONResponse(
-            status_code=status.HTTP_403_FORBIDDEN,
-            content={"status": "error", "message": str(exc), "code": "forbidden"},
-        )
-
-    @app.middleware("http")
-    async def audit_middleware(request: Request, call_next):
-        if should_skip_audit(request.url.path):
-            return await call_next(request)
-
-        try:
-            response = await call_next(request)
-        except Exception as exc:
-            await persist_audit_log(
-                AsyncSessionLocal,
-                service_name=settings.SERVICE_NAME,
-                request=request,
-                status_code=500,
-                error_message=str(exc),
-            )
-            raise
-
-        await persist_audit_log(
-            AsyncSessionLocal,
+    app = create_service_app(
+        ServiceAppConfig(
             service_name=settings.SERVICE_NAME,
-            request=request,
-            status_code=response.status_code,
-        )
-        if _should_invalidate_public_cache(request, response.status_code):
-            await invalidate_prefix("public")
-        return response
-
-    register_routers(app)
+            title="KSU Research API",
+            version=settings.APP_VERSION,
+            docs_url="/api/docs" if settings.APP_ENV != "production" else None,
+            redoc_url="/api/redoc" if settings.APP_ENV != "production" else None,
+            openapi_url="/api/openapi.json" if settings.APP_ENV != "production" else None,
+            lifespan=lifespan,
+        ),
+        cors=CorsConfig(origins=settings.CORS_ORIGINS),
+        register_routes=register_routers,
+        audit=AuditOptions(
+            session_factory=AsyncSessionLocal,
+            service_name=settings.SERVICE_NAME,
+        ),
+        after_response=_after_response,
+    )
+    app.state.idempotency_adoption_count = install_idempotency_guards(app)
     if settings.APP_ENV != "production" and SEED_ASSETS_DIR.exists():
         app.mount(
             "/seed-assets",
@@ -104,6 +77,11 @@ def create_app() -> FastAPI:
             name="seed-assets",
         )
     return app
+
+
+async def _after_response(request: Request, response: Response) -> None:
+    if _should_invalidate_public_cache(request, response.status_code):
+        await invalidate_prefix("public")
 
 
 def _should_invalidate_public_cache(request: Request, status_code: int) -> bool:

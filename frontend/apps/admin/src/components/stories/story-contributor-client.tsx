@@ -8,11 +8,17 @@ import {
   contentWorkflowApi,
   storiesApi,
   type ContentWorkflowAction,
+  type ContentWorkflowLog,
   type ContentWorkflowQueueItem,
   type ContentWorkflowStatus,
   type Story,
   type StorySubmissionPayload,
 } from "@ksu/api-client";
+import {
+  RichTextEditor,
+  richTextToPlainText,
+  sanitizeRichText,
+} from "@ksu/ui/components";
 
 type ViewMode = "dashboard" | "list" | "new" | "edit";
 type LoadState = "idle" | "loading" | "ready" | "error";
@@ -31,6 +37,7 @@ export function StoryContributorClient({
   const router = useRouter();
   const [stories, setStories] = useState<Story[]>([]);
   const [editingStory, setEditingStory] = useState<Story | null>(null);
+  const [feedback, setFeedback] = useState<ContentWorkflowLog[]>([]);
   const [state, setState] = useState<LoadState>("idle");
   const [saving, setSaving] = useState<SubmitIntent | null>(null);
   const [message, setMessage] = useState("");
@@ -45,6 +52,12 @@ export function StoryContributorClient({
       if (needsStory) {
         const response = await storiesApi.get(storyId);
         setEditingStory(response.data);
+        try {
+          const logs = await storiesApi.feedback(storyId);
+          setFeedback(logs.data ?? []);
+        } catch {
+          setFeedback([]);
+        }
       } else if (needsList) {
         const response = await storiesApi.listMine({ per_page: 50 });
         setStories(response.data ?? []);
@@ -109,6 +122,7 @@ export function StoryContributorClient({
             category: payload.category,
             contributor_affiliation_snapshot:
               payload.contributor_affiliation_snapshot,
+            reading_minutes: payload.reading_minutes,
             show_contributor_name: payload.show_contributor_name,
             consent_to_publish: payload.consent_to_publish,
           })
@@ -168,6 +182,7 @@ export function StoryContributorClient({
             : "This story is already in review, approved, scheduled, or published. It is read-only here."
         }
         story={editingStory}
+        feedback={feedback}
         message={message}
         saving={saving}
         readOnly={!canEdit}
@@ -376,6 +391,7 @@ function StoryEditor({
   title,
   description,
   story,
+  feedback = [],
   message,
   saving,
   readOnly = false,
@@ -385,6 +401,7 @@ function StoryEditor({
   title: string;
   description: string;
   story?: Story | null;
+  feedback?: ContentWorkflowLog[];
   message?: string;
   saving: SubmitIntent | null;
   readOnly?: boolean;
@@ -394,9 +411,26 @@ function StoryEditor({
     intent: SubmitIntent,
   ) => Promise<void>;
 }) {
+  const [richText, setRichText] = useState(
+    story?.rich_text ?? story?.plain_text ?? "",
+  );
+
   return (
     <PageFrame>
       <ContributorHeader title={title} description={description} />
+      {story ? (
+        <div className="flex items-center gap-3">
+          <StatusBadge
+            status={story.workflow_status ?? story.status ?? "draft"}
+          />
+          {story.submitted_at ? (
+            <span className="text-xs text-slate-500">
+              Submitted {new Date(story.submitted_at).toLocaleString()}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+      <ReviewerFeedback feedback={feedback} />
       <form
         onSubmit={(event) => {
           const submitter = (
@@ -458,18 +492,26 @@ function StoryEditor({
             placeholder="One short paragraph summarizing the story."
           />
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
-          Story body
-          <textarea
-            name="plain_text"
-            rows={12}
-            required
-            defaultValue={story?.plain_text ?? ""}
-            readOnly={readOnly}
-            className="rounded-xl border px-3 py-3 text-sm leading-6"
+        <Field
+          label="Reading time in minutes (optional)"
+          name="reading_minutes"
+          defaultValue={story?.reading_minutes?.toString()}
+          readOnly={readOnly}
+          type="number"
+          placeholder="Auto-calculated if blank"
+        />
+        <div className="grid gap-2 text-sm font-semibold text-slate-800">
+          <label htmlFor="story-rich-text">Story body</label>
+          <RichTextEditor
+            editorId="story-rich-text"
+            value={richText}
+            onChange={setRichText}
+            disabled={readOnly}
+            minHeight="18rem"
             placeholder="Write the full story. Include who, what, where, why it matters, and any useful context."
           />
-        </label>
+          <input type="hidden" name="rich_text" value={richText} />
+        </div>
         <Field
           label="Featured media ID (optional)"
           name="featured_media_id"
@@ -539,27 +581,88 @@ function StoryEditor({
   );
 }
 
+const FEEDBACK_ACTION_LABELS: Record<string, string> = {
+  submit: "Submitted for review",
+  start_review: "Review started",
+  request_changes: "Changes requested",
+  approve: "Approved",
+  reject: "Rejected",
+  schedule: "Scheduled",
+  publish: "Published",
+  unpublish: "Unpublished",
+  withdraw: "Withdrawn",
+  edit_reset: "Edited (returned to draft)",
+  archive: "Archived",
+};
+
+function ReviewerFeedback({ feedback }: { feedback: ContentWorkflowLog[] }) {
+  const entries = feedback.filter(
+    (log) =>
+      log.comments || ["request_changes", "reject", "approve"].includes(log.action),
+  );
+  if (!entries.length) return null;
+  return (
+    <section className="rounded-2xl border bg-white p-5 shadow-sm">
+      <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">
+        Reviewer feedback
+      </h2>
+      <ol className="mt-3 grid gap-3">
+        {entries.map((log) => (
+          <li
+            key={log.id}
+            className={`rounded-xl border px-4 py-3 text-sm ${
+              log.action === "request_changes"
+                ? "border-amber-200 bg-amber-50 text-amber-900"
+                : log.action === "reject"
+                  ? "border-red-200 bg-red-50 text-red-800"
+                  : "border-slate-200 bg-slate-50 text-slate-700"
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-bold">
+                {FEEDBACK_ACTION_LABELS[log.action] ?? log.action.replace(/_/g, " ")}
+              </span>
+              <time className="text-xs opacity-70">
+                {new Date(log.created_at).toLocaleString()}
+              </time>
+            </div>
+            {log.comments ? (
+              <p className="mt-1 whitespace-pre-wrap leading-6">{log.comments}</p>
+            ) : null}
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 function Field({
   label,
   name,
   defaultValue,
   required,
   readOnly,
+  type = "text",
+  placeholder,
 }: {
   label: string;
   name: string;
   defaultValue?: string | null;
   required?: boolean;
   readOnly?: boolean;
+  type?: "text" | "number";
+  placeholder?: string;
 }) {
   return (
     <label className="grid gap-2 text-sm font-semibold text-slate-800">
       {label}
       <input
         name={name}
+        type={type}
         required={required}
         defaultValue={defaultValue ?? ""}
         readOnly={readOnly}
+        placeholder={placeholder}
         className="min-h-12 rounded-xl border px-3 text-sm"
       />
     </label>
@@ -568,16 +671,19 @@ function Field({
 
 function formPayload(form: FormData): StorySubmissionPayload {
   const text = (key: string) => String(form.get(key) ?? "").trim();
+  const richText = sanitizeRichText(text("rich_text"));
+  const readingMinutes = Number(text("reading_minutes"));
   return {
     title: text("title"),
     summary: text("summary") || null,
-    plain_text: text("plain_text"),
-    rich_text: null,
+    plain_text: richTextToPlainText(richText) || null,
+    rich_text: richText || null,
     structured_content: null,
     related_links: [],
     featured_media_id: text("featured_media_id") || null,
     story_type: text("story_type") || "article",
     category: text("category") || null,
+    reading_minutes: readingMinutes > 0 ? readingMinutes : null,
     contributor_affiliation_snapshot:
       text("contributor_affiliation_snapshot") || null,
     show_contributor_name: form.get("show_contributor_name") === "on",

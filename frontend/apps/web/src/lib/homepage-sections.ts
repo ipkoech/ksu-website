@@ -76,6 +76,12 @@ export type HomepageSectionItem = {
   video_provider?: string | null;
   video_url?: string | null;
   video_duration_seconds?: number | null;
+  audience?: "all" | "prospective" | "current_student" | "visitor_partner" | null;
+  source_type?: string | null;
+  source_id?: string | null;
+  is_featured?: boolean;
+  poster_media_id?: string | null;
+  transcript?: string | null;
   display_order?: number;
   is_enabled?: boolean;
   content_enriched?: {
@@ -160,7 +166,7 @@ export type HomepageHeroAction = {
   type?: string | null;
   label: string;
   href: string;
-  style?: "primary" | "secondary" | null;
+  style?: "primary" | "secondary" | "tertiary" | null;
   open_in_new_tab?: boolean;
 };
 
@@ -230,6 +236,12 @@ export type HomepageCompositionApiResponse =
 export type HomepageCompositionState = {
   data: HomepageCompositionResponse | null;
   sections: HomepageSection[];
+  /**
+   * Sections as returned by the CMS, before normalizeSections drops disabled,
+   * unknown-variant, and empty entries. Needed to distinguish "disabled by an
+   * admin" from "not configured".
+   */
+  rawSections: HomepageSection[];
   hasRenderableSections: boolean;
   error: unknown;
 };
@@ -244,6 +256,7 @@ export const getComposedHomepage = cache(
         return {
           data: null,
           sections: [],
+          rawSections: [],
           hasRenderableSections: false,
           error: null,
         };
@@ -253,6 +266,7 @@ export const getComposedHomepage = cache(
       return {
         data: { ...composition, sections },
         sections,
+        rawSections: composition.sections ?? [],
         hasRenderableSections: sections.length > 0,
         error: null,
       };
@@ -263,6 +277,7 @@ export const getComposedHomepage = cache(
       return {
         data: null,
         sections: [],
+        rawSections: [],
         hasRenderableSections: false,
         error,
       };

@@ -105,7 +105,7 @@ function AboutWorkspace({
   });
 
   return (
-    <section className="px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <section className="px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <div className="mx-auto max-w-[1680px]">
         <Breadcrumbs />
 
@@ -120,10 +120,10 @@ function AboutWorkspace({
               <SectionBackdrop variant="network" />
               <div id="about-overview" className="relative z-10 grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
+                  <p className="text-sm font-semibold uppercase tracking-eyebrow text-secondary">
                     About REIRM
                   </p>
-                  <h1 className="mt-3 max-w-5xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
+                  <h1 className="mt-3 max-w-5xl font-display text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
                     {title}
                   </h1>
                   {overview ? (
@@ -138,7 +138,7 @@ function AboutWorkspace({
                   {teamMembers.length > 0 ? (
                     <Link
                       href="/team"
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-background px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
                     >
                       Team
                       <ArrowRight aria-hidden className="h-4 w-4" />
@@ -293,10 +293,10 @@ function LeadershipCard({
             {message ? (
               <ResearchRichText
                 content={message}
-                className="text-sm leading-7 text-white/86 prose-headings:text-white prose-p:text-white/86 prose-strong:text-white prose-li:text-white/86"
+                className="text-sm leading-7 text-white/[0.86] prose-headings:text-white prose-p:text-white/[0.86] prose-strong:text-white prose-li:text-white/[0.86]"
               />
             ) : (
-              <p className="text-sm leading-7 text-white/72">
+              <p className="text-sm leading-7 text-white/70">
                 Leadership message is not published yet.
               </p>
             )}
@@ -305,7 +305,7 @@ function LeadershipCard({
                 <h3 className="text-sm font-semibold text-white">
                   {teamMemberName(person)}
                 </h3>
-                <p className="mt-1 text-xs font-semibold text-white/72">
+                <p className="mt-1 text-xs font-semibold text-white/70">
                   {person.assignmentTitle}
                 </p>
               </div>
@@ -322,13 +322,20 @@ function LeadershipPortrait({ person }: { person: AboutTeamMember }) {
 
   return (
     <div className="overflow-hidden rounded-lg border border-white/15 bg-white/10 shadow-sm">
-      <div
-        aria-hidden
-        className="flex aspect-[4/5] min-h-48 items-center justify-center bg-white/10 bg-cover bg-center text-3xl font-semibold text-white"
-        style={photoUrl ? { backgroundImage: `url(${photoUrl})` } : undefined}
-      >
-        {photoUrl ? null : initials(teamMemberName(person))}
-      </div>
+      {photoUrl ? (
+        <img
+          src={String(photoUrl)}
+          alt={teamMemberName(person)}
+          className="aspect-[4/5] min-h-48 w-full object-cover"
+        />
+      ) : (
+        <div
+          aria-hidden
+          className="flex aspect-[4/5] min-h-48 items-center justify-center bg-white/10 text-3xl font-semibold text-white"
+        >
+          {initials(teamMemberName(person))}
+        </div>
+      )}
     </div>
   );
 }
@@ -352,7 +359,7 @@ function TeamHierarchyCard({
         <SectionHeader icon={Users} label="Team" title="Research staff hierarchy" />
         <Link
           href="/team"
-          className="inline-flex min-h-10 items-center gap-2 rounded-md border border-border px-4 text-sm font-semibold text-primary transition hover:bg-primary/5"
+          className="inline-flex min-h-11 items-center gap-2 rounded-md border border-primary/25 bg-background px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
         >
           Full team
           <ArrowRight aria-hidden className="h-4 w-4" />
@@ -533,7 +540,7 @@ function SectionHeader({
         <span
           className={
             inverted
-              ? "flex h-10 w-10 items-center justify-center rounded-md bg-white/12 text-secondary"
+              ? "flex h-10 w-10 items-center justify-center rounded-md bg-white/10 text-secondary"
               : "flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary"
           }
         >
@@ -542,8 +549,8 @@ function SectionHeader({
         <p
           className={
             inverted
-              ? "text-xs font-semibold uppercase tracking-[0.2em] text-white/72"
-              : "text-xs font-semibold uppercase tracking-[0.2em] text-secondary"
+              ? "text-sm font-semibold uppercase tracking-eyebrow text-white/70"
+              : "text-sm font-semibold uppercase tracking-eyebrow text-secondary"
           }
         >
           {label}
@@ -552,8 +559,8 @@ function SectionHeader({
       <h2
         className={
           inverted
-            ? "mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-white"
-            : "mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground"
+            ? "mt-3 font-display text-2xl font-semibold leading-tight text-white sm:text-3xl"
+            : "mt-3 font-display text-2xl font-semibold leading-tight text-foreground sm:text-3xl"
         }
       >
         {title}
@@ -622,7 +629,7 @@ function ContactTile({
     <>
       <Icon aria-hidden className="h-5 w-5 text-primary" />
       <span>
-        <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        <span className="block text-xs font-semibold uppercase tracking-eyebrow text-muted-foreground">
           {item.label}
         </span>
         <span className="mt-1 block text-sm font-semibold text-foreground">

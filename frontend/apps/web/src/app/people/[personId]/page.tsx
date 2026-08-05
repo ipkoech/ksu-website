@@ -311,7 +311,7 @@ function ProfileActionRail({
           href={cvUrl}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex h-12 items-center justify-center gap-3 rounded-lg bg-primary px-6 text-sm font-bold text-white shadow-sm transition hover:bg-primary/90"
+          className="inline-flex h-12 items-center justify-center gap-3 rounded-lg bg-primary px-6 text-sm font-bold text-white shadow-sm transition-colors duration-200 hover:bg-primary/90 active:scale-[0.98]"
         >
           <Download aria-hidden className="h-5 w-5" />
           Download CV
@@ -323,7 +323,7 @@ function ProfileActionRail({
           href={item.href ?? undefined}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-white px-4 text-sm font-bold text-muted-foreground transition hover:border-primary/30 hover:text-primary"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-white px-4 text-sm font-bold text-muted-foreground transition-colors duration-200 hover:border-primary/30 hover:text-primary active:scale-[0.98]"
         >
           <ExternalLink aria-hidden className="h-4 w-4" />
           {item.label}
@@ -390,7 +390,7 @@ function ContactRow({
           <a
             key={item.key}
             href={item.href}
-            className="inline-flex items-center gap-2 transition hover:text-primary"
+            className="inline-flex items-center gap-2 transition-colors duration-200 hover:text-primary"
           >
             {content}
           </a>
@@ -632,7 +632,7 @@ function ExternalProfileLinks({ links }: { links: ProfileLink[] }) {
           href={item.href ?? undefined}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex min-h-10 items-center justify-between gap-3 rounded-lg border border-border bg-white px-3 text-sm font-bold text-muted-foreground transition hover:border-primary/30 hover:text-primary"
+          className="inline-flex min-h-10 items-center justify-between gap-3 rounded-lg border border-border bg-white px-3 text-sm font-bold text-muted-foreground transition-colors duration-200 hover:border-primary/30 hover:text-primary"
         >
           <span className="truncate">{item.label}</span>
           <ExternalLink aria-hidden className="h-4 w-4 shrink-0" />

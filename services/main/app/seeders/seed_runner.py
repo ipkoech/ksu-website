@@ -15,6 +15,8 @@ from .seed_content import seed_content
 from .seed_cover_images import seed_cover_images
 from .seed_divisions import seed_divisions
 from .seed_featured_stories import seed_featured_stories
+from .seed_homepage_admissions import seed_homepage_admissions
+from .seed_student_life_stories import seed_student_life_stories
 from .seed_governance import seed_governance
 from .seed_management import seed_management
 from .seed_leadership_media import seed_leadership_media
@@ -29,6 +31,7 @@ from .seed_staff_profiles import seed_staff_profiles
 from .seed_staff_assignments import seed_staff_assignments
 from .seed_system_settings import seed_system_settings
 from .seed_test_user import seed_test_user
+from .seed_testimonials import seed_testimonials
 from .seed_university_info import seed_university_info
 from .seed_vc_activities import seed_vc_activities
 from .seed_vice_chancellor_hub import seed_vice_chancellor_hub
@@ -46,11 +49,14 @@ async def run() -> None:
             await seed_leadership_media(db, ctx)
             await seed_university_info(db, ctx)
             await seed_programmes(db, ctx)
+            await seed_homepage_admissions(db, ctx)
             await seed_admission_info(db, ctx)
             await seed_admissions_catalog(db, ctx)
             await seed_content(db, ctx)
             await seed_featured_stories(db, ctx)
+            await seed_student_life_stories(db, ctx)
             await seed_public_records(db, ctx)
+            await seed_testimonials(db, ctx)
             await seed_about_content(db, ctx)
             await seed_public_site_pages(db, ctx)
             await seed_page_cms(db, ctx)

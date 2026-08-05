@@ -1,7 +1,5 @@
 """Donation endpoints."""
 
-from __future__ import annotations
-
 import uuid
 
 from fastapi import APIRouter, Depends, Request, status
@@ -11,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.database import get_db
 from ...core.auth import require_scope
+from ...schemas.base import JsonObject, SuccessEnvelope
 from ...schemas import (
     DonationCreate,
     DonationImpactCreate,
@@ -31,7 +30,12 @@ from ._crud import build_crud_router
 router = APIRouter()
 
 
-@router.post("/donations/submit", status_code=status.HTTP_201_CREATED, tags=["Donations"])
+@router.post(
+    "/donations/submit",
+    status_code=status.HTTP_201_CREATED,
+    tags=["Donations"],
+    response_model=SuccessEnvelope[PublicDonationSubmissionRead],
+)
 @rate_limit(requests=5, window=60, by_user=False)
 async def submit_public_donation(
     request: Request,
@@ -55,22 +59,42 @@ async def submit_public_donation(
     )
 
 
-@router.get("/donations/summary", tags=["Donations"], dependencies=[Depends(require_scope("donations.manage"))])
+@router.get(
+    "/donations/summary",
+    tags=["Donations"],
+    dependencies=[Depends(require_scope("donations.manage"))],
+    response_model=SuccessEnvelope[JsonObject],
+)
 async def get_donation_summary(db: AsyncSession = Depends(get_db)):
     return success(data=await DonationService.summary(db))
 
 
-@router.get("/donors/id/{donor_id}/impacts", tags=["Donors"], dependencies=[Depends(require_scope("donations.manage"))])
+@router.get(
+    "/donors/id/{donor_id}/impacts",
+    tags=["Donors"],
+    dependencies=[Depends(require_scope("donations.manage"))],
+    response_model=SuccessEnvelope[list[JsonObject]],
+)
 async def list_donor_impacts(donor_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await DonationRelationshipService.list_donor_impacts(db, donor_id))
 
 
-@router.get("/donation-impacts/id/{impact_id}/donations", tags=["Donation Impacts"], dependencies=[Depends(require_scope("donations.manage"))])
+@router.get(
+    "/donation-impacts/id/{impact_id}/donations",
+    tags=["Donation Impacts"],
+    dependencies=[Depends(require_scope("donations.manage"))],
+    response_model=SuccessEnvelope[list[JsonObject]],
+)
 async def list_impact_donations(impact_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await DonationRelationshipService.list_impact_donations(db, impact_id))
 
 
-@router.get("/donation-impacts/id/{impact_id}/stories", tags=["Donation Impacts"], dependencies=[Depends(require_scope("donations.manage"))])
+@router.get(
+    "/donation-impacts/id/{impact_id}/stories",
+    tags=["Donation Impacts"],
+    dependencies=[Depends(require_scope("donations.manage"))],
+    response_model=SuccessEnvelope[list[JsonObject]],
+)
 async def list_impact_stories(impact_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await DonationRelationshipService.list_impact_stories(db, impact_id))
 

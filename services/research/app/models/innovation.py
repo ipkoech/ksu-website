@@ -9,7 +9,7 @@ from typing import Optional
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from ksu_common.models.base import AttachmentRefsMixin, CoverImageRefMixin, SEOMixin
 

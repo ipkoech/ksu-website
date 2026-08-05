@@ -7,24 +7,33 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from ksu_common.internal_client import internal_key_guard
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from ...api.v1._fields import FieldsDep, FieldSelection, build_selector
 from ...core.config import get_settings
 from ...core.database import get_db
-from ...models import Department, Media, Person, StaffAssignment
 from ...helpers.email import send_email
-from ...services import DepartmentService, NotificationService, PersonService, StaffService
+from ...models import Event, Media, Person, StaffAssignment
+from ...services import (
+    DepartmentService,
+    EventService,
+    NotificationService,
+    PersonService,
+    StaffService,
+)
 
 router = APIRouter(tags=["Internal"])
 settings = get_settings()
 
 
-def verify_internal_key(x_internal_key: str = Header(...)) -> None:
-    if x_internal_key != settings.INTERNAL_API_KEY:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid internal key")
+verify_internal_key = internal_key_guard(
+    lambda: get_settings().INTERNAL_API_KEY,
+    allow_legacy_header=False,
+)
 
 
 class InternalEmailPayload(BaseModel):
@@ -44,6 +53,29 @@ class InternalNotificationBroadcastPayload(BaseModel):
     action_url: str | None = Field(default=None, max_length=500)
     channels: list[str] = Field(default_factory=lambda: ["in_app"])
     payload: dict | None = None
+
+
+@router.get("/events", dependencies=[Depends(verify_internal_key)])
+async def list_internal_events(
+    scope_type: str | None = Query(default=None, max_length=64),
+    scope_id: uuid.UUID | None = None,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    fields: FieldSelection = FieldsDep,
+    db: AsyncSession = Depends(get_db),
+):
+    """Return public scoped events to authenticated sibling services."""
+    selector = build_selector(Event, fields)
+    result = await EventService.list(
+        db,
+        page=page,
+        per_page=per_page,
+        scope_type=scope_type,
+        scope_id=scope_id,
+        is_public=True,
+        load_options=selector.load_options,
+    )
+    return {"status": "success", "message": "ok", "data": selector.apply(result.items), "meta": result.meta}
 
 
 @router.post("/email/send", dependencies=[Depends(verify_internal_key)])

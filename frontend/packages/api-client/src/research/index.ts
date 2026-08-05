@@ -686,6 +686,17 @@ function readonlyCenterRelationApi(relation: "projects" | "programs" | "farms") 
   };
 }
 
+function centerPartnerBindingApi() {
+  return {
+    list: (centerId: string) =>
+      researchApi.get<{ data: ResearchGenericRecord[] }>(`/api/v1/centers/id/${centerId}/partners`),
+    add: (centerId: string, partnerId: string, metadata?: Record<string, unknown>) =>
+      researchApi.put<{ data: ResearchGenericRecord }>(`/api/v1/centers/id/${centerId}/partners/${partnerId}`, metadata),
+    remove: (centerId: string, partnerId: string) =>
+      researchApi.delete<void>(`/api/v1/centers/id/${centerId}/partners/${partnerId}`),
+  };
+}
+
 function centerFocusAreaBindingApi() {
   return {
     list: (centerId: string) =>
@@ -828,13 +839,15 @@ function readonlyInnovationRelationApi(
 }
 
 export const researchServiceApi = {
-  stats: () => researchApi.get<{ data: PublicStatsResponse }>("/api/v1/stats"),
+  // /research-prefixed paths: the gateway's shared /api/v1 space resolves
+  // bare /search, /analytics, and /stats to the main service.
+  stats: () => researchApi.get<{ data: PublicStatsResponse }>("/api/v1/research/stats"),
   adminStats: () =>
-    researchApi.get<{ data: PublicStatsResponse }>("/api/v1/stats/admin"),
+    researchApi.get<{ data: PublicStatsResponse }>("/api/v1/research/stats/admin"),
   dashboardAnalytics: () =>
-    researchApi.get<{ data: ResearchDashboardAnalytics }>("/api/v1/analytics/dashboard"),
+    researchApi.get<{ data: ResearchDashboardAnalytics }>("/api/v1/research/analytics/dashboard"),
   search: (params: { q: string; types?: string; limit?: number }) =>
-    researchApi.get<{ data: ResearchSearchResponse }>("/api/v1/search", params),
+    researchApi.get<{ data: ResearchSearchResponse }>("/api/v1/research/search", params),
   askAI: (data: ResearchAskAIRequest) =>
     researchApi.post<{ data: ResearchAskAIResponse }>("/api/v1/ask-ai", data),
   submitDonation: (data: PublicDonationSubmission) =>
@@ -910,6 +923,7 @@ export const researchServiceApi = {
     programs: readonlyCenterRelationApi("programs"),
     farms: readonlyCenterRelationApi("farms"),
     focusAreas: centerFocusAreaBindingApi(),
+    partners: centerPartnerBindingApi(),
   },
   farms: crudApi<ResearchGenericRecord, ResearchGenericPayload>(
     "/api/v1/farms",

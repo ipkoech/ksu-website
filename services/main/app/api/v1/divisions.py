@@ -92,7 +92,7 @@ async def list_admin_divisions(
 
 
 @router.get("/{slug}")
-@cached_public(timeout=300, vary_on=("fields", "include"))
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_division(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Division, fields)
     division = await DivisionService.get_by_slug(db, slug, load_options=selector.load_options)

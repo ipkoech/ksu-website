@@ -108,7 +108,7 @@ export default async function ResearchSearchPage({
             />
 
             {errors.length > 0 ? (
-              <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+              <div className="mt-5 rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm leading-6 text-destructive">
                 Some research result groups are temporarily unavailable. Showing
                 the records that could be loaded.
               </div>
@@ -179,8 +179,8 @@ function SearchHero({ query }: { query: string }) {
     <section className="relative overflow-hidden bg-white">
       <div className="mx-auto grid max-w-[1920px] lg:grid-cols-[minmax(0,0.92fr)_minmax(520px,1.08fr)]">
         <div className="flex min-h-[460px] flex-col justify-center px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <p className="text-sm font-semibold text-primary">Research Search</p>
-          <h1 className="mt-4 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground sm:text-5xl">
+          <p className="text-sm font-semibold uppercase tracking-eyebrow text-secondary">Research Search</p>
+          <h1 className="mt-4 max-w-3xl font-display text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             Find research records across Kisii University.
           </h1>
           <p className="mt-5 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
@@ -200,10 +200,10 @@ function SearchHero({ query }: { query: string }) {
                   defaultValue={query}
                   placeholder="Search climate, agriculture, public health, innovation..."
                   autoComplete="off"
-                  className="h-12 w-full rounded-md border border-transparent bg-white pl-12 pr-4 text-base text-foreground outline-none ring-primary/20 placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4"
+                  className="h-12 w-full rounded-md border border-transparent bg-white pl-12 pr-4 text-base text-foreground outline-none placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-ring"
                 />
               </label>
-              <button className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-semibold text-white transition hover:bg-primary/90">
+              <button className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
                 Search
                 <Search aria-hidden className="h-4 w-4" />
               </button>
@@ -211,7 +211,7 @@ function SearchHero({ query }: { query: string }) {
           </form>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold uppercase text-muted-foreground">Suggested:</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Suggested:</span>
             {suggestedSearches.map((term) => (
               <Link
                 key={term}
@@ -280,7 +280,7 @@ function ResultsToolbar({
   return (
     <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
       <div>
-        <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+        <h2 className="font-display text-2xl font-semibold text-foreground">
           {total} research results for <span className="text-primary">"{query}"</span>
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -338,7 +338,7 @@ function SearchFilters({
         {params.q ? <input type="hidden" name="q" value={params.q} /> : null}
 
         <fieldset>
-          <legend className="text-xs font-semibold uppercase text-muted-foreground">Record type</legend>
+          <legend className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Record type</legend>
           <div className="mt-3 space-y-2">
             {RESEARCH_SEARCH_GROUPS.map((group) => (
               <label key={group.key} className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -366,7 +366,7 @@ function SearchFilters({
         />
 
         <div>
-          <p className="text-xs font-semibold uppercase text-muted-foreground">Year</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Year</p>
           <div className="mt-2 grid grid-cols-2 gap-2">
             <input
               name="yearFrom"
@@ -384,7 +384,7 @@ function SearchFilters({
         </div>
 
         <label className="block">
-          <span className="text-xs font-semibold uppercase text-muted-foreground">Center / Unit</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Center / Unit</span>
           <select
             name="center"
             defaultValue={params.center ?? ""}
@@ -402,7 +402,7 @@ function SearchFilters({
         <ToggleField name="openAccess" label="Open access only" checked={params.openAccess === "1"} />
         <ToggleField name="featured" label="Featured only" checked={params.featured === "1"} />
 
-        <button className="inline-flex min-h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white">
+        <button className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
           Apply filters
         </button>
       </form>
@@ -464,7 +464,7 @@ function TopMatchCard({
             <ResultBadge result={result} />
             {result.isFeatured ? <span className="rounded-md bg-secondary px-2 py-1 text-xs font-semibold text-white">Featured</span> : null}
           </div>
-          <h3 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
+          <h3 className="mt-3 font-display text-2xl font-semibold leading-tight text-foreground">
             {result.title}
           </h3>
           <HighlightedText query={query} text={result.description} className="mt-3 line-clamp-3 text-sm leading-7 text-muted-foreground" />
@@ -483,9 +483,9 @@ function ResultRow({ query, result }: { query: string; result: ResearchSearchRes
       <div className="min-w-0">
         <div className="flex flex-wrap gap-2">
           <ResultBadge result={result} />
-          {result.isOpenAccess ? <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">Open access</span> : null}
+          {result.isOpenAccess ? <span className="rounded-md border border-success/30 bg-success/10 px-2 py-1 text-xs font-semibold text-success">Open access</span> : null}
         </div>
-        <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold leading-7 text-foreground">
+        <h3 className="mt-2 font-display text-xl font-semibold leading-7 text-foreground">
           {result.title}
         </h3>
         <HighlightedText query={query} text={result.description} className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground" />
@@ -498,14 +498,14 @@ function ResultRow({ query, result }: { query: string; result: ResearchSearchRes
 
 function GridResultCard({ query, result }: { query: string; result: ResearchSearchResult }) {
   return (
-    <Link href={result.href} className="group overflow-hidden rounded-lg border border-border bg-white shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md">
+    <Link href={result.href} className="group overflow-hidden rounded-lg border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
       <ResultThumb result={result} large />
       <div className="p-5">
         <div className="flex flex-wrap gap-2">
           <ResultBadge result={result} />
           {result.isFeatured ? <span className="rounded-md bg-secondary px-2 py-1 text-xs font-semibold text-white">Featured</span> : null}
         </div>
-        <h3 className="mt-3 font-[family-name:var(--font-display)] text-xl font-semibold leading-7 text-foreground">
+        <h3 className="mt-3 font-display text-xl font-semibold leading-7 text-foreground">
           {result.title}
         </h3>
         <HighlightedText query={query} text={result.description} className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground" />
@@ -551,7 +551,7 @@ function SearchSupportRail({
           Can't find what you're looking for? Our research team can help you
           find the right information.
         </p>
-        <Link href="/connect" className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5">
+        <Link href="/connect" className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-primary/25 bg-background px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5">
           Contact REIRM
           <ArrowRight aria-hidden className="h-4 w-4" />
         </Link>
@@ -583,14 +583,14 @@ function NoResults({ query }: { query: string }) {
   return (
     <div className="mt-5 rounded-lg border border-dashed border-border bg-white px-6 py-14 text-center">
       <Search aria-hidden className="mx-auto h-10 w-10 text-muted-foreground/60" />
-      <h3 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+      <h3 className="mt-4 font-display text-2xl font-semibold text-foreground">
         No public research records matched your search.
       </h3>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
         No records matched "{query}". Try a broader term, remove filters, or
         search by project, publication, center, or partner name.
       </p>
-      <Link href="/search" className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-primary/25 px-4 py-2 text-sm font-semibold text-primary">
+      <Link href="/search" className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-background px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5">
         Clear filters and try again
         <ArrowRight aria-hidden className="h-4 w-4" />
       </Link>
@@ -614,7 +614,7 @@ function IntroPanel({
       <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
         <Icon aria-hidden className="h-5 w-5" />
       </span>
-      <h2 className="mt-5 font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{title}</h2>
+      <h2 className="mt-5 font-display text-xl font-semibold text-foreground">{title}</h2>
       <p className="mt-3 text-sm leading-7 text-muted-foreground">{body}</p>
     </article>
   );
@@ -787,7 +787,7 @@ function SelectField({
 }) {
   return (
     <label className="block">
-      <span className="text-xs font-semibold uppercase text-muted-foreground">{label}</span>
+      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
       <select
         name={name}
         defaultValue={value ?? ""}
@@ -823,7 +823,7 @@ function ToggleField({
           defaultChecked={checked}
           className="peer sr-only"
         />
-        <span className="h-6 w-11 rounded-full bg-surface-muted transition peer-checked:bg-primary" />
+        <span className="h-6 w-11 rounded-full bg-surface-muted transition peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2" />
         <span className="absolute left-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5" />
       </span>
     </label>
@@ -845,7 +845,7 @@ function ViewToggle({
     <Link
       href={href}
       aria-label={label}
-      className={`inline-flex h-8 w-8 items-center justify-center rounded ${
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-md ${
         active ? "bg-primary text-white" : "text-muted-foreground hover:bg-surface-muted"
       }`}
     >

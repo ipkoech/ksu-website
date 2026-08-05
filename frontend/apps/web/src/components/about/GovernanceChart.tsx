@@ -420,7 +420,7 @@ function NodeCard({
   const nodeContent = (
     <>
       {isPerson ? (
-        <div className="flex h-24 w-full shrink-0 items-center justify-center overflow-hidden bg-[linear-gradient(135deg,#dbeafe,#eef4ff_56%,#fff7ed)] text-primary">
+        <div className="flex h-24 w-full shrink-0 items-center justify-center overflow-hidden bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] text-primary">
           {data.photoUrl ? (
             <PublicImage
               src={data.photoUrl}
@@ -471,18 +471,18 @@ function NodeCard({
       height={NODE_HEIGHT}
     >
       <div
-        className={`flex h-full w-full flex-col overflow-hidden rounded-[1rem] border shadow-sm ${
+        className={`flex h-full w-full flex-col overflow-hidden rounded-2xl ${
           isRoot
-            ? "border-primary/25 bg-white"
+            ? "ring-1 ring-primary/10 bg-white"
             : isFunction
-              ? "border-border bg-surface-subtle"
-              : "border-border bg-white"
+              ? "ring-1 ring-primary/10 bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)]"
+              : "ring-1 ring-primary/10 bg-white"
         }`}
       >
         {data.profileHref ? (
           <a
             href={data.profileHref}
-            className="flex h-full w-full flex-col transition hover:bg-primary/[0.03] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+            className="flex h-full w-full flex-col transition-colors duration-200 hover:bg-primary/[0.03] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
           >
             {nodeContent}
           </a>
@@ -606,17 +606,17 @@ export default function GovernanceChart(props: GovernanceChartProps) {
     <div className="w-full">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase text-secondary">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
             Org Chart
           </p>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-normal tracking-tight text-foreground">
             {title}
           </h2>
         </div>
         <button
           type="button"
           onClick={() => setIsFullScreen(true)}
-          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-border bg-white px-4 text-sm font-semibold text-primary shadow-sm transition hover:border-primary/40 hover:bg-primary/[0.03]"
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl ring-1 ring-primary/10 bg-white px-4 text-sm font-semibold text-primary transition-[background-color,box-shadow] duration-200 hover:ring-primary/20 hover:bg-primary/[0.03] active:scale-[0.98]"
         >
           <Maximize2 aria-hidden className="h-4 w-4" />
           View full screen
@@ -642,7 +642,7 @@ export default function GovernanceChart(props: GovernanceChartProps) {
             <button
               type="button"
               onClick={() => setIsFullScreen(false)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border text-muted-foreground transition hover:border-primary/40 hover:text-primary"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl ring-1 ring-primary/10 text-muted-foreground transition-colors duration-200 hover:ring-primary/20 hover:text-primary active:scale-[0.98]"
               aria-label="Close full screen org chart"
             >
               <X aria-hidden className="h-5 w-5" />

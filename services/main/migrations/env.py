@@ -86,7 +86,8 @@ async def run_migrations_online() -> None:
         version_schema = _version_table_schema()
         async with conn.begin():
             if version_schema:
-                await conn.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{version_schema}"'))
+                # Schemas are provisioned by the privileged ownership bootstrap.
+                # Service roles must not be able to create arbitrary schemas.
                 await conn.execute(text(f'SET search_path TO "{version_schema}", public'))
             marker_exists = await conn.run_sync(
                 lambda sync_conn: inspect(sync_conn).has_table(

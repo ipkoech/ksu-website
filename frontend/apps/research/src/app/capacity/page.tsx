@@ -138,7 +138,7 @@ function CapacityMasthead({
             <span className="text-foreground">Capacity</span>
           </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Capacity</p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">Training, mentorship, and scholarships for research growth</h1>
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--app-font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">Training, mentorship, and scholarships for research growth</h1>
           <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">Browse published capacity-building records for researchers, students, and collaborators.</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <PrimaryLink href="/training">Open training</PrimaryLink>
@@ -171,7 +171,7 @@ function SupportPanel({
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-foreground">{title}</h2>
       {error ? <div className="mt-4"><StatusMessage tone="error">{error}</StatusMessage></div> : null}
-      <div className="mt-4 divide-y divide-slate-200">
+      <div className="mt-4 divide-y divide-border">
         {records.map((record) => (
           <article key={record.id} className="py-4">
             <h3 className="text-base font-semibold leading-6 text-foreground">

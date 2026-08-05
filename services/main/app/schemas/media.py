@@ -20,7 +20,7 @@ ATTACHMENT_ROLE_SCHEMA = {
 
 class MediaFolderCreate(BaseSchema):
     name: str = Field(min_length=1, max_length=255)
-    slug: SlugStr
+    slug: SlugStr | None = None
     parent_id: uuid.UUID | None = None
     description: str | None = None
     is_public: bool = False

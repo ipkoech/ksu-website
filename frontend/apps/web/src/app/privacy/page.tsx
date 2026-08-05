@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, ShieldCheck } from "lucide-react";
-import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { CampusPageHeader } from "@ksu/ui/components";
+import { PageShell } from "@/components/site-shell";
 
 export const metadata = {
   title: "Privacy Policy",
@@ -10,29 +11,16 @@ export const metadata = {
 export default function PrivacyPage() {
   return (
     <PageShell>
+      <CampusPageHeader
+        title="Data privacy and information handling"
+        eyebrow="Privacy Policy"
+        description="Kisii University is committed to responsible handling of personal information in accordance with the Data Protection Act, 2019 and the university's institutional policies."
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Privacy Policy" }]}
+        seed="/privacy"
+      />
+
       <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <BreadcrumbTrail
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Privacy Policy" },
-          ]}
-        />
-
-        <div className="mt-8">
-          <p className="text-sm font-semibold uppercase text-secondary">
-            Privacy Policy
-          </p>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
-            Data privacy and information handling
-          </h1>
-          <p className="mt-4 text-base leading-8 text-muted-foreground">
-            Kisii University is committed to responsible handling of personal
-            information in accordance with the Data Protection Act, 2019 and
-            the university's institutional policies.
-          </p>
-        </div>
-
-        <div className="mt-10 space-y-8">
+        <div className="space-y-8">
           <section>
             <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Information we collect

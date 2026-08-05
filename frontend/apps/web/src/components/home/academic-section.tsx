@@ -286,7 +286,7 @@ export function AcademicSection({
                   <ScrollReveal key={school.id} delay={index * 50}>
                     <Link
                       href={`/academics/schools/${school.slug}`}
-                      className="group block h-full overflow-hidden rounded-xl bg-white border border-border shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                      className="group block h-full overflow-hidden rounded-xl bg-white border border-border shadow-sm hover:shadow-lg transition-[transform,box-shadow] duration-200 hover:-translate-y-1 active:scale-[0.98]"
                     >
                       <PublicImage
                         src={imageUrl}
@@ -304,7 +304,7 @@ export function AcademicSection({
                         }
                         sizes="(min-width: 1024px) 18vw, (min-width: 640px) 25vw, 50vw"
                         className="h-28"
-                        imageClassName="transition-transform duration-300 group-hover:scale-105"
+                        imageClassName="transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
                       />
                       <div className="p-3 h-16 flex items-center">
                         <h4 className="text-xs font-semibold text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
@@ -343,7 +343,7 @@ export function AcademicSection({
                 <ScrollReveal key={category.level} delay={index * 75}>
                   <Link
                     href={category.href}
-                    className="group relative overflow-hidden rounded-xl p-4 h-full min-h-[120px] flex flex-col justify-between transition-transform duration-300 hover:-translate-y-1"
+                    className="group relative overflow-hidden rounded-xl p-4 h-full min-h-[120px] flex flex-col justify-between transition-transform duration-200 hover:-translate-y-1 active:scale-[0.98]"
                   >
                     <div
                       className={`absolute inset-0 bg-gradient-to-br ${category.color}`}

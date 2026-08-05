@@ -71,7 +71,7 @@ export default async function FundingDetailPage({
       />
 
       {error ? (
-        <section className="px-4 pt-4 sm:px-6 lg:px-8">
+        <section className="px-4 pt-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mx-auto max-w-[1680px]">
             <StatusMessage tone="error">{error}</StatusMessage>
           </div>
@@ -147,7 +147,7 @@ export default async function FundingDetailPage({
             records={documents}
           />
           {compactText(grant.contact_name) || compactText(grant.contact_email) || compactText(grant.contact_phone) ? <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-            <h2 className="text-xl font-semibold text-foreground">Contact</h2>
+            <h2 className="font-display text-xl font-semibold text-foreground">Contact</h2>
             <dl className="mt-4 grid gap-3 text-sm">
               <ResearchFact label="Name" value={compactText(grant.contact_name)} />
               <ResearchFact label="Email" value={compactText(grant.contact_email)} />
@@ -170,11 +170,11 @@ function InternalDeadlinePanel({
   actionUrl: string;
 }) {
   return (
-    <section className="rounded-lg border-2 border-primary bg-primary/[0.04] p-5 shadow-sm">
+    <section className="rounded-lg border border-primary/30 bg-primary/[0.04] p-5 shadow-sm">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Internal grant deadline</p>
-          <h2 className="mt-3 text-2xl font-semibold leading-tight text-foreground">{deadline.label}</h2>
+          <p className="text-sm font-semibold uppercase tracking-eyebrow text-secondary">Internal grant deadline</p>
+          <h2 className="mt-3 font-display text-2xl font-semibold leading-tight text-foreground">{deadline.label}</h2>
           <p className="mt-2 text-lg font-semibold text-foreground">{deadline.value}</p>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
             This is a Kisii University administered grant. Review eligibility, requirements, documents, and workflow dates before submitting.
@@ -209,14 +209,14 @@ function WorkflowDates({ grant }: { grant: ResearchGenericRecord }) {
 
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">
+      <h2 className="font-display text-xl font-semibold text-foreground">
         Application flow
       </h2>
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
+      <dl className="mt-4 grid gap-3 md:grid-cols-2">
         {dates.map(([label, value]) => (
           <ResearchFact key={label} label={label} value={formatDate(value as string | null | undefined)} />
         ))}
-      </div>
+      </dl>
     </section>
   );
 }

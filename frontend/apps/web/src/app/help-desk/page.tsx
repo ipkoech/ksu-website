@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, ClipboardList, FileText, Handshake, Megaphone, Search, Sparkles } from "lucide-react";
-import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { CampusPageHeader } from "@ksu/ui/components";
+import { PageShell } from "@/components/site-shell";
 
 const officialLinks = {
   customerCare: "https://digital.kisiiuniversity.ac.ke/ksu_customer_care_center",
@@ -21,22 +22,16 @@ export const metadata = {
 export default function HelpDeskPage() {
   return (
     <PageShell>
+      <CampusPageHeader
+        title="Customer care and service support"
+        eyebrow="Help Desk"
+        description="Use the official Kisii University digital service channels to raise support tickets, submit feedback, request information, and follow up on existing requests."
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Help Desk" }]}
+        seed="/help-desk"
+      />
+
       <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <BreadcrumbTrail items={[{ label: "Home", href: "/" }, { label: "Help Desk" }]} />
-
-        <div className="mt-8">
-          <p className="text-sm font-semibold uppercase text-secondary">Help Desk</p>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
-            Customer care and service support
-          </h1>
-          <p className="mt-4 text-base leading-8 text-muted-foreground">
-            Use the official Kisii University digital service channels to raise
-            support tickets, submit feedback, request information, and follow up
-            on existing requests.
-          </p>
-        </div>
-
-        <section className="mt-10">
+        <section className="mt-0">
           <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
             Service request pathways
           </h2>

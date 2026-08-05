@@ -128,7 +128,7 @@ function ImpactMetricsHero({
         <p className="inline-flex rounded-md border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em]">
           Evidence Dashboard
         </p>
-        <h1 className="mt-4 max-w-4xl text-balance font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight sm:text-5xl">
+        <h1 className="mt-4 max-w-4xl text-balance font-[family-name:var(--app-font-display)] text-4xl font-semibold leading-tight sm:text-5xl">
           Impact metrics that connect evidence to public value
         </h1>
         <p className="mt-4 max-w-2xl text-pretty text-sm leading-7 text-white/82 sm:text-base">
@@ -235,7 +235,7 @@ function MetricEvidencePanel({ metric }: { metric: ResearchGenericRecord }) {
         </div>
       </div>
       {items.length > 0 ? (
-        <dl className="mt-4 divide-y divide-slate-200">
+        <dl className="mt-4 divide-y divide-border">
           {items.map((item) => (
             <div key={item.label} className="py-3 first:pt-0 last:pb-0">
               <dt className="text-xs font-semibold uppercase text-muted-foreground">{item.label}</dt>
@@ -298,7 +298,7 @@ function MetricRecordTable({ records }: { records: ResearchGenericRecord[] }) {
               <th className="px-4 py-3">Linked work</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200">
+          <tbody className="divide-y divide-border">
             {records.map((metric) => (
               <tr key={metric.id ?? metric.slug} className="transition hover:bg-surface-subtle">
                 <td className="px-4 py-3">
@@ -329,7 +329,7 @@ function MetricQuickLinks() {
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Trace evidence</p>
-      <div className="mt-3 divide-y divide-slate-200">
+      <div className="mt-3 divide-y divide-border">
         {links.map((link) => (
           <Link key={link.href} href={link.href} className="flex items-center justify-between gap-4 py-3 text-sm font-semibold text-primary">
             {link.label}

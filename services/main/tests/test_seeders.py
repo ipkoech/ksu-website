@@ -30,11 +30,13 @@ from app.seeders.seed_portal_users import (
 )
 from app.seeders.seed_rbac import RECONCILED_ROLE_NAMES, ROLE_SPECS
 from app.seeders.seed_programmes import programme_code
+from app.seeders import seed_programmes as seed_programmes_module
 from app.seeders.seed_public_records import CLUB_SPECS, CONTACT_SPECS, DOWNLOAD_SPECS, FAQ_SPECS
 from app.seeders.seed_public_records import _merged_download_specs
 from app.seeders.seed_staff_profiles import LIVE_STAFF_PROFILE_SPECS, SCHOOL_DEAN_PROFILE_KEYS
 from app.seeders.seed_leadership_media import LEADERSHIP_PORTRAITS
 from app.seeders.seed_runner import run as seed_runner_run
+from app.seeders.seed_testimonials import TESTIMONIAL_SPECS
 from app.seeders.seed_university_info import HANDBOOK_SOURCE, HANDBOOK_SOURCE_PHRASES
 from app.schemas.base import slugify
 
@@ -57,6 +59,28 @@ class SeederDataTests(unittest.TestCase):
             self.assertIn("https://kisiiuniversity.ac.ke/blog/", spec["source_url"])
             self.assertIn("https://kisiiuniversity.ac.ke/storage/public/resources/", spec["source_image_url"])
             self.assertTrue((asset_root / spec["asset_filename"]).exists())
+
+    def test_bachelor_of_laws_catalogue_record_is_programme_detail_ready(self):
+        programme = next(
+            spec for spec in BROCHURE_PROGRAMMES if spec["name"] == "Bachelor of Laws"
+        )
+
+        self.assertEqual("LLB", programme["code"])
+        self.assertEqual("accredited", programme["accreditation_status"])
+        self.assertIn("Council of Legal Education", programme["accrediting_body"])
+        self.assertIn("https://cle.or.ke/", programme["accrediting_body"])
+        self.assertIn("constitutional", programme["about"].lower())
+        self.assertIn("legal research", programme["objectives"].lower())
+        self.assertIn("advocate", programme["career_prospects"].lower())
+        self.assertIn("contract", programme["curriculum_overview"].lower())
+        self.assertEqual(["September"], list(programme["intake_months"]))
+
+    def test_seed_programmes_prefers_catalogue_code_and_content_over_generic_copy(self):
+        source = inspect.getsource(seed_programmes_module.seed_programmes)
+
+        self.assertIn('code=str(spec.get("code") or programme_code', source)
+        self.assertIn('about=spec.get("about") or', source)
+        self.assertIn('curriculum_overview=spec.get("curriculum_overview") or', source)
 
     def test_live_site_publication_snapshot_contains_current_official_records(self):
         news_by_title = {spec["title"]: spec for spec in LIVE_SITE_NEWS_ITEMS}
@@ -450,6 +474,46 @@ class SeederDataTests(unittest.TestCase):
         self.assertLess(
             runner_source.index("await seed_schools(db, ctx)"),
             runner_source.index("await seed_leadership_media(db, ctx)"),
+        )
+
+    def test_testimonial_specs_are_public_ready(self):
+        self.assertGreaterEqual(len(TESTIMONIAL_SPECS), 8)
+        self.assertLessEqual(len(TESTIMONIAL_SPECS), 10)
+        self.assertEqual([], duplicates(spec["name"] for spec in TESTIMONIAL_SPECS))
+        self.assertEqual(
+            [], duplicates(spec["display_order"] for spec in TESTIMONIAL_SPECS)
+        )
+
+        featured = [spec for spec in TESTIMONIAL_SPECS if spec.get("is_featured")]
+        self.assertGreaterEqual(len(featured), 3)
+        self.assertLessEqual(len(featured), 4)
+
+        school_codes = {spec["code"] for spec in SCHOOL_SPECS}
+        school_keys = {spec["key"] for spec in SCHOOL_SPECS}
+        programme_names = {
+            str(spec["name"]) for spec in BROCHURE_PROGRAMMES if spec.get("name")
+        }
+        for spec in TESTIMONIAL_SPECS:
+            self.assertIn(spec["testimonial_type"], {"student", "alumni", "staff"})
+            self.assertGreater(len(spec["quote"].strip()), 80)
+            self.assertNotIn("lorem", spec["quote"].lower())
+            self.assertTrue(spec.get("role"))
+            if spec.get("school_key"):
+                self.assertIn(spec["school_key"], school_keys)
+                self.assertIn(spec["school_code"], school_codes)
+            if spec.get("programme_name"):
+                self.assertIn(spec["programme_name"], programme_names)
+
+    def test_testimonials_seed_after_schools_and_programmes(self):
+        runner_source = inspect.getsource(seed_runner_run)
+
+        self.assertLess(
+            runner_source.index("await seed_schools(db, ctx)"),
+            runner_source.index("await seed_testimonials(db, ctx)"),
+        )
+        self.assertLess(
+            runner_source.index("await seed_programmes(db, ctx)"),
+            runner_source.index("await seed_testimonials(db, ctx)"),
         )
 
     def test_live_staff_profile_names_are_normalized_from_all_caps(self):

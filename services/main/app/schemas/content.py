@@ -56,6 +56,8 @@ class ScopedContentRead(BaseReadSchema):
     unpublished_at: datetime | None = None
     rejection_reason: str | None = None
     revision_notes: str | None = None
+    updated_by_id: uuid.UUID | None = None
+    updated_by: dict[str, Any] | None = None
     display_order: int
     deleted_at: datetime | None = None
 
@@ -525,5 +527,7 @@ class SliderRead(BaseReadSchema):
     unpublished_at: datetime | None = None
     rejection_reason: str | None = None
     revision_notes: str | None = None
+    updated_by_id: uuid.UUID | None = None
+    updated_by: dict[str, Any] | None = None
     display_order: int
     deleted_at: datetime | None = None

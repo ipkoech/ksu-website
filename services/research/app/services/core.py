@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import uuid
 import logging
+import uuid
 from typing import Any
 
-import httpx
 from fastapi import HTTPException, status
+from ksu_common.internal_client import get_integration_pool
 from ksu_common.models import AuditLog
 from sqlalchemy import delete, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,6 +30,7 @@ from ..models import (
     SuccessStory,
     Sustainability,
     center_focus_areas,
+    center_partners,
     program_themes,
     project_focus_areas,
     project_funders,
@@ -113,21 +114,22 @@ class MainScopedEventService:
     async def list(scope_type: str, scope_id: uuid.UUID, *, per_page: int = 20) -> list[dict[str, Any]]:
         settings = get_settings()
         try:
-            async with httpx.AsyncClient(
-                base_url=settings.MAIN_SERVICE_URL.rstrip("/"),
-                timeout=httpx.Timeout(settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS),
-            ) as client:
-                response = await client.get(
-                    "/api/v1/events",
-                    params={
-                        "scope_type": scope_type,
-                        "scope_id": str(scope_id),
-                        "page": 1,
-                        "per_page": per_page,
-                        "fields": "id,title,slug,summary,start_date,end_date,location,status,scope_type,scope_id,updated_at",
-                    },
-                )
-                response.raise_for_status()
+            response = await get_integration_pool().request_internal(
+                "main-scoped-events",
+                settings.MAIN_SERVICE_URL.rstrip("/"),
+                "GET",
+                "/api/v1/internal/events",
+                api_key=settings.MAIN_SERVICE_API_KEY,
+                timeout=settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS,
+                params={
+                    "scope_type": scope_type,
+                    "scope_id": str(scope_id),
+                    "page": 1,
+                    "per_page": per_page,
+                    "fields": "id,title,slug,summary,start_date,end_date,location,status,scope_type,scope_id,updated_at",
+                },
+            )
+            response.raise_for_status()
         except Exception as exc:
             logger.warning("Could not load main-service events for %s=%s: %s", scope_type, scope_id, exc)
             return []
@@ -365,6 +367,75 @@ class CenterRelationshipService:
     @staticmethod
     async def _ensure_focus_area(db: AsyncSession, focus_area_id: uuid.UUID) -> FocusArea:
         return await _get_or_404(db, FocusArea, focus_area_id, "Focus area not found")
+
+    @staticmethod
+    async def _ensure_partner(db: AsyncSession, partner_id: uuid.UUID) -> Partner:
+        return await _get_or_404(db, Partner, partner_id, "Partner not found")
+
+    @staticmethod
+    async def list_partners(db: AsyncSession, center_id: uuid.UUID) -> list[dict[str, Any]]:
+        await CenterRelationshipService._ensure_center(db, center_id)
+        result = await db.execute(
+            select(
+                Partner,
+                center_partners.c.partnership_type,
+                center_partners.c.partnership_level,
+                center_partners.c.mou_start_date,
+                center_partners.c.mou_end_date,
+                center_partners.c.status.label("relationship_status"),
+                center_partners.c.collaboration_areas,
+                center_partners.c.notes,
+            )
+            .join(center_partners, Partner.id == center_partners.c.partner_id)
+            .where(center_partners.c.center_id == center_id)
+            .order_by(Partner.display_order.asc(), Partner.name.asc())
+        )
+        rows = []
+        for partner, partnership_type, partnership_level, mou_start_date, mou_end_date, relationship_status, collaboration_areas, notes in result.all():
+            rows.append({
+                "id": partner.id,
+                "name": partner.name,
+                "slug": partner.slug,
+                "acronym": partner.acronym,
+                "partner_type": partner.partner_type,
+                "partnership_level": partnership_level or partner.partnership_level,
+                "about": partner.about,
+                "collaboration_areas": collaboration_areas if collaboration_areas is not None else partner.collaboration_areas,
+                "website": partner.website,
+                "country": partner.country,
+                "status": relationship_status,
+                "partnership_type": partnership_type,
+                "mou_start_date": mou_start_date,
+                "mou_end_date": mou_end_date,
+                "notes": notes,
+            })
+        return rows
+
+    @staticmethod
+    async def add_partner(db: AsyncSession, center_id: uuid.UUID, partner_id: uuid.UUID, metadata: dict[str, Any] | None = None) -> None:
+        await CenterRelationshipService._ensure_center(db, center_id)
+        await CenterRelationshipService._ensure_partner(db, partner_id)
+        exists = await db.scalar(
+            select(func.count()).select_from(center_partners).where(
+                center_partners.c.center_id == center_id,
+                center_partners.c.partner_id == partner_id,
+            )
+        )
+        values = {"center_id": center_id, "partner_id": partner_id, **(metadata or {})}
+        if not exists:
+            await db.execute(insert(center_partners).values(**values))
+        elif metadata:
+            await db.execute(
+                center_partners.update()
+                .where(center_partners.c.center_id == center_id, center_partners.c.partner_id == partner_id)
+                .values(**metadata)
+            )
+        await db.flush()
+
+    @staticmethod
+    async def remove_partner(db: AsyncSession, center_id: uuid.UUID, partner_id: uuid.UUID) -> None:
+        await db.execute(delete(center_partners).where(center_partners.c.center_id == center_id, center_partners.c.partner_id == partner_id))
+        await db.flush()
 
     @staticmethod
     async def list_projects(db: AsyncSession, center_id: uuid.UUID) -> list[dict[str, Any]]:

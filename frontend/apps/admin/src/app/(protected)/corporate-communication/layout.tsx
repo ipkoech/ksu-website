@@ -1,13 +1,11 @@
 "use client";
 
-import { PortalShell } from "@/components/portals/portal-shell";
+import { CorporatePortalProvider } from "@/components/corporate/corporate-portal-provider";
 
 export default function CorporateCommunicationLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <PortalShell portalKey="corporate-communication">{children}</PortalShell>
-  );
+  return <CorporatePortalProvider>{children}</CorporatePortalProvider>;
 }
