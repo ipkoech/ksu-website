@@ -2523,6 +2523,15 @@ export interface ContentWorkflowQueueItem {
       keywords?: Record<string, unknown> | string[] | null;
     };
   };
+  /** Present for externally contributed records (e.g. stories). */
+  contributor?: {
+    name?: string | null;
+    email?: string | null;
+    affiliation?: string | null;
+    show_name?: boolean | null;
+    consent_to_publish?: boolean | null;
+    source_type?: string | null;
+  } | null;
 }
 
 export interface ContentWorkflowActionPayload {

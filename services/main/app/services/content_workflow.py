@@ -237,6 +237,10 @@ class ContentWorkflowService:
                 or story_has_body(getattr(content, "structured_content", None))
             ):
                 raise ValueError("Cannot publish a story without body content")
+            # Consent is required at submission, but editors can flip it via
+            # StoryUpdate afterward — re-check at the publish gate.
+            if getattr(content, "consent_to_publish", True) is False:
+                raise ValueError("Cannot publish a story without contributor consent")
 
         content.status = to_status
         content.workflow_status = to_status

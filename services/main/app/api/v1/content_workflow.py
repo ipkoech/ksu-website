@@ -225,6 +225,22 @@ def build_content_workflow_queue_items(
                         "keywords": getattr(record, "keywords", None),
                     },
                 },
+                # Contributor attribution + consent for externally submitted
+                # records (stories); reviewers must see consent state before
+                # publishing.
+                "contributor": (
+                    {
+                        "name": getattr(record, "contributor_name_snapshot", None),
+                        "email": getattr(record, "contributor_email_snapshot", None),
+                        "affiliation": getattr(record, "contributor_affiliation_snapshot", None),
+                        "show_name": getattr(record, "show_contributor_name", None),
+                        "consent_to_publish": getattr(record, "consent_to_publish", None),
+                        "source_type": getattr(record, "source_type", None),
+                    }
+                    if getattr(record, "contributor_user_id", None)
+                    or getattr(record, "contributor_name_snapshot", None)
+                    else None
+                ),
             })
 
     return sorted(

@@ -21,6 +21,8 @@ import {
 import { usePermissions } from "@ksu/auth";
 import { toast } from "@ksu/ui";
 import {
+  Alert,
+  AlertDescription,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -803,6 +805,14 @@ function ReviewDetail({
             </div>
           </TabsContent>
           <TabsContent value="details" className="mt-0 space-y-5">
+            {item.contributor?.consent_to_publish === false ? (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  The contributor has <strong>not consented to publication</strong>.
+                  Publishing is blocked until consent is recorded on the story.
+                </AlertDescription>
+              </Alert>
+            ) : null}
             <dl className="grid gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
               <DetailTerm label="Owner" value={item.owner_label} />
               <DetailTerm
@@ -822,6 +832,24 @@ function ReviewDetail({
                 label="Publication target"
                 value={item.publication_target}
               />
+              {item.contributor ? (
+                <>
+                  <DetailTerm
+                    label="Contributor"
+                    value={`${item.contributor.name || "Unnamed"}${item.contributor.affiliation ? ` · ${item.contributor.affiliation}` : ""}`}
+                  />
+                  <DetailTerm
+                    label="Publication consent"
+                    value={
+                      item.contributor.consent_to_publish === false
+                        ? "Not granted"
+                        : item.contributor.consent_to_publish
+                          ? `Granted${item.contributor.show_name === false ? " (name withheld)" : ""}`
+                          : "Unknown"
+                    }
+                  />
+                </>
+              ) : null}
             </dl>
             <div className="border-t pt-5">
               <p className="text-sm font-medium">Search metadata</p>

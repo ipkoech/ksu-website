@@ -1712,6 +1712,12 @@ export const storiesApi = {
   update: (id: string, data: Partial<Story>) =>
     mainApi.patch<{ data: Story }>(`/api/v1/stories/id/${id}`, data),
 
+  /** Workflow history (reviewer feedback) for a story the caller contributed. */
+  feedback: (id: string) =>
+    mainApi.get<{ data: ContentWorkflowLog[] }>(
+      `/api/v1/stories/id/${id}/feedback`,
+    ),
+
   delete: (id: string) => mainApi.delete<void>(`/api/v1/stories/id/${id}`),
 
   requestContributorAccount: (data: StoryContributorAccountRequestPayload) =>
