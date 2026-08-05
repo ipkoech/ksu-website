@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 from ksu_common.reliability import (
     CircuitBreaker,
     CircuitOpenError,
+    IdempotencyAlreadyCompletedError,
     IdempotencyState,
     InMemoryIdempotencyStore,
     RetryPolicy,
@@ -18,6 +21,35 @@ def test_timeout_config_rejects_values_outside_its_bound() -> None:
 
     with pytest.raises(ValueError, match="must be between"):
         TimeoutConfig(total=0, maximum=30)
+
+
+@pytest.mark.parametrize("value", [float("inf"), float("-inf"), float("nan")])
+def test_timeout_config_rejects_non_finite_values(value: float) -> None:
+    with pytest.raises(ValueError, match="finite"):
+        TimeoutConfig(total=value, maximum=30)
+
+    with pytest.raises(ValueError, match="finite"):
+        TimeoutConfig(total=5, maximum=value)
+
+
+@pytest.mark.parametrize("field", ["initial_delay", "max_delay", "jitter_ratio"])
+@pytest.mark.parametrize("value", [float("inf"), float("-inf"), float("nan")])
+def test_retry_policy_rejects_non_finite_values(field: str, value: float) -> None:
+    with pytest.raises(ValueError, match="finite"):
+        RetryPolicy(**{field: value})
+
+
+def test_retry_policy_clamps_jitter_at_random_boundaries() -> None:
+    policy = RetryPolicy(initial_delay=1, max_delay=5, jitter_ratio=0.5)
+
+    assert policy.delay_for(1, 0.0) == 0.5
+    assert policy.delay_for(1, 1.0) == 1.5
+
+
+@pytest.mark.parametrize("value", [float("inf"), float("-inf"), float("nan")])
+def test_circuit_breaker_rejects_non_finite_recovery_timeout(value: float) -> None:
+    with pytest.raises(ValueError, match="finite"):
+        CircuitBreaker(recovery_timeout=value)
 
 
 @pytest.mark.asyncio
@@ -122,6 +154,42 @@ async def test_circuit_breaker_opens_then_recovers_after_reset_timeout() -> None
 
 
 @pytest.mark.asyncio
+async def test_circuit_breaker_releases_cancelled_half_open_probe() -> None:
+    now = 0.0
+
+    def clock() -> float:
+        return now
+
+    breaker = CircuitBreaker(failure_threshold=1, recovery_timeout=5, clock=clock)
+
+    async def fail() -> None:
+        raise TimeoutError("down")
+
+    with pytest.raises(TimeoutError):
+        await breaker.call(fail)
+
+    now = 5.0
+    started = asyncio.Event()
+    never = asyncio.Event()
+
+    async def cancelled_probe() -> None:
+        started.set()
+        await never.wait()
+
+    task = asyncio.create_task(breaker.call(cancelled_probe))
+    await started.wait()
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    async def succeed() -> str:
+        return "recovered"
+
+    assert await breaker.call(succeed) == "recovered"
+    assert breaker.state == "closed"
+
+
+@pytest.mark.asyncio
 async def test_in_memory_idempotency_store_claim_get_and_complete() -> None:
     store = InMemoryIdempotencyStore()
 
@@ -140,3 +208,15 @@ async def test_in_memory_idempotency_store_rejects_completion_without_claim() ->
 
     with pytest.raises(KeyError, match="must be claimed"):
         await store.complete("unknown", {"ok": True})
+
+
+@pytest.mark.asyncio
+async def test_in_memory_idempotency_store_preserves_completed_response() -> None:
+    store = InMemoryIdempotencyStore()
+    await store.claim("request-1")
+    await store.complete("request-1", {"result": 1})
+
+    with pytest.raises(IdempotencyAlreadyCompletedError, match="already completed"):
+        await store.complete("request-1", {"result": 2})
+
+    assert await store.get("request-1") == IdempotencyState.completed({"result": 1})

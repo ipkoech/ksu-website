@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import math
 import random
 import time
 from collections.abc import Awaitable, Callable
@@ -15,6 +16,11 @@ from dataclasses import dataclass
 from typing import Any, Protocol, TypeVar
 
 T = TypeVar("T")
+
+
+def _require_finite(value: float, name: str) -> None:
+    if not math.isfinite(value):
+        raise ValueError(f"{name} must be finite")
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,6 +31,8 @@ class TimeoutConfig:
     maximum: float = 30.0
 
     def __post_init__(self) -> None:
+        _require_finite(self.total, "total")
+        _require_finite(self.maximum, "maximum")
         if self.maximum <= 0:
             raise ValueError("maximum must be positive")
         if not 0 < self.total <= self.maximum:
@@ -43,6 +51,9 @@ class RetryPolicy:
     retry_statuses: frozenset[int] = frozenset()
 
     def __post_init__(self) -> None:
+        _require_finite(self.initial_delay, "initial_delay")
+        _require_finite(self.max_delay, "max_delay")
+        _require_finite(self.jitter_ratio, "jitter_ratio")
         if self.attempts < 1:
             raise ValueError("attempts must be at least one")
         if self.initial_delay < 0 or self.max_delay < 0:
@@ -106,6 +117,7 @@ class CircuitBreaker:
     ) -> None:
         if failure_threshold < 1:
             raise ValueError("failure_threshold must be at least one")
+        _require_finite(recovery_timeout, "recovery_timeout")
         if recovery_timeout <= 0:
             raise ValueError("recovery_timeout must be positive")
         self.failure_threshold = failure_threshold
@@ -122,7 +134,7 @@ class CircuitBreaker:
     def state(self) -> str:
         return self._state
 
-    async def _allow_call(self) -> None:
+    async def _allow_call(self) -> bool:
         async with self._lock:
             if self._state == "open":
                 assert self._opened_at is not None
@@ -134,6 +146,13 @@ class CircuitBreaker:
                 if self._half_open_in_flight:
                     raise CircuitOpenError(self.recovery_timeout)
                 self._half_open_in_flight = True
+                return True
+        return False
+
+    async def _release_half_open_probe(self) -> None:
+        async with self._lock:
+            if self._state == "half_open":
+                self._half_open_in_flight = False
 
     async def _succeed(self) -> None:
         async with self._lock:
@@ -151,19 +170,18 @@ class CircuitBreaker:
                 self._opened_at = self._clock()
 
     async def call(self, operation: Callable[[], Awaitable[T]]) -> T:
-        await self._allow_call()
+        half_open_probe = await self._allow_call()
         try:
             result = await operation()
         except self.failure_exceptions:
             await self._fail()
             raise
-        except Exception:
-            if self._state == "half_open":
-                async with self._lock:
-                    self._half_open_in_flight = False
-            raise
-        await self._succeed()
-        return result
+        else:
+            await self._succeed()
+            return result
+        finally:
+            if half_open_probe:
+                await self._release_half_open_probe()
 
 
 @dataclass(frozen=True, slots=True)
@@ -180,6 +198,10 @@ class IdempotencyState:
     @classmethod
     def completed(cls, response: Any) -> IdempotencyState:
         return cls("completed", response)
+
+
+class IdempotencyAlreadyCompletedError(RuntimeError):
+    """Raised when a caller attempts to replace a completed response."""
 
 
 class IdempotencyStore(Protocol):
@@ -213,6 +235,11 @@ class InMemoryIdempotencyStore:
 
     async def complete(self, key: str, response: Any) -> None:
         async with self._lock:
-            if key not in self._entries:
+            state = self._entries.get(key)
+            if state is None:
                 raise KeyError("idempotency key must be claimed before completion")
+            if state.status == "completed":
+                raise IdempotencyAlreadyCompletedError("idempotency key is already completed")
+            if state.status != "pending":
+                raise RuntimeError("idempotency key is not pending")
             self._entries[key] = IdempotencyState.completed(copy.deepcopy(response))
