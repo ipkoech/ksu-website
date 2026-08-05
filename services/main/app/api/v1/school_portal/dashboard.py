@@ -1,7 +1,5 @@
 """Operational School Portal dashboard endpoint."""
 
-from __future__ import annotations
-
 from fastapi import APIRouter, HTTPException, Query, Request
 from ksu_common import rate_limit
 from ksu_common.schemas.responses import SuccessResponse, success

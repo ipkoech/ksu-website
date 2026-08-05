@@ -316,15 +316,45 @@ async def test_contact_directory_loads_every_main_contact_and_faq_page(db):
 async def test_public_contact_directory_route_returns_envelope_and_varies_cache():
     class _Redis:
         def __init__(self):
+            self.values = {}
             self.keys = []
             self.timeouts = []
+            self.locks = {}
 
         async def get(self, key):
-            return None
+            return self.values.get(key)
+
+        async def set(self, key, value, *, nx=False, px=None):
+            if nx and key in self.locks:
+                return False
+            self.locks[key] = {"value": value, "px": px}
+            return True
 
         async def setex(self, key, timeout, _value):
+            self.values[key] = _value
             self.keys.append(key)
             self.timeouts.append(timeout)
+
+        async def eval(self, _script, numkeys, *args):
+            if numkeys == 2:
+                cache_key, lock_key, payload, timeout, token = args
+                lock = self.locks.get(lock_key)
+                if lock is None or lock["value"] != token:
+                    return 0
+                await self.setex(cache_key, timeout, payload)
+                self.locks.pop(lock_key, None)
+                return 1
+            if numkeys == 1:
+                lock_key, token, *rest = args
+                lock = self.locks.get(lock_key)
+                if lock is None or lock["value"] != token:
+                    return 0
+                if rest:
+                    lock["px"] = rest[0]
+                    return 1
+                self.locks.pop(lock_key, None)
+                return 1
+            raise AssertionError(f"unexpected eval arity: {numkeys}")
 
     redis = _Redis()
     compose = AsyncMock(return_value={"contacts": []})

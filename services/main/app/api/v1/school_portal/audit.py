@@ -1,7 +1,5 @@
 """School-scoped audit trail endpoint."""
 
-from __future__ import annotations
-
 from fastapi import APIRouter, HTTPException, Query
 from ksu_common.schemas.responses import success
 

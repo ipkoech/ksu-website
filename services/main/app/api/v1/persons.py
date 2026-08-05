@@ -1,7 +1,5 @@
 """Person endpoints."""
 
-from __future__ import annotations
-
 import uuid
 from types import SimpleNamespace
 

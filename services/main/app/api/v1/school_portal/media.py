@@ -1,7 +1,5 @@
 """School-scoped media upload batches and metadata imports."""
 
-from __future__ import annotations
-
 import uuid
 
 from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile, status
