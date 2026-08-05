@@ -1,7 +1,7 @@
 """Add durable command idempotency records.
 
 Revision ID: 20260805_0040
-Revises: 20260803_0300
+Revises: 20260805_0500
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision = "20260805_0040"
-down_revision = "20260803_0300"
+down_revision = "20260805_0500"
 branch_labels = None
 depends_on = None
 
