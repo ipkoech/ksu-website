@@ -131,7 +131,10 @@ import type {
   EditableListFilter,
 } from "@/components/dashboard/editable-service-resource-page";
 import { contentAttachmentRoles } from "@/components/content/content-attachment-roles";
-import { WORKFLOW_STATUS_FILTER_OPTIONS } from "@/components/workflow/status-chip";
+// Import from the server-safe vocabulary module, NOT status-chip: that file
+// is "use client", and this registry is evaluated from server components,
+// where client-module exports are non-iterable reference proxies.
+import { WORKFLOW_STATUS_FILTER_OPTIONS } from "@/components/workflow/workflow-status-vocabulary";
 
 const pageParams = { page: 1, per_page: 50 };
 const countParams = { page: 1, per_page: 1, fields: "id" };
