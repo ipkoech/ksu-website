@@ -47,7 +47,8 @@ export type CorporatePortalNavigationKey =
   | "media"
   | "engagement"
   | "student-life"
-  | "oversight";
+  | "oversight"
+  | "settings";
 
 export interface CorporatePortalContextResponse {
   capabilities: Record<string, boolean>;

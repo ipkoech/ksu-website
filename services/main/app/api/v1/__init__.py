@@ -23,6 +23,10 @@ from .clubs import router as clubs_router
 from .contact_directory import router as contact_directory_router
 from .contacts import router as contacts_router
 from .content_workflow import router as content_workflow_router
+from .corporate_comm_engagement import (
+    engagement_router as corporate_comm_engagement_router,
+    settings_router as corporate_comm_settings_router,
+)
 from .corporate_portal import router as corporate_portal_router
 from .departments import router as departments_router
 from .department_services import router as department_services_router
@@ -106,6 +110,16 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(users_router, prefix="/api/v1/users", tags=["Users"])
     app.include_router(search_router, prefix="/api/v1/search", tags=["Search"])
     app.include_router(stats_router, prefix="/api/v1/stats", tags=["Stats"])
+    app.include_router(
+        corporate_comm_engagement_router,
+        prefix="/api/v1/stats/portal/corporate-communication",
+        tags=["Stats"],
+    )
+    app.include_router(
+        corporate_comm_settings_router,
+        prefix="/api/v1/corporate-communication-portal/settings",
+        tags=["Corporate Communication Portal"],
+    )
     app.include_router(settings_router, prefix="/api/v1/settings", tags=["System"])
     app.include_router(university_info_router, prefix="/api/v1/university-info", tags=["University"])
     app.include_router(notifications_router, prefix="/api/v1/notifications", tags=["Users"])

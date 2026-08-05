@@ -8163,6 +8163,33 @@
         "title": "ContentWorkflowActionRequest",
         "type": "object"
       },
+      "CorporateCommSettingsUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "office_channels": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfficeChannels"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "social_links": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SocialLinks"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "CorporateCommSettingsUpdate",
+        "type": "object"
+      },
       "CouncilMemberCreate": {
         "properties": {
           "appointing_authority": {
@@ -17561,6 +17588,73 @@
         "title": "NotificationTemplateUpdate",
         "type": "object"
       },
+      "OfficeChannels": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "maxLength": 320,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "escalation_contact": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Escalation Contact"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "physical_office": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Physical Office"
+          },
+          "service_hours": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Hours"
+          }
+        },
+        "title": "OfficeChannels",
+        "type": "object"
+      },
       "PageSectionCreate": {
         "additionalProperties": false,
         "properties": {
@@ -26392,6 +26486,73 @@
           }
         },
         "title": "SliderUpdate",
+        "type": "object"
+      },
+      "SocialLinks": {
+        "additionalProperties": false,
+        "properties": {
+          "facebook": {
+            "anyOf": [
+              {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Facebook"
+          },
+          "instagram": {
+            "anyOf": [
+              {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instagram"
+          },
+          "linkedin": {
+            "anyOf": [
+              {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linkedin"
+          },
+          "twitter": {
+            "anyOf": [
+              {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Twitter"
+          },
+          "youtube": {
+            "anyOf": [
+              {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Youtube"
+          }
+        },
+        "title": "SocialLinks",
         "type": "object"
       },
       "SocialMediaPostCreate": {
@@ -51368,6 +51529,171 @@
           }
         ],
         "summary": "Retry Media File",
+        "tags": [
+          "Corporate Communication Portal"
+        ]
+      }
+    },
+    "/api/v1/corporate-communication-portal/settings": {
+      "get": {
+        "operationId": "get_corporate_comm_settings_api_v1_corporate_communication_portal_settings_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Corporate Comm Settings",
+        "tags": [
+          "Corporate Communication Portal"
+        ]
+      },
+      "put": {
+        "operationId": "update_corporate_comm_settings_api_v1_corporate_communication_portal_settings_put",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorporateCommSettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Corporate Comm Settings",
+        "tags": [
+          "Corporate Communication Portal"
+        ]
+      }
+    },
+    "/api/v1/corporate-communication-portal/settings/team": {
+      "get": {
+        "description": "Read-only roster of users holding Corporate Communication roles.\n\nA user belongs to the roster when one of their active roles grants a\nsignature Corporate Communication permission. Management deep-links to the\nadmin users screen; this endpoint intentionally exposes no user CRUD.",
+        "operationId": "list_corporate_comm_team_api_v1_corporate_communication_portal_settings_team_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Corporate Comm Team",
         "tags": [
           "Corporate Communication Portal"
         ]
@@ -85285,6 +85611,105 @@
         ]
       }
     },
+    "/api/v1/stats/portal/corporate-communication/engagement": {
+      "get": {
+        "description": "Website page-view and social delivery aggregates for the comms portal.\n\nWebsite numbers come from the same first-party ``analytics_events`` table\nthe school portal dashboard reads, scoped to the main public site. Social\nnumbers are delivery outcomes only \u2014 see ``social_insights_available``.",
+        "operationId": "get_corporate_communication_engagement_api_v1_stats_portal_corporate_communication_engagement_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "date_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "top_limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Top Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Corporate Communication Engagement",
+        "tags": [
+          "Stats"
+        ]
+      }
+    },
     "/api/v1/stats/portal/{portal}": {
       "get": {
         "operationId": "get_portal_stats_api_v1_stats_portal__portal__get",
@@ -86319,6 +86744,92 @@
           }
         ],
         "summary": "Update Story",
+        "tags": [
+          "Content"
+        ]
+      }
+    },
+    "/api/v1/stories/id/{story_id}/feedback": {
+      "get": {
+        "description": "Workflow history for a story, readable by its contributor.\n\nContributors cannot use the generic content-workflow logs route (it\nrequires reviewer/edit permissions), so this surfaces reviewer feedback\n(request_changes / reject comments and transitions) for their own story.",
+        "operationId": "list_story_feedback_api_v1_stories_id__story_id__feedback_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "story_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Story Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Per Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Story Feedback",
         "tags": [
           "Content"
         ]

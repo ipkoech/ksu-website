@@ -2766,6 +2766,21 @@ Delete Story
 - Parameters: `story_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
+### `GET /api/v1/stories/id/{story_id}/feedback`
+
+List Story Feedback
+
+Workflow history for a story, readable by its contributor.
+
+Contributors cannot use the generic content-workflow logs route (it
+requires reviewer/edit permissions), so this surfaces reviewer feedback
+(request_changes / reject comments and transitions) for their own story.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `story_id` (path, string), `page` (query, integer), `per_page` (query, integer), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ### `GET /api/v1/stories/mine`
 
 List My Stories
@@ -2831,6 +2846,39 @@ Retry Media File
 - Auth: HTTPBearer
 - Request body: -
 - Parameters: `batch_id` (path, string), `file_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/corporate-communication-portal/settings`
+
+Get Corporate Comm Settings
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PUT /api/v1/corporate-communication-portal/settings`
+
+Update Corporate Comm Settings
+
+- Auth: HTTPBearer
+- Request body: CorporateCommSettingsUpdate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/corporate-communication-portal/settings/team`
+
+List Corporate Comm Team
+
+Read-only roster of users holding Corporate Communication roles.
+
+A user belongs to the roster when one of their active roles grants a
+signature Corporate Communication permission. Management deep-links to the
+admin users screen; this endpoint intentionally exposes no user CRUD.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ## Documents
@@ -5580,6 +5628,21 @@ Export Corporate Communication Dashboard
 - Parameters: `date_from` (query, string | null), `date_to` (query, string | null), `compare` (query, string), `bucket` (query, string), `content_type` (query, string | null), `owner_portal` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
+### `GET /api/v1/stats/portal/corporate-communication/engagement`
+
+Get Corporate Communication Engagement
+
+Website page-view and social delivery aggregates for the comms portal.
+
+Website numbers come from the same first-party ``analytics_events`` table
+the school portal dashboard reads, scoped to the main public site. Social
+numbers are delivery outcomes only — see ``social_insights_available``.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `date_from` (query, string | null), `date_to` (query, string | null), `top_limit` (query, integer), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ### `GET /api/v1/stats/portal/{portal}`
 
 Get Portal Stats
@@ -6799,7 +6862,7 @@ Transition Content
 
 ## Schemas
 
-Generated component schemas: `257`
+Generated component schemas: `260`
 
 ### `AboutPageContentCreate`
 
@@ -7689,6 +7752,11 @@ Generated component schemas: `257`
 - `changed_fields`: `object | null` (optional)
 - `comments`: `string | null` (optional)
 - `scheduled_for`: `string | null` (optional)
+
+### `CorporateCommSettingsUpdate`
+
+- `office_channels`: `OfficeChannels | null` (optional)
+- `social_links`: `SocialLinks | null` (optional)
 
 ### `CouncilMemberCreate`
 
@@ -8776,6 +8844,14 @@ Generated component schemas: `257`
 - `title_template`: `string | null` (optional)
 - `variables`: `array<string> | null` (optional)
 
+### `OfficeChannels`
+
+- `email`: `string | null` (optional)
+- `escalation_contact`: `string | null` (optional)
+- `phone`: `string | null` (optional)
+- `physical_office`: `string | null` (optional)
+- `service_hours`: `string | null` (optional)
+
 ### `PageSectionCreate`
 
 - `description`: `string | null` (optional)
@@ -9731,6 +9807,14 @@ Generated component schemas: `257`
 - `structured_content`: `object | null` (optional)
 - `subtitle`: `string | null` (optional)
 - `title`: `string | null` (optional)
+
+### `SocialLinks`
+
+- `facebook`: `string | null` (optional)
+- `instagram`: `string | null` (optional)
+- `linkedin`: `string | null` (optional)
+- `twitter`: `string | null` (optional)
+- `youtube`: `string | null` (optional)
 
 ### `SocialMediaPostCreate`
 

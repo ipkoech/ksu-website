@@ -73,6 +73,7 @@ import {
 } from "@ksu/ui/components";
 import { cn } from "@ksu/ui/lib";
 import { PageHeader } from "@/components/layout";
+import { CorporateReachPanel } from "@/components/corporate/corporate-stats-reach-panel";
 
 ChartJS.register(
   CategoryScale,
@@ -319,6 +320,9 @@ export function CorporateCommunicationDashboard() {
             <PrimaryCharts dashboard={dashboard} />
             <WorkflowCharts dashboard={dashboard} />
             <OperationalCharts dashboard={dashboard} />
+            <CorporateReachPanel
+              params={{ date_from: dates.date_from, date_to: dates.date_to }}
+            />
             <ReadinessAndInsights dashboard={dashboard} />
             <MediaReadinessDetails dashboard={dashboard} />
             <AttentionAndCalendar dashboard={dashboard} />
