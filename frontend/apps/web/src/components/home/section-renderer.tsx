@@ -205,39 +205,11 @@ export function HomepageSections({
 }
 
 function orderHomepageSections(sections: HomepageSection[]) {
-  const priority: Record<HomepageSectionLayoutVariant, number> = {
-    hero_admissions: 10,
-    pulse_strip: 20,
-    featured_partnership: 30,
-    pillar_grid: 40,
-    facts_strip: 20,
-    programme_finder: 50,
-    date_timeline: 51,
-    featured_stories: 55,
-    media_mosaic: 58,
-    leadership_activity: 60,
-    research_cards: 70,
-    logo_carousel: 80,
-    news_grid: 100,
-    events_list: 101,
-    alumni_story: 110,
-  };
-
+  // Use CMS display_order as primary sort; original array index as tiebreaker
   return sections
     .map((section, index) => ({ section, index }))
     .sort((first, second) => {
-      const firstPriority = isKnownHomepageLayoutVariant(
-        first.section.layout_variant,
-      )
-        ? priority[first.section.layout_variant]
-        : 1_000;
-      const secondPriority = isKnownHomepageLayoutVariant(
-        second.section.layout_variant,
-      )
-        ? priority[second.section.layout_variant]
-        : 1_000;
       return (
-        firstPriority - secondPriority ||
         (first.section.display_order ?? 1_000) -
           (second.section.display_order ?? 1_000) ||
         first.index - second.index

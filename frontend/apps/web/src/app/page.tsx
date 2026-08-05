@@ -155,6 +155,24 @@ function partnershipFromCms(
   };
 }
 
+/**
+ * Map of CMS layout variants to the bespoke landing component they control.
+ * When CMS data is available and a section with the given variant is disabled
+ * (is_enabled === false), the corresponding bespoke component is hidden.
+ * When CMS is unavailable, all bespoke components render (graceful degradation).
+ */
+function isBespokeSectionEnabled(
+  sections: HomepageSection[],
+  cmsAvailable: boolean,
+  variant: string,
+): boolean {
+  // CMS unavailable: show everything (graceful degradation)
+  if (!cmsAvailable) return true;
+  // Find section by variant; if absent, assume enabled (default visible)
+  const section = sections.find((s) => s.layout_variant === variant);
+  return section ? section.is_enabled !== false : true;
+}
+
 export default async function LandingPage() {
   const [homepage, megaMenuData, composedHomepage, vcHub, researchLanding] =
     await Promise.all([
@@ -164,6 +182,16 @@ export default async function LandingPage() {
       getPublicVcHub(),
       getResearchLanding(),
     ]);
+
+  // CMS availability: true when sections were returned (even if empty array).
+  // Use rawSections: normalizeSections drops disabled entries, so the
+  // normalized list can't distinguish "disabled by an admin" from "absent".
+  const cmsAvailable = composedHomepage.data !== null;
+  const allSections = composedHomepage.rawSections;
+
+  // Helper to check if a bespoke section should render based on CMS enable state
+  const showSection = (variant: string) =>
+    isBespokeSectionEnabled(allSections, cmsAvailable, variant);
 
   const factsSection = composedHomepage.sections.find(
     (section) => section.layout_variant === "facts_strip",
@@ -253,78 +281,94 @@ export default async function LandingPage() {
           className="overflow-x-clip"
           tabIndex={-1}
         >
-          {/* The promise — cinematic full-viewport hero */}
-          <CinematicHero {...hero} />
+          {/* The promise — cinematic full-viewport hero (hero_admissions) */}
+          {showSection("hero_admissions") && <CinematicHero {...hero} />}
 
-          {/* Why Kisii University — cream interlude with the proof figures */}
-          <WhyKsuSection stats={overlayStats} />
+          {/* Why Kisii University — cream interlude with the proof figures (facts_strip / pulse_strip) */}
+          {(showSection("facts_strip") || showSection("pulse_strip")) && (
+            <WhyKsuSection stats={overlayStats} />
+          )}
 
-          {/* The signature moment — KSU × HERI Africa, CMS content */}
-          <StrategicPartnershipSection spotlight={partnership} />
+          {/* The signature moment — KSU × HERI Africa, CMS content (featured_partnership) */}
+          {showSection("featured_partnership") && (
+            <StrategicPartnershipSection spotlight={partnership} />
+          )}
 
-          {/* One mandate, three promises — the black benefits band */}
-          <FlowFeaturesSection section={pillarSection} />
+          {/* One mandate, three promises — the black benefits band (pillar_grid) */}
+          {showSection("pillar_grid") && (
+            <FlowFeaturesSection section={pillarSection} />
+          )}
 
-          {/* The voice behind the promises — Vice-Chancellor */}
-          <VcWelcomeSection leader={homepage.viceChancellor} />
+          {/* The voice behind the promises — Vice-Chancellor (leadership_activity) */}
+          {showSection("leadership_activity") && (
+            <VcWelcomeSection leader={homepage.viceChancellor} />
+          )}
 
           {/* Task routing — the action bridge into the programme finder */}
           <AudienceChips />
 
-          {/* The offer — programme finder, featured programmes, schools */}
-          <ProgrammeFinderCompact
-            schools={homepage.schools}
-            featuredProgrammes={homepage.featuredProgrammes}
-          />
+          {/* The offer — programme finder, featured programmes, schools (programme_finder) */}
+          {showSection("programme_finder") && (
+            <ProgrammeFinderCompact
+              schools={homepage.schools}
+              featuredProgrammes={homepage.featuredProgrammes}
+            />
+          )}
 
-          {/* The frontier — research themes + featured project */}
-          <ResearchHighlightsSection
-            themes={researchThemes}
-            featuredProject={
-              researchLanding.featuredProject
-                ? {
-                    title: researchLanding.featuredProject.title,
-                    summary: researchLanding.featuredProject.summary,
-                    status: researchLanding.featuredProject.status,
-                    href: `${researchFrontendUrl}/projects/${researchLanding.featuredProject.slug}`,
-                  }
-                : null
-            }
-          />
+          {/* The frontier — research themes + featured project (research_cards) */}
+          {showSection("research_cards") && (
+            <ResearchHighlightsSection
+              themes={researchThemes}
+              featuredProject={
+                researchLanding.featuredProject
+                  ? {
+                      title: researchLanding.featuredProject.title,
+                      summary: researchLanding.featuredProject.summary,
+                      status: researchLanding.featuredProject.status,
+                      href: `${researchFrontendUrl}/projects/${researchLanding.featuredProject.slug}`,
+                    }
+                  : null
+              }
+            />
+          )}
 
-          {/* The place to live — life around studies */}
+          {/* The place to live — life around studies (media_mosaic when section_key="campus-life") */}
           {campusLifeSection ? (
             <LifeAroundStudiesSection section={campusLifeSection} />
           ) : null}
 
-          {/* The people — featured stories showcase */}
-          <EditorialShowcaseSection
-            id="featured-stories"
-            badge="Stories"
-            headingLead="Stories worth"
-            headingAccent="telling."
-            subtitle="Voices from students, staff, and alumni. A look into the people and moments that make Kisii University."
-            viewAllHref="/stories"
-            viewAllLabel="View all stories"
-            cards={homepage.featuredStories}
-            emptyMessage="Stories are being prepared. Visit the stories page for earlier features."
-          />
+          {/* The people — featured stories showcase (featured_stories) */}
+          {showSection("featured_stories") && (
+            <EditorialShowcaseSection
+              id="featured-stories"
+              badge="Stories"
+              headingLead="Stories worth"
+              headingAccent="telling."
+              subtitle="Voices from students, staff, and alumni. A look into the people and moments that make Kisii University."
+              viewAllHref="/stories"
+              viewAllLabel="View all stories"
+              cards={homepage.featuredStories}
+              emptyMessage="Stories are being prepared. Visit the stories page for earlier features."
+            />
+          )}
 
-          {/* The pulse — university news and upcoming events */}
-          <EditorialShowcaseSection
-            id="news-events"
-            badge="News & events"
-            headingLead="The latest from"
-            headingAccent="the centre."
-            subtitle="Announcements, research milestones, and what is happening across the university."
-            viewAllHref="/news"
-            viewAllLabel="View all news"
-            cards={homepage.latestNews}
-            emptyMessage="News updates are on the way. See the news page for the full archive."
-            events={homepage.upcomingEvents}
-            eventsHref="/events"
-            tone="wash"
-          />
+          {/* The pulse — university news and upcoming events (news_grid) */}
+          {showSection("news_grid") && (
+            <EditorialShowcaseSection
+              id="news-events"
+              badge="News & events"
+              headingLead="The latest from"
+              headingAccent="the centre."
+              subtitle="Announcements, research milestones, and what is happening across the university."
+              viewAllHref="/news"
+              viewAllLabel="View all news"
+              cards={homepage.latestNews}
+              emptyMessage="News updates are on the way. See the news page for the full archive."
+              events={homepage.upcomingEvents}
+              eventsHref="/events"
+              tone="wash"
+            />
+          )}
 
           {composedHomepage.hasRenderableSections ? (
             /* Remaining current-design sections, ending at university news */
