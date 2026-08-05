@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Sequence
 
 from sqlalchemy import or_, select
@@ -45,6 +46,56 @@ async def record_school_portal_audit(
     return record
 
 
+def apply_audit_filters(
+    query,
+    *,
+    service_name: str | None = None,
+    user_id: uuid.UUID | None = None,
+    resource_type: str | None = None,
+    request_path_prefix: str | None = None,
+    status: str | None = None,
+    action: str | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+):
+    """Apply the shared audit-list filters to an AuditLog select.
+
+    ``action`` matches exactly or as a dotted-namespace prefix (``user``
+    matches ``user`` and ``user.login``). ``date_from``/``date_to`` bound
+    ``happened_at`` inclusively by calendar day (UTC).
+    """
+    if service_name is not None:
+        query = query.where(AuditLog.service_name == service_name)
+    if user_id is not None:
+        query = query.where(AuditLog.user_id == user_id)
+    if resource_type is not None:
+        query = query.where(AuditLog.resource_type == resource_type)
+    if request_path_prefix is not None:
+        query = query.where(
+            or_(
+                AuditLog.request_path == request_path_prefix,
+                AuditLog.request_path.startswith(f"{request_path_prefix}/"),
+            )
+        )
+    if status is not None:
+        query = query.where(AuditLog.status == status)
+    if action is not None:
+        query = query.where(
+            or_(
+                AuditLog.action == action,
+                AuditLog.action.startswith(f"{action}."),
+            )
+        )
+    if date_from is not None:
+        query = query.where(
+            AuditLog.happened_at >= datetime.combine(date_from, time.min, tzinfo=timezone.utc)
+        )
+    if date_to is not None:
+        end = datetime.combine(date_to, time.min, tzinfo=timezone.utc) + timedelta(days=1)
+        query = query.where(AuditLog.happened_at < end)
+    return query
+
+
 class AuditService:
     @staticmethod
     def _default_load_options():
@@ -68,25 +119,24 @@ class AuditService:
         resource_type: str | None = None,
         request_path_prefix: str | None = None,
         status: str | None = None,
+        action: str | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
         load_options: Sequence = (),
     ) -> PaginatedResult:
         options = load_options if load_options else AuditService._default_load_options()
         query = select(AuditLog).options(*options).order_by(AuditLog.happened_at.desc(), AuditLog.created_at.desc())
-        if service_name is not None:
-            query = query.where(AuditLog.service_name == service_name)
-        if user_id is not None:
-            query = query.where(AuditLog.user_id == user_id)
-        if resource_type is not None:
-            query = query.where(AuditLog.resource_type == resource_type)
-        if request_path_prefix is not None:
-            query = query.where(
-                or_(
-                    AuditLog.request_path == request_path_prefix,
-                    AuditLog.request_path.startswith(f"{request_path_prefix}/"),
-                )
-            )
-        if status is not None:
-            query = query.where(AuditLog.status == status)
+        query = apply_audit_filters(
+            query,
+            service_name=service_name,
+            user_id=user_id,
+            resource_type=resource_type,
+            request_path_prefix=request_path_prefix,
+            status=status,
+            action=action,
+            date_from=date_from,
+            date_to=date_to,
+        )
         return await paginate_query(db, query, page=page, per_page=per_page)
 
     @staticmethod

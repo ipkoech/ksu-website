@@ -268,8 +268,22 @@ export const pageCmsApi = {
     api.get<PageComposition>(`/pages/${pageKey}`, { params }),
 };
 
+export interface PageSectionAdminListParams extends PageSectionListParams {
+  status?: PageSectionStatus;
+}
+
+export interface PageSectionAdminListResponse {
+  data: PageSection[];
+  meta: {
+    page: number;
+    per_page: number;
+    total: number;
+    total_pages: number;
+  } | null;
+}
+
 export const pageSectionsApi = {
-  listAdmin: (params?: PageSectionListParams) =>
+  listAdmin: (params?: PageSectionAdminListParams) =>
     api.get<PageSection[]>("/page-sections/admin", { params }),
   get: (sectionId: string) =>
     api.get<PageSection>(`/page-sections/${sectionId}`),
@@ -277,8 +291,8 @@ export const pageSectionsApi = {
     api.post<PageSection>("/page-sections", data),
   update: (sectionId: string, data: PageSectionPayload) =>
     api.patch<PageSection>(`/page-sections/${sectionId}`, data),
-  workflow: (sectionId: string, action: PageSectionWorkflowAction) =>
-    api.post<PageSection>(`/page-sections/${sectionId}/${action}`),
+  workflow: (sectionId: string, action: PageSectionWorkflowAction, reason?: string) =>
+    api.post<PageSection>(`/page-sections/${sectionId}/${action}`, reason ? { reason } : undefined),
   archive: (sectionId: string) =>
     api.post<PageSection>(`/page-sections/${sectionId}/archive`),
 };

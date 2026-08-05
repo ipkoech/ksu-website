@@ -66,6 +66,7 @@ import type {
   ContentWorkflowBulkItemResult,
   ContentWorkflowLog,
   ContentWorkflowQueueFilters,
+  ContentWorkflowQueueMeta,
   ContentWorkflowQueueItem,
   SliderGroup,
   Slider,
@@ -1854,10 +1855,10 @@ export const announcementsApi = {
 
 export const contentWorkflowApi = {
   listQueue: (params?: ContentWorkflowQueueFilters) =>
-    mainApi.get<{ data: ContentWorkflowQueueItem[] }>(
-      "/api/v1/content-workflow/queue",
-      params,
-    ),
+    mainApi.get<{
+      data: ContentWorkflowQueueItem[];
+      meta?: ContentWorkflowQueueMeta;
+    }>("/api/v1/content-workflow/queue", params),
 
   action: (
     item: ContentWorkflowQueueItem,
@@ -2404,10 +2405,13 @@ export const auditLogsApi = {
     params?: ListParams<{
       user_id?: string;
       service_name?: string;
+      /** Exact match, or a dotted prefix ("user" matches "user.login"). */
       action?: string;
       resource_type?: string;
       resource_id?: string;
       status?: string;
+      /** Restrict to requests under this path prefix (e.g. "/api/v1/news"). */
+      request_path_prefix?: string;
       date_from?: string;
       date_to?: string;
     }>,

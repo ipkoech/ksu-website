@@ -240,6 +240,9 @@ export function PortalResourcePage({ portalKey, resourceKey, initialFilters }: P
       canCreate={canCreate}
       canEdit={canEdit}
       canDelete={canDelete}
+      allowActionsWithoutEdit={
+        canManage && scopedResource.allowActionsWithoutEdit === true
+      }
       readOnlyMessage={scopedResource.readOnlyMessage}
       viewInEditor={scopedResource.viewInEditor}
       primaryActionLabel={primaryActionLabel(scopedResource)}

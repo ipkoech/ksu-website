@@ -2454,7 +2454,7 @@ export type ContentWorkflowAction =
 
 export interface ContentWorkflowQueueFilters extends Record<
   string,
-  string | undefined
+  string | number | undefined
 > {
   source_portal?: string;
   content_type?: ContentWorkflowQueueItem["content_type"];
@@ -2462,6 +2462,24 @@ export interface ContentWorkflowQueueFilters extends Record<
   submitted_date?: string;
   scheduled_date?: string;
   reviewer?: string;
+  /** Free-text search over item titles. */
+  q?: string;
+  page?: number;
+  /** Pagination is opt-in; omitting per_page returns the full queue. */
+  per_page?: number;
+}
+
+/**
+ * Queue meta. `total` and `status_counts` always describe the whole filtered
+ * queue; `page`/`per_page`/`pages` are present only when pagination was
+ * requested.
+ */
+export interface ContentWorkflowQueueMeta {
+  total: number;
+  status_counts: Partial<Record<ContentWorkflowStatus, number>>;
+  page?: number;
+  per_page?: number;
+  pages?: number;
 }
 
 export interface ContentWorkflowQueueItem {
@@ -2476,7 +2494,9 @@ export interface ContentWorkflowQueueItem {
     | "club-media"
     | "page-sections"
     | "partnership-spotlights"
-    | "sliders";
+    | "sliders"
+    | "documents"
+    | "school-gallery";
   content_type_label: string;
   title: string;
   summary?: string | null;

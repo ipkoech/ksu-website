@@ -750,7 +750,7 @@ List Audit Logs
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `service_name` (query, string | null), `user_id` (query, string | null), `resource_type` (query, string | null), `status` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `service_name` (query, string | null), `user_id` (query, string | null), `resource_type` (query, string | null), `status` (query, string | null), `action` (query, string | null), `request_path_prefix` (query, string | null), `date_from` (query, string | null), `date_to` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/admin/audit/{audit_id}`
@@ -2218,9 +2218,13 @@ List Content Workflow Queue
 
 Return reviewable public content in a single CoCMS-oriented queue.
 
+Pagination is opt-in (pass ``per_page``); the bare-list response shape is
+unchanged and ``meta`` carries totals plus per-status counts for the whole
+filtered queue.
+
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `source_portal` (query, string | null), `content_type` (query, string | null), `status` (query, string | null), `submitted_date` (query, string | null), `scheduled_date` (query, string | null), `reviewer` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `source_portal` (query, string | null), `content_type` (query, string | null), `status` (query, string | null), `submitted_date` (query, string | null), `scheduled_date` (query, string | null), `reviewer` (query, string | null), `q` (query, string | null), `page` (query, integer), `per_page` (query, integer | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/content-workflow/{content_type}/{content_id}/logs`
@@ -2477,7 +2481,7 @@ the request's DB transaction, so any failure rolls back the whole batch.
 Run Page Section Workflow Action
 
 - Auth: HTTPBearer
-- Request body: -
+- Request body: PageSectionWorkflowBody | null
 - Parameters: `section_id` (path, string), `action` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
@@ -6795,7 +6799,7 @@ Transition Content
 
 ## Schemas
 
-Generated component schemas: `256`
+Generated component schemas: `257`
 
 ### `AboutPageContentCreate`
 
@@ -8805,6 +8809,10 @@ Generated component schemas: `256`
 - `title`: `string | null` (optional)
 - `valid_from`: `string | null` (optional)
 - `valid_to`: `string | null` (optional)
+
+### `PageSectionWorkflowBody`
+
+- `reason`: `string | null` (optional)
 
 ### `PartnershipSpotlightCreate`
 

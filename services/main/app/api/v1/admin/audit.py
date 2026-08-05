@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -34,6 +35,16 @@ async def list_audit_logs(
     user_id: uuid.UUID | None = None,
     resource_type: str | None = None,
     status: str | None = None,
+    action: str | None = Query(
+        default=None,
+        description="Matches the action exactly, or as a dotted prefix (e.g. 'user' matches 'user.login').",
+    ),
+    request_path_prefix: str | None = Query(
+        default=None,
+        description="Restrict to requests under this path prefix (e.g. '/api/v1/news').",
+    ),
+    date_from: date | None = None,
+    date_to: date | None = None,
     fields: FieldSelection = FieldsDep,
 ):
     _authorize_audit_list_access(user, service_name)
@@ -46,6 +57,10 @@ async def list_audit_logs(
         user_id=user_id,
         resource_type=resource_type,
         status=status,
+        action=action,
+        request_path_prefix=request_path_prefix,
+        date_from=date_from,
+        date_to=date_to,
         load_options=selector.load_options,
     )
     return success(data=selector.apply(result.items), meta=result.meta)

@@ -5,6 +5,14 @@ import { useMutation } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "@ksu/ui";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   Badge,
   Button,
   Card,
@@ -19,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
+  Label,
   RichTextEditor,
   Select,
   SelectContent,
@@ -50,23 +59,41 @@ import { usePermissions } from "@/hooks/use-permissions";
 import { PageTransition } from "@/lib/animations";
 import { cn } from "@ksu/ui/lib";
 import {
+  LIFE_AROUND_STUDIES_AUDIENCES,
+  LIFE_AROUND_STUDIES_SOURCE_TYPES,
   PAGE_CMS_MEDIA_ROLES,
   PAGE_SCOPE_TYPES,
   PAGE_SECTION_LAYOUT_VARIANTS,
   PAGE_SECTION_STATUSES,
+  SECTION_ITEM_STATUSES,
   SECTION_ITEM_TYPES,
+  pageCmsApi,
   pageSectionsApi,
   sectionItemsApi,
+  type LifeAroundStudiesAudience,
+  type LifeAroundStudiesSourceType,
+  type PageComposition,
   type PageScopeType,
   type PageSection,
   type PageSectionLayoutVariant,
   type PageSectionStatus,
   type PageSectionWorkflowAction,
   type SectionItem,
-  type SectionItemPayload,
+  type SectionItemBatchEntry,
+  type SectionItemStatus,
   type SectionItemType,
 } from "@/lib/api/page-cms";
-import { ExternalLink, Sparkles } from "lucide-react";
+import {
+  AlertTriangle,
+  Archive,
+  CheckCircle2,
+  ExternalLink,
+  Eye,
+  FileEdit,
+  Send,
+  Sparkles,
+  Undo2,
+} from "lucide-react";
 import { EntityPicker } from "@/components/relationships/entity-picker";
 import { PersonPicker } from "@/components/relationships/relationship-pickers";
 import { relationshipAdapters } from "@/components/relationships/relationship-adapters";
@@ -108,7 +135,12 @@ type SectionItemDraft = {
   video_duration_seconds: string;
   display_order: number;
   is_enabled: boolean;
+  is_featured: boolean;
+  audience: LifeAroundStudiesAudience;
+  source_type: LifeAroundStudiesSourceType | null;
+  status: SectionItemStatus;
   pending_attachments: PendingMediaAttachment[];
+  markedForRemoval?: boolean;
 };
 
 const MEDIA_ROLE_OPTIONS: AttachmentRoleOption[] = PAGE_CMS_MEDIA_ROLES.map(
@@ -180,7 +212,12 @@ function createItemDraft(item?: SectionItem): SectionItemDraft {
         : String(item.video_duration_seconds),
     display_order: item?.display_order ?? 100,
     is_enabled: item?.is_enabled ?? true,
+    is_featured: item?.is_featured ?? false,
+    audience: item?.audience ?? "all",
+    source_type: item?.source_type ?? null,
+    status: item?.status ?? "draft",
     pending_attachments: [],
+    markedForRemoval: false,
   };
 }
 
@@ -246,13 +283,14 @@ function formFromSection(section: PageSection): SectionFormState {
 function itemPayloadFromDraft(
   item: SectionItemDraft,
   layoutVariant: PageSectionLayoutVariant,
-): SectionItemPayload {
+): SectionItemBatchEntry {
   const content = { ...(item.content ?? {}) };
   if (layoutVariant === "leadership_activity") {
     delete content.staff_profile_id;
     delete content.leader_profile_id;
   }
   return {
+    id: item.id,
     item_type: item.item_type,
     title: item.title || null,
     subtitle: item.subtitle || null,
@@ -270,6 +308,10 @@ function itemPayloadFromDraft(
       : null,
     display_order: item.display_order,
     is_enabled: item.is_enabled,
+    is_featured: item.is_featured,
+    audience: item.audience,
+    source_type: item.source_type,
+    status: item.status,
   };
 }
 
@@ -291,6 +333,35 @@ function isEmptyItemDraft(item: SectionItemDraft) {
   );
 }
 
+type BatchErrorDetail = {
+  message?: string;
+  invalid_ids?: string[];
+};
+
+const statusLabels: Record<SectionItemStatus, string> = {
+  draft: "Draft",
+  in_review: "In review",
+  published: "Published",
+  archived: "Archived",
+};
+
+const statusBadgeVariants: Record<
+  SectionItemStatus,
+  "default" | "secondary" | "outline" | "destructive"
+> = {
+  draft: "secondary",
+  in_review: "outline",
+  published: "default",
+  archived: "destructive",
+};
+
+const audienceLabels: Record<LifeAroundStudiesAudience, string> = {
+  all: "Everyone",
+  prospective: "Prospective students",
+  current_student: "Current students",
+  visitor_partner: "Visitors and partners",
+};
+
 function workflowButtonsForStatus(status: PageSectionStatus) {
   const buttons: PageSectionWorkflowAction[] = [];
   if (status === "draft" || status === "changes_requested")
@@ -300,6 +371,38 @@ function workflowButtonsForStatus(status: PageSectionStatus) {
   if (status === "published") buttons.push("unpublish");
   if (status !== "archived") buttons.push("archive");
   return buttons;
+}
+
+function draftsHaveChanges(
+  drafts: SectionItemDraft[],
+  originalItems: SectionItem[],
+): boolean {
+  const originalById = new Map(originalItems.map((item) => [item.id, item]));
+  for (const draft of drafts) {
+    if (draft.markedForRemoval) return true;
+    if (!draft.id) return true;
+    const original = originalById.get(draft.id);
+    if (!original) return true;
+    if (
+      draft.title !== (original.title ?? "") ||
+      draft.subtitle !== (original.subtitle ?? "") ||
+      draft.body_text !== (original.body_text ?? "") ||
+      draft.cta_label !== (original.cta_label ?? "") ||
+      draft.cta_url !== (original.cta_url ?? "") ||
+      draft.cta_description !== (original.cta_description ?? "") ||
+      draft.media_caption !== (original.media_caption ?? "") ||
+      draft.media_alt_text !== (original.media_alt_text ?? "") ||
+      draft.video_url !== (original.video_url ?? "") ||
+      draft.display_order !== original.display_order ||
+      draft.is_enabled !== original.is_enabled ||
+      draft.is_featured !== (original.is_featured ?? false) ||
+      draft.audience !== (original.audience ?? "all") ||
+      draft.status !== (original.status ?? "draft")
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function scopeLabel(scopeType: PageScopeType) {
@@ -943,6 +1046,7 @@ export default function PageCmsSectionDetailPage() {
   const isNew = sectionId === "new";
   const [form, setForm] = useState<SectionFormState>(createEmptySectionForm());
   const [section, setSection] = useState<PageSection | null>(null);
+  const [originalItems, setOriginalItems] = useState<SectionItem[]>([]);
   const [items, setItems] = useState<SectionItemDraft[]>([createItemDraft()]);
   const [pendingSectionAttachments, setPendingSectionAttachments] = useState<
     PendingMediaAttachment[]
@@ -952,6 +1056,32 @@ export default function PageCmsSectionDetailPage() {
   const [workflowBusy, setWorkflowBusy] =
     useState<PageSectionWorkflowAction | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [failedItemIndices, setFailedItemIndices] = useState<Set<number>>(
+    new Set(),
+  );
+  const [pendingWorkflowAction, setPendingWorkflowAction] =
+    useState<PageSectionWorkflowAction | null>(null);
+  const [workflowReason, setWorkflowReason] = useState("");
+  const [showCompositionPreview, setShowCompositionPreview] = useState(false);
+  const [compositionPreview, setCompositionPreview] =
+    useState<PageComposition | null>(null);
+  const [compositionLoading, setCompositionLoading] = useState(false);
+
+  const isDirty = useMemo(
+    () => draftsHaveChanges(items, originalItems) || pendingSectionAttachments.length > 0,
+    [items, originalItems, pendingSectionAttachments],
+  );
+
+  // Dirty-state protection: warn before leaving with unsaved changes
+  useEffect(() => {
+    if (!isDirty) return;
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty]);
 
   const canManageSection = hasAnyPermission([
     "page_sections.create",
@@ -1022,12 +1152,14 @@ export default function PageCmsSectionDetailPage() {
         if (!nextSection) throw new Error("Missing section");
         setSection(nextSection);
         setForm(formFromSection(nextSection));
+        setOriginalItems(nextSection.items);
         setItems(
           nextSection.items.length
             ? nextSection.items.map((item) => createItemDraft(item))
             : [createItemDraft()],
         );
         setPendingSectionAttachments([]);
+        setFailedItemIndices(new Set());
       } catch {
         if (!cancelled) {
           setError("Failed to load section details.");
@@ -1076,6 +1208,7 @@ export default function PageCmsSectionDetailPage() {
 
     setIsSaving(true);
     setError(null);
+    setFailedItemIndices(new Set());
 
     try {
       const sectionPayload = {
@@ -1104,26 +1237,48 @@ export default function PageCmsSectionDetailPage() {
         pendingSectionAttachments,
       );
 
-      const creatableItems = items.filter(
-        (item) => item.id || !isEmptyItemDraft(item),
+      // Batch save items: collect items to save and ids to remove
+      const itemsToSave = items.filter(
+        (item) => !item.markedForRemoval && (item.id || !isEmptyItemDraft(item)),
       );
-      const nextItems: SectionItemDraft[] = [];
-      for (const item of creatableItems) {
-        const payload = itemPayloadFromDraft(item, form.layout_variant);
-        const savedItem = item.id
-          ? (await sectionItemsApi.update(item.id, payload)).data
-          : (await sectionItemsApi.create(savedSection.id, payload)).data;
-        await persistAttachments(
-          "section_item",
-          savedItem.id,
-          item.pending_attachments,
+      const removeIds = items
+        .filter((item) => item.markedForRemoval && item.id)
+        .map((item) => item.id as string);
+
+      const entries: SectionItemBatchEntry[] = itemsToSave.map((item) =>
+        itemPayloadFromDraft(item, form.layout_variant),
+      );
+
+      // Single batch save call
+      const batchResponse = await sectionItemsApi.batchSave(savedSection.id, {
+        items: entries,
+        remove_ids: removeIds,
+      });
+
+      // Commit pending attachments for saved items
+      const savedItems = batchResponse.data;
+      for (let i = 0; i < itemsToSave.length; i++) {
+        const draft = itemsToSave[i];
+        const saved = savedItems.find(
+          (s) => s.id === draft.id || (i < savedItems.length && !draft.id),
         );
-        nextItems.push(createItemDraft(savedItem));
+        if (saved && draft.pending_attachments.length) {
+          await persistAttachments(
+            "section_item",
+            saved.id,
+            draft.pending_attachments,
+          );
+        }
       }
 
       setPendingSectionAttachments([]);
       setSection(savedSection);
-      setItems(nextItems.length ? nextItems : [createItemDraft()]);
+      setOriginalItems(savedItems);
+      setItems(
+        savedItems.length
+          ? savedItems.map((item) => createItemDraft(item))
+          : [createItemDraft()],
+      );
       setForm(formFromSection(savedSection));
       toast.success(isNew ? "Page section created." : "Page section updated.");
 
@@ -1132,14 +1287,56 @@ export default function PageCmsSectionDetailPage() {
           `/corporate-communication/page-cms/sections/${savedSection.id}`,
         );
       }
-    } catch {
-      toast.error("Failed to save the page section.");
+    } catch (err) {
+      // Handle 422 invalid_ids error from batch save
+      const response = (
+        err as {
+          response?: {
+            status?: number;
+            data?: { detail?: BatchErrorDetail | string };
+          };
+        }
+      ).response;
+      const detail = response?.data?.detail;
+      if (
+        response?.status === 422 &&
+        detail &&
+        typeof detail === "object" &&
+        Array.isArray(detail.invalid_ids)
+      ) {
+        const invalidIds = new Set(detail.invalid_ids);
+        setFailedItemIndices(
+          new Set(
+            items.flatMap((item, index) =>
+              item.id && invalidIds.has(item.id) ? [index] : [],
+            ),
+          ),
+        );
+        toast.error(
+          detail.message ??
+            "Some items no longer belong to this section. Nothing was saved — refresh and try again.",
+        );
+      } else {
+        toast.error("Failed to save the page section.");
+      }
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleWorkflow = async (action: PageSectionWorkflowAction) => {
+  const handleWorkflowClick = (action: PageSectionWorkflowAction) => {
+    if (action === "request_changes") {
+      setPendingWorkflowAction(action);
+      setWorkflowReason("");
+    } else {
+      void executeWorkflow(action);
+    }
+  };
+
+  const executeWorkflow = async (
+    action: PageSectionWorkflowAction,
+    reason?: string,
+  ) => {
     if (isNew) return;
     if (action === "archive" && !canArchive) {
       toast.error("You do not have permission to archive page sections.");
@@ -1155,14 +1352,48 @@ export default function PageCmsSectionDetailPage() {
     }
     setWorkflowBusy(action);
     try {
-      const response = await pageSectionsApi.workflow(sectionId, action);
+      const response = await pageSectionsApi.workflow(sectionId, action, reason);
       setSection(response.data);
       setForm(formFromSection(response.data));
       toast.success(`Section ${action.replace(/_/g, " ")} complete.`);
+      setPendingWorkflowAction(null);
+      setWorkflowReason("");
     } catch {
       toast.error(`Failed to ${action.replace(/_/g, " ")} section.`);
     } finally {
       setWorkflowBusy(null);
+    }
+  };
+
+  const confirmWorkflowAction = () => {
+    if (!pendingWorkflowAction) return;
+    if (pendingWorkflowAction === "request_changes" && !workflowReason.trim()) {
+      toast.error("Add a clear revision note before requesting changes.");
+      return;
+    }
+    void executeWorkflow(pendingWorkflowAction, workflowReason.trim() || undefined);
+  };
+
+  const loadCompositionPreview = async () => {
+    if (!section) return;
+    setCompositionLoading(true);
+    try {
+      const response =
+        section.page_key === "homepage"
+          ? await pageCmsApi.getHomepage({
+              scope_type: section.scope_type as PageScopeType,
+              scope_id: section.scope_id ?? undefined,
+            })
+          : await pageCmsApi.getPage(section.page_key, {
+              scope_type: section.scope_type as PageScopeType,
+              scope_id: section.scope_id ?? undefined,
+            });
+      setCompositionPreview(response.data);
+      setShowCompositionPreview(true);
+    } catch {
+      toast.error("Failed to load composition preview.");
+    } finally {
+      setCompositionLoading(false);
     }
   };
 
@@ -1189,26 +1420,53 @@ export default function PageCmsSectionDetailPage() {
           </div>
           <div className="flex flex-col gap-2 lg:items-end">
             <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
-              {availableWorkflowActions.map((action) => (
+              {!isNew && (
                 <Button
-                  key={action}
                   type="button"
                   size="sm"
-                  variant={
-                    action === "publish"
-                      ? "default"
-                      : action === "archive"
-                        ? "destructive"
-                        : "outline"
-                  }
-                  disabled={workflowBusy !== null || isSaving}
-                  onClick={() => void handleWorkflow(action)}
+                  variant="outline"
+                  disabled={compositionLoading || isSaving}
+                  onClick={() => void loadCompositionPreview()}
                 >
-                  {workflowBusy === action
-                    ? "Working..."
-                    : action.replace(/_/g, " ")}
+                  <Eye className="size-4" />
+                  {compositionLoading ? "Loading..." : "Preview"}
                 </Button>
-              ))}
+              )}
+              {availableWorkflowActions.map((action) => {
+                const Icon =
+                  action === "submit"
+                    ? Send
+                    : action === "approve"
+                      ? CheckCircle2
+                      : action === "request_changes"
+                        ? Undo2
+                        : action === "publish"
+                          ? CheckCircle2
+                          : action === "archive"
+                            ? Archive
+                            : FileEdit;
+                return (
+                  <Button
+                    key={action}
+                    type="button"
+                    size="sm"
+                    variant={
+                      action === "publish"
+                        ? "default"
+                        : action === "archive"
+                          ? "destructive"
+                          : "outline"
+                    }
+                    disabled={workflowBusy !== null || isSaving}
+                    onClick={() => handleWorkflowClick(action)}
+                  >
+                    <Icon className="size-4" />
+                    {workflowBusy === action
+                      ? "Working..."
+                      : action.replace(/_/g, " ")}
+                  </Button>
+                );
+              })}
               <Button
                 type="button"
                 size="sm"
@@ -1219,7 +1477,9 @@ export default function PageCmsSectionDetailPage() {
                   ? "Saving..."
                   : isNew
                     ? "Create Section"
-                    : "Save Changes"}
+                    : isDirty
+                      ? "Save Changes"
+                      : "Saved"}
               </Button>
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
@@ -1513,24 +1773,35 @@ export default function PageCmsSectionDetailPage() {
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              {items.map((item, index) => (
+              {items.filter((i) => !i.markedForRemoval).map((item, index) => (
                 <Card
                   key={item.client_id}
                   className={cn(
                     "overflow-hidden bg-background shadow-sm",
                     !item.is_enabled ? "border-dashed opacity-80" : undefined,
+                    failedItemIndices.has(index)
+                      ? "border-destructive ring-1 ring-destructive/30"
+                      : undefined,
                   )}
                 >
                   <CardHeader className="flex flex-row items-start justify-between gap-4">
                     <div>
                       <CardTitle className="text-lg">
                         Item {index + 1}
+                        {item.is_featured ? (
+                          <Badge variant="outline" className="ml-2">
+                            Featured
+                          </Badge>
+                        ) : null}
                       </CardTitle>
                       <CardDescription>
-                        {item.id ? `Saved item ${item.id}` : "Unsaved item"}
+                        {item.id ? `Saved item ${item.id.slice(0, 8)}...` : "Unsaved item"}
                       </CardDescription>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant={statusBadgeVariants[item.status]}>
+                        {statusLabels[item.status]}
+                      </Badge>
                       <Badge
                         variant={item.is_enabled ? "default" : "secondary"}
                       >
@@ -1539,13 +1810,14 @@ export default function PageCmsSectionDetailPage() {
                       <Button
                         type="button"
                         variant="ghost"
+                        size="sm"
                         disabled={!canManageItems || isLoading}
                         onClick={() => {
                           if (item.id) {
                             setItems((current) =>
                               current.map((entry) =>
                                 entry.client_id === item.client_id
-                                  ? { ...entry, is_enabled: false }
+                                  ? { ...entry, markedForRemoval: true }
                                   : entry,
                               ),
                             );
@@ -1558,7 +1830,7 @@ export default function PageCmsSectionDetailPage() {
                           );
                         }}
                       >
-                        {item.id ? "Disable Item" : "Remove Item"}
+                        {item.id ? "Remove" : "Delete"}
                       </Button>
                     </div>
                   </CardHeader>
@@ -1650,6 +1922,131 @@ export default function PageCmsSectionDetailPage() {
                             )
                           }
                           placeholder="Supporting subtitle"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Status, Audience, Featured row */}
+                    <div className="grid gap-4 lg:grid-cols-4">
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Status</p>
+                        <Select
+                          value={item.status}
+                          disabled={
+                            !canManageItems ||
+                            isLoading ||
+                            ((item.status === "published" || item.status === "archived") &&
+                              !canPublish)
+                          }
+                          onValueChange={(value) =>
+                            setItems((current) =>
+                              current.map((entry) =>
+                                entry.client_id === item.client_id
+                                  ? { ...entry, status: value as SectionItemStatus }
+                                  : entry,
+                              ),
+                            )
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {SECTION_ITEM_STATUSES.filter((status) => {
+                                if (status === "published" || status === "archived") {
+                                  return canPublish;
+                                }
+                                return true;
+                              }).map((status) => (
+                                <SelectItem key={status} value={status}>
+                                  {statusLabels[status]}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Audience</p>
+                        <Select
+                          value={item.audience}
+                          disabled={!canManageItems || isLoading}
+                          onValueChange={(value) =>
+                            setItems((current) =>
+                              current.map((entry) =>
+                                entry.client_id === item.client_id
+                                  ? { ...entry, audience: value as LifeAroundStudiesAudience }
+                                  : entry,
+                              ),
+                            )
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Audience" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {LIFE_AROUND_STUDIES_AUDIENCES.map((aud) => (
+                                <SelectItem key={aud} value={aud}>
+                                  {audienceLabels[aud]}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Source Type</p>
+                        <Select
+                          value={item.source_type ?? "manual"}
+                          disabled={!canManageItems || isLoading}
+                          onValueChange={(value) =>
+                            setItems((current) =>
+                              current.map((entry) =>
+                                entry.client_id === item.client_id
+                                  ? {
+                                      ...entry,
+                                      source_type: value as LifeAroundStudiesSourceType,
+                                    }
+                                  : entry,
+                              ),
+                            )
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Source" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {LIFE_AROUND_STUDIES_SOURCE_TYPES.map((src) => (
+                                <SelectItem key={src} value={src}>
+                                  {src.replace(/_/g, " ")}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg border p-3">
+                        <div>
+                          <p className="text-sm font-medium">Featured</p>
+                          <p className="text-xs text-muted-foreground">
+                            Highlighted placement
+                          </p>
+                        </div>
+                        <Switch
+                          checked={item.is_featured}
+                          disabled={!canManageItems || isLoading}
+                          onCheckedChange={(checked) =>
+                            setItems((current) =>
+                              current.map((entry) =>
+                                entry.client_id === item.client_id
+                                  ? { ...entry, is_featured: checked }
+                                  : entry,
+                              ),
+                            )
+                          }
                         />
                       </div>
                     </div>
@@ -1944,6 +2341,114 @@ export default function PageCmsSectionDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Workflow Reason Dialog */}
+      <Dialog
+        open={Boolean(pendingWorkflowAction)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingWorkflowAction(null);
+            setWorkflowReason("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {pendingWorkflowAction === "request_changes"
+                ? "Request changes"
+                : pendingWorkflowAction?.replace(/_/g, " ")}
+            </DialogTitle>
+            <DialogDescription>
+              This changes the editorial state immediately and may affect public
+              visibility.
+            </DialogDescription>
+          </DialogHeader>
+          {pendingWorkflowAction === "request_changes" ? (
+            <div className="space-y-2">
+              <Label htmlFor="workflow-reason">Revision note</Label>
+              <Textarea
+                id="workflow-reason"
+                rows={4}
+                value={workflowReason}
+                onChange={(event) => setWorkflowReason(event.target.value)}
+                placeholder="Explain what must change before approval"
+              />
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setPendingWorkflowAction(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmWorkflowAction}
+              disabled={workflowBusy !== null}
+            >
+              {workflowBusy ? "Working..." : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Composition Preview Dialog */}
+      <Dialog open={showCompositionPreview} onOpenChange={setShowCompositionPreview}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Composition Preview</DialogTitle>
+            <DialogDescription>
+              Ordered list of enabled sections for {section?.page_key ?? "this page"}.
+              This is a structural preview, not a visual clone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            {compositionPreview?.sections.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No published sections found for this page composition.
+              </p>
+            ) : (
+              compositionPreview?.sections.map((sec, index) => (
+                <div
+                  key={sec.id}
+                  className={cn(
+                    "rounded-lg border p-3",
+                    sec.id === section?.id
+                      ? "border-primary bg-primary/5"
+                      : "bg-muted/30",
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">
+                        {index + 1}. {sec.title || sec.section_key}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {sec.layout_variant} · {sec.items?.length ?? 0} items
+                      </p>
+                    </div>
+                    <Badge variant={sec.is_enabled ? "default" : "secondary"}>
+                      {sec.is_enabled ? "enabled" : "disabled"}
+                    </Badge>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowCompositionPreview(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageTransition>
   );
 }

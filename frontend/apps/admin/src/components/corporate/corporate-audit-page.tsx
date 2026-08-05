@@ -186,6 +186,24 @@ function Detail({
   );
 }
 
+/**
+ * Path prefixes for the "Activity area" scope filter. The default view is
+ * honest about being platform-wide; picking an area narrows the trail to
+ * requests under that corporate-communication API surface.
+ */
+const ACTIVITY_AREAS: Array<{ value: string; label: string }> = [
+  { value: "/api/v1/news", label: "Newsroom — news" },
+  { value: "/api/v1/blogs", label: "Newsroom — press releases" },
+  { value: "/api/v1/stories", label: "Stories" },
+  { value: "/api/v1/announcements", label: "Notices and announcements" },
+  { value: "/api/v1/events", label: "Events" },
+  { value: "/api/v1/sliders", label: "Homepage sliders" },
+  { value: "/api/v1/media", label: "Media library" },
+  { value: "/api/v1/newsletters", label: "Newsletters" },
+  { value: "/api/v1/content-workflow", label: "Review workflow" },
+  { value: "/api/v1/pages", label: "Page CMS" },
+];
+
 export function CorporateAuditPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -193,16 +211,27 @@ export function CorporateAuditPage() {
   const page = Number(searchParams.get("page") || 1);
   const resourceType = searchParams.get("resource_type") || "";
   const status = searchParams.get("status") || "";
+  const action = searchParams.get("action") || "";
+  const dateFrom = searchParams.get("date_from") || "";
+  const dateTo = searchParams.get("date_to") || "";
+  const pathPrefix = searchParams.get("request_path_prefix") || "";
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const auditQuery = useQuery({
-    queryKey: ["corporate-audit", { page, resourceType, status }],
+    queryKey: [
+      "corporate-audit",
+      { page, resourceType, status, action, dateFrom, dateTo, pathPrefix },
+    ],
     queryFn: () =>
       auditLogsApi.list({
         page,
         per_page: 25,
         resource_type: resourceType || undefined,
         status: status || undefined,
+        action: action || undefined,
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined,
+        request_path_prefix: pathPrefix || undefined,
       }),
   });
 
@@ -260,16 +289,23 @@ export function CorporateAuditPage() {
         ]}
       />
       <CorporateFilterBar label="Filter audit events">
-        {/* The backend audit list supports resource_type and status filters
-            only; an action filter would be silently ignored. */}
-        <section className="grid gap-3 sm:grid-cols-2">
+        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <Input
             aria-label="Filter by resource type"
-            placeholder="Resource type"
+            placeholder="Resource type (press Enter)"
             defaultValue={resourceType}
             onKeyDown={(event) =>
               event.key === "Enter" &&
               updateUrl("resource_type", event.currentTarget.value.trim())
+            }
+          />
+          <Input
+            aria-label="Filter by action, exact or prefix"
+            placeholder="Action, e.g. news or news.publish (press Enter)"
+            defaultValue={action}
+            onKeyDown={(event) =>
+              event.key === "Enter" &&
+              updateUrl("action", event.currentTarget.value.trim())
             }
           />
           <Select
@@ -287,7 +323,50 @@ export function CorporateAuditPage() {
               <SelectItem value="failed">Failed</SelectItem>
             </SelectContent>
           </Select>
+          <Select
+            value={pathPrefix || "all"}
+            onValueChange={(value) =>
+              updateUrl("request_path_prefix", value === "all" ? "" : value)
+            }
+          >
+            <SelectTrigger aria-label="Filter by activity area">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All platform activity</SelectItem>
+              {ACTIVITY_AREAS.map((area) => (
+                <SelectItem key={area.value} value={area.value}>
+                  Corporate · {area.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="w-10 shrink-0 text-xs font-medium uppercase">From</span>
+            <Input
+              type="date"
+              aria-label="Show events from this date"
+              value={dateFrom}
+              max={dateTo || undefined}
+              onChange={(event) => updateUrl("date_from", event.target.value)}
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="w-10 shrink-0 text-xs font-medium uppercase">To</span>
+            <Input
+              type="date"
+              aria-label="Show events up to this date"
+              value={dateTo}
+              min={dateFrom || undefined}
+              onChange={(event) => updateUrl("date_to", event.target.value)}
+            />
+          </label>
         </section>
+        <p className="mt-3 text-xs text-muted-foreground">
+          {pathPrefix
+            ? `Showing activity under ${pathPrefix} only.`
+            : "Showing platform-wide activity. Pick an activity area to focus on corporate-communication requests."}
+        </p>
       </CorporateFilterBar>
 
       {auditQuery.error ? (

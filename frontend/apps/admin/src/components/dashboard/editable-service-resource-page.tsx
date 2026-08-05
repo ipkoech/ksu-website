@@ -261,6 +261,13 @@ interface EditableServiceResourcePageProps<
   canCreate?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
+  /**
+   * Lets record workflow actions run even when the record itself is not
+   * editable (canEdit false). Use for read-only resources whose only
+   * mutations are workflow actions (e.g. unsubscribing a newsletter
+   * subscriber) so no empty "Edit record" entry is surfaced.
+   */
+  allowActionsWithoutEdit?: boolean;
   readOnlyMessage?: string;
   primaryActionLabel?: string;
   resourceKey?: string;
@@ -477,6 +484,7 @@ export function EditableServiceResourcePage<
   canCreate = true,
   canEdit = true,
   canDelete = true,
+  allowActionsWithoutEdit = false,
   readOnlyMessage = "You can view these records, but your current permissions do not allow changes.",
   primaryActionLabel,
   resourceKey,
@@ -869,7 +877,7 @@ export function EditableServiceResourcePage<
     action: EditableRecordWorkflowAction<TRecord, TPayload>,
     overridePayload?: Partial<TPayload>,
   ) => {
-    if (!canEdit) {
+    if (!canEdit && !allowActionsWithoutEdit) {
       toast.error(`You do not have permission to update ${title.toLowerCase()}`);
       return;
     }

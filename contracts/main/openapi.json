@@ -17872,6 +17872,25 @@
         "title": "PageSectionUpdate",
         "type": "object"
       },
+      "PageSectionWorkflowBody": {
+        "description": "Optional body for page section workflow actions, allowing a reason/note.",
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "title": "PageSectionWorkflowBody",
+        "type": "object"
+      },
       "PartnershipSpotlightCreate": {
         "additionalProperties": false,
         "properties": {
@@ -35038,6 +35057,76 @@
             }
           },
           {
+            "description": "Matches the action exactly, or as a dotted prefix (e.g. 'user' matches 'user.login').",
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Matches the action exactly, or as a dotted prefix (e.g. 'user' matches 'user.login').",
+              "title": "Action"
+            }
+          },
+          {
+            "description": "Restrict to requests under this path prefix (e.g. '/api/v1/news').",
+            "in": "query",
+            "name": "request_path_prefix",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restrict to requests under this path prefix (e.g. '/api/v1/news').",
+              "title": "Request Path Prefix"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          },
+          {
             "in": "query",
             "name": "fields",
             "required": false,
@@ -50655,7 +50744,7 @@
     },
     "/api/v1/content-workflow/queue": {
       "get": {
-        "description": "Return reviewable public content in a single CoCMS-oriented queue.",
+        "description": "Return reviewable public content in a single CoCMS-oriented queue.\n\nPagination is opt-in (pass ``per_page``); the bare-list response shape is\nunchanged and ``meta`` carries totals plus per-status counts for the whole\nfiltered queue.",
         "operationId": "list_content_workflow_queue_api_v1_content_workflow_queue_get",
         "parameters": [
           {
@@ -50754,6 +50843,53 @@
                 }
               ],
               "title": "Reviewer"
+            }
+          },
+          {
+            "description": "Free-text search over item titles",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Free-text search over item titles",
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 100,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Per Page"
             }
           },
           {
@@ -68804,6 +68940,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/PageSectionWorkflowBody"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "content": {

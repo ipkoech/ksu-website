@@ -19,6 +19,7 @@ import {
   Loader2,
   Pencil,
   Plus,
+  RefreshCw,
   Save,
   Send,
   Settings2,
@@ -117,6 +118,13 @@ const SECTIONS: Array<{ value: VcSection; label: string }> = [
 ];
 const PUBLIC_VC_URL = `${process.env.NEXT_PUBLIC_WEB_URL || "http://localhost:3000"}/about/vice-chancellor`;
 
+const VC_SPEECH_VIDEO_ROLES = [
+  { value: "primary", label: "Primary recording" },
+  { value: "full_recording", label: "Full recording" },
+  { value: "excerpt", label: "Excerpt / highlight" },
+  { value: "related", label: "Related video" },
+] as const;
+
 function clean(value?: string | null) {
   return value?.trim() || null;
 }
@@ -168,11 +176,15 @@ function WorkflowActions({
 }) {
   const hub = useVcHubWorkflow();
   const content = useVcContentWorkflow();
+  const [reasonDialog, setReasonDialog] = useState<{ action: VcWorkflowAction; label: string } | null>(null);
+  const [reason, setReason] = useState("");
+
   const actions: Array<{
     action: VcWorkflowAction;
     label: string;
     allowed: boolean;
     icon: typeof Send;
+    needsReason?: boolean;
   }> = [];
   if (["draft", "changes_requested"].includes(status))
     actions.push({
@@ -189,6 +201,7 @@ function WorkflowActions({
         label: "Request changes",
         allowed: canReview,
         icon: Undo2,
+        needsReason: true,
       },
     );
   if (status === "approved")
@@ -205,36 +218,86 @@ function WorkflowActions({
       allowed: canPublish,
       icon: Undo2,
     });
-  const run = async (action: VcWorkflowAction) => {
+
+  const run = async (action: VcWorkflowAction, actionReason?: string) => {
     try {
-      if (resource === "hub") await hub.mutateAsync({ action });
-      else if (id) await content.mutateAsync({ resource, id, action });
+      if (resource === "hub") await hub.mutateAsync({ action, reason: actionReason });
+      else if (id) await content.mutateAsync({ resource, id, action, reason: actionReason });
       toast.success("Workflow updated");
+      setReasonDialog(null);
+      setReason("");
     } catch (error) {
       toast.error(errorMessage(error));
     }
   };
+
+  const handleClick = (item: typeof actions[0]) => {
+    if (item.needsReason) {
+      setReasonDialog({ action: item.action, label: item.label });
+    } else {
+      void run(item.action);
+    }
+  };
+
+  const confirmWithReason = () => {
+    if (!reasonDialog) return;
+    if (!reason.trim()) {
+      toast.error("Please provide a reason for requesting changes");
+      return;
+    }
+    void run(reasonDialog.action, reason.trim());
+  };
+
   return (
-    <div className="flex flex-wrap gap-2">
-      {actions
-        .filter((item) => item.allowed)
-        .map(({ action, label, icon: Icon }) => (
-          <Button
-            key={action}
-            size="sm"
-            variant={
-              action === "publish" || action === "approve"
-                ? "default"
-                : "outline"
-            }
-            disabled={hub.isPending || content.isPending}
-            onClick={() => void run(action)}
-          >
-            <Icon className="mr-2 size-4" />
-            {label}
-          </Button>
-        ))}
-    </div>
+    <>
+      <div className="flex flex-wrap gap-2">
+        {actions
+          .filter((item) => item.allowed)
+          .map((item) => {
+            const Icon = item.icon;
+            return (
+              <Button
+                key={item.action}
+                size="sm"
+                variant={
+                  item.action === "publish" || item.action === "approve"
+                    ? "default"
+                    : "outline"
+                }
+                disabled={hub.isPending || content.isPending}
+                onClick={() => handleClick(item)}
+              >
+                <Icon className="mr-2 size-4" />
+                {item.label}
+              </Button>
+            );
+          })}
+      </div>
+      <Dialog open={Boolean(reasonDialog)} onOpenChange={(open) => !open && setReasonDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{reasonDialog?.label}</DialogTitle>
+            <DialogDescription>Explain what changes are needed before this content can be approved.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="vc-workflow-reason">Revision note</label>
+            <Textarea
+              id="vc-workflow-reason"
+              rows={4}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Describe the required changes..."
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReasonDialog(null)}>Cancel</Button>
+            <Button onClick={confirmWithReason} disabled={hub.isPending || content.isPending}>
+              {hub.isPending || content.isPending ? "Working..." : "Request changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -552,12 +615,15 @@ function VideosTab({
 }: {
   permissions: ReturnType<typeof permissionState>;
 }) {
+  const client = useQueryClient();
   const query = useVcVideos();
   const create = useCreateVcVideo();
   const update = useUpdateVcVideo();
   const remove = useDeleteVcVideo();
   const [editor, setEditor] = useState<VcVideo | "new" | null>(null);
+  const [refreshingId, setRefreshingId] = useState<string | null>(null);
   const items = query.data?.data.items ?? [];
+
   const save = async (payload: VcVideoPayload) => {
     try {
       if (editor === "new") await create.mutateAsync(payload);
@@ -569,13 +635,28 @@ function VideosTab({
       toast.error(errorMessage(error));
     }
   };
+
   const destroy = async (item: VcVideo) => {
-    if (!confirm(`Delete “${item.title}”?`)) return;
+    if (!confirm(`Delete "${item.title}"?`)) return;
     try {
       await remove.mutateAsync(item.id);
       toast.success("Video deleted");
     } catch (error) {
       toast.error(errorMessage(error));
+    }
+  };
+
+  const refreshMetadata = async (item: VcVideo) => {
+    if (item.provider !== "youtube") return;
+    setRefreshingId(item.id);
+    try {
+      await viceChancellorApi.refreshVideo(item.id);
+      await client.invalidateQueries({ queryKey: queryKeys.viceChancellor.videos });
+      toast.success("Metadata refreshed");
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setRefreshingId(null);
     }
   };
   return (
@@ -610,6 +691,17 @@ function VideosTab({
                   />
                   {permissions.canManage ? (
                     <>
+                      {item.provider === "youtube" ? (
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          aria-label={`Refresh metadata for ${item.title}`}
+                          onClick={() => void refreshMetadata(item)}
+                          disabled={refreshingId === item.id}
+                        >
+                          {refreshingId === item.id ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+                        </Button>
+                      ) : null}
                       <Button
                         size="icon"
                         variant="outline"
@@ -667,8 +759,15 @@ function VideoEditor({
   const [form, setForm] = useState<Partial<VcVideoPayload>>({
     provider: "youtube",
   });
+  const [youtubePreview, setYoutubePreview] = useState<{
+    title?: string;
+    thumbnail_url?: string;
+    author_name?: string;
+  } | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
   useEffect(
-    () =>
+    () => {
       setForm(
         current
           ? {
@@ -685,11 +784,33 @@ function VideoEditor({
               is_featured: current.is_featured,
             }
           : { provider: "youtube", is_featured: false },
-      ),
+      );
+      setYoutubePreview(null);
+    },
     [current, open],
   );
+
   const set = (key: keyof VcVideoPayload, value: unknown) =>
     setForm((valueNow) => ({ ...valueNow, [key]: value }));
+
+  const previewYoutube = async () => {
+    if (!form.source_url) return;
+    setPreviewLoading(true);
+    try {
+      const response = await viceChancellorApi.previewYoutube(form.source_url);
+      setYoutubePreview(response.data);
+      if (response.data.title && !form.title) {
+        set("title", response.data.title);
+        set("slug", slugify(response.data.title));
+      }
+      toast.success("YouTube video validated");
+    } catch (error) {
+      toast.error(errorMessage(error));
+      setYoutubePreview(null);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
@@ -748,14 +869,39 @@ function VideoEditor({
             </Field>
           </div>
           {form.provider === "youtube" ? (
-            <Field label="YouTube URL">
-              <Input
-                type="url"
-                placeholder="https://www.youtube.com/watch?v=…"
-                value={form.source_url ?? ""}
-                onChange={(e) => set("source_url", e.target.value)}
-              />
-            </Field>
+            <div className="space-y-3">
+              <Field label="YouTube URL">
+                <div className="flex gap-2">
+                  <Input
+                    type="url"
+                    placeholder="https://www.youtube.com/watch?v=…"
+                    value={form.source_url ?? ""}
+                    onChange={(e) => { set("source_url", e.target.value); setYoutubePreview(null); }}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => void previewYoutube()}
+                    disabled={!form.source_url || previewLoading}
+                  >
+                    {previewLoading ? <Loader2 className="size-4 animate-spin" /> : <Eye className="size-4" />}
+                    Preview
+                  </Button>
+                </div>
+              </Field>
+              {youtubePreview ? (
+                <div className="flex items-start gap-3 rounded-lg border bg-muted/30 p-3">
+                  {youtubePreview.thumbnail_url ? (
+                    <img src={youtubePreview.thumbnail_url} alt="" className="h-16 w-28 rounded object-cover" />
+                  ) : null}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{youtubePreview.title || "Untitled video"}</p>
+                    {youtubePreview.author_name ? <p className="text-xs text-muted-foreground">{youtubePreview.author_name}</p> : null}
+                  </div>
+                </div>
+              ) : null}
+            </div>
           ) : (
             <MediaPicker
               label="Uploaded video"
@@ -950,13 +1096,14 @@ function SpeechEditor({
     speech_type: "speech",
   });
   const [videoId, setVideoId] = useState("");
+  const [videoRole, setVideoRole] = useState<"primary" | "full_recording" | "excerpt" | "related">("full_recording");
   const links = useQuery({
     queryKey: ["vice-chancellor", "speech-videos", current?.id],
     queryFn: () => viceChancellorApi.listSpeechVideos(current!.id),
     enabled: Boolean(current?.id && open),
   });
   useEffect(
-    () =>
+    () => {
       setForm(
         current
           ? {
@@ -974,7 +1121,10 @@ function SpeechEditor({
               is_featured: current.is_featured,
             }
           : { speech_type: "speech", is_featured: false },
-      ),
+      );
+      setVideoId("");
+      setVideoRole("full_recording");
+    },
     [current, open],
   );
   const set = (key: keyof VcSpeechPayload, value: unknown) =>
@@ -984,7 +1134,7 @@ function SpeechEditor({
     try {
       await viceChancellorApi.attachSpeechVideo(current.id, {
         video_id: videoId,
-        role: "full_recording",
+        role: videoRole,
       });
       setVideoId("");
       await links.refetch();
@@ -1113,7 +1263,7 @@ function SpeechEditor({
           {current ? (
             <div className="rounded-lg border p-4">
               <h3 className="font-medium">Matching recordings</h3>
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_140px_auto]">
                 <Select value={videoId} onValueChange={setVideoId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Choose a video" />
@@ -1122,6 +1272,18 @@ function SpeechEditor({
                     {videos.map((video) => (
                       <SelectItem key={video.id} value={video.id}>
                         {video.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={videoRole} onValueChange={(value) => setVideoRole(value as typeof videoRole)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VC_SPEECH_VIDEO_ROLES.map((role) => (
+                      <SelectItem key={role.value} value={role.value}>
+                        {role.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1141,7 +1303,10 @@ function SpeechEditor({
                     key={link.id}
                     className="flex items-center justify-between rounded-md bg-muted p-3 text-sm"
                   >
-                    <span>{link.video?.title ?? "Attached video"}</span>
+                    <div>
+                      <span className="font-medium">{link.video?.title ?? "Attached video"}</span>
+                      {link.role ? <span className="ml-2 text-xs text-muted-foreground">({link.role.replace(/_/g, " ")})</span> : null}
+                    </div>
                     <Button
                       size="sm"
                       variant="ghost"
@@ -1304,13 +1469,15 @@ function GalleryEditor({
   const current = item === "new" ? null : item;
   const [form, setForm] = useState<Partial<VcGalleryPayload>>({});
   const [newMedia, setNewMedia] = useState("");
+  const [newCaption, setNewCaption] = useState("");
+  const [newAltText, setNewAltText] = useState("");
   const links = useQuery({
     queryKey: ["vice-chancellor", "gallery-media", current?.id],
     queryFn: () => viceChancellorApi.listGalleryMedia(current!.id),
     enabled: Boolean(current?.id && open),
   });
   useEffect(
-    () =>
+    () => {
       setForm(
         current
           ? {
@@ -1323,7 +1490,11 @@ function GalleryEditor({
               is_featured: current.is_featured,
             }
           : { is_featured: false },
-      ),
+      );
+      setNewMedia("");
+      setNewCaption("");
+      setNewAltText("");
+    },
     [current, open],
   );
   const set = (key: keyof VcGalleryPayload, value: unknown) =>
@@ -1334,8 +1505,12 @@ function GalleryEditor({
       await viceChancellorApi.attachGalleryMedia(current.id, {
         media_id: newMedia,
         display_order: links.data?.data.length ?? 0,
+        caption: newCaption.trim() || null,
+        alt_text: newAltText.trim() || null,
       });
       setNewMedia("");
+      setNewCaption("");
+      setNewAltText("");
       await links.refetch();
       toast.success("Photo added");
     } catch (error) {
@@ -1422,7 +1597,7 @@ function GalleryEditor({
           {current ? (
             <div className="rounded-lg border p-4">
               <h3 className="font-medium">Gallery photographs</h3>
-              <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+              <div className="mt-3 space-y-3">
                 <MediaPicker
                   label="New photograph"
                   mediaType="image"
@@ -1431,14 +1606,29 @@ function GalleryEditor({
                   onChange={setNewMedia}
                   isPublic
                 />
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Field label="Caption (optional)">
+                    <Input
+                      value={newCaption}
+                      onChange={(e) => setNewCaption(e.target.value)}
+                      placeholder="Photo caption"
+                    />
+                  </Field>
+                  <Field label="Alt text (accessibility)">
+                    <Input
+                      value={newAltText}
+                      onChange={(e) => setNewAltText(e.target.value)}
+                      placeholder="Describe the image"
+                    />
+                  </Field>
+                </div>
                 <Button
-                  className="self-end"
                   variant="outline"
                   disabled={!newMedia}
                   onClick={() => void attach()}
                 >
                   <Plus className="mr-2 size-4" />
-                  Add
+                  Add photograph
                 </Button>
               </div>
               <div className="mt-4 space-y-2">
@@ -1522,8 +1712,9 @@ function GalleryEditor({
 
 function ActivitiesTab({ canManage }: { canManage: boolean }) {
   const placements = useVcPlacements();
-  const news = useVcNewsLookup();
-  const events = useVcEventsLookup();
+  const [searchQuery, setSearchQuery] = useState("");
+  const news = useVcNewsLookup(searchQuery);
+  const events = useVcEventsLookup(searchQuery);
   const create = useCreateVcPlacement();
   const [kind, setKind] = useState<"news" | "event">("event");
   const [selected, setSelected] = useState("");
@@ -1588,19 +1779,26 @@ function ActivitiesTab({ canManage }: { canManage: boolean }) {
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Content">
-            <Select value={selected} onValueChange={setSelected}>
-              <SelectTrigger>
-                <SelectValue placeholder={`Choose ${kind}`} />
-              </SelectTrigger>
-              <SelectContent>
-                {options.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    {String(item.title)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <Field label="Search and select">
+            <div className="space-y-2">
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={`Search ${kind === "news" ? "news" : "events"}...`}
+              />
+              <Select value={selected} onValueChange={setSelected}>
+                <SelectTrigger>
+                  <SelectValue placeholder={`Choose ${kind}`} />
+                </SelectTrigger>
+                <SelectContent>
+                  {options.map((item) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {String(item.title)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </Field>
           <Button
             className="self-end"
@@ -2057,7 +2255,7 @@ function DeleteButton({
       variant="outline"
       aria-label={`Delete ${label}`}
       onClick={async () => {
-        if (!confirm(`Delete “${label}”?`)) return;
+        if (!confirm(`Delete "${label}"?`)) return;
         try {
           await onDelete();
           toast.success("Deleted");

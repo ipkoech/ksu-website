@@ -16,6 +16,7 @@ from ...schemas import (
     PageSectionCreate,
     PageSectionRead,
     PageSectionUpdate,
+    PageSectionWorkflowBody,
     PartnershipSpotlightCreate,
     PartnershipSpotlightUpdate,
     SectionItemBatchSave,
@@ -696,6 +697,7 @@ async def run_page_section_workflow_action(
     action: str,
     db: DbSession,
     user: CurrentUser,
+    body: PageSectionWorkflowBody | None = None,
 ):
     item = await _get_page_section_or_404(db, section_id)
     await _require_page_section_access(
@@ -707,7 +709,8 @@ async def run_page_section_workflow_action(
         action=_workflow_action_scope(action),
         section_key=item.section_key,
     )
-    item = await PageSectionWorkflowService.transition(item, action, user.id, db=db)
+    reason = body.reason if body else None
+    item = await PageSectionWorkflowService.transition(item, action, user.id, note=reason, db=db)
     await db.flush()
     await db.refresh(item)
     return success(data=await _serialize_admin_page_section(db, item), message="Page section updated")

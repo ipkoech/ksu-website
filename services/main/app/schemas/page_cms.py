@@ -24,6 +24,12 @@ from .base import BaseReadSchema, BaseSchema
 PAGE_SECTION_WORKFLOW_ACTIONS = ("submit", "approve", "request_changes", "publish", "archive", "unpublish")
 
 
+class PageSectionWorkflowBody(BaseSchema):
+    """Optional body for page section workflow actions, allowing a reason/note."""
+
+    reason: str | None = Field(default=None, max_length=2000)
+
+
 def _validate_choice(value: str | None, allowed: tuple[str, ...], field_name: str) -> str | None:
     if value is None:
         return value

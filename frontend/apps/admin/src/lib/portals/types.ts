@@ -88,6 +88,13 @@ export interface PortalResourceConfig<
   canCreate?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
+  /**
+   * Allows record workflow actions to run without edit rights, so read-only
+   * resources whose only mutations are workflow actions can keep canEdit
+   * false (hiding the no-op "Edit record" entry). Still gated by
+   * manageScopes at the page level.
+   */
+  allowActionsWithoutEdit?: boolean;
   viewInEditor?: boolean;
   /** Enables the "All | Archived | Recently deleted" browser with one-click restore. */
   supportsRecovery?: boolean;

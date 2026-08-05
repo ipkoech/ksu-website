@@ -47,6 +47,7 @@ CORPORATE_PORTAL_CAPABILITIES = (
     "policy.manage",
     "policy.view",
     "section_items.manage",
+    "support.manage_contacts",
     "vc_hub.manage",
     "vc_hub.publish",
     "vc_hub.review",
@@ -95,7 +96,14 @@ CORPORATE_PORTAL_NAVIGATION = (
         ),
     ),
     ("media", ("media.view", "media.manage", "marketing.manage_sliders")),
-    ("engagement", ("content.manage", "marketing.manage_newsletters")),
+    (
+        "engagement",
+        (
+            "content.manage",
+            "marketing.manage_newsletters",
+            "support.manage_contacts",
+        ),
+    ),
     (
         "student-life",
         (

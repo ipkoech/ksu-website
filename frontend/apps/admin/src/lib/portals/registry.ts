@@ -3401,9 +3401,11 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     viewScopes: ["marketing.view", "marketing.manage_newsletters"],
     manageScopes: ["marketing.manage_newsletters"],
     canCreate: false,
-    // canEdit stays on so the shared workflow runner allows the Unsubscribe
-    // action; with no editable fields the record itself is still read-only.
-    canEdit: true,
+    // Subscribers are read-only records; the Unsubscribe workflow action is
+    // the only mutation, so it runs via allowActionsWithoutEdit instead of a
+    // no-op "Edit record" entry.
+    canEdit: false,
+    allowActionsWithoutEdit: true,
     canDelete: false,
     readOnlyMessage: "Subscribers are created from the public website subscription form.",
     exportResource: "newsletter-subscribers",
@@ -7896,9 +7898,15 @@ export const portalConfigs: Record<string, PortalConfig> = {
         title: "Engagement",
         href: "/corporate-communication/engagement/faqs",
         icon: ScrollText,
-        scope: ["content.manage", "marketing.manage_newsletters"],
+        scope: ["content.manage", "marketing.manage_newsletters", "support.manage_contacts"],
         navKey: "engagement",
         children: [
+          {
+            title: "Inquiries",
+            href: "/corporate-communication/inquiries",
+            icon: Mail,
+            scope: ["content.manage", "support.manage_contacts", "admin:*"],
+          },
           {
             title: "FAQs",
             href: "/corporate-communication/engagement/faqs",

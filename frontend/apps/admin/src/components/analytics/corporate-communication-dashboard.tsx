@@ -21,19 +21,23 @@ import { Bar, Doughnut, Line } from "react-chartjs-2";
 import {
   AlertTriangle,
   ArrowRight,
+  Calendar,
   CalendarClock,
   CheckCircle2,
   CircleGauge,
   ClipboardCheck,
   Clock3,
   Download,
+  Edit3,
   FileText,
   ImageIcon,
+  Info,
   Lightbulb,
   Megaphone,
   Newspaper,
   Printer,
   RefreshCw,
+  Send,
   ShieldCheck,
   Sparkles,
   TrendingDown,
@@ -54,6 +58,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Input,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Select,
   SelectContent,
   SelectGroup,
@@ -218,19 +226,28 @@ const baseChartOptions = {
   },
 };
 
+const bucketOptions = [
+  { value: "auto", label: "Auto" },
+  { value: "day", label: "Daily" },
+  { value: "week", label: "Weekly" },
+  { value: "month", label: "Monthly" },
+] as const;
+
 export function CorporateCommunicationDashboard() {
   const { hasAnyScope } = usePermissions();
   const [days, setDays] = useState(30);
   const [contentType, setContentType] = useState("all");
   const [ownerPortal, setOwnerPortal] = useState("all");
-  const dates = useMemo(() => rangeForDays(days), [days]);
+  const [bucket, setBucket] = useState<"auto" | "day" | "week" | "month">("auto");
+  const [customRange, setCustomRange] = useState<{ from: string; to: string } | null>(null);
+  const dates = useMemo(() => customRange ? { date_from: customRange.from, date_to: customRange.to } : rangeForDays(days), [days, customRange]);
   const params = useMemo<CorporateDashboardParams>(() => ({
     ...dates,
     compare: "previous",
-    bucket: "auto",
+    bucket,
     content_type: contentType === "all" ? undefined : contentType,
     owner_portal: ownerPortal === "all" ? undefined : ownerPortal,
-  }), [contentType, dates, ownerPortal]);
+  }), [bucket, contentType, dates, ownerPortal]);
   const dashboardQuery = useQuery({
     queryKey: ["corporate-communication", "dashboard", params],
     queryFn: () => statsApi.corporateDashboard(params),
@@ -265,11 +282,15 @@ export function CorporateCommunicationDashboard() {
       <div className="space-y-6 p-4 sm:p-6 print:p-0">
         <DashboardToolbar
           days={days}
-          setDays={setDays}
+          setDays={(value) => { setDays(value); setCustomRange(null); }}
           contentType={contentType}
           setContentType={setContentType}
           ownerPortal={ownerPortal}
           setOwnerPortal={setOwnerPortal}
+          bucket={bucket}
+          setBucket={setBucket}
+          customRange={customRange}
+          setCustomRange={setCustomRange}
           params={params}
           dashboard={dashboard}
           refreshing={dashboardQuery.isFetching}
@@ -294,10 +315,14 @@ export function CorporateCommunicationDashboard() {
         ) : dashboard ? (
           <>
             <KpiGrid dashboard={dashboard} metrics={activityMetrics} />
+            <SnapshotTiles dashboard={dashboard} />
             <PrimaryCharts dashboard={dashboard} />
+            <WorkflowCharts dashboard={dashboard} />
             <OperationalCharts dashboard={dashboard} />
             <ReadinessAndInsights dashboard={dashboard} />
+            <MediaReadinessDetails dashboard={dashboard} />
             <AttentionAndCalendar dashboard={dashboard} />
+            <DataQualityDisclosure dashboard={dashboard} />
           </>
         ) : null}
 
@@ -314,6 +339,10 @@ function DashboardToolbar({
   setContentType,
   ownerPortal,
   setOwnerPortal,
+  bucket,
+  setBucket,
+  customRange,
+  setCustomRange,
   params,
   dashboard,
   refreshing,
@@ -324,10 +353,26 @@ function DashboardToolbar({
   setContentType: (value: string) => void;
   ownerPortal: string;
   setOwnerPortal: (value: string) => void;
+  bucket: "auto" | "day" | "week" | "month";
+  setBucket: (value: "auto" | "day" | "week" | "month") => void;
+  customRange: { from: string; to: string } | null;
+  setCustomRange: (value: { from: string; to: string } | null) => void;
   params: CorporateDashboardParams;
   dashboard?: CorporateDashboardResponse;
   refreshing: boolean;
 }) {
+  const [rangeFrom, setRangeFrom] = useState("");
+  const [rangeTo, setRangeTo] = useState("");
+
+  const applyCustomRange = () => {
+    if (!rangeFrom || !rangeTo) return;
+    const from = new Date(rangeFrom);
+    const to = new Date(rangeTo);
+    const diffDays = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays < 1 || diffDays > 366) return;
+    setCustomRange({ from: rangeFrom, to: rangeTo });
+  };
+
   return (
     <Card className="overflow-hidden border-primary/10 bg-gradient-to-br from-background via-background to-primary/[0.035] shadow-sm print:border-slate-200 print:shadow-none">
       <CardContent className="p-4 sm:p-5">
@@ -342,13 +387,39 @@ function DashboardToolbar({
                   key={value}
                   type="button"
                   size="sm"
-                  variant={days === value ? "default" : "outline"}
+                  variant={!customRange && days === value ? "default" : "outline"}
                   onClick={() => setDays(value)}
                   className="print:hidden"
                 >
                   {value} days
                 </Button>
               ))}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button type="button" size="sm" variant={customRange ? "default" : "outline"} className="print:hidden">
+                    <Calendar className="mr-1.5 size-3.5" />
+                    {customRange ? `${customRange.from} to ${customRange.to}` : "Custom"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" align="start">
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Custom date range (max 366 days)</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="space-y-1">
+                        <span className="text-xs text-muted-foreground">From</span>
+                        <Input type="date" value={rangeFrom} onChange={(e) => setRangeFrom(e.target.value)} />
+                      </label>
+                      <label className="space-y-1">
+                        <span className="text-xs text-muted-foreground">To</span>
+                        <Input type="date" value={rangeTo} onChange={(e) => setRangeTo(e.target.value)} />
+                      </label>
+                    </div>
+                    <Button type="button" size="sm" className="w-full" onClick={applyCustomRange} disabled={!rangeFrom || !rangeTo}>
+                      Apply range
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
               {refreshing ? <RefreshCw className="size-3.5 animate-spin text-muted-foreground" aria-label="Refreshing dashboard" /> : null}
             </div>
             <div className="flex flex-wrap gap-3">
@@ -359,6 +430,10 @@ function DashboardToolbar({
               <Select value={ownerPortal} onValueChange={setOwnerPortal}>
                 <SelectTrigger className="w-[190px] print:hidden"><SelectValue /></SelectTrigger>
                 <SelectContent><SelectGroup>{ownerOptions.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectGroup></SelectContent>
+              </Select>
+              <Select value={bucket} onValueChange={(value) => setBucket(value as typeof bucket)}>
+                <SelectTrigger className="w-[120px] print:hidden"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectGroup>{bucketOptions.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectGroup></SelectContent>
               </Select>
               <div className="hidden text-sm print:block">
                 {contentOptions.find((item) => item.value === contentType)?.label} · {ownerOptions.find((item) => item.value === ownerPortal)?.label}
@@ -371,6 +446,7 @@ function DashboardToolbar({
               <div className="text-xs text-muted-foreground">
                 {dashboard.period.date_from} to {dashboard.period.date_to}
                 {dashboard.comparison_period ? ` · compared with ${dashboard.comparison_period.date_from} to ${dashboard.comparison_period.date_to}` : ""}
+                {dashboard.generated_at ? ` · generated ${new Date(dashboard.generated_at).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" })}` : ""}
               </div>
             ) : null}
             <div className="flex flex-wrap gap-2 print:hidden">
@@ -387,6 +463,60 @@ function DashboardToolbar({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function SnapshotTiles({ dashboard }: { dashboard: CorporateDashboardResponse }) {
+  const snapshot = dashboard.snapshot;
+  const reviewBacklog = snapshot.review_backlog;
+  const drafts = snapshot.drafts;
+
+  const tiles = [
+    {
+      title: "Drafts",
+      value: drafts?.total ?? 0,
+      description: drafts?.stale ? `${drafts.stale} stale (untouched 14+ days)` : "No stale drafts",
+      icon: Edit3,
+      tone: (drafts?.stale ?? 0) > 5 ? "warning" : "neutral",
+    },
+    {
+      title: "Submitted",
+      value: reviewBacklog?.submitted ?? 0,
+      description: "Awaiting first review decision",
+      icon: Send,
+      tone: (reviewBacklog?.submitted ?? 0) > 10 ? "warning" : "neutral",
+    },
+    {
+      title: "In review",
+      value: reviewBacklog?.in_review ?? 0,
+      description: "Actively being reviewed",
+      icon: ClipboardCheck,
+      tone: "neutral",
+    },
+  ];
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-3">
+      {tiles.map((tile) => (
+        <Card key={tile.title} className="relative overflow-hidden shadow-sm transition-colors hover:border-primary/30 print:break-inside-avoid print:shadow-none">
+          <div className={cn(
+            "absolute inset-x-0 top-0 h-1",
+            tile.tone === "warning" && "bg-amber-500",
+            tile.tone === "neutral" && "bg-slate-400",
+          )} />
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">{tile.title}</p>
+                <p className="mt-2 text-2xl font-bold tracking-tight">{compactNumber(tile.value)}</p>
+              </div>
+              <div className="flex size-9 items-center justify-center rounded-xl bg-muted text-muted-foreground"><tile.icon className="size-4" /></div>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">{tile.description}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }
 
@@ -543,6 +673,55 @@ function PrimaryCharts({ dashboard }: { dashboard: CorporateDashboardResponse })
   );
 }
 
+type WorkflowSeriesPoint = { period: string; submitted?: number; approved?: number; published?: number };
+type ContentTypeBreakdown = { content_type: string; content_type_label?: string; total: number };
+
+function WorkflowCharts({ dashboard }: { dashboard: CorporateDashboardResponse }) {
+  const workflow = dashboard.workflow as unknown as { series?: WorkflowSeriesPoint[]; by_content_type?: ContentTypeBreakdown[] } | undefined;
+  const workflowSeries = workflow?.series ?? [];
+  const byContentType = workflow?.by_content_type ?? [];
+
+  const seriesData: ChartData<"bar"> = {
+    labels: workflowSeries.map((point) => formatPeriodLabel(point.period)),
+    datasets: [
+      { label: "Submitted", data: workflowSeries.map((point) => point.submitted ?? 0), backgroundColor: palette.sky, borderRadius: 4 },
+      { label: "Approved", data: workflowSeries.map((point) => point.approved ?? 0), backgroundColor: palette.emerald, borderRadius: 4 },
+      { label: "Published", data: workflowSeries.map((point) => point.published ?? 0), backgroundColor: palette.blue, borderRadius: 4 },
+    ],
+  };
+
+  const contentTypeData: ChartData<"doughnut"> = {
+    labels: byContentType.map((item) => item.content_type_label ?? item.content_type),
+    datasets: [{
+      data: byContentType.map((item) => item.total),
+      backgroundColor: [palette.blue, palette.emerald, palette.amber, palette.violet, palette.rose, palette.sky, palette.slate],
+      borderWidth: 0,
+      hoverOffset: 6,
+    }],
+  };
+
+  if (!workflowSeries.length && !byContentType.length) return null;
+
+  return (
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(280px,.7fr)]">
+      <ChartCard
+        title="Workflow activity"
+        description="Per-period submit, approve, and publish actions."
+        badge={`${dashboard.period.bucket} view`}
+      >
+        {workflowSeries.some((point) => (point.submitted ?? 0) + (point.approved ?? 0) + (point.published ?? 0) > 0) ? (
+          <Bar data={seriesData} options={{ ...baseChartOptions, plugins: { ...baseChartOptions.plugins, legend: { ...baseChartOptions.plugins.legend, position: "bottom" } } } as ChartOptions<"bar">} />
+        ) : <ChartEmpty label="No workflow transitions were recorded in this period." />}
+      </ChartCard>
+      <ChartCard title="By content type" description="Workflow actions grouped by record type.">
+        {byContentType.length > 0 ? (
+          <Doughnut data={contentTypeData} options={{ responsive: true, maintainAspectRatio: false, cutout: "62%", plugins: baseChartOptions.plugins }} />
+        ) : <ChartEmpty label="No content type breakdown available." />}
+      </ChartCard>
+    </div>
+  );
+}
+
 function OperationalCharts({ dashboard }: { dashboard: CorporateDashboardResponse }) {
   const aging = dashboard.workflow.backlog_aging;
   const ownerRows = dashboard.workflow.by_owner_portal.slice(0, 6);
@@ -650,6 +829,69 @@ function ReadinessAndInsights({ dashboard }: { dashboard: CorporateDashboardResp
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function MediaReadinessDetails({ dashboard }: { dashboard: CorporateDashboardResponse }) {
+  const media = dashboard.readiness?.media;
+  if (!media) return null;
+
+  const issues = [
+    { label: "Images missing alt text", value: media.images_missing_alt ?? 0, tone: "warning" },
+    { label: "Unprocessed media", value: media.unprocessed ?? 0, tone: "neutral" },
+    { label: "Unlinked media files", value: media.unlinked ?? 0, tone: "neutral" },
+  ].filter((item) => item.value > 0);
+
+  if (issues.length === 0) return null;
+
+  return (
+    <Card className="shadow-sm print:break-inside-avoid print:shadow-none">
+      <CardHeader>
+        <CardTitle>Media readiness</CardTitle>
+        <CardDescription>Accessibility and processing status of media files.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {issues.map((issue) => (
+            <div key={issue.label} className={cn(
+              "rounded-xl border p-4",
+              issue.tone === "warning" && "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20",
+            )}>
+              <p className="text-2xl font-bold">{compactNumber(issue.value)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{issue.label}</p>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DataQualityDisclosure({ dashboard }: { dashboard: CorporateDashboardResponse }) {
+  const meta = dashboard as { workflow_logs_available?: boolean; audience_analytics_available?: boolean; excluded_metrics?: string[] };
+  const workflowLogsAvailable = meta.workflow_logs_available ?? true;
+  const audienceAnalyticsAvailable = meta.audience_analytics_available ?? true;
+  const excludedMetrics = meta.excluded_metrics ?? [];
+
+  const hasIssues = !workflowLogsAvailable || !audienceAnalyticsAvailable || excludedMetrics.length > 0;
+  if (!hasIssues) return null;
+
+  return (
+    <Card className="border-amber-200 bg-amber-50/30 shadow-sm dark:border-amber-900 dark:bg-amber-950/10 print:break-inside-avoid print:shadow-none">
+      <CardContent className="flex items-start gap-4 p-5">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400">
+          <Info className="size-5" />
+        </div>
+        <div>
+          <p className="font-semibold">Data quality note</p>
+          <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+            {!workflowLogsAvailable ? <li>Workflow logs are unavailable; some metrics are estimated.</li> : null}
+            {!audienceAnalyticsAvailable ? <li>Audience analytics are not enabled for this period.</li> : null}
+            {excludedMetrics.length > 0 ? <li>Excluded metrics: {excludedMetrics.join(", ")}.</li> : null}
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

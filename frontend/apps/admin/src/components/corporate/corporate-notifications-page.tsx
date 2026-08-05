@@ -1,22 +1,37 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { userNotificationsApi } from "@ksu/api-client";
-import type { UserNotification } from "@ksu/api-client";
+import type {
+  UserNotification,
+  UserNotificationPreferences,
+} from "@ksu/api-client";
 import {
   Archive,
   Bell,
   BellDot,
   CheckCheck,
+  ChevronDown,
   CircleCheck,
   ExternalLink,
   Inbox,
+  SlidersHorizontal,
+  Trash2,
 } from "lucide-react";
 import {
   Alert,
   AlertDescription,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   Badge,
   Button,
   Card,
@@ -183,6 +198,15 @@ export function CorporateNotificationsPage() {
     onSuccess: invalidateAll,
   });
 
+  const [deleteTarget, setDeleteTarget] = useState<UserNotification | null>(null);
+  const remove = useMutation({
+    mutationFn: (id: string) => userNotificationsApi.remove(id),
+    onSuccess: async () => {
+      setDeleteTarget(null);
+      await invalidateAll();
+    },
+  });
+
   const items: UserNotification[] = notificationsQuery.data?.data ?? [];
   const totalCount = notificationsQuery.data?.meta?.total ?? items.length;
   const unreadCount = unreadCountQuery.data?.data.count ?? 0;
@@ -256,6 +280,8 @@ export function CorporateNotificationsPage() {
         </div>
       </div>
 
+      <NotificationPreferencesCard />
+
       {notificationsQuery.error ? (
         <Alert variant="destructive">
           <AlertDescription>{notificationsQuery.error.message}</AlertDescription>
@@ -287,6 +313,12 @@ export function CorporateNotificationsPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-sm font-semibold">{notification.title}</h2>
+                  {notification.subject &&
+                  notification.subject !== notification.title ? (
+                    <span className="truncate text-xs text-muted-foreground">
+                      {notification.subject}
+                    </span>
+                  ) : null}
                   {!notification.is_read ? <Badge>New</Badge> : null}
                   <Badge variant="outline" className="capitalize">
                     {notification.notification_type.replaceAll("_", " ")}
@@ -333,6 +365,16 @@ export function CorporateNotificationsPage() {
                 >
                   <Archive className="size-4" />
                 </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-destructive"
+                  aria-label={`Delete ${notification.title}`}
+                  disabled={remove.isPending}
+                  onClick={() => setDeleteTarget(notification)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
               </div>
             </article>
           ))}
@@ -366,6 +408,174 @@ export function CorporateNotificationsPage() {
           Next
         </Button>
       </div>
+
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !remove.isPending) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this notification?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget
+                ? `"${deleteTarget.title}" will be permanently removed from your inbox. If you may need it later, archive it instead.`
+                : "The notification will be permanently removed from your inbox."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={remove.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={remove.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                if (deleteTarget) remove.mutate(deleteTarget.id);
+              }}
+            >
+              {remove.isPending ? "Deleting…" : "Delete notification"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </CorporateWorkspace>
+  );
+}
+
+const PREFERENCE_CHANNELS: Array<{
+  key: keyof UserNotificationPreferences;
+  label: string;
+  description: string;
+}> = [
+  {
+    key: "in_app",
+    label: "In-app",
+    description: "Show updates in the portal notification bell and inbox.",
+  },
+  {
+    key: "email",
+    label: "Email",
+    description: "Send a copy of each notification to your university email.",
+  },
+  {
+    key: "sms",
+    label: "SMS",
+    description: "Text urgent updates to your registered phone number.",
+  },
+  {
+    key: "push",
+    label: "Push",
+    description: "Deliver push notifications to signed-in devices.",
+  },
+];
+
+function NotificationPreferencesCard() {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+
+  const preferencesQuery = useQuery({
+    queryKey: ["corporate-notifications", "preferences"],
+    queryFn: () => userNotificationsApi.getPreferences(),
+    enabled: open,
+  });
+  const preferences = preferencesQuery.data?.data;
+
+  const updatePreferences = useMutation({
+    mutationFn: (next: UserNotificationPreferences) =>
+      userNotificationsApi.updatePreferences(next),
+    onSuccess: (response) => {
+      queryClient.setQueryData(
+        ["corporate-notifications", "preferences"],
+        response,
+      );
+    },
+  });
+
+  const setChannel = (
+    key: keyof UserNotificationPreferences,
+    enabled: boolean,
+  ) => {
+    if (!preferences) return;
+    updatePreferences.mutate({ ...preferences, [key]: enabled });
+  };
+
+  const panelId = "notification-preferences-panel";
+
+  return (
+    <Card className="overflow-hidden shadow-sm">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-muted/30"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span className="flex items-center gap-3">
+          <span className="rounded-xl bg-primary/10 p-2.5 text-primary">
+            <SlidersHorizontal className="size-5" />
+          </span>
+          <span>
+            <span className="block text-sm font-medium">
+              Delivery preferences
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              Choose which channels deliver your notifications.
+            </span>
+          </span>
+        </span>
+        <ChevronDown
+          className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open ? (
+        <CardContent id={panelId} className="border-t p-4">
+          {preferencesQuery.isPending ? (
+            <div className="space-y-3">
+              {PREFERENCE_CHANNELS.map((channel) => (
+                <Skeleton key={channel.key} className="h-12" />
+              ))}
+            </div>
+          ) : preferencesQuery.isError || !preferences ? (
+            <Alert variant="destructive">
+              <AlertDescription>
+                Your notification preferences could not be loaded. Try again in
+                a moment.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {PREFERENCE_CHANNELS.map((channel) => (
+                <div
+                  key={channel.key}
+                  className="flex items-start justify-between gap-3 rounded-lg border p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{channel.label}</p>
+                    <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                      {channel.description}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={preferences[channel.key]}
+                    disabled={updatePreferences.isPending}
+                    onCheckedChange={(checked) =>
+                      setChannel(channel.key, checked)
+                    }
+                    aria-label={`Deliver notifications via ${channel.label}`}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          {updatePreferences.isError ? (
+            <p className="mt-3 text-xs text-destructive" role="alert">
+              The change could not be saved. Toggle the channel again to retry.
+            </p>
+          ) : null}
+        </CardContent>
+      ) : null}
+    </Card>
   );
 }

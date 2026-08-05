@@ -230,6 +230,69 @@ class PageCmsWorkflowTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, "Invalid workflow transition"):
             await PartnershipSpotlightWorkflowService.transition(spotlight, "publish", uuid.uuid4())
 
+    async def test_request_changes_stores_revision_notes(self):
+        """Verify that reason is stored as revision_notes when requesting changes."""
+        user_id = uuid.uuid4()
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+
+        # First submit to get to in_review
+        await PageSectionWorkflowService.transition(section, "submit", user_id)
+        self.assertEqual("in_review", section.status)
+
+        # Request changes with a reason
+        reason = "Please fix the hero image alignment and update the CTA text."
+        await PageSectionWorkflowService.transition(section, "request_changes", user_id, note=reason)
+
+        self.assertEqual("changes_requested", section.status)
+        self.assertEqual("changes_requested", section.workflow_status)
+        self.assertEqual(reason, section.revision_notes)
+        self.assertEqual(user_id, section.reviewed_by_id)
+        self.assertIsNotNone(section.reviewed_at)
+
+    async def test_workflow_log_includes_reason_as_comments(self):
+        """Verify that reason is persisted to ContentWorkflowLog.comments when db is provided."""
+        from unittest.mock import MagicMock, AsyncMock
+
+        user_id = uuid.uuid4()
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        section.id = uuid.uuid4()
+
+        # Submit first
+        await PageSectionWorkflowService.transition(section, "submit", user_id)
+
+        # Mock db to capture the log entry
+        mock_db = MagicMock()
+        added_logs = []
+        mock_db.add = lambda log: added_logs.append(log)
+
+        reason = "Needs accessibility improvements."
+        await PageSectionWorkflowService.transition(
+            section, "request_changes", user_id, note=reason, db=mock_db
+        )
+
+        # Verify a log was added with the reason as comments
+        self.assertEqual(1, len(added_logs))
+        log = added_logs[0]
+        self.assertEqual("page-sections", log.content_type)
+        self.assertEqual(section.id, log.content_id)
+        self.assertEqual("in_review", log.from_status)
+        self.assertEqual("changes_requested", log.to_status)
+        self.assertEqual("request_changes", log.action)
+        self.assertEqual(user_id, log.actor_id)
+        self.assertEqual(reason, log.comments)
+
 
 if __name__ == "__main__":
     unittest.main()
