@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, status
+from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,6 +21,7 @@ router.include_router(build_crud_router(prefix="/impact-metrics", tag="Impact Me
 
 
 @router.get("/sustainability/id/{sustainability_id}/projects", tags=["Sustainability"])
+@cached_public(timeout=300)
 async def list_sustainability_projects(sustainability_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await SustainabilityRelationshipService.list_projects(db, sustainability_id))
 
@@ -36,6 +38,7 @@ async def remove_sustainability_project(sustainability_id: uuid.UUID, project_id
 
 
 @router.get("/sustainability/id/{sustainability_id}/partners", tags=["Sustainability"])
+@cached_public(timeout=300)
 async def list_sustainability_partners(sustainability_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await SustainabilityRelationshipService.list_partners(db, sustainability_id))
 
@@ -52,6 +55,7 @@ async def remove_sustainability_partner(sustainability_id: uuid.UUID, partner_id
 
 
 @router.get("/sustainability/id/{sustainability_id}/training", tags=["Sustainability"])
+@cached_public(timeout=300)
 async def list_sustainability_training(sustainability_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await SustainabilityRelationshipService.list_training(db, sustainability_id))
 
@@ -68,6 +72,7 @@ async def remove_sustainability_training(sustainability_id: uuid.UUID, training_
 
 
 @router.get("/sustainability/id/{sustainability_id}/stories", tags=["Sustainability"])
+@cached_public(timeout=300)
 async def list_sustainability_stories(sustainability_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await SustainabilityRelationshipService.list_stories(db, sustainability_id))
 

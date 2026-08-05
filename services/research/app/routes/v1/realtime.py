@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter
+from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 router = APIRouter(prefix="/realtime", tags=["Realtime"])
@@ -45,6 +46,11 @@ def research_realtime_config() -> dict[str, Any]:
     }
 
 
-@router.get("/research/config")
 async def get_research_realtime_config():
     return success(data=research_realtime_config())
+
+
+@router.get("/research/config")
+@cached_public(timeout=300)
+async def _cached_research_realtime_config():
+    return await get_research_realtime_config()

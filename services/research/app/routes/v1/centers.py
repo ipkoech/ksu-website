@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,6 +35,7 @@ router = APIRouter()
 
 
 @router.get("/farms/{slug}/detail", tags=["Research Farms"])
+@cached_public(timeout=300)
 async def get_farm_detail(slug: str, db: AsyncSession = Depends(get_db)):
     detail = await FarmDetailService.get_by_slug(db, slug)
     if detail is None:
@@ -42,6 +44,7 @@ async def get_farm_detail(slug: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/farms/id/{farm_id}/projects", tags=["Research Farms"])
+@cached_public(timeout=300)
 async def list_farm_projects(farm_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await FarmRelationshipService.list_projects(db, farm_id))
 
@@ -58,46 +61,55 @@ async def remove_farm_project(farm_id: uuid.UUID, project_id: uuid.UUID, db: Asy
 
 
 @router.get("/farms/id/{farm_id}/partners", tags=["Research Farms"])
+@cached_public(timeout=300)
 async def list_farm_partners(farm_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await FarmRelationshipService.list_partners(db, farm_id))
 
 
 @router.get("/farms/id/{farm_id}/activities", tags=["Research Farms"])
+@cached_public(timeout=300)
 async def list_farm_activities(farm_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await FarmRelationshipService.list_activities(db, farm_id))
 
 
 @router.get("/farms/id/{farm_id}/impact-stories", tags=["Research Farms"])
+@cached_public(timeout=300)
 async def list_farm_impact_stories(farm_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await FarmRelationshipService.list_impact_stories(db, farm_id))
 
 
 @router.get("/centers/id/{center_id}/projects", tags=["Research Centers"])
+@cached_public(timeout=300)
 async def list_center_projects(center_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await CenterRelationshipService.list_projects(db, center_id))
 
 
 @router.get("/centers/id/{center_id}/programs", tags=["Research Centers"])
+@cached_public(timeout=300)
 async def list_center_programs(center_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await CenterRelationshipService.list_programs(db, center_id))
 
 
 @router.get("/centers/id/{center_id}/farms", tags=["Research Centers"])
+@cached_public(timeout=300)
 async def list_center_farms(center_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await CenterRelationshipService.list_farms(db, center_id))
 
 
 @router.get("/centers/id/{center_id}/focus-areas", tags=["Research Centers"])
+@cached_public(timeout=300)
 async def list_center_focus_areas(center_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await CenterRelationshipService.list_focus_areas(db, center_id))
 
 
 @router.get("/centers/id/{center_id}/partners", tags=["Research Centers"])
+@cached_public(timeout=300)
 async def list_center_partners(center_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await CenterRelationshipService.list_partners(db, center_id))
 
 
 @router.get("/public/heri/centers/{center_id}/partners", tags=["HERI Public"])
+@cached_public(timeout=300)
 async def list_public_heri_center_partners(center_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """Public partner directory feed consumed by the HERI Africa site."""
     return success(data=await CenterRelationshipService.list_partners(db, center_id))
@@ -126,11 +138,13 @@ async def remove_center_focus_area(center_id: uuid.UUID, focus_area_id: uuid.UUI
 
 
 @router.get("/programs/id/{program_id}/projects", tags=["Research Programs"])
+@cached_public(timeout=300)
 async def list_program_projects(program_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await ProgramRelationshipService.list_projects(db, program_id))
 
 
 @router.get("/programs/id/{program_id}/themes", tags=["Research Programs"])
+@cached_public(timeout=300)
 async def list_program_themes(program_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await ProgramRelationshipService.list_themes(db, program_id))
 

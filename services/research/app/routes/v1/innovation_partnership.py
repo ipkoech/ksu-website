@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Body, Depends, HTTPException
+from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -124,21 +125,25 @@ def _include_common_action_routes(prefix: str, service, tag: str, write_scope: s
 
 
 @router.get("/innovations/id/{innovation_id}/startups", tags=["Innovations"])
+@cached_public(timeout=300)
 async def list_innovation_startups(innovation_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await InnovationPathwayRelationshipService.list_startups(db, innovation_id))
 
 
 @router.get("/innovations/id/{innovation_id}/incubation-records", tags=["Innovations"])
+@cached_public(timeout=300)
 async def list_innovation_incubation_records(innovation_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await InnovationPathwayRelationshipService.list_incubation_records(db, innovation_id))
 
 
 @router.get("/innovations/id/{innovation_id}/competition-entries", tags=["Innovations"])
+@cached_public(timeout=300)
 async def list_innovation_competition_entries(innovation_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await InnovationPathwayRelationshipService.list_competition_entries(db, innovation_id))
 
 
 @router.get("/innovations/id/{innovation_id}/technology-transfer-cases", tags=["Innovations"])
+@cached_public(timeout=300)
 async def list_innovation_technology_transfer_cases(innovation_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await InnovationPathwayRelationshipService.list_technology_transfer_cases(db, innovation_id))
 
