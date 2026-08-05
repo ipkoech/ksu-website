@@ -74,6 +74,7 @@ async def queue_research_export(
     sort: str | None = Query(default=None, max_length=64),
     order: str | None = Query(default="desc", pattern="^(asc|desc)$"),
     limit: int = Query(default=5000, ge=1, le=10000),
+    db: AsyncSession = Depends(get_db),
 ):
     config = ResearchExportService.get_config(resource_key)
     if config is None:

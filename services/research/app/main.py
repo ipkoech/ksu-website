@@ -23,6 +23,7 @@ from ksu_common.runtime import (
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal
 from .routes import register_routers
+from .services.idempotency import install_idempotency_guards
 
 settings = get_settings()
 configure_service_logging(
@@ -68,6 +69,7 @@ def create_app() -> FastAPI:
         ),
         after_response=_after_response,
     )
+    app.state.idempotency_adoption_count = install_idempotency_guards(app)
     if settings.APP_ENV != "production" and SEED_ASSETS_DIR.exists():
         app.mount(
             "/seed-assets",
