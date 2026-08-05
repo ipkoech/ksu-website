@@ -22,5 +22,15 @@ class ResearchExportJobSuccessResponse(SuccessResponse[ResearchExportJobRead]):
     """Concrete success envelope for queued and completed export jobs."""
 
 
-class ResearchExportJSONResponse(SuccessResponse[list[dict[str, JsonScalar]]]):
+class ResearchExportMeta(StrictSchema):
+    resource: str | None = None
+    total: int | None = None
+
+
+class ResearchExportJSONResponse(StrictSchema):
     """Documented JSON envelope for mixed export responses."""
+
+    status: str = "success"
+    message: str = "ok"
+    data: list[dict[str, JsonScalar]] | None = None
+    meta: ResearchExportMeta | None = None

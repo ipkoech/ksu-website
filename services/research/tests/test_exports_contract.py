@@ -31,6 +31,37 @@ def _paths(router, method: str, prefix: str = "") -> set[str]:
     return paths
 
 
+def _permissive_schema_paths(schema: dict) -> list[str]:
+    findings: list[str] = []
+    defs = schema.get("$defs", {})
+    visited: set[str] = set()
+
+    def visit(node, path: str) -> None:
+        if isinstance(node, dict):
+            ref = node.get("$ref")
+            if isinstance(ref, str) and ref.startswith("#/$defs/"):
+                name = ref.rsplit("/", 1)[-1]
+                if name in visited:
+                    return
+                visited.add(name)
+                visit(defs[name], f"{path}->$ref({name})")
+                return
+
+            if node.get("additionalProperties") is True:
+                findings.append(path)
+
+            for key, value in node.items():
+                visit(value, f"{path}.{key}")
+            return
+
+        if isinstance(node, list):
+            for index, value in enumerate(node):
+                visit(value, f"{path}[{index}]")
+
+    visit(schema, "ResearchExportJSONResponse")
+    return findings
+
+
 class ResearchExportContractTests(unittest.TestCase):
     def test_export_route_is_registered_and_protected(self):
         route = _route(exports_router, "/exports/{resource_key}", "GET")
@@ -62,11 +93,18 @@ class ResearchExportContractTests(unittest.TestCase):
     def test_export_route_openapi_documents_json_and_csv_variants(self):
         operation = create_app().openapi()["paths"]["/api/v1/exports/{resource_key}"]["get"]
         content = operation["responses"]["200"]["content"]
+        json_schema = content["application/json"]["schema"]
+        meta_schema_ref = json_schema["properties"]["meta"]["anyOf"][0]["$ref"]
+        meta_schema_name = meta_schema_ref.rsplit("/", 1)[-1]
+        meta_schema = json_schema["$defs"][meta_schema_name]
 
         self.assertIn("application/json", content)
         self.assertIn("text/csv", content)
         self.assertTrue(content["application/json"].get("schema") or content["application/json"].get("examples"))
         self.assertTrue(content["text/csv"].get("schema") or content["text/csv"].get("examples"))
+        self.assertEqual(_permissive_schema_paths(json_schema), [])
+        self.assertFalse(meta_schema.get("additionalProperties", False))
+        self.assertEqual(set(meta_schema["properties"]), {"resource", "total"})
 
     def test_research_export_task_is_registered_with_celery_worker(self):
         imports = set(celery_app.conf.imports)
