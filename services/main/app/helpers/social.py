@@ -20,8 +20,10 @@ SUPPORTED_SOCIAL_PLATFORMS = {"x", "facebook", "instagram", "linkedin"}
 PLATFORM_CONSTRAINTS = {
     "x": {
         "max_text_length": 280,
-        "max_media_count": 4,
-        "allowed_media_types": {"image", "video", "gif"},
+        # The X adapter is text-only for now — publish() rejects media, so
+        # validation must too. Raise when media upload lands in XAdapter.
+        "max_media_count": 0,
+        "allowed_media_types": set(),
         "requires_public_media_url": False,
     },
     "facebook": {
@@ -38,8 +40,10 @@ PLATFORM_CONSTRAINTS = {
     },
     "linkedin": {
         "max_text_length": 3000,
-        "max_media_count": 9,
-        "allowed_media_types": {"image", "video", "document", "link"},
+        # The LinkedIn adapter is text-only for now — publish() rejects
+        # media, so validation must too. Raise when asset upload lands.
+        "max_media_count": 0,
+        "allowed_media_types": set(),
         "requires_public_media_url": False,
     },
 }

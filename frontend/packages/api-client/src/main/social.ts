@@ -17,10 +17,12 @@ export const SOCIAL_PLATFORM_LIMITS: Record<
   SocialPlatform,
   { label: string; maxTextLength: number; maxMediaCount: number }
 > = {
-  x: { label: "X (Twitter)", maxTextLength: 280, maxMediaCount: 4 },
+  // maxMediaCount mirrors backend PLATFORM_CONSTRAINTS (helpers/social.py):
+  // the X and LinkedIn adapters are text-only until media upload lands.
+  x: { label: "X (Twitter)", maxTextLength: 280, maxMediaCount: 0 },
   facebook: { label: "Facebook", maxTextLength: 63206, maxMediaCount: 10 },
   instagram: { label: "Instagram", maxTextLength: 2200, maxMediaCount: 10 },
-  linkedin: { label: "LinkedIn", maxTextLength: 3000, maxMediaCount: 9 },
+  linkedin: { label: "LinkedIn", maxTextLength: 3000, maxMediaCount: 0 },
 };
 
 export type SocialPostStatus =
