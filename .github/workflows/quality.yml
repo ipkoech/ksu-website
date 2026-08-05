@@ -39,7 +39,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [common, main, research, library]
+        service: [common, main, research, library, heri_africa]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
