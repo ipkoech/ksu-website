@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from .observability import Metrics
+from .observability import Metrics, get_prometheus_registry
 
 _query_count: ContextVar[int | None] = ContextVar("ksu_database_query_count", default=None)
 
@@ -103,7 +103,7 @@ def create_database_runtime(
         engine_options["connect_args"] = dict(config.connect_args)
 
     engine = create_async_engine(config.url, **engine_options)
-    metric_registry = metrics or Metrics()
+    metric_registry = metrics or Metrics(get_prometheus_registry())
     driver = config.url.partition("://")[0] or "unknown"
     metric_tags = {"driver": driver[:128]}
 

@@ -15,6 +15,7 @@ from .observability import (
     Metrics,
     current_correlation_id,
     current_request_id,
+    get_prometheus_registry,
     request_context,
 )
 
@@ -45,6 +46,9 @@ class TaskQueueConfig:
     timezone: str = "Africa/Nairobi"
     shutdown_hooks: tuple[Callable[[], Awaitable[None]], ...] = ()
     metrics: Metrics | None = None
+    task_acks_late: bool = True
+    task_reject_on_worker_lost: bool = True
+    worker_prefetch_multiplier: int = 1
 
 
 class _WorkerAsyncRuntime:
@@ -217,17 +221,22 @@ def _task_failure(
 
 def _task_rejected(
     request: Any = None,
+    message: Any = None,
     reason: Any = None,
     requeue: bool | None = None,
     task: Any = None,
     sender: Any = None,
     **_kwargs: Any,
 ) -> None:
-    if requeue is not False:
+    if requeue is True:
         return
     metrics = _task_metrics(task, sender=sender)
     request_task = getattr(request, "task", None)
-    source = task if task is not None else request_task
+    message_headers = getattr(message, "headers", None) or {}
+    if isinstance(message, Mapping):
+        message_headers = message.get("headers") or message
+    message_task = message_headers.get("task") if isinstance(message_headers, Mapping) else None
+    source = task if task is not None else (request_task or message_task)
     task_name = _bounded_task_name(source, sender=sender)
     metrics.increment("celery.task.dead_letter", tags=_task_tags(task_name, "dead_letter"))
 
@@ -284,11 +293,14 @@ def create_celery_app(
         enable_utc=True,
         task_track_started=True,
         broker_connection_retry_on_startup=True,
+        task_acks_late=config.task_acks_late,
+        task_reject_on_worker_lost=config.task_reject_on_worker_lost,
+        worker_prefetch_multiplier=config.worker_prefetch_multiplier,
         task_default_queue=config.default_queue,
         task_routes=dict(config.task_routes),
         beat_schedule=dict(config.beat_schedule),
     )
-    app._ksu_metrics = config.metrics or Metrics()
+    app._ksu_metrics = config.metrics or Metrics(get_prometheus_registry())
     packages = tuple(task_packages)
     if packages:
         app.autodiscover_tasks(list(packages))

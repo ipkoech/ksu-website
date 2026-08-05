@@ -22,6 +22,7 @@ from .observability import (
     begin_request_observation,
     complete_request_observation,
     end_request_observation,
+    get_prometheus_registry,
 )
 
 STANDARD_CORS_METHODS = ("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
@@ -111,7 +112,7 @@ def create_service_app(
     if config.default_response_class is not None:
         app_options["default_response_class"] = config.default_response_class
     app = FastAPI(**app_options)
-    registry = metrics_registry or PrometheusMetricsRegistry()
+    registry = metrics_registry or get_prometheus_registry()
     sinks = [registry]
     if metrics_sink is not None:
         sinks.append(metrics_sink)

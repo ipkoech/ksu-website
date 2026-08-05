@@ -44,6 +44,19 @@ def test_prometheus_registry_renders_safe_bounded_counter_and_histogram() -> Non
     assert "# TYPE ksu_http_server_request_duration_seconds histogram" in rendered
 
 
+def test_prometheus_registry_emits_one_type_line_per_metric_family() -> None:
+    registry = PrometheusMetricsRegistry()
+
+    registry.increment("http.request.count", tags={"route": "/one"})
+    registry.increment("http.request.count", tags={"route": "/two"})
+    registry.observe_latency("http.request.latency_ms", 5, tags={"route": "/one"})
+    registry.observe_latency("http.request.latency_ms", 10, tags={"route": "/two"})
+
+    rendered = registry.render()
+    assert rendered.count("# TYPE ksu_http_request_count_total counter") == 1
+    assert rendered.count("# TYPE ksu_http_request_latency_ms_seconds histogram") == 1
+
+
 def test_prometheus_registry_drops_new_series_after_bound() -> None:
     registry = PrometheusMetricsRegistry(max_series=1)
 

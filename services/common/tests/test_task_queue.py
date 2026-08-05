@@ -47,6 +47,9 @@ def test_create_celery_app_applies_shared_transport_policy() -> None:
     assert app.conf.task_default_queue == "test.default"
     assert app.conf.task_routes["test.task"]["queue"] == "test.jobs"
     assert app.conf.imports == ("test.tasks",)
+    assert app.conf.task_acks_late is True
+    assert app.conf.task_reject_on_worker_lost is True
+    assert app.conf.worker_prefetch_multiplier == 1
 
 
 def test_task_lifecycle_emits_bounded_count_latency_failure_and_retry_metrics() -> None:

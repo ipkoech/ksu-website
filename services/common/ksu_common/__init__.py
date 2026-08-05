@@ -61,6 +61,7 @@ from .observability import (
     Tracer,
     audit_event,
     request_context,
+    get_prometheus_registry,
 )
 from .reliability import (
     CircuitBreaker,
@@ -147,6 +148,7 @@ __all__ = [
     "Metrics",
     "CompositeMetricsSink",
     "PrometheusMetricsRegistry",
+    "get_prometheus_registry",
     "Span",
     "Tracer",
     "AuditEvent",

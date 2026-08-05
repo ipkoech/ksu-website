@@ -197,6 +197,8 @@ class Metrics:
 _PROMETHEUS_NAME = re.compile(r"[^a-zA-Z0-9_:]")
 _PROMETHEUS_LABEL = re.compile(r"[^a-zA-Z0-9_:]")
 _DEFAULT_HISTOGRAM_BUCKETS = (0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0)
+_DEFAULT_PROMETHEUS_REGISTRY: PrometheusMetricsRegistry | None = None
+_DEFAULT_PROMETHEUS_REGISTRY_LOCK = Lock()
 
 
 def _prometheus_name(name: str, *, suffix: str = "") -> str:
@@ -301,10 +303,17 @@ class PrometheusMetricsRegistry:
             histograms = list(self._histograms.items())
             dropped = self._dropped
         lines: list[str] = []
+        rendered_counter_types: set[str] = set()
         for (name, labels), value in sorted(counters):
-            lines.extend((f"# TYPE {name} counter", f"{name}{_render_labels(labels)} {value}"))
+            if name not in rendered_counter_types:
+                lines.append(f"# TYPE {name} counter")
+                rendered_counter_types.add(name)
+            lines.append(f"{name}{_render_labels(labels)} {value}")
+        rendered_histogram_types: set[str] = set()
         for (name, labels), histogram in sorted(histograms):
-            lines.append(f"# TYPE {name} histogram")
+            if name not in rendered_histogram_types:
+                lines.append(f"# TYPE {name} histogram")
+                rendered_histogram_types.add(name)
             for bucket, count in zip(self.histogram_buckets, histogram.buckets):
                 lines.append(f'{name}_bucket{_render_labels(labels, ("le", _format_number(bucket)))} {count}')
             lines.extend(
@@ -317,6 +326,17 @@ class PrometheusMetricsRegistry:
         if dropped:
             lines.extend(("# TYPE ksu_metrics_dropped_series_total counter", f"ksu_metrics_dropped_series_total {dropped}"))
         return "\n".join(lines) + ("\n" if lines else "")
+
+
+def get_prometheus_registry() -> PrometheusMetricsRegistry:
+    """Return the process-wide registry shared by HTTP, DB, and worker code."""
+
+    global _DEFAULT_PROMETHEUS_REGISTRY
+    if _DEFAULT_PROMETHEUS_REGISTRY is None:
+        with _DEFAULT_PROMETHEUS_REGISTRY_LOCK:
+            if _DEFAULT_PROMETHEUS_REGISTRY is None:
+                _DEFAULT_PROMETHEUS_REGISTRY = PrometheusMetricsRegistry()
+    return _DEFAULT_PROMETHEUS_REGISTRY
 
 
 def _format_number(value: float) -> str:
