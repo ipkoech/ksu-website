@@ -88,17 +88,21 @@ import {
   type LibraryGenericPayload,
   type LibraryGenericRecord,
   type LibraryGuide,
+  type LibraryGuidePayload,
   type LibraryInquiry,
   type LibraryLoan,
   type LibraryPolicyPage,
+  type LibraryPolicyPagePayload,
   type LibraryReservation,
   type LibraryRegulation,
   type LibraryResource,
   type LibraryResourcePayload,
   type LibraryStaff,
   type LibrarySpecialist,
+  type LibrarySpecialistPayload,
   type LibrarySupportTicket,
   type LibraryWorkflow,
+  type LibraryWorkflowPayload,
   type Media,
   type MediaFolder,
   type News,
@@ -6544,7 +6548,8 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
         library_id: String(libraryId),
       });
     },
-    create: (payload) => libraryServiceApi.guides.create(payload),
+    create: (payload) =>
+      libraryServiceApi.guides.create(payload as unknown as LibraryGuidePayload),
     update: (id, payload) => libraryServiceApi.guides.update(id, payload),
     delete: (id) => libraryServiceApi.guides.delete(id),
     getRecordTitle: (record) => record.title,
@@ -6633,7 +6638,10 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
         library_id: String(libraryId),
       });
     },
-    create: (payload) => libraryServiceApi.specialists.create(payload),
+    create: (payload) =>
+      libraryServiceApi.specialists.create(
+        payload as unknown as LibrarySpecialistPayload,
+      ),
     update: (id, payload) => libraryServiceApi.specialists.update(id, payload),
     delete: (id) => libraryServiceApi.specialists.delete(id),
     getRecordTitle: (record) =>
@@ -6721,7 +6729,10 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
         library_id: String(libraryId),
       });
     },
-    create: (payload) => libraryServiceApi.workflows.create(payload),
+    create: (payload) =>
+      libraryServiceApi.workflows.create(
+        payload as unknown as LibraryWorkflowPayload,
+      ),
     update: (id, payload) => libraryServiceApi.workflows.update(id, payload),
     delete: (id) => libraryServiceApi.workflows.delete(id),
     getRecordTitle: (record) => record.title,
@@ -6811,7 +6822,10 @@ const libraryResources: Record<string, PortalResourceConfig<any, any>> = {
         library_id: String(libraryId),
       });
     },
-    create: (payload) => libraryServiceApi.policies.create(payload),
+    create: (payload) =>
+      libraryServiceApi.policies.create(
+        payload as unknown as LibraryPolicyPagePayload,
+      ),
     update: (id, payload) => libraryServiceApi.policies.update(id, payload),
     delete: (id) => libraryServiceApi.policies.delete(id),
     getRecordTitle: (record) => record.title,

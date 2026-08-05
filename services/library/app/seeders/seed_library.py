@@ -286,7 +286,7 @@ async def seed_catalog(db, libraries: dict[str, Library]) -> None:
                 "total_copies": total,
                 "available_copies": available,
                 "subject_tags": tags,
-                "description": f"{title} is included in the seeded Library catalog for design and workflow testing.",
+                "description": f"{title} is available through the Library catalog for learning, teaching, and research support.",
                 "is_loanable": resource_type not in {"journal"},
                 "is_reference_only": resource_type in {"journal", "thesis"},
                 "is_active": True,

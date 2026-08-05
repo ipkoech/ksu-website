@@ -149,115 +149,6 @@ export interface LibraryStaff {
   updated_at?: string;
 }
 
-export type LibraryGuideType = "subject" | "course" | "database" | "research" | "other";
-
-export interface LibraryGuideSection {
-  id: string;
-  guide_id: string;
-  heading: string;
-  content?: string | null;
-  section_type?: string | null;
-  resource_links?: Array<Record<string, unknown>> | null;
-  file_ids?: string[] | null;
-  sort_order?: number;
-  is_active?: boolean;
-}
-
-export interface LibrarySpecialist {
-  id: string;
-  library_id?: string | null;
-  staff_id?: string | null;
-  subjects?: string[] | null;
-  schools?: string[] | null;
-  departments?: string[] | null;
-  support_areas?: string[] | null;
-  booking_url?: string | null;
-  is_public?: boolean;
-  is_active?: boolean;
-  sort_order?: number;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface LibraryGuide {
-  id: string;
-  library_id?: string | null;
-  title: string;
-  slug: string;
-  summary?: string | null;
-  guide_type?: LibraryGuideType | string;
-  subject?: string | null;
-  course_code?: string | null;
-  audience?: string | null;
-  school_id?: string | null;
-  department_id?: string | null;
-  owner_staff_id?: string | null;
-  is_public?: boolean;
-  is_active?: boolean;
-  sort_order?: number;
-  sections?: LibraryGuideSection[] | null;
-  specialists?: LibrarySpecialist[] | null;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export type LibraryWorkflowType =
-  | "borrowing"
-  | "clearance"
-  | "research"
-  | "repository"
-  | "other";
-
-export interface LibraryWorkflowStep {
-  id: string;
-  workflow_id: string;
-  title: string;
-  instructions?: string | null;
-  link_url?: string | null;
-  file_id?: string | null;
-  sort_order?: number;
-  is_active?: boolean;
-}
-
-export interface LibraryWorkflow {
-  id: string;
-  library_id?: string | null;
-  workflow_type?: LibraryWorkflowType | string;
-  title: string;
-  slug: string;
-  summary?: string | null;
-  audience?: string | null;
-  is_public?: boolean;
-  is_active?: boolean;
-  sort_order?: number;
-  steps?: LibraryWorkflowStep[] | null;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export type LibraryPolicyType =
-  | "borrowing"
-  | "access"
-  | "clearance"
-  | "repository"
-  | "other";
-
-export interface LibraryPolicyPage {
-  id: string;
-  library_id?: string | null;
-  policy_type?: LibraryPolicyType | string;
-  title: string;
-  slug: string;
-  content?: string | null;
-  related_regulation_id?: string | null;
-  file_id?: string | null;
-  is_public?: boolean;
-  status?: string;
-  sort_order?: number;
-  created_at?: string;
-  updated_at?: string;
-}
-
 export type LibraryAssistantContextStatus = "draft" | "active" | "archived";
 
 export interface LibraryAssistantSource {
@@ -421,6 +312,269 @@ export interface LibraryRegulation {
   sort_order?: number;
   created_at?: string;
   updated_at?: string;
+}
+
+export type LibraryGuideType =
+  | "subject"
+  | "course"
+  | "audience"
+  | "topic"
+  | "general";
+
+export type LibraryGuideSectionType =
+  | "text"
+  | "resources"
+  | "links"
+  | "files"
+  | "contact";
+
+export interface LibraryGuideSectionPayload {
+  guide_id?: string | null;
+  heading: string;
+  content: string;
+  section_type?: LibraryGuideSectionType;
+  resource_links?: Record<string, unknown>[] | null;
+  file_ids?: string[] | null;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+export interface LibraryGuideSectionUpdatePayload {
+  guide_id?: string | null;
+  heading?: string | null;
+  content?: string | null;
+  section_type?: LibraryGuideSectionType | null;
+  resource_links?: Record<string, unknown>[] | null;
+  file_ids?: string[] | null;
+  sort_order?: number | null;
+  is_active?: boolean | null;
+}
+
+export interface LibraryGuideSection extends LibraryGuideSectionPayload {
+  id: string;
+  guide_id: string;
+  section_type: LibraryGuideSectionType;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
+export interface LibrarySpecialistPayload {
+  library_id?: string | null;
+  staff_id: string;
+  subjects?: string[];
+  schools?: string[];
+  departments?: string[];
+  support_areas?: string[];
+  booking_url?: string | null;
+  is_public?: boolean;
+  is_active?: boolean;
+  sort_order?: number;
+}
+
+export interface LibrarySpecialistUpdatePayload {
+  library_id?: string | null;
+  staff_id?: string | null;
+  subjects?: string[] | null;
+  schools?: string[] | null;
+  departments?: string[] | null;
+  support_areas?: string[] | null;
+  booking_url?: string | null;
+  is_public?: boolean | null;
+  is_active?: boolean | null;
+  sort_order?: number | null;
+}
+
+export interface LibrarySpecialist extends LibrarySpecialistPayload {
+  id: string;
+  staff_id: string;
+  subjects: string[];
+  schools: string[];
+  departments: string[];
+  support_areas: string[];
+  is_public: boolean;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
+export interface LibraryGuidePayload {
+  library_id?: string | null;
+  title: string;
+  slug: string;
+  summary?: string | null;
+  guide_type: LibraryGuideType;
+  subject?: string | null;
+  course_code?: string | null;
+  audience?: string | null;
+  school_id?: string | null;
+  department_id?: string | null;
+  owner_staff_id?: string | null;
+  is_public?: boolean;
+  is_active?: boolean;
+  sort_order?: number;
+}
+
+export interface LibraryGuideUpdatePayload {
+  library_id?: string | null;
+  title?: string | null;
+  slug?: string | null;
+  summary?: string | null;
+  guide_type?: LibraryGuideType | null;
+  subject?: string | null;
+  course_code?: string | null;
+  audience?: string | null;
+  school_id?: string | null;
+  department_id?: string | null;
+  owner_staff_id?: string | null;
+  is_public?: boolean | null;
+  is_active?: boolean | null;
+  sort_order?: number | null;
+}
+
+export interface LibraryGuide extends LibraryGuidePayload {
+  id: string;
+  guide_type: LibraryGuideType;
+  is_public: boolean;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+  sections: LibraryGuideSection[];
+  specialists: LibrarySpecialist[];
+}
+
+export type LibraryWorkflowType =
+  | "remote_access"
+  | "borrowing"
+  | "borrowing_access"
+  | "repository_deposit"
+  | "digital_scholarship"
+  | "research_support"
+  | "citation_support"
+  | "inter_library_loan"
+  | "general";
+
+export interface LibraryWorkflowStepPayload {
+  workflow_id?: string | null;
+  title: string;
+  instructions: string;
+  link_url?: string | null;
+  file_id?: string | null;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+export interface LibraryWorkflowStepUpdatePayload {
+  workflow_id?: string | null;
+  title?: string | null;
+  instructions?: string | null;
+  link_url?: string | null;
+  file_id?: string | null;
+  sort_order?: number | null;
+  is_active?: boolean | null;
+}
+
+export interface LibraryWorkflowStep extends LibraryWorkflowStepPayload {
+  id: string;
+  workflow_id: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
+export interface LibraryWorkflowPayload {
+  library_id?: string | null;
+  workflow_type: LibraryWorkflowType;
+  title: string;
+  slug: string;
+  summary?: string | null;
+  audience?: string | null;
+  is_public?: boolean;
+  is_active?: boolean;
+  sort_order?: number;
+}
+
+export interface LibraryWorkflowUpdatePayload {
+  library_id?: string | null;
+  workflow_type?: LibraryWorkflowType | null;
+  title?: string | null;
+  slug?: string | null;
+  summary?: string | null;
+  audience?: string | null;
+  is_public?: boolean | null;
+  is_active?: boolean | null;
+  sort_order?: number | null;
+}
+
+export interface LibraryWorkflow extends LibraryWorkflowPayload {
+  id: string;
+  workflow_type: LibraryWorkflowType;
+  is_public: boolean;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+  steps: LibraryWorkflowStep[];
+}
+
+export type LibraryPolicyType =
+  | "privacy"
+  | "borrowing"
+  | "access"
+  | "accessibility"
+  | "copyright"
+  | "acceptable_use"
+  | "conduct"
+  | "fees"
+  | "general";
+
+export type LibraryPolicyStatus = "draft" | "active" | "archived";
+
+export interface LibraryPolicyPagePayload {
+  library_id?: string | null;
+  policy_type: LibraryPolicyType;
+  title: string;
+  slug: string;
+  content: string;
+  related_regulation_id?: string | null;
+  file_id?: string | null;
+  is_public?: boolean;
+  status?: LibraryPolicyStatus;
+  sort_order?: number;
+}
+
+export interface LibraryPolicyPageUpdatePayload {
+  library_id?: string | null;
+  policy_type?: LibraryPolicyType | null;
+  title?: string | null;
+  slug?: string | null;
+  content?: string | null;
+  related_regulation_id?: string | null;
+  file_id?: string | null;
+  is_public?: boolean | null;
+  status?: LibraryPolicyStatus | null;
+  sort_order?: number | null;
+}
+
+export interface LibraryPolicyPage extends LibraryPolicyPagePayload {
+  id: string;
+  policy_type: LibraryPolicyType;
+  content: string;
+  is_public: boolean;
+  status: LibraryPolicyStatus;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
 }
 
 export interface LibraryInquiry {
@@ -1014,18 +1168,6 @@ export const libraryServiceApi = {
   databases: crudApi<LibraryElectronicResource, LibraryGenericPayload>(
     "/api/v1/library/databases/",
   ),
-  guides: publicSlugApi<LibraryGuide, LibraryGenericPayload>(
-    "/api/v1/library/guides/",
-  ),
-  specialists: crudApi<LibrarySpecialist, LibraryGenericPayload>(
-    "/api/v1/library/specialists/",
-  ),
-  workflows: publicSlugApi<LibraryWorkflow, LibraryGenericPayload>(
-    "/api/v1/library/workflows/",
-  ),
-  policies: publicSlugApi<LibraryPolicyPage, LibraryGenericPayload>(
-    "/api/v1/library/policies/",
-  ),
   inquiries: {
     ...crudApi<LibraryInquiry, LibraryInquiryPayload>(
       "/api/v1/library/inquiries/",
@@ -1048,6 +1190,186 @@ export const libraryServiceApi = {
   regulations: crudApi<LibraryRegulation, LibraryGenericPayload>(
     "/api/v1/library/regulations/",
   ),
+  guides: {
+    list: (
+      params?: ListParams<{
+        library_id?: string;
+        guide_type?: LibraryGuideType;
+        subject?: string;
+        course_code?: string;
+        audience?: string;
+        per_page?: number;
+        include_total?: boolean;
+      }>,
+    ) =>
+      libraryApi.get<PaginatedResponse<LibraryGuide>>(
+        "/api/v1/library/guides/",
+        params,
+      ),
+    getBySlug: (slug: string, params?: FieldSelectionParams) =>
+      libraryApi.get<{ data: LibraryGuide }>(
+        `/api/v1/library/guides/${slug}`,
+        params,
+      ),
+    get: (id: string, params?: FieldSelectionParams) =>
+      libraryApi.get<{ data: LibraryGuide }>(
+        `/api/v1/library/guides/records/${id}`,
+        params,
+      ),
+    create: (data: LibraryGuidePayload) =>
+      libraryApi.post<{ data: LibraryGuide }>("/api/v1/library/guides/", data),
+    update: (id: string, data: LibraryGuideUpdatePayload) =>
+      libraryApi.patch<{ data: LibraryGuide }>(
+        `/api/v1/library/guides/${id}`,
+        data,
+      ),
+    delete: (id: string) =>
+      libraryApi.delete<void>(`/api/v1/library/guides/${id}`),
+  },
+  guideSections: {
+    list: (
+      params?: ListParams<{
+        guide_id?: string;
+        section_type?: LibraryGuideSectionType;
+        is_active?: boolean;
+      }>,
+    ) =>
+      libraryApi.get<{ data: LibraryGuideSection[] }>(
+        "/api/v1/library/guide-sections/",
+        params,
+      ),
+    create: (data: LibraryGuideSectionPayload) =>
+      libraryApi.post<{ data: LibraryGuideSection }>(
+        "/api/v1/library/guide-sections/",
+        data,
+      ),
+    update: (id: string, data: LibraryGuideSectionUpdatePayload) =>
+      libraryApi.patch<{ data: LibraryGuideSection }>(
+        `/api/v1/library/guide-sections/${id}`,
+        data,
+      ),
+    delete: (id: string) =>
+      libraryApi.delete<void>(`/api/v1/library/guide-sections/${id}`),
+  },
+  specialists: {
+    list: (
+      params?: ListParams<{
+        library_id?: string;
+        subject?: string;
+        school?: string;
+        department?: string;
+      }>,
+    ) =>
+      libraryApi.get<{ data: LibrarySpecialist[] }>(
+        "/api/v1/library/specialists/",
+        params,
+      ),
+    create: (data: LibrarySpecialistPayload) =>
+      libraryApi.post<{ data: LibrarySpecialist }>(
+        "/api/v1/library/specialists/",
+        data,
+      ),
+    update: (id: string, data: LibrarySpecialistUpdatePayload) =>
+      libraryApi.patch<{ data: LibrarySpecialist }>(
+        `/api/v1/library/specialists/${id}`,
+        data,
+      ),
+    delete: (id: string) =>
+      libraryApi.delete<void>(`/api/v1/library/specialists/${id}`),
+  },
+  workflows: {
+    list: (
+      params?: ListParams<{
+        library_id?: string;
+        workflow_type?: LibraryWorkflowType;
+        audience?: string;
+        per_page?: number;
+        include_total?: boolean;
+      }>,
+    ) =>
+      libraryApi.get<PaginatedResponse<LibraryWorkflow>>(
+        "/api/v1/library/workflows/",
+        params,
+      ),
+    getBySlug: (slug: string, params?: FieldSelectionParams) =>
+      libraryApi.get<{ data: LibraryWorkflow }>(
+        `/api/v1/library/workflows/${slug}`,
+        params,
+      ),
+    get: (id: string, params?: FieldSelectionParams) =>
+      libraryApi.get<{ data: LibraryWorkflow }>(
+        `/api/v1/library/workflows/records/${id}`,
+        params,
+      ),
+    create: (data: LibraryWorkflowPayload) =>
+      libraryApi.post<{ data: LibraryWorkflow }>(
+        "/api/v1/library/workflows/",
+        data,
+      ),
+    update: (id: string, data: LibraryWorkflowUpdatePayload) =>
+      libraryApi.patch<{ data: LibraryWorkflow }>(
+        `/api/v1/library/workflows/${id}`,
+        data,
+      ),
+    delete: (id: string) =>
+      libraryApi.delete<void>(`/api/v1/library/workflows/${id}`),
+  },
+  workflowSteps: {
+    list: (
+      params?: ListParams<{
+        workflow_id?: string;
+        is_active?: boolean;
+      }>,
+    ) =>
+      libraryApi.get<{ data: LibraryWorkflowStep[] }>(
+        "/api/v1/library/workflow-steps/",
+        params,
+      ),
+    create: (data: LibraryWorkflowStepPayload) =>
+      libraryApi.post<{ data: LibraryWorkflowStep }>(
+        "/api/v1/library/workflow-steps/",
+        data,
+      ),
+    update: (id: string, data: LibraryWorkflowStepUpdatePayload) =>
+      libraryApi.patch<{ data: LibraryWorkflowStep }>(
+        `/api/v1/library/workflow-steps/${id}`,
+        data,
+      ),
+    delete: (id: string) =>
+      libraryApi.delete<void>(`/api/v1/library/workflow-steps/${id}`),
+  },
+  policies: {
+    list: (
+      params?: ListParams<{
+        library_id?: string;
+        policy_type?: LibraryPolicyType;
+        status?: LibraryPolicyStatus;
+        per_page?: number;
+        include_total?: boolean;
+      }>,
+    ) =>
+      libraryApi.get<PaginatedResponse<LibraryPolicyPage>>(
+        "/api/v1/library/policies/",
+        params,
+      ),
+    getBySlug: (slug: string, params?: FieldSelectionParams) =>
+      libraryApi.get<{ data: LibraryPolicyPage }>(
+        `/api/v1/library/policies/${slug}`,
+        params,
+      ),
+    create: (data: LibraryPolicyPagePayload) =>
+      libraryApi.post<{ data: LibraryPolicyPage }>(
+        "/api/v1/library/policies/",
+        data,
+      ),
+    update: (id: string, data: LibraryPolicyPageUpdatePayload) =>
+      libraryApi.patch<{ data: LibraryPolicyPage }>(
+        `/api/v1/library/policies/${id}`,
+        data,
+      ),
+    delete: (id: string) =>
+      libraryApi.delete<void>(`/api/v1/library/policies/${id}`),
+  },
   staff: {
     list: (params: ListParams<{ library_id: string }>) =>
       libraryApi.get<{ data: LibraryStaff[] }>(

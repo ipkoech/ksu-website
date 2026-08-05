@@ -64,6 +64,7 @@ export function LibraryHero({
   title,
   body,
   actions,
+  children,
   breadcrumbs,
   imageSrc = "/images/library/library-exterior.jpg",
   imageAlt = "The Kisii University Library building",
@@ -72,6 +73,7 @@ export function LibraryHero({
   title: string;
   body: string;
   actions?: ReactNode;
+  children?: ReactNode;
   breadcrumbs?: { label: string; href?: string }[];
   imageSrc?: string;
   imageAlt?: string;
@@ -105,6 +107,7 @@ export function LibraryHero({
           {actions ? (
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">{actions}</div>
           ) : null}
+          {children ? <div className="mt-7">{children}</div> : null}
         </LibraryHeroContentMotion>
       </div>
     </LibraryHeroMotion>

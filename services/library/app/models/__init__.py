@@ -14,26 +14,18 @@ from .staff import LibraryStaff
 from .electronic import ElectronicResource, ElectronicResourceGuide
 from .services import LibraryService, LibraryStatistics
 from .engagement import (
-    LibraryGuide,
-    LibraryGuideSection,
-    LibraryGuideSpecialist,
     LibraryInquiry,
-    LibraryPolicyPage,
     LibraryRegulation,
-    LibrarySpecialist,
-    LibraryWorkflow,
-    LibraryWorkflowStep,
     SavedPublication,
     SupportTicket,
 )
-from .assistant import (
-    LibraryAssistantContext,
-    LibraryAssistantContextSource,
-    LibraryConversation,
-    LibraryConversationMessage,
-    LibraryEmailVerification,
-    LibraryConversationRecovery,
-    LibraryGuestSession,
+from .guides import (
+    LibraryGuide,
+    LibraryGuideSection,
+    LibraryPolicyPage,
+    LibrarySpecialist,
+    LibraryWorkflow,
+    LibraryWorkflowStep,
 )
 
 __all__ = [
@@ -62,19 +54,11 @@ __all__ = [
     "SupportTicket",
     "SavedPublication",
     "LibraryRegulation",
-    "LibrarySpecialist",
+    # guides
     "LibraryGuide",
     "LibraryGuideSection",
-    "LibraryGuideSpecialist",
+    "LibrarySpecialist",
     "LibraryWorkflow",
     "LibraryWorkflowStep",
     "LibraryPolicyPage",
-    # assistant
-    "LibraryAssistantContext",
-    "LibraryAssistantContextSource",
-    "LibraryConversation",
-    "LibraryConversationMessage",
-    "LibraryGuestSession",
-    "LibraryEmailVerification",
-    "LibraryConversationRecovery",
 ]
