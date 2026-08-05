@@ -16,6 +16,7 @@ volumes:
   redis_data:
   uploads_data:
   prometheus_data:
+  alertmanager_data:
   frontend_node_modules:
   frontend_pnpm_store:
 
@@ -91,7 +92,14 @@ services:
   # ── Redis (shared: cache + Celery queues) ─────────────────────────────────────
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - ${REDIS_MAXMEMORY:-0}
+      - --maxmemory-policy
+      - ${REDIS_MAXMEMORY_POLICY:-noeviction}
     volumes:
       - redis_data:/data
     networks: [ksu]
@@ -416,13 +424,64 @@ services:
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION_TIME:-30d}
       - --web.enable-lifecycle
     ports:
-      - "${PROMETHEUS_PORT:-9090}:9090"
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
       - prometheus_data:/prometheus
     networks: [ksu, api]
+    depends_on:
+      alertmanager:
+        condition: service_started
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    profiles: [observability]
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    ports:
+      - "127.0.0.1:${ALERTMANAGER_PORT:-9093}:9093"
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    networks: [ksu]
+    restart: unless-stopped
+
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.16.0
+    profiles: [observability]
+    environment:
+      # Set POSTGRES_EXPORTER_* in deployment secrets. The application
+      # credential fallback is for local development only.
+      DATA_SOURCE_URI: postgres:5432/${POSTGRES_DB:-ksu_services_db}?sslmode=disable
+      DATA_SOURCE_USER: ${POSTGRES_EXPORTER_USER:-${POSTGRES_USER:-ksu_service_user}}
+      DATA_SOURCE_PASS: ${POSTGRES_EXPORTER_PASSWORD:-${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}}
+    command:
+      - --config.file=/etc/postgres_exporter/postgres_exporter.yml
+      - --extend.query-path=/etc/postgres_exporter/queries.yaml
+    volumes:
+      - ./monitoring/postgres-exporter.yml:/etc/postgres_exporter/postgres_exporter.yml:ro
+      - ./monitoring/postgres-queries.yml:/etc/postgres_exporter/queries.yaml:ro
+    networks: [ksu]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.65.0
+    profiles: [observability]
+    command:
+      - --redis.addr=redis://redis:6379
+    networks: [ksu]
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   # ── Frontend dev servers ────────────────────────────────────────────────────

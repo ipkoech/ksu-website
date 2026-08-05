@@ -55,6 +55,8 @@ class MetricsSink(Protocol):
         self, name: str, duration_ms: float, *, tags: dict[str, str]
     ) -> None: ...
 
+    def gauge(self, name: str, value: float, *, tags: dict[str, str]) -> None: ...
+
 
 class CompositeMetricsSink:
     """Forward metrics to all configured sinks without changing their contract."""
@@ -69,6 +71,12 @@ class CompositeMetricsSink:
     def observe_latency(self, name: str, duration_ms: float, *, tags: dict[str, str]) -> None:
         for sink in self._sinks:
             sink.observe_latency(name, duration_ms, tags=tags)
+
+    def gauge(self, name: str, value: float, *, tags: dict[str, str]) -> None:
+        for sink in self._sinks:
+            sink_gauge = getattr(sink, "gauge", None)
+            if callable(sink_gauge):
+                sink_gauge(name, value, tags=tags)
 
 
 class SpanSink(Protocol):
@@ -193,6 +201,23 @@ class Metrics:
             self._sink.observe_latency(metric.name, float(metric.value), tags=metric.tags)
         return metric
 
+    def gauge(
+        self, name: str, value: float, *, tags: Mapping[str, object] | None = None
+    ) -> Metric:
+        normalized_value = float(value)
+        if not math.isfinite(normalized_value):
+            raise ValueError("gauge value must be finite")
+        metric = Metric(
+            name=_normalize_text(name, field_name="metric name", maximum=_MAX_OBSERVABILITY_TEXT_LENGTH),
+            value=normalized_value,
+            tags=_normalize_tags(tags),
+        )
+        if self._sink is not None:
+            sink_gauge = getattr(self._sink, "gauge", None)
+            if callable(sink_gauge):
+                sink_gauge(metric.name, float(metric.value), tags=metric.tags)
+        return metric
+
 
 _PROMETHEUS_NAME = re.compile(r"[^a-zA-Z0-9_:]")
 _PROMETHEUS_LABEL = re.compile(r"[^a-zA-Z0-9_:]")
@@ -259,6 +284,7 @@ class PrometheusMetricsRegistry:
         self.histogram_buckets = tuple(sorted(set(histogram_buckets)))
         self._counters: dict[tuple[str, tuple[tuple[str, str], ...]], int] = {}
         self._histograms: dict[tuple[str, tuple[tuple[str, str], ...]], _Histogram] = {}
+        self._gauges: dict[tuple[str, tuple[tuple[str, str], ...]], float] = {}
         self._series = 0
         self._dropped = 0
         self._lock = Lock()
@@ -297,10 +323,22 @@ class PrometheusMetricsRegistry:
                 if duration_seconds <= bucket:
                     histogram.buckets[index] += 1
 
+    def gauge(self, name: str, value: float, *, tags: dict[str, str]) -> None:
+        normalized_value = float(value)
+        if not math.isfinite(normalized_value):
+            return
+        metric_name = _prometheus_name(name)
+        key = (metric_name, _prometheus_labels(tags))
+        with self._lock:
+            if key not in self._gauges and not self._reserve(1):
+                return
+            self._gauges[key] = normalized_value
+
     def render(self) -> str:
         with self._lock:
             counters = list(self._counters.items())
             histograms = list(self._histograms.items())
+            gauges = list(self._gauges.items())
             dropped = self._dropped
         lines: list[str] = []
         rendered_counter_types: set[str] = set()
@@ -323,6 +361,12 @@ class PrometheusMetricsRegistry:
                     f"{name}_sum{_render_labels(labels)} {_format_number(histogram.total_seconds)}",
                 )
             )
+        rendered_gauge_types: set[str] = set()
+        for (name, labels), value in sorted(gauges):
+            if name not in rendered_gauge_types:
+                lines.append(f"# TYPE {name} gauge")
+                rendered_gauge_types.add(name)
+            lines.append(f"{name}{_render_labels(labels)} {_format_number(value)}")
         if dropped:
             lines.extend(("# TYPE ksu_metrics_dropped_series_total counter", f"ksu_metrics_dropped_series_total {dropped}"))
         return "\n".join(lines) + ("\n" if lines else "")

@@ -87,6 +87,53 @@ async def test_push_webhook_uses_authenticated_shared_pool(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("module", "sender", "settings"),
+    [
+        (
+            sms,
+            lambda: sms._send_webhook_sms("+254700000000", "Hello"),
+            SimpleNamespace(SMS_WEBHOOK_URL="https://sms.example/hooks", SMS_WEBHOOK_TOKEN=""),
+        ),
+        (
+            push,
+            lambda: push._send_webhook_push("device-token", "Title", "Body"),
+            SimpleNamespace(PUSH_WEBHOOK_URL="https://push.example/hooks", PUSH_WEBHOOK_TOKEN=None),
+        ),
+    ],
+)
+async def test_webhook_delivery_fails_closed_without_provider_authentication(
+    monkeypatch: pytest.MonkeyPatch,
+    module: object,
+    sender: object,
+    settings: object,
+) -> None:
+    pool = _Pool([])
+    monkeypatch.setattr(module, "get_integration_pool", lambda: pool)
+    monkeypatch.setattr(module, "get_settings", lambda: settings)
+
+    with pytest.raises(RuntimeError, match="TOKEN is required"):
+        await sender()
+
+    assert pool.calls == []
+
+
+@pytest.mark.parametrize("module", [sms, push])
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://user:password@example.test/hooks",
+        "https://example.test/hooks#fragment",
+        "https:///hooks",
+        "ftp://example.test/hooks",
+    ],
+)
+def test_webhook_target_rejects_ambiguous_or_credentialed_urls(module: object, url: str) -> None:
+    with pytest.raises(ValueError, match="absolute HTTP\\(S\\) URL"):
+        module._webhook_target(url)
+
+
+@pytest.mark.asyncio
 async def test_youtube_oembed_uses_shared_pool_for_read(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

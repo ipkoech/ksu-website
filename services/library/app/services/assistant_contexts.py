@@ -5,7 +5,6 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-import sqlalchemy as sa
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,8 +13,6 @@ from sqlalchemy.orm import selectinload
 from ..models import LibraryAssistantContext, LibraryAssistantContextSource
 from ..schemas.assistant import (
     LibraryAssistantContextCreate,
-    LibraryAssistantContextOut,
-    LibraryAssistantContextPublicOut,
     LibraryAssistantContextUpdate,
     LibraryAssistantSourceCreate,
 )

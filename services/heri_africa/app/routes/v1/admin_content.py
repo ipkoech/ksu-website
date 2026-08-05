@@ -21,8 +21,10 @@ router = APIRouter(prefix="/admin", tags=["HERI Admin Content"])
 @router.get("/news")
 async def list_news(page: int = Query(1, ge=1), per_page: int = Query(25, ge=1, le=100), search: str | None = Query(None, min_length=1, max_length=120), status_filter: str | None = Query(None, alias="status"), db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.content.read"))):
     filters = [NewsArticle.deleted_at.is_(None)]
-    if status_filter: filters.append(NewsArticle.status == status_filter)
-    if search: filters.append(NewsArticle.title.ilike(f"%{search}%"))
+    if status_filter:
+        filters.append(NewsArticle.status == status_filter)
+    if search:
+        filters.append(NewsArticle.title.ilike(f"%{search}%"))
     total = int((await db.execute(select(func.count()).select_from(NewsArticle).where(*filters))).scalar_one())
     records = (await db.execute(select(NewsArticle).where(*filters).order_by(NewsArticle.created_at.desc()).offset((page - 1) * per_page).limit(per_page))).scalars().all()
     return {"data": [NewsAdminResponse.model_validate(record) for record in records], "meta": {"page": page, "per_page": per_page, "total": total, "pages": max(1, (total + per_page - 1) // per_page)}}
@@ -73,8 +75,10 @@ async def transition_news(article_id: UUID, payload: TransitionRequest, request:
 @router.get("/events")
 async def list_events(page: int = Query(1, ge=1), per_page: int = Query(25, ge=1, le=100), search: str | None = Query(None, min_length=1, max_length=120), status_filter: str | None = Query(None, alias="status"), db: AsyncSession = Depends(get_db), _: TokenPayload = Depends(require_permission("heri.content.read"))):
     filters = [Event.deleted_at.is_(None)]
-    if status_filter: filters.append(Event.status == status_filter)
-    if search: filters.append(Event.title.ilike(f"%{search}%"))
+    if status_filter:
+        filters.append(Event.status == status_filter)
+    if search:
+        filters.append(Event.title.ilike(f"%{search}%"))
     total = int((await db.execute(select(func.count()).select_from(Event).where(*filters))).scalar_one())
     records = (await db.execute(select(Event).where(*filters).order_by(Event.starts_at.asc()).offset((page - 1) * per_page).limit(per_page))).scalars().all()
     return {"data": records, "meta": {"page": page, "per_page": per_page, "total": total, "pages": max(1, (total + per_page - 1) // per_page)}}

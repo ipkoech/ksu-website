@@ -7,7 +7,7 @@ from datetime import date, datetime, timezone
 from typing import Any, Generic, TypeVar
 
 import sqlalchemy as sa
-from sqlalchemy import extract, or_, select
+from sqlalchemy import extract, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common import PaginatedResult, paginate

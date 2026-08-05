@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from email.message import EmailMessage
 
 from .observability import Metrics
-from .reliability import CircuitBreaker
+from .reliability import CircuitBreaker, CircuitOpenError
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,7 +61,14 @@ class SmtpTransport:
         async def operation() -> str:
             return await asyncio.to_thread(self._send_sync, message)
 
-        return await self.circuit.call(operation)
+        try:
+            return await self.circuit.call(operation)
+        except CircuitOpenError as exc:
+            self.metrics.increment(
+                "integration_failures_total",
+                tags={"integration": "smtp", "operation": "send", "error": type(exc).__name__},
+            )
+            raise
 
     def _connect_sync(self) -> smtplib.SMTP:
         connection = smtplib.SMTP(

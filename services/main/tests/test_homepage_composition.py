@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, patch
 
-from app.models import Blog, Media, MediaLink, PageSection, PartnershipSpotlight, SectionItem
+from app.models import Media, MediaLink, PageSection, PartnershipSpotlight, SectionItem
 from app.api.v1 import public_media
 from app.services import BlogService, HomepageCompositionService, group_media_links
 import app.services.content as content_service
@@ -83,7 +83,12 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
     async def test_public_media_links_endpoint_scopes_workflow_gate_to_club_media(self):
         db = _QueueDb([])
 
-        await public_media.list_public_media_links(db, entity_type="club", entity_id=uuid.uuid4(), per_page=24)
+        await public_media.list_public_media_links(
+            db=db,
+            entity_type="club",
+            entity_id=uuid.uuid4(),
+            per_page=24,
+        )
 
         query_text = str(db.statements[0]).lower()
         self.assertIn("media_links.is_public is true", query_text)

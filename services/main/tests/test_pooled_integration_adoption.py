@@ -51,6 +51,11 @@ async def test_main_internal_integrations_use_the_shared_pool_and_preserve_auth(
     )
     for module in (research_client, research_partners, stats_service, imports_service):
         monkeypatch.setattr(module, "get_integration_pool", lambda: pool)
+    monkeypatch.setattr(
+        research_partners,
+        "settings",
+        research_partners.settings.model_copy(update={"RESEARCH_SERVICE_API_KEY": "research-key"}),
+    )
     imports_service._settings = imports_service._settings.model_copy(
         update={"RESEARCH_SERVICE_API_KEY": "research-key"}
     )
@@ -73,7 +78,9 @@ async def test_main_internal_integrations_use_the_shared_pool_and_preserve_auth(
     assert client_call[0] == "request_authenticated"
     assert client_call[2]["auth_headers"] == {"Authorization": "Bearer user-token"}
     assert client_call[2]["request_id"] == "request-123"
-    assert partner_call[0] == research_stats_call[0] == "request"
+    assert partner_call[0] == research_stats_call[0] == "request_internal"
+    assert partner_call[1][3] == "/api/v1/internal/partners"
+    assert partner_call[2]["api_key"] == "research-key"
     assert library_call[0] == import_call[0] == "request_internal"
     assert library_call[2]["api_key"] == "library-key"
     assert import_call[2]["api_key"] == "research-key"

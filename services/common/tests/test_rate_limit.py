@@ -274,6 +274,21 @@ async def test_decorator_returns_503_when_redis_is_unavailable(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_direct_handler_call_satisfies_required_request_without_using_redis():
+    called_with = None
+
+    @rate_limit(requests=1, window=60, prefix="test-direct-call")
+    async def endpoint(request: Request):
+        nonlocal called_with
+        called_with = request
+        return {"ok": True}
+
+    assert await endpoint() == {"ok": True}
+    assert isinstance(called_with, Request)
+    assert called_with.url.path.startswith("/__direct_test__/")
+
+
+@pytest.mark.asyncio
 async def test_decorator_preserves_body_limits_and_rate_limit_headers(monkeypatch):
     redis = _FakeRedis()
 

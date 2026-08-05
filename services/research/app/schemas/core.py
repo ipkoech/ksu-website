@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import date
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import Field
 
@@ -16,7 +16,6 @@ from .base import (
     SlugMixin,
     StatusMixin,
     SlugStr,
-    CodeStr,
     UrlStr,
     EmailField,
     PhoneStr,

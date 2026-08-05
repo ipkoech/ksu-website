@@ -17,11 +17,28 @@ def _development_reference(phone_number: str, message: str) -> str:
 
 
 def _webhook_target(url: str) -> tuple[str, str]:
-    parsed = urlsplit(url)
+    try:
+        parsed = urlsplit(url)
+        port = parsed.port
+    except ValueError as exc:
+        raise ValueError("SMS_WEBHOOK_URL must be a valid absolute HTTP(S) URL") from exc
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.fragment
+    ):
+        raise ValueError(
+            "SMS_WEBHOOK_URL must be an absolute HTTP(S) URL without credentials or a fragment"
+        )
     target = parsed.path or "/"
     if parsed.query:
         target = f"{target}?{parsed.query}"
-    return f"{parsed.scheme}://{parsed.netloc}", target
+    host = parsed.hostname
+    if ":" in host and not host.startswith("["):
+        host = f"[{host}]"
+    return f"{parsed.scheme}://{host}{f':{port}' if port else ''}", target
 
 
 async def _send_webhook_sms(phone_number: str, message: str) -> str:
@@ -29,29 +46,19 @@ async def _send_webhook_sms(phone_number: str, message: str) -> str:
     if not settings.SMS_WEBHOOK_URL:
         raise RuntimeError("SMS_WEBHOOK_URL is required when SMS_PROVIDER=webhook")
 
-    headers = {}
-    if settings.SMS_WEBHOOK_TOKEN:
-        headers["Authorization"] = f"Bearer {settings.SMS_WEBHOOK_TOKEN}"
+    token = (settings.SMS_WEBHOOK_TOKEN or "").strip()
+    if not token:
+        raise RuntimeError("SMS_WEBHOOK_TOKEN is required when SMS_PROVIDER=webhook")
 
     base_url, target = _webhook_target(settings.SMS_WEBHOOK_URL)
-    pool = get_integration_pool()
-    if headers:
-        response = await pool.request_authenticated(
-            "sms-webhook",
-            base_url,
-            "POST",
-            target,
-            auth_headers=headers,
-            json={"to": phone_number, "message": message},
-        )
-    else:
-        response = await pool.request(
-            "sms-webhook",
-            base_url,
-            "POST",
-            target,
-            json={"to": phone_number, "message": message},
-        )
+    response = await get_integration_pool().request_authenticated(
+        "sms-webhook",
+        base_url,
+        "POST",
+        target,
+        auth_headers={"Authorization": f"Bearer {token}"},
+        json={"to": phone_number, "message": message},
+    )
     response.raise_for_status()
     payload = response.json() if response.content else {}
     return str(

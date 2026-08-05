@@ -4,15 +4,15 @@ from collections.abc import AsyncIterator
 from types import SimpleNamespace
 
 import pytest
-
 from ksu_common.database import (
     DatabaseConfig,
     DatabaseRuntime,
-    current_query_count,
     create_database_runtime,
+    current_query_count,
     query_count_context,
 )
 from ksu_common.observability import Metrics
+from sqlalchemy.pool import NullPool
 
 
 class _Session:
@@ -144,15 +144,133 @@ def test_database_runtime_instruments_query_count_and_latency(
     assert current_query_count() == 0
 
 
+def test_database_runtime_reports_queue_pool_saturation_metrics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Pool:
+        _max_overflow = 5
+
+        def size(self) -> int:
+            return 10
+
+        def checkedout(self) -> int:
+            return 6
+
+        def overflow(self) -> int:
+            return 2
+
+    engine = SimpleNamespace(sync_engine=SimpleNamespace(pool=Pool()))
+    gauges: list[tuple[str, float, dict[str, str]]] = []
+
+    class Sink:
+        def increment(self, _name: str, _value: int, *, tags: dict[str, str]) -> None:
+            return None
+
+        def observe_latency(
+            self, _name: str, _duration_ms: float, *, tags: dict[str, str]
+        ) -> None:
+            return None
+
+        def gauge(self, name: str, value: float, *, tags: dict[str, str]) -> None:
+            gauges.append((name, value, tags))
+
+    monkeypatch.setattr("ksu_common.database.create_async_engine", lambda *_args, **_kwargs: engine)
+    monkeypatch.setattr("ksu_common.database.async_sessionmaker", lambda **_kwargs: object())
+    monkeypatch.setattr("ksu_common.database.event.listen", lambda *_args, **_kwargs: None)
+
+    runtime = create_database_runtime(
+        DatabaseConfig(url="postgresql+asyncpg://db/service"),
+        metrics=Metrics(Sink()),
+    )
+
+    status = runtime.pool_status()
+
+    assert status.supported is True
+    assert status.size == 10
+    assert status.checked_out == 6
+    assert status.overflow == 2
+    assert status.utilization == pytest.approx(0.4)
+    assert gauges[-4:] == [
+        ("database.pool.size", 10.0, {"driver": "postgresql+asyncpg"}),
+        ("database.pool.checked_out", 6.0, {"driver": "postgresql+asyncpg"}),
+        ("database.pool.overflow", 2.0, {"driver": "postgresql+asyncpg"}),
+        ("database.pool.utilization", 0.4, {"driver": "postgresql+asyncpg"}),
+    ]
+
+
+def test_database_runtime_ignores_null_pool_metrics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine = SimpleNamespace(sync_engine=SimpleNamespace(pool=NullPool(lambda: None)))
+    gauges: list[tuple[str, float, dict[str, str]]] = []
+
+    class Sink:
+        def increment(self, _name: str, _value: int, *, tags: dict[str, str]) -> None:
+            return None
+
+        def observe_latency(
+            self, _name: str, _duration_ms: float, *, tags: dict[str, str]
+        ) -> None:
+            return None
+
+        def gauge(self, name: str, value: float, *, tags: dict[str, str]) -> None:
+            gauges.append((name, value, tags))
+
+    monkeypatch.setattr("ksu_common.database.create_async_engine", lambda *_args, **_kwargs: engine)
+    monkeypatch.setattr("ksu_common.database.async_sessionmaker", lambda **_kwargs: object())
+    monkeypatch.setattr("ksu_common.database.event.listen", lambda *_args, **_kwargs: None)
+
+    runtime = create_database_runtime(
+        DatabaseConfig(url="sqlite+aiosqlite:///tmp/service.db"),
+        metrics=Metrics(Sink()),
+    )
+
+    status = runtime.pool_status()
+
+    assert status.supported is False
+    assert status.size is None
+    assert status.checked_out is None
+    assert status.overflow is None
+    assert status.utilization is None
+    assert gauges == []
+
+
+def test_database_runtime_omits_utilization_for_unbounded_overflow() -> None:
+    class Pool:
+        _max_overflow = -1
+
+        def size(self) -> int:
+            return 5
+
+        def checkedout(self) -> int:
+            return 7
+
+        def overflow(self) -> int:
+            return 2
+
+    runtime = DatabaseRuntime(
+        engine=SimpleNamespace(sync_engine=SimpleNamespace(pool=Pool())),
+        session_factory=object(),
+    )
+
+    status = runtime.pool_status()
+
+    assert status.supported is True
+    assert status.size == 5
+    assert status.checked_out == 7
+    assert status.overflow == 2
+    assert status.utilization is None
+
+
 @pytest.mark.asyncio
 async def test_session_dependency_commits_successful_work() -> None:
     session = _Session()
     runtime = DatabaseRuntime(engine=object(), session_factory=_SessionFactory(session))
 
     dependency: AsyncIterator[_Session] = runtime.session()
-    assert await anext(dependency) is session
+    assert await dependency.__anext__() is session
     with pytest.raises(StopAsyncIteration):
-        await anext(dependency)
+        await dependency.__anext__()
 
     assert session.commits == 1
     assert session.rollbacks == 0
@@ -164,7 +282,7 @@ async def test_session_dependency_rolls_back_failed_work() -> None:
     runtime = DatabaseRuntime(engine=object(), session_factory=_SessionFactory(session))
 
     dependency: AsyncIterator[_Session] = runtime.session()
-    assert await anext(dependency) is session
+    assert await dependency.__anext__() is session
     with pytest.raises(RuntimeError, match="failed"):
         await dependency.athrow(RuntimeError("failed"))
 

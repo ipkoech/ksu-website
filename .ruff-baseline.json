@@ -2,52 +2,10 @@
   "description": "Legacy Ruff findings. New occurrences fail the baseline check.",
   "finding_counts": [
     {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/common/ksu_common/field_selection.py",
-      "message": "`typing.Callable` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/common/ksu_common/models/base.py",
-      "message": "`typing.Any` imported but unused"
-    },
-    {
       "code": "E402",
       "count": 2,
       "filename": "services/common/ksu_common/rbac.py",
       "message": "Module level import not at top of file"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/common/ksu_common/security.py",
-      "message": "`os` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/heri_africa/app/routes/v1/admin.py",
-      "message": "`...models.analytics.AnalyticsEvent` imported but unused"
-    },
-    {
-      "code": "E701",
-      "count": 4,
-      "filename": "services/heri_africa/app/routes/v1/admin_content.py",
-      "message": "Multiple statements on one line (colon)"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/heri_africa/app/routes/v1/analytics_report.py",
-      "message": "`sqlalchemy.case` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/heri_africa/app/schemas/admin_content.py",
-      "message": "`.collections.ResearchSummary` imported but unused"
     },
     {
       "code": "F821",
@@ -128,154 +86,10 @@
       "message": "Undefined name `Library`"
     },
     {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/routes/v1/assistant_contexts.py",
-      "message": "`...models.LibraryAssistantContext` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/routes/v1/assistant_recovery.py",
-      "message": "`fastapi.Cookie` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/routes/v1/assistant_verification.py",
-      "message": "`uuid` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/routes/v1/electronic.py",
-      "message": "`...schemas.PublicationResult` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/schemas/library.py",
-      "message": "`pydantic.HttpUrl` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/seeders/seed_library.py",
-      "message": "`datetime.datetime` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/seeders/seed_library.py",
-      "message": "`datetime.timedelta` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/seeders/seed_library.py",
-      "message": "`datetime.timezone` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/seeders/seed_library.py",
-      "message": "`uuid` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/services/assistant_contexts.py",
-      "message": "`..schemas.assistant.LibraryAssistantContextOut` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/services/assistant_contexts.py",
-      "message": "`..schemas.assistant.LibraryAssistantContextPublicOut` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/services/assistant_contexts.py",
-      "message": "`sqlalchemy` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/services/assistant_conversations.py",
-      "message": "`..schemas.assistant_chat.LibraryAssistantConversationOut` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/services/assistant_conversations.py",
-      "message": "`..schemas.assistant_chat.LibraryAssistantMessageOut` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/services/assistant_identity.py",
-      "message": "`sqlalchemy` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/services/assistant_identity.py",
-      "message": "`uuid` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/services/assistant_notifications.py",
-      "message": "`uuid` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/services/assistant_staff.py",
-      "message": "`sqlalchemy` imported but unused"
-    },
-    {
       "code": "E741",
       "count": 1,
       "filename": "services/library/app/services/electronic.py",
       "message": "Ambiguous variable name: `l`"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/services/electronic.py",
-      "message": "`..schemas.ElectronicResourceGuideOut` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/services/electronic.py",
-      "message": "`..schemas.ElectronicResourceOut` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/services/electronic.py",
-      "message": "`..schemas.SavedPublicationOut` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/services/electronic.py",
-      "message": "`datetime.datetime` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/app/services/electronic.py",
-      "message": "`datetime.timezone` imported but unused"
-    },
-    {
-      "code": "F841",
-      "count": 1,
-      "filename": "services/library/app/services/electronic.py",
-      "message": "Local variable `params` is assigned to but never used"
     },
     {
       "code": "E741",
@@ -290,34 +104,10 @@
       "message": "Undefined name `LibraryResourceOut`"
     },
     {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/library/tests/test_assistant_models.py",
-      "message": "`sqlalchemy` imported but unused"
-    },
-    {
       "code": "E712",
       "count": 2,
       "filename": "services/main/app/api/v1/public_leadership.py",
       "message": "Avoid equality comparisons to `True`; use `StaffAssignment.is_public:` for truth checks"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/main/app/api/v1/public_leadership.py",
-      "message": "`fastapi.HTTPException` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/main/app/api/v1/settings.py",
-      "message": "`...deps.require_api_key_scope` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/main/app/helpers/email.py",
-      "message": "`pathlib.Path` imported but unused"
     },
     {
       "code": "F401",
@@ -398,12 +188,6 @@
       "message": "Undefined name `School`"
     },
     {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/main/app/models/person.py",
-      "message": "`datetime.datetime` imported but unused"
-    },
-    {
       "code": "F821",
       "count": 1,
       "filename": "services/main/app/models/support.py",
@@ -414,18 +198,6 @@
       "count": 2,
       "filename": "services/main/app/models/support.py",
       "message": "Undefined name `User`"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/main/app/realtime/events.py",
-      "message": "`uuid` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/main/app/routes/v1/internal.py",
-      "message": "`...models.Department` imported but unused"
     },
     {
       "code": "F401",
@@ -626,30 +398,6 @@
       "message": "`.school_portal.SchoolPortalUserSummary` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
     },
     {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/main/app/schemas/base.py",
-      "message": "`datetime.date` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/main/app/schemas/base.py",
-      "message": "`pydantic.EmailStr` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/main/app/schemas/school_portal_content.py",
-      "message": "`uuid` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/main/app/schemas/upload_batch.py",
-      "message": "`typing.Any` imported but unused"
-    },
-    {
       "code": "F841",
       "count": 1,
       "filename": "services/main/app/seeders/seed_staff_assignments.py",
@@ -670,30 +418,6 @@
     {
       "code": "F401",
       "count": 1,
-      "filename": "services/main/app/services/admissions.py",
-      "message": "`..models.AcademicCalendar` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/main/app/services/admissions.py",
-      "message": "`..models.School` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/main/app/services/public_page.py",
-      "message": "`sqlalchemy.select` imported but unused"
-    },
-    {
-      "code": "F821",
-      "count": 2,
-      "filename": "services/main/app/tasks/notifications.py",
-      "message": "Undefined name `exc`"
-    },
-    {
-      "code": "F401",
-      "count": 1,
       "filename": "services/main/migrations/versions/ed2320d646d1_merge_youtube_url_and_date_heads.py",
       "message": "`alembic.op` imported but unused"
     },
@@ -702,24 +426,6 @@
       "count": 1,
       "filename": "services/main/migrations/versions/ed2320d646d1_merge_youtube_url_and_date_heads.py",
       "message": "`sqlalchemy` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/main/tests/test_homepage_composition.py",
-      "message": "`app.models.Blog` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/main/tests/test_school_portal_publications.py",
-      "message": "`uuid` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/research/app/core/auth.py",
-      "message": "`collections.abc.Iterable` imported but unused"
     },
     {
       "code": "F401",
@@ -780,36 +486,6 @@
       "count": 1,
       "filename": "services/research/app/models/core.py",
       "message": "`.publication.Publication` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/research/app/models/innovation.py",
-      "message": "`sqlalchemy.orm.relationship` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/research/app/models/publication.py",
-      "message": "`sqlalchemy.orm.foreign` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/research/app/models/support.py",
-      "message": "`ksu_common.models.base.LogoRefMixin` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/research/app/models/support.py",
-      "message": "`ksu_common.models.base.PhotoRefMixin` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/research/app/models/support.py",
-      "message": "`sqlalchemy.orm.relationship` imported but unused"
     },
     {
       "code": "F403",
@@ -908,42 +584,6 @@
       "message": "`from .support import *` used; unable to detect undefined names"
     },
     {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/research/app/schemas/base.py",
-      "message": "`datetime.date` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/research/app/schemas/base.py",
-      "message": "`pydantic.EmailStr` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/research/app/schemas/core.py",
-      "message": "`.base.CodeStr` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/research/app/schemas/core.py",
-      "message": "`typing.Optional` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/research/app/schemas/impact.py",
-      "message": "`datetime.datetime` imported but unused"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/research/app/schemas/support.py",
-      "message": "`typing.Any` imported but unused"
-    },
-    {
       "code": "F403",
       "count": 1,
       "filename": "services/research/app/services/__init__.py",
@@ -1008,14 +648,8 @@
       "count": 1,
       "filename": "services/research/app/services/__init__.py",
       "message": "`from .support import *` used; unable to detect undefined names"
-    },
-    {
-      "code": "F401",
-      "count": 1,
-      "filename": "services/research/app/services/_crud.py",
-      "message": "`sqlalchemy.select` imported but unused"
     }
   ],
   "schema_version": 1,
-  "total_findings": 196
+  "total_findings": 131
 }

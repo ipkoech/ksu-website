@@ -46,10 +46,10 @@ async def test_heri_partner_sync_uses_shared_authenticated_pool(monkeypatch: pyt
 
     assert result == {"created": 0, "updated": 0, "total": 0}
     assert [call[0] for call in pool.calls] == ["request_internal", "request_internal", "request_internal"]
-    assert pool.calls[0][1][:4] == ("research-heri-partner-sync", "http://research.test", "GET", "/api/v1/partners")
+    assert pool.calls[0][1][:4] == ("research-heri-partner-sync", "http://research.test", "GET", "/api/v1/internal/partners")
     assert pool.calls[0][2]["api_key"] == "research-key"
-    assert pool.calls[1][1][3] == "/api/v1/centers"
-    assert pool.calls[2][1][3] == "/api/v1/centers/id/center-1/partners"
+    assert pool.calls[1][1][3] == "/api/v1/internal/centers"
+    assert pool.calls[2][1][3] == "/api/v1/internal/centers/center-1/partners"
 
 
 @pytest.mark.asyncio

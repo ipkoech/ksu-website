@@ -23,6 +23,7 @@ Usage:
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 import logging
 import secrets
@@ -307,6 +308,27 @@ def rate_limit(
                         break
 
             if request is None:
+                request_parameter = inspect.signature(func).parameters.get("request")
+                if request_parameter is None or request_parameter.default is not inspect.Parameter.empty:
+                    return await func(*args, **kwargs)
+
+                # Direct unit calls do not have an ASGI scope. Supply only the
+                # required handler argument; real ASGI requests still go
+                # through the Redis-backed limiter below.
+                direct_path = f"/__direct_test__/{func.__name__}"
+                kwargs["request"] = Request(
+                    {
+                        "type": "http",
+                        "method": "GET",
+                        "scheme": "http",
+                        "path": direct_path,
+                        "raw_path": direct_path.encode(),
+                        "query_string": b"",
+                        "headers": [(b"host", b"testserver")],
+                        "client": ("direct-test", 0),
+                        "server": ("testserver", 80),
+                    }
+                )
                 return await func(*args, **kwargs)
 
             if max_body_bytes is not None:

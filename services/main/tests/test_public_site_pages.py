@@ -16,10 +16,14 @@ def test_public_site_pages_route_is_registered():
     class FakeApp:
         def __init__(self):
             self.prefixes: list[str] = []
+            self.routes = []
 
         def include_router(self, _router, *, prefix: str, tags: list[str]):
             del tags
             self.prefixes.append(prefix)
+
+        def add_middleware(self, *_args, **_kwargs):
+            return None
 
     app = FakeApp()
     register_routes(app)  # type: ignore[arg-type]

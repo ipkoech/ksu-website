@@ -1,0 +1,15 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: operations-dashboard
+  group_by: [alertname, service, component]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  # This receiver keeps alerts visible in Alertmanager without committing any
+  # provider credentials. Production must replace it with an authenticated
+  # webhook, email, PagerDuty, or another owned notification receiver.
+  - name: operations-dashboard

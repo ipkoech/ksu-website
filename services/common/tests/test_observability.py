@@ -57,6 +57,19 @@ def test_prometheus_registry_emits_one_type_line_per_metric_family() -> None:
     assert rendered.count("# TYPE ksu_http_request_latency_ms_seconds histogram") == 1
 
 
+def test_prometheus_registry_renders_gauge() -> None:
+    registry = PrometheusMetricsRegistry()
+
+    Metrics(registry).gauge(
+        "database.pool.utilization", 0.4, tags={"driver": "postgresql"}
+    )
+
+    assert (
+        '# TYPE ksu_database_pool_utilization gauge\n'
+        'ksu_database_pool_utilization{driver="postgresql"} 0.4\n'
+    ) == registry.render()
+
+
 def test_prometheus_registry_drops_new_series_after_bound() -> None:
     registry = PrometheusMetricsRegistry(max_series=1)
 

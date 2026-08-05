@@ -16,7 +16,6 @@ from ksu_common.schemas.responses import success
 
 from ...core.auth import require_library_scope
 from ...core.database import get_db
-from ...models import LibraryAssistantContext
 from ...schemas import (
     LibraryAssistantContextCreate,
     LibraryAssistantContextOut,

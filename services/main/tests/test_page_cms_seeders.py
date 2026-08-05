@@ -22,6 +22,9 @@ class _ScalarResult:
     def scalars(self):
         return self
 
+    def first(self):
+        return self._rows[0] if self._rows else None
+
     def all(self):
         return list(self._rows)
 
@@ -77,18 +80,15 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             {
                 "hero-admissions",
-                "pulse",
                 "why-kisii",
                 "featured-partnership",
                 "programme-finder",
                 "academic-dates",
                 "campus-life",
-                "leadership-activity",
                 "research-impact",
                 "latest-news",
                 "upcoming-events",
                 "partners",
-                "alumni-impact",
                 "facts",
             },
             set(sections_by_key),
@@ -105,7 +105,6 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("page-cms-homepage-v1", hero.settings["seed"]["owner"])
         self.assertGreaterEqual(len(hero.items), 2)
 
-        self.assertEqual("pulse_strip", sections_by_key["pulse"].layout_variant)
         self.assertEqual("featured_partnership", sections_by_key["featured-partnership"].layout_variant)
         self.assertEqual("programme_finder", sections_by_key["programme-finder"].layout_variant)
         self.assertEqual("facts_strip", sections_by_key["facts"].layout_variant)
@@ -118,19 +117,16 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             [
                 "hero_admissions",
-                "pulse_strip",
+                "facts_strip",
                 "featured_partnership",
                 "pillar_grid",
-                "facts_strip",
                 "programme_finder",
                 "date_timeline",
-                "leadership_activity",
                 "research_cards",
                 "logo_carousel",
                 "media_mosaic",
                 "news_grid",
                 "events_list",
-                "alumni_story",
             ],
             ordered_variants,
         )
@@ -143,8 +139,6 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
         research_items = sections_by_key["research-impact"].items
         self.assertEqual(5, len(research_items))
         self.assertTrue(all(item.content.get("imageUrl") for item in research_items))
-        self.assertEqual(4, len(sections_by_key["leadership-activity"].items))
-        self.assertEqual(1, len(sections_by_key["alumni-impact"].items))
         self.assertEqual(7, len(sections_by_key["facts"].items))
         self.assertTrue(
             all(
@@ -187,7 +181,7 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
             await seed_page_cms(db, SeedContext())
             await seed_page_cms(db, SeedContext())
 
-        self.assertEqual(14, len(db.sections))
+        self.assertEqual(11, len(db.sections))
         self.assertEqual(1, len(db.spotlights))
         self.assertEqual(
             sorted(section.section_key for section in db.sections),
@@ -200,10 +194,10 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
             page_key="homepage",
             scope_type="university",
             scope_id=None,
-            section_key="pulse",
+            section_key="facts",
             title="Old seed title",
             settings={"seed": {"owner": "page-cms-homepage-v1"}},
-            layout_variant="pulse_strip",
+            layout_variant="facts_strip",
             status="draft",
             is_enabled=True,
         )
@@ -211,10 +205,10 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
             page_key="homepage",
             scope_type="university",
             scope_id=None,
-            section_key="facts",
+            section_key="why-kisii",
             title="Editor facts",
             settings={"edited_by": "admin"},
-            layout_variant="facts_strip",
+            layout_variant="pillar_grid",
             status="published",
             published_at=datetime.now(timezone.utc),
             is_enabled=True,
@@ -231,8 +225,8 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("published", seed_owned_draft.status)
         self.assertEqual("Editor facts", manual_published.title)
         self.assertEqual({"edited_by": "admin"}, manual_published.settings)
-        self.assertEqual(14, len(db.sections))
-        self.assertIs(_section_by_key(db, "facts"), manual_published)
+        self.assertEqual(11, len(db.sections))
+        self.assertIs(_section_by_key(db, "why-kisii"), manual_published)
 
     async def test_seed_upgrades_an_older_seed_owned_published_section(self):
         db = _MemoryDb()
@@ -240,10 +234,10 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
             page_key="homepage",
             scope_type="university",
             scope_id=None,
-            section_key="pulse",
-            title="Legacy pulse",
+            section_key="facts",
+            title="Legacy facts",
             settings={"seed": {"owner": "page-cms-homepage-v1", "version": 1}},
-            layout_variant="pulse_strip",
+            layout_variant="facts_strip",
             status="published",
             published_at=datetime.now(timezone.utc),
             is_enabled=True,
@@ -256,9 +250,9 @@ class PageCmsSeederTests(unittest.IsolatedAsyncioTestCase):
         ):
             await seed_page_cms(db, SeedContext())
 
-        self.assertEqual("University pulse", legacy_pulse.title)
-        self.assertEqual(3, legacy_pulse.settings["seed"]["version"])
-        self.assertEqual(5, len(legacy_pulse.items))
+        self.assertEqual("Kisii University at a glance", legacy_pulse.title)
+        self.assertEqual(7, legacy_pulse.settings["seed"]["version"])
+        self.assertEqual(7, len(legacy_pulse.items))
 
     async def test_seed_does_not_overwrite_published_seeded_section_after_manual_edits(self):
         db = _MemoryDb()

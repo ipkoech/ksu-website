@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import sys
+from types import ModuleType, SimpleNamespace
+
 import pytest
 
 from ksu_common.gemini import GeminiTransport
@@ -12,6 +15,11 @@ class _Models:
     def generate_content(self, **kwargs):
         self.calls += 1
         assert kwargs["model"] == "test-model"
+        assert kwargs["config"] == {
+            "temperature": 0.2,
+            "max_output_tokens": 10,
+            "response_mime_type": "text/plain",
+        }
         return type("Response", (), {"text": " grounded answer "})()
 
 
@@ -34,7 +42,14 @@ class _Client:
 
 
 @pytest.mark.asyncio
-async def test_gemini_transport_reuses_client_and_is_bounded():
+async def test_gemini_transport_reuses_client_and_is_bounded(monkeypatch: pytest.MonkeyPatch):
+    google_module = ModuleType("google")
+    genai_module = ModuleType("google.genai")
+    genai_module.types = SimpleNamespace(GenerateContentConfig=lambda **kwargs: kwargs)
+    google_module.genai = genai_module
+    monkeypatch.setitem(sys.modules, "google", google_module)
+    monkeypatch.setitem(sys.modules, "google.genai", genai_module)
+
     clients: list[_Client] = []
 
     def factory(_api_key: str) -> _Client:

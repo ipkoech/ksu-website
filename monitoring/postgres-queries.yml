@@ -1,0 +1,57 @@
+ksu_postgres_connection_utilization:
+  query: |
+    SELECT
+      count(*)::double precision / NULLIF(current_setting('max_connections')::double precision, 0)
+        AS connection_utilization_ratio
+    FROM pg_stat_activity
+  metrics:
+    - connection_utilization_ratio:
+        usage: "GAUGE"
+        description: "Fraction of PostgreSQL connections currently in use"
+
+ksu_postgres_active_query:
+  query: |
+    SELECT
+      COALESCE(datname, 'unknown') AS database,
+      COALESCE(wait_event_type, 'none') AS wait_event_type,
+      max(EXTRACT(EPOCH FROM (clock_timestamp() - query_start)))::double precision
+        AS active_query_max_seconds
+    FROM pg_stat_activity
+    WHERE state <> 'idle'
+      AND query_start IS NOT NULL
+      AND pid <> pg_backend_pid()
+    GROUP BY datname, wait_event_type
+  metrics:
+    - database:
+        usage: "LABEL"
+        description: "PostgreSQL database name"
+    - wait_event_type:
+        usage: "LABEL"
+        description: "PostgreSQL wait event class"
+    - active_query_max_seconds:
+        usage: "GAUGE"
+        description: "Longest running non-idle PostgreSQL query in seconds"
+
+ksu_postgres_lock:
+  query: |
+    SELECT
+      COALESCE(datname, 'unknown') AS database,
+      mode,
+      granted::text AS granted,
+      count(*)::double precision AS lock_count
+    FROM pg_locks
+    LEFT JOIN pg_database ON pg_database.oid = pg_locks.database
+    GROUP BY datname, mode, granted
+  metrics:
+    - database:
+        usage: "LABEL"
+        description: "PostgreSQL database name"
+    - mode:
+        usage: "LABEL"
+        description: "PostgreSQL lock mode"
+    - granted:
+        usage: "LABEL"
+        description: "Whether the lock has been granted"
+    - lock_count:
+        usage: "GAUGE"
+        description: "Number of PostgreSQL locks by database, mode, and grant state"

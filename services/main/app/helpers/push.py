@@ -16,11 +16,28 @@ def _development_reference(push_token: str, title: str, message: str) -> str:
 
 
 def _webhook_target(url: str) -> tuple[str, str]:
-    parsed = urlsplit(url)
+    try:
+        parsed = urlsplit(url)
+        port = parsed.port
+    except ValueError as exc:
+        raise ValueError("PUSH_WEBHOOK_URL must be a valid absolute HTTP(S) URL") from exc
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.fragment
+    ):
+        raise ValueError(
+            "PUSH_WEBHOOK_URL must be an absolute HTTP(S) URL without credentials or a fragment"
+        )
     target = parsed.path or "/"
     if parsed.query:
         target = f"{target}?{parsed.query}"
-    return f"{parsed.scheme}://{parsed.netloc}", target
+    host = parsed.hostname
+    if ":" in host and not host.startswith("["):
+        host = f"[{host}]"
+    return f"{parsed.scheme}://{host}{f':{port}' if port else ''}", target
 
 
 async def _send_webhook_push(push_token: str, title: str, message: str) -> str:
@@ -28,29 +45,19 @@ async def _send_webhook_push(push_token: str, title: str, message: str) -> str:
     if not settings.PUSH_WEBHOOK_URL:
         raise RuntimeError("PUSH_WEBHOOK_URL is required when PUSH_PROVIDER=webhook")
 
-    headers = {}
-    if settings.PUSH_WEBHOOK_TOKEN:
-        headers["Authorization"] = f"Bearer {settings.PUSH_WEBHOOK_TOKEN}"
+    token = (settings.PUSH_WEBHOOK_TOKEN or "").strip()
+    if not token:
+        raise RuntimeError("PUSH_WEBHOOK_TOKEN is required when PUSH_PROVIDER=webhook")
 
     base_url, target = _webhook_target(settings.PUSH_WEBHOOK_URL)
-    pool = get_integration_pool()
-    if headers:
-        response = await pool.request_authenticated(
-            "push-webhook",
-            base_url,
-            "POST",
-            target,
-            auth_headers=headers,
-            json={"token": push_token, "title": title, "message": message},
-        )
-    else:
-        response = await pool.request(
-            "push-webhook",
-            base_url,
-            "POST",
-            target,
-            json={"token": push_token, "title": title, "message": message},
-        )
+    response = await get_integration_pool().request_authenticated(
+        "push-webhook",
+        base_url,
+        "POST",
+        target,
+        auth_headers={"Authorization": f"Bearer {token}"},
+        json={"token": push_token, "title": title, "message": message},
+    )
     response.raise_for_status()
     payload = response.json() if response.content else {}
     return str(

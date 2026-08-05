@@ -160,6 +160,8 @@ class SettingsTests(unittest.TestCase):
                     INTERNAL_API_KEY="i" * 32,
                     DATABASE_URL="postgresql+asyncpg://user:pass@postgres:5432/ksu",
                     REDIS_URL="redis://redis:6379/0",
+                    RESEARCH_SERVICE_API_KEY="r" * 32,
+                    LIBRARY_SERVICE_API_KEY="l" * 32,
                     CORS_ORIGINS=[],
                 )
             )
@@ -177,7 +179,8 @@ class SettingsTests(unittest.TestCase):
                 get_settings.cache_clear()
                 sys.modules.pop("app.main", None)
                 main = importlib.import_module("app.main")
-                cors = next(middleware for middleware in main.app.user_middleware if middleware.cls is CORSMiddleware)
+                app = main.create_app()
+                cors = next(middleware for middleware in app.user_middleware if middleware.cls is CORSMiddleware)
 
                 self.assertEqual(cors.kwargs["allow_methods"], ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
                 self.assertEqual(cors.kwargs["allow_headers"], ["Authorization", "Content-Type", "X-Internal-Key"])

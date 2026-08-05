@@ -67,12 +67,25 @@ class DatabaseConfig:
 
 
 @dataclass(frozen=True)
+class DatabasePoolStatus:
+    """Current SQLAlchemy pool saturation state when the pool exposes counters."""
+
+    supported: bool
+    size: int | None = None
+    checked_out: int | None = None
+    overflow: int | None = None
+    utilization: float | None = None
+
+
+@dataclass(frozen=True)
 class DatabaseRuntime:
     """An engine, session factory, and transactional request dependency."""
 
     engine: AsyncEngine | object
     session_factory: Any
     metrics: Metrics = field(default_factory=Metrics)
+    pool_metric_tags: Mapping[str, str] = field(default_factory=dict)
+    max_overflow: int | None = None
 
     async def session(self) -> AsyncIterator[AsyncSession]:
         async with self.session_factory() as session:
@@ -82,6 +95,57 @@ class DatabaseRuntime:
             except Exception:
                 await session.rollback()
                 raise
+
+    def pool_status(self) -> DatabasePoolStatus:
+        """Read and export pool saturation without assuming QueuePool internals exist."""
+
+        sync_engine = getattr(self.engine, "sync_engine", None)
+        pool = getattr(sync_engine, "pool", None)
+        size = _pool_counter(pool, "size")
+        checked_out = _pool_counter(pool, "checkedout")
+        overflow = _pool_counter(pool, "overflow")
+        if size is None or checked_out is None or overflow is None:
+            return DatabasePoolStatus(supported=False)
+
+        max_overflow = _pool_max_overflow(pool, configured=self.max_overflow)
+        capacity = size + max_overflow if max_overflow is not None else None
+        utilization = checked_out / capacity if capacity and capacity > 0 else None
+        status = DatabasePoolStatus(
+            supported=True,
+            size=size,
+            checked_out=checked_out,
+            overflow=overflow,
+            utilization=utilization,
+        )
+        self.metrics.gauge("database.pool.size", float(size), tags=self.pool_metric_tags)
+        self.metrics.gauge(
+            "database.pool.checked_out", float(checked_out), tags=self.pool_metric_tags
+        )
+        self.metrics.gauge("database.pool.overflow", float(overflow), tags=self.pool_metric_tags)
+        if utilization is not None:
+            self.metrics.gauge(
+                "database.pool.utilization", utilization, tags=self.pool_metric_tags
+            )
+        return status
+
+
+def _pool_counter(pool: object | None, name: str) -> int | None:
+    try:
+        counter = getattr(pool, name, None)
+        if not callable(counter):
+            return None
+        return int(counter())
+    except (AttributeError, NotImplementedError, RuntimeError, TypeError, ValueError):
+        return None
+
+
+def _pool_max_overflow(pool: object | None, *, configured: int | None) -> int | None:
+    try:
+        value = getattr(pool, "_max_overflow", configured)
+        normalized = int(value)
+        return normalized if normalized >= 0 else None
+    except (AttributeError, RuntimeError, TypeError, ValueError):
+        return max(0, configured or 0)
 
 
 def create_database_runtime(
@@ -117,7 +181,7 @@ def create_database_runtime(
             execution_context: Any,
             _executemany: bool,
         ) -> None:
-            setattr(execution_context, "_ksu_query_started_at", perf_counter())
+            execution_context._ksu_query_started_at = perf_counter()
             _record_query_count()
             metric_registry.increment("database.query.count", tags=metric_tags)
 
@@ -149,8 +213,15 @@ def create_database_runtime(
         expire_on_commit=False,
         autoflush=False,
     )
-    return DatabaseRuntime(
+    runtime = DatabaseRuntime(
         engine=engine,
         session_factory=session_factory,
         metrics=metric_registry,
+        pool_metric_tags=metric_tags,
+        max_overflow=config.max_overflow,
     )
+    pool = getattr(sync_engine, "pool", None)
+    if runtime.pool_status().supported:
+        event.listen(pool, "checkout", lambda *_args: runtime.pool_status())
+        event.listen(pool, "checkin", lambda *_args: runtime.pool_status())
+    return runtime
