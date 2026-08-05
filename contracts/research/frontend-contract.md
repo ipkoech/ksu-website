@@ -17,7 +17,7 @@ List Audit Logs
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `user_id` (query, string | null), `resource_type` (query, string | null), `status` (query, string | null), `x-internal-api-key` (header, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `user_id` (query, string | null), `resource_type` (query, string | null), `status` (query, string | null), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
 - Success response: 200 -
 
 ## Competition Entries
@@ -952,6 +952,19 @@ Get Item
 - Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
+## HERI Public
+
+### `GET /api/v1/public/heri/centers/{center_id}/partners`
+
+List Public Heri Center Partners
+
+Public partner directory feed consumed by the HERI Africa site.
+
+- Auth: public
+- Request body: -
+- Parameters: `center_id` (path, string)
+- Success response: 200 -
+
 ## Health
 
 ### `GET /api/v1/health`
@@ -1210,6 +1223,69 @@ Get Item
 - Auth: public
 - Request body: -
 - Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+## Internal
+
+### `GET /api/v1/internal/centers`
+
+List Internal Centers
+
+- Auth: public
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/internal/centers/{center_id}/partners`
+
+List Internal Center Partners
+
+- Auth: public
+- Request body: -
+- Parameters: `center_id` (path, string), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/internal/imports/{resource}`
+
+Create Internal Import
+
+Create only the explicitly supported Main bulk-import resources.
+
+This endpoint replaces the old service-key bypass on every public CRUD
+create route. Resource names and model columns are allow-listed here.
+
+- Auth: public
+- Request body: object
+- Parameters: `resource` (path, string), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/internal/partners`
+
+List Internal Partners
+
+- Auth: public
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `partner_ids` (query, array<string> | null), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/internal/partners/{slug}`
+
+Get Internal Partner
+
+- Auth: public
+- Request body: -
+- Parameters: `slug` (path, string), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/internal/stats`
+
+Get Internal Stats
+
+Return the public Research statistics contract to authenticated peers.
+
+- Auth: public
+- Request body: -
+- Parameters: `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
 - Success response: 200 -
 
 ## Journals
@@ -1597,7 +1673,7 @@ Get Item
 
 ### `GET /api/v1/realtime/research/config`
 
-Get Research Realtime Config
+ Cached Research Realtime Config
 
 - Auth: public
 - Request body: -
@@ -1613,7 +1689,7 @@ Get Research Dashboard Analytics
 - Auth: HTTPBearer
 - Request body: -
 - Parameters: `access_token` (cookie, string | null)
-- Success response: 200 -
+- Success response: 200 ResearchDashboardAnalyticsSuccessResponse
 
 ## Research Ask AI
 
@@ -1624,7 +1700,7 @@ Ask Research Ai
 - Auth: HTTPBearer
 - Request body: ResearchAskAIRequest
 - Parameters: `access_token` (cookie, string | null)
-- Success response: 200 -
+- Success response: 200 ResearchAskAISuccessResponse
 
 ### `GET /api/v1/ask-ai/conversations`
 
@@ -1633,7 +1709,7 @@ List Ask Ai Conversations
 - Auth: HTTPBearer
 - Request body: -
 - Parameters: `access_token` (cookie, string | null)
-- Success response: 200 -
+- Success response: 200 ResearchAskAIConversationListResponse
 
 ### `GET /api/v1/ask-ai/conversations/{conversation_id}/messages`
 
@@ -1642,7 +1718,7 @@ List Ask Ai Messages
 - Auth: HTTPBearer
 - Request body: -
 - Parameters: `conversation_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Success response: 200 ResearchAskAIMessageListResponse
 
 ### `POST /api/v1/ask-ai/stream`
 
@@ -1651,7 +1727,7 @@ Stream Research Ai
 - Auth: HTTPBearer
 - Request body: ResearchAskAIRequest
 - Parameters: `access_token` (cookie, string | null)
-- Success response: 200 -
+- Success response: 200
 
 ## Research Centers
 
@@ -1709,6 +1785,33 @@ Remove Center Focus Area
 - Parameters: `center_id` (path, string), `focus_area_id` (path, string), `access_token` (cookie, string | null)
 - Success response: 204 No Content
 
+### `GET /api/v1/centers/id/{center_id}/partners`
+
+List Center Partners
+
+- Auth: public
+- Request body: -
+- Parameters: `center_id` (path, string)
+- Success response: 200 -
+
+### `PUT /api/v1/centers/id/{center_id}/partners/{partner_id}`
+
+Add Center Partner
+
+- Auth: HTTPBearer
+- Request body: CenterPartnerLink | null
+- Parameters: `center_id` (path, string), `partner_id` (path, string), `access_token` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/centers/id/{center_id}/partners/{partner_id}`
+
+Remove Center Partner
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `center_id` (path, string), `partner_id` (path, string), `access_token` (cookie, string | null)
+- Success response: 204 No Content
+
 ### `GET /api/v1/centers/id/{center_id}/programs`
 
 List Center Programs
@@ -1763,7 +1866,7 @@ Get Research Export Job
 - Auth: HTTPBearer
 - Request body: -
 - Parameters: `job_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Success response: 200 ResearchExportJobSuccessResponse
 
 ### `GET /api/v1/exports/jobs/{job_id}/download`
 
@@ -1772,7 +1875,7 @@ Download Research Export Job
 - Auth: HTTPBearer
 - Request body: -
 - Parameters: `job_id` (path, string), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Success response: 200
 
 ### `GET /api/v1/exports/{resource_key}`
 
@@ -1781,7 +1884,7 @@ Export Research Resource
 - Auth: HTTPBearer
 - Request body: -
 - Parameters: `resource_key` (path, string), `format` (query, string), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `publication_type` (query, string | null), `partner_type` (query, string | null), `consultancy_type` (query, string | null), `fund_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `initiative_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `grant_id` (query, string | null), `farm_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `limit` (query, integer), `access_token` (cookie, string | null)
-- Success response: 200 -
+- Success response: 200 object
 
 ### `POST /api/v1/exports/{resource_key}/jobs`
 
@@ -1790,7 +1893,7 @@ Queue Research Export
 - Auth: HTTPBearer
 - Request body: -
 - Parameters: `resource_key` (path, string), `format` (query, string), `search` (query, string | null), `status` (query, string | null), `is_active` (query, boolean | null), `is_featured` (query, boolean | null), `is_public` (query, boolean | null), `is_open_access` (query, boolean | null), `category` (query, string | null), `grant_type` (query, string | null), `project_type` (query, string | null), `publication_type` (query, string | null), `partner_type` (query, string | null), `consultancy_type` (query, string | null), `fund_type` (query, string | null), `output_type` (query, string | null), `program_type` (query, string | null), `delivery_mode` (query, string | null), `scholarship_type` (query, string | null), `initiative_type` (query, string | null), `center_id` (query, string | null), `program_id` (query, string | null), `project_id` (query, string | null), `partner_id` (query, string | null), `pi_id` (query, string | null), `journal_id` (query, string | null), `grant_id` (query, string | null), `farm_id` (query, string | null), `has_grant` (query, boolean | null), `missing_pi` (query, boolean | null), `start_date_from` (query, string | null), `end_date_to` (query, string | null), `report_type` (query, string | null), `funder_type` (query, string | null), `is_required` (query, boolean | null), `is_accepting_contributions` (query, boolean | null), `year` (query, integer | null), `sort` (query, string | null), `order` (query, string | null), `limit` (query, integer), `access_token` (cookie, string | null)
-- Success response: 202 -
+- Success response: 202 ResearchExportJobSuccessResponse
 
 ## Research Farms
 
@@ -2299,7 +2402,7 @@ Search Research
 - Auth: public
 - Request body: -
 - Parameters: `q` (query, string), `types` (query, string | null), `limit` (query, integer)
-- Success response: 200 -
+- Success response: 200 ResearchSearchSuccessResponse
 
 ## Research Services
 
@@ -3182,7 +3285,17 @@ Download Resource
 
 ## Schemas
 
-Generated component schemas: `96`
+Generated component schemas: `123`
+
+### `CenterPartnerLink`
+
+- `collaboration_areas`: `array<string> | object | null` (optional)
+- `mou_end_date`: `string | null` (optional)
+- `mou_start_date`: `string | null` (optional)
+- `notes`: `string | null` (optional)
+- `partnership_level`: `string | null` (optional)
+- `partnership_type`: `string | null` (optional)
+- `status`: `string | null` (optional)
 
 ### `CompetitionEntryCreate`
 
@@ -4333,12 +4446,120 @@ Generated component schemas: `96`
 - `volume`: `string | null` (optional)
 - `year`: `integer | null` (optional)
 
+### `ResearchAIConversationRead`
+
+- `context`: `ResearchAskAIContext | null` (optional)
+- `created_at`: `string` (required)
+- `id`: `string` (required)
+- `is_archived`: `boolean` (optional)
+- `record_id`: `string | null` (optional)
+- `resource_key`: `string | null` (optional)
+- `section_key`: `string | null` (optional)
+- `title`: `string` (required)
+- `updated_at`: `string` (required)
+
+### `ResearchAIMessageRead`
+
+- `content`: `string` (required)
+- `content_format`: `string` (optional)
+- `context_snapshot`: `ResearchAskAIContext | null` (optional)
+- `conversation_id`: `string` (required)
+- `created_at`: `string` (required)
+- `id`: `string` (required)
+- `metadata`: `ResearchAskAIMessageMetadata | null` (optional)
+- `references`: `array<ResearchAskAIReference> | null` (optional)
+- `role`: `string` (required)
+
+### `ResearchAnalyticsAttentionItem`
+
+- `description`: `string` (required)
+- `href`: `string | null` (optional)
+- `key`: `string` (required)
+- `label`: `string` (required)
+- `severity`: `string` (optional)
+- `value`: `integer | number` (required)
+
+### `ResearchAnalyticsChart`
+
+- `chart_type`: `string` (required)
+- `data`: `array<ResearchAnalyticsPoint>` (required)
+- `description`: `string | null` (optional)
+- `key`: `string` (required)
+- `title`: `string` (required)
+
+### `ResearchAnalyticsKpi`
+
+- `description`: `string` (required)
+- `href`: `string | null` (optional)
+- `key`: `string` (required)
+- `label`: `string` (required)
+- `suffix`: `string` (optional)
+- `value`: `integer | number` (required)
+
+### `ResearchAnalyticsPoint`
+
+- `description`: `string | null` (optional)
+- `href`: `string | null` (optional)
+- `key`: `string` (required)
+- `label`: `string` (required)
+- `secondary_value`: `integer | number | null` (optional)
+- `suffix`: `string` (optional)
+- `value`: `integer | number` (required)
+
+### `ResearchAskAIContext`
+
+- `capabilities`: `array<string>` (optional)
+- `guided_prompts`: `array<ResearchAskAIPrompt>` (optional)
+- `intent_mode`: `string` (optional)
+- `path`: `string` (required)
+- `record_id`: `string | null` (optional)
+- `references`: `array<ResearchAskAIReference>` (optional)
+- `resource_key`: `string | null` (optional)
+- `scope`: `string` (optional)
+- `section_key`: `string` (required)
+- `section_label`: `string` (required)
+
 ### `ResearchAskAIContextRequest`
 
 - `path`: `string` (optional)
 - `record_id`: `string | null` (optional)
 - `resource_key`: `string | null` (optional)
 - `section`: `string | null` (optional)
+
+### `ResearchAskAIConversationListResponse`
+
+- `data`: `array<ResearchAIConversationRead> | null` (optional)
+- `message`: `string` (optional)
+- `meta`: `object | null` (optional)
+- `status`: `string` (optional)
+
+### `ResearchAskAIMessageListResponse`
+
+- `data`: `array<ResearchAIMessageRead> | null` (optional)
+- `message`: `string` (optional)
+- `meta`: `object | null` (optional)
+- `status`: `string` (optional)
+
+### `ResearchAskAIMessageMetadata`
+
+- `mode`: `string` (required)
+- `provider`: `string | null` (optional)
+- `service_exposure_keys`: `array<string>` (optional)
+
+### `ResearchAskAIPrompt`
+
+- `id`: `string` (required)
+- `intent`: `string` (required)
+- `label`: `string` (required)
+- `text`: `string` (required)
+
+### `ResearchAskAIRecordSampleGroup`
+
+- `columns`: `array<string>` (required)
+- `href`: `string` (required)
+- `key`: `string` (required)
+- `label`: `string` (required)
+- `records`: `array<object>` (required)
 
 ### `ResearchAskAIReference`
 
@@ -4355,6 +4576,68 @@ Generated component schemas: `96`
 - `message`: `string` (required)
 - `references`: `array<ResearchAskAIReference>` (optional)
 - `scope`: `string` (optional)
+
+### `ResearchAskAIResponse`
+
+- `answer`: `string` (required)
+- `assistant_message_id`: `string | null` (optional)
+- `content_format`: `string` (optional)
+- `context`: `ResearchAskAIContext` (required)
+- `conversation_id`: `string | null` (optional)
+- `mode`: `string` (optional)
+- `references`: `array<ResearchAskAIReference>` (optional)
+- `service_exposure`: `ResearchAskAIServiceExposure` (optional)
+- `suggested_prompts`: `array<ResearchAskAIPrompt>` (optional)
+- `user_message_id`: `string | null` (optional)
+
+### `ResearchAskAIServiceExposure`
+
+- `admin_stats`: `array<ResearchAskAIServiceExposureStat>` (optional)
+- `exports`: `array<ResearchAskAIServiceExposureExport>` (optional)
+- `mode`: `string` (optional)
+- `record_samples`: `array<ResearchAskAIRecordSampleGroup>` (optional)
+- `resources`: `array<ResearchAskAIServiceExposureResource>` (optional)
+- `sections`: `array<ResearchAskAIServiceExposureSection>` (optional)
+
+### `ResearchAskAIServiceExposureExport`
+
+- `columns`: `array<string>` (required)
+- `filename`: `string` (required)
+- `key`: `string` (required)
+- `label`: `string` (required)
+
+### `ResearchAskAIServiceExposureResource`
+
+- `exportable`: `boolean` (required)
+- `key`: `string` (required)
+- `label`: `string` (required)
+- `metadata_fields`: `array<string>` (required)
+- `route`: `string` (required)
+- `search_fields`: `array<string>` (required)
+
+### `ResearchAskAIServiceExposureSection`
+
+- `focus`: `string` (required)
+- `href`: `string` (required)
+- `key`: `string` (required)
+- `label`: `string` (required)
+- `resource_key`: `string | null` (required)
+
+### `ResearchAskAIServiceExposureStat`
+
+- `description`: `string` (required)
+- `href`: `string | null` (required)
+- `key`: `string` (required)
+- `label`: `string` (required)
+- `suffix`: `string` (required)
+- `value`: `integer | number` (required)
+
+### `ResearchAskAISuccessResponse`
+
+- `data`: `ResearchAskAIResponse | null` (optional)
+- `message`: `string` (optional)
+- `meta`: `object | null` (optional)
+- `status`: `string` (optional)
 
 ### `ResearchCenterCreate`
 
@@ -4405,6 +4688,44 @@ Generated component schemas: `96`
 - `name`: `string | null` (optional)
 - `slug`: `string | null` (optional)
 - `vision`: `string | null` (optional)
+
+### `ResearchDashboardAnalytics`
+
+- `admin_activity`: `array<ResearchAnalyticsChart>` (required)
+- `applications_reviews`: `array<ResearchAnalyticsChart>` (required)
+- `attention`: `array<ResearchAnalyticsAttentionItem>` (required)
+- `funding_pipeline`: `array<ResearchAnalyticsChart>` (required)
+- `kpis`: `array<ResearchAnalyticsKpi>` (required)
+- `outputs_publications`: `array<ResearchAnalyticsChart>` (required)
+- `partnerships_sustainability`: `array<ResearchAnalyticsChart>` (required)
+- `portfolio_health`: `array<ResearchAnalyticsChart>` (required)
+- `scope`: `string` (optional)
+- `title`: `string` (optional)
+
+### `ResearchDashboardAnalyticsSuccessResponse`
+
+- `data`: `ResearchDashboardAnalytics | null` (optional)
+- `message`: `string` (optional)
+- `meta`: `object | null` (optional)
+- `status`: `string` (optional)
+
+### `ResearchExportJobRead`
+
+- `download_url`: `string | null` (optional)
+- `error`: `string | null` (optional)
+- `filename`: `string | null` (optional)
+- `format`: `string | null` (optional)
+- `job_id`: `string` (required)
+- `resource`: `string | null` (optional)
+- `status`: `string` (required)
+- `total_rows`: `integer | null` (optional)
+
+### `ResearchExportJobSuccessResponse`
+
+- `data`: `ResearchExportJobRead | null` (optional)
+- `message`: `string` (optional)
+- `meta`: `object | null` (optional)
+- `status`: `string` (optional)
 
 ### `ResearchFarmCreate`
 
@@ -4761,6 +5082,32 @@ Generated component schemas: `96`
 - `status`: `string | null` (optional)
 - `training_required`: `string | null` (optional)
 - `usage_guidelines`: `string | null` (optional)
+
+### `ResearchSearchResponse`
+
+- `by_type`: `object` (required)
+- `query`: `string` (required)
+- `results`: `array<ResearchSearchResult>` (required)
+- `total`: `integer` (required)
+
+### `ResearchSearchResult`
+
+- `date`: `string | null` (optional)
+- `description`: `string | null` (optional)
+- `id`: `string` (required)
+- `is_featured`: `boolean` (optional)
+- `metadata`: `object` (optional)
+- `status`: `string | null` (optional)
+- `title`: `string` (required)
+- `type`: `string` (required)
+- `url`: `string | null` (optional)
+
+### `ResearchSearchSuccessResponse`
+
+- `data`: `ResearchSearchResponse | null` (optional)
+- `message`: `string` (optional)
+- `meta`: `object | null` (optional)
+- `status`: `string` (optional)
 
 ### `ResearchServiceCreate`
 

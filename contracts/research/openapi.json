@@ -1,6 +1,101 @@
 {
   "components": {
     "schemas": {
+      "CenterPartnerLink": {
+        "properties": {
+          "collaboration_areas": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collaboration Areas"
+          },
+          "mou_end_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mou End Date"
+          },
+          "mou_start_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mou Start Date"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "partnership_level": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partnership Level"
+          },
+          "partnership_type": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partnership Type"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "title": "CenterPartnerLink",
+        "type": "object"
+      },
       "CompetitionEntryCreate": {
         "properties": {
           "application_deadline": {
@@ -11124,7 +11219,456 @@
         "title": "PublicationUpdate",
         "type": "object"
       },
+      "ResearchAIConversationRead": {
+        "additionalProperties": false,
+        "properties": {
+          "context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResearchAskAIContext"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_archived": {
+            "default": false,
+            "title": "Is Archived",
+            "type": "boolean"
+          },
+          "record_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Record Id"
+          },
+          "resource_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Key"
+          },
+          "section_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section Key"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ResearchAIConversationRead",
+        "type": "object"
+      },
+      "ResearchAIMessageRead": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "content_format": {
+            "default": "markdown",
+            "title": "Content Format",
+            "type": "string"
+          },
+          "context_snapshot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResearchAskAIContext"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "conversation_id": {
+            "format": "uuid",
+            "title": "Conversation Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResearchAskAIMessageMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "references": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ResearchAskAIReference"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "References"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "conversation_id",
+          "role",
+          "content",
+          "created_at"
+        ],
+        "title": "ResearchAIMessageRead",
+        "type": "object"
+      },
+      "ResearchAnalyticsAttentionItem": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "href": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Href"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "severity": {
+            "default": "info",
+            "title": "Severity",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "value",
+          "description"
+        ],
+        "title": "ResearchAnalyticsAttentionItem",
+        "type": "object"
+      },
+      "ResearchAnalyticsChart": {
+        "properties": {
+          "chart_type": {
+            "title": "Chart Type",
+            "type": "string"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAnalyticsPoint"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "chart_type",
+          "data"
+        ],
+        "title": "ResearchAnalyticsChart",
+        "type": "object"
+      },
+      "ResearchAnalyticsKpi": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "href": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Href"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "suffix": {
+            "default": "",
+            "title": "Suffix",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "value",
+          "description"
+        ],
+        "title": "ResearchAnalyticsKpi",
+        "type": "object"
+      },
+      "ResearchAnalyticsPoint": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "href": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Href"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "secondary_value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Secondary Value"
+          },
+          "suffix": {
+            "default": "",
+            "title": "Suffix",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "value"
+        ],
+        "title": "ResearchAnalyticsPoint",
+        "type": "object"
+      },
+      "ResearchAskAIContext": {
+        "additionalProperties": false,
+        "properties": {
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Capabilities",
+            "type": "array"
+          },
+          "guided_prompts": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAskAIPrompt"
+            },
+            "title": "Guided Prompts",
+            "type": "array"
+          },
+          "intent_mode": {
+            "default": "summarize",
+            "title": "Intent Mode",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "record_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Record Id"
+          },
+          "references": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAskAIReference"
+            },
+            "title": "References",
+            "type": "array"
+          },
+          "resource_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Key"
+          },
+          "scope": {
+            "default": "page",
+            "title": "Scope",
+            "type": "string"
+          },
+          "section_key": {
+            "title": "Section Key",
+            "type": "string"
+          },
+          "section_label": {
+            "title": "Section Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "section_key",
+          "section_label",
+          "path"
+        ],
+        "title": "ResearchAskAIContext",
+        "type": "object"
+      },
       "ResearchAskAIContextRequest": {
+        "additionalProperties": false,
         "properties": {
           "path": {
             "default": "/research",
@@ -11172,7 +11716,214 @@
         "title": "ResearchAskAIContextRequest",
         "type": "object"
       },
+      "ResearchAskAIConversationListResponse": {
+        "description": "Concrete success envelope for Ask AI conversation lists.",
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ResearchAIConversationRead"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "message": {
+            "default": "ok",
+            "title": "Message",
+            "type": "string"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          },
+          "status": {
+            "default": "success",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "ResearchAskAIConversationListResponse",
+        "type": "object"
+      },
+      "ResearchAskAIMessageListResponse": {
+        "description": "Concrete success envelope for Ask AI message lists.",
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ResearchAIMessageRead"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "message": {
+            "default": "ok",
+            "title": "Message",
+            "type": "string"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          },
+          "status": {
+            "default": "success",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "ResearchAskAIMessageListResponse",
+        "type": "object"
+      },
+      "ResearchAskAIMessageMetadata": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "service_exposure_keys": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Service Exposure Keys",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "ResearchAskAIMessageMetadata",
+        "type": "object"
+      },
+      "ResearchAskAIPrompt": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "intent": {
+            "title": "Intent",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "text",
+          "intent"
+        ],
+        "title": "ResearchAskAIPrompt",
+        "type": "object"
+      },
+      "ResearchAskAIRecordSampleGroup": {
+        "additionalProperties": false,
+        "properties": {
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "href": {
+            "title": "Href",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "records": {
+            "items": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "title": "Records",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "href",
+          "columns",
+          "records"
+        ],
+        "title": "ResearchAskAIRecordSampleGroup",
+        "type": "object"
+      },
       "ResearchAskAIReference": {
+        "additionalProperties": false,
         "properties": {
           "href": {
             "title": "Href",
@@ -11207,6 +11958,7 @@
         "type": "object"
       },
       "ResearchAskAIRequest": {
+        "additionalProperties": false,
         "properties": {
           "context": {
             "$ref": "#/components/schemas/ResearchAskAIContextRequest"
@@ -11253,6 +12005,343 @@
           "message"
         ],
         "title": "ResearchAskAIRequest",
+        "type": "object"
+      },
+      "ResearchAskAIResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "title": "Answer",
+            "type": "string"
+          },
+          "assistant_message_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assistant Message Id"
+          },
+          "content_format": {
+            "default": "markdown",
+            "title": "Content Format",
+            "type": "string"
+          },
+          "context": {
+            "$ref": "#/components/schemas/ResearchAskAIContext"
+          },
+          "conversation_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversation Id"
+          },
+          "mode": {
+            "default": "read_only",
+            "title": "Mode",
+            "type": "string"
+          },
+          "references": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAskAIReference"
+            },
+            "title": "References",
+            "type": "array"
+          },
+          "service_exposure": {
+            "$ref": "#/components/schemas/ResearchAskAIServiceExposure"
+          },
+          "suggested_prompts": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAskAIPrompt"
+            },
+            "title": "Suggested Prompts",
+            "type": "array"
+          },
+          "user_message_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Message Id"
+          }
+        },
+        "required": [
+          "answer",
+          "context"
+        ],
+        "title": "ResearchAskAIResponse",
+        "type": "object"
+      },
+      "ResearchAskAIServiceExposure": {
+        "additionalProperties": false,
+        "properties": {
+          "admin_stats": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAskAIServiceExposureStat"
+            },
+            "title": "Admin Stats",
+            "type": "array"
+          },
+          "exports": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAskAIServiceExposureExport"
+            },
+            "title": "Exports",
+            "type": "array"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "record_samples": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAskAIRecordSampleGroup"
+            },
+            "title": "Record Samples",
+            "type": "array"
+          },
+          "resources": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAskAIServiceExposureResource"
+            },
+            "title": "Resources",
+            "type": "array"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAskAIServiceExposureSection"
+            },
+            "title": "Sections",
+            "type": "array"
+          }
+        },
+        "title": "ResearchAskAIServiceExposure",
+        "type": "object"
+      },
+      "ResearchAskAIServiceExposureExport": {
+        "additionalProperties": false,
+        "properties": {
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "columns",
+          "filename"
+        ],
+        "title": "ResearchAskAIServiceExposureExport",
+        "type": "object"
+      },
+      "ResearchAskAIServiceExposureResource": {
+        "additionalProperties": false,
+        "properties": {
+          "exportable": {
+            "title": "Exportable",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "metadata_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Metadata Fields",
+            "type": "array"
+          },
+          "route": {
+            "title": "Route",
+            "type": "string"
+          },
+          "search_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Search Fields",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "route",
+          "search_fields",
+          "metadata_fields",
+          "exportable"
+        ],
+        "title": "ResearchAskAIServiceExposureResource",
+        "type": "object"
+      },
+      "ResearchAskAIServiceExposureSection": {
+        "additionalProperties": false,
+        "properties": {
+          "focus": {
+            "title": "Focus",
+            "type": "string"
+          },
+          "href": {
+            "title": "Href",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "resource_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Key"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "href",
+          "resource_key",
+          "focus"
+        ],
+        "title": "ResearchAskAIServiceExposureSection",
+        "type": "object"
+      },
+      "ResearchAskAIServiceExposureStat": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "href": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Href"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "suffix": {
+            "title": "Suffix",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "value",
+          "suffix",
+          "description",
+          "href"
+        ],
+        "title": "ResearchAskAIServiceExposureStat",
+        "type": "object"
+      },
+      "ResearchAskAISuccessResponse": {
+        "description": "Concrete success envelope for Ask AI responses.",
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResearchAskAIResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "default": "ok",
+            "title": "Message",
+            "type": "string"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          },
+          "status": {
+            "default": "success",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "ResearchAskAISuccessResponse",
         "type": "object"
       },
       "ResearchCenterCreate": {
@@ -11749,6 +12838,251 @@
           }
         },
         "title": "ResearchCenterUpdate",
+        "type": "object"
+      },
+      "ResearchDashboardAnalytics": {
+        "properties": {
+          "admin_activity": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAnalyticsChart"
+            },
+            "title": "Admin Activity",
+            "type": "array"
+          },
+          "applications_reviews": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAnalyticsChart"
+            },
+            "title": "Applications Reviews",
+            "type": "array"
+          },
+          "attention": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAnalyticsAttentionItem"
+            },
+            "title": "Attention",
+            "type": "array"
+          },
+          "funding_pipeline": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAnalyticsChart"
+            },
+            "title": "Funding Pipeline",
+            "type": "array"
+          },
+          "kpis": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAnalyticsKpi"
+            },
+            "title": "Kpis",
+            "type": "array"
+          },
+          "outputs_publications": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAnalyticsChart"
+            },
+            "title": "Outputs Publications",
+            "type": "array"
+          },
+          "partnerships_sustainability": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAnalyticsChart"
+            },
+            "title": "Partnerships Sustainability",
+            "type": "array"
+          },
+          "portfolio_health": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchAnalyticsChart"
+            },
+            "title": "Portfolio Health",
+            "type": "array"
+          },
+          "scope": {
+            "default": "research_admin",
+            "title": "Scope",
+            "type": "string"
+          },
+          "title": {
+            "default": "Research operational analytics",
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kpis",
+          "attention",
+          "portfolio_health",
+          "funding_pipeline",
+          "outputs_publications",
+          "partnerships_sustainability",
+          "applications_reviews",
+          "admin_activity"
+        ],
+        "title": "ResearchDashboardAnalytics",
+        "type": "object"
+      },
+      "ResearchDashboardAnalyticsSuccessResponse": {
+        "description": "Concrete success envelope for the research analytics dashboard.",
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResearchDashboardAnalytics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "default": "ok",
+            "title": "Message",
+            "type": "string"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          },
+          "status": {
+            "default": "success",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "ResearchDashboardAnalyticsSuccessResponse",
+        "type": "object"
+      },
+      "ResearchExportJobRead": {
+        "additionalProperties": false,
+        "properties": {
+          "download_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Download Url"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Format"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "resource": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total_rows": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Rows"
+          }
+        },
+        "required": [
+          "job_id",
+          "status"
+        ],
+        "title": "ResearchExportJobRead",
+        "type": "object"
+      },
+      "ResearchExportJobSuccessResponse": {
+        "description": "Concrete success envelope for queued and completed export jobs.",
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResearchExportJobRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "default": "ok",
+            "title": "Message",
+            "type": "string"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          },
+          "status": {
+            "default": "success",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "ResearchExportJobSuccessResponse",
         "type": "object"
       },
       "ResearchFarmCreate": {
@@ -15345,6 +16679,176 @@
           }
         },
         "title": "ResearchResourceUpdate",
+        "type": "object"
+      },
+      "ResearchSearchResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Type",
+            "type": "object"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchSearchResult"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "query",
+          "total",
+          "results",
+          "by_type"
+        ],
+        "title": "ResearchSearchResponse",
+        "type": "object"
+      },
+      "ResearchSearchResult": {
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "is_featured": {
+            "default": false,
+            "title": "Is Featured",
+            "type": "boolean"
+          },
+          "metadata": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Metadata",
+            "type": "object"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title"
+        ],
+        "title": "ResearchSearchResult",
+        "type": "object"
+      },
+      "ResearchSearchSuccessResponse": {
+        "description": "Concrete success envelope for public unified research search.",
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResearchSearchResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "default": "ok",
+            "title": "Message",
+            "type": "string"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          },
+          "status": {
+            "default": "success",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "ResearchSearchSuccessResponse",
         "type": "object"
       },
       "ResearchServiceCreate": {
@@ -20980,7 +22484,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchDashboardAnalyticsSuccessResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -21042,7 +22548,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchAskAISuccessResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -21094,7 +22602,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchAskAIConversationListResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -21156,7 +22666,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchAskAIMessageListResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -21216,11 +22728,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
             "description": "Successful Response"
           },
           "422": {
@@ -21323,7 +22830,23 @@
           },
           {
             "in": "header",
-            "name": "x-internal-api-key",
+            "name": "X-Internal-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Key"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Internal-API-Key",
             "required": false,
             "schema": {
               "anyOf": [
@@ -22874,6 +24397,201 @@
           }
         ],
         "summary": "Add Center Focus Area",
+        "tags": [
+          "Research Centers"
+        ]
+      }
+    },
+    "/api/v1/centers/id/{center_id}/partners": {
+      "get": {
+        "operationId": "list_center_partners_api_v1_centers_id__center_id__partners_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "center_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Center Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Center Partners",
+        "tags": [
+          "Research Centers"
+        ]
+      }
+    },
+    "/api/v1/centers/id/{center_id}/partners/{partner_id}": {
+      "delete": {
+        "operationId": "remove_center_partner_api_v1_centers_id__center_id__partners__partner_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "center_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Center Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "partner_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Partner Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "access_token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Remove Center Partner",
+        "tags": [
+          "Research Centers"
+        ]
+      },
+      "put": {
+        "operationId": "add_center_partner_api_v1_centers_id__center_id__partners__partner_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "center_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Center Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "partner_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Partner Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "access_token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/CenterPartnerLink"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Add Center Partner",
         "tags": [
           "Research Centers"
         ]
@@ -37574,7 +39292,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchExportJobSuccessResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -37633,11 +39353,6 @@
         ],
         "responses": {
           "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
             "description": "Successful Response"
           },
           "422": {
@@ -38324,10 +40039,107 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$defs": {
+                    "ResearchExportMeta": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "resource": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "title": "Resource"
+                        },
+                        "total": {
+                          "anyOf": [
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "title": "Total"
+                        }
+                      },
+                      "title": "ResearchExportMeta",
+                      "type": "object"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "description": "Documented JSON envelope for mixed export responses.",
+                  "properties": {
+                    "data": {
+                      "anyOf": [
+                        {
+                          "items": {
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "integer"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Data"
+                    },
+                    "message": {
+                      "default": "ok",
+                      "title": "Message",
+                      "type": "string"
+                    },
+                    "meta": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/ResearchExportMeta"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "status": {
+                      "default": "success",
+                      "title": "Status",
+                      "type": "string"
+                    }
+                  },
+                  "title": "ResearchExportJSONResponse",
+                  "type": "object"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
               }
             },
-            "description": "Successful Response"
+            "description": "JSON export rows when format=json, or CSV file contents when format=csv."
           },
           "422": {
             "content": {
@@ -39013,7 +40825,9 @@
           "202": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchExportJobSuccessResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -58687,6 +60501,611 @@
         ]
       }
     },
+    "/api/v1/internal/centers": {
+      "get": {
+        "operationId": "list_internal_centers_api_v1_internal_centers_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Per Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 32,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "is_active",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": true,
+              "title": "Is Active"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Internal-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Key"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Internal-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Internal Centers",
+        "tags": [
+          "Internal"
+        ]
+      }
+    },
+    "/api/v1/internal/centers/{center_id}/partners": {
+      "get": {
+        "operationId": "list_internal_center_partners_api_v1_internal_centers__center_id__partners_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "center_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Center Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Internal-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Key"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Internal-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Internal Center Partners",
+        "tags": [
+          "Internal"
+        ]
+      }
+    },
+    "/api/v1/internal/imports/{resource}": {
+      "post": {
+        "description": "Create only the explicitly supported Main bulk-import resources.\n\nThis endpoint replaces the old service-key bypass on every public CRUD\ncreate route. Resource names and model columns are allow-listed here.",
+        "operationId": "create_internal_import_api_v1_internal_imports__resource__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resource",
+            "required": true,
+            "schema": {
+              "title": "Resource",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Internal-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Key"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Internal-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Payload",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Internal Import",
+        "tags": [
+          "Internal"
+        ]
+      }
+    },
+    "/api/v1/internal/partners": {
+      "get": {
+        "operationId": "list_internal_partners_api_v1_internal_partners_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Per Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 32,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "active",
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "is_active",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": true,
+              "title": "Is Active"
+            }
+          },
+          {
+            "in": "query",
+            "name": "is_featured",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Is Featured"
+            }
+          },
+          {
+            "in": "query",
+            "name": "partner_ids",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Partner Ids"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Internal-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Key"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Internal-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Internal Partners",
+        "tags": [
+          "Internal"
+        ]
+      }
+    },
+    "/api/v1/internal/partners/{slug}": {
+      "get": {
+        "operationId": "get_internal_partner_api_v1_internal_partners__slug__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Internal-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Key"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Internal-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Internal Partner",
+        "tags": [
+          "Internal"
+        ]
+      }
+    },
+    "/api/v1/internal/stats": {
+      "get": {
+        "description": "Return the public Research statistics contract to authenticated peers.",
+        "operationId": "get_internal_stats_api_v1_internal_stats_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Internal-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Key"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Internal-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Internal Stats",
+        "tags": [
+          "Internal"
+        ]
+      }
+    },
     "/api/v1/journals": {
       "get": {
         "operationId": "list_items_api_v1_journals_get",
@@ -72082,6 +74501,48 @@
         ]
       }
     },
+    "/api/v1/public/heri/centers/{center_id}/partners": {
+      "get": {
+        "description": "Public partner directory feed consumed by the HERI Africa site.",
+        "operationId": "list_public_heri_center_partners_api_v1_public_heri_centers__center_id__partners_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "center_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Center Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Public Heri Center Partners",
+        "tags": [
+          "HERI Public"
+        ]
+      }
+    },
     "/api/v1/publications": {
       "get": {
         "operationId": "list_items_api_v1_publications_get",
@@ -73579,7 +76040,7 @@
     },
     "/api/v1/realtime/research/config": {
       "get": {
-        "operationId": "get_research_realtime_config_api_v1_realtime_research_config_get",
+        "operationId": "get_research_realtime_config",
         "responses": {
           "200": {
             "content": {
@@ -73590,7 +76051,7 @@
             "description": "Successful Response"
           }
         },
-        "summary": "Get Research Realtime Config",
+        "summary": " Cached Research Realtime Config",
         "tags": [
           "Realtime"
         ]
@@ -78661,7 +81122,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchSearchSuccessResponse"
+                }
               }
             },
             "description": "Successful Response"

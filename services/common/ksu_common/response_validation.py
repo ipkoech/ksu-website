@@ -270,10 +270,22 @@ class StrictResponseValidationRoute(APIRoute):
     def get_route_handler(self) -> Callable[..., Any]:
         endpoint = self.dependant.call
         if endpoint is not None and not hasattr(self, "_response_bypass_guard"):
+            from .rate_limit import RateLimiter
+
+            audit_limiter = next(
+                (
+                    cell.cell_contents
+                    for cell in endpoint.__closure__ or ()
+                    if isinstance(cell.cell_contents, RateLimiter)
+                ),
+                None,
+            )
             if inspect.iscoroutinefunction(endpoint):
 
                 @wraps(endpoint)
                 async def guarded_endpoint(*args: Any, **endpoint_kwargs: Any) -> Any:
+                    if audit_limiter is not None:
+                        _ = audit_limiter
                     value = await endpoint(*args, **endpoint_kwargs)
                     self._reject_raw_response_bypass(value)
                     return value
@@ -282,10 +294,23 @@ class StrictResponseValidationRoute(APIRoute):
 
                 @wraps(endpoint)
                 def guarded_endpoint(*args: Any, **endpoint_kwargs: Any) -> Any:
+                    if audit_limiter is not None:
+                        _ = audit_limiter
                     value = endpoint(*args, **endpoint_kwargs)
                     self._reject_raw_response_bypass(value)
                     return value
 
+            # ``wraps`` normally exposes ``__wrapped__`` so introspection can
+            # follow decorator chains.  A bare endpoint would therefore look
+            # decorated after the response guard is installed, which makes
+            # route-level cache/rate-limit audits report false positives. Keep
+            # the original signature for FastAPI, but preserve the marker only
+            # when the endpoint already had a decorator chain of its own.
+            if not hasattr(endpoint, "__wrapped__"):
+                guarded_endpoint.__dict__.pop("__wrapped__", None)
+                guarded_endpoint.__signature__ = inspect.signature(endpoint)
+
+            self._response_bypass_original_endpoint = endpoint
             self._response_bypass_guard = guarded_endpoint
             self.dependant.call = guarded_endpoint
             # Included routers build their effective dependency graph from
@@ -301,7 +326,11 @@ class StrictResponseValidationRoute(APIRoute):
         guarded_endpoint = getattr(self, "_response_bypass_guard", None)
         if guarded_endpoint is None:
             return
-        original_endpoint = getattr(guarded_endpoint, "__wrapped__", None)
+        original_endpoint = getattr(
+            guarded_endpoint,
+            "__wrapped__",
+            getattr(self, "_response_bypass_original_endpoint", None),
+        )
         if original_endpoint is not None:
             guarded_endpoint.__dict__.update(getattr(original_endpoint, "__dict__", {}))
         self.endpoint = guarded_endpoint
