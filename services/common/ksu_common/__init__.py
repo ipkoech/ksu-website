@@ -52,7 +52,16 @@ from .internal_client import (
 )
 from .database import current_query_count, query_count_context
 from .gemini import GeminiTransport, close_gemini_transports, get_gemini_transport
-from .observability import AuditEvent, Metrics, Span, Tracer, audit_event, request_context
+from .observability import (
+    AuditEvent,
+    CompositeMetricsSink,
+    Metrics,
+    PrometheusMetricsRegistry,
+    Span,
+    Tracer,
+    audit_event,
+    request_context,
+)
 from .reliability import (
     CircuitBreaker,
     IdempotencyStore,
@@ -136,6 +145,8 @@ __all__ = [
     "get_gemini_transport",
     "close_gemini_transports",
     "Metrics",
+    "CompositeMetricsSink",
+    "PrometheusMetricsRegistry",
     "Span",
     "Tracer",
     "AuditEvent",
