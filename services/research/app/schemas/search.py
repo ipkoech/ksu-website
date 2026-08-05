@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ksu_common.schemas.responses import SuccessResponse
 from pydantic import BaseModel, Field
 
 
@@ -24,3 +25,7 @@ class ResearchSearchResponse(BaseModel):
     total: int
     results: list[ResearchSearchResult]
     by_type: dict[str, int]
+
+
+class ResearchSearchSuccessResponse(SuccessResponse[ResearchSearchResponse]):
+    """Concrete success envelope for public unified research search."""

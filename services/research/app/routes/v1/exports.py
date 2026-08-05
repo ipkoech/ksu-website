@@ -9,31 +9,25 @@ import uuid
 from celery.result import AsyncResult
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ksu_common.response_validation import allow_response_model_exemption
 from ksu_common.schemas.responses import success
 
 from ...core.auth import require_scope
 from ...core.database import get_db
+from ...schemas.exports import ResearchExportJobRead, ResearchExportJobSuccessResponse
 from ...services.exports import ResearchExportService
 from ...tasks.celery_app import celery_app
 
 router = APIRouter(tags=["Research Exports"], dependencies=[Depends(require_scope("research:write"))])
 
 
-class ResearchExportJobRead(BaseModel):
-    job_id: str
-    status: str
-    resource: str | None = None
-    download_url: str | None = None
-    filename: str | None = None
-    format: str | None = None
-    total_rows: int | None = None
-    error: str | None = None
-
-
-@router.post("/exports/{resource_key}/jobs", status_code=202)
+@router.post(
+    "/exports/{resource_key}/jobs",
+    status_code=202,
+    response_model=ResearchExportJobSuccessResponse,
+)
 async def queue_research_export(
     resource_key: str,
     format: str = Query("csv", pattern="^(csv|json)$"),
@@ -132,12 +126,16 @@ async def queue_research_export(
         },
     )
     return success(
-        data=ResearchExportJobRead(job_id=task.id, status="PENDING", resource=config.key),
+        data=ResearchExportJobRead(
+            job_id=task.id,
+            status="PENDING",
+            resource=config.key,
+        ).model_dump(mode="json"),
         message="Export queued",
     )
 
 
-@router.get("/exports/jobs/{job_id}")
+@router.get("/exports/jobs/{job_id}", response_model=ResearchExportJobSuccessResponse)
 async def get_research_export_job(job_id: str):
     result = AsyncResult(job_id, app=celery_app)
     result_data = result.result if result.successful() else {}
@@ -153,11 +151,12 @@ async def get_research_export_job(job_id: str):
             format=result_data.get("format") if isinstance(result_data, dict) else None,
             total_rows=result_data.get("total_rows") if isinstance(result_data, dict) else None,
             error=error,
-        )
+        ).model_dump(mode="json")
     )
 
 
-@router.get("/exports/jobs/{job_id}/download")
+@router.get("/exports/jobs/{job_id}/download", response_class=FileResponse)
+@allow_response_model_exemption("file", path="/api/v1/exports/jobs/{job_id}/download")
 async def download_research_export_job(job_id: str):
     result = AsyncResult(job_id, app=celery_app)
     if not result.successful():

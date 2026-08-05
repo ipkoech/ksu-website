@@ -12,13 +12,13 @@ from ksu_common.rate_limit import rate_limit
 from ksu_common.schemas.responses import success
 
 from ...core.database import get_db
-from ...schemas.search import ResearchSearchResponse
+from ...schemas.search import ResearchSearchResponse, ResearchSearchSuccessResponse
 from ...services.search import unified_research_search
 
 router = APIRouter(tags=["Research Search"])
 
 
-@router.get("/search")
+@router.get("/search", response_model=ResearchSearchSuccessResponse)
 @rate_limit(requests=30, window=60, prefix="research:search:ip")
 @cached_public(timeout=60, vary_on=("q", "types", "limit"))
 async def search_research(

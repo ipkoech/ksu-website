@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
+from ksu_common.schemas.responses import SuccessResponse
 from pydantic import Field
 
 from .base import BaseSchema
@@ -88,3 +89,15 @@ class ResearchAskAIResponse(BaseSchema):
     service_exposure: dict = Field(default_factory=dict)
     references: list[ResearchAskAIReference] = Field(default_factory=list)
     suggested_prompts: list[ResearchAskAIPrompt] = Field(default_factory=list)
+
+
+class ResearchAskAISuccessResponse(SuccessResponse[ResearchAskAIResponse]):
+    """Concrete success envelope for Ask AI responses."""
+
+
+class ResearchAskAIConversationListResponse(SuccessResponse[list[ResearchAIConversationRead]]):
+    """Concrete success envelope for Ask AI conversation lists."""
+
+
+class ResearchAskAIMessageListResponse(SuccessResponse[list[ResearchAIMessageRead]]):
+    """Concrete success envelope for Ask AI message lists."""
