@@ -24,7 +24,17 @@ class SettingsTests(unittest.TestCase):
 
     def test_internal_api_key_default_rejected_outside_development(self):
         with self.assertRaisesRegex(ValidationError, "INTERNAL_API_KEY"):
-            Settings(**base_settings(APP_ENV="production", INTERNAL_API_KEY="change-me-internal"))
+            Settings(
+                **base_settings(
+                    APP_ENV="production",
+                    MAIN_SERVICE_API_KEY="m" * 32,
+                    INTERNAL_API_KEY="change-me-internal",
+                )
+            )
+
+    def test_main_service_api_key_is_required_outside_development(self):
+        with self.assertRaisesRegex(ValidationError, "MAIN_SERVICE_API_KEY"):
+            Settings(**base_settings(APP_ENV="production", INTERNAL_API_KEY="i" * 32))
 
 
 if __name__ == "__main__":

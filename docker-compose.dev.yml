@@ -5,7 +5,7 @@ services:
       - "${GATEWAY_PORT:-8080}:80"
   main:
     ports:
-      - "${MAIN_SERVICE_PORT:-8000}:8000"
+      - "127.0.0.1:${MAIN_SERVICE_PORT:-8000}:8000"
     environment:
       APP_ENV: development
       JWT_SECRET_KEY: change-me-local
@@ -15,7 +15,7 @@ services:
       CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003"]'
   research:
     ports:
-      - "${RESEARCH_SERVICE_PORT:-8001}:8001"
+      - "127.0.0.1:${RESEARCH_SERVICE_PORT:-8001}:8001"
     environment:
       APP_ENV: development
       JWT_SECRET_KEY: change-me-local
@@ -25,10 +25,11 @@ services:
       CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003"]'
   library:
     ports:
-      - "${LIBRARY_SERVICE_PORT:-8002}:8002"
+      - "127.0.0.1:${LIBRARY_SERVICE_PORT:-8002}:8002"
     environment:
       APP_ENV: development
       JWT_SECRET_KEY: change-me-local
+      MAIN_SERVICE_API_KEY: change-me-internal
       INTERNAL_API_KEY: change-me-internal
       CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003"]'
   heri:

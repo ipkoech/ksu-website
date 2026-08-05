@@ -24,6 +24,7 @@ from .audit import AuditEntry, AuditLogger, audit_action, get_audit_logger, pers
 from .rate_limit import (
     RateLimiter,
     RateLimitExceeded,
+    RateLimitUnavailable,
     install_request_body_limit_middleware,
     rate_limit,
     reset_rate_limit,
@@ -118,6 +119,7 @@ __all__ = [
     # Rate limiting
     "RateLimiter",
     "RateLimitExceeded",
+    "RateLimitUnavailable",
     "install_request_body_limit_middleware",
     "rate_limit",
     "reset_rate_limit",

@@ -37,7 +37,8 @@ async def test_library_internal_integrations_use_the_shared_pool(monkeypatch: py
     ])
     settings = SimpleNamespace(
         MAIN_SERVICE_URL="http://main.test/",
-        INTERNAL_API_KEY="main-key",
+        MAIN_SERVICE_API_KEY="main-key",
+        INTERNAL_API_KEY="library-key",
         PUBLIC_APP_URL="http://portal.test/",
     )
     for module in (media, assistant_identity, assistant_notifications):

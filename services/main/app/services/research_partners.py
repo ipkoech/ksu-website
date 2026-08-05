@@ -36,11 +36,12 @@ class ResearchPartnersProxyService:
         if search:
             params["search"] = search
 
-        response = await get_integration_pool().request(
+        response = await get_integration_pool().request_internal(
             "research-partners",
             settings.RESEARCH_SERVICE_URL.rstrip("/"),
             "GET",
-            "/api/v1/partners",
+            "/api/v1/internal/partners",
+            api_key=settings.RESEARCH_SERVICE_API_KEY,
             headers={"X-KSU-Proxy": "main-partners"},
             params=params,
         )
@@ -53,11 +54,12 @@ class ResearchPartnersProxyService:
 
     @staticmethod
     async def get_partner(slug: str) -> dict[str, Any]:
-        response = await get_integration_pool().request(
+        response = await get_integration_pool().request_internal(
             "research-partners",
             settings.RESEARCH_SERVICE_URL.rstrip("/"),
             "GET",
-            f"/api/v1/partners/{slug}",
+            f"/api/v1/internal/partners/{slug}",
+            api_key=settings.RESEARCH_SERVICE_API_KEY,
             headers={"X-KSU-Proxy": "main-partners"},
         )
         response.raise_for_status()

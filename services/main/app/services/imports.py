@@ -252,7 +252,7 @@ def _make_research_create(api_path: str) -> CreateFunc:
             "research-imports",
             _settings.RESEARCH_SERVICE_URL.rstrip("/"),
             "POST",
-            api_path,
+            f"/api/v1/internal/imports/{api_path.rsplit('/', 1)[-1]}",
             api_key=_settings.RESEARCH_SERVICE_API_KEY,
             headers={"X-KSU-Proxy": "main-imports"},
             json=payload,

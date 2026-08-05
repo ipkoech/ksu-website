@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Literal
 
 from ksu_common.config import (
-    validate_explicit_production_settings,
     validate_cors_origins,
+    validate_explicit_production_settings,
     validate_secret,
     validate_service_url,
 )
@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     CELERY_RESULT_BACKEND: str | None = None
 
     MAIN_SERVICE_URL: str = "http://main:8000"
+    # Credential used only when Library calls Main. Keep it separate from the
+    # inbound key used to authenticate callers into Library.
+    MAIN_SERVICE_API_KEY: str | None = None
     INTERNAL_API_KEY: str = "change-me-internal"
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: Literal["json", "text"] = "json"
@@ -88,6 +91,11 @@ class Settings(BaseSettings):
             app_env=self.APP_ENV,
         )
         validate_secret(self.JWT_SECRET_KEY, field_name="JWT_SECRET_KEY", app_env=self.APP_ENV)
+        validate_secret(
+            self.MAIN_SERVICE_API_KEY,
+            field_name="MAIN_SERVICE_API_KEY",
+            app_env=self.APP_ENV,
+        )
         validate_secret(self.INTERNAL_API_KEY, field_name="INTERNAL_API_KEY", app_env=self.APP_ENV)
         validate_service_url(self.DATABASE_URL, field_name="DATABASE_URL", app_env=self.APP_ENV)
         validate_service_url(self.REDIS_URL, field_name="REDIS_URL", app_env=self.APP_ENV)

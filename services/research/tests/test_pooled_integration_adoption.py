@@ -68,8 +68,9 @@ async def test_research_reference_and_event_integrations_use_the_shared_pool(mon
         "GET",
         f"/api/v1/internal/schools/{school_id}/departments/{department_id}",
     )
-    assert event_call[0] == "request"
-    assert event_call[1][:4] == ("main-scoped-events", "http://main.test", "GET", "/api/v1/events")
+    assert event_call[0] == "request_internal"
+    assert event_call[1][:4] == ("main-scoped-events", "http://main.test", "GET", "/api/v1/internal/events")
+    assert event_call[2]["api_key"] == "main-key"
     assert events == [{"id": "event-1"}]
 
 

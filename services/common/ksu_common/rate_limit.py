@@ -40,7 +40,9 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from .cache import get_redis
 
 logger = logging.getLogger("ksu.rate_limit")
-_rate_limit_metrics = Counter()
+# This counter is health telemetry only. It is never consulted for an allow or
+# deny decision; all rate-limit state lives in Redis so replicas share limits.
+_rate_limit_health_metrics = Counter()
 
 RedisProvider = Callable[[], Awaitable[Any]]
 
@@ -71,8 +73,8 @@ return {1, current_count + 1, 0}
 
 
 def get_rate_limit_metrics() -> dict[str, int]:
-    """Return process-local rate-limit health metrics."""
-    return dict(_rate_limit_metrics)
+    """Return process-local backend-health telemetry, never limiter state."""
+    return dict(_rate_limit_health_metrics)
 
 
 class RequestBodyLimitMiddleware:
@@ -216,7 +218,7 @@ class RateLimiter:
         return f"ratelimit:{hashlib.sha256(raw.encode()).hexdigest()[:16]}"
 
     def _record_backend_unavailable(self, endpoint: str) -> None:
-        _rate_limit_metrics["backend_unavailable"] += 1
+        _rate_limit_health_metrics["backend_unavailable"] += 1
         logger.error(
             json.dumps(
                 {

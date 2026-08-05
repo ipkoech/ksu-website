@@ -26,7 +26,8 @@ class _Pool:
 
     async def request_internal(self, *args, **kwargs):
         self.calls.append(("request_internal", args, kwargs))
-        return _Response({"status": "success", "data": {"stats": [{"key": "loans", "value": 1}]}})
+        key = "publications" if args[0] == "research-public-stats" else "loans"
+        return _Response({"status": "success", "data": {"stats": [{"key": key, "value": 1}]}})
 
 
 @pytest.mark.asyncio
@@ -41,6 +42,7 @@ async def test_research_import_uses_internal_key_and_separate_proxy_header(monke
 
     _, args, kwargs = pool.calls[0]
     assert args[:3] == ("research-imports", imports_service._settings.RESEARCH_SERVICE_URL.rstrip("/"), "POST")
+    assert args[3] == "/api/v1/internal/imports/projects"
     assert kwargs["api_key"] == "research-key"
     assert kwargs["headers"] == {"X-KSU-Proxy": "main-imports"}
 
@@ -52,6 +54,7 @@ async def test_cross_service_stats_use_internal_key_and_separate_proxy_header(mo
     stats_service.settings = stats_service.settings.model_copy(
         update={
             "LIBRARY_SERVICE_API_KEY": "library-key",
+            "RESEARCH_SERVICE_API_KEY": "research-key",
             "RESEARCH_SERVICE_URL": "http://research",
             "LIBRARY_SERVICE_URL": "http://library",
         }
@@ -60,7 +63,9 @@ async def test_cross_service_stats_use_internal_key_and_separate_proxy_header(mo
     await stats_service._published_publications_count()
     await stats_service._library_portal_stat_counts()
 
-    assert pool.calls[0][0] == "request"
+    assert pool.calls[0][0] == "request_internal"
+    assert pool.calls[0][1][3] == "/api/v1/internal/stats"
+    assert pool.calls[0][2]["api_key"] == stats_service.settings.RESEARCH_SERVICE_API_KEY
     assert pool.calls[0][2]["headers"] == {"X-KSU-Proxy": "main-stats"}
     assert pool.calls[1][0] == "request_internal"
     assert pool.calls[1][2]["api_key"] == "library-key"

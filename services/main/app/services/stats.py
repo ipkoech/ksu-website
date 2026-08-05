@@ -100,11 +100,12 @@ async def _count(db: AsyncSession, model, *conditions) -> int:
 async def _published_publications_count() -> int:
     """Read the public publication count from the owning Research service."""
 
-    response = await get_integration_pool().request(
+    response = await get_integration_pool().request_internal(
         "research-public-stats",
         settings.RESEARCH_SERVICE_URL.rstrip("/"),
         "GET",
-        "/api/v1/stats",
+        "/api/v1/internal/stats",
+        api_key=settings.RESEARCH_SERVICE_API_KEY,
         headers={"X-KSU-Proxy": "main-stats"},
     )
     response.raise_for_status()

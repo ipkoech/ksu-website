@@ -47,7 +47,7 @@ async def resolve_public_media(media_ids: list[uuid.UUID]) -> dict[uuid.UUID, di
                 base_url,
                 "GET",
                 f"/api/v1/internal/media/{media_id}",
-                api_key=settings.INTERNAL_API_KEY,
+                api_key=settings.MAIN_SERVICE_API_KEY,
                 timeout=_TIMEOUT,
             )
             response.raise_for_status()

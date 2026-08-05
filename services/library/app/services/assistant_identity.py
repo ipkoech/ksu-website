@@ -166,7 +166,7 @@ async def send_verification_email(
         settings.MAIN_SERVICE_URL.rstrip("/"),
         "POST",
         "/api/v1/internal/email/send",
-        api_key=settings.INTERNAL_API_KEY,
+        api_key=settings.MAIN_SERVICE_API_KEY,
         timeout=10,
         json={"to_email": email, "subject": "Continue your Library conversation", "text_body": text, "html_body": html},
     )

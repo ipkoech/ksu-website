@@ -2,6 +2,8 @@
 networks:
   ksu:
     driver: bridge
+  api:
+    driver: bridge
   proxy:
     driver: bridge
     ipam:
@@ -64,6 +66,7 @@ services:
     networks:
       proxy:
         ipv4_address: 172.31.0.2
+      api:
     restart: unless-stopped
 
   # ── PostgreSQL (shared DB, separate schemas) ──────────────────────────────────
@@ -135,7 +138,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks: [ksu, proxy]
+    networks: [ksu, api]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
@@ -176,7 +179,7 @@ services:
         condition: service_healthy
       main:
         condition: service_healthy
-    networks: [ksu, proxy]
+    networks: [ksu, api]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/api/v1/health"]
@@ -214,7 +217,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks: [ksu, proxy]
+    networks: [ksu, api]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8003/api/v1/heri/health"]
@@ -239,6 +242,7 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/1
       MAIN_SERVICE_URL: http://main:8000
+      MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       INTERNAL_API_KEY: ${LIBRARY_INTERNAL_API_KEY:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-}
       LOG_LEVEL: ${LIBRARY_LOG_LEVEL:-INFO}
@@ -253,7 +257,7 @@ services:
         condition: service_healthy
       main:
         condition: service_healthy
-    networks: [ksu, proxy]
+    networks: [ksu, api]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/api/v1/health"]
@@ -306,6 +310,7 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/1
       MAIN_SERVICE_URL: http://main:8000
+      MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-}
       LOG_DIR: /app/logs

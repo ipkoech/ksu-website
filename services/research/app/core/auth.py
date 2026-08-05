@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-import hmac
 import uuid
 
-from fastapi import Cookie, Depends, Header, HTTPException, status
+from fastapi import Cookie, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-
 from ksu_common.auth import TokenPayload
-from ksu_common.authorization import AuthorizationDecision, AuthorizationScope, authorize_permission
+from ksu_common.authorization import (
+    AuthorizationDecision,
+    AuthorizationScope,
+    authorize_permission,
+)
 from ksu_common.security import decode_token
 
 from .config import get_settings
@@ -82,31 +84,6 @@ def require_scope(scope: str):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Insufficient privileges",
         )
-
-    return _check
-
-
-def require_write_or_internal(scope: str):
-    """Authorize a user write or a signed sibling-service write request."""
-
-    async def _check(
-        internal_key: str | None = Header(default=None, alias="X-Internal-Key"),
-        user: TokenPayload | None = Depends(get_optional_user),
-    ) -> TokenPayload | None:
-        if internal_key and settings.INTERNAL_API_KEY and hmac.compare_digest(
-            internal_key,
-            settings.INTERNAL_API_KEY,
-        ):
-            return None
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or missing token",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        if authorize_permission(user, scope).allowed:
-            return user
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient privileges")
 
     return _check
 

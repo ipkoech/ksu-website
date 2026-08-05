@@ -114,11 +114,12 @@ class MainScopedEventService:
     async def list(scope_type: str, scope_id: uuid.UUID, *, per_page: int = 20) -> list[dict[str, Any]]:
         settings = get_settings()
         try:
-            response = await get_integration_pool().request(
+            response = await get_integration_pool().request_internal(
                 "main-scoped-events",
                 settings.MAIN_SERVICE_URL.rstrip("/"),
                 "GET",
-                "/api/v1/events",
+                "/api/v1/internal/events",
+                api_key=settings.MAIN_SERVICE_API_KEY,
                 timeout=settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS,
                 params={
                     "scope_type": scope_type,

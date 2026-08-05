@@ -2,15 +2,23 @@
 
 import uuid
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, Response, status
-
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    HTTPException,
+    Query,
+    Request,
+    Response,
+    status,
+)
 from ksu_common import cached_public, rate_limit
 from ksu_common.schemas.responses import success
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...core.auth import get_current_user, require_scope, require_scoped_record, require_write_or_internal
+from ...core.auth import get_current_user, require_scope, require_scoped_record
 from ...core.database import get_db
-from ._fields import FieldSelection, FieldsDep, build_selector
+from ._fields import FieldsDep, FieldSelection, build_selector
 
 
 def build_crud_router(
@@ -327,7 +335,7 @@ def build_crud_router(
         async def create_item(
             data: create_schema = Body(...),
             db: AsyncSession = Depends(get_db),
-            access=Depends(require_write_or_internal(write_scope)),
+            access=Depends(require_scope(write_scope)),
         ):
             center_id = getattr(data, "center_id", None)
             if access is not None and (model_has_center_scope or center_id is not None):
@@ -336,7 +344,7 @@ def build_crud_router(
                 item = await service.create(
                     db,
                     data,
-                    actor_id=access.sub if access is not None else "service:main",
+                    actor_id=access.sub,
                 )
             except ValueError as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc

@@ -40,7 +40,7 @@ class _ResearchStatsClient:
     def __init__(self):
         self.request_path = None
 
-    async def request(self, _integration, _base_url, _method, path, **_kwargs):
+    async def request_internal(self, _integration, _base_url, _method, path, **_kwargs):
         self.request_path = path
         return _ResearchStatsResponse()
 
@@ -262,7 +262,7 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
             count = await stats_service._published_publications_count()
 
         self.assertEqual(11, count)
-        self.assertEqual("/api/v1/stats", client.request_path)
+        self.assertEqual("/api/v1/internal/stats", client.request_path)
 
     async def test_library_portal_stats_come_from_library_stats_api(self):
         client = _LibraryStatsClient()
