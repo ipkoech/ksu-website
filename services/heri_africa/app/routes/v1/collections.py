@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from ksu_common.cache import cached_public
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,12 +25,14 @@ async def _paged(db: AsyncSession, model: type, schema: type, page: int, per_pag
 
 @router.get("/team", response_model=list[TeamSummary])
 @public_content_rate_limit
+@cached_public(timeout=300, vary_on=("limit",))
 async def team(request: Request, limit: int = Query(20, ge=1, le=100), db: AsyncSession = Depends(get_db)):
     return [TeamSummary.model_validate(item) for item in await PublicService().list(db, TeamMember, limit=limit)]
 
 
 @router.get("/team/{slug}", response_model=TeamSummary)
 @public_content_rate_limit
+@cached_public(timeout=300, vary_on=("slug",))
 async def team_detail(request: Request, slug: str, db: AsyncSession = Depends(get_db)):
     item = await PublicService().by_slug(db, TeamMember, slug)
     if item is None:
@@ -39,6 +42,7 @@ async def team_detail(request: Request, slug: str, db: AsyncSession = Depends(ge
 
 @router.get("/partners", response_model=list[PartnerSummary])
 @public_content_rate_limit
+@cached_public(timeout=300, vary_on=("limit", "center_id", "center_slug"))
 async def partners(request: Request, limit: int = Query(50, ge=1, le=100), center_id: str | None = Query(None), center_slug: str | None = Query(None), db: AsyncSession = Depends(get_db)):
     query = PublicService.public_query(Partner).order_by(Partner.display_order.asc(), Partner.name.asc()).limit(limit)
     if center_id:
@@ -51,24 +55,28 @@ async def partners(request: Request, limit: int = Query(50, ge=1, le=100), cente
 
 @router.get("/centers/{center_id}/partners", response_model=list[PartnerSummary])
 @public_content_rate_limit
+@cached_public(timeout=300, vary_on=("center_id", "limit"))
 async def center_partners(request: Request, center_id: str, limit: int = Query(50, ge=1, le=100), db: AsyncSession = Depends(get_db)):
     return await partners(request=request, limit=limit, center_id=center_id, db=db)
 
 
 @router.get("/research/projects", response_model=list[ResearchSummary])
 @public_content_rate_limit
+@cached_public(timeout=300, vary_on=("limit",))
 async def projects(request: Request, limit: int = Query(20, ge=1, le=100), db: AsyncSession = Depends(get_db)):
     return [ResearchSummary.model_validate(item) for item in await PublicService().list(db, ResearchProject, limit=limit)]
 
 
 @router.get("/research/projects/paginated", response_model=PaginatedCollection)
 @public_content_rate_limit
+@cached_public(timeout=300, vary_on=("page", "per_page"))
 async def projects_paginated(request: Request, page: int = Query(1, ge=1), per_page: int = Query(12, ge=1, le=100), db: AsyncSession = Depends(get_db)):
     return await _paged(db, ResearchProject, ResearchSummary, page, per_page)
 
 
 @router.get("/research/projects/{slug}", response_model=ResearchSummary)
 @public_content_rate_limit
+@cached_public(timeout=300, vary_on=("slug",))
 async def project_detail(request: Request, slug: str, db: AsyncSession = Depends(get_db)):
     item = await PublicService().by_slug(db, ResearchProject, slug)
     if item is None:
@@ -78,6 +86,7 @@ async def project_detail(request: Request, slug: str, db: AsyncSession = Depends
 
 @router.get("/research/publications", response_model=list[ResearchSummary])
 @public_content_rate_limit
+@cached_public(timeout=300, vary_on=("limit",))
 async def publications(request: Request, limit: int = Query(20, ge=1, le=100), db: AsyncSession = Depends(get_db)):
     records = await PublicService().list(db, ResearchPublication, limit=limit)
     return [ResearchSummary(id=item.id, slug=item.slug, title=item.title, summary=item.abstract or "") for item in records]
@@ -85,12 +94,14 @@ async def publications(request: Request, limit: int = Query(20, ge=1, le=100), d
 
 @router.get("/research/publications/paginated", response_model=PaginatedCollection)
 @public_content_rate_limit
+@cached_public(timeout=300, vary_on=("page", "per_page"))
 async def publications_paginated(request: Request, page: int = Query(1, ge=1), per_page: int = Query(12, ge=1, le=100), db: AsyncSession = Depends(get_db)):
     return await _paged(db, ResearchPublication, lambda item: ResearchSummary(id=item.id, slug=item.slug, title=item.title, summary=item.abstract or ""), page, per_page)
 
 
 @router.get("/research/publications/{slug}", response_model=ResearchSummary)
 @public_content_rate_limit
+@cached_public(timeout=300, vary_on=("slug",))
 async def publication_detail(request: Request, slug: str, db: AsyncSession = Depends(get_db)):
     item = await PublicService().by_slug(db, ResearchPublication, slug)
     if item is None:
@@ -100,12 +111,14 @@ async def publication_detail(request: Request, slug: str, db: AsyncSession = Dep
 
 @router.get("/research/themes", response_model=list[ResearchSummary])
 @public_content_rate_limit
+@cached_public(timeout=300, vary_on=("limit",))
 async def themes(request: Request, limit: int = Query(20, ge=1, le=100), db: AsyncSession = Depends(get_db)):
     return [ResearchSummary(id=item.id, slug=item.slug, title=item.name, summary=item.description) for item in await PublicService().list(db, ResearchTheme, limit=limit)]
 
 
 @router.get("/research/themes/{slug}", response_model=ResearchSummary)
 @public_content_rate_limit
+@cached_public(timeout=300, vary_on=("slug",))
 async def theme_detail(request: Request, slug: str, db: AsyncSession = Depends(get_db)):
     item = await PublicService().by_slug(db, ResearchTheme, slug)
     if item is None:
@@ -115,6 +128,7 @@ async def theme_detail(request: Request, slug: str, db: AsyncSession = Depends(g
 
 @router.get("/pages/{slug}", response_model=PublicPageResponse)
 @public_content_rate_limit
+@cached_public(timeout=300, vary_on=("slug",))
 async def public_page(request: Request, slug: str, db: AsyncSession = Depends(get_db)):
     page = (await db.execute(select(Page).where(Page.slug == slug, Page.status == PublicationStatus.PUBLISHED, Page.deleted_at.is_(None)))).scalar_one_or_none()
     if page is None:
@@ -125,6 +139,7 @@ async def public_page(request: Request, slug: str, db: AsyncSession = Depends(ge
 
 @router.get("/impact-metrics", response_model=list[ImpactMetricSummary])
 @public_content_rate_limit
+@cached_public(timeout=300)
 async def impact_metrics(request: Request, db: AsyncSession = Depends(get_db)):
     records = (await db.execute(select(ImpactMetric).where(ImpactMetric.is_visible.is_(True), ImpactMetric.deleted_at.is_(None)).order_by(ImpactMetric.position.asc(), ImpactMetric.created_at.asc()))).scalars().all()
     return [ImpactMetricSummary.model_validate(item) for item in records]
@@ -132,11 +147,13 @@ async def impact_metrics(request: Request, db: AsyncSession = Depends(get_db)):
 
 @router.get("/events", response_model=list[EventSummary])
 @public_content_rate_limit
+@cached_public(timeout=300, vary_on=("limit",))
 async def events(request: Request, limit: int = Query(20, ge=1, le=100), db: AsyncSession = Depends(get_db)):
     return [EventSummary.model_validate(item) for item in await PublicService().list(db, Event, limit=limit)]
 
 
 @router.get("/opportunities", response_model=list[OpportunitySummary])
 @public_content_rate_limit
+@cached_public(timeout=300, vary_on=("limit",))
 async def opportunities(request: Request, limit: int = Query(20, ge=1, le=100), db: AsyncSession = Depends(get_db)):
     return [OpportunitySummary.model_validate(item) for item in await PublicService().list(db, Opportunity, limit=limit)]

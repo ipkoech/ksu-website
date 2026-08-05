@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query, Request
+from ksu_common.cache import cached_public
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +17,7 @@ router = APIRouter(tags=["HERI Public"])
 
 @router.get("/site", response_model=SiteResponse)
 @public_content_rate_limit
+@cached_public(timeout=300)
 async def site(request: Request, db: AsyncSession = Depends(get_db)) -> SiteResponse:
     settings = (await db.execute(select(SiteSettings).order_by(SiteSettings.created_at.asc()))).scalars().first()
     if settings is None:
@@ -25,6 +27,7 @@ async def site(request: Request, db: AsyncSession = Depends(get_db)) -> SiteResp
 
 @router.get("/navigation", response_model=list[NavigationItemResponse])
 @public_content_rate_limit
+@cached_public(timeout=300)
 async def navigation(request: Request, db: AsyncSession = Depends(get_db)):
     records = (await db.execute(select(NavigationItem).where(NavigationItem.is_visible.is_(True)).order_by(NavigationItem.position.asc()))).scalars().all()
     return [NavigationItemResponse.model_validate(item) for item in records]
@@ -32,6 +35,7 @@ async def navigation(request: Request, db: AsyncSession = Depends(get_db)):
 
 @router.get("/hero-slides")
 @public_content_rate_limit
+@cached_public(timeout=300)
 async def hero_slides(request: Request, db: AsyncSession = Depends(get_db)):
     records = (await db.execute(select(HeroSlide).where(HeroSlide.is_active.is_(True)).order_by(HeroSlide.position.asc(), HeroSlide.created_at.asc()))).scalars().all()
     return records
@@ -39,6 +43,7 @@ async def hero_slides(request: Request, db: AsyncSession = Depends(get_db)):
 
 @router.get("/footer", response_model=list[FooterLinkResponse])
 @public_content_rate_limit
+@cached_public(timeout=300)
 async def footer(request: Request, db: AsyncSession = Depends(get_db)):
     records = (await db.execute(select(FooterLink).where(FooterLink.is_visible.is_(True)).order_by(FooterLink.column.asc(), FooterLink.position.asc()))).scalars().all()
     return [FooterLinkResponse.model_validate(item) for item in records]
@@ -46,6 +51,7 @@ async def footer(request: Request, db: AsyncSession = Depends(get_db)):
 
 @router.get("/news", response_model=list[NewsSummary])
 @public_content_rate_limit
+@cached_public(timeout=120, vary_on=("limit", "offset"))
 async def news(
     request: Request,
     limit: int = Query(default=20, ge=1, le=100),
@@ -58,6 +64,7 @@ async def news(
 
 @router.get("/news/{slug}", response_model=NewsDetail)
 @public_content_rate_limit
+@cached_public(timeout=300, vary_on=("slug",))
 async def news_detail(request: Request, slug: str, db: AsyncSession = Depends(get_db)) -> NewsDetail:
     from fastapi import HTTPException
 
