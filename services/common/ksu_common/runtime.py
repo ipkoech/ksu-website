@@ -30,6 +30,7 @@ from .response_validation import (
     StrictResponseValidationRoute,
     allow_response_model_exemption,
     enforce_response_model_coverage,
+    install_strict_response_validation,
 )
 
 STANDARD_CORS_METHODS = ("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
@@ -132,7 +133,7 @@ def create_service_app(
 
     if config.metrics_path:
         @app.get(config.metrics_path, include_in_schema=False)
-        @allow_response_model_exemption("metrics")
+        @allow_response_model_exemption("metrics", path=config.metrics_path)
         async def metrics_endpoint() -> Response:
             return Response(
                 content=registry.render(),
@@ -166,6 +167,7 @@ def create_service_app(
         )
 
     register_routes(app)
+    install_strict_response_validation(app.routes)
     configured_environment = config.environment or os.getenv("APP_ENV", "")
     is_production = configured_environment.strip().lower() == "production"
     strict_response_model_validation = (
@@ -176,6 +178,20 @@ def create_service_app(
     app.state.response_model_coverage = enforce_response_model_coverage(
         app.routes,
         production=strict_response_model_validation,
+    )
+    coverage = app.state.response_model_coverage
+    coverage_tags = {"service": config.service_name}
+    http_metrics.gauge("response_model_coverage.missing", len(coverage.missing), tags=coverage_tags)
+    http_metrics.gauge(
+        "response_model_coverage.nonconcrete", len(coverage.nonconcrete), tags=coverage_tags
+    )
+    http_metrics.gauge(
+        "response_model_coverage.invalid_exemptions",
+        len(coverage.invalid_exemptions),
+        tags=coverage_tags,
+    )
+    http_metrics.gauge(
+        "response_model_coverage.baseline_delta", coverage.baseline_delta, tags=coverage_tags
     )
 
     # Register this last so body-limit middleware installed by route registrars
