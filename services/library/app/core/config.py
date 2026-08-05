@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     # inbound key used to authenticate callers into Library.
     MAIN_SERVICE_API_KEY: str | None = None
     INTERNAL_API_KEY: str = "change-me-internal"
+    PUBLIC_CATALOG_RATE_LIMIT_COUNT: int = Field(default=60, ge=1)
+    PUBLIC_CATALOG_RATE_LIMIT_WINDOW_SECONDS: int = Field(default=60, ge=1)
+    HEALTH_RATE_LIMIT_COUNT: int = Field(default=30, ge=1)
+    HEALTH_RATE_LIMIT_WINDOW_SECONDS: int = Field(default=60, ge=1)
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: Literal["json", "text"] = "json"
     LOG_DIR: str = "/app/logs"

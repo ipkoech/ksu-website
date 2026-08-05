@@ -39,6 +39,10 @@ class HeriSettings(BaseSettings):
     CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:3001", "http://localhost:3004"]
     RESEARCH_SERVICE_URL: str = "http://research:8001"
     RESEARCH_SERVICE_API_KEY: str | None = None
+    PUBLIC_CONTENT_RATE_LIMIT_COUNT: int = Field(default=120, ge=1)
+    PUBLIC_CONTENT_RATE_LIMIT_WINDOW_SECONDS: int = Field(default=60, ge=1)
+    HEALTH_RATE_LIMIT_COUNT: int = Field(default=30, ge=1)
+    HEALTH_RATE_LIMIT_WINDOW_SECONDS: int = Field(default=60, ge=1)
 
     @field_validator("DATABASE_URL")
     @classmethod

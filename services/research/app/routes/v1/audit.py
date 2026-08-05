@@ -22,6 +22,7 @@ require_internal_api_key = internal_key_guard(
     lambda: get_settings().INTERNAL_API_KEY,
     allow_legacy_header=False,
 )
+settings = get_settings()
 
 
 @router.get("", dependencies=[Depends(require_internal_api_key)])

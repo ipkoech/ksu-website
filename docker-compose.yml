@@ -15,6 +15,7 @@ volumes:
   postgres_data:
   redis_data:
   uploads_data:
+  prometheus_data:
   frontend_node_modules:
   frontend_pnpm_store:
 
@@ -285,7 +286,13 @@ services:
       LIBRARY_SERVICE_URL: http://library:8002
       CORS_ORIGINS: ${CORS_ORIGINS:-}
       SCHOOL_PORTAL_EVENTS_ENABLED: ${SCHOOL_PORTAL_EVENTS_ENABLED:-true}
+      KSU_WORKER_METRICS_HOST: 0.0.0.0
+      KSU_WORKER_METRICS_PORT: 9100
+      PROMETHEUS_MULTIPROC_DIR: /tmp/ksu-prometheus
+      KSU_WORKER_METRICS_REDIS_URL: redis://redis:6379/0
       LOG_DIR: /app/logs
+    expose:
+      - "9100"
     volumes:
       - ./logs/main:/app/logs
     depends_on:
@@ -312,8 +319,14 @@ services:
       MAIN_SERVICE_URL: http://main:8000
       MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
+      KSU_WORKER_METRICS_HOST: 0.0.0.0
+      KSU_WORKER_METRICS_PORT: 9101
+      PROMETHEUS_MULTIPROC_DIR: /tmp/ksu-prometheus
+      KSU_WORKER_METRICS_REDIS_URL: redis://redis:6379/1
       CORS_ORIGINS: ${CORS_ORIGINS:-}
       LOG_DIR: /app/logs
+    expose:
+      - "9101"
     volumes:
       - ./logs/library:/app/logs
     depends_on:
@@ -341,12 +354,18 @@ services:
       MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       INTERNAL_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
       REFERENCE_VALIDATION_MODE: strict
+      KSU_WORKER_METRICS_HOST: 0.0.0.0
+      KSU_WORKER_METRICS_PORT: 9102
+      PROMETHEUS_MULTIPROC_DIR: /tmp/ksu-prometheus
+      KSU_WORKER_METRICS_REDIS_URL: redis://redis:6379/2
       CORS_ORIGINS: ${CORS_ORIGINS:-}
       LOG_DIR: /app/logs
       EXPORT_DIR: /app/exports
     volumes:
       - ./logs/research:/app/logs
       - ./uploads/research-exports:/app/exports
+    expose:
+      - "9102"
     depends_on:
       postgres:
         condition: service_healthy
@@ -372,17 +391,38 @@ services:
       CELERY_RESULT_BACKEND: redis://redis:6379/3
       RESEARCH_SERVICE_URL: http://research:8001
       RESEARCH_SERVICE_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
+      KSU_WORKER_METRICS_HOST: 0.0.0.0
+      KSU_WORKER_METRICS_PORT: 9103
+      PROMETHEUS_MULTIPROC_DIR: /tmp/ksu-prometheus
+      KSU_WORKER_METRICS_REDIS_URL: redis://redis:6379/3
       CORS_ORIGINS: ${CORS_ORIGINS:-}
       LOG_DIR: /app/logs
     volumes:
       - ./logs/heri:/app/logs
       - ./uploads/heri:/app/uploads
+    expose:
+      - "9103"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     networks: [ksu]
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    profiles: [observability]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks: [ksu, api]
     restart: unless-stopped
 
   # ── Frontend dev servers ────────────────────────────────────────────────────

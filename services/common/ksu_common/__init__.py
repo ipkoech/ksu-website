@@ -79,6 +79,15 @@ from .task_queue import (
     create_celery_app,
     run_worker_async,
 )
+from .worker_metrics import (
+    MultiprocessMetricsSink,
+    QueueDepthCollector,
+    WorkerMetricsConfig,
+    mark_worker_process_dead,
+    start_worker_metrics_server,
+    stop_worker_metrics_server,
+    worker_metrics_config_from_environment,
+)
 
 __all__ = [
     # Auth
@@ -171,4 +180,11 @@ __all__ = [
     "close_worker_async_runtime",
     "create_celery_app",
     "run_worker_async",
+    "MultiprocessMetricsSink",
+    "QueueDepthCollector",
+    "WorkerMetricsConfig",
+    "mark_worker_process_dead",
+    "start_worker_metrics_server",
+    "stop_worker_metrics_server",
+    "worker_metrics_config_from_environment",
 ]

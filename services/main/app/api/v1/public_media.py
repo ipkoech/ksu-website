@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import selectinload
 
@@ -15,6 +15,7 @@ from ...deps import DbSession
 from ...models import Media, MediaLink
 from ...services import MediaService
 from ...services._base import ilike_any, paginate_query
+from ...core.config import public_media_rate_limit
 
 router = APIRouter()
 
@@ -79,7 +80,9 @@ def public_media_link_payload(link: MediaLink) -> dict[str, object | None]:
 
 
 @router.get("")
+@public_media_rate_limit
 async def list_public_media(
+    request: Request,
     db: DbSession,
     page: int = Query(1, ge=1),
     per_page: int = Query(24, ge=1, le=100),
@@ -114,7 +117,9 @@ async def list_public_media(
 
 
 @router.get("/links")
+@public_media_rate_limit
 async def list_public_media_links(
+    request: Request,
     db: DbSession,
     entity_type: str = Query(..., min_length=1, max_length=64),
     entity_id: uuid.UUID = Query(...),
@@ -146,7 +151,8 @@ async def list_public_media_links(
 
 
 @router.get("/{media_id}")
-async def get_public_media(media_id: uuid.UUID, db: DbSession):
+@public_media_rate_limit
+async def get_public_media(request: Request, media_id: uuid.UUID, db: DbSession):
     media = await MediaService.get_by_id(db, media_id)
     if media is None or not media.is_public:
         raise HTTPException(status_code=404, detail="Media not found")

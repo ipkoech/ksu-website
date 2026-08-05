@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Request, status
 
 from ksu_common import cached_public
 from ksu_common.schemas.responses import success
@@ -15,13 +15,16 @@ from ...deps import CurrentUser, DbSession
 from ...models import Document
 from ...schemas import DocumentCreate, DocumentUpdate
 from ...services import DocumentService
+from ...core.config import public_content_rate_limit
 
 router = APIRouter()
 
 
 @router.get("")
+@public_content_rate_limit
 @cached_public(timeout=300, vary_on=("page", "per_page", "q", "document_type", "category", "scope_type", "scope_id", "fields", "include"))
 async def list_documents(
+    request: Request,
     db: DbSession,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -89,8 +92,9 @@ async def list_admin_documents(
 
 
 @router.get("/{slug}")
+@public_content_rate_limit
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
-async def get_document(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
+async def get_document(request: Request, slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Document, fields)
     item = await DocumentService.get_by_slug(db, slug, load_options=selector.load_options)
     if item is None:

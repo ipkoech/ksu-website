@@ -14,11 +14,13 @@ from ksu_common.schemas.responses import success
 from ...core.database import get_db
 from ...schemas.search import LibrarySearchResponse
 from ...services.search import unified_search
+from ._rate_limits import public_catalog_rate_limit
 
 router = APIRouter(prefix="/library/search", tags=["Library Search"])
 
 
 @router.get("")
+@public_catalog_rate_limit
 @cached_public(timeout=60, vary_on=("q", "types", "library_id", "limit"))
 async def search_library(
     request: Request,

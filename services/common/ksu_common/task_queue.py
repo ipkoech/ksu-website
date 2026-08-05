@@ -12,11 +12,19 @@ from time import perf_counter
 from typing import Any
 
 from .observability import (
+    CompositeMetricsSink,
     Metrics,
     current_correlation_id,
     current_request_id,
     get_prometheus_registry,
     request_context,
+)
+from .worker_metrics import (
+    MultiprocessMetricsSink,
+    mark_worker_process_dead,
+    start_worker_metrics_server,
+    stop_worker_metrics_server,
+    worker_metrics_config_from_environment,
 )
 
 _task_context = threading.local()
@@ -214,8 +222,7 @@ def _task_failure(
     metrics = observation.metrics if observation else _task_metrics(task, sender=sender)
     task_name = observation.task_name if observation else _bounded_task_name(task, sender=sender)
     tags = _task_tags(task_name, "failure")
-    if exception is not None:
-        tags["exception"] = type(exception).__name__[:64]
+    tags["exception"] = type(exception).__name__[:64] if exception is not None else "unknown"
     metrics.increment("celery.task.failure", tags=tags)
 
 
@@ -276,6 +283,7 @@ def create_celery_app(
         task_prerun,
         task_rejected,
         task_retry,
+        worker_ready,
         worker_process_shutdown,
         worker_shutdown,
     )
@@ -300,7 +308,18 @@ def create_celery_app(
         task_routes=dict(config.task_routes),
         beat_schedule=dict(config.beat_schedule),
     )
-    app._ksu_metrics = config.metrics or Metrics(get_prometheus_registry())
+    worker_metrics_config = worker_metrics_config_from_environment(
+        broker_url=config.broker_url,
+        default_queue=config.default_queue,
+        task_routes=config.task_routes,
+    )
+    if config.metrics is not None:
+        app._ksu_metrics = config.metrics
+    else:
+        sinks = [get_prometheus_registry()]
+        if worker_metrics_config is not None:
+            sinks.append(MultiprocessMetricsSink())
+        app._ksu_metrics = Metrics(CompositeMetricsSink(*sinks))
     packages = tuple(task_packages)
     if packages:
         app.autodiscover_tasks(list(packages))
@@ -309,13 +328,29 @@ def create_celery_app(
     worker_process_shutdown.connect(
         lambda **_kwargs: close_worker_async_runtime(config.shutdown_hooks),
         weak=False,
-        dispatch_uid="ksu_common.worker_process_shutdown",
+        dispatch_uid=f"ksu_common.worker_process_shutdown.{config.name}",
     )
     worker_shutdown.connect(
         lambda **_kwargs: close_worker_async_runtime(config.shutdown_hooks),
         weak=False,
-        dispatch_uid="ksu_common.worker_shutdown",
+        dispatch_uid=f"ksu_common.worker_shutdown.{config.name}",
     )
+    worker_process_shutdown.connect(
+        lambda **_kwargs: mark_worker_process_dead(),
+        weak=False,
+        dispatch_uid=f"ksu_common.worker_process_shutdown_metrics.{config.name}",
+    )
+    worker_shutdown.connect(
+        lambda **_kwargs: stop_worker_metrics_server(),
+        weak=False,
+        dispatch_uid=f"ksu_common.worker_shutdown_metrics.{config.name}",
+    )
+    if worker_metrics_config is not None:
+        worker_ready.connect(
+            lambda **_kwargs: start_worker_metrics_server(worker_metrics_config),
+            weak=False,
+            dispatch_uid=f"ksu_common.worker_ready_metrics.{config.name}",
+        )
     task_prerun.connect(_task_prerun, weak=False, dispatch_uid="ksu_common.task_prerun")
     task_postrun.connect(_task_postrun, weak=False, dispatch_uid="ksu_common.task_postrun")
     task_retry.connect(_task_retry, weak=False, dispatch_uid="ksu_common.task_retry")
