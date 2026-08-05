@@ -43,13 +43,13 @@ export default async function LibrarySearchPage({ searchParams }: SearchPageProp
   const total = catalog.data.length + electronic.data.length;
 
   return (
-    <main id="library-main" className="min-h-screen bg-white">
+    <main id="library-main" className="min-h-screen bg-background">
       <LibraryContentBand>
         <div className="mb-6">
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-secondary">
             Library Search
           </p>
-          <h1 className="mt-3 max-w-4xl text-wrap font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-foreground sm:text-5xl">
+          <h1 className="mt-3 max-w-4xl text-wrap font-[family-name:var(--app-font-display)] text-3xl font-normal leading-tight tracking-tight text-foreground sm:text-5xl">
             Search catalog records, e-resources, downloads, services, and staff.
           </h1>
           <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">

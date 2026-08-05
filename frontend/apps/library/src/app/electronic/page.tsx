@@ -107,7 +107,7 @@ export default async function ElectronicResourcesPage({
   const electronicBaseHref = buildBaseHref("/electronic", params);
 
   return (
-    <main id="library-main" className="min-h-screen bg-white">
+    <main id="library-main" className="min-h-screen bg-background">
       <LibraryHero
         imageSrc="/images/library/shelves.jpg"
         imageAlt="Rows of shelved books in the Kisii University Library"
@@ -130,7 +130,6 @@ export default async function ElectronicResourcesPage({
       <LibraryContentBand>
         <SearchPanel>
           <LibrarySectionHeading
-            eyebrow="Search"
             title="Find an electronic resource"
             body="Search by database name, provider, subject, access level, or platform type."
           />
@@ -176,7 +175,6 @@ export default async function ElectronicResourcesPage({
         <LibrarySection
           eyebrow="Featured"
           title="Frequently used platforms"
-          body="These resources are marked as featured by the library team."
         >
           <div className="grid gap-5 lg:grid-cols-3">
             {featured.map((resource) => (
@@ -188,7 +186,6 @@ export default async function ElectronicResourcesPage({
 
       <LibraryContentBand tone="soft">
         <LibrarySectionHeading
-          eyebrow="A-Z Listing"
           title={query ? `Results for "${query}"` : "Browse all e-resources"}
           body={resultSummary({
           count: resources.data.length,
@@ -271,9 +268,8 @@ export default async function ElectronicResourcesPage({
 
       <div id="external-links" className="scroll-mt-24">
         <LibrarySection
-          eyebrow="Repository & external access"
-          title="Repository, OPAC, and off-campus access points"
-          body="Verified library links for repository content, OPAC records, e-journals, and remote access tools."
+          eyebrow="Repository"
+          title="OPAC and off-campus access points"
           tone="white"
         >
           {externalLinks.length === 0 ? (
@@ -301,7 +297,6 @@ export default async function ElectronicResourcesPage({
         <LibrarySection
           eyebrow="Downloads"
           title="Library documents and forms"
-          body="Public documents published by library branches, including guides, forms, and policies."
         >
           {downloadFiles.length === 0 ? (
             <StatusMessage>No public library downloads are available yet.</StatusMessage>
@@ -354,8 +349,8 @@ function ResourceCard({
     <article
       className={
         featured
-          ? "rounded-lg border border-primary/30 bg-white p-5 shadow-sm"
-          : "rounded-lg border border-border bg-white p-5 shadow-sm"
+          ? "rounded-2xl bg-card p-5 ring-1 ring-primary/30"
+          : "rounded-2xl bg-card p-5 ring-1 ring-primary/10"
       }
     >
       <div className="flex flex-wrap items-center gap-2">

@@ -88,7 +88,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   const catalogBaseHref = buildBaseHref("/catalog", params);
 
   return (
-    <main id="library-main" className="min-h-screen bg-white">
+    <main id="library-main" className="min-h-screen bg-background">
       <LibraryHero
         imageSrc="/images/library/stacks-science.jpg"
         imageAlt="Book stacks in the Science and Technology section of the Kisii University Library"

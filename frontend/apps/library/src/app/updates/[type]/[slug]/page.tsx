@@ -1,4 +1,4 @@
-import type { Blog, Event, News } from "@ksu/api-client";
+import type { Event } from "@ksu/api-client";
 import { notFound } from "next/navigation";
 import { RichTextRenderer } from "@ksu/ui/rich-text-renderer";
 import {

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { ksuSans, ksuDisplay } from "@ksu/ui/fonts";
 import { AccessibilityInitScript, AccessibilityShell } from "@ksu/ui";
 import { MiniHeader } from "@ksu/ui/layout/public";
 import { LibraryHeader } from "../components/library-header";
 import { LibraryFooter } from "../components/library-footer";
 import { LibraryAssistantLauncher } from "../components/library-assistant-launcher";
+import { getLibraryTodayHours } from "../lib/library-public-data";
 import { publicFrontendUrl } from "../lib/service-urls";
 import "./globals.css";
 
@@ -63,13 +65,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const todayHours = await getLibraryTodayHours();
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${ksuSans.variable} ${ksuDisplay.variable}`}
+    >
       <body className="font-sans antialiased" suppressHydrationWarning>
         <AccessibilityInitScript />
         <AccessibilityShell mainContentId="library-main">
@@ -79,7 +86,7 @@ export default function RootLayout({
               quickLinks={miniQuickLinks}
               socialLinks={socialLinks}
             />
-            <LibraryHeader />
+            <LibraryHeader todayHours={todayHours.data[0] ?? null} />
             {children}
             <LibraryAssistantLauncher />
             <LibraryFooter contactInfo={contactInfo} />

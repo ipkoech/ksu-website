@@ -47,7 +47,7 @@ export default async function LibraryAboutPage() {
     .filter((group) => group.staff.length > 0);
 
   return (
-    <main id="library-main" className="min-h-screen bg-white">
+    <main id="library-main" className="min-h-screen bg-background">
       <EditorialPageHero
         eyebrow="About the Library"
         title="A library built around access, scholarship, and support."
@@ -58,7 +58,7 @@ export default async function LibraryAboutPage() {
 
       {errors.map((error) => <section key={error} className="px-4 pt-6 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section>)}
 
-      <EditorialSection eyebrow="Our mandate" title={primaryBranch?.name ?? "Kisii University Library"} body={compactText(primaryBranch?.description) || "Library overview content is being updated by the library team."}>
+      <EditorialSection title={primaryBranch?.name ?? "Kisii University Library"} body={compactText(primaryBranch?.description) || "Library overview content is being updated by the library team."}>
         <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
           <div className="border-l-4 border-secondary bg-surface-subtle p-6 sm:p-8">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-secondary">Library direction</p>
@@ -69,14 +69,14 @@ export default async function LibraryAboutPage() {
       </EditorialSection>
 
       <div id="leadership" className="scroll-mt-24">
-        <EditorialSection eyebrow="Leadership" title="People who support your academic journey" body="Meet the library leadership who guide services for students, researchers, and academic staff." tone="soft">
+        <EditorialSection eyebrow="Leadership" title="People who support your academic journey" body="Meet the library leadership who guide services for students, researchers, and staff." tone="soft">
           {featuredLeader ? <LeadershipFeature member={featuredLeader} /> : <StatusMessage>No public library leadership records are available yet.</StatusMessage>}
           {leaders.length > 1 ? <div className="mt-10 grid gap-x-8 divide-y divide-border sm:grid-cols-2 sm:divide-y-0">{leaders.slice(1).map((member) => <StaffRow key={member.id} member={member} />)}</div> : null}
         </EditorialSection>
       </div>
 
       <div id="staff" className="scroll-mt-24">
-        <EditorialSection eyebrow="Staff directory" title="Library team by branch" body="Public library staff records grouped by the branch where they are based.">
+        <EditorialSection title="Library team by branch" body="Public library staff records grouped by the branch where they are based.">
           {staffGroups.length === 0 ? (
             <StatusMessage>No public library staff records are available yet.</StatusMessage>
           ) : (
@@ -95,7 +95,7 @@ export default async function LibraryAboutPage() {
         </EditorialSection>
       </div>
 
-      <EditorialSection eyebrow="Library network" title="Access points across the University" body="Each public branch record is maintained by the library team and reused across the catalog, services, and contact journeys.">
+      <EditorialSection title="Access points across the University" body="Each public branch record is maintained by the library team and reused across the catalog, services, and contact journeys.">
         <div className="divide-y divide-border border-y border-border">{branches.data.length === 0 ? <StatusMessage>No public library branches are available yet.</StatusMessage> : branches.data.map((branch) => <div key={branch.id} className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between"><div><h3 className="text-lg font-semibold text-foreground">{branch.name}</h3><p className="mt-1 text-sm text-muted-foreground">{branch.address ?? branch.location ?? "Location being updated"}</p></div><Link href="/contact" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-secondary">Contact this branch <ArrowRight aria-hidden className="h-4 w-4" /></Link></div>)}</div>
       </EditorialSection>
 

@@ -86,7 +86,7 @@ export function LibraryHero({
         sizes="100vw"
         className="object-cover object-[48%_50%]"
       />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.94)_0%,rgba(2,20,49,0.82)_42%,rgba(2,20,49,0.32)_78%,rgba(2,20,49,0.12)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--brand-overlay)/0.94)_0%,hsl(var(--brand-overlay)/0.82)_42%,hsl(var(--brand-overlay)/0.32)_78%,hsl(var(--brand-overlay)/0.12)_100%)]" />
       <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-brand-overlay/40 to-transparent" />
       <div className="relative mx-auto flex min-h-[70vh] max-w-[1680px] flex-col justify-center px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <LibraryHeroContentMotion>
@@ -96,7 +96,7 @@ export function LibraryHero({
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/80 sm:text-sm sm:tracking-[0.24em]">
             {eyebrow}
           </p>
-          <h1 className="mt-4 max-w-3xl text-balance font-[family-name:var(--font-display)] text-3xl font-bold leading-tight sm:text-5xl lg:text-6xl">
+          <h1 className="mt-4 max-w-3xl text-balance font-[family-name:var(--app-font-display)] text-3xl font-normal leading-tight tracking-tight sm:text-5xl lg:text-6xl">
             {title}
           </h1>
           <p className="mt-5 max-w-2xl text-pretty text-sm leading-7 text-white/85 sm:text-base sm:leading-8 lg:text-lg">
@@ -147,7 +147,7 @@ export function LibrarySection({
   children,
   tone = "light",
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   body?: string;
   children: ReactNode;
@@ -157,16 +157,18 @@ export function LibrarySection({
     <section
       className={
         tone === "white"
-          ? "bg-white px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
-          : "border-y border-border bg-surface-subtle px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+          ? "bg-background px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+          : "border-y border-border bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] px-4 py-12 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       }
     >
       <div className="mx-auto w-full max-w-[1680px]">
         <div className="mb-7 max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary sm:text-sm sm:tracking-[0.24em]">
-            {eyebrow}
-          </p>
-          <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground sm:text-4xl">
+          {eyebrow ? (
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+              {eyebrow}
+            </p>
+          ) : null}
+          <h2 className={`${eyebrow ? "mt-3" : ""} text-balance font-[family-name:var(--app-font-display)] text-2xl font-normal leading-tight tracking-tight text-foreground sm:text-4xl`}>
             {title}
           </h2>
           {body ? (
@@ -217,7 +219,7 @@ export function IconCard({
   );
 
   const className =
-    "group flex min-h-[230px] flex-col rounded-lg border border-border bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20";
+    "group flex min-h-[230px] flex-col rounded-2xl bg-card p-5 ring-1 ring-primary/10 transition hover:-translate-y-1 hover:ring-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 active:scale-[0.98]";
 
   return href ? (
     <Link href={href} className={className}>
@@ -335,8 +337,8 @@ export function StatusMessage({
       role="status"
       className={
         tone === "error"
-          ? "rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
-          : "rounded-md border border-border bg-white p-4 text-sm leading-6 text-muted-foreground"
+          ? "rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+          : "rounded-2xl bg-card p-4 text-sm leading-6 text-muted-foreground ring-1 ring-primary/10"
       }
     >
       {children}
@@ -349,7 +351,7 @@ export function LibraryShell({
 }: {
   children: ReactNode;
 }) {
-  return <main id="library-main" className="min-h-screen overflow-hidden bg-white">{children}</main>;
+  return <main id="library-main" className="min-h-screen overflow-hidden bg-background">{children}</main>;
 }
 
 export function LibraryContentBand({
@@ -363,8 +365,8 @@ export function LibraryContentBand({
     <section
       className={
         tone === "soft"
-          ? "border-y border-border bg-surface-subtle px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
-          : "bg-white px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+          ? "border-y border-border bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
+          : "bg-background px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       }
     >
       <div className="mx-auto w-full max-w-[1680px]">{children}</div>
@@ -377,16 +379,18 @@ export function LibrarySectionHeading({
   title,
   body,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   body?: string | null;
 }) {
   return (
     <div className="mb-6 max-w-3xl">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary sm:text-sm sm:tracking-[0.22em]">
-        {eyebrow}
-      </p>
-      <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground sm:text-4xl">
+      {eyebrow ? (
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+          {eyebrow}
+        </p>
+      ) : null}
+      <h2 className={`${eyebrow ? "mt-3" : ""} text-balance font-[family-name:var(--app-font-display)] text-2xl font-normal leading-tight tracking-tight text-foreground sm:text-4xl`}>
         {title}
       </h2>
       {body ? <p className="mt-4 text-pretty text-base leading-7 text-muted-foreground">{body}</p> : null}
@@ -396,7 +400,7 @@ export function LibrarySectionHeading({
 
 export function SearchPanel({ children }: { children: ReactNode }) {
   return (
-    <div className="-mt-4 min-w-0 rounded-lg border border-border bg-white p-4 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)] sm:-mt-8 sm:p-5">
+    <div className="-mt-4 min-w-0 rounded-2xl bg-card p-4 ring-1 ring-primary/10 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)] sm:-mt-8 sm:p-5">
       {children}
     </div>
   );
@@ -557,7 +561,7 @@ export function SidePanel({
   children: ReactNode;
 }) {
   return (
-    <aside className="h-fit min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+    <aside className="h-fit min-w-0 rounded-2xl bg-card p-5 ring-1 ring-primary/10">
       {eyebrow ? (
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
           {eyebrow}
@@ -581,7 +585,7 @@ export function MetricStrip({
       {items.map((item) => (
         <div
           key={item.label}
-          className="rounded-lg border border-border bg-white p-5 shadow-sm"
+          className="rounded-2xl bg-card p-5 ring-1 ring-primary/10"
         >
           <p className="text-3xl font-bold text-foreground">{item.value}</p>
           <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
@@ -607,7 +611,7 @@ export function PillNav({
         <Link
           key={item.href}
           href={item.href}
-          className="inline-flex min-h-11 shrink-0 items-center rounded-md border border-border bg-white px-4 py-2 text-sm font-semibold text-muted-foreground shadow-sm transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="inline-flex min-h-11 shrink-0 items-center rounded-2xl bg-card px-4 py-2 text-sm font-semibold text-muted-foreground ring-1 ring-primary/10 transition hover:ring-primary/30 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 active:scale-[0.98]"
         >
           {item.label}
         </Link>
@@ -668,12 +672,12 @@ export function CompactRecord({
   return href ? (
     <Link
       href={href}
-      className="block rounded-lg border border-border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+      className="block rounded-2xl bg-card p-5 ring-1 ring-primary/10 transition hover:-translate-y-0.5 hover:ring-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 active:scale-[0.98]"
     >
       {content}
     </Link>
   ) : (
-    <article className="rounded-lg border border-border bg-white p-5 shadow-sm">
+    <article className="rounded-2xl bg-card p-5 ring-1 ring-primary/10">
       {content}
     </article>
   );
@@ -689,7 +693,7 @@ export function QuickStat({
   detail?: string | null;
 }) {
   return (
-    <div className="rounded-md border border-border bg-white p-4 shadow-sm">
+    <div className="rounded-2xl bg-card p-4 ring-1 ring-primary/10">
       <p className="text-2xl font-bold text-foreground">{value}</p>
       <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-secondary">
         {label}
@@ -755,12 +759,12 @@ export function RecordListItem({
   return href ? (
     <Link
       href={href}
-      className="block rounded-lg border border-border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+      className="block rounded-2xl bg-card p-5 ring-1 ring-primary/10 transition hover:-translate-y-0.5 hover:ring-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 active:scale-[0.98]"
     >
       {content}
     </Link>
   ) : (
-    <article className="rounded-lg border border-border bg-white p-5 shadow-sm">
+    <article className="rounded-2xl bg-card p-5 ring-1 ring-primary/10">
       {content}
     </article>
   );

@@ -23,7 +23,7 @@ export default async function AskLibrarianPage() {
   ]);
 
   return (
-    <main id="library-main" className="min-h-screen bg-white">
+    <main id="library-main" className="min-h-screen bg-background">
       <LibraryHero
         imageSrc="/images/library/reading-veranda.jpg"
         imageAlt="Students studying on the veranda of the Kisii University Library"
@@ -52,7 +52,6 @@ export default async function AskLibrarianPage() {
       ) : null}
 
       <LibrarySection
-        eyebrow="Conversational support"
         title="Find the next useful step"
         body="Ask naturally about a resource, service, database, policy, branch, or research task. The assistant will use the Library’s published knowledge and explain when a librarian should take over."
         tone="white"
@@ -76,7 +75,7 @@ export default async function AskLibrarianPage() {
         </div>
       </section>
 
-      <section className="bg-white px-4 py-12 sm:px-6 lg:px-8">
+      <section className="bg-background px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-[1320px] border-t border-border pt-7">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Privacy by design</p>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">Your first question is held temporarily for the preview. We only create a persistent conversation after you verify your email. Do not share passwords, payment details, or confidential personal information.</p>
