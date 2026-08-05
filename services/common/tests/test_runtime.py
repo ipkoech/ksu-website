@@ -28,6 +28,11 @@ def _register_routes(app: FastAPI) -> None:
         return {"ok": True}
 
     limited.__max_body_bytes__ = 4
+
+    @app.get("/items/{item_id}")
+    async def item(item_id: str) -> dict[str, str]:
+        return {"item_id": item_id}
+
     install_request_body_limit_middleware(app)
 
 
@@ -140,3 +145,21 @@ def test_runtime_redacts_secret_like_exception_detail(monkeypatch) -> None:
     TestClient(app, raise_server_exceptions=False).get("/raises")
 
     assert persisted[-1]["error_message"] == "upstream Authorization: Bearer [REDACTED] failed"
+
+
+def test_runtime_exposes_prometheus_http_metrics_without_raw_urls() -> None:
+    client = TestClient(_app(), raise_server_exceptions=False)
+
+    assert client.get("/items/secret-record-123").status_code == 200
+    assert client.get("/missing").status_code == 404
+
+    response = client.get("/metrics")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/plain; version=0.0.4")
+    body = response.text
+    assert 'ksu_http_server_requests_total{method="GET",route="/items/{item_id}",service="test-service",status_code="200"} 1' in body
+    assert 'ksu_http_server_requests_total{method="GET",route="/__unmatched__",service="test-service",status_code="404"} 1' in body
+    assert "secret-record-123" not in body
+    assert "route=\"/metrics\"" not in body
+    assert "ksu_http_server_request_duration_seconds" in body

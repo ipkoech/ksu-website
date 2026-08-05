@@ -10,6 +10,7 @@ from ksu_common.logging import JsonFormatter
 from ksu_common.observability import (
     AuditEvent,
     Metrics,
+    PrometheusMetricsRegistry,
     Span,
     Tracer,
     audit_event,
@@ -18,6 +19,50 @@ from ksu_common.observability import (
     health_status,
     normalize_request_id,
 )
+
+
+def test_prometheus_registry_renders_safe_bounded_counter_and_histogram() -> None:
+    registry = PrometheusMetricsRegistry(max_series=16)
+
+    registry.increment(
+        "http.server.requests",
+        tags={"route": "/items/{item_id}", "method": "GET", "secret": "do-not-export"},
+    )
+    registry.observe_latency(
+        "http.server.request.duration",
+        12.5,
+        tags={"route": "/items/{item_id}", "method": "GET", "status": "200"},
+    )
+
+    rendered = registry.render()
+
+    assert 'ksu_http_server_requests_total{method="GET",route="/items/{item_id}",secret="[REDACTED]"} 1' in rendered
+    assert 'ksu_http_server_request_duration_seconds_count{method="GET",route="/items/{item_id}",status="200"} 1' in rendered
+    assert 'ksu_http_server_request_duration_seconds_sum{method="GET",route="/items/{item_id}",status="200"} 0.0125' in rendered
+    assert "do-not-export" not in rendered
+    assert "# TYPE ksu_http_server_requests_total counter" in rendered
+    assert "# TYPE ksu_http_server_request_duration_seconds histogram" in rendered
+
+
+def test_prometheus_registry_drops_new_series_after_bound() -> None:
+    registry = PrometheusMetricsRegistry(max_series=1)
+
+    registry.increment("requests", tags={"route": "/first"})
+    registry.increment("requests", tags={"route": "/second"})
+
+    rendered = registry.render()
+
+    assert 'ksu_requests_total{route="/first"} 1' in rendered
+    assert '/second' not in rendered
+    assert "ksu_metrics_dropped_series_total 1" in rendered
+
+
+def test_prometheus_registry_escapes_label_values() -> None:
+    registry = PrometheusMetricsRegistry()
+
+    registry.increment("requests", tags={"label": 'quote"slash\\line\nfeed'})
+
+    assert 'label="quote\\"slash\\\\line\\nfeed"' in registry.render()
 
 
 def test_request_ids_accept_safe_values_and_reject_log_injection() -> None:

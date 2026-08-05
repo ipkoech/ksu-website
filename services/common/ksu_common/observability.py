@@ -12,6 +12,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar, Token
 from dataclasses import dataclass, field
 from itertools import islice
+from threading import Lock
 from time import perf_counter
 from typing import Protocol, cast
 
@@ -53,6 +54,21 @@ class MetricsSink(Protocol):
     def observe_latency(
         self, name: str, duration_ms: float, *, tags: dict[str, str]
     ) -> None: ...
+
+
+class CompositeMetricsSink:
+    """Forward metrics to all configured sinks without changing their contract."""
+
+    def __init__(self, *sinks: MetricsSink) -> None:
+        self._sinks = tuple(sinks)
+
+    def increment(self, name: str, value: int, *, tags: dict[str, str]) -> None:
+        for sink in self._sinks:
+            sink.increment(name, value, tags=tags)
+
+    def observe_latency(self, name: str, duration_ms: float, *, tags: dict[str, str]) -> None:
+        for sink in self._sinks:
+            sink.observe_latency(name, duration_ms, tags=tags)
 
 
 class SpanSink(Protocol):
@@ -176,6 +192,135 @@ class Metrics:
         if self._sink is not None:
             self._sink.observe_latency(metric.name, float(metric.value), tags=metric.tags)
         return metric
+
+
+_PROMETHEUS_NAME = re.compile(r"[^a-zA-Z0-9_:]")
+_PROMETHEUS_LABEL = re.compile(r"[^a-zA-Z0-9_:]")
+_DEFAULT_HISTOGRAM_BUCKETS = (0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0)
+
+
+def _prometheus_name(name: str, *, suffix: str = "") -> str:
+    normalized = _PROMETHEUS_NAME.sub("_", str(name).strip()).strip("_").lower()
+    if not normalized or not (normalized[0].isalpha() or normalized[0] == "_"):
+        normalized = f"metric_{normalized}"
+    return f"ksu_{normalized}{suffix}"
+
+
+def _prometheus_labels(tags: Mapping[str, object]) -> tuple[tuple[str, str], ...]:
+    labels: list[tuple[str, str]] = []
+    for key, value in sorted(tags.items(), key=lambda item: str(item[0])):
+        label = _PROMETHEUS_LABEL.sub("_", str(key).strip()).strip("_").lower()
+        if not label or not (label[0].isalpha() or label[0] == "_"):
+            continue
+        normalized_value = (
+            "[REDACTED]"
+            if _SENSITIVE_DETAIL_KEY.search(label)
+            else _redact_secret_text(str(value).replace("\r", " ")[:128])
+        )
+        labels.append((label[:64], normalized_value))
+    return tuple(labels[:32])
+
+
+def _render_labels(labels: tuple[tuple[str, str], ...], extra: tuple[str, str] | None = None) -> str:
+    rendered = list(labels)
+    if extra is not None:
+        rendered.append(extra)
+    if not rendered:
+        return ""
+    return "{" + ",".join(
+        f'{key}="{value.replace(chr(92), chr(92) * 2).replace(chr(34), chr(92) + chr(34)).replace(chr(10), chr(92) + "n")}"'
+        for key, value in sorted(rendered)
+    ) + "}"
+
+
+@dataclass
+class _Histogram:
+    buckets: list[int]
+    count: int = 0
+    total_seconds: float = 0.0
+
+
+class PrometheusMetricsRegistry:
+    """Bounded, dependency-free Prometheus exposition sink."""
+
+    def __init__(
+        self,
+        *,
+        max_series: int = 2048,
+        histogram_buckets: tuple[float, ...] = _DEFAULT_HISTOGRAM_BUCKETS,
+    ) -> None:
+        if max_series < 1:
+            raise ValueError("max_series must be positive")
+        if not histogram_buckets or any(not math.isfinite(value) or value <= 0 for value in histogram_buckets):
+            raise ValueError("histogram_buckets must contain positive finite values")
+        self.max_series = max_series
+        self.histogram_buckets = tuple(sorted(set(histogram_buckets)))
+        self._counters: dict[tuple[str, tuple[tuple[str, str], ...]], int] = {}
+        self._histograms: dict[tuple[str, tuple[tuple[str, str], ...]], _Histogram] = {}
+        self._series = 0
+        self._dropped = 0
+        self._lock = Lock()
+
+    def _reserve(self, amount: int) -> bool:
+        if self._series + amount > self.max_series:
+            self._dropped += 1
+            return False
+        self._series += amount
+        return True
+
+    def increment(self, name: str, value: int = 1, *, tags: dict[str, str]) -> None:
+        metric_name = _prometheus_name(name, suffix="" if name.endswith("_total") else "_total")
+        key = (metric_name, _prometheus_labels(tags))
+        with self._lock:
+            if key not in self._counters and not self._reserve(1):
+                return
+            self._counters[key] = self._counters.get(key, 0) + max(0, int(value))
+
+    def observe_latency(self, name: str, duration_ms: float, *, tags: dict[str, str]) -> None:
+        duration_seconds = max(0.0, float(duration_ms)) / 1000
+        if not math.isfinite(duration_seconds):
+            return
+        metric_name = _prometheus_name(name, suffix="_seconds")
+        key = (metric_name, _prometheus_labels(tags))
+        with self._lock:
+            histogram = self._histograms.get(key)
+            if histogram is None:
+                if not self._reserve(len(self.histogram_buckets) + 2):
+                    return
+                histogram = _Histogram([0] * len(self.histogram_buckets))
+                self._histograms[key] = histogram
+            histogram.count += 1
+            histogram.total_seconds += duration_seconds
+            for index, bucket in enumerate(self.histogram_buckets):
+                if duration_seconds <= bucket:
+                    histogram.buckets[index] += 1
+
+    def render(self) -> str:
+        with self._lock:
+            counters = list(self._counters.items())
+            histograms = list(self._histograms.items())
+            dropped = self._dropped
+        lines: list[str] = []
+        for (name, labels), value in sorted(counters):
+            lines.extend((f"# TYPE {name} counter", f"{name}{_render_labels(labels)} {value}"))
+        for (name, labels), histogram in sorted(histograms):
+            lines.append(f"# TYPE {name} histogram")
+            for bucket, count in zip(self.histogram_buckets, histogram.buckets):
+                lines.append(f'{name}_bucket{_render_labels(labels, ("le", _format_number(bucket)))} {count}')
+            lines.extend(
+                (
+                    f'{name}_bucket{_render_labels(labels, ("le", "+Inf"))} {histogram.count}',
+                    f"{name}_count{_render_labels(labels)} {histogram.count}",
+                    f"{name}_sum{_render_labels(labels)} {_format_number(histogram.total_seconds)}",
+                )
+            )
+        if dropped:
+            lines.extend(("# TYPE ksu_metrics_dropped_series_total counter", f"ksu_metrics_dropped_series_total {dropped}"))
+        return "\n".join(lines) + ("\n" if lines else "")
+
+
+def _format_number(value: float) -> str:
+    return format(value, ".15g")
 
 
 @dataclass
@@ -367,6 +512,8 @@ def complete_request_observation(
     response: Response | None,
     status_code: int,
     error_type: str | None = None,
+    metrics: Metrics | None = None,
+    route: str | None = None,
 ) -> None:
     duration_ms = round((perf_counter() - observation.started_at) * 1000, 3)
     if response is not None:
@@ -388,6 +535,15 @@ def complete_request_observation(
     if error_type:
         extra["error_type"] = error_type
     logger.log(level, event, extra=extra)
+    if metrics is not None:
+        tags = {
+            "service": observation.service_name,
+            "method": observation.method,
+            "route": route or "/__unmatched__",
+            "status_code": str(status_code),
+        }
+        metrics.increment("http.server.requests", tags=tags)
+        metrics.observe_latency("http.server.request.duration", duration_ms, tags=tags)
 
 
 def end_request_observation(observation: RequestObservation) -> None:

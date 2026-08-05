@@ -15,6 +15,10 @@ from fastapi.responses import JSONResponse
 
 from .audit import persist_audit_log, should_skip_audit
 from .observability import (
+    CompositeMetricsSink,
+    Metrics,
+    MetricsSink,
+    PrometheusMetricsRegistry,
     begin_request_observation,
     complete_request_observation,
     end_request_observation,
@@ -53,6 +57,7 @@ class ServiceAppConfig:
     lifespan: Lifespan | None = None
     default_response_class: type[Response] | None = None
     error_response_class: type[Response] | None = None
+    metrics_path: str | None = "/metrics"
 
 
 @dataclass(frozen=True)
@@ -88,6 +93,8 @@ def create_service_app(
     register_routes: RouteRegistrar,
     audit: AuditOptions | None = None,
     after_response: AfterResponse | None = None,
+    metrics_registry: PrometheusMetricsRegistry | None = None,
+    metrics_sink: MetricsSink | None = None,
 ) -> FastAPI:
     """Build one service app while keeping all domain callbacks in that service."""
 
@@ -104,6 +111,21 @@ def create_service_app(
     if config.default_response_class is not None:
         app_options["default_response_class"] = config.default_response_class
     app = FastAPI(**app_options)
+    registry = metrics_registry or PrometheusMetricsRegistry()
+    sinks = [registry]
+    if metrics_sink is not None:
+        sinks.append(metrics_sink)
+    http_metrics = Metrics(CompositeMetricsSink(*sinks))
+    app.state.metrics_registry = registry
+    app.state.metrics = http_metrics
+
+    if config.metrics_path:
+        @app.get(config.metrics_path, include_in_schema=False)
+        async def metrics_endpoint() -> Response:
+            return Response(
+                content=registry.render(),
+                media_type="text/plain; version=0.0.4",
+            )
 
     app.add_middleware(
         CORSMiddleware,
@@ -185,6 +207,12 @@ def create_service_app(
                 response=response,
                 status_code=status_code,
                 error_type=error_type,
+                metrics=(
+                    None
+                    if config.metrics_path and request.url.path == config.metrics_path
+                    else http_metrics
+                ),
+                route=getattr(request.scope.get("route"), "path", None),
             )
             end_request_observation(observation)
 
