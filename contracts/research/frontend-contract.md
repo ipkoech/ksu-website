@@ -17,7 +17,7 @@ List Audit Logs
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `user_id` (query, string | null), `resource_type` (query, string | null), `status` (query, string | null), `x-internal-api-key` (header, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `user_id` (query, string | null), `resource_type` (query, string | null), `status` (query, string | null), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
 - Success response: 200 -
 
 ## Competition Entries
@@ -952,6 +952,19 @@ Get Item
 - Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
+## HERI Public
+
+### `GET /api/v1/public/heri/centers/{center_id}/partners`
+
+List Public Heri Center Partners
+
+Public partner directory feed consumed by the HERI Africa site.
+
+- Auth: public
+- Request body: -
+- Parameters: `center_id` (path, string)
+- Success response: 200 -
+
 ## Health
 
 ### `GET /api/v1/health`
@@ -1615,6 +1628,15 @@ Get Research Dashboard Analytics
 - Parameters: `access_token` (cookie, string | null)
 - Success response: 200 -
 
+### `GET /api/v1/research/analytics/dashboard`
+
+Get Research Dashboard Analytics
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `access_token` (cookie, string | null)
+- Success response: 200 -
+
 ## Research Ask AI
 
 ### `POST /api/v1/ask-ai`
@@ -1707,6 +1729,33 @@ Remove Center Focus Area
 - Auth: HTTPBearer
 - Request body: -
 - Parameters: `center_id` (path, string), `focus_area_id` (path, string), `access_token` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/centers/id/{center_id}/partners`
+
+List Center Partners
+
+- Auth: public
+- Request body: -
+- Parameters: `center_id` (path, string)
+- Success response: 200 -
+
+### `PUT /api/v1/centers/id/{center_id}/partners/{partner_id}`
+
+Add Center Partner
+
+- Auth: HTTPBearer
+- Request body: CenterPartnerLink | null
+- Parameters: `center_id` (path, string), `partner_id` (path, string), `access_token` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/centers/id/{center_id}/partners/{partner_id}`
+
+Remove Center Partner
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `center_id` (path, string), `partner_id` (path, string), `access_token` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/centers/id/{center_id}/programs`
@@ -2292,6 +2341,15 @@ Get Item
 
 ## Research Search
 
+### `GET /api/v1/research/search`
+
+Search Research
+
+- Auth: public
+- Request body: -
+- Parameters: `q` (query, string), `types` (query, string | null), `limit` (query, integer)
+- Success response: 200 -
+
 ### `GET /api/v1/search`
 
 Search Research
@@ -2783,6 +2841,24 @@ Get Item
 
 ## Stats
 
+### `GET /api/v1/research/stats`
+
+Get Public Stats
+
+- Auth: public
+- Request body: -
+- Parameters: -
+- Success response: 200 -
+
+### `GET /api/v1/research/stats/admin`
+
+Get Admin Stats
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `access_token` (cookie, string | null)
+- Success response: 200 -
+
 ### `GET /api/v1/stats`
 
 Get Public Stats
@@ -3182,7 +3258,17 @@ Download Resource
 
 ## Schemas
 
-Generated component schemas: `96`
+Generated component schemas: `97`
+
+### `CenterPartnerLink`
+
+- `collaboration_areas`: `array<string> | object | null` (optional)
+- `mou_end_date`: `string | null` (optional)
+- `mou_start_date`: `string | null` (optional)
+- `notes`: `string | null` (optional)
+- `partnership_level`: `string | null` (optional)
+- `partnership_type`: `string | null` (optional)
+- `status`: `string | null` (optional)
 
 ### `CompetitionEntryCreate`
 

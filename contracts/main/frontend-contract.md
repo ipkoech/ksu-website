@@ -1322,6 +1322,141 @@ List Admin Admission Info
 - Parameters: `page` (query, integer), `per_page` (query, integer), `content_type` (query, string | null), `audience_level` (query, string | null), `school_id` (query, string | null), `is_published` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
+### `GET /api/v1/admissions/documents`
+
+List Admission Documents
+
+- Auth: public
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `document_type` (query, string | null), `applicant_type` (query, string | null), `pathway_id` (query, string | null), `programme_id` (query, string | null), `intake_id` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/admissions/documents`
+
+Create Admission Document
+
+- Auth: HTTPBearer
+- Request body: AdmissionDocumentCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `PATCH /api/v1/admissions/documents/{item_id}`
+
+Update Admission Document
+
+- Auth: HTTPBearer
+- Request body: AdmissionDocumentUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/admissions/documents/{item_id}`
+
+Delete Admission Document
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/admissions/documents/{slug}`
+
+Get Admission Document
+
+- Auth: public
+- Request body: -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/admissions/faqs`
+
+List Admission Faqs
+
+- Auth: public
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `category` (query, string | null), `applicant_type` (query, string | null), `pathway_id` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/admissions/faqs`
+
+Create Admission Faq
+
+- Auth: HTTPBearer
+- Request body: AdmissionFaqCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/admissions/faqs/{item_id}`
+
+Get Admission Faq
+
+- Auth: public
+- Request body: -
+- Parameters: `item_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/admissions/faqs/{item_id}`
+
+Update Admission Faq
+
+- Auth: HTTPBearer
+- Request body: AdmissionFaqUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/admissions/faqs/{item_id}`
+
+Delete Admission Faq
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/admissions/fee-structures`
+
+List Programme Fee Structures
+
+- Auth: public
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `programme_id` (query, string | null), `intake_id` (query, string | null), `applicant_type` (query, string | null), `fee_category` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/admissions/fee-structures`
+
+Create Programme Fee Structure
+
+- Auth: HTTPBearer
+- Request body: ProgrammeFeeStructureCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/admissions/fee-structures/{item_id}`
+
+Get Programme Fee Structure
+
+- Auth: public
+- Request body: -
+- Parameters: `item_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/admissions/fee-structures/{item_id}`
+
+Update Programme Fee Structure
+
+- Auth: HTTPBearer
+- Request body: ProgrammeFeeStructureUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/admissions/fee-structures/{item_id}`
+
+Delete Programme Fee Structure
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
 ### `GET /api/v1/admissions/id/{item_id}`
 
 Get Admission Info By Id
@@ -1330,6 +1465,141 @@ Get Admission Info By Id
 - Request body: -
 - Parameters: `item_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
+
+### `GET /api/v1/admissions/page-sections`
+
+List Admission Page Sections
+
+- Auth: public
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `page_key` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/admissions/page-sections`
+
+Create Admission Page Section
+
+- Auth: HTTPBearer
+- Request body: AdmissionPageSectionCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/admissions/page-sections/{item_id}`
+
+Get Admission Page Section
+
+- Auth: public
+- Request body: -
+- Parameters: `item_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/admissions/page-sections/{item_id}`
+
+Update Admission Page Section
+
+- Auth: HTTPBearer
+- Request body: AdmissionPageSectionUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/admissions/page-sections/{item_id}`
+
+Delete Admission Page Section
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/admissions/pathways`
+
+List Admission Pathways
+
+- Auth: public
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `applicant_type` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/admissions/pathways`
+
+Create Admission Pathway
+
+- Auth: HTTPBearer
+- Request body: AdmissionPathwayCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `PATCH /api/v1/admissions/pathways/{item_id}`
+
+Update Admission Pathway
+
+- Auth: HTTPBearer
+- Request body: AdmissionPathwayUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/admissions/pathways/{item_id}`
+
+Delete Admission Pathway
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/admissions/pathways/{slug}`
+
+Get Admission Pathway
+
+- Auth: public
+- Request body: -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/admissions/requirements`
+
+List Admission Requirements
+
+- Auth: public
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `programme_id` (query, string | null), `school_id` (query, string | null), `intake_id` (query, string | null), `pathway_id` (query, string | null), `applicant_type` (query, string | null), `level` (query, string | null), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/admissions/requirements`
+
+Create Admission Requirement
+
+- Auth: HTTPBearer
+- Request body: AdmissionRequirementCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/admissions/requirements/{item_id}`
+
+Get Admission Requirement
+
+- Auth: public
+- Request body: -
+- Parameters: `item_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/admissions/requirements/{item_id}`
+
+Update Admission Requirement
+
+- Auth: HTTPBearer
+- Request body: AdmissionRequirementUpdate
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/admissions/requirements/{item_id}`
+
+Delete Admission Requirement
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
 
 ### `PATCH /api/v1/admissions/{item_id}`
 
@@ -1790,7 +2060,7 @@ List Admin Announcements
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `is_published` (query, boolean | null), `status` (query, string | null), `workflow_status` (query, string | null), `owner_portal` (query, string | null), `owner_scope_type` (query, string | null), `owner_scope_id` (query, string | null), `scheduled_from` (query, string | null), `scheduled_to` (query, string | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `is_published` (query, boolean | null), `status` (query, string | null), `workflow_status` (query, string | null), `owner_portal` (query, string | null), `owner_scope_type` (query, string | null), `owner_scope_id` (query, string | null), `scheduled_from` (query, string | null), `scheduled_to` (query, string | null), `search` (query, string | null), `record_state` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/announcements/id/{announcement_id}`
@@ -1871,7 +2141,7 @@ List Admin Blogs
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `is_published` (query, boolean | null), `status` (query, string | null), `workflow_status` (query, string | null), `owner_portal` (query, string | null), `owner_scope_type` (query, string | null), `owner_scope_id` (query, string | null), `scheduled_from` (query, string | null), `scheduled_to` (query, string | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `is_published` (query, boolean | null), `status` (query, string | null), `workflow_status` (query, string | null), `owner_portal` (query, string | null), `owner_scope_type` (query, string | null), `owner_scope_id` (query, string | null), `scheduled_from` (query, string | null), `scheduled_to` (query, string | null), `search` (query, string | null), `record_state` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/blogs/id/{blog_id}`
@@ -1928,6 +2198,20 @@ Get Blog
 - Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
+### `POST /api/v1/content-workflow/bulk`
+
+Run Bulk Content Workflow Action
+
+Apply one workflow action to many records, reporting per-item outcomes.
+
+Authorization and transition failures never fail the whole request; each
+item reports its own ``{content_id, ok, error}`` result.
+
+- Auth: HTTPBearer
+- Request body: BulkWorkflowRequest
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ### `GET /api/v1/content-workflow/queue`
 
 List Content Workflow Queue
@@ -1981,7 +2265,7 @@ List Admin Events
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `is_published` (query, boolean | null), `upcoming` (query, boolean | null), `status` (query, string | null), `workflow_status` (query, string | null), `owner_portal` (query, string | null), `owner_scope_type` (query, string | null), `owner_scope_id` (query, string | null), `scheduled_from` (query, string | null), `scheduled_to` (query, string | null), `search` (query, string | null), `include_scope` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `is_published` (query, boolean | null), `upcoming` (query, boolean | null), `status` (query, string | null), `workflow_status` (query, string | null), `owner_portal` (query, string | null), `owner_scope_type` (query, string | null), `owner_scope_id` (query, string | null), `scheduled_from` (query, string | null), `scheduled_to` (query, string | null), `search` (query, string | null), `record_state` (query, string), `include_scope` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/events/id/{event_id}`
@@ -2071,7 +2355,7 @@ List Admin News
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `is_published` (query, boolean | null), `status` (query, string | null), `workflow_status` (query, string | null), `owner_portal` (query, string | null), `owner_scope_type` (query, string | null), `owner_scope_id` (query, string | null), `scheduled_from` (query, string | null), `scheduled_to` (query, string | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `is_published` (query, boolean | null), `status` (query, string | null), `workflow_status` (query, string | null), `owner_portal` (query, string | null), `owner_scope_type` (query, string | null), `owner_scope_id` (query, string | null), `scheduled_from` (query, string | null), `scheduled_to` (query, string | null), `search` (query, string | null), `record_state` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/news/id/{news_id}`
@@ -2236,6 +2520,15 @@ Run Partnership Spotlight Workflow Action
 - Parameters: `spotlight_id` (path, string), `action` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
+### `POST /api/v1/records/{content_type}/{record_id}/restore`
+
+Restore Record
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `content_type` (path, string), `record_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ### `PATCH /api/v1/section-items/{item_id}`
 
 Update Section Item
@@ -2269,7 +2562,7 @@ List Admin Sliders
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `slider_group_id` (query, string | null), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `status` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `slider_group_id` (query, string | null), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `status` (query, string | null), `search` (query, string | null), `record_state` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/sliders/groups`
@@ -2413,7 +2706,7 @@ List Admin Stories
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `is_published` (query, boolean | null), `status` (query, string | null), `workflow_status` (query, string | null), `story_type` (query, string | null), `category` (query, string | null), `contributor_user_id` (query, string | null), `scheduled_from` (query, string | null), `scheduled_to` (query, string | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `is_published` (query, boolean | null), `status` (query, string | null), `workflow_status` (query, string | null), `story_type` (query, string | null), `category` (query, string | null), `contributor_user_id` (query, string | null), `scheduled_from` (query, string | null), `scheduled_to` (query, string | null), `search` (query, string | null), `record_state` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/stories/id/{story_id}`
@@ -2616,6 +2909,19 @@ Get Exchange Programme
 - Auth: public
 - Request body: -
 - Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+## Exports
+
+### `GET /api/v1/exports/{resource}.csv`
+
+Export Resource Csv
+
+Export a resource's admin listing (honoring the caller's filters) as CSV.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `resource` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ## Governance
@@ -3271,7 +3577,7 @@ Get Department Snapshot
 
 - Auth: public
 - Request body: -
-- Parameters: `department_id` (path, string), `x-internal-key` (header, string)
+- Parameters: `department_id` (path, string), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/internal/email/send`
@@ -3280,7 +3586,7 @@ Send Internal Email
 
 - Auth: public
 - Request body: InternalEmailPayload
-- Parameters: `x-internal-key` (header, string)
+- Parameters: `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/internal/media/{media_id}`
@@ -3291,7 +3597,7 @@ Return browser-safe fields for public media referenced by sibling services.
 
 - Auth: public
 - Request body: -
-- Parameters: `media_id` (path, string), `x-internal-key` (header, string)
+- Parameters: `media_id` (path, string), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/internal/notifications/broadcast`
@@ -3300,7 +3606,7 @@ Broadcast Internal Notification
 
 - Auth: public
 - Request body: InternalNotificationBroadcastPayload
-- Parameters: `x-internal-key` (header, string)
+- Parameters: `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/internal/persons/{person_id}`
@@ -3311,7 +3617,7 @@ Return a minimal person snapshot for sibling services (Research, Library).
 
 - Auth: public
 - Request body: -
-- Parameters: `person_id` (path, string), `x-internal-key` (header, string)
+- Parameters: `person_id` (path, string), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/internal/references/{kind}/{item_id}`
@@ -3322,7 +3628,7 @@ Validate shared main-owned references for sibling services.
 
 - Auth: public
 - Request body: -
-- Parameters: `kind` (path, string), `item_id` (path, string), `x-internal-key` (header, string)
+- Parameters: `kind` (path, string), `item_id` (path, string), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/internal/schools/{school_id}/departments/{department_id}`
@@ -3333,7 +3639,7 @@ Validate the cross-service school/department ownership pair.
 
 - Auth: public
 - Request body: -
-- Parameters: `school_id` (path, string), `department_id` (path, string), `x-internal-key` (header, string)
+- Parameters: `school_id` (path, string), `department_id` (path, string), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/internal/staff-assignments/{assignment_id}`
@@ -3342,7 +3648,7 @@ Get Staff Assignment Snapshot
 
 - Auth: public
 - Request body: -
-- Parameters: `assignment_id` (path, string), `x-internal-key` (header, string)
+- Parameters: `assignment_id` (path, string), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
 - Success response: 200 -
 
 ## Marketing
@@ -3371,7 +3677,7 @@ List Newsletters Admin
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `status` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `search` (query, string | null), `status` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/newsletters/admin/{item_id}`
@@ -3578,7 +3884,7 @@ List Admin Testimonials
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `testimonial_type` (query, string | null), `school_id` (query, string | null), `department_id` (query, string | null), `programme_id` (query, string | null), `featured_only` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `testimonial_type` (query, string | null), `school_id` (query, string | null), `department_id` (query, string | null), `programme_id` (query, string | null), `featured_only` (query, boolean), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/testimonials/{item_id}`
@@ -3673,7 +3979,7 @@ List Media
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `folder_id` (query, string | null), `media_type` (query, string | null), `uploaded_by_id` (query, string | null), `entity_type` (query, string | null), `entity_id` (query, string | null), `role` (query, string | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `folder_id` (query, string | null), `media_type` (query, string | null), `uploaded_by_id` (query, string | null), `entity_type` (query, string | null), `entity_id` (query, string | null), `role` (query, string | null), `search` (query, string | null), `record_state` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/media/folders`
@@ -4033,6 +4339,17 @@ Remove Person Photo
 
 ## Public
 
+### `GET /api/v1/navigation`
+
+Get Navigation
+
+Single public payload backing the main-site mega menu.
+
+- Auth: public
+- Request body: -
+- Parameters: -
+- Success response: 200 -
+
 ### `GET /api/v1/public-pages`
 
 List Public Site Pages
@@ -4251,6 +4568,15 @@ Get Public Team
 - Auth: public
 - Request body: -
 - Parameters: `entity_type` (query, string), `entity_id` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/public/team/academic-organization`
+
+Get Public Academic Organization
+
+- Auth: public
+- Request body: -
+- Parameters: `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
 ## Realtime
@@ -4839,6 +5165,15 @@ Download Team Import Template
 - Parameters: `format` (query, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
+### `GET /api/v1/school-portal/team/person-options`
+
+Get Team Person Options
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `search` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ### `GET /api/v1/school-portal/team/{assignment_id}`
 
 Get Team Member
@@ -5211,6 +5546,17 @@ Get Arts Culture
 - Auth: public
 - Request body: -
 - Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/campus-life/homepage`
+
+Get Life Around Studies Homepage
+
+Return the editorial composition plus live student-life highlights.
+
+- Auth: public
+- Request body: -
+- Parameters: `audience` (query, string)
 - Success response: 200 -
 
 ### `GET /api/v1/clubs`
@@ -5604,6 +5950,24 @@ Get Admin Contact
 - Parameters: `contact_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
+### `POST /api/v1/contacts/admin/{contact_id}/archive`
+
+Archive Contact
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `contact_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/contacts/admin/{contact_id}/unarchive`
+
+Unarchive Contact
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `contact_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ### `GET /api/v1/contacts/owners`
 
 List Contact Owners
@@ -5655,7 +6019,7 @@ List Admin Faqs
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/faqs/admin/{faq_id}`
@@ -6291,7 +6655,7 @@ Transition Content
 
 ## Schemas
 
-Generated component schemas: `238`
+Generated component schemas: `252`
 
 ### `AboutPageContentCreate`
 
@@ -6434,6 +6798,60 @@ Generated component schemas: `238`
 - `total_rooms`: `integer | null` (optional)
 - `warden_id`: `string | null` (optional)
 
+### `AdmissionDocumentCreate`
+
+- `applicant_type`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `document_type`: `string` (required)
+- `expires_at`: `string | null` (optional)
+- `external_url`: `string | null` (optional)
+- `intake_id`: `string | null` (optional)
+- `is_published`: `boolean` (optional)
+- `media_id`: `string | null` (optional)
+- `pathway_id`: `string | null` (optional)
+- `programme_id`: `string | null` (optional)
+- `published_at`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string` (required)
+
+### `AdmissionDocumentUpdate`
+
+- `applicant_type`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `document_type`: `string | null` (optional)
+- `expires_at`: `string | null` (optional)
+- `external_url`: `string | null` (optional)
+- `intake_id`: `string | null` (optional)
+- `is_published`: `boolean | null` (optional)
+- `media_id`: `string | null` (optional)
+- `pathway_id`: `string | null` (optional)
+- `programme_id`: `string | null` (optional)
+- `published_at`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string | null` (optional)
+
+### `AdmissionFaqCreate`
+
+- `answer`: `string` (required)
+- `applicant_type`: `string | null` (optional)
+- `category`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `is_published`: `boolean` (optional)
+- `pathway_id`: `string | null` (optional)
+- `question`: `string` (required)
+
+### `AdmissionFaqUpdate`
+
+- `answer`: `string | null` (optional)
+- `applicant_type`: `string | null` (optional)
+- `category`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `is_published`: `boolean | null` (optional)
+- `pathway_id`: `string | null` (optional)
+- `question`: `string | null` (optional)
+
 ### `AdmissionInfoCreate`
 
 - `attachment_media_id`: `string | null` (optional)
@@ -6462,6 +6880,102 @@ Generated component schemas: `238`
 - `school_id`: `string | null` (optional)
 - `slug`: `string | null` (optional)
 - `summary`: `string | null` (optional)
+- `title`: `string | null` (optional)
+
+### `AdmissionPageSectionCreate`
+
+- `body`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `is_enabled`: `boolean` (optional)
+- `items`: `array<object> | null` (optional)
+- `layout_variant`: `string` (optional)
+- `media_id`: `string | null` (optional)
+- `page_key`: `string` (required)
+- `section_key`: `string` (required)
+- `settings`: `object | null` (optional)
+- `subtitle`: `string | null` (optional)
+- `title`: `string` (required)
+
+### `AdmissionPageSectionUpdate`
+
+- `body`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `is_enabled`: `boolean | null` (optional)
+- `items`: `array<object> | null` (optional)
+- `layout_variant`: `string | null` (optional)
+- `media_id`: `string | null` (optional)
+- `page_key`: `string | null` (optional)
+- `section_key`: `string | null` (optional)
+- `settings`: `object | null` (optional)
+- `subtitle`: `string | null` (optional)
+- `title`: `string | null` (optional)
+
+### `AdmissionPathwayCreate`
+
+- `applicant_type`: `string` (required)
+- `application_steps`: `array<object> | null` (optional)
+- `cover_image_id`: `string | null` (optional)
+- `cta_label`: `string | null` (optional)
+- `cta_url`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `eligibility_notes`: `string | null` (optional)
+- `is_published`: `boolean` (optional)
+- `required_documents`: `array<object> | null` (optional)
+- `slug`: `string | null` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string` (required)
+
+### `AdmissionPathwayUpdate`
+
+- `applicant_type`: `string | null` (optional)
+- `application_steps`: `array<object> | null` (optional)
+- `cover_image_id`: `string | null` (optional)
+- `cta_label`: `string | null` (optional)
+- `cta_url`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `eligibility_notes`: `string | null` (optional)
+- `is_published`: `boolean | null` (optional)
+- `required_documents`: `array<object> | null` (optional)
+- `slug`: `string | null` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string | null` (optional)
+
+### `AdmissionRequirementCreate`
+
+- `alternative_qualifications`: `array<object> | null` (optional)
+- `applicant_type`: `string` (required)
+- `display_order`: `integer` (optional)
+- `documents_required`: `array<object> | null` (optional)
+- `effective_from`: `string | null` (optional)
+- `effective_to`: `string | null` (optional)
+- `intake_id`: `string | null` (optional)
+- `is_active`: `boolean` (optional)
+- `level`: `string | null` (optional)
+- `minimum_grade`: `string | null` (optional)
+- `notes`: `string | null` (optional)
+- `pathway_id`: `string | null` (optional)
+- `programme_id`: `string | null` (optional)
+- `school_id`: `string | null` (optional)
+- `subject_requirements`: `array<object> | null` (optional)
+- `title`: `string` (required)
+
+### `AdmissionRequirementUpdate`
+
+- `alternative_qualifications`: `array<object> | null` (optional)
+- `applicant_type`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `documents_required`: `array<object> | null` (optional)
+- `effective_from`: `string | null` (optional)
+- `effective_to`: `string | null` (optional)
+- `intake_id`: `string | null` (optional)
+- `is_active`: `boolean | null` (optional)
+- `level`: `string | null` (optional)
+- `minimum_grade`: `string | null` (optional)
+- `notes`: `string | null` (optional)
+- `pathway_id`: `string | null` (optional)
+- `programme_id`: `string | null` (optional)
+- `school_id`: `string | null` (optional)
+- `subject_requirements`: `array<object> | null` (optional)
 - `title`: `string | null` (optional)
 
 ### `AlumniAssociationCreate`
@@ -6832,6 +7346,17 @@ Generated component schemas: `238`
 ### `BulkSettingsUpdatePayload`
 
 - `settings`: `array<BulkSettingUpdateItem>` (optional)
+
+### `BulkWorkflowItem`
+
+- `content_id`: `string` (required)
+- `content_type`: `string` (required)
+
+### `BulkWorkflowRequest`
+
+- `action`: `string` (required)
+- `comments`: `string | null` (optional)
+- `items`: `array<BulkWorkflowItem>` (required)
 
 ### `CampusCreate`
 
@@ -8347,6 +8872,46 @@ Generated component schemas: `238`
 - `objectives`: `string | null` (optional)
 - `slug`: `string | null` (optional)
 
+### `ProgrammeFeeStructureCreate`
+
+- `applicant_type`: `string` (required)
+- `attachment_media_id`: `string | null` (optional)
+- `currency`: `string` (optional)
+- `display_order`: `integer` (optional)
+- `effective_from`: `string | null` (optional)
+- `effective_to`: `string | null` (optional)
+- `fee_category`: `string` (optional)
+- `intake_id`: `string | null` (optional)
+- `is_active`: `boolean` (optional)
+- `notes`: `string | null` (optional)
+- `other_amount`: `integer | null` (optional)
+- `payment_schedule`: `array<object> | null` (optional)
+- `programme_id`: `string` (required)
+- `statutory_amount`: `integer | null` (optional)
+- `title`: `string` (required)
+- `total_amount`: `integer | null` (optional)
+- `tuition_amount`: `integer | null` (optional)
+
+### `ProgrammeFeeStructureUpdate`
+
+- `applicant_type`: `string | null` (optional)
+- `attachment_media_id`: `string | null` (optional)
+- `currency`: `string | null` (optional)
+- `display_order`: `integer | null` (optional)
+- `effective_from`: `string | null` (optional)
+- `effective_to`: `string | null` (optional)
+- `fee_category`: `string | null` (optional)
+- `intake_id`: `string | null` (optional)
+- `is_active`: `boolean | null` (optional)
+- `notes`: `string | null` (optional)
+- `other_amount`: `integer | null` (optional)
+- `payment_schedule`: `array<object> | null` (optional)
+- `programme_id`: `string | null` (optional)
+- `statutory_amount`: `integer | null` (optional)
+- `title`: `string | null` (optional)
+- `total_amount`: `integer | null` (optional)
+- `tuition_amount`: `integer | null` (optional)
+
 ### `ProgrammeIntakeCreate`
 
 - `application_deadline`: `string | null` (optional)
@@ -8840,6 +9405,7 @@ Generated component schemas: `238`
 
 ### `SectionItemCreate`
 
+- `audience`: `string` (optional)
 - `body_text`: `string | null` (optional)
 - `content`: `object | null` (optional)
 - `cta_description`: `string | null` (optional)
@@ -8847,18 +9413,24 @@ Generated component schemas: `238`
 - `cta_url`: `string | null` (optional)
 - `display_order`: `integer` (optional)
 - `is_enabled`: `boolean` (optional)
+- `is_featured`: `boolean` (optional)
 - `item_type`: `string` (optional)
 - `media_alt_text`: `string | null` (optional)
 - `media_caption`: `string | null` (optional)
 - `page_section_id`: `string | null` (optional)
+- `poster_media_id`: `string | null` (optional)
+- `source_id`: `string | null` (optional)
+- `source_type`: `string | null` (optional)
 - `subtitle`: `string | null` (optional)
 - `title`: `string | null` (optional)
+- `transcript`: `string | null` (optional)
 - `video_duration_seconds`: `integer | null` (optional)
 - `video_provider`: `string | null` (optional)
 - `video_url`: `string | null` (optional)
 
 ### `SectionItemUpdate`
 
+- `audience`: `string | null` (optional)
 - `body_text`: `string | null` (optional)
 - `content`: `object | null` (optional)
 - `cta_description`: `string | null` (optional)
@@ -8866,12 +9438,17 @@ Generated component schemas: `238`
 - `cta_url`: `string | null` (optional)
 - `display_order`: `integer | null` (optional)
 - `is_enabled`: `boolean | null` (optional)
+- `is_featured`: `boolean | null` (optional)
 - `item_type`: `string | null` (optional)
 - `media_alt_text`: `string | null` (optional)
 - `media_caption`: `string | null` (optional)
 - `page_section_id`: `string | null` (optional)
+- `poster_media_id`: `string | null` (optional)
+- `source_id`: `string | null` (optional)
+- `source_type`: `string | null` (optional)
 - `subtitle`: `string | null` (optional)
 - `title`: `string | null` (optional)
+- `transcript`: `string | null` (optional)
 - `video_duration_seconds`: `integer | null` (optional)
 - `video_provider`: `string | null` (optional)
 - `video_url`: `string | null` (optional)
