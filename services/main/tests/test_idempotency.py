@@ -227,6 +227,47 @@ async def test_school_inquiry_pending_claim_returns_documented_retry_response(mo
 
 
 @pytest.mark.asyncio
+async def test_school_inquiry_new_key_still_creates_a_later_same_content_inquiry(monkeypatch):
+    target = _target()
+    record = CommandIdempotency(
+        command_name="public.school_inquiry.create",
+        scope=f"public:school:{target.entity_id}",
+        idempotency_key="later-client-key",
+        request_fingerprint="b" * 64,
+    )
+    existing = SimpleNamespace(id=uuid.uuid4(), reference_number="INQ-1", status="new")
+    created = SimpleNamespace(id=uuid.uuid4(), reference_number="INQ-2", status="new")
+    create = AsyncMock(return_value=created)
+    monkeypatch.setattr(inquiries, "resolve_public_inquiry_target", AsyncMock(return_value=target))
+    monkeypatch.setattr(
+        inquiries,
+        "acquire_json_command",
+        AsyncMock(return_value=CommandClaim(kind="started", record=record)),
+    )
+    monkeypatch.setattr(inquiries, "_enforce_email_limit", AsyncMock(), raising=False)
+    monkeypatch.setattr(inquiries, "_find_duplicate", AsyncMock(return_value=existing), raising=False)
+    monkeypatch.setattr(inquiries.ContactInquiryService, "create_public", create)
+
+    response = await inquiries.create_public_school_inquiry.__wrapped__(
+        school_slug="business",
+        request=_request("later-client-key"),
+        data=_payload(),
+        db=SimpleNamespace(),
+        idempotency_key="later-client-key",
+    )
+
+    body = json.loads(response.body)
+    assert isinstance(response, JSONResponse)
+    assert response.status_code == 201
+    assert body["message"] == "Inquiry received"
+    assert body["data"]["id"] == str(created.id)
+    assert body["data"]["reference_number"] == created.reference_number
+    assert body["data"]["id"] != str(existing.id)
+    create.assert_awaited_once()
+    assert record.state == "completed"
+
+
+@pytest.mark.asyncio
 async def test_entity_inquiry_started_claim_executes_business_logic_and_stores_response(monkeypatch):
     target = SimpleNamespace(
         entity_type="department",
@@ -396,6 +437,67 @@ async def test_acquire_json_command_converts_key_reuse_into_conflict_response(mo
     assert isinstance(response, JSONResponse)
     assert response.status_code == 409
     assert json.loads(response.body)["code"] == "idempotency_key_reused"
+
+
+@pytest.mark.asyncio
+async def test_acquire_json_command_replays_the_stored_terminal_response(monkeypatch):
+    record = CommandIdempotency(
+        command_name="public.entity_inquiry.create",
+        scope="public:department:1",
+        idempotency_key="client-key",
+        request_fingerprint="a" * 64,
+        state="completed",
+        status_code=201,
+        response_body={"status": "success", "data": {"id": "inquiry-1"}},
+    )
+    monkeypatch.setattr(
+        "app.services.idempotency.acquire_command",
+        AsyncMock(return_value=CommandClaim(kind="replay", record=record)),
+    )
+
+    response = await acquire_json_command(
+        _Db(),
+        command_name="public.entity_inquiry.create",
+        scope="public:department:1",
+        idempotency_key="client-key",
+        request_payload={"subject": "Admissions question"},
+        in_progress_body={"code": "idempotency_in_progress"},
+        key_reuse_body={"code": "idempotency_key_reused"},
+    )
+
+    assert isinstance(response, JSONResponse)
+    assert response.status_code == 201
+    assert json.loads(response.body) == record.response_body
+
+
+@pytest.mark.asyncio
+async def test_acquire_json_command_returns_retryable_in_progress_response(monkeypatch):
+    record = CommandIdempotency(
+        command_name="public.entity_inquiry.create",
+        scope="public:department:1",
+        idempotency_key="client-key",
+        request_fingerprint="a" * 64,
+    )
+    monkeypatch.setattr(
+        "app.services.idempotency.acquire_command",
+        AsyncMock(return_value=CommandClaim(kind="in_progress", record=record)),
+    )
+
+    response = await acquire_json_command(
+        _Db(),
+        command_name="public.entity_inquiry.create",
+        scope="public:department:1",
+        idempotency_key="client-key",
+        request_payload={"subject": "Admissions question"},
+        in_progress_body={"code": "idempotency_in_progress"},
+        key_reuse_body={"code": "idempotency_key_reused"},
+        retry_after=7,
+    )
+
+    assert isinstance(response, JSONResponse)
+    assert response.status_code == 409
+    assert response.headers["retry-after"] == "7"
+    assert json.loads(response.body) == {"code": "idempotency_in_progress"}
 
 
 def test_migration_uses_the_current_main_head_and_guards_terminal_rows():

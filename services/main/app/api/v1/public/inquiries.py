@@ -9,10 +9,8 @@ from fastapi.responses import JSONResponse
 from ksu_common import rate_limit
 from ksu_common.rate_limit import RateLimiter
 from ksu_common.schemas.responses import error, success
-from sqlalchemy import select
 
 from ....deps import DbSession
-from ....models.contact_inquiry import ContactInquiry, ContactInquiryMessage
 from ....schemas.contact_inquiry import PublicEntityInquiryCreate
 from ....services.contact_inquiry import ContactInquiryService
 from ....services.idempotency import acquire_json_command, complete_json_command
@@ -21,23 +19,6 @@ from ....services.public_inquiry_target import resolve_public_inquiry_target
 router = APIRouter()
 _INQUIRY_EMAIL_LIMITER = RateLimiter(requests=10, window=3600, prefix="main:public-inquiries:email")
 IdempotencyKey = Annotated[str, Header(alias="Idempotency-Key", min_length=8, max_length=255)]
-
-
-async def _find_duplicate(db, *, target, data: PublicEntityInquiryCreate):
-    result = await db.execute(
-        select(ContactInquiry)
-        .join(ContactInquiryMessage, ContactInquiryMessage.inquiry_id == ContactInquiry.id)
-        .where(
-            ContactInquiry.target_entity_type == target.entity_type,
-            ContactInquiry.target_entity_id == target.entity_id,
-            ContactInquiry.sender_email == str(data.sender_email).strip().lower(),
-            ContactInquiry.subject == data.subject,
-            ContactInquiryMessage.body == data.message,
-        )
-        .order_by(ContactInquiry.created_at.desc())
-        .limit(1)
-    )
-    return result.scalar_one_or_none()
 
 
 async def _enforce_email_limit(request: Request, data: PublicEntityInquiryCreate) -> None:
@@ -95,22 +76,6 @@ async def create_public_school_inquiry(
     if isinstance(claim, JSONResponse):
         return claim
     await _enforce_email_limit(request, data)
-    duplicate = await _find_duplicate(db, target=target, data=data)
-    if duplicate is not None:
-        item = duplicate
-        return complete_json_command(
-            claim.record,
-            status_code=status.HTTP_201_CREATED,
-            response_body=success(
-                data={
-                    "id": item.id,
-                    "reference_number": item.reference_number,
-                    "status": item.status,
-                    "target_entity_name": target.name,
-                },
-                message="Inquiry already received",
-            ),
-        )
     item = await ContactInquiryService.create_public(
         db,
         target=target,
@@ -167,22 +132,6 @@ async def create_public_entity_inquiry(
     if isinstance(claim, JSONResponse):
         return claim
     await _enforce_email_limit(request, data)
-    duplicate = await _find_duplicate(db, target=target, data=data)
-    if duplicate is not None:
-        item = duplicate
-        return complete_json_command(
-            claim.record,
-            status_code=status.HTTP_201_CREATED,
-            response_body=success(
-                data={
-                    "id": item.id,
-                    "reference_number": item.reference_number,
-                    "status": item.status,
-                    "target_entity_name": target.name,
-                },
-                message="Inquiry already received",
-            ),
-        )
     item = await ContactInquiryService.create_public(
         db,
         target=target,
