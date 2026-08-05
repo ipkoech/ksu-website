@@ -36,6 +36,7 @@ PAGE_SECTION_LAYOUT_VARIANTS = (
     "facts_strip",
 )
 SECTION_ITEM_TYPES = ("text", "card", "stat", "cta", "media", "video")
+SECTION_ITEM_STATUSES = ("draft", "in_review", "published", "archived")
 LIFE_AROUND_STUDIES_AUDIENCES = ("all", "prospective", "current_student", "visitor_partner")
 LIFE_AROUND_STUDIES_SOURCE_TYPES = (
     "manual",
@@ -195,6 +196,10 @@ class SectionItem(Base):
             "source_type IS NULL OR source_type IN ('manual', 'club', 'club_activity', 'sport', 'accommodation', 'arts', 'governance', 'story', 'event')",
             name="ck_section_items_source_type",
         ),
+        sa.CheckConstraint(
+            "status IN ('draft', 'in_review', 'published', 'archived')",
+            name="ck_section_items_status",
+        ),
         sa.Index("ix_section_items_section_order", "page_section_id", "display_order"),
         sa.Index("ix_section_items_source", "source_type", "source_id"),
         sa.Index("ix_section_items_featured_audience", "is_featured", "audience", "is_enabled"),
@@ -227,6 +232,12 @@ class SectionItem(Base):
     transcript: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
     display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
     is_enabled: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    status: Mapped[str] = mapped_column(
+        sa.String(32),
+        nullable=False,
+        server_default="published",
+        index=True,
+    )
 
     page_section: Mapped["PageSection"] = relationship("PageSection", back_populates="items")
 
@@ -312,6 +323,7 @@ __all__ = [
     "PAGE_SECTION_STATUSES",
     "PAGE_SECTION_LAYOUT_VARIANTS",
     "SECTION_ITEM_TYPES",
+    "SECTION_ITEM_STATUSES",
     "PARTNERSHIP_CTA_SOURCES",
     "PageSection",
     "SectionItem",

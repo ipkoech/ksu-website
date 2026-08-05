@@ -14,6 +14,7 @@ from app.models import (
     PAGE_SECTION_STATUSES,
     PARTNERSHIP_CTA_SOURCES,
     SECTION_ITEM_TYPES,
+    SECTION_ITEM_STATUSES,
     LIFE_AROUND_STUDIES_AUDIENCES,
     LIFE_AROUND_STUDIES_SOURCE_TYPES,
 )
@@ -101,11 +102,17 @@ class SectionItemCreate(BaseSchema):
     transcript: str | None = None
     display_order: int = 100
     is_enabled: bool = True
+    status: str | None = Field(default=None, max_length=32)
 
     @field_validator("item_type")
     @classmethod
     def validate_item_type(cls, value: str) -> str:
         return _validate_choice(value, SECTION_ITEM_TYPES, "item_type") or value
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, value: str | None) -> str | None:
+        return _validate_choice(value, SECTION_ITEM_STATUSES, "status")
 
     @field_validator("audience")
     @classmethod
@@ -151,11 +158,17 @@ class SectionItemUpdate(BaseSchema):
     transcript: str | None = None
     display_order: int | None = None
     is_enabled: bool | None = None
+    status: str | None = Field(default=None, max_length=32)
 
     @field_validator("item_type")
     @classmethod
     def validate_item_type(cls, value: str | None) -> str | None:
         return _validate_choice(value, SECTION_ITEM_TYPES, "item_type")
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, value: str | None) -> str | None:
+        return _validate_choice(value, SECTION_ITEM_STATUSES, "status")
 
     @field_validator("audience")
     @classmethod
@@ -201,7 +214,19 @@ class SectionItemRead(BaseReadSchema):
     transcript: str | None = None
     display_order: int
     is_enabled: bool
+    status: str | None = SECTION_ITEM_STATUSES[2]
     content_enriched: dict[str, Any] | None = None
+
+
+class SectionItemBatchEntry(SectionItemCreate):
+    """Batch save entry: with `id` updates an existing item, without `id` creates one."""
+
+    id: uuid.UUID | None = None
+
+
+class SectionItemBatchSave(BaseSchema):
+    items: list[SectionItemBatchEntry] = Field(default_factory=list)
+    remove_ids: list[uuid.UUID] = Field(default_factory=list)
 
 
 class PageSectionCreate(BaseSchema):
@@ -491,6 +516,8 @@ __all__ = [
     "SectionItemCreate",
     "SectionItemUpdate",
     "SectionItemRead",
+    "SectionItemBatchEntry",
+    "SectionItemBatchSave",
     "PageSectionCreate",
     "PageSectionUpdate",
     "PageSectionRead",

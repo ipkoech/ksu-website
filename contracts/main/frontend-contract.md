@@ -2457,6 +2457,21 @@ Create Section Item
 - Parameters: `section_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
+### `PUT /api/v1/page-sections/{section_id}/items/batch`
+
+Batch Save Section Items
+
+Transactionally upsert and soft-disable section items in one request.
+
+Items with an ``id`` are updated, items without are created, and every id
+in ``remove_ids`` is soft-disabled (``is_enabled=False``). All changes share
+the request's DB transaction, so any failure rolls back the whole batch.
+
+- Auth: HTTPBearer
+- Request body: SectionItemBatchSave
+- Parameters: `section_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ### `POST /api/v1/page-sections/{section_id}/{action}`
 
 Run Page Section Workflow Action
@@ -6655,7 +6670,7 @@ Transition Content
 
 ## Schemas
 
-Generated component schemas: `252`
+Generated component schemas: `254`
 
 ### `AboutPageContentCreate`
 
@@ -9403,6 +9418,38 @@ Generated component schemas: `252`
 - `vision`: `string | null` (optional)
 - `website`: `string | null` (optional)
 
+### `SectionItemBatchEntry`
+
+- `audience`: `string` (optional)
+- `body_text`: `string | null` (optional)
+- `content`: `object | null` (optional)
+- `cta_description`: `string | null` (optional)
+- `cta_label`: `string | null` (optional)
+- `cta_url`: `string | null` (optional)
+- `display_order`: `integer` (optional)
+- `id`: `string | null` (optional)
+- `is_enabled`: `boolean` (optional)
+- `is_featured`: `boolean` (optional)
+- `item_type`: `string` (optional)
+- `media_alt_text`: `string | null` (optional)
+- `media_caption`: `string | null` (optional)
+- `page_section_id`: `string | null` (optional)
+- `poster_media_id`: `string | null` (optional)
+- `source_id`: `string | null` (optional)
+- `source_type`: `string | null` (optional)
+- `status`: `string | null` (optional)
+- `subtitle`: `string | null` (optional)
+- `title`: `string | null` (optional)
+- `transcript`: `string | null` (optional)
+- `video_duration_seconds`: `integer | null` (optional)
+- `video_provider`: `string | null` (optional)
+- `video_url`: `string | null` (optional)
+
+### `SectionItemBatchSave`
+
+- `items`: `array<SectionItemBatchEntry>` (optional)
+- `remove_ids`: `array<string>` (optional)
+
 ### `SectionItemCreate`
 
 - `audience`: `string` (optional)
@@ -9421,6 +9468,7 @@ Generated component schemas: `252`
 - `poster_media_id`: `string | null` (optional)
 - `source_id`: `string | null` (optional)
 - `source_type`: `string | null` (optional)
+- `status`: `string | null` (optional)
 - `subtitle`: `string | null` (optional)
 - `title`: `string | null` (optional)
 - `transcript`: `string | null` (optional)
@@ -9446,6 +9494,7 @@ Generated component schemas: `252`
 - `poster_media_id`: `string | null` (optional)
 - `source_id`: `string | null` (optional)
 - `source_type`: `string | null` (optional)
+- `status`: `string | null` (optional)
 - `subtitle`: `string | null` (optional)
 - `title`: `string | null` (optional)
 - `transcript`: `string | null` (optional)

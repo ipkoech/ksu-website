@@ -13,7 +13,7 @@ from app.api.v1 import page_cms
 from app.deps import get_db
 from app.helpers.jwt import create_access_token
 from app.models import PageSection, PartnershipSpotlight, SectionItem
-from app.schemas import PageSectionCreate, PageSectionUpdate
+from app.schemas import PageSectionCreate, PageSectionUpdate, SectionItemBatchSave
 from ksu_common import PaginatedResult
 
 
@@ -118,6 +118,26 @@ def _persisted_section(**overrides) -> PageSection:
     section.is_enabled = True if section.is_enabled is None else section.is_enabled
     section.workflow_status = section.workflow_status or section.status
     return section
+
+
+def _persisted_item(section: PageSection, **overrides) -> SectionItem:
+    payload = {
+        "item_type": "text",
+        "title": "Tile",
+        "display_order": 1,
+        "is_enabled": True,
+        "status": "published",
+        "audience": "all",
+        "is_featured": False,
+        **overrides,
+    }
+    item = SectionItem(page_section_id=section.id, **payload)
+    item.id = uuid.uuid4()
+    now = datetime.now(timezone.utc)
+    item.created_at = now
+    item.updated_at = now
+    section.items.append(item)
+    return item
 
 
 def _build_test_app(db) -> TestClient:
@@ -763,6 +783,173 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("success", response["status"])
         self.assertEqual(["hero"], [section["section_key"] for section in response["data"]["sections"]])
         self.assertEqual(["published"], [section["status"] for section in response["data"]["sections"]])
+
+    async def test_batch_save_upserts_and_disables_in_single_call(self):
+        user = _user("section_items.manage")
+        db = _AuthDb(user)
+        section = _persisted_section(section_key="campus-life")
+        kept = _persisted_item(section, title="Keep me", display_order=1)
+        removed = _persisted_item(section, title="Remove me", display_order=2)
+        payload = SectionItemBatchSave(
+            items=[
+                {"id": kept.id, "title": "Keep me (edited)"},
+                {"title": "Brand new tile", "display_order": 5},
+            ],
+            remove_ids=[removed.id],
+        )
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "section_items.manage"
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+        ):
+            response = await page_cms.batch_save_section_items(section.id, payload, db=db, user=user)
+
+        self.assertEqual("success", response["status"])
+        self.assertEqual("Keep me (edited)", kept.title)
+        self.assertFalse(removed.is_enabled)
+        self.assertEqual(3, len(response["data"]))
+        titles = {item["title"] for item in response["data"]}
+        self.assertIn("Brand new tile", titles)
+
+    async def test_batch_save_rejects_ids_from_another_section(self):
+        user = _user("section_items.manage")
+        db = _AuthDb(user)
+        section = _persisted_section(section_key="campus-life")
+        item = _persisted_item(section, title="Owned")
+        foreign_id = uuid.uuid4()
+        payload = SectionItemBatchSave(
+            items=[
+                {"id": item.id, "title": "Should not be applied"},
+                {"id": foreign_id, "title": "Not ours"},
+            ],
+            remove_ids=[],
+        )
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "section_items.manage"
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.batch_save_section_items(section.id, payload, db=db, user=user)
+
+        self.assertEqual(422, context.exception.status_code)
+        self.assertEqual([str(foreign_id)], context.exception.detail["invalid_ids"])
+        self.assertEqual("Owned", item.title)
+
+    async def test_batch_save_rejects_foreign_remove_ids(self):
+        user = _user("section_items.manage")
+        db = _AuthDb(user)
+        section = _persisted_section(section_key="campus-life")
+        item = _persisted_item(section, title="Owned")
+        foreign_id = uuid.uuid4()
+        payload = SectionItemBatchSave(items=[], remove_ids=[foreign_id])
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "section_items.manage"
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.batch_save_section_items(section.id, payload, db=db, user=user)
+
+        self.assertEqual(422, context.exception.status_code)
+        self.assertTrue(item.is_enabled)
+
+    async def test_batch_item_publish_status_requires_publish_scope(self):
+        user = _user("section_items.manage")
+        db = _AuthDb(user)
+        section = _persisted_section(section_key="campus-life")
+        item = _persisted_item(section, title="Draft tile", status="draft")
+        payload = SectionItemBatchSave(items=[{"id": item.id, "status": "published"}], remove_ids=[])
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "section_items.manage"
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.batch_save_section_items(section.id, payload, db=db, user=user)
+
+        self.assertEqual(403, context.exception.status_code)
+        self.assertEqual("draft", item.status)
+
+    async def test_batch_item_publish_status_accepts_life_around_studies_publish(self):
+        user = _user("life_around_studies.manage", "life_around_studies.publish")
+        db = _AuthDb(user)
+        section = _persisted_section(section_key="campus-life")
+        item = _persisted_item(section, title="Draft tile", status="draft")
+        payload = SectionItemBatchSave(items=[{"id": item.id, "status": "published"}], remove_ids=[])
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission in {"life_around_studies.manage", "life_around_studies.publish"}
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+        ):
+            response = await page_cms.batch_save_section_items(section.id, payload, db=db, user=user)
+
+        self.assertEqual("success", response["status"])
+        self.assertEqual("published", item.status)
+
+    async def test_batch_flipping_published_item_to_draft_needs_only_manage(self):
+        user = _user("section_items.manage")
+        db = _AuthDb(user)
+        section = _persisted_section(section_key="campus-life")
+        item = _persisted_item(section, title="Published tile", status="published")
+        payload = SectionItemBatchSave(
+            items=[{"id": item.id, "title": "Unlocked edit", "status": "draft"}],
+            remove_ids=[],
+        )
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "section_items.manage"
+
+        with (
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+        ):
+            response = await page_cms.batch_save_section_items(section.id, payload, db=db, user=user)
+
+        self.assertEqual("success", response["status"])
+        self.assertEqual("draft", item.status)
+        self.assertEqual("Unlocked edit", item.title)
+
+    async def test_update_section_item_publish_status_requires_publish_scope(self):
+        user = _user("section_items.manage")
+        db = _AuthDb(user)
+        section = _persisted_section(section_key="campus-life")
+        item = _persisted_item(section, title="Draft tile", status="draft")
+
+        async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
+            return permission == "section_items.manage"
+
+        from app.schemas import SectionItemUpdate
+
+        with (
+            patch.object(page_cms.SectionItem, "get_by_id", AsyncMock(return_value=item)),
+            patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.update_section_item(
+                    item.id,
+                    SectionItemUpdate(status="published"),
+                    db=db,
+                    user=user,
+                )
+
+        self.assertEqual(403, context.exception.status_code)
 
     async def test_school_scoped_update_requires_scope_access(self):
         own_school_id = uuid.uuid4()

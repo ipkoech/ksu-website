@@ -348,7 +348,11 @@ async def _serialize_section(
         (
             item
             for item in section.items
-            if item.is_enabled and getattr(item, "deleted_at", None) is None
+            if item.is_enabled
+            and getattr(item, "deleted_at", None) is None
+            # Per-item workflow: only published items are publicly composed.
+            # None guards unsaved/legacy in-memory rows (DB default is "published").
+            and (getattr(item, "status", None) or "published") == "published"
         ),
         key=lambda item: (item.display_order, item.created_at or datetime.min.replace(tzinfo=timezone.utc)),
     )
@@ -378,6 +382,7 @@ async def _serialize_section(
             "transcript": item.transcript,
             "display_order": item.display_order,
             "is_enabled": item.is_enabled,
+            "status": getattr(item, "status", None) or "published",
             "content_enriched": await _enrich_section_item_content(db, item.content),
         }
         for item in public_items

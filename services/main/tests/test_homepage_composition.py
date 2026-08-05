@@ -9,7 +9,7 @@ from app.models import Blog, Media, MediaLink, PageSection, PartnershipSpotlight
 from app.api.v1 import public_media
 from app.services import BlogService, HomepageCompositionService, group_media_links
 import app.services.content as content_service
-from app.services.page_cms import _get_research_partner_payload
+from app.services.page_cms import _get_research_partner_payload, _serialize_section
 
 
 class _ScalarResult:
@@ -65,6 +65,40 @@ def _make_link(entity_type: str, entity_id: uuid.UUID, role: str, filename: str,
 
 
 class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
+    async def test_public_section_payload_excludes_non_published_items(self):
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="campus-life",
+            layout_variant="pillar_grid",
+            status="published",
+        )
+        section.id = uuid.uuid4()
+        now = datetime.now(timezone.utc)
+        for item_status, title in (
+            ("published", "Live tile"),
+            ("draft", "Draft tile"),
+            ("in_review", "Review tile"),
+            ("archived", "Archived tile"),
+            (None, "Legacy tile"),
+        ):
+            item = SectionItem(
+                page_section_id=section.id,
+                item_type="text",
+                title=title,
+                display_order=1,
+                is_enabled=True,
+            )
+            item.status = item_status
+            item.created_at = now
+            section.items.append(item)
+
+        payload = await _serialize_section(None, section, {})
+
+        titles = sorted(item["title"] for item in payload["items"])
+        self.assertEqual(["Legacy tile", "Live tile"], titles)
+        self.assertTrue(all(item["status"] == "published" for item in payload["items"]))
+
     async def test_group_media_links_scopes_workflow_gate_to_club_media(self):
         db = _QueueDb([])
 

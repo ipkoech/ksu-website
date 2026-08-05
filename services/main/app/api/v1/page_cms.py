@@ -18,6 +18,7 @@ from ...schemas import (
     PageSectionUpdate,
     PartnershipSpotlightCreate,
     PartnershipSpotlightUpdate,
+    SectionItemBatchSave,
     SectionItemCreate,
     SectionItemRead,
     SectionItemUpdate,
@@ -303,6 +304,54 @@ async def _require_page_section_access(
     )
 
 
+SECTION_ITEM_STATUS_PUBLISH_EXTRA_SCOPES = ("life_around_studies.publish", "homepage.manage")
+SECTION_ITEM_STATUS_REVIEW_EXTRA_SCOPES = ("life_around_studies.review",)
+
+
+async def _require_section_item_status_change(
+    db: DbSession,
+    user: CurrentUser,
+    section: PageSection,
+    requested_status: str | None,
+    current_status: str | None = None,
+) -> None:
+    """Gate per-item workflow status changes against the caller's scopes.
+
+    Publishing/archiving an item requires publish authority for the section's
+    page scope (plus life_around_studies.publish for the campus-life feature);
+    sending an item to review requires item-manage or review authority.
+    Setting draft needs no authority beyond item_manage (already enforced).
+    """
+    if requested_status is None or requested_status == current_status:
+        return
+    if requested_status in {"published", "archived"}:
+        permissions = _page_section_permissions(
+            page_key=section.page_key,
+            scope_type=section.scope_type,
+            action="publish",
+            section_key=section.section_key,
+        )
+        permissions.extend(SECTION_ITEM_STATUS_PUBLISH_EXTRA_SCOPES)
+    elif requested_status == "in_review":
+        permissions = _page_section_permissions(
+            page_key=section.page_key,
+            scope_type=section.scope_type,
+            action="item_manage",
+            section_key=section.section_key,
+        )
+        permissions.extend(SECTION_ITEM_STATUS_REVIEW_EXTRA_SCOPES)
+    else:
+        return
+    await require_scoped_record(
+        db,
+        user,
+        list(dict.fromkeys(permissions)),
+        section.scope_type,
+        section.scope_id,
+        resource_name="section item status",
+    )
+
+
 async def _can_access_page_section_admin_row(db: DbSession, user: CurrentUser, section: PageSection) -> bool:
     for action in PAGE_SECTION_ADMIN_BROAD_ROW_ACTIONS:
         if await can_access_scoped_record(
@@ -528,6 +577,7 @@ async def create_section_item(
         section_key=section.section_key,
     )
     _require_page_authoring_edit(user, section)
+    await _require_section_item_status_change(db, user, section, data.status)
     await ContentWorkflowService.reset_after_authoring_edit(
         db,
         section,
@@ -535,7 +585,10 @@ async def create_section_item(
         user.id,
         changed_fields={"section_item_create": data.model_dump(exclude={"page_section_id"})},
     )
-    item = SectionItem(page_section_id=section.id, **data.model_dump(exclude={"page_section_id"}))
+    payload = data.model_dump(exclude={"page_section_id"})
+    if payload.get("status") is None:
+        payload.pop("status", None)
+    item = SectionItem(page_section_id=section.id, **payload)
     await _validate_leadership_content_references(
         db,
         item.content,
@@ -545,6 +598,96 @@ async def create_section_item(
     await db.flush()
     await db.refresh(item)
     return success(data=await _serialize_admin_section_item(db, item), message="Section item created")
+
+
+@router.put("/page-sections/{section_id}/items/batch")
+async def batch_save_section_items(
+    section_id: uuid.UUID,
+    data: SectionItemBatchSave,
+    db: DbSession,
+    user: CurrentUser,
+):
+    """Transactionally upsert and soft-disable section items in one request.
+
+    Items with an ``id`` are updated, items without are created, and every id
+    in ``remove_ids`` is soft-disabled (``is_enabled=False``). All changes share
+    the request's DB transaction, so any failure rolls back the whole batch.
+    """
+    section = await _get_page_section_or_404(db, section_id)
+    await _require_page_section_access(
+        db,
+        user,
+        page_key=section.page_key,
+        scope_type=section.scope_type,
+        scope_id=section.scope_id,
+        action="item_manage",
+        section_key=section.section_key,
+    )
+    _require_page_authoring_edit(user, section)
+
+    existing = {item.id: item for item in section.items}
+    invalid_ids = [str(entry.id) for entry in data.items if entry.id is not None and entry.id not in existing]
+    invalid_ids.extend(str(remove_id) for remove_id in data.remove_ids if remove_id not in existing)
+    if invalid_ids:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "Some item ids do not belong to this section",
+                "invalid_ids": invalid_ids,
+            },
+        )
+
+    for entry in data.items:
+        current_status = existing[entry.id].status if entry.id is not None else None
+        await _require_section_item_status_change(db, user, section, entry.status, current_status)
+
+    await ContentWorkflowService.reset_after_authoring_edit(
+        db,
+        section,
+        "page-sections",
+        user.id,
+        changed_fields={
+            "section_items_batch": {
+                "upserted": len(data.items),
+                "removed": [str(remove_id) for remove_id in data.remove_ids],
+            }
+        },
+    )
+
+    disallow_item_profile = section.layout_variant == "leadership_activity"
+    for entry in data.items:
+        if entry.id is not None:
+            payload = entry.model_dump(exclude_unset=True, exclude={"id", "page_section_id"})
+            if payload.get("status") is None:
+                payload.pop("status", None)
+            await _validate_leadership_content_references(
+                db, payload.get("content"), disallow_item_profile=disallow_item_profile,
+            )
+            apply_updates(existing[entry.id], **payload)
+        else:
+            payload = entry.model_dump(exclude={"id", "page_section_id"})
+            if payload.get("status") is None:
+                payload.pop("status", None)
+            await _validate_leadership_content_references(
+                db, payload.get("content"), disallow_item_profile=disallow_item_profile,
+            )
+            section.items.append(SectionItem(page_section_id=section.id, **payload))
+
+    for remove_id in data.remove_ids:
+        existing[remove_id].is_enabled = False
+
+    await db.flush()
+    for item in section.items:
+        await db.refresh(item)
+
+    refreshed = sorted(
+        section.items,
+        key=lambda item: (item.display_order if item.display_order is not None else 100, str(item.id)),
+    )
+    return success(
+        data=[await _serialize_admin_section_item(db, item) for item in refreshed],
+        message="Section items saved",
+    )
 
 
 @router.post("/page-sections/{section_id}/{action}")
@@ -589,6 +732,9 @@ async def update_section_item(
         section_key=section.section_key,
     )
     payload = data.model_dump(exclude_unset=True)
+    if payload.get("status") is None:
+        payload.pop("status", None)
+    await _require_section_item_status_change(db, user, section, payload.get("status"), item.status)
     await _validate_leadership_content_references(
         db,
         payload.get("content"),
