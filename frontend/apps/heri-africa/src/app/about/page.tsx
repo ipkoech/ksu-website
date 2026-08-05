@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -12,6 +13,13 @@ import {
 import { SiteShell } from "../../components/site-shell";
 import { Reveal, RevealItem } from "../../components/motion/reveal";
 import { withBasePath } from "../../lib/base-path";
+
+export const metadata: Metadata = {
+  title: "About the Research Chair",
+  description:
+    "Who we are: the vision, mission, values and approach of the HERI Africa Language Education Research Chair, hosted by Kisii University.",
+};
+
 
 const values = [
   ["Excellence", "We pursue the highest standards in everything we do."],

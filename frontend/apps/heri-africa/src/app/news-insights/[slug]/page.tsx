@@ -9,6 +9,25 @@ import { getEvents, getNewsDetail, getOpportunities } from "../../../lib/api";
 
 export const revalidate = 300;
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const news = await getNewsDetail(slug).catch(() => null);
+  if (!news) return { title: "News & Insights" };
+  return {
+    title: news.title,
+    description:
+      news.excerpt ??
+      "News from the HERI Africa Language Education Research Chair.",
+    openGraph: news.featured_image_url
+      ? { images: [{ url: news.featured_image_url }] }
+      : undefined,
+  };
+}
+
 export default async function InsightDetailPage({
   params,
 }: {

@@ -1,9 +1,17 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { InsightsFeed } from "../../components/news/insights-feed";
 import { Reveal } from "../../components/motion/reveal";
 import { SiteShell } from "../../components/site-shell";
 import { getEvents, getNews, getOpportunities } from "../../lib/api";
 import { withBasePath } from "../../lib/base-path";
+
+export const metadata: Metadata = {
+  title: "News & Insights",
+  description:
+    "The latest research, events and stories from the HERI Africa Language Education Research Chair.",
+};
+
 
 export const revalidate = 300;
 

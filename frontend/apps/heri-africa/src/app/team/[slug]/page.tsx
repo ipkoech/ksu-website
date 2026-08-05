@@ -8,6 +8,20 @@ import { getTeamMember } from "../../../lib/api";
 
 export const revalidate = 300;
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const member = await getTeamMember(slug).catch(() => null);
+  if (!member) return { title: "Team" };
+  return {
+    title: member.name,
+    description: `${member.name}, ${member.role} at the HERI Africa Language Education Research Chair, Kisii University.`,
+  };
+}
+
 export default async function TeamMemberPage({
   params,
 }: {

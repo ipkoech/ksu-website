@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { TeamDirectory } from "../../components/team/team-directory";
@@ -5,6 +6,13 @@ import { SiteShell } from "../../components/site-shell";
 import { Reveal } from "../../components/motion/reveal";
 import { getTeam } from "../../lib/api";
 import { withBasePath } from "../../lib/base-path";
+
+export const metadata: Metadata = {
+  title: "Our Team",
+  description:
+    "The researchers, educators and leaders behind the HERI Africa Language Education Research Chair.",
+};
+
 
 export const revalidate = 300;
 

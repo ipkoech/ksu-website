@@ -1,6 +1,14 @@
+import type { Metadata } from "next";
 import { Reveal, RevealItem } from "../../../components/motion/reveal";
 import { SiteShell } from "../../../components/site-shell";
 import { getPublications } from "../../../lib/api";
+
+export const metadata: Metadata = {
+  title: "Publications",
+  description:
+    "Publications and resources from the HERI Africa Language Education Research Chair.",
+};
+
 
 export default async function PublicationsPage() {
   const publications = await getPublications().catch(() => []);

@@ -1,8 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpen, FileText, Goal, Handshake, Lightbulb, Search, UsersRound } from "lucide-react";
 import { SiteShell } from "../../components/site-shell";
 import { Reveal, RevealItem } from "../../components/motion/reveal";
 import { getEvents, getImpactMetrics, getOpportunities, getProjects, getPublications, getResearchThemes } from "../../lib/api";
+
+export const metadata: Metadata = {
+  title: "Our Work",
+  description:
+    "Research priorities, approach, portfolio and impact of the HERI Africa Language Education Research Chair.",
+};
+
 
 const focusAreas = [
   ["Foundational Literacy", "Strengthening early reading and writing for every learner.", BookOpen],

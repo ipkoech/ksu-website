@@ -1,6 +1,14 @@
+import type { Metadata } from "next";
 import { Reveal, RevealItem } from "../../../components/motion/reveal";
 import { SiteShell } from "../../../components/site-shell";
 import { getProjects } from "../../../lib/api";
+
+export const metadata: Metadata = {
+  title: "Research Projects",
+  description:
+    "Active and completed research projects of the HERI Africa Language Education Research Chair.",
+};
+
 
 export default async function ProjectsPage() {
   const projects = await getProjects().catch(() => []);

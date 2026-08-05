@@ -1,6 +1,14 @@
+import type { Metadata } from "next";
 import { Reveal, RevealItem } from "../../components/motion/reveal";
 import { SiteShell } from "../../components/site-shell";
 import { getEvents } from "../../lib/api";
+
+export const metadata: Metadata = {
+  title: "Events",
+  description:
+    "Upcoming gatherings, convenings and opportunities from the HERI Africa Language Education Research Chair.",
+};
+
 
 export default async function EventsPage() {
   const events = await getEvents().catch(() => []);

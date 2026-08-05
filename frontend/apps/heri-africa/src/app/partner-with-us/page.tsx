@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -17,6 +18,13 @@ import { ContactForm } from "../../components/forms/contact-form";
 import { SiteShell } from "../../components/site-shell";
 import { Reveal, RevealItem } from "../../components/motion/reveal";
 import { getPartners } from "../../lib/api";
+
+export const metadata: Metadata = {
+  title: "Partner With Us",
+  description:
+    "Collaborate with the HERI Africa Language Education Research Chair: research partnerships, funding, policy engagement and enquiries.",
+};
+
 
 const pathways = [
   [
