@@ -15,6 +15,7 @@ from pathlib import PurePosixPath
 
 _DESTRUCTIVE_ALEMBIC_OPERATIONS = frozenset({"drop_table", "drop_column"})
 _DESTRUCTIVE_SQL = re.compile(r"\b(?:drop|truncate)\b", re.IGNORECASE)
+_ALEMBIC_HEAD_MARKER = re.compile(r"\(head\)")
 
 
 class MigrationCheckError(ValueError):
@@ -35,7 +36,7 @@ class MigrationValidationResult:
     """Structured outcome for a supplied migration file set."""
 
     findings: tuple[MigrationFinding, ...]
-    errors: tuple[str, ...]
+    errors: tuple[MigrationFinding, ...]
 
     @property
     def ok(self) -> bool:
@@ -57,7 +58,7 @@ def validate_migration_source(source: str, *, path: str = "<migration>") -> tupl
         return (
             MigrationFinding(
                 path=path,
-                code="invalid_migration_source",
+                code="invalid_source",
                 message=f"migration source cannot be parsed{location}",
             ),
         )
@@ -76,14 +77,10 @@ def validate_migration_source(source: str, *, path: str = "<migration>") -> tupl
                         message=f"destructive operation in upgrade: op.{operation}",
                     )
                 )
-            elif operation == "execute" and _contains_destructive_sql(node):
-                findings.append(
-                    MigrationFinding(
-                        path=path,
-                        code="destructive_upgrade_operation",
-                        message="destructive operation in upgrade: SQL " + _sql_operation(node),
-                    )
-                )
+            elif operation == "execute":
+                sql_finding = _destructive_sql_finding(node, path=path)
+                if sql_finding is not None:
+                    findings.append(sql_finding)
     return tuple(findings)
 
 
@@ -112,22 +109,30 @@ def select_migration_paths(
     except KeyError as error:
         raise MigrationCheckError(f"unsupported migration scan mode: {mode}") from error
 
-    root = _normalise_path(migration_directory).rstrip("/")
+    root = _normalise_path(migration_directory)
+    if root is None:
+        raise MigrationCheckError("migration directory must not contain traversal segments")
+    root = root.rstrip("/")
     selected = {
         normalised
         for path in paths
-        if (normalised := _normalise_path(path)).startswith(root + "/")
+        if (normalised := _normalise_path(path)) is not None
+        and normalised.startswith(root + "/")
         and normalised.endswith(".py")
     }
     return tuple(sorted(selected))
 
 
 def require_single_head(alembic_heads: str) -> str:
-    """Return the sole non-empty Alembic head line or raise a clear error."""
+    """Return the sole Alembic ``(head)`` line and reject diagnostic output."""
 
-    heads = tuple(line.strip() for line in alembic_heads.splitlines() if line.strip())
-    if len(heads) != 1:
-        raise MigrationCheckError(f"expected exactly one migration head; received {len(heads)}")
+    lines = tuple(line.strip() for line in alembic_heads.splitlines() if line.strip())
+    heads = tuple(line for line in lines if _ALEMBIC_HEAD_MARKER.search(line))
+    if len(lines) != 1 or len(heads) != 1:
+        raise MigrationCheckError(
+            "expected exactly one Alembic '(head)' marker with no diagnostics; "
+            f"received {len(heads)} markers across {len(lines)} lines"
+        )
     return heads[0]
 
 
@@ -145,15 +150,33 @@ def validate_migration_file_set(
         for path, source in sorted(entries)
         for finding in validate_migration_source(source, path=path)
     )
-    errors: list[str] = []
+    errors: list[MigrationFinding] = []
     if any(finding.code == "destructive_upgrade_operation" for finding in findings) and not destructive_approved:
-        errors.append("destructive migration changes require explicit approval")
-    if any(finding.code == "invalid_migration_source" for finding in findings):
-        errors.append("one or more migration sources cannot be parsed")
+        errors.append(
+            MigrationFinding(
+                path="<migration-set>",
+                code="destructive_unapproved",
+                message="destructive migration changes require explicit approval",
+            )
+        )
+    if any(finding.code == "invalid_source" for finding in findings):
+        errors.append(
+            MigrationFinding(
+                path="<migration-set>",
+                code="invalid_source",
+                message="one or more migration sources cannot be parsed",
+            )
+        )
     try:
         require_single_head(alembic_heads)
     except MigrationCheckError as error:
-        errors.append(str(error))
+        errors.append(
+            MigrationFinding(
+                path="<migration-set>",
+                code="invalid_head_count",
+                message=str(error),
+            )
+        )
     return MigrationValidationResult(findings=findings, errors=tuple(errors))
 
 
@@ -176,24 +199,60 @@ def _alembic_operation(node: ast.Call) -> str | None:
     return function.attr
 
 
-def _contains_destructive_sql(node: ast.Call) -> bool:
-    return bool(_DESTRUCTIVE_SQL.search(_sql_text(node)))
+def _destructive_sql_finding(node: ast.Call, *, path: str) -> MigrationFinding | None:
+    """Require review for destructive or dynamic ``op.execute`` SQL.
 
+    Dynamic SQL cannot be statically proven safe, so it follows the existing
+    destructive-review gate.  Literal SQL inside ``sa.text(...)`` is unwrapped
+    so safe wrapped statements remain safe while destructive ones are caught.
+    """
 
-def _sql_operation(node: ast.Call) -> str:
-    match = _DESTRUCTIVE_SQL.search(_sql_text(node))
-    return match.group(0).upper() if match else "statement"
-
-
-def _sql_text(node: ast.Call) -> str:
     if not node.args:
-        return ""
-    try:
-        value = ast.literal_eval(node.args[0])
-    except (ValueError, TypeError):
-        return ""
-    return value if isinstance(value, str) else ""
+        return None
+    sql_text, dynamic = _sql_expression(node.args[0])
+    match = _DESTRUCTIVE_SQL.search(sql_text)
+    if match:
+        detail = f"SQL {match.group(0).upper()}"
+        if dynamic:
+            detail += " (dynamic)"
+    elif dynamic:
+        detail = "dynamic SQL requires review"
+    else:
+        return None
+    return MigrationFinding(
+        path=path,
+        code="destructive_upgrade_operation",
+        message="destructive operation in upgrade: " + detail,
+    )
 
 
-def _normalise_path(path: str) -> str:
-    return PurePosixPath(path.replace("\\", "/")).as_posix()
+def _sql_expression(node: ast.AST) -> tuple[str, bool]:
+    """Return static SQL fragments and whether the expression is dynamic."""
+
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value, False
+    if isinstance(node, ast.JoinedStr):
+        fragments = [value.value for value in node.values if isinstance(value, ast.Constant) and isinstance(value.value, str)]
+        return "".join(fragments), True
+    if isinstance(node, ast.Call) and _is_sql_text_wrapper(node):
+        if not node.args:
+            return "", True
+        return _sql_expression(node.args[0])
+    return "", True
+
+
+def _is_sql_text_wrapper(node: ast.Call) -> bool:
+    function = node.func
+    return (
+        isinstance(function, ast.Name)
+        and function.id == "text"
+        or isinstance(function, ast.Attribute)
+        and function.attr == "text"
+    )
+
+
+def _normalise_path(path: str) -> str | None:
+    normalised = PurePosixPath(path.replace("\\", "/"))
+    if ".." in normalised.parts:
+        return None
+    return normalised.as_posix()

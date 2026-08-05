@@ -50,6 +50,27 @@ def downgrade():
     assert validate_migration_source(source, path="versions/002.py") == ()
 
 
+def test_upgrade_dynamic_and_wrapped_sql_require_destructive_review() -> None:
+    source = """
+def upgrade():
+    table_name = 'old_records'
+    op.execute(f'DROP TABLE {table_name}')
+    op.execute(sa.text('TRUNCATE TABLE transient_records'))
+    op.execute(sa.text(f'DROP TABLE {table_name}'))
+
+
+def downgrade():
+    op.execute(f'DROP TABLE {table_name}')
+    op.execute(sa.text('TRUNCATE TABLE transient_records'))
+"""
+
+    findings = validate_migration_source(source, path="versions/003.py")
+
+    assert len(findings) == 3
+    assert all(finding.code == "destructive_upgrade_operation" for finding in findings)
+    assert all(finding.path == "versions/003.py" for finding in findings)
+
+
 def test_select_migration_paths_uses_only_requested_source_and_migration_directory() -> None:
     paths = select_migration_paths(
         mode="committed",
@@ -69,14 +90,33 @@ def test_select_migration_paths_uses_only_requested_source_and_migration_directo
     assert paths == ("services/main/migrations/versions/002_committed.py",)
 
 
-def test_require_single_head_rejects_zero_or_multiple_heads() -> None:
+def test_select_migration_paths_ignores_traversal_paths() -> None:
+    paths = select_migration_paths(
+        mode="tracked",
+        tracked_paths=(
+            "services/main/migrations/versions/003_safe.py",
+            "services/main/migrations/versions/../env.py",
+            "services/main/migrations/versions/../../outside.py",
+        ),
+        migration_directory="services/main/migrations/versions",
+    )
+
+    assert paths == ("services/main/migrations/versions/003_safe.py",)
+
+
+def test_require_single_head_rejects_non_head_and_diagnostic_output() -> None:
     assert require_single_head("abc123 (head)") == "abc123 (head)"
 
-    for output in ("", "first (head)\nsecond (head)\n"):
+    for output in (
+        "",
+        "alembic failed to load config",
+        "first (head)\nsecond (head)\n",
+        "warning: stale config\nfirst (head)\n",
+    ):
         try:
             require_single_head(output)
         except MigrationCheckError as error:
-            assert "exactly one migration head" in str(error)
+            assert "exactly one Alembic '(head)' marker" in str(error)
         else:  # pragma: no cover - documents the failure expected above
             raise AssertionError("expected migration-head validation to fail")
 
@@ -100,8 +140,32 @@ def test_file_set_returns_head_and_destructive_errors_together() -> None:
         ),
     )
     assert result.errors == (
-        "destructive migration changes require explicit approval",
-        "expected exactly one migration head; received 2",
+        MigrationFinding(
+            path="<migration-set>",
+            code="destructive_unapproved",
+            message="destructive migration changes require explicit approval",
+        ),
+        MigrationFinding(
+            path="<migration-set>",
+            code="invalid_head_count",
+            message="expected exactly one Alembic '(head)' marker with no diagnostics; received 0 markers across 2 lines",
+        ),
+    )
+
+
+def test_file_set_exposes_typed_invalid_source_error() -> None:
+    result = validate_migration_file_set(
+        migration_sources={"versions/broken.py": "def upgrade(:\n    pass\n"},
+        alembic_heads="valid (head)",
+        destructive_approved=True,
+    )
+
+    assert result.errors == (
+        MigrationFinding(
+            path="<migration-set>",
+            code="invalid_source",
+            message="one or more migration sources cannot be parsed",
+        ),
     )
 
 
