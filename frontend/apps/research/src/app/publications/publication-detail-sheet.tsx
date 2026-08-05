@@ -45,7 +45,7 @@ export function PublicationDetailSheet({
             {publication.publication_type ? <Badge>{formatLabel(publication.publication_type)}</Badge> : null}
             {publication.access_type ? <Badge>{formatLabel(publication.access_type)}</Badge> : null}
             {publication.is_open_access ? (
-              <span className="inline-flex rounded-md bg-secondary px-2.5 py-1 text-xs font-semibold uppercase text-primary">
+              <span className="inline-flex rounded-md bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
                 Open access
               </span>
             ) : null}
@@ -127,7 +127,7 @@ function ContextCard({
       <p className="text-xs font-semibold uppercase text-muted-foreground">{title}</p>
       {recordTitle ? (
         href ? (
-          <Link href={href} className="mt-2 block text-sm font-semibold leading-6 text-primary hover:text-secondary">
+          <Link href={href} className="mt-2 block text-sm font-semibold leading-6 text-foreground hover:text-primary">
             {recordTitle}
           </Link>
         ) : (

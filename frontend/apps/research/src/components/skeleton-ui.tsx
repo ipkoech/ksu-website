@@ -1,6 +1,6 @@
 export function SkeletonCard() {
   return (
-    <div className="animate-pulse rounded-lg border border-border bg-white p-5 shadow-sm">
+    <div className="animate-pulse rounded-lg border border-border bg-card p-5 shadow-sm">
       <div className="flex gap-2">
         <div className="h-5 w-20 rounded bg-surface-muted" />
         <div className="h-5 w-16 rounded bg-surface-muted" />
@@ -24,7 +24,7 @@ export function SkeletonCard() {
 
 export function SkeletonList({ count = 6 }: { count?: number }) {
   return (
-    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+    <div role="status" aria-label="Loading" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: count }).map((_, i) => (
         <SkeletonCard key={i} />
       ))}
@@ -34,7 +34,7 @@ export function SkeletonList({ count = 6 }: { count?: number }) {
 
 export function SkeletonDetail() {
   return (
-    <div className="animate-pulse space-y-6">
+    <div role="status" aria-label="Loading" className="animate-pulse space-y-6">
       <div className="flex gap-2">
         <div className="h-6 w-24 rounded-full bg-surface-muted" />
         <div className="h-6 w-32 rounded-full bg-surface-muted" />
@@ -62,7 +62,7 @@ export function SkeletonDetail() {
 
 export function SkeletonTable({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="animate-pulse rounded-lg border border-border bg-white">
+    <div role="status" aria-label="Loading" className="animate-pulse rounded-lg border border-border bg-card">
       <div className="border-b border-border px-5 py-4">
         <div className="h-4 w-1/3 rounded bg-surface-muted" />
       </div>

@@ -45,7 +45,7 @@ function CountUpMetricCard({
 
   return (
     <a href={href} className="block rounded-xl border border-border bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md">
-      <p className="font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground sm:text-4xl">
+      <p className="font-[family-name:var(--app-font-display)] text-3xl font-semibold text-foreground sm:text-4xl">
         {count.toLocaleString()}{suffix}
       </p>
       <p className="mt-1 text-xs font-semibold uppercase text-muted-foreground">{label}</p>

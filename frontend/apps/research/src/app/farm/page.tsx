@@ -112,7 +112,7 @@ export default async function FarmPage({ searchParams }: { searchParams?: Promis
       >
         <FarmFilters params={params} years={years} months={months} />
         {visibleFarms.length > 0 ? (
-          <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-border bg-white shadow-sm">
+          <div className="mt-6 divide-y divide-border rounded-lg border border-border bg-white shadow-sm">
             {visibleFarms.map((farm) => <FarmRow key={farm.id} farm={farm} />)}
           </div>
         ) : <div className="mt-7"><StatusMessage>No farm records match the current filters.</StatusMessage></div>}
@@ -187,7 +187,7 @@ function FarmHero({ farmCount, projectCount, partnerCount, activityCount }: { fa
             <span className="text-foreground">University Farm</span>
           </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">University Farm</p>
-          <h1 className="mt-4 max-w-5xl text-balance font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground sm:text-5xl lg:text-6xl">University Farm: Field Research in Practice</h1>
+          <h1 className="mt-4 max-w-5xl text-balance font-[family-name:var(--app-font-display)] text-4xl font-semibold leading-tight text-foreground sm:text-5xl lg:text-6xl">University Farm: Field Research in Practice</h1>
           <p className="mt-5 max-w-3xl text-pretty text-base leading-8 text-muted-foreground sm:text-lg">Farm facilities, demonstrations, action research, training, partners, and community engagement organized as a living research destination.</p>
           <div className="mt-7 flex flex-wrap gap-3">
             <PrimaryLink href="#facilities">Explore farm facilities</PrimaryLink>
@@ -397,7 +397,7 @@ function RecordListPanel({
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-      <div className="mt-4 divide-y divide-slate-200">
+      <div className="mt-4 divide-y divide-border">
         {records.slice(0, 8).map((record) => (
           <article key={record.id} className="py-4 first:pt-0 last:pb-0">
             <div className="flex flex-wrap gap-2">

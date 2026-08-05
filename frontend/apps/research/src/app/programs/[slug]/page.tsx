@@ -237,16 +237,16 @@ function ProgramHero({
       <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-brand-overlay/88 via-brand-overlay/52 to-brand-overlay/8" />
       <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-white/20" />
       <div className="relative mx-auto max-w-[1680px]">
-        <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-white/75">
+        <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-white/75">
           <Link href="/" className="transition hover:text-white">Home</Link>
           <span>/</span>
           <Link href="/programs" className="transition hover:text-white">Programs</Link>
           <span>/</span>
-          <span className="text-white">{title}</span>
+          <span aria-current="page" className="text-white">{title}</span>
         </nav>
         <div className="max-w-3xl">
           <div className="flex flex-wrap gap-2">
-            <span className="inline-flex rounded-md border border-white/25 bg-primary/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-white shadow-sm backdrop-blur">
+            <span className="inline-flex rounded-md border border-white/25 bg-primary/90 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white shadow-sm backdrop-blur">
               Research Program
             </span>
             {labels.map((label) => (
@@ -255,7 +255,7 @@ function ProgramHero({
               </span>
             ))}
           </div>
-          <h1 className="mt-3 text-balance font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight sm:text-5xl lg:max-w-4xl lg:text-6xl">
+          <h1 className="mt-3 text-balance font-display text-4xl font-semibold leading-tight sm:text-5xl lg:max-w-4xl">
             {title}
           </h1>
           {summary ? (
@@ -267,7 +267,7 @@ function ProgramHero({
             {hasProjects ? (
               <Link
                 href="#project-streams"
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
               >
                 View project streams
                 <ArrowRight aria-hidden className="h-4 w-4" />
@@ -276,7 +276,7 @@ function ProgramHero({
             {contactEmail ? (
               <a
                 href={`mailto:${contactEmail}`}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/40 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/40 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15"
               >
                 <Mail aria-hidden className="h-4 w-4" />
                 Contact lead
@@ -285,7 +285,7 @@ function ProgramHero({
             {briefUrl ? (
               <a
                 href={briefUrl}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/40 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/40 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15"
               >
                 <Download aria-hidden className="h-4 w-4" />
                 Download brief
@@ -383,10 +383,10 @@ function ProgramStoryTable({ sections }: { sections: Array<{ title: string; body
   const icons = [Target, Leaf, Network, LineChart, UsersRound];
   return (
     <section className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
-      <h2 className="border-b border-border px-5 py-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+      <h2 className="border-b border-border px-5 py-4 font-display text-xl font-semibold text-foreground">
         Program Story
       </h2>
-      <div className="divide-y divide-slate-200">
+      <div className="divide-y divide-border">
         {sections.map((section, index) => {
           const Icon = icons[index] ?? FileText;
           return (
@@ -413,7 +413,7 @@ function ProjectStreams({ projects }: { projects: ResearchProject[] }) {
   return (
     <section id="project-streams" className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
       <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4">
-        <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+        <h2 className="font-display text-xl font-semibold text-foreground">
           Project Streams
         </h2>
         <Link href="/projects" className="hidden text-sm font-semibold text-primary hover:text-secondary sm:inline-flex">
@@ -427,7 +427,7 @@ function ProjectStreams({ projects }: { projects: ResearchProject[] }) {
         <span>Timeline</span>
         <span>Progress</span>
       </div>
-      <div className="divide-y divide-slate-200">
+      <div className="divide-y divide-border">
         {projects.slice(0, 12).map((project) => (
           <ProjectStreamRow key={project.id} project={project} />
         ))}
@@ -448,7 +448,7 @@ function ProjectStreamRow({ project }: { project: ResearchProject }) {
   return (
     <Link
       href={href}
-      className="group grid gap-3 px-5 py-3 transition hover:bg-surface-subtle focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 lg:grid-cols-[minmax(280px,1fr)_140px_140px_170px] lg:items-center"
+      className="group grid gap-3 px-5 py-3 transition hover:bg-surface-subtle lg:grid-cols-[minmax(280px,1fr)_140px_140px_170px] lg:items-center"
     >
       <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold leading-6 text-foreground">
         <FileText aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -492,7 +492,7 @@ function EvidenceOutputs({
 
   return (
     <section className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
-      <h2 className="border-b border-border px-5 py-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+      <h2 className="border-b border-border px-5 py-4 font-display text-xl font-semibold text-foreground">
         Evidence & Outputs
       </h2>
       <div className="flex flex-wrap gap-2 border-b border-border px-5 py-3">
@@ -502,7 +502,7 @@ function EvidenceOutputs({
           </span>
         ))}
       </div>
-      <div className="divide-y divide-slate-200">
+      <div className="divide-y divide-border">
         {groups.flatMap((group) =>
           group.records.slice(0, 4).map((record) => {
             const generic = record as ResearchGenericRecord;
@@ -558,11 +558,11 @@ function ProgramFactsSidebar({
 
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+      <h2 className="font-display text-xl font-semibold text-foreground">
         Program facts
       </h2>
       {visibleRows.length > 0 ? (
-        <dl className="mt-4 divide-y divide-slate-200 border-t border-border">
+        <dl className="mt-4 divide-y divide-border border-t border-border">
           {visibleRows.map((fact) => (
             <div key={fact.label} className="grid grid-cols-[120px_minmax(0,1fr)] gap-4 py-3">
               <dt className="text-xs font-semibold text-muted-foreground">{fact.label}</dt>
@@ -576,7 +576,7 @@ function ProgramFactsSidebar({
       {contactEmail ? (
         <a
           href={`mailto:${contactEmail}`}
-          className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-primary/25 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/5"
+          className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-primary/25 bg-background px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5"
         >
           <Mail aria-hidden className="h-4 w-4" />
           Contact program lead
@@ -606,10 +606,10 @@ function QuickPaths({
 
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+      <h2 className="font-display text-xl font-semibold text-foreground">
         Quick paths
       </h2>
-      <div className="mt-3 divide-y divide-slate-200 border-t border-border">
+      <div className="mt-3 divide-y divide-border border-t border-border">
         {links.map((link) => (
           <Link
             key={link.href}
@@ -637,7 +637,7 @@ function ContactCard({
 
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+      <h2 className="font-display text-xl font-semibold text-foreground">
         Contact
       </h2>
       <p className="mt-3 text-sm text-muted-foreground">Questions about this program?</p>
@@ -658,7 +658,7 @@ function ContactCard({
       {contactEmail ? (
         <a
           href={`mailto:${contactEmail}`}
-          className="mt-5 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-primary px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/5"
+          className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-primary/25 bg-background px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5"
         >
           Contact program lead
           <ArrowRight aria-hidden className="h-4 w-4" />
@@ -684,7 +684,7 @@ function getIncludedProgramProjects(program: ResearchGenericRecord) {
 function PartnerChips({ partners }: { partners: ResearchGenericRecord[] }) {
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-foreground">Partners</h2>
+      <h2 className="font-display text-xl font-semibold text-foreground">Partners</h2>
       <div className="mt-3 flex flex-wrap gap-2">
         {partners.slice(0, 8).map((partner, index) => (
           <Link

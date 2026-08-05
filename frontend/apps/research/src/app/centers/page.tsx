@@ -143,12 +143,12 @@ export default async function CentersPage({
         {visibleCenters.length > 0 ? (
           <>
             <div className="mt-6 overflow-hidden rounded-lg border border-border bg-white shadow-sm">
-              <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-border bg-surface-subtle px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground md:grid">
+              <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-border bg-surface-subtle px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:grid">
                 <span>Center</span>
                 <span>Type</span>
                 <span>Status</span>
               </div>
-              <div className="divide-y divide-slate-200">
+              <div className="divide-y divide-border">
                 {visibleCenters.map((center) => (
                   <CenterRow key={center.id} center={center} />
                 ))}
@@ -167,14 +167,15 @@ export default async function CentersPage({
         title="Facilities connected to center work"
         body="Published farm and facility records are shown from the backend as practical research infrastructure."
       >
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {facilities.data.slice(0, 8).map((facility) => (
-            <FacilityTile key={facility.id} facility={facility} />
-          ))}
-          {facilities.data.length === 0 ? (
-            <StatusMessage>No public facilities are currently published.</StatusMessage>
-          ) : null}
-        </div>
+        {facilities.data.length > 0 ? (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {facilities.data.slice(0, 8).map((facility) => (
+              <FacilityTile key={facility.id} facility={facility} />
+            ))}
+          </div>
+        ) : (
+          <StatusMessage>No public facilities are currently published.</StatusMessage>
+        )}
       </ResearchSection>
     </main>
   );
@@ -218,7 +219,7 @@ function CenterRow({ center }: { center: ResearchGenericRecord }) {
   return (
     <Link
       href={href}
-      className="group grid gap-2 px-4 py-3 transition hover:bg-surface-subtle/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
+      className="group grid gap-2 px-4 py-3 transition hover:bg-surface-subtle/80 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
     >
       <div className="min-w-0">
         <h2 className="truncate text-sm font-semibold leading-6 text-foreground transition group-hover:text-primary">
@@ -243,7 +244,7 @@ function FacilityTile({ facility }: { facility: ResearchGenericRecord }) {
   return (
     <Link
       href={facility.slug ? `/farm/${facility.slug}` : "/farm"}
-      className="rounded-lg border border-border bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/5"
+      className="rounded-lg border border-border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
     >
       <Badge>{formatLabel(compactText(facility.farm_type) || "facility")}</Badge>
       <h3 className="mt-3 text-base font-semibold leading-6 text-foreground">

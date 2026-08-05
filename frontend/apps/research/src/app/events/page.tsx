@@ -128,7 +128,7 @@ export default async function EventsPage({
                   <FeaturedEvent event={featuredEvent} />
                 </div>
               ) : null}
-              <div className="divide-y divide-slate-200 rounded-lg border border-border bg-white shadow-sm">
+              <div className="divide-y divide-border rounded-lg border border-border bg-white shadow-sm">
                 {rowEvents.map((event) => (
                   <EventRow key={event.id} event={event} />
                 ))}
@@ -177,7 +177,7 @@ function EventsMasthead({
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
             Events
           </p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--app-font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             Research workshops, forums, seminars, and conferences
           </h1>
           <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">
@@ -239,7 +239,7 @@ function EventFilters({
 function CalendarRail({ events }: { events: ResearchGenericRecord[] }) {
   return (
     <ResearchSidePanel title="Calendar view" eyebrow="Events">
-      <div className="divide-y divide-slate-200">
+      <div className="divide-y divide-border">
         {events.slice(0, 8).map((event) => (
           <article key={event.id} className="py-4 first:pt-0 last:pb-0">
             <p className="text-xs font-semibold uppercase text-secondary">

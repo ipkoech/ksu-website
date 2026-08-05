@@ -118,7 +118,7 @@ export function ResearchFilterForm({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-white p-3 shadow-sm">
+    <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
       <div className="flex flex-col gap-3">
         <form id={formId} action={action} className="flex gap-2 md:gap-3">
           <ResearchTextField
@@ -131,7 +131,7 @@ export function ResearchFilterForm({
           />
           <button
             type="submit"
-            className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
+            className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
           >
             Search
           </button>
@@ -231,7 +231,7 @@ export function ResearchSelectField({
         form={formId}
         name={name}
         defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
+        className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground outline-none ring-ring transition focus:border-primary focus:ring-2"
       >
         {includeAllOption ? <option value="">{allLabel ?? `All ${label.toLowerCase()}`}</option> : null}
         {normalizeOptions(options).map((option) => (
@@ -276,7 +276,7 @@ function ResearchTextField({
           defaultValue={value ?? ""}
           placeholder={placeholder}
           autoComplete="off"
-          className={`h-11 w-full rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground outline-none ring-primary/20 transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4 ${
+          className={`h-11 w-full rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground outline-none ring-ring transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 ${
             isSearch ? "pl-9" : ""
           }`}
         />
@@ -323,7 +323,7 @@ export function ResearchListCard({
   const cleanFilledBadges = uniqueDisplayValues(filledBadges.map((badge) => compactText(badge)));
 
   return (
-    <article className="group flex min-h-[220px] flex-col rounded-lg border border-border bg-white p-4 shadow-sm transition hover:border-primary/30 hover:shadow-[0_20px_50px_-42px_rgba(15,23,42,0.45)]">
+    <article className="group flex min-h-[220px] flex-col rounded-lg border border-border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
       <div className="flex flex-wrap gap-2">
         {cleanBadges.map((badge) => (
           <Badge key={badge}>{badge}</Badge>
@@ -331,14 +331,14 @@ export function ResearchListCard({
         {cleanFilledBadges.map((badge) => (
           <span
             key={badge}
-            className="inline-flex items-center rounded-md bg-secondary px-3 py-1 text-xs font-semibold uppercase text-primary"
+            className="inline-flex items-center rounded-md bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground"
           >
             {badge}
           </span>
         ))}
       </div>
-      <h2 className="mt-3 text-pretty text-lg font-semibold leading-7 text-foreground">
-        <Link href={href} className="rounded-sm transition hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
+      <h2 className="mt-3 text-pretty font-display text-lg font-semibold leading-7 text-foreground">
+        <Link href={href} className="rounded-sm transition hover:text-primary">
           {title}
         </Link>
       </h2>
@@ -395,14 +395,14 @@ export function ResearchRecordRow({
           {cleanFilledBadges.map((badge) => (
             <span
               key={badge}
-              className="inline-flex items-center rounded-md bg-secondary px-3 py-1 text-xs font-semibold uppercase text-primary"
+              className="inline-flex items-center rounded-md bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground"
             >
               {badge}
             </span>
           ))}
         </div>
-        <h2 className="mt-3 text-pretty text-lg font-semibold leading-7 text-foreground">
-          <Link href={href} className="rounded-sm transition hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
+        <h2 className="mt-3 text-pretty font-display text-lg font-semibold leading-7 text-foreground">
+          <Link href={href} className="rounded-sm transition hover:text-primary">
             {title}
           </Link>
         </h2>
@@ -416,7 +416,7 @@ export function ResearchRecordRow({
       <Link
         href={href}
         aria-label="Open item"
-        className="hidden h-10 w-10 items-center justify-center rounded-md border border-border bg-white text-primary transition group-hover:border-primary/30 group-hover:bg-primary group-hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 lg:inline-flex"
+        className="hidden h-10 w-10 items-center justify-center rounded-md border border-border bg-white text-primary transition group-hover:border-primary/30 group-hover:bg-primary group-hover:text-white lg:inline-flex"
       >
         <ArrowRight aria-hidden className="h-4 w-4" />
       </Link>
@@ -478,11 +478,11 @@ export function GenericRecordList({
   const visibleRecords = limit ? records.data.slice(0, limit) : records.data;
 
   return (
-    <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
+    <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
       {records.error || error ? (
         <StatusMessage tone="error">{records.error || error}</StatusMessage>
       ) : null}
-      <div className="divide-y divide-slate-200">
+      <div className="divide-y divide-border">
         {visibleRecords.map((record) => (
           <article key={record.id} className="py-4 first:pt-0 last:pb-0">
             {getRecordLabels(record, labelFields).length > 0 ? (
@@ -534,7 +534,7 @@ function GenericRecordCard({
           ))}
         </div>
       ) : null}
-      <h2 className="mt-4 text-pretty text-xl font-semibold leading-7 text-foreground">
+      <h2 className="mt-4 text-pretty font-display text-xl font-semibold leading-7 text-foreground">
         {getRecordTitle(record)}
       </h2>
       {getRecordDescription(record, descriptionFields) ? (
@@ -553,12 +553,12 @@ function GenericRecordCard({
   return href ? (
     <Link
       href={href}
-      className="block rounded-lg border border-border bg-white p-4 shadow-sm transition hover:border-primary/30 hover:shadow-[0_20px_50px_-42px_rgba(15,23,42,0.45)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+      className="block rounded-lg border border-border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
     >
       {content}
     </Link>
   ) : (
-    <article className="rounded-lg border border-border bg-white p-4 shadow-sm">
+    <article className="rounded-lg border border-border bg-card p-4 shadow-sm">
       {content}
     </article>
   );

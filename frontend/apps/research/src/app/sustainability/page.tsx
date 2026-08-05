@@ -112,7 +112,7 @@ export default async function SustainabilityPage({ searchParams }: { searchParam
           months={months}
         />
         {visibleInitiatives.length > 0 ? (
-          <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-border bg-white shadow-sm">
+          <div className="mt-6 divide-y divide-border rounded-lg border border-border bg-white shadow-sm">
             {visibleInitiatives.map((initiative) => (
               <InitiativeRow key={initiative.id} initiative={initiative} />
             ))}
@@ -184,7 +184,7 @@ function SustainabilityHero({
             <span className="text-foreground">Sustainability</span>
           </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Sustainability</p>
-          <h1 className="mt-4 max-w-5xl text-balance font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground sm:text-5xl lg:text-6xl">Sustainability at Kisii University Research</h1>
+          <h1 className="mt-4 max-w-5xl text-balance font-[family-name:var(--app-font-display)] text-4xl font-semibold leading-tight text-foreground sm:text-5xl lg:text-6xl">Sustainability at Kisii University Research</h1>
           <p className="mt-5 max-w-3xl text-pretty text-base leading-8 text-muted-foreground sm:text-lg">Climate, conservation, water, food systems, and measurable public impact brought together through published university research records.</p>
           <div className="mt-7 flex flex-wrap gap-3">
             <PrimaryLink href="#initiatives">Explore initiatives</PrimaryLink>
@@ -345,7 +345,7 @@ function StoryPanel({ records }: { records: ResearchGenericRecord[] }) {
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-foreground">Stories</h2>
-      <div className="mt-4 divide-y divide-slate-200">
+      <div className="mt-4 divide-y divide-border">
         {records.slice(0, 5).map((record) => (
           <article key={record.id} className="py-4 first:pt-0 last:pb-0">
             <h3 className="text-base font-semibold leading-6 text-foreground">
@@ -375,7 +375,7 @@ function RecordListPanel({
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-      <div className="mt-4 divide-y divide-slate-200">
+      <div className="mt-4 divide-y divide-border">
         {records.slice(0, 8).map((record) => (
           <article key={record.id} className="py-4 first:pt-0 last:pb-0">
             <div className="flex flex-wrap gap-2">

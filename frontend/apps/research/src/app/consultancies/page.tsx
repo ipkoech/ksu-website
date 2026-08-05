@@ -129,7 +129,7 @@ function ConsultancyPortfolioHero({ count, heroImage }: { count: number; heroIma
         <p className="inline-flex rounded-md border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em]">
           Expert services
         </p>
-        <h1 className="mt-4 max-w-4xl text-balance font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight sm:text-5xl">
+        <h1 className="mt-4 max-w-4xl text-balance font-[family-name:var(--app-font-display)] text-4xl font-semibold leading-tight sm:text-5xl">
           Commissioned research, advisory work, and public-value delivery
         </h1>
         <p className="mt-4 max-w-2xl text-pretty text-sm leading-7 text-white/82 sm:text-base">
@@ -214,7 +214,7 @@ function FeaturedConsultancy({ consultancy }: { consultancy: ResearchGenericReco
           {consultancy.client_type ? <Badge>{formatLabel(consultancy.client_type)}</Badge> : null}
           <span className="rounded-md bg-primary px-3 py-1 text-xs font-semibold uppercase text-white">Featured</span>
         </div>
-        <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
+        <h2 className="mt-3 text-balance font-[family-name:var(--app-font-display)] text-2xl font-semibold leading-tight text-foreground">
           {getRecordTitle(consultancy, "Consultancy")}
         </h2>
         {summary ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{summary}</p> : null}
@@ -244,7 +244,7 @@ function ConsultancyTable({ records }: { records: ResearchGenericRecord[] }) {
               <th className="px-4 py-3">Value</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200">
+          <tbody className="divide-y divide-border">
             {records.map((consultancy) => {
               const href = consultancy.slug ? `/consultancies/${consultancy.slug}` : "/consultancies";
               return (
@@ -298,7 +298,7 @@ function EngagementPathways() {
           );
         })}
       </div>
-      <div className="mt-5 divide-y divide-slate-200">
+      <div className="mt-5 divide-y divide-border">
         {[
           { href: "/partners", label: "Partner network" },
           { href: "/services", label: "Research services" },

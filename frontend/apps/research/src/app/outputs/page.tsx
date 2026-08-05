@@ -262,7 +262,7 @@ function OutputCard({
   return (
     <Link
       href={href}
-      className="group overflow-hidden rounded-lg border border-border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+      className="group overflow-hidden rounded-lg border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
     >
       {image ? (
         <div
@@ -271,7 +271,7 @@ function OutputCard({
         />
       ) : (
         <div className="relative aspect-[4/3] overflow-hidden bg-[hsl(var(--brand-overlay))]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_22%,rgba(245,158,11,0.5),transparent_30%),linear-gradient(135deg,hsl(var(--brand-overlay)),#075985)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_22%,hsl(var(--secondary)/0.5),transparent_30%),linear-gradient(135deg,hsl(var(--brand-overlay)),hsl(var(--primary)))]" />
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.12)_1px,transparent_1px)] bg-[size:22px_22px] opacity-60" />
           <div className="absolute left-3 right-3 top-4 h-2 rounded-full bg-white/25" />
           <div className="absolute bottom-3 left-3 right-3 h-12 rounded-md border border-white/20 bg-white/10" />
@@ -279,11 +279,11 @@ function OutputCard({
       )}
       <div className="p-3">
         <div className="flex flex-wrap gap-1.5">
-          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary">
+          <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary">
             {access}
           </span>
           {output.is_featured ? (
-            <span className="rounded bg-secondary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-secondary">
+            <span className="rounded-md bg-secondary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-secondary">
               Featured
             </span>
           ) : null}
@@ -291,7 +291,7 @@ function OutputCard({
         <h2 className="mt-2 line-clamp-2 min-h-[2.5rem] text-xs font-semibold leading-5 text-foreground transition group-hover:text-primary sm:text-sm">
           {title}
         </h2>
-        <p className="mt-1 truncate text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+        <p className="mt-1 truncate text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           {type}
         </p>
         {source ? (

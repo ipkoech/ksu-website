@@ -66,7 +66,7 @@ export default async function ExpertisePage({
           <div className="min-w-0">
             <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
               <div className="pt-1">
-                <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground">
+                <h2 className="font-[family-name:var(--app-font-display)] text-3xl font-semibold leading-tight text-foreground">
                   Expertise Directory
                 </h2>
                 <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
@@ -118,7 +118,7 @@ export default async function ExpertisePage({
             />
             <aside className="rounded-lg border border-border bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Work with our experts</p>
-              <div className="mt-3 divide-y divide-slate-200">
+              <div className="mt-3 divide-y divide-border">
                 {[
                   ["Discover", "Search by person, department, or knowledge area."],
                   ["Contact", "Open the profile sheet and use the published contact path."],

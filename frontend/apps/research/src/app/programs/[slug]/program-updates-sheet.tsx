@@ -34,7 +34,7 @@ export function ProgramUpdatesSheet({ groups }: { groups: ProgramUpdateGroup[] }
     <section className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
         <div>
-          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+          <h2 className="font-display text-xl font-semibold text-foreground">
             Program updates
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -55,7 +55,7 @@ export function ProgramUpdatesSheet({ groups }: { groups: ProgramUpdateGroup[] }
       <div className="grid gap-4 p-5 lg:grid-cols-3">
         {visibleGroups.map((group) => (
           <div key={group.title} className="min-w-0">
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-eyebrow text-secondary">
               {group.title}
             </h3>
             <div className="grid gap-2">
@@ -99,9 +99,9 @@ function ProgramUpdateSheetItem({
       <SheetTrigger asChild>
         <button
           type="button"
-          className="group w-full rounded-lg border border-border bg-white p-4 text-left transition hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+          className="group w-full rounded-lg border border-border bg-white p-4 text-left transition hover:border-primary/30 hover:bg-primary/5"
         >
-          <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-primary">
+          <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
             <Icon aria-hidden className="h-4 w-4" />
             {label}
           </span>
@@ -141,7 +141,7 @@ function ProgramUpdateSheetItem({
           <RecordNarrative record={record} />
           <a
             href={href}
-            className="inline-flex min-h-10 w-fit items-center gap-2 rounded-md border border-primary px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/5"
+            className="inline-flex min-h-11 w-fit items-center gap-2 rounded-md border border-primary/25 bg-background px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5"
           >
             Open full page
             <ExternalLink aria-hidden className="h-4 w-4" />

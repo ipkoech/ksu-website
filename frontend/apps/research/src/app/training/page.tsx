@@ -128,7 +128,7 @@ export default async function TrainingPage({
                 <FeaturedTraining item={featuredTraining} />
               </div>
             ) : null}
-            <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-border bg-white shadow-sm">
+            <div className="mt-6 divide-y divide-border rounded-lg border border-border bg-white shadow-sm">
               {rowTraining.map((item) => (
                 <TrainingRow key={item.id} item={item} />
               ))}
@@ -176,7 +176,7 @@ function TrainingMasthead({
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
             Learning
           </p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--app-font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             Research training, workshops, seminars, and bootcamps
           </h1>
           <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">

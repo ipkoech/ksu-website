@@ -474,7 +474,7 @@ function WorkspaceSideNav({
           );
         })}
       </nav>
-      <div className="mt-5 hidden rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm lg:block">
+      <div className="mt-5 hidden rounded-2xl ring-1 ring-secondary/30 bg-secondary/10 p-4 text-sm lg:block">
         <p className="font-semibold text-foreground">Need access?</p>
         <p className="mt-2 leading-6 text-muted-foreground">Contact the research office for resource booking, policy documents, and file access support.</p>
         <Link href="/connect" className="mt-3 inline-flex text-sm font-semibold text-primary">Contact Research Office</Link>
@@ -757,7 +757,7 @@ function MobileList({
     return <div className="p-4 lg:hidden"><StatusMessage>No records match the current filters.</StatusMessage></div>;
   }
   return (
-    <div className="divide-y divide-slate-200 lg:hidden">
+    <div className="divide-y divide-border lg:hidden">
       {records.map((record) => {
         const href = record.slug ? `${hrefBase}/${record.slug}` : hrefBase;
         return (
@@ -823,7 +823,7 @@ function StatusBadge({ value }: { value?: unknown }) {
 
 function AccessBadge({ value }: { value?: unknown }) {
   return (
-    <span className="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+    <span className="inline-flex items-center rounded-2xl ring-1 ring-secondary/30 bg-secondary/10 px-3 py-1 text-xs font-semibold text-secondary">
       {formatLabel(toCompactString(value) || "internal")}
     </span>
   );
