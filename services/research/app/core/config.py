@@ -6,15 +6,14 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
 from ksu_common.config import (
     validate_explicit_production_settings,
     validate_cors_origins,
     validate_secret,
     validate_service_url,
 )
+from pydantic import Field, field_validator, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 SERVICE_DIR = Path(__file__).resolve().parents[2]
 
@@ -28,6 +27,8 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str
     DB_SCHEMA: str = "research"
+    DB_POOL_SIZE: int = Field(default=10, ge=1)
+    DB_MAX_OVERFLOW: int = Field(default=20, ge=0)
 
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
