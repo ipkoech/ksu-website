@@ -8,15 +8,27 @@ import asyncio
 import threading
 import uuid
 from collections.abc import Awaitable, Callable
+from time import perf_counter
 from typing import Any
 
 from .observability import (
+    Metrics,
     current_correlation_id,
     current_request_id,
     request_context,
 )
 
 _task_context = threading.local()
+_MAX_TASK_LABEL_LENGTH = 128
+_MAX_TASK_LATENCY_MS = 3_600_000.0
+
+
+@dataclass
+class _TaskObservation:
+    metrics: Metrics
+    task_name: str
+    started_at: float
+    request_context: Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,6 +44,7 @@ class TaskQueueConfig:
     imports: tuple[str, ...] = ()
     timezone: str = "Africa/Nairobi"
     shutdown_hooks: tuple[Callable[[], Awaitable[None]], ...] = ()
+    metrics: Metrics | None = None
 
 
 class _WorkerAsyncRuntime:
@@ -145,17 +158,95 @@ def close_worker_async_runtime(
             runtime.close()
 
 
-def _task_prerun(task_id: str | None = None, **_kwargs: Any) -> None:
+def _bounded_task_name(task: Any = None, *, sender: Any = None) -> str:
+    source = task if task is not None else sender
+    candidate = getattr(source, "name", None) or str(source or "unknown")
+    return str(candidate).replace("\r", " ").replace("\n", " ").strip()[:_MAX_TASK_LABEL_LENGTH]
+
+
+def _task_metrics(task: Any = None, *, sender: Any = None) -> Metrics:
+    source = task if task is not None else sender
+    app = getattr(source, "app", None)
+    return getattr(app, "_ksu_metrics", None) or Metrics()
+
+
+def _task_tags(task_name: str, state: str) -> dict[str, str]:
+    return {"task": task_name[:_MAX_TASK_LABEL_LENGTH], "state": state[:64]}
+
+
+def _task_prerun(
+    task_id: str | None = None,
+    task: Any = None,
+    sender: Any = None,
+    **_kwargs: Any,
+) -> None:
+    task_name = _bounded_task_name(task, sender=sender)
+    metrics = _task_metrics(task, sender=sender)
+    metrics.increment("celery.task.count", tags=_task_tags(task_name, "started"))
     context = request_context(f"celery-{task_id or uuid.uuid4()}")
     context.__enter__()
-    _task_context.context = context
+    _task_context.observation = _TaskObservation(
+        metrics=metrics,
+        task_name=task_name,
+        started_at=perf_counter(),
+        request_context=context,
+    )
+
+
+def _task_retry(task: Any = None, sender: Any = None, **_kwargs: Any) -> None:
+    observation = getattr(_task_context, "observation", None)
+    metrics = observation.metrics if observation else _task_metrics(task, sender=sender)
+    task_name = observation.task_name if observation else _bounded_task_name(task, sender=sender)
+    metrics.increment("celery.task.retry", tags=_task_tags(task_name, "retry"))
+
+
+def _task_failure(
+    task: Any = None,
+    sender: Any = None,
+    exception: BaseException | None = None,
+    **_kwargs: Any,
+) -> None:
+    observation = getattr(_task_context, "observation", None)
+    metrics = observation.metrics if observation else _task_metrics(task, sender=sender)
+    task_name = observation.task_name if observation else _bounded_task_name(task, sender=sender)
+    tags = _task_tags(task_name, "failure")
+    if exception is not None:
+        tags["exception"] = type(exception).__name__[:64]
+    metrics.increment("celery.task.failure", tags=tags)
+
+
+def _task_rejected(
+    request: Any = None,
+    reason: Any = None,
+    requeue: bool | None = None,
+    task: Any = None,
+    sender: Any = None,
+    **_kwargs: Any,
+) -> None:
+    if requeue is not False:
+        return
+    metrics = _task_metrics(task, sender=sender)
+    request_task = getattr(request, "task", None)
+    source = task if task is not None else request_task
+    task_name = _bounded_task_name(source, sender=sender)
+    metrics.increment("celery.task.dead_letter", tags=_task_tags(task_name, "dead_letter"))
 
 
 def _task_postrun(**_kwargs: Any) -> None:
-    context = getattr(_task_context, "context", None)
-    if context is not None:
-        context.__exit__(None, None, None)
-        del _task_context.context
+    observation = getattr(_task_context, "observation", None)
+    if observation is not None:
+        duration_ms = min(
+            max(0.0, (perf_counter() - observation.started_at) * 1000),
+            _MAX_TASK_LATENCY_MS,
+        )
+        state = str(_kwargs.get("state") or "complete")
+        observation.metrics.observe_latency(
+            "celery.task.latency_ms",
+            duration_ms,
+            tags=_task_tags(observation.task_name, state),
+        )
+        observation.request_context.__exit__(None, None, None)
+        del _task_context.observation
 
 
 def create_celery_app(
@@ -170,7 +261,15 @@ def create_celery_app(
     """
 
     from celery import Celery
-    from celery.signals import task_postrun, task_prerun, worker_process_shutdown, worker_shutdown
+    from celery.signals import (
+        task_failure,
+        task_postrun,
+        task_prerun,
+        task_rejected,
+        task_retry,
+        worker_process_shutdown,
+        worker_shutdown,
+    )
 
     app = Celery(
         config.name,
@@ -189,6 +288,7 @@ def create_celery_app(
         task_routes=dict(config.task_routes),
         beat_schedule=dict(config.beat_schedule),
     )
+    app._ksu_metrics = config.metrics or Metrics()
     packages = tuple(task_packages)
     if packages:
         app.autodiscover_tasks(list(packages))
@@ -206,6 +306,9 @@ def create_celery_app(
     )
     task_prerun.connect(_task_prerun, weak=False, dispatch_uid="ksu_common.task_prerun")
     task_postrun.connect(_task_postrun, weak=False, dispatch_uid="ksu_common.task_postrun")
+    task_retry.connect(_task_retry, weak=False, dispatch_uid="ksu_common.task_retry")
+    task_failure.connect(_task_failure, weak=False, dispatch_uid="ksu_common.task_failure")
+    task_rejected.connect(_task_rejected, weak=False, dispatch_uid="ksu_common.task_rejected")
     return app
 
 

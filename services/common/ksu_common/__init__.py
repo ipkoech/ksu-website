@@ -50,6 +50,7 @@ from .internal_client import (
     close_integration_pool,
     get_integration_pool,
 )
+from .database import current_query_count, query_count_context
 from .gemini import GeminiTransport, close_gemini_transports, get_gemini_transport
 from .observability import AuditEvent, Metrics, Span, Tracer, audit_event, request_context
 from .reliability import (
@@ -129,6 +130,8 @@ __all__ = [
     "PooledIntegrationClient",
     "get_integration_pool",
     "close_integration_pool",
+    "current_query_count",
+    "query_count_context",
     "GeminiTransport",
     "get_gemini_transport",
     "close_gemini_transports",

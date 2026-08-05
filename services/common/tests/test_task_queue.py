@@ -4,14 +4,30 @@ import pytest
 
 from ksu_common.task_queue import (
     TaskQueueConfig,
+    _task_failure,
+    _task_postrun,
+    _task_prerun,
+    _task_rejected,
+    _task_retry,
     close_worker_async_runtime,
     create_celery_app,
     run_worker_async,
 )
-from ksu_common.observability import current_request_id
+from ksu_common.observability import Metrics, current_request_id
 
 
 def test_create_celery_app_applies_shared_transport_policy() -> None:
+    records: list[tuple[str, object, dict[str, str]]] = []
+
+    class Sink:
+        def increment(self, name: str, value: int, *, tags: dict[str, str]) -> None:
+            records.append((name, value, tags))
+
+        def observe_latency(
+            self, name: str, duration_ms: float, *, tags: dict[str, str]
+        ) -> None:
+            records.append((name, duration_ms, tags))
+
     app = create_celery_app(
         TaskQueueConfig(
             name="test-service",
@@ -20,6 +36,7 @@ def test_create_celery_app_applies_shared_transport_policy() -> None:
             default_queue="test.default",
             task_routes={"test.task": {"queue": "test.jobs"}},
             imports=("test.tasks",),
+            metrics=Metrics(Sink()),
         )
     )
 
@@ -30,6 +47,49 @@ def test_create_celery_app_applies_shared_transport_policy() -> None:
     assert app.conf.task_default_queue == "test.default"
     assert app.conf.task_routes["test.task"]["queue"] == "test.jobs"
     assert app.conf.imports == ("test.tasks",)
+
+
+def test_task_lifecycle_emits_bounded_count_latency_failure_and_retry_metrics() -> None:
+    records: list[tuple[str, object, dict[str, str]]] = []
+
+    class Sink:
+        def increment(self, name: str, value: int, *, tags: dict[str, str]) -> None:
+            records.append((name, value, tags))
+
+        def observe_latency(
+            self, name: str, duration_ms: float, *, tags: dict[str, str]
+        ) -> None:
+            records.append((name, duration_ms, tags))
+
+    app = create_celery_app(
+        TaskQueueConfig(
+            name="metrics-service",
+            broker_url="redis://localhost:6379/9",
+            metrics=Metrics(Sink()),
+        )
+    )
+    def metrics_task() -> None:
+        return None
+
+    task = app.task(name="metrics-service.task." + ("x" * 300))(metrics_task)
+
+    _task_prerun(task_id="task-1", task=task)
+    _task_retry(task=task)
+    _task_failure(task_id="task-1", task=task, exception=ValueError("secret"))
+    _task_postrun(task_id="task-1", task=task, state="FAILURE")
+    _task_rejected(task=task, requeue=False)
+
+    count = next(record for record in records if record[0] == "celery.task.count")
+    assert count[1:] == (
+        1,
+        {"task": "metrics-service.task." + ("x" * 107), "state": "started"},
+    )
+    assert any(record[0] == "celery.task.retry" for record in records)
+    assert any(record[0] == "celery.task.failure" for record in records)
+    assert any(record[0] == "celery.task.dead_letter" for record in records)
+    latency = next(record for record in records if record[0] == "celery.task.latency_ms")
+    assert latency[2]["task"] == count[2]["task"]
+    assert latency[2]["state"] == "FAILURE"
 
 
 def test_worker_async_runtime_reuses_one_loop_and_closes() -> None:
