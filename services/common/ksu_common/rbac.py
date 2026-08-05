@@ -89,14 +89,7 @@ def _resource_aliases(resource: str) -> frozenset[str]:
 
 
 def _is_known_permission(permission: str) -> bool:
-    resource, action = _split_permission(permission)
-    if permission in KNOWN_PERMISSIONS:
-        return True
-    if resource == "admin" and action == "*":
-        return True
-    return bool(action) and action in KNOWN_ACTIONS and bool(
-        _resource_aliases(resource) & KNOWN_RESOURCES
-    )
+    return _normalize_value(permission) in KNOWN_PERMISSIONS
 
 
 def _required_permission(action: str, resource: str) -> str | None:

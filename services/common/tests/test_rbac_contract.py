@@ -45,6 +45,14 @@ def test_authorize_denies_unknown_permissions_even_for_administrators() -> None:
     assert decision.matched_permission is None
 
 
+def test_authorize_denies_undeclared_actions_even_for_admin_wildcards() -> None:
+    decision = authorize(_token(permissions=["admin:*"]), "publish", "library")
+
+    assert decision.allowed is False
+    assert decision.reason == "unknown_permission"
+    assert decision.matched_permission is None
+
+
 def test_authorize_denies_a_valid_permission_without_a_matching_grant() -> None:
     decision = authorize(_token(permissions=["research.view"]), "manage_projects", "research")
 

@@ -17,12 +17,21 @@ def _token(*, permissions: list[str]) -> TokenPayload:
     )
 
 
-@pytest.mark.parametrize("action", ["review", "publish", "upload", "send", "delete"])
-def test_manage_permission_does_not_grant_unrelated_actions(action: str) -> None:
+@pytest.mark.parametrize(
+    ("action", "reason"),
+    [
+        ("review", "missing_permission"),
+        ("publish", "missing_permission"),
+        ("upload", "unknown_permission"),
+        ("send", "unknown_permission"),
+        ("delete", "unknown_permission"),
+    ],
+)
+def test_manage_permission_does_not_grant_unrelated_actions(action: str, reason: str) -> None:
     decision = authorize(_token(permissions=["heri.content.manage"]), action, "heri.content")
 
     assert decision.allowed is False
-    assert decision.reason == "missing_permission"
+    assert decision.reason == reason
 
 
 def test_manage_permission_grants_the_exact_manage_action() -> None:

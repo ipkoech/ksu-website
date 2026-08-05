@@ -6,8 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from ksu_common.auth import TokenPayload
+from ksu_common.rbac import authorize_permission
 
-from ...core.auth import authorize_permission, get_current_user, require_permission
+from ...core.auth import get_current_user, require_permission
 from ...core.database import get_db
 from ...models.content import Event, NewsArticle, PublicationStatus
 from ...schemas.admin_content import EventCreate, NewsAdminResponse, NewsCreate, NewsUpdate, TransitionRequest
