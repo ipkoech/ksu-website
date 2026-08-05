@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import re
 from collections.abc import Awaitable, Callable, Sequence
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
@@ -25,6 +26,18 @@ STANDARD_CORS_HEADERS = ("Authorization", "Content-Type", "X-Internal-Key")
 RouteRegistrar = Callable[[FastAPI], None]
 AfterResponse = Callable[[Request, Response], Awaitable[None] | None]
 Lifespan = Callable[[FastAPI], AbstractAsyncContextManager[None]]
+
+_BEARER_EXCEPTION_TEXT = re.compile(r"(?i)\b(bearer)\s+[^\s,;]+")
+_SENSITIVE_EXCEPTION_TEXT = re.compile(
+    r"(?i)((?:authorization|x-internal-key|x-internal-api-key|api[_-]?key|token|secret|password)\s*[:=]\s*(?:bearer\s+)?)\S+"
+)
+
+
+def _safe_exception_detail(exc: BaseException) -> str:
+    """Keep useful audit detail without persisting obvious credential values."""
+
+    detail = _BEARER_EXCEPTION_TEXT.sub(r"\1 [REDACTED]", str(exc))
+    return _SENSITIVE_EXCEPTION_TEXT.sub(r"\1[REDACTED]", detail)
 
 
 @dataclass(frozen=True)
@@ -118,6 +131,11 @@ def create_service_app(
             content={"status": "error", "message": str(exc), "code": "forbidden"},
         )
 
+    register_routes(app)
+
+    # Register this last so body-limit middleware installed by route registrars
+    # is inside the shared observation boundary. Header-only rejections still
+    # receive correlation and latency headers and are timed consistently.
     @app.middleware("http")
     async def service_runtime_middleware(request: Request, call_next: Callable) -> Response:
         observation = begin_request_observation(request, service_name=config.service_name)
@@ -142,7 +160,7 @@ def create_service_app(
                         service_name=audit.service_name,
                         request=request,
                         status_code=status_code,
-                        error_message=error_type,
+                        error_message=_safe_exception_detail(exc),
                         changes=changes,
                     )
                 raise
@@ -170,5 +188,4 @@ def create_service_app(
             )
             end_request_observation(observation)
 
-    register_routes(app)
     return app
