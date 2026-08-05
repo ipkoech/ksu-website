@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from ksu_common.internal_client import outbound_client
+from ksu_common.internal_client import get_integration_pool
 
 from ..core.config import get_settings
 
@@ -36,15 +36,16 @@ class ResearchPartnersProxyService:
         if search:
             params["search"] = search
 
-        async with outbound_client(
-            base_url=settings.RESEARCH_SERVICE_URL.rstrip("/"),
-            timeout=20.0,
-            connect_timeout=5.0,
+        response = await get_integration_pool().request(
+            "research-partners",
+            settings.RESEARCH_SERVICE_URL.rstrip("/"),
+            "GET",
+            "/api/v1/partners",
             headers={"X-KSU-Proxy": "main-partners"},
-        ) as client:
-            response = await client.get("/api/v1/partners", params=params)
-            response.raise_for_status()
-            payload = response.json()
+            params=params,
+        )
+        response.raise_for_status()
+        payload = response.json()
 
         if not isinstance(payload, dict) or payload.get("status") != "success":
             raise ValueError("Research service returned an unexpected partners payload")
@@ -52,15 +53,15 @@ class ResearchPartnersProxyService:
 
     @staticmethod
     async def get_partner(slug: str) -> dict[str, Any]:
-        async with outbound_client(
-            base_url=settings.RESEARCH_SERVICE_URL.rstrip("/"),
-            timeout=20.0,
-            connect_timeout=5.0,
+        response = await get_integration_pool().request(
+            "research-partners",
+            settings.RESEARCH_SERVICE_URL.rstrip("/"),
+            "GET",
+            f"/api/v1/partners/{slug}",
             headers={"X-KSU-Proxy": "main-partners"},
-        ) as client:
-            response = await client.get(f"/api/v1/partners/{slug}")
-            response.raise_for_status()
-            payload = response.json()
+        )
+        response.raise_for_status()
+        payload = response.json()
 
         if not isinstance(payload, dict) or payload.get("status") != "success":
             raise ValueError("Research service returned an unexpected partner payload")

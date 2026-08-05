@@ -7,25 +7,26 @@ import io
 import json
 import uuid
 import xml.etree.ElementTree as ET
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import date
 from types import NoneType, UnionType
-from typing import Any, Awaitable, Callable, Union, get_args, get_origin
+from typing import Any, Union, get_args, get_origin
 from zipfile import BadZipFile, ZipFile
 
-from ksu_common.internal_client import internal_headers, outbound_client
+from ksu_common.internal_client import get_integration_pool
 from pydantic import BaseModel, ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.config import get_settings
 from ..models import (
+    FAQ,
     AcademicCalendar,
     Board,
     Campus,
     Department,
     Division,
-    FAQ,
     Intake,
     Person,
     Programme,
@@ -62,7 +63,6 @@ from .organization import DivisionService, WingService
 from .person import PersonService
 from .staff import StaffService
 from .support import FAQService
-
 
 CreateFunc = Callable[[AsyncSession, dict[str, Any]], Awaitable[Any]]
 PrepareFunc = Callable[[AsyncSession, dict[str, Any], dict[str, Any], list[str]], Awaitable[dict[str, Any]]]
@@ -248,17 +248,16 @@ def _make_research_create(api_path: str) -> CreateFunc:
     """Factory that creates records by POSTing to the research service."""
 
     async def _create(db: AsyncSession, payload: dict[str, Any]) -> None:
-        async with outbound_client(
-            base_url=_settings.RESEARCH_SERVICE_URL.rstrip("/"),
-            timeout=30.0,
-            connect_timeout=5.0,
-            headers={
-                **internal_headers(_settings.RESEARCH_SERVICE_API_KEY),
-                "X-KSU-Proxy": "main-imports",
-            },
-        ) as client:
-            response = await client.post(api_path, json=payload)
-            response.raise_for_status()
+        response = await get_integration_pool().request_internal(
+            "research-imports",
+            _settings.RESEARCH_SERVICE_URL.rstrip("/"),
+            "POST",
+            api_path,
+            api_key=_settings.RESEARCH_SERVICE_API_KEY,
+            headers={"X-KSU-Proxy": "main-imports"},
+            json=payload,
+        )
+        response.raise_for_status()
 
     return _create
 

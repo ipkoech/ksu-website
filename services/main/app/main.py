@@ -6,25 +6,34 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.responses import FileResponse
-from sqlalchemy import select
-
 from ksu_common import (
     configure_service_logging,
     invalidate_prefix,
     request_actor_id,
 )
 from ksu_common.cache import close_redis
-from ksu_common.runtime import AuditOptions, CorsConfig, ServiceAppConfig, create_service_app
+from ksu_common.internal_client import close_integration_pool
+from ksu_common.runtime import (
+    AuditOptions,
+    CorsConfig,
+    ServiceAppConfig,
+    create_service_app,
+)
+from sqlalchemy import select
 
-from .core.config import get_settings
-from .core.database import AsyncSessionLocal
 from .api.v1 import register_routes
 from .cache_invalidation import should_invalidate_public_cache
+from .core.config import get_settings
+from .core.database import AsyncSessionLocal
 from .helpers.storage import normalize_storage_path
 from .models import Media
-from .services.change_tracking import begin_audit_context, collected_audit_changes, reset_audit_context
 from .realtime.connection_manager import manager
 from .realtime.redis_subscriber import subscriber
+from .services.change_tracking import (
+    begin_audit_context,
+    collected_audit_changes,
+    reset_audit_context,
+)
 
 settings = get_settings()
 
@@ -43,6 +52,7 @@ async def lifespan(app: FastAPI):
     finally:
         await subscriber.stop()
         await manager.close_all()
+        await close_integration_pool()
         await close_redis()
 
 

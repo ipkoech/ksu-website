@@ -4,14 +4,13 @@ import uuid
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
 from app.api.v1 import stats as stats_api
 from app.deps import get_db
 from app.helpers.jwt import create_access_token
 from app.services import stats as stats_service
 from app.services.stats import PORTAL_STAT_CONTRACTS, portal_stats
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 
 class _CountResult:
@@ -41,13 +40,7 @@ class _ResearchStatsClient:
     def __init__(self):
         self.request_path = None
 
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc, traceback):
-        return False
-
-    async def get(self, path):
+    async def request(self, _integration, _base_url, _method, path, **_kwargs):
         self.request_path = path
         return _ResearchStatsResponse()
 
@@ -74,13 +67,7 @@ class _LibraryStatsClient:
     def __init__(self):
         self.request_path = None
 
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc, traceback):
-        return False
-
-    async def get(self, path):
+    async def request_internal(self, _integration, _base_url, _method, path, **_kwargs):
         self.request_path = path
         return _LibraryStatsResponse()
 
@@ -271,7 +258,7 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
     async def test_published_publication_count_comes_from_research_stats_api(self):
         client = _ResearchStatsClient()
 
-        with patch.object(stats_service.httpx, "AsyncClient", return_value=client):
+        with patch.object(stats_service, "get_integration_pool", return_value=client):
             count = await stats_service._published_publications_count()
 
         self.assertEqual(11, count)
@@ -280,7 +267,7 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
     async def test_library_portal_stats_come_from_library_stats_api(self):
         client = _LibraryStatsClient()
 
-        with patch.object(stats_service.httpx, "AsyncClient", return_value=client):
+        with patch.object(stats_service, "get_integration_pool", return_value=client):
             result = await portal_stats(_FakeDb(), "library")
 
         self.assertIsNotNone(result)
@@ -294,7 +281,7 @@ class PortalStatsTests(unittest.IsolatedAsyncioTestCase):
             },
             result.stats,
         )
-        self.assertEqual("/api/v1/stats/admin", client.request_path)
+        self.assertEqual("/api/v1/stats/internal/admin", client.request_path)
 
     def test_research_portal_stats_do_not_sum_person_publication_counters(self):
         self.assertNotIn(
