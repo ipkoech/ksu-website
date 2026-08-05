@@ -23,7 +23,6 @@ PAGE_SECTION_LAYOUT_VARIANTS = (
     "pulse_strip",
     "featured_partnership",
     "programme_finder",
-    "featured_stories",
     "date_timeline",
     "pillar_grid",
     "media_mosaic",
@@ -35,7 +34,7 @@ PAGE_SECTION_LAYOUT_VARIANTS = (
     "alumni_story",
     "facts_strip",
 )
-SECTION_ITEM_TYPES = ("text", "card", "stat", "cta", "media", "video")
+SECTION_ITEM_TYPES = ("text", "card", "stat", "cta", "media", "video", "reference")
 SECTION_ITEM_STATUSES = ("draft", "in_review", "published", "archived")
 LIFE_AROUND_STUDIES_AUDIENCES = ("all", "prospective", "current_student", "visitor_partner")
 LIFE_AROUND_STUDIES_SOURCE_TYPES = (
@@ -48,6 +47,36 @@ LIFE_AROUND_STUDIES_SOURCE_TYPES = (
     "governance",
     "story",
     "event",
+)
+SECTION_ITEM_SOURCE_TYPES = (
+    "intake",
+    "programme",
+    "academic_calendar",
+    "person",
+    "staff_assignment",
+    "research_project",
+    "publication",
+    "news",
+    "event",
+    "research_partner",
+    "alumni",
+    "testimonial",
+    "public_stat",
+    "club_activity",
+)
+SECTION_ITEM_REFERENCE_CONTENT_FIELDS = (
+    "title",
+    "subtitle",
+    "body_text",
+    "content",
+    "cta_label",
+    "cta_url",
+    "cta_description",
+    "media_caption",
+    "media_alt_text",
+    "video_provider",
+    "video_url",
+    "video_duration_seconds",
 )
 PARTNERSHIP_CTA_SOURCES = ("manual", "partner_website", "generated_detail_page")
 
@@ -93,7 +122,7 @@ class PageSection(Base):
         sa.CheckConstraint(
             "layout_variant IN "
             "('hero_admissions', 'pulse_strip', 'featured_partnership', 'programme_finder', "
-            "'featured_stories', 'date_timeline', 'pillar_grid', 'media_mosaic', 'leadership_activity', "
+            "'date_timeline', 'pillar_grid', 'media_mosaic', 'leadership_activity', "
             "'research_cards', 'news_grid', 'events_list', 'logo_carousel', 'alumni_story', "
             "'facts_strip')",
             name="ck_page_sections_layout_variant",
@@ -112,6 +141,7 @@ class PageSection(Base):
     description: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
     settings: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+    revision: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("1"))
     is_enabled: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
     layout_variant: Mapped[str] = mapped_column(
         sa.String(64),
@@ -185,24 +215,53 @@ class SectionItem(Base):
     __tablename__ = "section_items"
     __table_args__ = (
         sa.CheckConstraint(
-            "item_type IN ('text', 'card', 'stat', 'cta', 'media', 'video')",
+            "item_type IN ('text', 'card', 'stat', 'cta', 'media', 'video', 'reference')",
             name="ck_section_items_item_type",
         ),
         sa.CheckConstraint(
-            "audience IN ('all', 'prospective', 'current_student', 'visitor_partner')",
-            name="ck_section_items_audience",
+            "((source_type IS NULL AND source_id IS NULL) OR "
+            "(source_type IS NOT NULL AND source_id IS NOT NULL))",
+            name="ck_section_items_source_reference",
         ),
         sa.CheckConstraint(
-            "source_type IS NULL OR source_type IN ('manual', 'club', 'club_activity', 'sport', 'accommodation', 'arts', 'governance', 'story', 'event')",
+            "source_type IS NULL OR source_type IN "
+            "('intake', 'programme', 'academic_calendar', 'person', 'staff_assignment', "
+            "'research_project', 'publication', 'news', 'event', 'research_partner', 'alumni', "
+            "'testimonial', 'public_stat', 'club_activity')",
             name="ck_section_items_source_type",
         ),
         sa.CheckConstraint(
-            "status IN ('draft', 'in_review', 'published', 'archived')",
-            name="ck_section_items_status",
+            "source_type IS NULL OR item_type = 'reference'",
+            name="ck_section_items_source_reference_item_type",
+        ),
+        sa.CheckConstraint(
+            "item_type != 'reference' OR ("
+            "(title IS NULL OR btrim(title) = '') AND "
+            "(subtitle IS NULL OR btrim(subtitle) = '') AND "
+            "(body_text IS NULL OR btrim(body_text) = '') AND "
+            "(content IS NULL OR content = '{}'::jsonb) AND "
+            "(cta_label IS NULL OR btrim(cta_label) = '') AND "
+            "(cta_url IS NULL OR btrim(cta_url) = '') AND "
+            "(cta_description IS NULL OR btrim(cta_description) = '') AND "
+            "(media_caption IS NULL OR btrim(media_caption) = '') AND "
+            "(media_alt_text IS NULL OR btrim(media_alt_text) = '') AND "
+            "(video_provider IS NULL OR btrim(video_provider) = '') AND "
+            "(video_url IS NULL OR btrim(video_url) = '') AND "
+            "(video_duration_seconds IS NULL OR video_duration_seconds = 0)"
+            ")",
+            name="ck_section_items_reference_content_empty",
+        ),
+        sa.CheckConstraint(
+            "editorial_overrides IS NULL OR ("
+            "jsonb_typeof(editorial_overrides) = 'object' AND "
+            "editorial_overrides - ARRAY["
+            "'title', 'subtitle', 'summary', 'cta_label', 'cta_url', 'badge', 'image_media_id'"
+            "]::text[] = '{}'::jsonb"
+            ")",
+            name="ck_section_items_editorial_overrides",
         ),
         sa.Index("ix_section_items_section_order", "page_section_id", "display_order"),
         sa.Index("ix_section_items_source", "source_type", "source_id"),
-        sa.Index("ix_section_items_featured_audience", "is_featured", "audience", "is_enabled"),
     )
 
     page_section_id: Mapped[uuid.UUID] = mapped_column(
@@ -222,22 +281,12 @@ class SectionItem(Base):
     video_provider: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True)
     video_url: Mapped[Optional[str]] = mapped_column(sa.String(1024), nullable=True)
     video_duration_seconds: Mapped[Optional[int]] = mapped_column(sa.Integer, nullable=True)
-    audience: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="all", index=True)
-    source_type: Mapped[Optional[str]] = mapped_column(sa.String(32), nullable=True)
+    source_type: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True)
     source_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True)
-    is_featured: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"), index=True)
-    poster_media_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True, index=True
-    )
-    transcript: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    editorial_overrides: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+    revision: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("1"))
     is_enabled: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
-    status: Mapped[str] = mapped_column(
-        sa.String(32),
-        nullable=False,
-        server_default="published",
-        index=True,
-    )
 
     page_section: Mapped["PageSection"] = relationship("PageSection", back_populates="items")
 
@@ -324,6 +373,10 @@ __all__ = [
     "PAGE_SECTION_LAYOUT_VARIANTS",
     "SECTION_ITEM_TYPES",
     "SECTION_ITEM_STATUSES",
+    "LIFE_AROUND_STUDIES_AUDIENCES",
+    "LIFE_AROUND_STUDIES_SOURCE_TYPES",
+    "SECTION_ITEM_SOURCE_TYPES",
+    "SECTION_ITEM_REFERENCE_CONTENT_FIELDS",
     "PARTNERSHIP_CTA_SOURCES",
     "PageSection",
     "SectionItem",

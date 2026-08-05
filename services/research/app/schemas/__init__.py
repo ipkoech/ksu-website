@@ -12,6 +12,7 @@ from .impact import *
 from .innovation import *
 from .innovation_partnership import *
 from .partnership import *
+from .page_cms_source_contract import *
 from .publication import *
 from .search import *
 from .stats import *

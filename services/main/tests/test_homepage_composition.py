@@ -163,15 +163,26 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
                 _make_link("page_section", entity_id, "video", "story.mp4", media_type="video"),
                 _make_link("page_section", entity_id, "background", "bg.jpg"),
                 _make_link("page_section", entity_id, "poster", "poster.jpg"),
+                _make_link("page_section", entity_id, "signing_photo", "signing.jpg"),
             ]
         )
 
         grouped = await group_media_links(db, "page_section", entity_id)
 
         self.assertEqual(
-            {"heroImage", "mobileImage", "logos", "gallery", "video", "background", "poster"},
+            {
+                "heroImage",
+                "mobileImage",
+                "logos",
+                "gallery",
+                "video",
+                "background",
+                "poster",
+                "signingPhoto",
+            },
             set(grouped.keys()),
         )
+        self.assertEqual("signing_photo", grouped["signingPhoto"][0]["role"])
         self.assertEqual("heroImage", grouped["heroImage"][0]["role"])
         self.assertEqual("mobileImage", grouped["mobileImage"][0]["role"])
         self.assertEqual("logo", grouped["logos"][0]["role"])
@@ -183,6 +194,7 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
         query_text = str(db.statements[0]).lower()
         self.assertIn("media_links.entity_type", query_text)
         self.assertIn("media_links.entity_id", query_text)
+        self.assertIn("media_links.archived_at is null", query_text)
         self.assertIn("media_links.display_order", query_text)
 
     async def test_compose_sorts_sections_and_resolves_partnership_ctas(self):

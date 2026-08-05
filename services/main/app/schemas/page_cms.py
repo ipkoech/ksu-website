@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Mapping
 from datetime import datetime
-from typing import Any
+from html import unescape
+from html.parser import HTMLParser
+from typing import Any, Literal
 
 from pydantic import ConfigDict, Field, field_validator, model_validator
 
@@ -18,16 +21,52 @@ from app.models import (
     LIFE_AROUND_STUDIES_AUDIENCES,
     LIFE_AROUND_STUDIES_SOURCE_TYPES,
 )
+from app.models.page_cms import SECTION_ITEM_REFERENCE_CONTENT_FIELDS, SECTION_ITEM_SOURCE_TYPES
 
 from .base import BaseReadSchema, BaseSchema
 
 PAGE_SECTION_WORKFLOW_ACTIONS = ("submit", "approve", "request_changes", "publish", "archive", "unpublish")
+EDITORIAL_OVERRIDE_FIELDS = ("title", "subtitle", "summary", "cta_label", "cta_url", "badge", "image_media_id")
 
 
-class PageSectionWorkflowBody(BaseSchema):
-    """Optional body for page section workflow actions, allowing a reason/note."""
+class _DisplayTextParser(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+        self.suppressed_depth = 0
 
-    reason: str | None = Field(default=None, max_length=2000)
+    def handle_starttag(self, tag: str, attrs) -> None:
+        if tag.lower() in {"script", "style"}:
+            self.suppressed_depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() in {"script", "style"} and self.suppressed_depth:
+            self.suppressed_depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        if not self.suppressed_depth:
+            self.parts.append(data)
+
+
+def _plain_display_text(value: str) -> str:
+    parser = _DisplayTextParser()
+    parser.feed(unescape(value))
+    parser.close()
+    return " ".join("".join(parser.parts).split())
+
+
+def _sanitize_source_metadata(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: _sanitize_source_metadata(item)
+            for key, item in value.items()
+            if key != "id" and not key.endswith("_id")
+        }
+    if isinstance(value, list):
+        return [_sanitize_source_metadata(item) for item in value]
+    if isinstance(value, str):
+        return _plain_display_text(value)[:1000]
+    return value
 
 
 def _validate_choice(value: str | None, allowed: tuple[str, ...], field_name: str) -> str | None:
@@ -42,47 +81,70 @@ def _validate_choice(value: str | None, allowed: tuple[str, ...], field_name: st
 def _validate_link_target(value: str | None, field_name: str) -> str | None:
     if value is None:
         return value
+    if value == "":
+        return value
     if value.startswith(("http://", "https://", "/")):
         return value
     raise ValueError(f"{field_name} must start with http://, https://, or /")
 
 
-LEADERSHIP_CONTENT_TYPES = {"news", "blog", "event"}
+def _validate_editorial_overrides(value: dict[str, Any] | None) -> dict[str, Any] | None:
+    if value is None:
+        return value
+    unsupported_fields = set(value) - set(EDITORIAL_OVERRIDE_FIELDS)
+    if unsupported_fields:
+        fields = ", ".join(sorted(unsupported_fields))
+        raise ValueError(f"editorial_overrides contains unsupported fields: {fields}")
+    return value
 
 
-def _validate_leadership_activity_content(content: dict[str, Any] | None) -> dict[str, Any] | None:
-    if not content:
-        return content
-
-    linked_type = content.get("linked_content_type")
-    linked_id = content.get("linked_content_id")
-    if linked_type in (None, "") and linked_id in (None, ""):
-        return content
-    if linked_type not in LEADERSHIP_CONTENT_TYPES:
-        raise ValueError("content.linked_content_type must be news, blog, or event")
-    if linked_id in (None, ""):
-        raise ValueError("content.linked_content_id is required when linked_content_type is set")
-    try:
-        content["linked_content_id"] = str(uuid.UUID(str(linked_id)))
-    except (TypeError, ValueError) as exc:
-        raise ValueError("content.linked_content_id must be a valid news/blog/event ID") from exc
-    content["linked_content_type"] = linked_type
-    return content
+def _is_empty_reference_content(value: Any) -> bool:
+    return value is None or value == "" or value == {} or value == 0
 
 
-def _validate_leadership_section_settings(settings: dict[str, Any] | None) -> dict[str, Any] | None:
-    if not settings:
-        return settings
+def validate_section_item_state(state: Mapping[str, Any]) -> None:
+    """Validate a complete section-item state, including merged PATCH values."""
+    item_type = state.get("item_type")
+    source_type = state.get("source_type")
+    source_id = state.get("source_id")
 
-    staff_profile_id = settings.get("staff_profile_id") or settings.get("leader_profile_id")
-    if staff_profile_id not in (None, ""):
-        try:
-            normalized = str(uuid.UUID(str(staff_profile_id)))
-        except (TypeError, ValueError) as exc:
-            raise ValueError("settings.staff_profile_id must be a valid staff profile/person ID") from exc
-        settings["staff_profile_id"] = normalized
-        settings.pop("leader_profile_id", None)
-    return settings
+    if (source_type is None) != (source_id is None):
+        raise ValueError("source_type and source_id must be provided together")
+    if source_type is not None and item_type != "reference":
+        raise ValueError("source references require item_type to be reference")
+
+    if item_type != "reference":
+        return
+
+    populated_fields = [
+        field
+        for field in SECTION_ITEM_REFERENCE_CONTENT_FIELDS
+        if not _is_empty_reference_content(state.get(field))
+    ]
+    if populated_fields:
+        fields = ", ".join(populated_fields)
+        raise ValueError(f"reference items cannot populate generic fields: {fields}")
+
+
+class MediaRoleDefinitionRead(BaseSchema):
+    label: str
+    media_type: str
+    required: bool = False
+    multiple: bool = False
+
+
+class SectionDefinitionRead(BaseSchema):
+    key: str
+    label: str
+    description: str
+    allowed_scopes: tuple[str, ...]
+    min_items: int
+    max_items: int
+    allowed_item_types: tuple[str, ...]
+    allowed_source_types: tuple[str, ...]
+    media_roles: dict[str, MediaRoleDefinitionRead]
+    settings_schema: dict[str, Any]
+    required_fields: tuple[str, ...]
 
 
 class SectionItemCreate(BaseSchema):
@@ -100,48 +162,41 @@ class SectionItemCreate(BaseSchema):
     video_provider: str | None = Field(default=None, max_length=64)
     video_url: str | None = Field(default=None, max_length=1024)
     video_duration_seconds: int | None = None
-    audience: str = Field(default="all", max_length=32)
-    source_type: str | None = Field(default=None, max_length=32)
+    source_type: str | None = Field(default=None, max_length=64)
     source_id: uuid.UUID | None = None
-    is_featured: bool = False
-    poster_media_id: uuid.UUID | None = None
-    transcript: str | None = None
+    editorial_overrides: dict[str, Any] | None = None
     display_order: int = 100
     is_enabled: bool = True
-    status: str | None = Field(default=None, max_length=32)
 
     @field_validator("item_type")
     @classmethod
     def validate_item_type(cls, value: str) -> str:
         return _validate_choice(value, SECTION_ITEM_TYPES, "item_type") or value
 
-    @field_validator("status")
-    @classmethod
-    def validate_status(cls, value: str | None) -> str | None:
-        return _validate_choice(value, SECTION_ITEM_STATUSES, "status")
-
-    @field_validator("audience")
-    @classmethod
-    def validate_audience(cls, value: str) -> str:
-        return _validate_choice(value, LIFE_AROUND_STUDIES_AUDIENCES, "audience") or value
-
     @field_validator("source_type")
     @classmethod
     def validate_source_type(cls, value: str | None) -> str | None:
-        return _validate_choice(value, LIFE_AROUND_STUDIES_SOURCE_TYPES, "source_type")
+        return _validate_choice(value, SECTION_ITEM_SOURCE_TYPES, "source_type")
+
+    @field_validator("editorial_overrides")
+    @classmethod
+    def validate_editorial_overrides(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
+        return _validate_editorial_overrides(value)
 
     @field_validator("cta_url")
     @classmethod
     def validate_cta_url(cls, value: str | None) -> str | None:
         return _validate_link_target(value, "cta_url")
 
-    @field_validator("content")
-    @classmethod
-    def validate_content(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
-        return _validate_leadership_activity_content(value)
+    @model_validator(mode="after")
+    def validate_source_reference(self):
+        validate_section_item_state(self.model_dump())
+        return self
 
 
 class SectionItemUpdate(BaseSchema):
+    id: uuid.UUID | None = None
+    revision: int | None = Field(default=None, ge=1)
     page_section_id: uuid.UUID | None = None
     item_type: str | None = Field(default=None, max_length=32)
     title: str | None = Field(default=None, max_length=255)
@@ -156,45 +211,47 @@ class SectionItemUpdate(BaseSchema):
     video_provider: str | None = Field(default=None, max_length=64)
     video_url: str | None = Field(default=None, max_length=1024)
     video_duration_seconds: int | None = None
-    audience: str | None = Field(default=None, max_length=32)
-    source_type: str | None = Field(default=None, max_length=32)
+    source_type: str | None = Field(default=None, max_length=64)
     source_id: uuid.UUID | None = None
-    is_featured: bool | None = None
-    poster_media_id: uuid.UUID | None = None
-    transcript: str | None = None
+    editorial_overrides: dict[str, Any] | None = None
     display_order: int | None = None
     is_enabled: bool | None = None
-    status: str | None = Field(default=None, max_length=32)
 
     @field_validator("item_type")
     @classmethod
     def validate_item_type(cls, value: str | None) -> str | None:
         return _validate_choice(value, SECTION_ITEM_TYPES, "item_type")
 
-    @field_validator("status")
-    @classmethod
-    def validate_status(cls, value: str | None) -> str | None:
-        return _validate_choice(value, SECTION_ITEM_STATUSES, "status")
-
-    @field_validator("audience")
-    @classmethod
-    def validate_audience(cls, value: str | None) -> str | None:
-        return _validate_choice(value, LIFE_AROUND_STUDIES_AUDIENCES, "audience")
-
     @field_validator("source_type")
     @classmethod
     def validate_source_type(cls, value: str | None) -> str | None:
-        return _validate_choice(value, LIFE_AROUND_STUDIES_SOURCE_TYPES, "source_type")
+        return _validate_choice(value, SECTION_ITEM_SOURCE_TYPES, "source_type")
+
+    @field_validator("editorial_overrides")
+    @classmethod
+    def validate_editorial_overrides(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
+        return _validate_editorial_overrides(value)
 
     @field_validator("cta_url")
     @classmethod
     def validate_cta_url(cls, value: str | None) -> str | None:
         return _validate_link_target(value, "cta_url")
 
-    @field_validator("content")
-    @classmethod
-    def validate_content(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
-        return _validate_leadership_activity_content(value)
+    @model_validator(mode="after")
+    def validate_source_reference(self):
+        if self.id is not None and self.revision is None:
+            raise ValueError("revision is required when id is supplied")
+        if self.id is None and self.revision is not None:
+            raise ValueError("id is required when revision is supplied")
+        source_type_supplied = "source_type" in self.model_fields_set
+        source_id_supplied = "source_id" in self.model_fields_set
+        if source_type_supplied != source_id_supplied:
+            raise ValueError("source_type and source_id must be updated together")
+        if self.source_type is not None and self.item_type not in (None, "reference"):
+            raise ValueError("source references require item_type to be reference")
+        if self.item_type == "reference":
+            validate_section_item_state(self.model_dump(exclude_unset=True))
+        return self
 
 
 class SectionItemRead(BaseReadSchema):
@@ -212,16 +269,12 @@ class SectionItemRead(BaseReadSchema):
     video_provider: str | None = None
     video_url: str | None = None
     video_duration_seconds: int | None = None
-    audience: str = "all"
     source_type: str | None = None
     source_id: uuid.UUID | None = None
-    is_featured: bool = False
-    poster_media_id: uuid.UUID | None = None
-    transcript: str | None = None
+    editorial_overrides: dict[str, Any] | None = None
     display_order: int
+    revision: int
     is_enabled: bool
-    status: str | None = SECTION_ITEM_STATUSES[2]
-    content_enriched: dict[str, Any] | None = None
 
 
 class SectionItemBatchEntry(SectionItemCreate):
@@ -233,6 +286,35 @@ class SectionItemBatchEntry(SectionItemCreate):
 class SectionItemBatchSave(BaseSchema):
     items: list[SectionItemBatchEntry] = Field(default_factory=list)
     remove_ids: list[uuid.UUID] = Field(default_factory=list)
+
+
+class ReorderEntry(BaseSchema):
+    id: uuid.UUID
+    display_order: int
+    revision: int = Field(ge=1)
+
+
+class PageSectionReorderRequest(BaseSchema):
+    scope_type: str = Field(default=PAGE_SCOPE_TYPES[0], max_length=32)
+    scope_id: uuid.UUID | None = None
+    items: list[ReorderEntry] = Field(min_length=1)
+
+    @field_validator("scope_type")
+    @classmethod
+    def validate_scope_type(cls, value: str) -> str:
+        return _validate_choice(value, PAGE_SCOPE_TYPES, "scope_type") or value
+
+    @model_validator(mode="after")
+    def validate_scope(self):
+        if self.scope_type == "university" and self.scope_id is not None:
+            raise ValueError("scope_id must be null when scope_type is university")
+        if self.scope_type != "university" and self.scope_id is None:
+            raise ValueError(f"scope_id is required when scope_type is {self.scope_type}")
+        return self
+
+
+class SectionItemReorderRequest(BaseSchema):
+    items: list[ReorderEntry] = Field(min_length=1)
 
 
 class PageSectionCreate(BaseSchema):
@@ -268,15 +350,10 @@ class PageSectionCreate(BaseSchema):
     def validate_layout_variant(cls, value: str) -> str:
         return _validate_choice(value, PAGE_SECTION_LAYOUT_VARIANTS, "layout_variant") or value
 
-    @field_validator("settings")
-    @classmethod
-    def validate_settings(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
-        return _validate_leadership_section_settings(value)
-
     @model_validator(mode="after")
     def validate_scope_and_window(self):
-        if self.scope_type == "school" and self.scope_id is None:
-            raise ValueError("scope_id is required when scope_type is school")
+        if self.scope_type != "university" and self.scope_id is None:
+            raise ValueError(f"scope_id is required when scope_type is {self.scope_type}")
         if self.valid_from and self.valid_to and self.valid_to < self.valid_from:
             raise ValueError("valid_to must be greater than or equal to valid_from")
         return self
@@ -290,6 +367,7 @@ class PageSectionUpdate(BaseSchema):
         extra="forbid",
     )
 
+    revision: int | None = Field(default=None, ge=1)
     page_key: str | None = Field(default=None, min_length=1, max_length=64)
     scope_type: str | None = Field(default=None, max_length=32)
     scope_id: uuid.UUID | None = None
@@ -304,6 +382,7 @@ class PageSectionUpdate(BaseSchema):
     valid_from: datetime | None = None
     valid_to: datetime | None = None
     items: list[SectionItemUpdate] | None = None
+    media_links: list["PageSectionMediaLinkUpdate"] | None = None
 
     @field_validator("scope_type")
     @classmethod
@@ -315,18 +394,21 @@ class PageSectionUpdate(BaseSchema):
     def validate_layout_variant(cls, value: str | None) -> str | None:
         return _validate_choice(value, PAGE_SECTION_LAYOUT_VARIANTS, "layout_variant")
 
-    @field_validator("settings")
-    @classmethod
-    def validate_settings(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
-        return _validate_leadership_section_settings(value)
-
     @model_validator(mode="after")
     def validate_scope_and_window(self):
-        if self.scope_type == "school" and self.scope_id is None:
-            raise ValueError("scope_id is required when scope_type is school")
+        if self.scope_type is not None and self.scope_type != "university" and self.scope_id is None:
+            raise ValueError(f"scope_id is required when scope_type is {self.scope_type}")
         if self.valid_from and self.valid_to and self.valid_to < self.valid_from:
             raise ValueError("valid_to must be greater than or equal to valid_from")
         return self
+
+
+class PageSectionMediaLinkUpdate(BaseSchema):
+    id: uuid.UUID | None = None
+    media_id: uuid.UUID
+    role: str = Field(min_length=1, max_length=64)
+    display_order: int = 100
+    is_public: bool = True
 
 
 class PageSectionRead(BaseReadSchema):
@@ -338,8 +420,8 @@ class PageSectionRead(BaseReadSchema):
     subtitle: str | None = None
     description: str | None = None
     settings: dict[str, Any] | None = None
-    settings_enriched: dict[str, Any] | None = None
     display_order: int
+    revision: int
     is_enabled: bool
     layout_variant: str
     status: str
@@ -508,6 +590,12 @@ class PageSectionWorkflowAction(BaseSchema):
         return _validate_choice(value, PAGE_SECTION_WORKFLOW_ACTIONS, "action") or value
 
 
+class PageSectionWorkflowBody(BaseSchema):
+    """Optional body for page section workflow actions, allowing a reason/note."""
+
+    reason: str | None = Field(default=None, max_length=2000)
+
+
 class PageCompositionResponse(BaseSchema):
     page_key: str = Field(min_length=1, max_length=64)
     scope_type: str = Field(max_length=32)
@@ -516,14 +604,155 @@ class PageCompositionResponse(BaseSchema):
     partnership_spotlights: list[PartnershipSpotlightRead] = Field(default_factory=list)
 
 
+class PageValidationIssue(BaseSchema):
+    code: str = Field(min_length=1, max_length=64)
+    severity: Literal["error", "warning"]
+    section_id: uuid.UUID
+    item_id: uuid.UUID | None = None
+    field: str | None = Field(default=None, max_length=255)
+    message: str = Field(min_length=1, max_length=1000)
+    blocking: bool
+
+
+class PageValidationResponse(BaseSchema):
+    page_key: str = Field(min_length=1, max_length=64)
+    scope_type: str = Field(max_length=32)
+    scope_id: uuid.UUID | None = None
+    issues: list[PageValidationIssue] = Field(default_factory=list)
+
+
+class PageCmsSourceSummary(BaseSchema):
+    """Stable, compact representation of a record selectable by Page CMS."""
+
+    id: uuid.UUID
+    source_type: str = Field(max_length=64)
+    label: str = Field(min_length=1, max_length=255)
+    secondary_label: str | None = Field(default=None, max_length=500)
+    status: str = Field(max_length=64)
+    published_at: datetime | None = None
+    thumbnail_url: str | None = Field(default=None, max_length=1024)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    selectable: bool = True
+
+    @field_validator("label", "secondary_label", "status", mode="before")
+    @classmethod
+    def normalize_display_text(cls, value: Any, info):
+        if value is None:
+            return None
+        limits = {"label": 255, "secondary_label": 500, "status": 64}
+        normalized = _plain_display_text(str(value))[:limits[info.field_name]].strip()
+        return normalized or None
+
+    @field_validator("thumbnail_url")
+    @classmethod
+    def validate_thumbnail_url(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if not value.startswith(("/", "https://", "http://")):
+            raise ValueError("thumbnail_url must be an HTTP(S) or root-relative URL")
+        return value
+
+    @field_validator("metadata", mode="before")
+    @classmethod
+    def sanitize_metadata(cls, value: Any) -> dict[str, Any]:
+        return _sanitize_source_metadata(value if isinstance(value, dict) else {})
+
+
+class PagePreviewResolvedSource(PageCmsSourceSummary):
+    """Resolved source data that is safe to render in an authorised preview."""
+
+
+class PagePreviewMedia(BaseSchema):
+    id: uuid.UUID
+    filename: str
+    original_filename: str
+    mime_type: str
+    media_type: str
+    url: str
+    public_url: str | None = None
+    cdn_url: str | None = None
+    thumbnail_url: str | None = None
+    alt_text: str | None = None
+    title: str | None = None
+    caption: str | None = None
+    width: int | None = None
+    height: int | None = None
+    duration: int | None = None
+
+
+class PagePreviewMediaLink(BaseSchema):
+    id: uuid.UUID
+    media_id: uuid.UUID
+    entity_type: str
+    entity_id: uuid.UUID
+    role: str
+    display_order: int
+    media: PagePreviewMedia
+
+
+class PagePreviewItem(BaseSchema):
+    id: uuid.UUID
+    page_section_id: uuid.UUID
+    item_type: str
+    title: str | None = None
+    subtitle: str | None = None
+    body_text: str | None = None
+    content: dict[str, Any] | None = None
+    cta_label: str | None = None
+    cta_url: str | None = None
+    cta_description: str | None = None
+    media_caption: str | None = None
+    media_alt_text: str | None = None
+    video_provider: str | None = None
+    video_url: str | None = None
+    video_duration_seconds: int | None = None
+    source_type: str | None = None
+    source_id: uuid.UUID | None = None
+    editorial_overrides: dict[str, Any] | None = None
+    source: PagePreviewResolvedSource | None = None
+    display_order: int
+    is_enabled: bool
+
+
+class PagePreviewSection(BaseSchema):
+    id: uuid.UUID
+    page_key: str
+    scope_type: str
+    scope_id: uuid.UUID | None = None
+    section_key: str
+    title: str | None = None
+    subtitle: str | None = None
+    description: str | None = None
+    settings: dict[str, Any] | None = None
+    display_order: int
+    revision: int
+    is_enabled: bool
+    layout_variant: str
+    status: str
+    workflow_status: str
+    valid_from: datetime | None = None
+    valid_to: datetime | None = None
+    approved_at: datetime | None = None
+    published_at: datetime | None = None
+    items: list[PagePreviewItem] = Field(default_factory=list)
+    media: dict[str, list[PagePreviewMediaLink]] = Field(default_factory=dict)
+
+
+class PagePreviewResponse(PageValidationResponse):
+    sections: list[PagePreviewSection] = Field(default_factory=list)
+
+
 __all__ = [
     "PARTNERSHIP_CTA_SOURCES",
     "PAGE_SECTION_WORKFLOW_ACTIONS",
+    "MediaRoleDefinitionRead",
+    "SectionDefinitionRead",
     "SectionItemCreate",
     "SectionItemUpdate",
     "SectionItemRead",
-    "SectionItemBatchEntry",
-    "SectionItemBatchSave",
+    "ReorderEntry",
+    "PageSectionReorderRequest",
+    "SectionItemReorderRequest",
     "PageSectionCreate",
     "PageSectionUpdate",
     "PageSectionRead",
@@ -532,4 +761,13 @@ __all__ = [
     "PartnershipSpotlightRead",
     "PageSectionWorkflowAction",
     "PageCompositionResponse",
+    "PageValidationIssue",
+    "PageValidationResponse",
+    "PageCmsSourceSummary",
+    "PagePreviewResolvedSource",
+    "PagePreviewMedia",
+    "PagePreviewMediaLink",
+    "PagePreviewItem",
+    "PagePreviewSection",
+    "PagePreviewResponse",
 ]
