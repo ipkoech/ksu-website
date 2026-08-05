@@ -758,7 +758,7 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         }
 
         with patch.object(page_cms.HomepageCompositionService, "compose", AsyncMock(return_value=composition)):
-            response = await page_cms.get_homepage(db=None)
+            response = await page_cms.get_homepage.__wrapped__.__wrapped__(request=None, db=None)
 
         self.assertEqual("success", response["status"])
         self.assertEqual(["hero"], [section["section_key"] for section in response["data"]["sections"]])

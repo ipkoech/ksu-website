@@ -14,6 +14,8 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from ksu_common import cached_public
+
 from ...core.config import get_settings
 from ...core.database import AsyncSessionLocal
 from ...deps import CurrentUser
@@ -65,6 +67,7 @@ def _research_realtime_config() -> dict[str, Any]:
 
 
 @router.get("/realtime/research/config")
+@cached_public(timeout=300, vary_on=())
 async def get_research_realtime_config():
     return {"data": _research_realtime_config()}
 

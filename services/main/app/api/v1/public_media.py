@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import selectinload
 
+from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ...deps import DbSession
@@ -81,6 +82,7 @@ def public_media_link_payload(link: MediaLink) -> dict[str, object | None]:
 
 @router.get("")
 @public_media_rate_limit
+@cached_public(timeout=300, vary_on=("page", "per_page", "media_type", "search"))
 async def list_public_media(
     request: Request,
     db: DbSession,
@@ -118,6 +120,7 @@ async def list_public_media(
 
 @router.get("/links")
 @public_media_rate_limit
+@cached_public(timeout=300, vary_on=("entity_type", "entity_id", "role", "per_page"))
 async def list_public_media_links(
     request: Request,
     db: DbSession,
@@ -152,6 +155,7 @@ async def list_public_media_links(
 
 @router.get("/{media_id}")
 @public_media_rate_limit
+@cached_public(timeout=300, vary_on=("media_id",))
 async def get_public_media(request: Request, media_id: uuid.UUID, db: DbSession):
     media = await MediaService.get_by_id(db, media_id)
     if media is None or not media.is_public:
