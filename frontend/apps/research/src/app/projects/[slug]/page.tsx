@@ -222,16 +222,16 @@ function ProjectHero({
       <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-brand-overlay/88 via-brand-overlay/52 to-brand-overlay/8" />
       <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-white/20" />
       <div className="relative mx-auto max-w-[1680px]">
-        <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-white/75">
+        <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-white/75">
           <Link href="/" className="transition hover:text-white">Home</Link>
           <span>/</span>
           <Link href="/projects" className="transition hover:text-white">Projects</Link>
           <span>/</span>
-          <span className="text-white">{title}</span>
+          <span aria-current="page" className="text-white">{title}</span>
         </nav>
         <div className="max-w-3xl">
           <div className="flex flex-wrap gap-2">
-            <span className="inline-flex rounded-md border border-white/25 bg-primary/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-white shadow-sm backdrop-blur">
+            <span className="inline-flex rounded-md border border-white/25 bg-primary/90 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white shadow-sm backdrop-blur">
               Research Project
             </span>
             {labels.map((label) => (
@@ -240,7 +240,7 @@ function ProjectHero({
               </span>
             ))}
           </div>
-          <h1 className="mt-3 text-balance font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight sm:text-5xl lg:max-w-4xl lg:text-6xl">
+          <h1 className="mt-3 text-balance font-display text-4xl font-semibold leading-tight sm:text-5xl lg:max-w-4xl">
             {title}
           </h1>
           {summary ? (
@@ -252,7 +252,7 @@ function ProjectHero({
             {hasEvidence ? (
               <Link
                 href="#evidence-outputs"
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
               >
                 View evidence
                 <ArrowRight aria-hidden className="h-4 w-4" />
@@ -261,7 +261,7 @@ function ProjectHero({
             {contactEmail ? (
               <a
                 href={`mailto:${contactEmail}`}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/40 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/40 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15"
               >
                 <Mail aria-hidden className="h-4 w-4" />
                 Contact lead
@@ -270,7 +270,7 @@ function ProjectHero({
             {briefUrl ? (
               <a
                 href={briefUrl}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/40 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/40 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15"
               >
                 <Download aria-hidden className="h-4 w-4" />
                 Download brief
@@ -374,10 +374,10 @@ function ProjectStoryTable({ sections }: { sections: Array<{ title: string; body
   const icons = [Target, FileText, Network, LineChart, UsersRound];
   return (
     <section className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
-      <h2 className="border-b border-border px-5 py-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+      <h2 className="border-b border-border px-5 py-4 font-display text-xl font-semibold text-foreground">
         Project Story
       </h2>
-      <div className="divide-y divide-slate-200">
+      <div className="divide-y divide-border">
         {sections.map((section, index) => {
           const Icon = icons[index] ?? FileText;
           return (
@@ -418,7 +418,7 @@ function EvidenceOutputs({
 
   return (
     <section id="evidence-outputs" className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
-      <h2 className="border-b border-border px-5 py-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+      <h2 className="border-b border-border px-5 py-4 font-display text-xl font-semibold text-foreground">
         Evidence & Outputs
       </h2>
       <div className="flex flex-wrap gap-2 border-b border-border px-5 py-3">
@@ -428,7 +428,7 @@ function EvidenceOutputs({
           </span>
         ))}
       </div>
-      <div className="divide-y divide-slate-200">
+      <div className="divide-y divide-border">
         {groups.flatMap((group) =>
           group.records.slice(0, 6).map((record) => {
             const generic = record as ResearchGenericRecord;
@@ -464,7 +464,7 @@ function ProjectMilestoneTable({
 
   return (
     <section className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
-      <h2 className="border-b border-border px-5 py-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+      <h2 className="border-b border-border px-5 py-4 font-display text-xl font-semibold text-foreground">
         Milestones & Impact
       </h2>
       {milestones.length > 0 ? (
@@ -473,7 +473,7 @@ function ProjectMilestoneTable({
           <span>Published value</span>
         </div>
       ) : null}
-      <div className="divide-y divide-slate-200">
+      <div className="divide-y divide-border">
         {milestones.map((milestone) => (
           <div key={`${milestone.label}-${milestone.value}`} className="grid gap-2 px-5 py-3 text-sm md:grid-cols-[minmax(220px,1fr)_minmax(0,1fr)]">
             <span className="font-semibold text-primary">{milestone.label}</span>
@@ -483,7 +483,7 @@ function ProjectMilestoneTable({
       </div>
       {impact ? (
         <div className="border-t border-border px-5 py-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Impact note</p>
+          <p className="text-sm font-semibold uppercase tracking-eyebrow text-secondary">Impact note</p>
           <ResearchRichText content={impact} className="mt-2 text-sm leading-7 text-muted-foreground" />
         </div>
       ) : null}
@@ -512,10 +512,10 @@ function LinkedWork({
   const linkedPeople = partners.length > 0 ? partners : teamMembers;
   return (
     <section className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
-      <h2 className="border-b border-border px-5 py-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+      <h2 className="border-b border-border px-5 py-4 font-display text-xl font-semibold text-foreground">
         Linked Work
       </h2>
-      <div className="grid gap-0 divide-y divide-slate-200 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+      <div className="grid gap-0 divide-y divide-border lg:grid-cols-2 lg:divide-x lg:divide-y-0">
         <div className="p-5">
           <h3 className="text-sm font-semibold text-primary">Partners and contributors</h3>
           {linkedPeople.length > 0 ? (
@@ -538,7 +538,7 @@ function LinkedWork({
         </div>
         <div className="p-5">
           <h3 className="text-sm font-semibold text-primary">Useful paths</h3>
-          <div className="mt-3 divide-y divide-slate-200 border-t border-border">
+          <div className="mt-3 divide-y divide-border border-t border-border">
             {getExploreLinks(center, program, project).map((link) => (
               <Link
                 key={link.href}
@@ -593,11 +593,11 @@ function ProjectFactsSidebar({
 
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+      <h2 className="font-display text-xl font-semibold text-foreground">
         Project facts
       </h2>
       {visibleRows.length > 0 ? (
-        <dl className="mt-4 divide-y divide-slate-200 border-t border-border">
+        <dl className="mt-4 divide-y divide-border border-t border-border">
           {visibleRows.map((fact) => (
             <div key={fact.label} className="grid grid-cols-[120px_minmax(0,1fr)] gap-4 py-3">
               <dt className="text-xs font-semibold text-muted-foreground">{fact.label}</dt>
@@ -611,7 +611,7 @@ function ProjectFactsSidebar({
       {contactEmail ? (
         <a
           href={`mailto:${contactEmail}`}
-          className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-primary/25 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/5"
+          className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-primary/25 bg-background px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5"
         >
           <Mail aria-hidden className="h-4 w-4" />
           Contact project lead
@@ -635,10 +635,10 @@ function QuickPaths({
 
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+      <h2 className="font-display text-xl font-semibold text-foreground">
         Quick paths
       </h2>
-      <div className="mt-3 divide-y divide-slate-200 border-t border-border">
+      <div className="mt-3 divide-y divide-border border-t border-border">
         {links.map((link) => (
           <Link
             key={link.href}
@@ -666,7 +666,7 @@ function ContactCard({
 
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+      <h2 className="font-display text-xl font-semibold text-foreground">
         Contact
       </h2>
       <p className="mt-3 text-sm text-muted-foreground">Questions about this project?</p>
@@ -687,7 +687,7 @@ function ContactCard({
       {contactEmail ? (
         <a
           href={`mailto:${contactEmail}`}
-          className="mt-5 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-primary px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/5"
+          className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-primary/25 bg-background px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5"
         >
           Contact project lead
           <ArrowRight aria-hidden className="h-4 w-4" />
@@ -700,7 +700,7 @@ function ContactCard({
 function PartnerChips({ partners }: { partners: ResearchGenericRecord[] }) {
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-foreground">Partners</h2>
+      <h2 className="font-display text-xl font-semibold text-foreground">Partners</h2>
       <div className="mt-3 flex flex-wrap gap-2">
         {partners.slice(0, 8).map((partner, index) => (
           <Link
@@ -719,7 +719,7 @@ function PartnerChips({ partners }: { partners: ResearchGenericRecord[] }) {
 function EmptyPanel({ title, message }: { title: string; message: string }) {
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+      <h2 className="font-display text-xl font-semibold text-foreground">
         {title}
       </h2>
       <p className="mt-3 text-sm leading-6 text-muted-foreground">{message}</p>

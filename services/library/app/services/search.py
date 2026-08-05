@@ -23,6 +23,12 @@ from ..models import (
     LibraryStaff,
     LibraryWorkflow,
 )
+from .guides import (
+    public_guides_query,
+    public_policy_pages_query,
+    public_specialists_query,
+    public_workflows_query,
+)
 
 SEARCH_TYPES = {
     "branch",
@@ -39,6 +45,14 @@ SEARCH_TYPES = {
     "policy",
 }
 
+WORKFLOW_URLS = {
+    "borrowing": "/borrowing",
+    "borrowing_access": "/borrowing",
+    "remote_access": "/remote-access",
+    "repository_deposit": "/repositories",
+    "digital_scholarship": "/digital-scholarship",
+}
+
 
 def _term(query: str) -> str:
     return f"%{query.strip()}%"
@@ -53,11 +67,51 @@ def _snippet(*values: object | None) -> str | None:
     return None
 
 
+def _joined(values: list[str] | None) -> str | None:
+    if not values:
+        return None
+    text = ", ".join(value for value in values if value)
+    return text or None
+
+
+def _guide_url(slug: str) -> str:
+    return f"/guides/{slug}"
+
+
+def _workflow_url(workflow_type: str, slug: str) -> str:
+    return WORKFLOW_URLS.get(workflow_type, f"/guides/{slug}")
+
+
+def _policy_url(slug: str) -> str:
+    return f"/policies/{slug}"
+
+
 def _selected_types(types: str | None) -> set[str]:
     if not types:
         return set(SEARCH_TYPES)
     selected = {item.strip() for item in types.split(",") if item.strip()}
     return selected & SEARCH_TYPES
+
+
+def _public_library_parent_filter(model: type, *, allow_global: bool = False):
+    parent_is_public = (
+        sa.select(Library.id)
+        .where(
+            Library.id == model.library_id,
+            Library.is_active.is_(True),
+            Library.is_public.is_(True),
+            Library.deleted_at.is_(None),
+        )
+        .exists()
+    )
+    if allow_global:
+        return sa.or_(model.library_id.is_(None), parent_is_public)
+    return parent_is_public
+
+
+def _per_type_limit(types: set[str], limit: int) -> int:
+    count = len(types)
+    return max(3, min(12, limit // max(1, count) + 1))
 
 
 async def _library_names(db: AsyncSession, library_ids: Iterable[uuid.UUID]) -> dict[uuid.UUID, str]:
@@ -81,7 +135,7 @@ async def unified_search(
         return {"query": query, "total": 0, "results": [], "by_type": {}}
 
     term = _term(query)
-    per_type = max(3, min(12, limit // max(1, len(selected)) + 1))
+    per_type = _per_type_limit(selected, limit)
     results: list[dict] = []
 
     if "branch" in selected:
@@ -121,6 +175,7 @@ async def unified_search(
     if "catalog" in selected:
         statement = LibraryResource.active_query().where(
             LibraryResource.is_active.is_(True),
+            _public_library_parent_filter(LibraryResource),
             sa.or_(
                 LibraryResource.title.ilike(term),
                 LibraryResource.subtitle.ilike(term),
@@ -156,21 +211,27 @@ async def unified_search(
         )
 
     if "database" in selected:
+        statement = ElectronicResource.active_query().where(
+            ElectronicResource.is_active.is_(True),
+            _public_library_parent_filter(ElectronicResource, allow_global=True),
+            sa.or_(
+                ElectronicResource.name.ilike(term),
+                ElectronicResource.provider.ilike(term),
+                ElectronicResource.description.ilike(term),
+            ),
+        )
+        if library_id:
+            statement = statement.where(ElectronicResource.library_id == library_id)
         rows = (
             await db.execute(
-                ElectronicResource.active_query()
-                .where(
-                    ElectronicResource.is_active.is_(True),
-                    sa.or_(
-                        ElectronicResource.name.ilike(term),
-                        ElectronicResource.provider.ilike(term),
-                        ElectronicResource.description.ilike(term),
-                    ),
-                )
-                .order_by(ElectronicResource.sort_order, ElectronicResource.name)
-                .limit(per_type)
+                statement.order_by(
+                    ElectronicResource.sort_order, ElectronicResource.name
+                ).limit(per_type)
             )
-        ).scalars()
+        ).scalars().all()
+        library_names.update(
+            await _library_names(db, [row.library_id for row in rows if row.library_id])
+        )
         results.extend(
             {
                 "id": str(row.id),
@@ -195,6 +256,7 @@ async def unified_search(
         statement = LibraryService.active_query().where(
             LibraryService.is_active.is_(True),
             LibraryService.is_public.is_(True),
+            _public_library_parent_filter(LibraryService),
             sa.or_(
                 LibraryService.name.ilike(term),
                 LibraryService.description.ilike(term),
@@ -223,6 +285,7 @@ async def unified_search(
     if "download" in selected:
         statement = LibraryFile.active_query().where(
             LibraryFile.is_public.is_(True),
+            _public_library_parent_filter(LibraryFile),
             sa.or_(
                 LibraryFile.title.ilike(term),
                 LibraryFile.description.ilike(term),
@@ -255,6 +318,7 @@ async def unified_search(
         statement = LibraryStaff.active_query().where(
             LibraryStaff.is_active.is_(True),
             LibraryStaff.is_public.is_(True),
+            _public_library_parent_filter(LibraryStaff),
             sa.or_(
                 LibraryStaff.job_title.ilike(term),
                 LibraryStaff.department.ilike(term),
@@ -286,52 +350,21 @@ async def unified_search(
             for row in rows
         )
 
-    if "regulation" in selected:
-        statement = LibraryRegulation.active_query().where(
-            LibraryRegulation.is_public.is_(True),
-            sa.or_(
-                LibraryRegulation.title.ilike(term),
-                LibraryRegulation.content.ilike(term),
-                LibraryRegulation.category.ilike(term),
-            ),
-        )
-        if library_id:
-            statement = statement.where(LibraryRegulation.library_id == library_id)
-        rows = (await db.execute(statement.order_by(LibraryRegulation.sort_order, LibraryRegulation.title).limit(per_type))).scalars().all()
-        library_names.update(await _library_names(db, [row.library_id for row in rows if row.library_id]))
-        results.extend(
-            {
-                "id": str(row.id),
-                "type": "regulation",
-                "title": row.title,
-                "description": _snippet(row.content, row.category),
-                "url": f"/services#regulation-{row.id}",
-                "library_id": str(row.library_id) if row.library_id else None,
-                "library_name": library_names.get(row.library_id) if row.library_id else None,
-                "metadata": {"category": row.category, "status": row.status},
-            }
-            for row in rows
-        )
-
     if "guide" in selected:
-        statement = LibraryGuide.active_query().where(
-            LibraryGuide.is_public.is_(True),
-            LibraryGuide.is_active.is_(True),
+        statement = public_guides_query().where(
             sa.or_(
                 LibraryGuide.title.ilike(term),
                 LibraryGuide.summary.ilike(term),
                 LibraryGuide.subject.ilike(term),
                 LibraryGuide.course_code.ilike(term),
                 LibraryGuide.audience.ilike(term),
-            ),
+            )
         )
         if library_id:
             statement = statement.where(LibraryGuide.library_id == library_id)
         rows = (
             await db.execute(
-                statement.order_by(LibraryGuide.sort_order, LibraryGuide.title).limit(
-                    per_type
-                )
+                statement.order_by(LibraryGuide.sort_order, LibraryGuide.title).limit(per_type)
             )
         ).scalars().all()
         library_names.update(
@@ -342,11 +375,14 @@ async def unified_search(
                 "id": str(row.id),
                 "type": "guide",
                 "title": row.title,
-                "description": _snippet(row.summary, row.subject, row.course_code),
-                "url": f"/guides/{row.slug}",
+                "description": _snippet(
+                    row.summary, row.subject, row.course_code, row.audience
+                ),
+                "url": _guide_url(row.slug),
                 "library_id": str(row.library_id) if row.library_id else None,
                 "library_name": library_names.get(row.library_id) if row.library_id else None,
                 "metadata": {
+                    "slug": row.slug,
                     "guide_type": row.guide_type,
                     "subject": row.subject,
                     "course_code": row.course_code,
@@ -357,25 +393,11 @@ async def unified_search(
         )
 
     if "specialist" in selected:
-        json_text = sa.cast(
-            sa.func.concat(
-                LibrarySpecialist.subjects,
-                " ",
-                LibrarySpecialist.schools,
-                " ",
-                LibrarySpecialist.departments,
-                " ",
-                LibrarySpecialist.support_areas,
-            ),
-            sa.String,
-        )
-        statement = LibrarySpecialist.active_query().where(
-            LibrarySpecialist.is_public.is_(True),
-            LibrarySpecialist.is_active.is_(True),
+        statement = public_specialists_query().where(
             sa.or_(
-                LibrarySpecialist.booking_url.ilike(term),
-                json_text.ilike(term),
-            ),
+                sa.cast(LibrarySpecialist.subjects, sa.String).ilike(term),
+                sa.cast(LibrarySpecialist.support_areas, sa.String).ilike(term),
+            )
         )
         if library_id:
             statement = statement.where(LibrarySpecialist.library_id == library_id)
@@ -394,45 +416,39 @@ async def unified_search(
                 "id": str(row.id),
                 "type": "specialist",
                 "title": _snippet(
-                    ", ".join(row.subjects or []),
-                    ", ".join(row.support_areas or []),
-                    "Library specialist",
+                    _joined(row.subjects),
+                    _joined(row.support_areas),
+                    "Library Specialist",
                 ),
-                "description": _snippet(
-                    ", ".join(row.schools or []),
-                    ", ".join(row.departments or []),
-                    row.booking_url,
-                ),
-                "url": f"/specialists?specialist={row.id}",
+                "description": _snippet(_joined(row.support_areas), _joined(row.subjects)),
+                "url": "/specialists",
                 "library_id": str(row.library_id) if row.library_id else None,
                 "library_name": library_names.get(row.library_id) if row.library_id else None,
                 "metadata": {
-                    "staff_id": str(row.staff_id) if row.staff_id else None,
+                    "staff_id": str(row.staff_id),
                     "subjects": row.subjects or [],
                     "support_areas": row.support_areas or [],
+                    "booking_url": row.booking_url,
                 },
             }
             for row in rows
         )
 
     if "workflow" in selected:
-        statement = LibraryWorkflow.active_query().where(
-            LibraryWorkflow.is_public.is_(True),
-            LibraryWorkflow.is_active.is_(True),
+        statement = public_workflows_query().where(
             sa.or_(
                 LibraryWorkflow.title.ilike(term),
                 LibraryWorkflow.summary.ilike(term),
-                LibraryWorkflow.audience.ilike(term),
                 LibraryWorkflow.workflow_type.ilike(term),
-            ),
+            )
         )
         if library_id:
             statement = statement.where(LibraryWorkflow.library_id == library_id)
         rows = (
             await db.execute(
-                statement.order_by(
-                    LibraryWorkflow.sort_order, LibraryWorkflow.title
-                ).limit(per_type)
+                statement.order_by(LibraryWorkflow.sort_order, LibraryWorkflow.title).limit(
+                    per_type
+                )
             )
         ).scalars().all()
         library_names.update(
@@ -443,11 +459,12 @@ async def unified_search(
                 "id": str(row.id),
                 "type": "workflow",
                 "title": row.title,
-                "description": _snippet(row.summary, row.audience),
-                "url": f"/workflows/{row.slug}",
+                "description": _snippet(row.summary, row.workflow_type, row.audience),
+                "url": _workflow_url(row.workflow_type, row.slug),
                 "library_id": str(row.library_id) if row.library_id else None,
                 "library_name": library_names.get(row.library_id) if row.library_id else None,
                 "metadata": {
+                    "slug": row.slug,
                     "workflow_type": row.workflow_type,
                     "audience": row.audience,
                 },
@@ -456,14 +473,12 @@ async def unified_search(
         )
 
     if "policy" in selected:
-        statement = LibraryPolicyPage.active_query().where(
-            LibraryPolicyPage.is_public.is_(True),
-            LibraryPolicyPage.status == "active",
+        statement = public_policy_pages_query().where(
             sa.or_(
                 LibraryPolicyPage.title.ilike(term),
                 LibraryPolicyPage.content.ilike(term),
                 LibraryPolicyPage.policy_type.ilike(term),
-            ),
+            )
         )
         if library_id:
             statement = statement.where(LibraryPolicyPage.library_id == library_id)
@@ -483,10 +498,11 @@ async def unified_search(
                 "type": "policy",
                 "title": row.title,
                 "description": _snippet(row.content, row.policy_type),
-                "url": f"/policies/{row.slug}",
+                "url": _policy_url(row.slug),
                 "library_id": str(row.library_id) if row.library_id else None,
                 "library_name": library_names.get(row.library_id) if row.library_id else None,
                 "metadata": {
+                    "slug": row.slug,
                     "policy_type": row.policy_type,
                     "status": row.status,
                 },
@@ -494,9 +510,39 @@ async def unified_search(
             for row in rows
         )
 
+    if "regulation" in selected:
+        statement = LibraryRegulation.active_query().where(
+            LibraryRegulation.is_public.is_(True),
+            LibraryRegulation.status == "active",
+            _public_library_parent_filter(LibraryRegulation, allow_global=True),
+            sa.or_(
+                LibraryRegulation.title.ilike(term),
+                LibraryRegulation.content.ilike(term),
+                LibraryRegulation.category.ilike(term),
+            ),
+        )
+        if library_id:
+            statement = statement.where(LibraryRegulation.library_id == library_id)
+        rows = (await db.execute(statement.order_by(LibraryRegulation.sort_order, LibraryRegulation.title).limit(per_type))).scalars().all()
+        library_names.update(await _library_names(db, [row.library_id for row in rows if row.library_id]))
+        results.extend(
+            {
+                "id": str(row.id),
+                "type": "regulation",
+                "title": row.title,
+                "description": _snippet(row.content, row.category),
+                "url": f"/services#regulation-{row.slug}",
+                "library_id": str(row.library_id) if row.library_id else None,
+                "library_name": library_names.get(row.library_id) if row.library_id else None,
+                "metadata": {"category": row.category, "status": row.status},
+            }
+            for row in rows
+        )
+
     if "external_link" in selected:
         statement = LibraryExternalLink.active_query().where(
             LibraryExternalLink.is_active.is_(True),
+            _public_library_parent_filter(LibraryExternalLink),
             sa.or_(
                 LibraryExternalLink.label.ilike(term),
                 LibraryExternalLink.description.ilike(term),

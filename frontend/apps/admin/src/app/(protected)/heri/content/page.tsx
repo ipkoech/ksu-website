@@ -1,4 +1,11 @@
-import { HeriCrudWorkspace } from "../_components/heri-crud-workspace";
-const statuses = ["draft", "in_review", "approved", "scheduled", "published", "archived"];
-const commonStatus = { name: "status", label: "Status", type: "select" as const, options: statuses };
-export default function HeriContentPage() { return <div className="space-y-8"><HeriCrudWorkspace config={{ resource: "news", title: "Content management", description: "Create, edit, filter, and publish news and stories with audited workflow controls.", permission: "heri.content.write", workflow: true, fields: [{ name: "title", label: "Title", required: true }, { name: "slug", label: "Slug", required: true }, { name: "excerpt", label: "Excerpt", type: "textarea" }, { name: "body", label: "Body", type: "textarea" }, commonStatus] }} /><HeriCrudWorkspace config={{ resource: "events", title: "Events", description: "Manage upcoming events and registration details.", permission: "heri.content.write", workflow: true, fields: [{ name: "title", label: "Title", required: true }, { name: "slug", label: "Slug", required: true }, { name: "summary", label: "Summary", type: "textarea" }, { name: "starts_at", label: "Starts at", type: "date" }, { name: "location", label: "Location" }, commonStatus] }} /><HeriCrudWorkspace config={{ resource: "opportunities", title: "Opportunities", description: "Publish calls, grants, and other opportunities for the HERI community.", permission: "heri.content.write", workflow: true, fields: [{ name: "title", label: "Title", required: true }, { name: "slug", label: "Slug", required: true }, { name: "summary", label: "Summary", type: "textarea" }, { name: "application_url", label: "Application URL" }, { name: "closing_at", label: "Closing at", type: "date" }, commonStatus] }} /></div>; }
+import { NewsStoriesWorkspace } from "../_components/news-stories-workspace";
+import { EventsOpportunitiesWorkspace } from "../_components/events-opportunities-workspace";
+export default function HeriContentPage() {
+  return (
+    <div className="space-y-8">
+      <NewsStoriesWorkspace />
+      <EventsOpportunitiesWorkspace kind="events" />
+      <EventsOpportunitiesWorkspace kind="opportunities" />
+    </div>
+  );
+}

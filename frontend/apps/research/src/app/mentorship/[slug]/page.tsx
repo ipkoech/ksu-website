@@ -18,7 +18,6 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
   const { data, error } = await getMentorshipBySlug(slug);
   if (!data) notFound();
   const mentorship = data as ResearchGenericRecord;
-  const applications = Array.isArray(mentorship.applications) ? (mentorship.applications as ResearchGenericRecord[]) : [];
   const matches = Array.isArray(mentorship.matches) ? (mentorship.matches as ResearchGenericRecord[]) : [];
   const title = getRecordTitle(mentorship, "Mentorship programme");
   const storySections = getNarrativeSections(mentorship, [
@@ -58,7 +57,6 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
             <MentorshipStoryPanel sections={storySections} />
-            {matches.length > 0 ? <ResearchRecordPanel title="Matches" records={matches} /> : null}
           </div>
           <ResearchDetailSidebar
             labels={[mentorship.program_type ?? "mentorship", mentorship.status]}
@@ -75,10 +73,9 @@ export default async function MentorshipDetailPage({ params }: { params: Promise
           />
         </div>
       </ResearchSection>
-      <ResearchSection eyebrow="Programme Records" title="Applications, matches, and contact" body="Programme applications, matches, and contact details appear when published.">
+      <ResearchSection eyebrow="Programme Records" title="Matches and contact" body="Programme matches and contact details appear when published.">
         <div className="grid gap-5 lg:grid-cols-3">
           <ApplicationWindowCard record={mentorship} />
-          {applications.length > 0 ? <ResearchRecordPanel title="Applications" records={applications} /> : null}
           {matches.length > 0 ? <ResearchRecordPanel title="Matches" records={matches} /> : null}
           <ContactPanel record={mentorship} />
         </div>

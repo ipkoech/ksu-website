@@ -7,7 +7,7 @@ from datetime import date, datetime, timezone
 from typing import Any, Generic, TypeVar
 
 import sqlalchemy as sa
-from sqlalchemy import extract, or_, select
+from sqlalchemy import extract, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common import PaginatedResult, paginate
@@ -71,6 +71,9 @@ class CRUDService(Generic[M]):
                     project_focus_areas,
                     getattr(cls.model, "id") == project_focus_areas.c.project_id,
                 ).where(project_focus_areas.c.focus_area_id == value)
+                continue
+            if key == "id__in" and hasattr(cls.model, "id"):
+                query = query.where(getattr(cls.model, "id").in_(value))
                 continue
             if not hasattr(cls.model, key):
                 continue

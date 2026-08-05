@@ -25,6 +25,7 @@ import type {
 import { ListPagination, ScrollReveal } from "@ksu/ui/components";
 import type { CampusLifePageData } from "@/lib/get-campus-life";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
+import { CampusLifeStoryLanding } from "@/components/campus-life/campus-life-story-landing";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { PublicImage } from "@/components/public/public-image";
 import {
@@ -317,7 +318,7 @@ function CampusListFilters({
 }) {
   return (
     <PublicListFilterForm
-      className="mb-6 border border-border bg-white p-4 shadow-sm"
+      className="mb-6 rounded-2xl ring-1 ring-primary/10 bg-white p-4 shadow-sm"
       searchValue={filters?.q}
       searchPlaceholder="Search records"
       selects={[
@@ -351,9 +352,9 @@ function SideNav({ currentHref }: { currentHref: string }) {
   return (
     <nav
       aria-label="Campus life navigation"
-      className="border border-border bg-white p-3 shadow-sm lg:sticky lg:top-28"
+      className="rounded-2xl ring-1 ring-primary/10 bg-white p-3 shadow-sm lg:sticky lg:top-28"
     >
-      <p className="px-3 py-2 text-xs font-semibold uppercase text-secondary">
+      <p className="px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
         Campus Life
       </p>
       <div className="mt-1 grid gap-1">
@@ -364,17 +365,17 @@ function SideNav({ currentHref }: { currentHref: string }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`group flex gap-3 border px-3 py-3 text-sm transition ${
+              className={`group flex gap-3 border px-3 py-3 text-sm transition-colors duration-200 ${
                 active
                   ? "border-primary/30 bg-primary/5 text-foreground"
-                  : "border-transparent text-muted-foreground hover:border-border hover:bg-surface-subtle hover:text-foreground"
+                  : "border-transparent text-muted-foreground hover:border-border hover:bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] hover:text-foreground"
               }`}
             >
               <span
                 className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center ${
                   active
                     ? "bg-primary text-white"
-                    : "bg-surface-muted text-primary group-hover:bg-primary group-hover:text-white"
+                    : "bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] text-primary group-hover:bg-primary group-hover:text-white"
                 }`}
               >
                 <Icon aria-hidden className="h-4 w-4" />
@@ -405,7 +406,7 @@ function Hero({
   image: string;
 }) {
   return (
-    <section className="border-b border-border bg-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+    <section className="border-b border-primary/10 bg-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
       <div className="w-full">
         <BreadcrumbTrail
           items={[
@@ -416,10 +417,10 @@ function Hero({
         />
         <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.65fr)] lg:items-stretch">
           <div className="flex flex-col justify-end">
-            <p className="text-sm font-semibold uppercase text-secondary">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
               {eyebrow}
             </p>
-            <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-foreground sm:text-5xl lg:text-6xl">
+            <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-normal tracking-tight leading-[1.05] text-foreground sm:text-5xl lg:text-6xl">
               {title}
             </h1>
             <p className="mt-6 max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">
@@ -437,7 +438,7 @@ function Hero({
               </ActionLink>
             </div>
           </div>
-          <div className="relative min-h-[320px] overflow-hidden border border-border bg-surface-muted">
+          <div className="relative min-h-[320px] overflow-hidden rounded-2xl ring-1 ring-primary/10 bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)]">
             <PublicImage
               src={image}
               alt=""
@@ -479,20 +480,20 @@ function Section({
       as="section"
       className={
         dark
-          ? "border-y border-border bg-brand-overlay px-4 py-14 text-white sm:px-6 lg:px-8 lg:py-16"
-          : "border-b border-border bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16"
+          ? "border-y border-primary/10 bg-brand-overlay px-4 py-14 text-white sm:px-6 lg:px-8 lg:py-16"
+          : "border-b border-primary/10 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16"
       }
     >
       <div className="grid w-full gap-9 xl:grid-cols-[340px_minmax(0,1fr)]">
         <div>
-          <p className="text-sm font-semibold uppercase text-secondary">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
             {eyebrow}
           </p>
           <h2
             className={
               dark
-                ? "mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-4xl"
-                : "mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl"
+                ? "mt-4 font-[family-name:var(--font-display)] text-3xl font-normal tracking-tight leading-tight text-white sm:text-4xl"
+                : "mt-4 font-[family-name:var(--font-display)] text-3xl font-normal tracking-tight leading-tight text-foreground sm:text-4xl"
             }
           >
             {title}
@@ -526,7 +527,7 @@ function RecordGrid<T>({
 }) {
   if (!items.length) {
     return (
-      <div className="border border-border bg-white p-6">
+      <div className="rounded-2xl ring-1 ring-primary/10 bg-white p-6">
         <h3 className="text-xl font-semibold text-foreground">{emptyTitle}</h3>
         <p className="mt-3 text-sm leading-7 text-muted-foreground">
           No public records were returned for this category. Use official
@@ -552,9 +553,9 @@ function ClubCard({ club }: { club: Club }) {
   return (
     <Link
       href={`/campus-life/clubs/${club.slug}`}
-      className="group border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+      className="group rounded-2xl ring-1 ring-primary/10 bg-white p-5 transition-colors duration-200 hover:ring-primary/20 hover:bg-primary/5"
     >
-      <p className="text-xs font-semibold uppercase text-secondary">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
         {club.club_type || "Club"}
       </p>
       <h3 className="mt-3 text-lg font-semibold text-foreground">{club.name}</h3>
@@ -564,7 +565,7 @@ function ClubCard({ club }: { club: Club }) {
           "Student club or society.",
         )}
       </p>
-      <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-border pt-4 text-sm">
+      <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-primary/10 pt-4 text-sm">
         <div>
           <dt className="text-xs uppercase text-muted-foreground">Members</dt>
           <dd className="mt-1 font-semibold text-foreground">
@@ -590,9 +591,9 @@ function HousingCard({ item }: { item: Accommodation }) {
   return (
     <Link
       href={`/campus-life/accommodation/${item.slug}`}
-      className="grid gap-5 border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5 md:grid-cols-[160px_minmax(0,1fr)]"
+      className="grid gap-5 rounded-2xl ring-1 ring-primary/10 bg-white p-5 transition-colors duration-200 hover:ring-primary/20 hover:bg-primary/5 md:grid-cols-[160px_minmax(0,1fr)]"
     >
-      <div className="min-h-36 bg-surface-muted">
+      <div className="min-h-36 bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)]">
         <PublicImage
           src={media.accommodation}
           alt=""
@@ -602,7 +603,7 @@ function HousingCard({ item }: { item: Accommodation }) {
         />
       </div>
       <div>
-        <p className="text-xs font-semibold uppercase text-secondary">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
           {item.accommodation_type} · {item.gender}
         </p>
         <h3 className="mt-2 text-xl font-semibold text-foreground">
@@ -625,7 +626,7 @@ function SportCard({ item }: { item: SportsFacility }) {
   return (
     <Link
       href={`/campus-life/sports/${item.slug}`}
-      className="border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+      className="rounded-2xl ring-1 ring-primary/10 bg-white p-5 transition-colors duration-200 hover:ring-primary/20 hover:bg-primary/5"
     >
       <span className="flex h-11 w-11 items-center justify-center bg-primary/10 text-primary">
         <Dumbbell aria-hidden className="h-5 w-5" />
@@ -648,20 +649,20 @@ function ArtCard({ item }: { item: ArtsCulture }) {
   return (
     <Link
       href={`/campus-life/gallery/${item.slug}`}
-      className="group overflow-hidden border border-border bg-white transition hover:border-primary/35"
+      className="group overflow-hidden rounded-2xl ring-1 ring-primary/10 bg-white transition-colors duration-200 hover:border-primary/35"
     >
-      <div className="h-44 bg-surface-muted">
+      <div className="h-44 bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)]">
         <PublicImage
           src={media.gallery}
           alt=""
           ratio="news"
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
           className="h-full w-full"
-          imageClassName="transition group-hover:scale-[1.03]"
+          imageClassName="transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
         />
       </div>
       <div className="p-5">
-        <p className="text-xs font-semibold uppercase text-secondary">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
           {item.category || "Gallery"}
         </p>
         <h3 className="mt-2 text-lg font-semibold text-foreground">
@@ -679,9 +680,9 @@ function GovernanceCard({ item }: { item: StudentGovernance }) {
   return (
     <Link
       href={`/campus-life/student-life/${item.slug}`}
-      className="border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+      className="rounded-2xl ring-1 ring-primary/10 bg-white p-5 transition-colors duration-200 hover:ring-primary/20 hover:bg-primary/5"
     >
-      <p className="text-xs font-semibold uppercase text-secondary">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
         {item.acronym || item.governance_type || "Student body"}
       </p>
       <h3 className="mt-3 text-lg font-semibold text-foreground">{item.name}</h3>
@@ -733,9 +734,9 @@ function Landing({ data }: { data: CampusLifePageData }) {
       <section className="grid gap-5 py-12 sm:grid-cols-2 lg:grid-cols-4 lg:py-16">
         {supporting.map((item, index) => (
           <ScrollReveal key={item.id} variant="fade-up" delay={index * 70}>
-            <Link href={item.cta_url ?? "/campus-life"} className="group block overflow-hidden rounded-[1.35rem] bg-white shadow-sm ring-1 ring-black/5 transition hover:-translate-y-1 hover:shadow-xl">
-              <div className="relative aspect-[4/3] overflow-hidden"><PublicImage src={itemImage(item)} alt={item.title ?? "Life around studies"} ratio="fill" className="absolute inset-0 h-full rounded-none" imageClassName="h-full object-cover transition duration-700 group-hover:scale-105" sizes="(min-width: 1024px) 24vw, 50vw" /><div className="absolute inset-0 bg-gradient-to-t from-primary/55 to-transparent" /></div>
-              <div className="p-5"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">{item.audience === "prospective" ? "Before you arrive" : item.audience === "current_student" ? "For students" : "Campus life"}</p><h2 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{item.title}</h2><p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{item.body_text}</p><span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">{item.cta_label ?? "Explore"}<ArrowRight className="size-4 transition group-hover:translate-x-1" /></span></div>
+            <Link href={item.cta_url ?? "/campus-life"} className="group block overflow-hidden rounded-[1.35rem] bg-white shadow-sm ring-1 ring-black/5 transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl">
+              <div className="relative aspect-[4/3] overflow-hidden"><PublicImage src={itemImage(item)} alt={item.title ?? "Life around studies"} ratio="fill" className="absolute inset-0 h-full rounded-none" imageClassName="h-full object-cover transition-transform duration-500 motion-safe:group-hover:scale-105" sizes="(min-width: 1024px) 24vw, 50vw" /><div className="absolute inset-0 bg-gradient-to-t from-primary/55 to-transparent" /></div>
+              <div className="p-5"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">{item.audience === "prospective" ? "Before you arrive" : item.audience === "current_student" ? "For students" : "Campus life"}</p><h2 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{item.title}</h2><p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{item.body_text}</p><span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">{item.cta_label ?? "Explore"}<ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" /></span></div>
             </Link>
           </ScrollReveal>
         ))}
@@ -743,7 +744,7 @@ function Landing({ data }: { data: CampusLifePageData }) {
 
       <section className="rounded-[2rem] bg-[linear-gradient(135deg,hsl(var(--surface-subtle)),#fff)] px-5 py-10 sm:px-8 lg:px-12 lg:py-14">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">The KSU rhythm</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground sm:text-4xl">Make space for the things that make university yours.</h2></div><Link href="/campus-life" className="inline-flex items-center gap-2 text-sm font-semibold text-primary">Explore all student life <ArrowRight className="size-4" /></Link></div>
-        <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{navItems.slice(1, 5).map((item, index) => <Link key={item.href} href={item.href} className="group rounded-2xl bg-white/75 p-5 ring-1 ring-black/5 transition hover:bg-white"><span className="text-3xl font-semibold text-primary/20">0{index + 1}</span><h3 className="mt-5 font-semibold text-foreground">{item.title}</h3><span className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground group-hover:text-primary">Open page <ArrowRight className="size-4" /></span></Link>)}</div>
+        <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{navItems.slice(1, 5).map((item, index) => <Link key={item.href} href={item.href} className="group rounded-2xl bg-white/75 p-5 ring-1 ring-black/5 transition-colors duration-200 hover:bg-white"><span className="text-3xl font-semibold text-primary/20">0{index + 1}</span><h3 className="mt-5 font-semibold text-foreground">{item.title}</h3><span className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground group-hover:text-primary">Open page <ArrowRight className="size-4" /></span></Link>)}</div>
       </section>
     </div>
   );
@@ -1204,7 +1205,7 @@ function SupportPage({
             const Icon = service.icon;
             const external = service.href.startsWith("http");
             const className =
-              "border border-border bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5";
+              "rounded-2xl ring-1 ring-primary/10 bg-white p-5 transition-colors duration-200 hover:ring-primary/20 hover:bg-primary/5";
             const inner = (
               <>
                 <span className="flex h-11 w-11 items-center justify-center bg-primary/10 text-primary">
@@ -1256,7 +1257,7 @@ function SupportRecords({
   const hasRecords = faqs.length || contacts.length;
   if (!hasRecords) {
     return (
-      <div className="border border-white/10 bg-white/[0.04] p-6">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
         <h3 className="text-xl font-semibold text-white">
           Use official support channels
         </h3>
@@ -1279,9 +1280,9 @@ function SupportRecords({
       {faqs.map((faq) => (
         <div
           key={faq.id}
-          className="border border-white/10 bg-white/[0.04] p-5"
+          className="rounded-2xl border border-white/10 bg-white/5 p-5"
         >
-          <p className="text-xs font-semibold uppercase text-secondary">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
             {faq.category || "FAQ"}
           </p>
           <h3 className="mt-3 text-lg font-semibold text-white">
@@ -1298,9 +1299,9 @@ function SupportRecords({
       {contacts.map((contact) => (
         <div
           key={contact.id}
-          className="border border-white/10 bg-white/[0.04] p-5"
+          className="rounded-2xl border border-white/10 bg-white/5 p-5"
         >
-          <p className="text-xs font-semibold uppercase text-secondary">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
             {contact.contact_type || "Contact"}
           </p>
           <h3 className="mt-3 text-lg font-semibold text-white">
@@ -1374,7 +1375,7 @@ function GalleryPage({
             (album) => (
               <div
                 key={album}
-                className="overflow-hidden border border-white/10 bg-white/[0.04]"
+                className="overflow-hidden rounded-2xl border border-white/10 bg-white/5"
               >
                 <div className="h-36 bg-white/10">
                   <PublicImage
@@ -1424,11 +1425,11 @@ function GalleryDetail({ item }: { item?: ArtsCulture | null }) {
 
 function DetailGrid({ rows }: { rows: [string, string][] }) {
   return (
-    <dl className="grid border border-border bg-white md:grid-cols-2">
+    <dl className="grid rounded-2xl ring-1 ring-primary/10 bg-white md:grid-cols-2">
       {rows.map(([label, value]) => (
         <div
           key={label}
-          className="border-b border-border p-5 odd:md:border-r"
+          className="border-b border-primary/10 p-5 odd:md:border-r"
         >
           <dt className="text-xs font-semibold uppercase text-muted-foreground">
             {label}
@@ -1456,8 +1457,8 @@ function TextBlocks({
           key={title}
           className={
             dark
-              ? "border border-white/10 bg-white/[0.04] p-5"
-              : "border border-border bg-white p-5"
+              ? "rounded-2xl border border-white/10 bg-white/5 p-5"
+              : "rounded-2xl ring-1 ring-primary/10 bg-white p-5"
           }
         >
           <h3
@@ -1498,8 +1499,8 @@ function StepList({
           key={step}
           className={
             dark
-              ? "grid gap-4 border border-white/10 bg-white/[0.04] p-4 text-white sm:grid-cols-[48px_minmax(0,1fr)]"
-              : "grid gap-4 border border-border bg-white p-4 text-foreground sm:grid-cols-[48px_minmax(0,1fr)]"
+              ? "grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-white sm:grid-cols-[48px_minmax(0,1fr)]"
+              : "grid gap-4 rounded-2xl ring-1 ring-primary/10 bg-white p-4 text-foreground sm:grid-cols-[48px_minmax(0,1fr)]"
           }
         >
           <span className="flex h-10 w-10 items-center justify-center bg-primary text-sm font-semibold text-white">
@@ -1658,27 +1659,33 @@ export function CampusLifeContent({
   return (
     <PageShell>
       <AboutPageLenis>
-        <Hero
-          eyebrow={copy.eyebrow}
-          title={copy.title}
-          body={copy.body}
-          image={copy.image}
-        />
-        <div className="grid w-full gap-8 bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-8">
-          <SideNav currentHref={currentHref} />
-          <div className="min-w-0">
-            <ContentByArea
-              area={area}
-              slug={slug}
-              data={data}
-              filters={filters}
+        {area === "landing" ? (
+          <CampusLifeStoryLanding testimonials={data.testimonials ?? []} />
+        ) : (
+          <>
+            <Hero
+              eyebrow={copy.eyebrow}
+              title={copy.title}
+              body={copy.body}
+              image={copy.image}
             />
-          </div>
-        </div>
-        <section className="border-y border-border bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
+            <div className="grid w-full gap-8 bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-8">
+              <SideNav currentHref={currentHref} />
+              <div className="min-w-0">
+                <ContentByArea
+                  area={area}
+                  slug={slug}
+                  data={data}
+                  filters={filters}
+                />
+              </div>
+            </div>
+          </>
+        )}
+        <section className="border-y border-primary/10 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
           <div className="grid w-full gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
             <div>
-              <p className="text-sm font-semibold uppercase text-secondary">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
                 Student Services
               </p>
               <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground sm:text-4xl">

@@ -53,6 +53,8 @@ class FAQRead(BaseReadSchema):
     display_order: int
     views_count: int
     helpful_count: int
+    updated_by_id: uuid.UUID | None = None
+    updated_by: dict[str, Any] | None = None
     deleted_at: datetime | None = None
 
 
@@ -109,6 +111,8 @@ class ContactDirectoryRead(BaseReadSchema):
     is_public: bool
     status: str
     contact_person: dict[str, Any] | None = None
+    updated_by_id: uuid.UUID | None = None
+    updated_by: dict[str, Any] | None = None
     deleted_at: datetime | None = None
 
 

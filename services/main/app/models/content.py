@@ -8,9 +8,23 @@ from typing import Optional
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, declared_attr, mapped_column, relationship
 
 from ksu_common.models.base import Base, SEOMixin
+
+
+class UpdatedByMixin:
+    """Attribution for the most recent edit on a record."""
+
+    updated_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    @declared_attr
+    def updated_by(cls) -> Mapped[Optional["User"]]:
+        return relationship("User", foreign_keys=f"{cls.__name__}.updated_by_id")
 
 
 class WorkflowMetadataMixin:
@@ -73,7 +87,7 @@ class RichContentMixin:
     )
 
 
-class News(Base, SEOMixin, ScopedContentMixin, RichContentMixin):
+class News(Base, SEOMixin, ScopedContentMixin, RichContentMixin, UpdatedByMixin):
     __tablename__ = "news"
     __table_args__ = (
         sa.Index("ix_news_public_listing_workflow", "is_public", "is_published", "workflow_status", "published_at"),
@@ -88,7 +102,7 @@ class News(Base, SEOMixin, ScopedContentMixin, RichContentMixin):
     author: Mapped[Optional["User"]] = relationship("User", foreign_keys="News.author_user_id")
 
 
-class Blog(Base, SEOMixin, ScopedContentMixin, RichContentMixin):
+class Blog(Base, SEOMixin, ScopedContentMixin, RichContentMixin, UpdatedByMixin):
     __tablename__ = "blogs"
     __table_args__ = (
         sa.Index("ix_blogs_public_listing_workflow", "is_public", "is_published", "workflow_status", "published_at"),
@@ -104,7 +118,7 @@ class Blog(Base, SEOMixin, ScopedContentMixin, RichContentMixin):
     author: Mapped[Optional["User"]] = relationship("User", foreign_keys="Blog.author_user_id")
 
 
-class Story(Base, SEOMixin, ScopedContentMixin, RichContentMixin):
+class Story(Base, SEOMixin, ScopedContentMixin, RichContentMixin, UpdatedByMixin):
     """Submitted and editorial stories for the public website."""
 
     __tablename__ = "stories"
@@ -171,7 +185,7 @@ class StoryContributorAccountRequest(Base):
     approved_user: Mapped[Optional["User"]] = relationship("User", foreign_keys="StoryContributorAccountRequest.approved_user_id")
 
 
-class Announcement(Base, SEOMixin, ScopedContentMixin, RichContentMixin):
+class Announcement(Base, SEOMixin, ScopedContentMixin, RichContentMixin, UpdatedByMixin):
     __tablename__ = "announcements"
     __table_args__ = (
         sa.Index("ix_announcements_public_listing_workflow", "is_public", "is_published", "workflow_status", "published_at"),
@@ -189,7 +203,7 @@ class Announcement(Base, SEOMixin, ScopedContentMixin, RichContentMixin):
     author: Mapped[Optional["User"]] = relationship("User", foreign_keys="Announcement.author_user_id")
 
 
-class Event(Base, SEOMixin, ScopedContentMixin):
+class Event(Base, SEOMixin, ScopedContentMixin, UpdatedByMixin):
     __tablename__ = "events"
     __table_args__ = (
         sa.Index("ix_events_public_listing_workflow", "is_public", "is_published", "workflow_status", "published_at"),
@@ -253,7 +267,7 @@ class SliderGroup(Base):
     )
 
 
-class Slider(Base, WorkflowMetadataMixin):
+class Slider(Base, WorkflowMetadataMixin, UpdatedByMixin):
     __tablename__ = "sliders"
 
     slider_group_id: Mapped[Optional[uuid.UUID]] = mapped_column(
@@ -295,6 +309,7 @@ class Slider(Base, WorkflowMetadataMixin):
 
 
 __all__ = [
+    "UpdatedByMixin",
     "News",
     "Blog",
     "Story",

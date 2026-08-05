@@ -43,6 +43,7 @@ class SiteSettings(UUIDMixin, Base):
     contact: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     social_links: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     seo_defaults: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    research_center_slug: Mapped[str | None] = mapped_column(String(180), nullable=True, index=True)
 
 
 class Page(UUIDMixin, Base):
@@ -105,6 +106,18 @@ class ResearchPublication(UUIDMixin, Base):
     status: Mapped[PublicationStatus] = mapped_column(Enum(PublicationStatus), default=PublicationStatus.DRAFT, index=True)
     scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     resource_url: Mapped[str | None] = mapped_column(String(500))
+
+
+class ImpactMetric(UUIDMixin, Base):
+    """A publishable metric displayed on the public Our Work page."""
+
+    __tablename__ = "impact_metrics"
+    label: Mapped[str] = mapped_column(String(180))
+    value: Mapped[str] = mapped_column(String(120))
+    unit: Mapped[str | None] = mapped_column(String(80))
+    description: Mapped[str] = mapped_column(Text, default="")
+    position: Mapped[int] = mapped_column(Integer, default=0, index=True)
+    is_visible: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
 
 
 class Event(UUIDMixin, Base):

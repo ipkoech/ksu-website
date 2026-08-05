@@ -36,7 +36,7 @@ function MemberGroup({
     <section className="bg-white px-5 py-8 sm:px-8 lg:px-10" aria-label={title}>
       <AboutReveal className="mx-auto w-full max-w-7xl" variant={title === "Council Members" ? "up" : "scale"}>
         <div className="mb-4 text-center">
-          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold uppercase text-primary">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl font-normal tracking-tight uppercase text-primary">
             {title}
           </h2>
           <div className="mx-auto mt-2 h-0.5 w-10 bg-secondary" />
@@ -61,7 +61,7 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
 
   return (
     <div className="bg-white">
-      <section className="relative overflow-hidden bg-[#062d62] text-white">
+      <section className="relative overflow-hidden bg-brand-overlay text-white">
         <PublicImage
           src={data.page.hero_image?.url || "/images/backgrounds/KSUB-RollPhotos2025-122.jpg"}
           alt={data.page.hero_image?.alt || title}
@@ -80,11 +80,11 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
             <span>{title}</span>
           </nav>
           <div className="mt-10 max-w-2xl">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-secondary">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
               Governance
             </p>
-            <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-medium leading-tight sm:text-5xl lg:text-6xl">
-              {title}
+            <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-normal tracking-tight sm:text-5xl lg:text-6xl">
+              University <em className="italic">Council</em>
             </h1>
             <p className="mt-4 max-w-lg text-sm leading-7 text-white/90">
               {description}
@@ -95,12 +95,12 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
 
       {mandate ? (
         <section className="relative z-10 -mt-8 px-5 pb-5 sm:px-8 lg:px-10">
-          <AboutReveal className="mx-auto grid w-full max-w-7xl gap-4 border border-border bg-white p-6 shadow-xl lg:grid-cols-[3.5rem_minmax(0,1fr)_auto] lg:items-center" variant="scale">
+          <AboutReveal className="mx-auto grid w-full max-w-7xl gap-4 rounded-2xl ring-1 ring-primary/10 bg-white p-6 lg:grid-cols-[3.5rem_minmax(0,1fr)_auto] lg:items-center" variant="scale">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-secondary">
               <Landmark aria-hidden className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary/80">
                 {text(mandate.label, "Our Mandate")}
               </p>
               <p className="mt-2 max-w-4xl text-sm leading-6 text-muted-foreground">
@@ -110,7 +110,7 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
             {documentCtaHref ? (
               <Link
                 href={documentCtaHref}
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-primary px-4 py-3 text-sm font-bold text-primary transition hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl ring-1 ring-primary/20 px-4 py-3 text-sm font-bold text-primary transition-colors duration-200 hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98]"
               >
                 {text(mandate.document_cta?.label, "Council Charter")}
                 <Download aria-hidden className="h-4 w-4" />
@@ -124,7 +124,7 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
         {data.chairperson ? (
           <UniversityCouncilCard member={data.chairperson} variant="featured" />
         ) : (
-          <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
             Chairperson profile is not currently published.
           </p>
         )}
@@ -140,7 +140,7 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
             ))}
           </div>
         ) : (
-          <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
             Council member profiles are not currently published.
           </p>
         )}
@@ -150,7 +150,7 @@ export function UniversityCouncilPage({ data }: { data: UniversityCouncilPageDat
         {data.secretary ? (
           <UniversityCouncilCard member={data.secretary} variant="secretary" />
         ) : (
-          <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
             Secretary to Council profile is not currently published.
           </p>
         )}

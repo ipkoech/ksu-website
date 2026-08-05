@@ -64,7 +64,7 @@ export default async function StoriesPage() {
             </div>
             <Link
               href="/stories/request-account"
-              className="inline-flex min-h-12 items-center gap-3 rounded-full bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary/90"
+              className="inline-flex min-h-12 items-center gap-3 rounded-full bg-primary px-6 text-sm font-bold text-white transition-colors duration-200 hover:bg-primary/90 active:scale-[0.98]"
             >
               Request contributor account
               <PenLine className="h-4 w-4" />
@@ -78,7 +78,7 @@ export default async function StoriesPage() {
               <Link
                 key={story.id}
                 href={`/stories/${story.slug}`}
-                className="group overflow-hidden rounded-[1.4rem] border border-primary/10 bg-white/82 shadow-[0_18px_60px_rgba(0,53,37,.08)] transition hover:-translate-y-1 hover:shadow-[0_26px_76px_rgba(0,53,37,.14)] motion-reduce:transform-none"
+                className="group overflow-hidden rounded-[1.4rem] border border-primary/10 bg-white/80 shadow-[0_18px_60px_rgba(0,53,37,.08)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_26px_76px_rgba(0,53,37,.14)] motion-reduce:transform-none"
               >
                 <div className="relative h-56 overflow-hidden bg-primary/10">
                   <PublicImage
@@ -92,7 +92,7 @@ export default async function StoriesPage() {
                     fallbackContent={<Newspaper className="h-8 w-8" />}
                     sizes="(min-width: 1024px) 33vw, 100vw"
                     className="absolute inset-0 h-full w-full"
-                    imageClassName="object-cover transition duration-700 group-hover:scale-[1.035]"
+                    imageClassName="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
                   />
                 </div>
                 <div className="p-5">
@@ -113,7 +113,7 @@ export default async function StoriesPage() {
                   </p>
                   <span className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-secondary">
                     Read story
-                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                    <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                   </span>
                 </div>
               </Link>

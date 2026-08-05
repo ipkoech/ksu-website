@@ -9,6 +9,8 @@ import re
 import uuid
 from typing import Any
 
+from ksu_common.gemini import get_gemini_transport
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -60,32 +62,21 @@ class GeminiResearchAIProvider:
         if not self.is_configured:
             return None
 
-        try:
-            from google import genai
-            from google.genai import types
-        except Exception:
-            return None
-
         prompt = self.build_prompt(message=message, context=context, service_exposure=service_exposure)
-
-        def _generate() -> str | None:
-            client = genai.Client(api_key=self.api_key)
-            response = client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    temperature=0.2,
-                    max_output_tokens=1200,
-                    response_mime_type="text/plain",
-                ),
-            )
-            text = getattr(response, "text", None)
-            return text.strip() if isinstance(text, str) and text.strip() else None
-
-        import asyncio
+        transport = get_gemini_transport(
+            api_key=self.api_key,
+            model=self.model,
+            timeout_seconds=self.timeout_seconds,
+        )
 
         try:
-            return await asyncio.wait_for(asyncio.to_thread(_generate), timeout=self.timeout_seconds)
+            answer = await transport.generate(
+                prompt,
+                temperature=0.2,
+                max_output_tokens=1200,
+                response_mime_type="text/plain",
+            )
+            return answer or None
         except Exception:
             return None
 
@@ -906,10 +897,11 @@ def _jsonable_value(value: Any) -> Any:
 
 
 def _sanitize_service_exposure(service_exposure: dict) -> dict:
-    safe_exposure = dict(service_exposure)
+    normalized_exposure = _service_exposure_dict(service_exposure)
+    safe_exposure = dict(normalized_exposure)
     safe_exposure["record_samples"] = [
         _sanitize_record_sample_group(group)
-        for group in service_exposure.get("record_samples", [])
+        for group in normalized_exposure.get("record_samples", [])
         if isinstance(group, dict)
     ]
     return safe_exposure
@@ -932,6 +924,17 @@ def _sanitize_record_sample_group(group: dict[str, Any]) -> dict[str, Any]:
         if isinstance(record, dict)
     ]
     return safe_group
+
+
+def _service_exposure_dict(service_exposure: Any) -> dict[str, Any]:
+    if isinstance(service_exposure, dict):
+        return service_exposure
+    model_dump = getattr(service_exposure, "model_dump", None)
+    if callable(model_dump):
+        dumped = model_dump(mode="python")
+        if isinstance(dumped, dict):
+            return dumped
+    return {}
 
 
 def _is_internal_record_field(key: str) -> bool:

@@ -127,7 +127,7 @@ function MentorshipPortfolioHero({ count, heroImage }: { count: number; heroImag
         <p className="inline-flex rounded-md border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em]">
           Growth pathways
         </p>
-        <h1 className="mt-4 max-w-4xl text-balance font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight sm:text-5xl">
+        <h1 className="mt-4 max-w-4xl text-balance font-[family-name:var(--app-font-display)] text-4xl font-semibold leading-tight sm:text-5xl">
           Mentorship programmes for researchers, writers, grant teams, and emerging leaders
         </h1>
         <p className="mt-4 max-w-2xl text-pretty text-sm leading-7 text-white/82 sm:text-base">
@@ -211,7 +211,7 @@ function FeaturedMentorship({ item }: { item: ResearchGenericRecord }) {
           <DeadlineStatusBadge record={item} />
           <span className="rounded-md bg-primary px-3 py-1 text-xs font-semibold uppercase text-white">Featured</span>
         </div>
-        <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
+        <h2 className="mt-3 text-balance font-[family-name:var(--app-font-display)] text-2xl font-semibold leading-tight text-foreground">
           {getRecordTitle(item, "Mentorship programme")}
         </h2>
         {summary ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{summary}</p> : null}
@@ -241,7 +241,7 @@ function MentorshipTable({ records }: { records: ResearchGenericRecord[] }) {
               <th className="px-4 py-3">Capacity</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200">
+          <tbody className="divide-y divide-border">
             {records.map((item) => {
               const href = item.slug ? `/mentorship/${item.slug}` : "/mentorship";
               return (
@@ -304,7 +304,7 @@ function ChooseYourPathway() {
           );
         })}
       </div>
-      <div className="mt-5 divide-y divide-slate-200">
+      <div className="mt-5 divide-y divide-border">
         {[
           { href: "/training", label: "Training programmes" },
           { href: "/news?tab=-events", label: "Events calendar" },
@@ -382,7 +382,7 @@ function getDeadlineState(record: ResearchGenericRecord) {
   if (!deadline || Number.isNaN(deadline.getTime())) return { label: formatLabel(explicit || "Open"), className: "bg-emerald-100 text-emerald-800" };
   const days = Math.ceil((deadline.getTime() - Date.now()) / 86_400_000);
   if (days < 0) return { label: "Closed", className: "bg-surface-muted text-muted-foreground" };
-  if (days <= 14) return { label: "Closing soon", className: "bg-amber-100 text-amber-800" };
+  if (days <= 14) return { label: "Closing soon", className: "bg-secondary/20 text-secondary" };
   return { label: "Open", className: "bg-emerald-100 text-emerald-800" };
 }
 

@@ -1,12 +1,9 @@
-from __future__ import annotations
-
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.auth import require_permission
 from ...core.database import get_db
-from ...models.analytics import AnalyticsEvent
 from ...models.content import NewsArticle, PublicationStatus, ResearchProject, ResearchPublication
 from ...models.people import TeamMember
 from ...models.partners import Partner

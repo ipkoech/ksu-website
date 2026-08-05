@@ -49,7 +49,7 @@ export function ExpandableRichText({
           {expanded ? "Show less" : "Read full biography"}
           <ChevronDown
             aria-hidden
-            className={`h-4 w-4 transition ${expanded ? "rotate-180" : ""}`}
+            className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
           />
         </button>
       ) : null}

@@ -32,8 +32,8 @@ const staticPages: MetadataRoute.Sitemap = [
   { url: "/help-desk", priority: 0.7, changeFrequency: "monthly" },
   { url: "/faq", priority: 0.7, changeFrequency: "monthly" },
   { url: "/downloads", priority: 0.7, changeFrequency: "monthly" },
-  { url: "/careers", priority: 0.7, changeFrequency: "weekly" },
-  { url: "/tenders", priority: 0.7, changeFrequency: "weekly" },
+  // /careers and /tenders permanently redirect to the external digital
+  // portals and are intentionally excluded from the sitemap.
   { url: "/conferences", priority: 0.6, changeFrequency: "monthly" },
   { url: "/visitors", priority: 0.6, changeFrequency: "monthly" },
   { url: "/alumni", priority: 0.5, changeFrequency: "monthly" },

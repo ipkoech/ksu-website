@@ -5,6 +5,7 @@ import {
   PublicFooter,
   type MegaMenuData,
 } from "@ksu/ui/layout/public";
+import { corporateCommSettingsApi } from "@ksu/api-client";
 import { getNavData } from "@/lib/nav-data";
 import {
   heriAfricaFrontendUrl,
@@ -12,13 +13,31 @@ import {
   researchFrontendUrl,
 } from "@/lib/service-urls";
 
-const socialLinks = {
+const fallbackSocialLinks = {
   facebook: "https://facebook.com/kisiiuniversity",
   twitter: "https://twitter.com/kisiiuniversity",
   instagram: "https://instagram.com/kisiiuniversity",
   youtube: "https://youtube.com/kisiiuniversity",
   linkedin: "https://linkedin.com/school/kisiiuniversity",
 };
+
+/**
+ * Social links are managed in the Corporate Communication portal settings
+ * (public setting corporate_communication.social_links); the hardcoded map
+ * is the fallback when the setting is unseeded or the API is unreachable.
+ */
+async function getSocialLinks(): Promise<typeof fallbackSocialLinks> {
+  try {
+    const managed = await corporateCommSettingsApi.publicSocialLinks();
+    if (!managed) return fallbackSocialLinks;
+    const entries = Object.entries(managed).filter(
+      ([, url]) => typeof url === "string" && url.trim() !== "",
+    );
+    return { ...fallbackSocialLinks, ...Object.fromEntries(entries) };
+  } catch {
+    return fallbackSocialLinks;
+  }
+}
 
 const contactInfo = {
   address: "Main Campus, Kisii",
@@ -77,9 +96,10 @@ export async function PageShell({
   megaMenuData,
   header,
 }: PageShellProps) {
-  const resolvedMegaMenuData = header
-    ? megaMenuData
-    : megaMenuData || (await getNavData());
+  const [resolvedMegaMenuData, socialLinks] = await Promise.all([
+    header ? Promise.resolve(megaMenuData) : megaMenuData ? Promise.resolve(megaMenuData) : getNavData(),
+    getSocialLinks(),
+  ]);
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_38%,hsl(var(--surface-muted))_100%)] text-foreground">

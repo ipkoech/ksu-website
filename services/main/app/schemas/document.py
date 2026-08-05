@@ -126,6 +126,8 @@ class DocumentRead(BaseReadSchema):
     download_count: int
     is_active: bool
     file: dict[str, Any] | None = None
+    updated_by_id: uuid.UUID | None = None
+    updated_by: dict[str, Any] | None = None
     display_order: int
 
 

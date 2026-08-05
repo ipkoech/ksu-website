@@ -56,6 +56,20 @@ export interface FieldSelectionParams {
 
 export type QueryParams = PaginationParams & FieldSelectionParams;
 
+export interface FetchCacheOptions {
+  cache?: RequestCache;
+  next?: { revalidate?: number | false; tags?: string[] };
+}
+
+const DEFAULT_PUBLIC_REVALIDATE_SECONDS = 300;
+
+function resolvePublicRevalidateSeconds() {
+  const configured = Number(process.env.NEXT_PUBLIC_API_CACHE_SECONDS);
+  return Number.isFinite(configured) && configured >= 0
+    ? configured
+    : DEFAULT_PUBLIC_REVALIDATE_SECONDS;
+}
+
 export class ApiClient {
   private baseUrl: string;
   private credentials: RequestCredentials;
@@ -81,7 +95,7 @@ export class ApiClient {
       body?: unknown;
       params?: Record<string, string | number | boolean | undefined>;
       headers?: Record<string, string>;
-    } = {}
+    } & FetchCacheOptions = {}
   ): Promise<T> {
     const url = new URL(`${this.baseUrl}${path}`);
 
@@ -100,19 +114,34 @@ export class ApiClient {
     );
     let response: Response;
 
+    const headers: Record<string, string> = {
+      ...this.headers,
+      ...(getStoredAccessToken() && !options.headers?.Authorization
+        ? { Authorization: `Bearer ${getStoredAccessToken()}` }
+        : {}),
+      ...options.headers,
+    };
+
+    // Server-side anonymous GETs opt into Next's data cache so public pages
+    // don't refetch on every request. Authenticated or cookie-bearing
+    // requests, and any request with explicit cache/next options, are left
+    // alone. The `next` property is ignored outside the Next.js runtime.
+    const isAnonymous = !headers.Authorization && !headers.Cookie && !headers.cookie;
+    const cacheOptions: FetchCacheOptions =
+      options.cache !== undefined || options.next !== undefined
+        ? { cache: options.cache, next: options.next }
+        : method === "GET" && typeof window === "undefined" && isAnonymous
+          ? { next: { revalidate: resolvePublicRevalidateSeconds() } }
+          : {};
+
     try {
       response = await fetch(url.toString(), {
         method,
         credentials: this.credentials,
-        headers: {
-          ...this.headers,
-          ...(getStoredAccessToken() && !options.headers?.Authorization
-            ? { Authorization: `Bearer ${getStoredAccessToken()}` }
-            : {}),
-          ...options.headers,
-        },
+        headers,
         body: options.body ? JSON.stringify(options.body) : undefined,
         signal: controller.signal,
+        ...cacheOptions,
       });
     } finally {
       globalThis.clearTimeout(timeout);
@@ -176,8 +205,12 @@ export class ApiClient {
     }
   }
 
-  get<T>(path: string, params?: Record<string, string | number | boolean | undefined>) {
-    return this.request<T>("GET", path, { params });
+  get<T>(
+    path: string,
+    params?: Record<string, string | number | boolean | undefined>,
+    cacheOptions?: FetchCacheOptions
+  ) {
+    return this.request<T>("GET", path, { params, ...cacheOptions });
   }
 
   post<T>(path: string, body?: unknown) {

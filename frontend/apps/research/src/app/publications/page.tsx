@@ -115,7 +115,7 @@ export default async function PublicationsPage({
           <div className="min-w-0">
             <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
               <div className="pt-1">
-                <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground">
+                <h2 className="font-display text-3xl font-semibold leading-tight text-foreground">
                   Publication Catalogue
                 </h2>
                 <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
@@ -142,13 +142,13 @@ export default async function PublicationsPage({
             {visiblePublications.length > 0 ? (
               <>
                 <div className="mt-6 overflow-hidden rounded-lg border border-border bg-white shadow-sm">
-                  <div className="hidden grid-cols-[minmax(0,1fr)_160px_170px_150px] border-b border-border bg-surface-subtle px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground lg:grid">
+                  <div className="hidden grid-cols-[minmax(0,1fr)_160px_170px_150px] border-b border-border bg-surface-subtle px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:grid">
                     <span>Publication</span>
                     <span>Type</span>
                     <span>Access</span>
                     <span>Published</span>
                   </div>
-                  <div className="divide-y divide-slate-200">
+                  <div className="divide-y divide-border">
                     {visiblePublications.map((publication) => (
                       <PublicationRow key={publication.id} publication={publication} />
                     ))}
@@ -179,9 +179,9 @@ export default async function PublicationsPage({
                 { label: "Resources & tools", href: "/resources-tools", body: "Access reusable research tools" },
               ]}
             />
-            <aside className="rounded-lg border border-border bg-white p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">How to read publications</p>
-              <div className="mt-3 divide-y divide-slate-200">
+            <aside className="rounded-lg border border-border bg-card p-4 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-eyebrow text-secondary">How to read publications</p>
+              <div className="mt-3 divide-y divide-border">
                 {["Evidence", "Access", "Related work"].map((label, index) => (
                   <div key={label} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 py-3 first:pt-0 last:pb-0">
                     <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
@@ -255,7 +255,7 @@ function PublicationRow({ publication }: { publication: ResearchPublication }) {
     <PublicationDetailSheet publication={publication}>
       <button
         type="button"
-        className="group grid w-full gap-3 px-4 py-3 text-left transition hover:bg-surface-subtle/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 lg:grid-cols-[minmax(0,1fr)_160px_170px_150px] lg:items-center"
+        className="group grid w-full gap-3 px-4 py-3 text-left transition hover:bg-surface-subtle/80 lg:grid-cols-[minmax(0,1fr)_160px_170px_150px] lg:items-center"
       >
         <span className="min-w-0">
           <span className="block text-sm font-semibold leading-6 text-foreground group-hover:text-primary">
@@ -271,7 +271,7 @@ function PublicationRow({ publication }: { publication: ResearchPublication }) {
         <span className="flex flex-wrap gap-2">
           {publication.access_type ? <Badge>{formatLabel(publication.access_type)}</Badge> : null}
           {publication.is_open_access ? (
-            <span className="inline-flex rounded-md bg-secondary px-2.5 py-1 text-xs font-semibold uppercase text-primary">
+            <span className="inline-flex rounded-md bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
               Open
             </span>
           ) : null}

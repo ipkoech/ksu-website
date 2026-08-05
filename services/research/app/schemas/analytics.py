@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from ksu_common.schemas.responses import SuccessResponse
+
 from .base import BaseSchema
 
 
@@ -52,3 +54,7 @@ class ResearchDashboardAnalytics(BaseSchema):
     partnerships_sustainability: list[ResearchAnalyticsChart]
     applications_reviews: list[ResearchAnalyticsChart]
     admin_activity: list[ResearchAnalyticsChart]
+
+
+class ResearchDashboardAnalyticsSuccessResponse(SuccessResponse[ResearchDashboardAnalytics]):
+    """Concrete success envelope for the research analytics dashboard."""

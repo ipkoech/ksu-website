@@ -65,7 +65,7 @@ export function ResearchDetailHero({
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
               {eyebrow}
             </p>
-            <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+            <h1 className="mt-3 max-w-5xl text-balance font-display text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
               {title}
             </h1>
             {body ? (
@@ -89,8 +89,8 @@ export function ResearchDetailHero({
                     href={action.href}
                     className={
                       action.variant === "secondary"
-                        ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-                        : "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                        ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
+                        : "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
                     }
                   >
                     {action.label}
@@ -231,8 +231,8 @@ function DetailTextSection({
   if (entries.length === 0) return null;
 
   return (
-    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{section.title}</h2>
+    <section className="min-w-0 rounded-lg border border-border bg-card p-5 shadow-sm">
+      <h2 className="font-display text-xl font-semibold text-foreground">{section.title}</h2>
       <div className="mt-4 flex flex-col gap-4">
         {entries.map((entry) => (
           <div key={entry.label}>
@@ -301,8 +301,8 @@ export function ResearchTextPanel({
     .filter(([, value]) => value);
 
   return (
-    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">
+    <section className="min-w-0 rounded-lg border border-border bg-card p-5 shadow-sm">
+      <h2 className="font-display text-xl font-semibold text-foreground">
         {title}
       </h2>
       {entries.length > 0 ? (
@@ -340,8 +340,8 @@ export function ResearchActionLink({ action }: { action: DetailAction }) {
       href={action.href}
       className={
         action.variant === "secondary"
-          ? "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-4 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-          : "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          ? "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-4 py-3 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
+          : "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
       }
     >
       {action.label}
@@ -371,7 +371,7 @@ export function ResearchDetailSidebar({
   }
 
   return (
-    <aside className="h-fit min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+    <aside className="h-fit min-w-0 rounded-lg border border-border bg-card p-5 shadow-sm">
       {cleanLabels.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {cleanLabels.map((label) => (
@@ -407,7 +407,7 @@ export function ResearchSidePanel({
   children: ReactNode;
 }) {
   return (
-    <aside className="h-fit min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+    <aside className="h-fit min-w-0 rounded-lg border border-border bg-card p-5 shadow-sm">
       {eyebrow ? (
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
           {eyebrow}
@@ -433,9 +433,9 @@ export function ResearchRecordPanel({
   empty?: string;
 }) {
   return (
-    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-      <div className="mt-4 divide-y divide-slate-200">
+    <section className="min-w-0 rounded-lg border border-border bg-card p-5 shadow-sm">
+      <h2 className="font-display text-xl font-semibold text-foreground">{title}</h2>
+      <div className="mt-4 divide-y divide-border">
         {records.slice(0, 8).map((record, index) => (
           <SimpleRecordItem
             key={record.id ?? `${title}-${index}`}
@@ -462,8 +462,8 @@ export function ResearchRecordGrid({
   return (
     <div className="grid gap-5 lg:grid-cols-3">
       {records.map((record, index) => (
-        <article key={record.id ?? index} className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
-          <h2 className="text-base font-semibold text-foreground">
+        <article key={record.id ?? index} className="min-w-0 rounded-lg border border-border bg-card p-5 shadow-sm">
+          <h2 className="font-display text-base font-semibold text-foreground">
             {record.name ?? record.title ?? record.file_name ?? record.document_name ?? `File ${index + 1}`}
           </h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -496,8 +496,8 @@ export function ResearchRelationshipCard({
   empty: string;
 }) {
   return (
-    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+    <section className="min-w-0 rounded-lg border border-border bg-card p-5 shadow-sm">
+      <h2 className="font-display text-xl font-semibold text-foreground">{title}</h2>
       {record ? (
         <>
           <h3 className="mt-4 text-base font-semibold text-foreground">

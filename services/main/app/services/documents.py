@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import uuid
-from typing import Sequence
+from typing import Awaitable, Callable, Sequence
 
-from sqlalchemy import select
+from sqlalchemy import and_, false, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common import PaginatedResult
@@ -69,6 +69,7 @@ class PolicyService:
         department_id: uuid.UUID | None = None,
         public_only: bool = True,
         status: str | None = None,
+        is_public: bool | None = None,
         load_options: Sequence = (),
     ) -> PaginatedResult:
         query = select(Policy).order_by(Policy.display_order.asc(), Policy.title.asc())
@@ -84,8 +85,11 @@ class PolicyService:
             query = query.where(Policy.department_id == department_id)
         if public_only:
             query = query.where(Policy.is_public.is_(True), Policy.status == "active")
-        elif status:
-            query = query.where(Policy.status == status)
+        else:
+            if status:
+                query = query.where(Policy.status == status)
+            if is_public is not None:
+                query = query.where(Policy.is_public.is_(is_public))
         return await paginate_query(db, query, page=page, per_page=per_page)
 
 
@@ -137,19 +141,18 @@ class DocumentService:
         return item
 
     @staticmethod
-    async def list(
-        db: AsyncSession,
+    def _list_query(
         *,
-        page: int = 1,
-        per_page: int = 20,
         q: str | None = None,
         document_type: str | None = None,
         category: str | None = None,
         scope_type: str | None = None,
         scope_id: uuid.UUID | None = None,
         public_only: bool = True,
+        is_public: bool | None = None,
+        is_active: bool | None = None,
         load_options: Sequence = (),
-    ) -> PaginatedResult:
+    ):
         query = select(Document).order_by(Document.display_order.asc(), Document.title.asc())
         if load_options:
             query = query.options(*load_options)
@@ -166,7 +169,98 @@ class DocumentService:
         if public_only:
             query = query.where(Document.is_active.is_(True), Document.is_public.is_(True))
         else:
-            query = query.where(Document.is_active.is_(True))
+            query = query.where(Document.is_active.is_(True if is_active is None else is_active))
+            if is_public is not None:
+                query = query.where(Document.is_public.is_(is_public))
+        return query
+
+    @staticmethod
+    async def list(
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        q: str | None = None,
+        document_type: str | None = None,
+        category: str | None = None,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+        public_only: bool = True,
+        is_public: bool | None = None,
+        is_active: bool | None = None,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = DocumentService._list_query(
+            q=q,
+            document_type=document_type,
+            category=category,
+            scope_type=scope_type,
+            scope_id=scope_id,
+            public_only=public_only,
+            is_public=is_public,
+            is_active=is_active,
+            load_options=load_options,
+        )
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+    @staticmethod
+    async def list_admin_authorized(
+        db: AsyncSession,
+        *,
+        is_visible: Callable[[str | None, uuid.UUID | None], Awaitable[bool]],
+        page: int = 1,
+        per_page: int = 20,
+        q: str | None = None,
+        document_type: str | None = None,
+        category: str | None = None,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+        is_public: bool | None = None,
+        is_active: bool | None = None,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        """Admin listing with the caller's scope visibility pushed into the query.
+
+        The permission filter is applied before pagination so ``meta`` reflects
+        the true filtered totals (mirrors ContactService.list_admin_authorized).
+        """
+        query = DocumentService._list_query(
+            q=q,
+            document_type=document_type,
+            category=category,
+            scope_type=scope_type,
+            scope_id=scope_id,
+            public_only=False,
+            is_public=is_public,
+            is_active=is_active,
+            load_options=load_options,
+        )
+        scope_query = query.with_only_columns(
+            Document.scope_type,
+            Document.scope_id,
+        ).order_by(None).distinct()
+        scope_result = await db.execute(scope_query)
+        allowed_scopes = [
+            (candidate_scope_type, candidate_scope_id)
+            for candidate_scope_type, candidate_scope_id in scope_result.all()
+            if await is_visible(candidate_scope_type, candidate_scope_id)
+        ]
+
+        allowed_predicates = []
+        for allowed_scope_type, allowed_scope_id in allowed_scopes:
+            type_predicate = (
+                Document.scope_type.is_(None)
+                if allowed_scope_type is None
+                else Document.scope_type == allowed_scope_type
+            )
+            id_predicate = (
+                Document.scope_id.is_(None)
+                if allowed_scope_id is None
+                else Document.scope_id == allowed_scope_id
+            )
+            allowed_predicates.append(and_(type_predicate, id_predicate))
+
+        query = query.where(or_(*allowed_predicates) if allowed_predicates else false())
         return await paginate_query(db, query, page=page, per_page=per_page)
 
 

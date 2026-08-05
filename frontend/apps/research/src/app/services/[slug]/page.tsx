@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { researchServiceApi } from "@ksu/api-client";
-import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordGrid, ResearchRecordPanel } from "../../../components/research-detail";
+import { ResearchDetailHero, ResearchDetailSidebar, ResearchRecordPanel } from "../../../components/research-detail";
 import { ResearchSection, StatusMessage } from "../../../components/research-ui";
 import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import { compactText, generateSlugParams, getServiceBySlug } from "../../../lib/research-public-data";
@@ -49,7 +49,6 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
           />
         </div>
       </ResearchSection>
-      <ResearchSection eyebrow="Resources" title="Service attachments" body="Supporting service files appear when published."><ResearchRecordGrid records={attachments} /></ResearchSection>
     </main>
   );
 }

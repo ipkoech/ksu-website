@@ -11,8 +11,8 @@ export function EditorialPageHero({
   eyebrow,
   title,
   body,
-  imageSrc = "/images/library/library-hero-imagegen.webp",
-  imageAlt = "Kisii University Library and learning environment",
+  imageSrc = "/images/library/library-exterior.jpg",
+  imageAlt = "The Kisii University Library building",
   breadcrumbs,
   actions,
 }: {
@@ -34,7 +34,7 @@ export function EditorialPageHero({
         sizes="100vw"
         className="object-cover object-center"
       />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.94)_0%,rgba(2,20,49,0.78)_52%,rgba(2,20,49,0.3)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--brand-overlay)/0.94)_0%,hsl(var(--brand-overlay)/0.78)_52%,hsl(var(--brand-overlay)/0.3)_100%)]" />
       <div className="relative mx-auto flex min-h-[min(520px,62vh)] max-w-[1680px] items-center px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <LibraryHeroContentMotion>
           {breadcrumbs?.length ? (
@@ -48,7 +48,7 @@ export function EditorialPageHero({
             </nav>
           ) : null}
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary sm:text-sm">{eyebrow}</p>
-          <h1 className="mt-4 max-w-3xl text-balance font-[family-name:var(--font-display)] text-4xl font-bold leading-tight sm:text-6xl">{title}</h1>
+          <h1 className="mt-4 max-w-3xl text-balance font-[family-name:var(--app-font-display)] text-4xl font-normal leading-tight tracking-tight sm:text-6xl">{title}</h1>
           <p className="mt-5 max-w-2xl text-pretty text-base leading-8 text-white/85 sm:text-lg">{body}</p>
           {actions ? <div className="mt-7 flex flex-wrap gap-3">{actions}</div> : null}
         </LibraryHeroContentMotion>
@@ -64,18 +64,20 @@ export function EditorialSection({
   tone = "white",
   children,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   body?: string;
   tone?: "white" | "soft";
   children: ReactNode;
 }) {
   return (
-    <section className={tone === "soft" ? "border-y border-border bg-surface-subtle px-4 py-14 sm:px-6 lg:px-8" : "bg-white px-4 py-14 sm:px-6 lg:px-8"}>
+    <section className={tone === "soft" ? "border-y border-border bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] px-4 py-14 sm:px-6 lg:px-8" : "bg-background px-4 py-14 sm:px-6 lg:px-8"}>
       <div className="mx-auto w-full max-w-[1680px]">
         <div className="mb-8 max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary sm:text-sm">{eyebrow}</p>
-          <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-5xl">{title}</h2>
+          {eyebrow ? (
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">{eyebrow}</p>
+          ) : null}
+          <h2 className={`${eyebrow ? "mt-3" : ""} text-balance font-[family-name:var(--app-font-display)] text-3xl font-normal leading-tight tracking-tight text-foreground sm:text-5xl`}>{title}</h2>
           {body ? <p className="mt-4 text-pretty text-base leading-8 text-muted-foreground">{body}</p> : null}
         </div>
         {children}

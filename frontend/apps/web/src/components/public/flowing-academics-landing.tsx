@@ -119,13 +119,13 @@ export function FlowingAcademicsLanding({
             <Link
               key={href}
               href={href}
-              className="group inline-flex items-center gap-2 text-sm font-semibold text-foreground transition hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+              className="group inline-flex items-center gap-2 text-sm font-semibold text-foreground transition-colors duration-200 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
             >
               <Icon aria-hidden className="h-4 w-4 text-primary" />
               {label}
               <ArrowRight
                 aria-hidden
-                className="h-3 w-3 text-secondary transition group-hover:translate-x-1"
+                className="h-3 w-3 text-secondary transition-transform duration-150 group-hover:translate-x-1"
               />
             </Link>
           ))}
@@ -274,7 +274,7 @@ export function FlowingAcademicsLanding({
                       </span>
                       <ArrowRight
                         aria-hidden
-                        className="mt-1 h-4 w-4 shrink-0 text-primary transition group-hover:translate-x-1"
+                        className="mt-1 h-4 w-4 shrink-0 text-primary transition-transform duration-150 group-hover:translate-x-1"
                       />
                     </span>
                   </Link>
@@ -342,7 +342,7 @@ export function FlowingAcademicsLanding({
                   </span>
                   <ArrowRight
                     aria-hidden
-                    className="mt-1 h-4 w-4 shrink-0 text-primary transition group-hover:translate-x-1"
+                    className="mt-1 h-4 w-4 shrink-0 text-primary transition-transform duration-150 group-hover:translate-x-1"
                   />
                 </Link>
               ) : null,

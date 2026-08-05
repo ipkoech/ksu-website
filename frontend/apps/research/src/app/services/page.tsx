@@ -51,7 +51,7 @@ export default async function ServicesPage({ searchParams }: { searchParams?: Pr
         {visibleServices.length ? (
           <>
             {featuredService ? <div className="mt-6"><FeaturedService item={featuredService} /></div> : null}
-            <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-border bg-white shadow-sm">{rowServices.map((item) => <ServiceRow key={item.id} item={item} />)}</div>
+            <div className="mt-6 divide-y divide-border rounded-lg border border-border bg-white shadow-sm">{rowServices.map((item) => <ServiceRow key={item.id} item={item} />)}</div>
           </>
         ) : <div className="mt-7"><StatusMessage>No services match the current filters.</StatusMessage></div>}
       </ResearchSection>
@@ -79,7 +79,7 @@ function ServicesMasthead({ resultCount, publishedCount, centersCount, categorie
             <span className="text-foreground">Services</span>
           </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Research Support</p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">Support services for researchers, students, collaborators, and public requests</h1>
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--app-font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">Support services for researchers, students, collaborators, and public requests</h1>
           <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">Compare service scope, access route, turnaround, fees, and the center or office responsible for delivery.</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <PrimaryLink href="/connect">Contact support</PrimaryLink>

@@ -161,7 +161,7 @@ export default async function FundingPage({
                   <FeaturedGrant grant={featuredGrant} />
                 </div>
               ) : null}
-              {rowGrants.length > 0 ? <div className="divide-y divide-slate-200 overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+              {rowGrants.length > 0 ? <div className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-white shadow-sm">
                 {rowGrants.map((grant) => (
                   <GrantRow key={grant.id} grant={grant} />
                 ))}
@@ -262,10 +262,11 @@ function GrantTypeSplit({
         <Link
           key={item.label}
           href={item.href}
+          aria-current={item.active ? "true" : undefined}
           className={
             item.active
-              ? "inline-flex min-h-10 items-center gap-3 rounded-md border border-primary bg-primary px-4 text-sm font-semibold text-white shadow-sm"
-              : "inline-flex min-h-10 items-center gap-3 rounded-md border border-border bg-white px-4 text-sm font-semibold text-muted-foreground shadow-sm transition hover:border-primary/30 hover:text-primary"
+              ? "inline-flex min-h-11 items-center gap-3 rounded-md border border-primary bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm"
+              : "inline-flex min-h-11 items-center gap-3 rounded-md border border-border bg-white px-4 text-sm font-semibold text-muted-foreground shadow-sm transition hover:border-primary/30 hover:text-primary"
           }
         >
           {item.label}
@@ -308,16 +309,10 @@ function FundingFilters({
 }
 
 function FeaturedGrant({ grant }: { grant: ResearchGrant }) {
-  const isInternal = grant.grant_type === "internal";
-
   return (
     <Link
       href={grant.slug ? `/funding/${grant.slug}` : "/funding"}
-      className={
-        isInternal
-          ? "group grid gap-4 rounded-lg border-2 border-primary bg-primary/[0.04] p-4 shadow-sm transition hover:bg-primary/[0.07] lg:grid-cols-[minmax(0,1fr)_280px_auto] lg:items-center"
-          : "group grid gap-4 rounded-lg border border-amber-300 bg-amber-50/50 p-4 shadow-sm transition hover:border-amber-400 lg:grid-cols-[minmax(0,1fr)_280px_auto] lg:items-center"
-      }
+      className="group grid gap-4 rounded-lg border border-primary/30 bg-primary/[0.03] p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md lg:grid-cols-[minmax(0,1fr)_280px_auto] lg:items-center"
     >
       <GrantRowContent grant={grant} featured />
     </Link>
@@ -418,7 +413,7 @@ function SupportPanel({
 }) {
   return (
     <FundingSidebar title={title}>
-      <div className="divide-y divide-slate-200">
+      <div className="divide-y divide-border">
         {records.map((record) => (
           <SupportPanelItem key={compactText(record.id)} record={record} />
         ))}

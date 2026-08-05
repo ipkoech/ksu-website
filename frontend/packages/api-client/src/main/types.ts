@@ -1443,6 +1443,34 @@ export interface School {
   updated_at: string;
 }
 
+export interface NavigationEntry {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface NavigationDivision extends NavigationEntry {
+  division_type?: string | null;
+}
+
+export interface NavigationDepartment extends NavigationEntry {
+  code?: string | null;
+  school_id?: string | null;
+  department_type?: string | null;
+}
+
+export interface NavigationWing extends NavigationEntry {
+  code?: string | null;
+}
+
+export interface NavigationData {
+  schools: NavigationEntry[];
+  divisions: NavigationDivision[];
+  departments: NavigationDepartment[];
+  clubs: NavigationEntry[];
+  wings: NavigationWing[];
+}
+
 export interface Division {
   id: string;
   name: string;
@@ -1841,7 +1869,32 @@ export interface Document {
   is_public: boolean;
   requires_login: boolean;
   download_count: number;
+  status: string;
   is_active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Policy {
+  id: string;
+  title: string;
+  slug: string;
+  code?: string | null;
+  category: string;
+  summary?: string | null;
+  content?: string | null;
+  division_id?: string | null;
+  department_id?: string | null;
+  version?: string | null;
+  effective_date?: string | null;
+  review_date?: string | null;
+  supersedes_id?: string | null;
+  approved_by_id?: string | null;
+  approved_at?: string | null;
+  pdf_file_id?: string | null;
+  is_public: boolean;
+  status: string;
   display_order: number;
   created_at: string;
   updated_at: string;
@@ -2401,7 +2454,7 @@ export type ContentWorkflowAction =
 
 export interface ContentWorkflowQueueFilters extends Record<
   string,
-  string | undefined
+  string | number | undefined
 > {
   source_portal?: string;
   content_type?: ContentWorkflowQueueItem["content_type"];
@@ -2409,6 +2462,24 @@ export interface ContentWorkflowQueueFilters extends Record<
   submitted_date?: string;
   scheduled_date?: string;
   reviewer?: string;
+  /** Free-text search over item titles. */
+  q?: string;
+  page?: number;
+  /** Pagination is opt-in; omitting per_page returns the full queue. */
+  per_page?: number;
+}
+
+/**
+ * Queue meta. `total` and `status_counts` always describe the whole filtered
+ * queue; `page`/`per_page`/`pages` are present only when pagination was
+ * requested.
+ */
+export interface ContentWorkflowQueueMeta {
+  total: number;
+  status_counts: Partial<Record<ContentWorkflowStatus, number>>;
+  page?: number;
+  per_page?: number;
+  pages?: number;
 }
 
 export interface ContentWorkflowQueueItem {
@@ -2423,7 +2494,9 @@ export interface ContentWorkflowQueueItem {
     | "club-media"
     | "page-sections"
     | "partnership-spotlights"
-    | "sliders";
+    | "sliders"
+    | "documents"
+    | "school-gallery";
   content_type_label: string;
   title: string;
   summary?: string | null;
@@ -2450,6 +2523,15 @@ export interface ContentWorkflowQueueItem {
       keywords?: Record<string, unknown> | string[] | null;
     };
   };
+  /** Present for externally contributed records (e.g. stories). */
+  contributor?: {
+    name?: string | null;
+    email?: string | null;
+    affiliation?: string | null;
+    show_name?: boolean | null;
+    consent_to_publish?: boolean | null;
+    source_type?: string | null;
+  } | null;
 }
 
 export interface ContentWorkflowActionPayload {
@@ -2464,13 +2546,42 @@ export interface ContentWorkflowActionResult {
   workflow_status?: ContentWorkflowStatus;
 }
 
+/** Actions the bulk transition endpoint accepts. */
+export type ContentWorkflowBulkAction =
+  | "submit"
+  | "approve"
+  | "publish"
+  | "unpublish"
+  | "archive";
+
+export interface ContentWorkflowBulkItem {
+  content_type: string;
+  content_id: string;
+}
+
+/** Per-item outcome from POST /api/v1/content-workflow/bulk. */
+export interface ContentWorkflowBulkItemResult {
+  content_id: string;
+  ok: boolean;
+  error: string | null;
+}
+
+/** Log rows include system/audit actions beyond the user-triggered ones. */
+export type ContentWorkflowLogAction =
+  | ContentWorkflowAction
+  | "edit_reset"
+  | "withdraw"
+  | "review_edit"
+  | "system_publish"
+  | "system_expire";
+
 export interface ContentWorkflowLog {
   id: string;
   content_type: string;
   content_id: string;
   from_status: ContentWorkflowStatus;
   to_status: ContentWorkflowStatus;
-  action: ContentWorkflowAction;
+  action: ContentWorkflowLogAction;
   actor_id?: string | null;
   comments?: string | null;
   changed_fields?: Record<string, unknown> | null;
@@ -2616,7 +2727,8 @@ export interface MediaUpdatePayload {
 
 export interface MediaFolderCreatePayload {
   name: string;
-  slug: string;
+  /** Auto-generated from name when omitted. */
+  slug?: string | null;
   parent_id?: string | null;
   description?: string | null;
   is_public?: boolean;
@@ -2854,6 +2966,8 @@ export interface Newsletter {
   sent_at?: string | null;
   send_status: string;
   send_error?: string | null;
+  recipients_count?: number | null;
+  sent_count?: number | null;
   cover_image_id?: string | null;
   pdf_file_id?: string | null;
   cover_image?: Media | null;
@@ -2916,7 +3030,21 @@ export interface AuditLog {
   id: string;
   user_id?: string;
   action: string;
-  entity_type: string;
+  // Fields returned by GET /api/v1/admin/audit (ksu_common AuditLog model).
+  resource_type?: string;
+  resource_id?: string;
+  status?: string;
+  service_name?: string;
+  request_method?: string;
+  request_path?: string;
+  route_name?: string;
+  status_code?: number;
+  error_message?: string;
+  details?: Record<string, unknown>;
+  changes?: Record<string, unknown>;
+  happened_at?: string;
+  // Legacy field names kept for older consumers; not returned by the API.
+  entity_type?: string;
   entity_id?: string;
   old_values?: Record<string, unknown>;
   new_values?: Record<string, unknown>;
@@ -3405,4 +3533,29 @@ export interface VcGalleryMediaLink {
   media_id: string;
   display_order: number;
   media?: VcPublicMedia | null;
+}
+
+// User notifications (inbox)
+export interface UserNotification {
+  id: string;
+  title: string;
+  subject?: string | null;
+  message: string;
+  notification_type: string;
+  priority: string;
+  action_url?: string | null;
+  scope_type?: string | null;
+  scope_id?: string | null;
+  channels: string[];
+  is_read: boolean;
+  read_at?: string | null;
+  archived_at?: string | null;
+  created_at: string;
+}
+
+export interface UserNotificationPreferences {
+  in_app: boolean;
+  email: boolean;
+  sms: boolean;
+  push: boolean;
 }

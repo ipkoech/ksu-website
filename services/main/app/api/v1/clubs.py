@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
 
 from ksu_common import cached_public
 from ksu_common.schemas.responses import success
@@ -32,8 +33,15 @@ from ...services import AnnouncementService, BlogService, ClubService, ContentWo
 
 router = APIRouter()
 
-CLUB_VIEW_PERMISSIONS = ["clubs.view", "clubs.manage_own"]
+# Central CoCMS reviewers (content.review / content.manage at university scope)
+# get read access to club records alongside club-scoped officers.
+CLUB_VIEW_PERMISSIONS = ["clubs.view", "clubs.manage_own", "content.review", "content.manage"]
 CLUB_MANAGE_PERMISSIONS = ["clubs.manage_own"]
+# Permissions that may list every club for central review, checked at university scope.
+CLUB_REVIEW_LIST_PERMISSIONS = ("content.review", "content.manage", "clubs.view")
+# Central holders who may flip a club profile's visibility (is_public / is_active).
+CLUB_VISIBILITY_PERMISSIONS = {"content.publish", "clubs.admin", "admin:*"}
+CLUB_VISIBILITY_FIELDS = {"is_public", "is_active"}
 CLUB_EVENT_PERMISSIONS = ["clubs.events_manage", "clubs.manage_own"]
 CLUB_STORY_PERMISSIONS = ["clubs.stories_manage", "clubs.manage_own"]
 CLUB_SUBMIT_PERMISSIONS = ["clubs.content_submit", "clubs.manage_own"]
@@ -119,13 +127,26 @@ def _club_content_update_payload(data) -> dict:
 
 def _club_profile_update_payload(data, user: CurrentUser) -> dict:
     payload = data.model_dump(exclude_unset=True)
-    if any(permission in permissions_for_user(user) for permission in {"admin:*", "clubs.admin"}):
+    permissions = permissions_for_user(user)
+    if {"admin:*", "clubs.admin"}.intersection(permissions):
         return payload
+    allowed_fields = set(CLUB_PROFILE_OWNER_MUTABLE_FIELDS)
+    if "content.publish" in permissions:
+        # Central publishers may flip visibility but never rewrite club identity.
+        allowed_fields |= CLUB_VISIBILITY_FIELDS
     return {
         key: value
         for key, value in payload.items()
-        if key in CLUB_PROFILE_OWNER_MUTABLE_FIELDS
+        if key in allowed_fields
     }
+
+
+async def _is_central_club_reviewer(db: DbSession, user: CurrentUser) -> bool:
+    """True when the user holds a review/read grant that spans the whole university."""
+    for permission in CLUB_REVIEW_LIST_PERMISSIONS:
+        if await can_access_scope(db, user, permission, "university", None):
+            return True
+    return False
 
 
 def _authorize_club_media_workflow_action(action: str, permissions: set[str]) -> None:
@@ -143,6 +164,15 @@ def _authorize_club_media_workflow_action(action: str, permissions: set[str]) ->
 
 async def _club_or_404(db: DbSession, club_id: uuid.UUID) -> Club:
     club = await ClubService.get_by_id(db, club_id)
+    if club is None:
+        raise HTTPException(status_code=404, detail="Club not found")
+    return club
+
+
+async def _club_or_404_any_status(db: DbSession, club_id: uuid.UUID) -> Club:
+    """Fetch a club even when hidden/inactive, so reviewers can re-activate it."""
+    result = await db.execute(select(Club).where(Club.id == club_id))
+    club = result.scalar_one_or_none()
     if club is None:
         raise HTTPException(status_code=404, detail="Club not found")
     return club
@@ -227,6 +257,31 @@ async def list_managed_clubs(
     return success(data=selector.apply(authorized), meta=meta)
 
 
+@router.get("/review")
+async def list_clubs_for_review(
+    db: DbSession,
+    user: CurrentUser,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=100),
+    q: str | None = None,
+    club_type: str | None = None,
+    is_active: bool | None = None,
+    fields: FieldSelection = FieldsDep,
+):
+    """List every club (public and hidden) for central CoCMS review."""
+    if not await _is_central_club_reviewer(db, user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Central review privileges are required to list clubs for review",
+        )
+    selector = build_selector(Club, fields)
+    result = await ClubService.list(
+        db, page=page, per_page=per_page, q=q, club_type=club_type,
+        is_public=None, is_active=is_active, load_options=selector.load_options,
+    )
+    return success(data=selector.apply(result.items), meta=result.meta)
+
+
 @router.get("/{slug}")
 @cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_club(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
@@ -256,8 +311,20 @@ async def create_club(data: ClubCreate, db: DbSession, _: CurrentUser):
 
 @router.patch("/{club_id}")
 async def update_club(club_id: uuid.UUID, data: ClubUpdate, db: DbSession, user: CurrentUser):
-    item = await _club_or_404(db, club_id)
-    await require_club_scope(db, user, item.id, CLUB_MANAGE_PERMISSIONS, resource_name="club")
+    payload_keys = set(data.model_dump(exclude_unset=True))
+    permissions = permissions_for_user(user)
+    visibility_toggle = (
+        bool(payload_keys)
+        and payload_keys <= CLUB_VISIBILITY_FIELDS
+        and bool(CLUB_VISIBILITY_PERMISSIONS.intersection(permissions))
+    )
+    if visibility_toggle:
+        # Central publishers/admins may flip is_public / is_active without a
+        # club-scoped grant; the payload filter still strips everything else.
+        item = await _club_or_404_any_status(db, club_id)
+    else:
+        item = await _club_or_404(db, club_id)
+        await require_club_scope(db, user, item.id, CLUB_MANAGE_PERMISSIONS, resource_name="club")
     item = await ClubService.update(db, item, **_club_profile_update_payload(data, user))
     return success(data=item, message="Club updated")
 

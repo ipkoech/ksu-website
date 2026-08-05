@@ -166,7 +166,7 @@ export type HomepageHeroAction = {
   type?: string | null;
   label: string;
   href: string;
-  style?: "primary" | "secondary" | null;
+  style?: "primary" | "secondary" | "tertiary" | null;
   open_in_new_tab?: boolean;
 };
 
@@ -236,6 +236,12 @@ export type HomepageCompositionApiResponse =
 export type HomepageCompositionState = {
   data: HomepageCompositionResponse | null;
   sections: HomepageSection[];
+  /**
+   * Sections as returned by the CMS, before normalizeSections drops disabled,
+   * unknown-variant, and empty entries. Needed to distinguish "disabled by an
+   * admin" from "not configured".
+   */
+  rawSections: HomepageSection[];
   hasRenderableSections: boolean;
   error: unknown;
 };
@@ -250,6 +256,7 @@ export const getComposedHomepage = cache(
         return {
           data: null,
           sections: [],
+          rawSections: [],
           hasRenderableSections: false,
           error: null,
         };
@@ -259,6 +266,7 @@ export const getComposedHomepage = cache(
       return {
         data: { ...composition, sections },
         sections,
+        rawSections: composition.sections ?? [],
         hasRenderableSections: sections.length > 0,
         error: null,
       };
@@ -269,6 +277,7 @@ export const getComposedHomepage = cache(
       return {
         data: null,
         sections: [],
+        rawSections: [],
         hasRenderableSections: false,
         error,
       };

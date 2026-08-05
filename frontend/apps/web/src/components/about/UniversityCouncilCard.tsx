@@ -22,7 +22,7 @@ export function UniversityCouncilCard({
 
   const card = (
     <article
-      className={`group relative overflow-hidden rounded-lg border border-border bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl ${
+      className={`group relative overflow-hidden rounded-2xl ring-1 ring-primary/10 bg-white transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-xl ${
         featured ? "mx-auto w-full max-w-[310px]" : secretary ? "mx-auto w-full max-w-[420px]" : "w-full"
       }`}
     >
@@ -34,7 +34,7 @@ export function UniversityCouncilCard({
             ratio="profile"
             className="h-full w-full"
             sizes={secretary ? "136px" : featured ? "310px" : "200px"}
-            imageClassName="object-cover object-top transition duration-500 group-hover:scale-[1.025]"
+            imageClassName="object-cover object-top transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
           />
         </ImageCurtainReveal>
         <div className={featured ? "p-5 text-center" : "p-3 text-center"}>
@@ -63,7 +63,7 @@ export function UniversityCouncilCard({
     <Link
       href={href}
       aria-label={`View staff profile of ${member.name}, ${member.role}`}
-      className={`block rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${featured || secretary ? "mx-auto" : ""}`}
+      className={`block rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${featured || secretary ? "mx-auto" : ""}`}
     >
       {card}
     </Link>

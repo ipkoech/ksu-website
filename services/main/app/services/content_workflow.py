@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import re
 import uuid
+from collections.abc import Sequence
 from datetime import datetime, timezone
 from typing import Any
 
@@ -14,7 +14,7 @@ from ..models import ContentWorkflowLog
 
 ALLOWED_TRANSITIONS = {
     "draft": {"submit": "submitted", "archive": "archived"},
-    "submitted": {"start_review": "in_review", "withdraw": "draft", "archive": "archived"},
+    "submitted": {"start_review": "in_review", "archive": "archived"},
     "in_review": {
         "request_changes": "changes_requested", "approve": "approved",
         "reject": "rejected", "archive": "archived",
@@ -27,13 +27,6 @@ ALLOWED_TRANSITIONS = {
     "rejected": {"submit": "submitted", "archive": "archived"},
     "archived": {},
 }
-
-
-def story_has_body(content: Any) -> bool:
-    if isinstance(content, dict) and content:
-        return True
-    text = re.sub(r"<[^>]+>", " ", str(content or ""))
-    return bool(text.split())
 
 
 class ContentWorkflowService:
@@ -98,6 +91,50 @@ class ContentWorkflowService:
         if from_status == "draft":
             return False
 
+        cls._reset_to_draft(content)
+
+        db.add(ContentWorkflowLog(
+            content_type=content_type,
+            content_id=content.id,
+            from_status=from_status,
+            to_status="draft",
+            action="edit_reset",
+            actor_id=actor_id,
+            changed_fields=changed_fields,
+        ))
+        return True
+
+    @classmethod
+    async def reset_after_batch_reorder(
+        cls,
+        db: AsyncSession,
+        contents: Sequence[Any],
+        content_type: str,
+        actor_id: uuid.UUID,
+        *,
+        changed_fields: dict[str, Any],
+    ) -> None:
+        """Reset a reordered collection and record exactly one anchored audit event."""
+        if not contents:
+            raise ValueError("Batch reorder contents are required")
+
+        anchor = contents[0]
+        from_status = getattr(anchor, "workflow_status", None) or getattr(anchor, "status", "draft")
+        for content in contents:
+            cls._reset_to_draft(content)
+
+        db.add(ContentWorkflowLog(
+            content_type=content_type,
+            content_id=anchor.id,
+            from_status=from_status,
+            to_status="draft",
+            action="edit_reset",
+            actor_id=actor_id,
+            changed_fields=changed_fields,
+        ))
+
+    @staticmethod
+    def _reset_to_draft(content: Any) -> None:
         content.status = "draft"
         content.workflow_status = "draft"
         for field, value in (
@@ -119,52 +156,6 @@ class ContentWorkflowService:
         ):
             if hasattr(content, field):
                 setattr(content, field, value)
-
-        db.add(ContentWorkflowLog(
-            content_type=content_type,
-            content_id=content.id,
-            from_status=from_status,
-            to_status="draft",
-            action="edit_reset",
-            actor_id=actor_id,
-            changed_fields=changed_fields,
-        ))
-        return True
-
-    @classmethod
-    async def apply_edit_policy(
-        cls,
-        db: AsyncSession,
-        content: Any,
-        content_type: str,
-        actor_id: uuid.UUID,
-        *,
-        actor_kind: str,
-        changed_fields: dict[str, Any] | None = None,
-    ) -> bool:
-        """Apply role-aware edits without corrupting editorial state.
-
-        Authors may edit only drafts and change-requested records. CoCMS
-        reviewers may correct a record only while it remains in review.
-        """
-        current = getattr(content, "workflow_status", None) or getattr(content, "status", "draft")
-        allowed = {
-            "author": {"draft", "changes_requested"},
-            "reviewer": {"in_review"},
-        }
-        if actor_kind not in allowed or current not in allowed[actor_kind]:
-            raise ValueError(f"{actor_kind} cannot edit content in {current} state")
-        if actor_kind == "reviewer" and changed_fields:
-            db.add(ContentWorkflowLog(
-                content_type=content_type,
-                content_id=content.id,
-                from_status=current,
-                to_status=current,
-                action="review_edit",
-                actor_id=actor_id,
-                changed_fields=changed_fields,
-            ))
-        return False
 
     @classmethod
     async def transition(
@@ -195,14 +186,6 @@ class ContentWorkflowService:
                 raise ValueError("scheduled_for must be in the future")
             scheduled_for = comparable_schedule
 
-        if action == "publish" and content_type in {"story", "stories"}:
-            if not (
-                story_has_body(getattr(content, "rich_text", None))
-                or story_has_body(getattr(content, "plain_text", None))
-                or story_has_body(getattr(content, "structured_content", None))
-            ):
-                raise ValueError("Cannot publish a story without body content")
-
         content.status = to_status
         content.workflow_status = to_status
         if hasattr(content, "updated_at"):
@@ -210,9 +193,6 @@ class ContentWorkflowService:
         if action == "submit":
             content.submitted_by_id = actor_id
             content.submitted_at = now
-        elif action == "withdraw":
-            content.submitted_by_id = None
-            content.submitted_at = None
         elif action == "start_review":
             content.reviewed_by_id = actor_id
             content.reviewed_at = now

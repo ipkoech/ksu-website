@@ -5,16 +5,18 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import selectinload
 
+from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ...deps import DbSession
 from ...models import Media, MediaLink
 from ...services import MediaService
 from ...services._base import ilike_any, paginate_query
+from ...core.config import public_media_rate_limit
 
 router = APIRouter()
 
@@ -79,7 +81,10 @@ def public_media_link_payload(link: MediaLink) -> dict[str, object | None]:
 
 
 @router.get("")
+@public_media_rate_limit
+@cached_public(timeout=300, vary_on=("page", "per_page", "media_type", "search"))
 async def list_public_media(
+    request: Request,
     db: DbSession,
     page: int = Query(1, ge=1),
     per_page: int = Query(24, ge=1, le=100),
@@ -114,7 +119,10 @@ async def list_public_media(
 
 
 @router.get("/links")
+@public_media_rate_limit
+@cached_public(timeout=300, vary_on=("entity_type", "entity_id", "role", "per_page"))
 async def list_public_media_links(
+    request: Request,
     db: DbSession,
     entity_type: str = Query(..., min_length=1, max_length=64),
     entity_id: uuid.UUID = Query(...),
@@ -146,7 +154,9 @@ async def list_public_media_links(
 
 
 @router.get("/{media_id}")
-async def get_public_media(media_id: uuid.UUID, db: DbSession):
+@public_media_rate_limit
+@cached_public(timeout=300, vary_on=("media_id",))
+async def get_public_media(request: Request, media_id: uuid.UUID, db: DbSession):
     media = await MediaService.get_by_id(db, media_id)
     if media is None or not media.is_public:
         raise HTTPException(status_code=404, detail="Media not found")

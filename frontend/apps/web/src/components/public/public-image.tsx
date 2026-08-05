@@ -64,7 +64,15 @@ export function PublicImage({
           fill
           sizes={sizes}
           priority={priority}
-          unoptimized={unoptimized}
+          // API media is served by the local gateway. Skipping Next's server
+          // optimizer keeps Docker-internal rendering from trying to fetch a
+          // host-only localhost URL; the browser can request it directly.
+          unoptimized={
+            unoptimized ||
+            /^https?:\/\/(localhost|127\.0\.0\.1|gateway|main)(:\d+)?\//i.test(
+              currentSrc,
+            )
+          }
           loading={priority ? undefined : "lazy"}
           className={cn("object-cover", imageClassName)}
           onError={() => {
@@ -105,7 +113,7 @@ export function ProgressiveImageCard({
         ratio="fill"
         className="absolute inset-0 h-full w-full"
         imageClassName={cn(
-          "transition duration-500 group-hover:scale-[1.03]",
+          "transition-transform duration-500 motion-safe:group-hover:scale-[1.03]",
           imageClassName,
         )}
       />

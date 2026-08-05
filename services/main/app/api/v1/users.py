@@ -17,7 +17,7 @@ from ._fields import FieldSelection, FieldsDep, build_selector
 router = APIRouter()
 
 
-@router.get("")
+@router.get("", dependencies=[Depends(require_scope("users:read"))])
 async def list_users(
     db: DbSession,
     _: CurrentUser,
@@ -32,7 +32,7 @@ async def list_users(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{user_id}")
+@router.get("/{user_id}", dependencies=[Depends(require_scope("users:read"))])
 async def get_user(user_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(User, fields)
     user = await UserService.get_by_id(db, user_id, load_options=selector.load_options)

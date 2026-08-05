@@ -70,6 +70,7 @@ PERMISSION_SPECS = [
     ("stories.view_own", "View own submitted stories", "stories", "view_own"),
     ("stories.update_own", "Update own submitted stories before publication", "stories", "update_own"),
     ("about.manage", "Manage About KSU and institutional facts", "about", "manage"),
+    ("marketing.manage_social", "Manage social media posts and publishing", "marketing", "manage_social"),
     ("clubs.view", "View student club records", "clubs", "view"),
     ("clubs.manage_own", "Manage assigned student club records", "clubs", "manage_own"),
     ("clubs.content_submit", "Submit student club content for review", "clubs", "content_submit"),
@@ -164,10 +165,15 @@ COCMS_PERMISSION_NAMES = [
     "partnership_spotlights.manage",
     "marketing.view",
     "marketing.manage_sliders",
+    "marketing.manage_social",
     "marketing.manage_testimonials",
     "marketing.manage_newsletters",
     "support.manage_faqs",
     "support.manage_contacts",
+    "policy.view",
+    "policy.view_drafts",
+    "policy.manage",
+    "policy.publish",
     *VC_HUB_PERMISSION_NAMES,
 ]
 
@@ -319,6 +325,20 @@ for spec in ROLE_SPECS:
             *PUBLICATIONS_ADMIN_PERMISSION_NAMES,
         ]))
         break
+
+
+for spec in ROLE_SPECS:
+    for permission_name in spec["permission_names"]:
+        if permission_name in _existing_permissions:
+            continue
+        resource, action = _split_permission_name(permission_name)
+        PERMISSION_SPECS.append((
+            permission_name,
+            f"Grant {permission_name.replace('_', ' ')}",
+            resource,
+            action,
+        ))
+        _existing_permissions.add(permission_name)
 
 
 async def seed_rbac(db: AsyncSession, ctx: SeedContext) -> None:

@@ -7,7 +7,8 @@ import {
   Monitor,
   Phone,
 } from "lucide-react";
-import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { CampusPageHeader } from "@ksu/ui/components";
+import { PageShell } from "@/components/site-shell";
 
 export const metadata = {
   title: "Accessibility",
@@ -17,30 +18,16 @@ export const metadata = {
 export default function AccessibilityPage() {
   return (
     <PageShell>
+      <CampusPageHeader
+        title="Accessibility and inclusive access"
+        eyebrow="Accessibility"
+        description="Kisii University is committed to providing accessible public information and services for all users, including people with disabilities. This statement outlines our approach and how to get help."
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Accessibility" }]}
+        seed="/accessibility"
+      />
+
       <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <BreadcrumbTrail
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Accessibility" },
-          ]}
-        />
-
-        <div className="mt-8">
-          <p className="text-sm font-semibold uppercase text-secondary">
-            Accessibility
-          </p>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
-            Accessibility and inclusive access
-          </h1>
-          <p className="mt-4 text-base leading-8 text-muted-foreground">
-            Kisii University is committed to providing accessible public
-            information and services for all users, including people with
-            disabilities. This statement outlines our approach and how to get
-            help.
-          </p>
-        </div>
-
-        <div className="mt-10 space-y-8">
+        <div className="space-y-8">
           <section>
             <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Our commitment

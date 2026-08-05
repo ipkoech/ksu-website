@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import re
 import uuid
-from datetime import date, datetime
-from typing import Annotated, Any, Generic, TypeVar
+from datetime import datetime
+from typing import Annotated, Generic, Literal, TypeVar
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 T = TypeVar("T")
+JsonScalar = str | int | float | bool | None
+JsonValue = JsonScalar | list[JsonScalar] | dict[str, JsonScalar]
+JsonObject = dict[str, JsonValue]
 
 
 class BaseSchema(BaseModel):
@@ -20,6 +23,31 @@ class BaseSchema(BaseModel):
         populate_by_name=True,
         str_strip_whitespace=True,
     )
+
+
+class StrictSchema(BaseSchema):
+    """Base schema for concrete response models that reject unknown fields."""
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        str_strip_whitespace=True,
+        extra="forbid",
+    )
+
+
+class SuccessEnvelope(StrictSchema, Generic[T]):
+    """Strict success envelope for concrete Research responses."""
+
+    status: Literal["success"] = "success"
+    message: str = "ok"
+    data: T | None = None
+
+
+class SuccessEnvelopeWithMeta(SuccessEnvelope[T], Generic[T]):
+    """Strict success envelope with typed metadata."""
+
+    meta: JsonObject | None = None
 
 
 class TimestampMixin(BaseModel):
@@ -40,7 +68,7 @@ class SEOFieldsMixin(BaseModel):
 
     meta_title: str | None = None
     meta_description: str | None = None
-    keywords: dict | None = None
+    keywords: JsonObject | None = None
 
 
 class PaginatedResponse(BaseModel, Generic[T]):
@@ -66,7 +94,7 @@ class APIResponse(BaseModel, Generic[T]):
 
     data: T | None = None
     error: str | None = None
-    meta: dict[str, Any] | None = None
+    meta: JsonObject | None = None
 
 
 # Common field types

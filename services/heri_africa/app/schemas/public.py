@@ -22,8 +22,11 @@ class NewsDetail(NewsSummary):
 
 
 class SiteResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     name: str
     tagline: str | None
     contact: dict[str, object]
     social_links: dict[str, object]
     seo_defaults: dict[str, object]
+    research_center_slug: str | None = None

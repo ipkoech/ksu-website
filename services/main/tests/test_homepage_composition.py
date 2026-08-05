@@ -5,11 +5,11 @@ import uuid
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, patch
 
-from app.models import Blog, Media, MediaLink, PageSection, PartnershipSpotlight, SectionItem
+from app.models import Media, MediaLink, PageSection, PartnershipSpotlight, SectionItem
 from app.api.v1 import public_media
 from app.services import BlogService, HomepageCompositionService, group_media_links
 import app.services.content as content_service
-from app.services.page_cms import _get_research_partner_payload
+from app.services.page_cms import _get_research_partner_payload, _serialize_section
 
 
 class _ScalarResult:
@@ -65,6 +65,40 @@ def _make_link(entity_type: str, entity_id: uuid.UUID, role: str, filename: str,
 
 
 class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
+    async def test_public_section_payload_excludes_non_published_items(self):
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="campus-life",
+            layout_variant="pillar_grid",
+            status="published",
+        )
+        section.id = uuid.uuid4()
+        now = datetime.now(timezone.utc)
+        for item_status, title in (
+            ("published", "Live tile"),
+            ("draft", "Draft tile"),
+            ("in_review", "Review tile"),
+            ("archived", "Archived tile"),
+            (None, "Legacy tile"),
+        ):
+            item = SectionItem(
+                page_section_id=section.id,
+                item_type="text",
+                title=title,
+                display_order=1,
+                is_enabled=True,
+            )
+            item.status = item_status
+            item.created_at = now
+            section.items.append(item)
+
+        payload = await _serialize_section(None, section, {})
+
+        titles = sorted(item["title"] for item in payload["items"])
+        self.assertEqual(["Legacy tile", "Live tile"], titles)
+        self.assertTrue(all(item["status"] == "published" for item in payload["items"]))
+
     async def test_group_media_links_scopes_workflow_gate_to_club_media(self):
         db = _QueueDb([])
 
@@ -83,7 +117,13 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
     async def test_public_media_links_endpoint_scopes_workflow_gate_to_club_media(self):
         db = _QueueDb([])
 
-        await public_media.list_public_media_links(db, entity_type="club", entity_id=uuid.uuid4(), per_page=24)
+        await public_media.list_public_media_links.__wrapped__.__wrapped__(
+            request=None,
+            db=db,
+            entity_type="club",
+            entity_id=uuid.uuid4(),
+            per_page=24,
+        )
 
         query_text = str(db.statements[0]).lower()
         self.assertIn("media_links.is_public is true", query_text)
@@ -123,15 +163,26 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
                 _make_link("page_section", entity_id, "video", "story.mp4", media_type="video"),
                 _make_link("page_section", entity_id, "background", "bg.jpg"),
                 _make_link("page_section", entity_id, "poster", "poster.jpg"),
+                _make_link("page_section", entity_id, "signing_photo", "signing.jpg"),
             ]
         )
 
         grouped = await group_media_links(db, "page_section", entity_id)
 
         self.assertEqual(
-            {"heroImage", "mobileImage", "logos", "gallery", "video", "background", "poster"},
+            {
+                "heroImage",
+                "mobileImage",
+                "logos",
+                "gallery",
+                "video",
+                "background",
+                "poster",
+                "signingPhoto",
+            },
             set(grouped.keys()),
         )
+        self.assertEqual("signing_photo", grouped["signingPhoto"][0]["role"])
         self.assertEqual("heroImage", grouped["heroImage"][0]["role"])
         self.assertEqual("mobileImage", grouped["mobileImage"][0]["role"])
         self.assertEqual("logo", grouped["logos"][0]["role"])
@@ -143,6 +194,7 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
         query_text = str(db.statements[0]).lower()
         self.assertIn("media_links.entity_type", query_text)
         self.assertIn("media_links.entity_id", query_text)
+        self.assertIn("media_links.archived_at is null", query_text)
         self.assertIn("media_links.display_order", query_text)
 
     async def test_compose_sorts_sections_and_resolves_partnership_ctas(self):
@@ -155,6 +207,7 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
             status="published",
             display_order=20,
         )
+        first_section.id = uuid.uuid4()
         first_section.items = [
             SectionItem(
                 page_section=first_section,
@@ -173,6 +226,7 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
             status="published",
             display_order=5,
         )
+        second_section.id = uuid.uuid4()
         second_section.items = [
             SectionItem(
                 page_section=second_section,
@@ -224,6 +278,13 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
                 AsyncMock(return_value=[manual_spotlight, partner_website_spotlight, detail_page_spotlight]),
             ),
             patch(
+                "app.services.page_cms.group_media_links_for_entities",
+                AsyncMock(return_value={
+                    first_section.id: {"heroImage": [], "mobileImage": [], "logos": [], "gallery": [], "video": [], "background": [], "poster": []},
+                    second_section.id: {"heroImage": [], "mobileImage": [], "logos": [], "gallery": [], "video": [], "background": [], "poster": []},
+                }),
+            ),
+            patch(
                 "app.services.page_cms.group_media_links",
                 AsyncMock(
                     side_effect=[
@@ -243,6 +304,19 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
                         "slug": "international-collaboration",
                         "website": "https://partner.example.test",
                         "name": "Partner University",
+                    }
+                ),
+            ),
+            patch(
+                "app.services.page_cms.ResearchPartnersProxyService.find_partners_by_ids",
+                AsyncMock(
+                    return_value={
+                        str(spotlight_source_id): {
+                            "id": str(spotlight_source_id),
+                            "slug": "international-collaboration",
+                            "website": "https://partner.example.test",
+                            "name": "Partner University",
+                        }
                     }
                 ),
             ),
@@ -266,6 +340,50 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
             composition["partnership_spotlights"][2]["primary_cta"],
         )
 
+    async def test_compose_loads_all_section_media_in_one_bulk_query(self):
+        first_section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="first",
+            layout_variant="hero_admissions",
+            status="published",
+            display_order=10,
+        )
+        first_section.id = uuid.uuid4()
+        second_section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="second",
+            layout_variant="hero_admissions",
+            status="published",
+            display_order=20,
+        )
+        second_section.id = uuid.uuid4()
+        first_section.items = []
+        second_section.items = []
+        empty_media = {
+            "heroImage": [], "mobileImage": [], "logos": [], "gallery": [],
+            "video": [], "background": [], "poster": [],
+        }
+        bulk_media = AsyncMock(return_value={
+            first_section.id: {**empty_media, "heroImage": [{"id": "first"}]},
+            second_section.id: {**empty_media, "heroImage": [{"id": "second"}]},
+        })
+        db = object()
+
+        with (
+            patch("app.services.page_cms.PageSectionService.list_public", AsyncMock(return_value=[first_section, second_section])),
+            patch("app.services.page_cms._list_active_partnership_spotlights", AsyncMock(return_value=[])),
+            patch("app.services.page_cms.group_media_links_for_entities", bulk_media),
+            patch("app.services.page_cms.group_media_links", AsyncMock()) as individual_media,
+        ):
+            composition = await HomepageCompositionService.compose(db, "homepage", "university")
+
+        bulk_media.assert_awaited_once_with(db, "page_section", [first_section.id, second_section.id])
+        individual_media.assert_not_awaited()
+        self.assertEqual([{"id": "first"}], composition["sections"][0]["media"]["heroImage"])
+        self.assertEqual([{"id": "second"}], composition["sections"][1]["media"]["heroImage"])
+
     async def test_compose_filters_disabled_and_deleted_section_items_and_preserves_item_order(self):
         section = PageSection(
             page_key="homepage",
@@ -275,6 +393,7 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
             status="published",
             display_order=5,
         )
+        section.id = uuid.uuid4()
         deleted_item = SectionItem(
             page_section=section,
             page_section_id=section.id,
@@ -322,6 +441,12 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
                 AsyncMock(return_value=[]),
             ),
             patch(
+                "app.services.page_cms.group_media_links_for_entities",
+                AsyncMock(return_value={
+                    section.id: {"heroImage": [], "mobileImage": [], "logos": [], "gallery": [], "video": [], "background": [], "poster": []},
+                }),
+            ),
+            patch(
                 "app.services.page_cms.group_media_links",
                 AsyncMock(
                     return_value={
@@ -357,6 +482,7 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
             display_order=95,
             settings={"source": "research_partners"},
         )
+        section.id = uuid.uuid4()
         section.items = [
             SectionItem(
                 page_section=section,
@@ -378,6 +504,12 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
             patch(
                 "app.services.page_cms._list_active_partnership_spotlights",
                 AsyncMock(return_value=[]),
+            ),
+            patch(
+                "app.services.page_cms.group_media_links_for_entities",
+                AsyncMock(return_value={
+                    section.id: {"heroImage": [], "mobileImage": [], "logos": [], "gallery": [], "video": [], "background": [], "poster": []},
+                }),
             ),
             patch(
                 "app.services.page_cms.group_media_links",
@@ -425,6 +557,47 @@ class HomepageCompositionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("https://cdn.example.test/umn.svg", item["content"]["logoUrl"])
         self.assertEqual("https://twin-cities.umn.edu/", item["cta_url"])
         self.assertEqual("university-of-minnesota", item["content_enriched"]["research_partner"]["slug"])
+
+    async def test_compose_reuses_partner_section_payload_for_matching_spotlight(self):
+        partner_id = uuid.uuid4()
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="partners",
+            layout_variant="logo_carousel",
+            status="published",
+        )
+        section.id = uuid.uuid4()
+        section.items = []
+        spotlight = PartnershipSpotlight(
+            source_type="research_partner",
+            source_id=partner_id,
+            headline="Partner CTA",
+            primary_cta_source="partner_website",
+            primary_cta_label="Visit partner",
+            status="published",
+            is_enabled=True,
+        )
+        partner = {
+            "id": str(partner_id),
+            "name": "Partner University",
+            "slug": "partner-university",
+            "website": "https://partner.example.test",
+        }
+
+        with (
+            patch("app.services.page_cms.PageSectionService.list_public", AsyncMock(return_value=[section])),
+            patch("app.services.page_cms._list_active_partnership_spotlights", AsyncMock(return_value=[spotlight])),
+            patch("app.services.page_cms.group_media_links_for_entities", AsyncMock(return_value={section.id: {"heroImage": [], "mobileImage": [], "logos": [], "gallery": [], "video": [], "background": [], "poster": []}})),
+            patch("app.services.page_cms.group_media_links", AsyncMock(return_value={"heroImage": [], "mobileImage": [], "logos": [], "gallery": [], "video": [], "background": [], "poster": []})),
+            patch("app.services.page_cms.ResearchPartnersProxyService.list_partners", AsyncMock(return_value={"status": "success", "data": [partner]})) as list_partners,
+            patch("app.services.page_cms._get_research_partner_payload", AsyncMock()) as get_partner,
+        ):
+            composition = await HomepageCompositionService.compose(object(), "homepage", "university")
+
+        list_partners.assert_awaited_once_with(per_page=24, status="active", is_active=True)
+        get_partner.assert_not_awaited()
+        self.assertEqual("https://partner.example.test", composition["partnership_spotlights"][0]["primary_cta"]["href"])
 
     async def test_partner_lookup_is_not_limited_to_the_first_page(self):
         target_id = uuid.uuid4()

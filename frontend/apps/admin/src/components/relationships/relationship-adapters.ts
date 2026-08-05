@@ -11,6 +11,7 @@ import {
   blogsApi,
   newsApi,
   personsApi,
+  policiesApi,
   programmesApi,
   schoolsApi,
   slidersApi,
@@ -34,6 +35,7 @@ import {
   type Blog,
   type Event,
   type Person,
+  type Policy,
   type Programme,
   type ResearchDonor,
   type ResearchGenericRecord,
@@ -574,6 +576,50 @@ export const storyRelationshipAdapter: RelationshipAdapter<{
         "id,title,slug,summary,excerpt,status,is_published,published_at,updated_at",
     });
     return response.data ? storyOption(response.data) : null;
+  },
+};
+
+function policyOption(policy: Policy): RelationshipOption {
+  return {
+    id: policy.id,
+    label: policy.title,
+    description: joinDescription([
+      policy.code,
+      policy.version ? `v${policy.version}` : null,
+      policy.effective_date ? `Effective ${policy.effective_date}` : null,
+    ]),
+    eyebrow: policy.category,
+    raw: policy,
+  };
+}
+
+export const policyRelationshipAdapter: RelationshipAdapter<{
+  category?: string;
+}> = {
+  key: "policy",
+  entityType: "policy",
+  label: "Policy",
+  pluralLabel: "Policies",
+  searchPlaceholder: "Search policies by title, code, or summary",
+  emptyLabel: "No policies found.",
+  async search({ search, filters, limit = defaultLimit }) {
+    const response = await policiesApi.list({
+      per_page: limit,
+      q: search?.trim() || undefined,
+      category:
+        typeof filters?.category === "string" ? filters.category : undefined,
+      fields: "id,title,slug,code,category,version,effective_date,status",
+    });
+    return (response.data ?? []).map(policyOption);
+  },
+  async get(id) {
+    // Policies have no fetch-by-id endpoint; resolve from the register list.
+    const response = await policiesApi.list({
+      per_page: 100,
+      fields: "id,title,slug,code,category,version,effective_date,status",
+    });
+    const match = (response.data ?? []).find((policy) => policy.id === id);
+    return match ? policyOption(match) : null;
   },
 };
 
@@ -1835,6 +1881,7 @@ export const staffAssignmentRelationshipAdapter: RelationshipAdapter<{
 export const relationshipAdapters = {
   person: personRelationshipAdapter,
   news: newsRelationshipAdapter,
+  policy: policyRelationshipAdapter,
   story: storyRelationshipAdapter,
   event: eventRelationshipAdapter,
   user: userRelationshipAdapter,

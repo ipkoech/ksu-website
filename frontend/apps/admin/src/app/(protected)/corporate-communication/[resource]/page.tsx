@@ -12,12 +12,15 @@ export function generateStaticParams() {
     { resource: "homepage-features" },
     { resource: "sliders" },
     { resource: "media-folders" },
+    { resource: "media-assets" },
     { resource: "student-clubs" },
     { resource: "faqs" },
     { resource: "contacts" },
     { resource: "newsletters" },
     { resource: "newsletter-subscribers" },
     { resource: "testimonials" },
+    { resource: "documents" },
+    { resource: "policies" },
   ];
 }
 

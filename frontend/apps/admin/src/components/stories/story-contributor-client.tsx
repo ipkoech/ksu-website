@@ -8,6 +8,7 @@ import {
   contentWorkflowApi,
   storiesApi,
   type ContentWorkflowAction,
+  type ContentWorkflowLog,
   type ContentWorkflowQueueItem,
   type ContentWorkflowStatus,
   type Story,
@@ -36,6 +37,7 @@ export function StoryContributorClient({
   const router = useRouter();
   const [stories, setStories] = useState<Story[]>([]);
   const [editingStory, setEditingStory] = useState<Story | null>(null);
+  const [feedback, setFeedback] = useState<ContentWorkflowLog[]>([]);
   const [state, setState] = useState<LoadState>("idle");
   const [saving, setSaving] = useState<SubmitIntent | null>(null);
   const [message, setMessage] = useState("");
@@ -50,6 +52,12 @@ export function StoryContributorClient({
       if (needsStory) {
         const response = await storiesApi.get(storyId);
         setEditingStory(response.data);
+        try {
+          const logs = await storiesApi.feedback(storyId);
+          setFeedback(logs.data ?? []);
+        } catch {
+          setFeedback([]);
+        }
       } else if (needsList) {
         const response = await storiesApi.listMine({ per_page: 50 });
         setStories(response.data ?? []);
@@ -174,6 +182,7 @@ export function StoryContributorClient({
             : "This story is already in review, approved, scheduled, or published. It is read-only here."
         }
         story={editingStory}
+        feedback={feedback}
         message={message}
         saving={saving}
         readOnly={!canEdit}
@@ -382,6 +391,7 @@ function StoryEditor({
   title,
   description,
   story,
+  feedback = [],
   message,
   saving,
   readOnly = false,
@@ -391,6 +401,7 @@ function StoryEditor({
   title: string;
   description: string;
   story?: Story | null;
+  feedback?: ContentWorkflowLog[];
   message?: string;
   saving: SubmitIntent | null;
   readOnly?: boolean;
@@ -407,6 +418,19 @@ function StoryEditor({
   return (
     <PageFrame>
       <ContributorHeader title={title} description={description} />
+      {story ? (
+        <div className="flex items-center gap-3">
+          <StatusBadge
+            status={story.workflow_status ?? story.status ?? "draft"}
+          />
+          {story.submitted_at ? (
+            <span className="text-xs text-slate-500">
+              Submitted {new Date(story.submitted_at).toLocaleString()}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+      <ReviewerFeedback feedback={feedback} />
       <form
         onSubmit={(event) => {
           const submitter = (
@@ -554,6 +578,61 @@ function StoryEditor({
         </div>
       </form>
     </PageFrame>
+  );
+}
+
+const FEEDBACK_ACTION_LABELS: Record<string, string> = {
+  submit: "Submitted for review",
+  start_review: "Review started",
+  request_changes: "Changes requested",
+  approve: "Approved",
+  reject: "Rejected",
+  schedule: "Scheduled",
+  publish: "Published",
+  unpublish: "Unpublished",
+  withdraw: "Withdrawn",
+  edit_reset: "Edited (returned to draft)",
+  archive: "Archived",
+};
+
+function ReviewerFeedback({ feedback }: { feedback: ContentWorkflowLog[] }) {
+  const entries = feedback.filter(
+    (log) =>
+      log.comments || ["request_changes", "reject", "approve"].includes(log.action),
+  );
+  if (!entries.length) return null;
+  return (
+    <section className="rounded-2xl border bg-white p-5 shadow-sm">
+      <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">
+        Reviewer feedback
+      </h2>
+      <ol className="mt-3 grid gap-3">
+        {entries.map((log) => (
+          <li
+            key={log.id}
+            className={`rounded-xl border px-4 py-3 text-sm ${
+              log.action === "request_changes"
+                ? "border-amber-200 bg-amber-50 text-amber-900"
+                : log.action === "reject"
+                  ? "border-red-200 bg-red-50 text-red-800"
+                  : "border-slate-200 bg-slate-50 text-slate-700"
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-bold">
+                {FEEDBACK_ACTION_LABELS[log.action] ?? log.action.replace(/_/g, " ")}
+              </span>
+              <time className="text-xs opacity-70">
+                {new Date(log.created_at).toLocaleString()}
+              </time>
+            </div>
+            {log.comments ? (
+              <p className="mt-1 whitespace-pre-wrap leading-6">{log.comments}</p>
+            ) : null}
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 

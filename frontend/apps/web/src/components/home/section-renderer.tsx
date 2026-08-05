@@ -124,6 +124,7 @@ export function HomepageSections({
   featuredStories,
   socialLinks,
   vcHub,
+  suppressImplicitFeaturedStories = false,
 }: {
   sections: HomepageSection[];
   hero?: HomepageResolvedHero | null;
@@ -132,6 +133,7 @@ export function HomepageSections({
   featuredStories?: HomeCard[];
   socialLinks?: HomeSocialLinks;
   vcHub?: VcPublicHub | null;
+  suppressImplicitFeaturedStories?: boolean;
 }) {
   const orderedSections = orderHomepageSections(sections);
   const factsSection = sections.find(
@@ -139,10 +141,8 @@ export function HomepageSections({
       section.layout_variant === "facts_strip" ||
       section.section_key === "facts",
   );
-  const hasMergedWhySection = sections.some(
-    (section) =>
-      section.layout_variant === "pillar_grid" &&
-      section.section_key === "why-kisii",
+  const hasPulseStrip = sections.some(
+    (section) => section.layout_variant === "pulse_strip",
   );
   const academicDatesSection = sections.find(
     (section) =>
@@ -165,10 +165,7 @@ export function HomepageSections({
   return (
     <>
       {orderedSections.map((section) => {
-        if (section.layout_variant === "alumni_story") {
-          return null;
-        }
-        if (hasMergedWhySection && section.layout_variant === "facts_strip") {
+        if (hasPulseStrip && section.layout_variant === "facts_strip") {
           return null;
         }
         if (
@@ -196,7 +193,8 @@ export function HomepageSections({
               vcHub={vcHub}
             />
             {section.layout_variant === "programme_finder" &&
-            !hasExplicitFeaturedStories ? (
+            !hasExplicitFeaturedStories &&
+            !suppressImplicitFeaturedStories ? (
               <FeaturedStoriesSection stories={featuredStories} />
             ) : null}
           </Fragment>
@@ -207,39 +205,11 @@ export function HomepageSections({
 }
 
 function orderHomepageSections(sections: HomepageSection[]) {
-  const priority: Record<HomepageSectionLayoutVariant, number> = {
-    hero_admissions: 10,
-    pulse_strip: 20,
-    featured_partnership: 30,
-    pillar_grid: 40,
-    facts_strip: 41,
-    programme_finder: 50,
-    date_timeline: 51,
-    featured_stories: 55,
-    media_mosaic: 58,
-    leadership_activity: 60,
-    research_cards: 70,
-    logo_carousel: 80,
-    news_grid: 100,
-    events_list: 101,
-    alumni_story: 110,
-  };
-
+  // Use CMS display_order as primary sort; original array index as tiebreaker
   return sections
     .map((section, index) => ({ section, index }))
     .sort((first, second) => {
-      const firstPriority = isKnownHomepageLayoutVariant(
-        first.section.layout_variant,
-      )
-        ? priority[first.section.layout_variant]
-        : 1_000;
-      const secondPriority = isKnownHomepageLayoutVariant(
-        second.section.layout_variant,
-      )
-        ? priority[second.section.layout_variant]
-        : 1_000;
       return (
-        firstPriority - secondPriority ||
         (first.section.display_order ?? 1_000) -
           (second.section.display_order ?? 1_000) ||
         first.index - second.index

@@ -4,7 +4,17 @@ import { useEffect, useId, useMemo, useState, type Dispatch, type KeyboardEvent,
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpDown, ChevronDown, Database, Edit, Eye, FilterX, HelpCircle, MoreHorizontal, Plus, Search, ShieldCheck, SlidersHorizontal, Sparkles, Trash2 } from "lucide-react";
+import { ArchiveRestore, ArrowUpDown, ChevronDown, Database, Download, Edit, Eye, FileSpreadsheet, FilterX, HelpCircle, History, MoreHorizontal, Plus, Search, ShieldCheck, SlidersHorizontal, Sparkles, Trash2 } from "lucide-react";
+
+import { RecordHistory } from "@/components/workflow/record-history";
+import { NextActionButton } from "@/components/workflow/next-action-button";
+import { StatusChip } from "@/components/workflow/status-chip";
+import {
+  contentWorkflowApi,
+  mainExportsApi,
+  usersApi,
+  type ContentWorkflowBulkAction,
+} from "@ksu/api-client";
 
 const RESEARCH_FRONTEND = process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL;
 
@@ -31,6 +41,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Checkbox,
   Alert,
   AlertDescription,
   ConfirmDialog,
@@ -225,6 +236,13 @@ interface EditableServiceResourcePageProps<
   create: (payload: TPayload) => Promise<unknown>;
   update: (id: string, payload: Partial<TPayload>) => Promise<unknown>;
   delete?: (id: string) => Promise<unknown>;
+  /**
+   * Optional pre-delete lookup that runs when a delete is requested. The
+   * resolved message is appended to the confirm dialog (e.g. "Used in 3
+   * places…"), and confirming is blocked while the lookup is in flight.
+   * Backwards compatible: when omitted the delete flow is unchanged.
+   */
+  beforeDelete?: (record: TRecord) => Promise<string | null | undefined | void>;
   getRecordTitle: (record: TRecord) => string;
   getRecordMeta?: (record: TRecord) => string;
   getRecordDetailHref?: (record: TRecord) => string | null | undefined;
@@ -243,6 +261,13 @@ interface EditableServiceResourcePageProps<
   canCreate?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
+  /**
+   * Lets record workflow actions run even when the record itself is not
+   * editable (canEdit false). Use for read-only resources whose only
+   * mutations are workflow actions (e.g. unsubscribing a newsletter
+   * subscriber) so no empty "Edit record" entry is surfaced.
+   */
+  allowActionsWithoutEdit?: boolean;
   readOnlyMessage?: string;
   primaryActionLabel?: string;
   resourceKey?: string;
@@ -260,12 +285,38 @@ interface EditableServiceResourcePageProps<
   actionsInMenuOnly?: boolean;
   sortOptions?: EditableSortOption[];
   defaultSort?: EditableSortOption;
+  /**
+   * Shows the "All records | Archived | Recently deleted" browser. The list
+   * function receives a `record_state` param for the non-default views.
+   */
+  supportsRecovery?: boolean;
+  /** Which recovery views the backend supports (defaults to both). */
+  recoveryStates?: Array<"archived" | "deleted">;
+  /** Restores an archived or soft-deleted record. Required for the recovery views. */
+  restoreRecord?: (record: TRecord) => Promise<unknown>;
+  /**
+   * Backend content-type key for the workflow logs endpoint. When set, each
+   * row gains a "History" action that opens the record's workflow timeline.
+   */
+  historyContentType?: string;
+  /**
+   * Backend resource key for GET /api/v1/exports/{resource}.csv. When set,
+   * the toolbar gains a "Download CSV" button honoring the current filters.
+   */
+  exportResource?: string;
+  /** Spreadsheet import page for this resource (e.g. /imports/faqs). */
+  importHref?: string;
   emptyState?: {
     title?: string;
     description?: string;
     primaryActionLabel?: string;
     secondaryAction?: ReactNode;
   };
+  /**
+   * Pre-populate filter values on mount. Useful for workspace wrappers that
+   * drive the status filter via URL params. Keys should match `listFilters`.
+   */
+  initialFilters?: RecordShape;
 }
 
 function defaultValue(field: EditableField) {
@@ -420,6 +471,7 @@ export function EditableServiceResourcePage<
   create,
   update,
   delete: deleteRecord,
+  beforeDelete,
   getRecordTitle,
   getRecordMeta,
   getRecordDetailHref,
@@ -432,6 +484,7 @@ export function EditableServiceResourcePage<
   canCreate = true,
   canEdit = true,
   canDelete = true,
+  allowActionsWithoutEdit = false,
   readOnlyMessage = "You can view these records, but your current permissions do not allow changes.",
   primaryActionLabel,
   resourceKey,
@@ -445,7 +498,14 @@ export function EditableServiceResourcePage<
   actionsInMenuOnly = false,
   sortOptions = [],
   defaultSort,
+  supportsRecovery = false,
+  recoveryStates = ["archived", "deleted"],
+  restoreRecord,
+  historyContentType,
+  exportResource,
+  importHref,
   emptyState,
+  initialFilters,
 }: EditableServiceResourcePageProps<TRecord, TPayload>) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -456,6 +516,11 @@ export function EditableServiceResourcePage<
   const [editorIntent, setEditorIntent] = useState<"create" | "view" | "edit">("create");
   const [editingRecord, setEditingRecord] = useState<TRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TRecord | null>(null);
+  const [deleteContext, setDeleteContext] = useState<{
+    status: "idle" | "loading" | "ready";
+    message: string | null;
+  }>({ status: "idle", message: null });
+  const [historyTarget, setHistoryTarget] = useState<TRecord | null>(null);
   const [workflowTarget, setWorkflowTarget] = useState<{
     record: TRecord;
     action: EditableRecordWorkflowAction<TRecord, TPayload>;
@@ -468,8 +533,13 @@ export function EditableServiceResourcePage<
     recordToValues(fields),
   );
   const [workflowValues, setWorkflowValues] = useState<RecordShape>({});
-  const [filterValues, setFilterValues] = useState<RecordShape>({});
+  const [filterValues, setFilterValues] = useState<RecordShape>(() => initialFilters ?? {});
   const [sortValue, setSortValue] = useState(() => serializeSort(defaultSort ?? sortOptions[0]));
+  const [recordState, setRecordState] = useState<"active" | "archived" | "deleted">("active");
+  const inRecoveryView = supportsRecovery && recordState !== "active";
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
+  const [bulkAction, setBulkAction] = useState<"publish" | "archive" | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -487,12 +557,13 @@ export function EditableServiceResourcePage<
     [defaultSort, sortOptions, sortValue],
   );
   const recordsQuery = useQuery({
-    queryKey: [...queryKey, "filters", activeFilters, "sort", activeSort, "page", page, "perPage", perPage],
+    queryKey: [...queryKey, "filters", activeFilters, "sort", activeSort, "page", page, "perPage", perPage, "recordState", recordState],
     queryFn: () =>
       list({
         page,
         per_page: perPage,
         ...(activeSort ? { sort: activeSort.sort, order: activeSort.order } : {}),
+        ...(inRecoveryView ? { record_state: recordState } : {}),
         ...activeFilters,
       }),
   });
@@ -516,7 +587,40 @@ export function EditableServiceResourcePage<
 
   useEffect(() => {
     setPage(1);
-  }, [activeFilters, perPage]);
+  }, [activeFilters, perPage, recordState]);
+
+  // Bulk workflow actions only make sense on workflow resources for users who
+  // can publish; selection is page-scoped, so it resets with the visible page.
+  const bulkEnabled =
+    Boolean(historyContentType) &&
+    !inRecoveryView &&
+    hasAnyWorkflowScope?.(["content.publish"]) === true;
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [activeFilters, page, perPage, recordState]);
+
+  const toggleSelected = (recordId: string, checked: boolean) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (checked) {
+        next.add(recordId);
+      } else {
+        next.delete(recordId);
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const allPageSelected =
+    records.length > 0 && records.every((record) => selectedIds.has(String(record.id)));
+  const somePageSelected = records.some((record) => selectedIds.has(String(record.id)));
+
+  const toggleSelectAllOnPage = (checked: boolean) => {
+    setSelectedIds(checked ? new Set(records.map((record) => String(record.id))) : new Set());
+  };
 
   const createMutation = useMutation({
     mutationFn: create,
@@ -530,6 +634,92 @@ export function EditableServiceResourcePage<
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteRecord?.(id) ?? Promise.resolve(),
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+  });
+  const bulkMutation = useMutation({
+    mutationFn: ({
+      action,
+      items,
+    }: {
+      action: ContentWorkflowBulkAction;
+      items: Array<{ content_type: string; content_id: string }>;
+    }) => contentWorkflowApi.bulk(action, items),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+  });
+
+  const runBulkAction = async (action: "publish" | "archive") => {
+    if (!historyContentType) return;
+    const selectedRecords = records.filter((record) => selectedIds.has(String(record.id)));
+    if (selectedRecords.length === 0) return;
+
+    const verb = action === "publish" ? "Published" : "Archived";
+    const failureVerb = action === "publish" ? "published" : "archived";
+    try {
+      const response = await bulkMutation.mutateAsync({
+        action,
+        items: selectedRecords.map((record) => ({
+          content_type: historyContentType,
+          content_id: String(record.id),
+        })),
+      });
+      const results = response.data ?? [];
+      const failures = results.filter((result) => !result.ok);
+      const okCount = results.length - failures.length;
+      if (failures.length === 0) {
+        toast.success(`${verb} ${okCount} of ${results.length}.`);
+      } else {
+        const titlesById = new Map(
+          selectedRecords.map((record) => [String(record.id), getRecordTitle(record)]),
+        );
+        const detail = failures
+          .map(
+            (failure) =>
+              `'${titlesById.get(failure.content_id) ?? failure.content_id}' — ${failure.error ?? "not allowed right now"}`,
+          )
+          .join("; ");
+        const couldnt = failures.length === 1 ? "1 couldn't" : `${failures.length} couldn't`;
+        toast.error(`${verb} ${okCount} of ${results.length}. ${couldnt} be ${failureVerb}: ${detail}`);
+      }
+      clearSelection();
+    } catch {
+      toast.error(`The bulk ${action} could not be completed. Try again in a moment.`);
+    } finally {
+      setBulkAction(null);
+    }
+  };
+
+  const downloadCsv = async () => {
+    if (!exportResource || isExporting) return;
+    setIsExporting(true);
+    try {
+      const blob = await mainExportsApi.downloadCsv(exportResource, {
+        ...(inRecoveryView ? { record_state: recordState } : {}),
+        ...activeFilters,
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${exportResource}.csv`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      toast.success("CSV downloaded. Check your downloads folder.");
+    } catch {
+      toast.error("The CSV could not be downloaded. Try again in a moment.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const restoreMutation = useMutation({
+    mutationFn: (record: TRecord) => restoreRecord?.(record) ?? Promise.resolve(),
+    onSuccess: (_result, record) => {
+      toast.success(`'${getRecordTitle(record)}' has been restored. It's back in your drafts.`);
+      return queryClient.invalidateQueries({ queryKey });
+    },
+    onError: () => {
+      toast.error(`Failed to restore ${title.toLowerCase()}`);
+    },
   });
 
   const startEdit = (record: TRecord) => {
@@ -650,6 +840,20 @@ export function EditableServiceResourcePage<
     }
   };
 
+  const requestDelete = (record: TRecord) => {
+    setDeleteTarget(record);
+    if (!beforeDelete) {
+      setDeleteContext({ status: "idle", message: null });
+      return;
+    }
+    setDeleteContext({ status: "loading", message: null });
+    void beforeDelete(record)
+      .then((message) =>
+        setDeleteContext({ status: "ready", message: message ?? null }),
+      )
+      .catch(() => setDeleteContext({ status: "ready", message: null }));
+  };
+
   const confirmDelete = async () => {
     if (!deleteTarget || !deleteRecord) return;
     if (!canDelete) {
@@ -673,7 +877,7 @@ export function EditableServiceResourcePage<
     action: EditableRecordWorkflowAction<TRecord, TPayload>,
     overridePayload?: Partial<TPayload>,
   ) => {
-    if (!canEdit) {
+    if (!canEdit && !allowActionsWithoutEdit) {
       toast.error(`You do not have permission to update ${title.toLowerCase()}`);
       return;
     }
@@ -720,6 +924,7 @@ export function EditableServiceResourcePage<
   };
 
   const openRecordDetail = (record: TRecord) => {
+    if (inRecoveryView) return;
     if (viewInEditor) {
       startView(record);
       return;
@@ -764,7 +969,53 @@ export function EditableServiceResourcePage<
   };
 
   const renderRecordActions = (record: TRecord) => {
+    if (inRecoveryView) {
+      const stampValue =
+        recordState === "deleted"
+          ? record.deleted_at
+          : record.archived_at ?? record.updated_at;
+      const stampDate = stampValue ? new Date(stampValue) : null;
+      return (
+        <div
+          className="flex shrink-0 items-center gap-3"
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          {stampDate && !Number.isNaN(stampDate.getTime()) ? (
+            <span className="text-xs text-muted-foreground">
+              {recordState === "deleted" ? "deleted on" : "archived on"}{" "}
+              {stampDate.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+            </span>
+          ) : null}
+          {restoreRecord && canEdit ? (
+            <Button
+              type="button"
+              size="sm"
+              disabled={restoreMutation.isPending}
+              onClick={() => restoreMutation.mutate(record)}
+            >
+              <ArchiveRestore data-icon="inline-start" />
+              Restore
+            </Button>
+          ) : null}
+        </div>
+      );
+    }
+
     const detailHref = getRecordDetailHref?.(record);
+    const nextActionButton =
+      historyContentType && record.workflow_status ? (
+        <NextActionButton
+          contentType={historyContentType}
+          record={{ id: String(record.id), workflow_status: record.workflow_status }}
+          recordTitle={getRecordTitle(record)}
+          canEdit={canEdit}
+          canReview={hasAnyWorkflowScope?.(["content.review", "content.manage"]) === true}
+          canPublish={hasAnyWorkflowScope?.(["content.publish"]) === true}
+          onEdit={canEdit ? () => startEdit(record) : undefined}
+          onCompleted={() => queryClient.invalidateQueries({ queryKey })}
+        />
+      ) : null;
     const workflowActions = (getRecordWorkflowActions?.(record) ?? []).filter(
       (action) => !action.scopes?.length || hasAnyWorkflowScope?.(action.scopes) === true,
     );
@@ -773,9 +1024,10 @@ export function EditableServiceResourcePage<
       viewInEditor ||
       Boolean(detailHref) ||
       canEdit ||
+      Boolean(historyContentType) ||
       Boolean(deleteRecord && canDelete);
 
-    if (!canShowMenu) return null;
+    if (!canShowMenu && !nextActionButton) return null;
 
     return (
       <div
@@ -783,6 +1035,7 @@ export function EditableServiceResourcePage<
         onClick={(event) => event.stopPropagation()}
         onKeyDown={(event) => event.stopPropagation()}
       >
+        {nextActionButton}
         {!actionsInMenuOnly ? (
           <>
             {workflowActions.slice(0, 2).map((action) => (
@@ -831,6 +1084,7 @@ export function EditableServiceResourcePage<
           </>
         ) : null}
 
+        {canShowMenu ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -875,12 +1129,18 @@ export function EditableServiceResourcePage<
                 Edit record
               </DropdownMenuItem>
             ) : null}
+            {historyContentType ? (
+              <DropdownMenuItem onClick={() => setHistoryTarget(record)}>
+                <History data-icon="inline-start" />
+                History
+              </DropdownMenuItem>
+            ) : null}
             {deleteRecord && canDelete ? (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
-                  onClick={() => setDeleteTarget(record)}
+                  onClick={() => requestDelete(record)}
                 >
                   <Trash2 data-icon="inline-start" />
                   Delete record
@@ -889,6 +1149,7 @@ export function EditableServiceResourcePage<
             ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
+        ) : null}
       </div>
     );
   };
@@ -909,10 +1170,30 @@ export function EditableServiceResourcePage<
         tableLayout === "compact" && "flex-wrap sm:items-center sm:justify-end",
       )}
     >
-      {canCreate ? (
+      {canCreate && !inRecoveryView ? (
         <Button type="button" size="sm" className="shadow-sm" onClick={startCreate}>
           <Plus data-icon="inline-start" />
           {primaryActionLabel ?? "Create Record"}
+        </Button>
+      ) : null}
+      {exportResource ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={isExporting}
+          onClick={downloadCsv}
+        >
+          <Download data-icon="inline-start" />
+          {isExporting ? "Preparing CSV..." : "Download CSV"}
+        </Button>
+      ) : null}
+      {importHref && canCreate && !inRecoveryView ? (
+        <Button asChild type="button" variant="outline" size="sm">
+          <Link href={importHref}>
+            <FileSpreadsheet data-icon="inline-start" />
+            Import from spreadsheet
+          </Link>
         </Button>
       ) : null}
       {toolbarSlot}
@@ -970,10 +1251,10 @@ export function EditableServiceResourcePage<
           </SelectContent>
         </Select>
       ) : filter.type === "text" ? (
-        <Input
-          value={filterValues[filter.name] ?? ""}
+        <DebouncedFilterInput
+          value={typeof filterValues[filter.name] === "string" ? filterValues[filter.name] : ""}
           placeholder={filter.placeholder ?? filter.label}
-          onChange={(event) => updateFilter(filter.name, event.target.value || null)}
+          onCommit={(nextValue) => updateFilter(filter.name, nextValue || null)}
         />
       ) : filter.type === "date" ? (
         <DateTimePicker
@@ -1039,16 +1320,41 @@ export function EditableServiceResourcePage<
             </CardHeader>
           ) : null}
           <CardContent className="p-4 sm:p-5">
+            {supportsRecovery ? (
+              <div className="mb-4 inline-flex flex-wrap items-center gap-1 rounded-full border bg-muted/30 p-1">
+                {([
+                  { value: "active", label: "All records" },
+                  ...(recoveryStates.includes("archived")
+                    ? [{ value: "archived", label: "Archived" }]
+                    : []),
+                  ...(recoveryStates.includes("deleted")
+                    ? [{ value: "deleted", label: "Recently deleted" }]
+                    : []),
+                ] as Array<{ value: "active" | "archived" | "deleted"; label: string }>).map((segment) => (
+                  <Button
+                    key={segment.value}
+                    type="button"
+                    size="sm"
+                    variant={recordState === segment.value ? "secondary" : "ghost"}
+                    className="rounded-full"
+                    aria-pressed={recordState === segment.value}
+                    onClick={() => setRecordState(segment.value)}
+                  >
+                    {segment.label}
+                  </Button>
+                ))}
+              </div>
+            ) : null}
             {tableLayout === "compact" ? (
               <div className="mb-4 flex flex-col gap-3 rounded-2xl border bg-muted/20 p-3 lg:flex-row lg:items-center lg:justify-between">
                 {searchFilter ? (
                   <div className="relative min-w-0 flex-1">
                     <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      value={filterValues[searchFilter.name] ?? ""}
+                    <DebouncedFilterInput
+                      value={typeof filterValues[searchFilter.name] === "string" ? filterValues[searchFilter.name] : ""}
                       placeholder={searchFilter.placeholder ?? "Search records"}
                       className="pl-9"
-                      onChange={(event) => updateFilter(searchFilter.name, event.target.value || null)}
+                      onCommit={(nextValue) => updateFilter(searchFilter.name, nextValue || null)}
                     />
                   </div>
                 ) : (
@@ -1155,10 +1461,22 @@ export function EditableServiceResourcePage<
             ) : records.length === 0 ? (
               <div className="rounded-2xl border bg-gradient-to-br from-background to-muted/25 p-8">
                 <EmptyState
-                  title={emptyState?.title ?? "No records found"}
-                  description={emptyState?.description ?? emptyMessage}
+                  title={
+                    inRecoveryView
+                      ? recordState === "archived"
+                        ? "Nothing in the archive"
+                        : "Nothing recently deleted"
+                      : emptyState?.title ?? "No records found"
+                  }
+                  description={
+                    inRecoveryView
+                      ? recordState === "archived"
+                        ? "Records you archive will appear here — nothing is ever lost permanently."
+                        : "Records you delete will appear here so you can restore them."
+                      : emptyState?.description ?? emptyMessage
+                  }
                 />
-                {canCreate || emptyState?.secondaryAction ? (
+                {!inRecoveryView && (canCreate || emptyState?.secondaryAction) ? (
                   <div className="mt-4 flex flex-wrap justify-center gap-2">
                     {canCreate ? (
                       <Button type="button" size="sm" onClick={startCreate}>
@@ -1177,6 +1495,15 @@ export function EditableServiceResourcePage<
                     <table className="hidden w-full min-w-[960px] text-sm md:table">
                       <thead className="border-b bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
                         <tr>
+                          {bulkEnabled ? (
+                            <th className="w-10 px-4 py-3">
+                              <Checkbox
+                                aria-label="Select all records on this page"
+                                checked={allPageSelected ? true : somePageSelected ? "indeterminate" : false}
+                                onCheckedChange={(checked) => toggleSelectAllOnPage(checked === true)}
+                              />
+                            </th>
+                          ) : null}
                           {recordColumns.map((column) => (
                             <th key={column.key} className={`px-4 py-3 font-semibold ${column.className ?? ""}`}>
                               {column.label}
@@ -1191,13 +1518,26 @@ export function EditableServiceResourcePage<
                             key={record.id}
                             className={cn(
                               "align-top transition-colors",
-                              (viewInEditor || getRecordDetailHref?.(record)) && "cursor-pointer hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                              !inRecoveryView && (viewInEditor || getRecordDetailHref?.(record)) && "cursor-pointer hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                             )}
-                            role={viewInEditor ? "button" : getRecordDetailHref?.(record) ? "link" : undefined}
-                            tabIndex={viewInEditor || getRecordDetailHref?.(record) ? 0 : undefined}
+                            role={inRecoveryView ? undefined : viewInEditor ? "button" : getRecordDetailHref?.(record) ? "link" : undefined}
+                            tabIndex={!inRecoveryView && (viewInEditor || getRecordDetailHref?.(record)) ? 0 : undefined}
                             onClick={() => openRecordDetail(record)}
                             onKeyDown={(event) => handleRecordKeyDown(event, record)}
                           >
+                            {bulkEnabled ? (
+                              <td
+                                className="w-10 px-4 py-3"
+                                onClick={(event) => event.stopPropagation()}
+                                onKeyDown={(event) => event.stopPropagation()}
+                              >
+                                <Checkbox
+                                  aria-label={`Select ${getRecordTitle(record)}`}
+                                  checked={selectedIds.has(String(record.id))}
+                                  onCheckedChange={(checked) => toggleSelected(String(record.id), checked === true)}
+                                />
+                              </td>
+                            ) : null}
                             {recordColumns.map((column) => (
                               <td key={column.key} className={`px-4 py-3 ${column.className ?? ""}`}>
                                 {column.render(record)}
@@ -1217,10 +1557,10 @@ export function EditableServiceResourcePage<
                             key={`mobile-${record.id}`}
                             className={cn(
                               "p-3",
-                              (viewInEditor || getRecordDetailHref?.(record)) && "cursor-pointer transition-colors hover:bg-muted/35",
+                              !inRecoveryView && (viewInEditor || getRecordDetailHref?.(record)) && "cursor-pointer transition-colors hover:bg-muted/35",
                             )}
-                            role={viewInEditor ? "button" : getRecordDetailHref?.(record) ? "link" : undefined}
-                            tabIndex={viewInEditor || getRecordDetailHref?.(record) ? 0 : undefined}
+                            role={inRecoveryView ? undefined : viewInEditor ? "button" : getRecordDetailHref?.(record) ? "link" : undefined}
+                            tabIndex={!inRecoveryView && (viewInEditor || getRecordDetailHref?.(record)) ? 0 : undefined}
                             onClick={() => openRecordDetail(record)}
                             onKeyDown={(event) => handleRecordKeyDown(event, record)}
                           >
@@ -1233,9 +1573,17 @@ export function EditableServiceResourcePage<
                             getRecordTitle={getRecordTitle}
                             getRecordMeta={getRecordMeta}
                             actions={renderRecordActions(record)}
-                            detailHref={getRecordDetailHref?.(record)}
-                            openInEditor={viewInEditor}
+                            detailHref={inRecoveryView ? null : getRecordDetailHref?.(record)}
+                            openInEditor={viewInEditor && !inRecoveryView}
                             onOpen={() => openRecordDetail(record)}
+                            selection={
+                              bulkEnabled
+                                ? {
+                                    selected: selectedIds.has(String(record.id)),
+                                    onSelectedChange: (checked) => toggleSelected(String(record.id), checked),
+                                  }
+                                : undefined
+                            }
                           />
                         )
                       ))}
@@ -1251,8 +1599,8 @@ export function EditableServiceResourcePage<
                             "p-3",
                             (viewInEditor || getRecordDetailHref?.(record)) && "cursor-pointer transition-colors hover:bg-muted/35",
                           )}
-                          role={viewInEditor ? "button" : getRecordDetailHref?.(record) ? "link" : undefined}
-                          tabIndex={viewInEditor || getRecordDetailHref?.(record) ? 0 : undefined}
+                          role={inRecoveryView ? undefined : viewInEditor ? "button" : getRecordDetailHref?.(record) ? "link" : undefined}
+                          tabIndex={!inRecoveryView && (viewInEditor || getRecordDetailHref?.(record)) ? 0 : undefined}
                           onClick={() => openRecordDetail(record)}
                           onKeyDown={(event) => handleRecordKeyDown(event, record)}
                         >
@@ -1265,9 +1613,17 @@ export function EditableServiceResourcePage<
                           getRecordTitle={getRecordTitle}
                           getRecordMeta={getRecordMeta}
                           actions={renderRecordActions(record)}
-                          detailHref={getRecordDetailHref?.(record)}
-                          openInEditor={viewInEditor}
+                          detailHref={inRecoveryView ? null : getRecordDetailHref?.(record)}
+                          openInEditor={viewInEditor && !inRecoveryView}
                           onOpen={() => openRecordDetail(record)}
+                          selection={
+                            bulkEnabled
+                              ? {
+                                  selected: selectedIds.has(String(record.id)),
+                                  onSelectedChange: (checked) => toggleSelected(String(record.id), checked),
+                                }
+                              : undefined
+                          }
                         />
                       )
                     ))}
@@ -1358,6 +1714,7 @@ export function EditableServiceResourcePage<
               readOnly={false}
             />
             <SheetFooter className="sticky bottom-0 mt-auto gap-2 border-t bg-background pt-4 sm:gap-0">
+              <LastEditedBy record={editingRecord} />
               <EditorFooter
                 editingRecord={editingRecord}
                 canCreate={canCreate}
@@ -1397,6 +1754,7 @@ export function EditableServiceResourcePage<
               readOnly={editorIntent === "view"}
             />
             <DialogFooter className="gap-2 sm:gap-0">
+              <LastEditedBy record={editingRecord} />
               <EditorFooter
                 editingRecord={editingRecord}
                 canCreate={canCreate}
@@ -1412,17 +1770,50 @@ export function EditableServiceResourcePage<
         </Dialog>
       )}
 
+      {historyContentType ? (
+        <Sheet
+          open={!!historyTarget}
+          onOpenChange={(open) => {
+            if (!open) setHistoryTarget(null);
+          }}
+        >
+          <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-xl">
+            <SheetHeader>
+              <SheetTitle>History</SheetTitle>
+              <SheetDescription>
+                {historyTarget
+                  ? `Everything that has happened to "${getRecordTitle(historyTarget)}".`
+                  : "Record history."}
+              </SheetDescription>
+            </SheetHeader>
+            {historyTarget ? (
+              <RecordHistory
+                contentType={historyContentType}
+                contentId={historyTarget.id}
+              />
+            ) : null}
+          </SheetContent>
+        </Sheet>
+      ) : null}
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
         }}
         title={`Delete ${title.toLowerCase()}?`}
-        description={`This will delete "${deleteTarget ? getRecordTitle(deleteTarget) : "this record"}".`}
+        description={[
+          `This will delete "${deleteTarget ? getRecordTitle(deleteTarget) : "this record"}".`,
+          deleteContext.status === "loading"
+            ? "Checking where this record is used…"
+            : deleteContext.message ?? "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         variant="destructive"
         confirmLabel="Delete"
         onConfirm={confirmDelete}
         isLoading={deleteMutation.isPending}
+        disabled={deleteContext.status === "loading"}
       />
       <Sheet
         open={!!workflowEditorTarget}
@@ -1496,7 +1887,103 @@ export function EditableServiceResourcePage<
         }}
         isLoading={updateMutation.isPending}
       />
+      {bulkEnabled && selectedIds.size > 0 ? (
+        <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
+          <div className="flex flex-wrap items-center gap-2 rounded-full border bg-background/95 px-4 py-2 shadow-lg backdrop-blur sm:gap-3 sm:px-5">
+            <p className="text-sm font-medium">
+              {selectedIds.size} selected
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              disabled={bulkMutation.isPending}
+              onClick={() => setBulkAction("publish")}
+            >
+              Publish
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={bulkMutation.isPending}
+              onClick={() => setBulkAction("archive")}
+            >
+              Archive
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={bulkMutation.isPending}
+              onClick={clearSelection}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      ) : null}
+      <ConfirmDialog
+        open={!!bulkAction}
+        onOpenChange={(open) => {
+          if (!open && !bulkMutation.isPending) setBulkAction(null);
+        }}
+        title={
+          bulkAction === "archive"
+            ? `Archive ${selectedIds.size} record${selectedIds.size === 1 ? "" : "s"}?`
+            : `Publish ${selectedIds.size} record${selectedIds.size === 1 ? "" : "s"}?`
+        }
+        description={
+          bulkAction === "archive"
+            ? `The ${selectedIds.size} selected record${selectedIds.size === 1 ? "" : "s"} will move to the archive. You can restore them later from the Archived view.`
+            : `The ${selectedIds.size} selected record${selectedIds.size === 1 ? "" : "s"} will appear on the public website immediately. Records that are not ready to publish are skipped and reported.`
+        }
+        confirmLabel={bulkAction === "archive" ? "Archive" : "Publish"}
+        onConfirm={async () => {
+          if (bulkAction) await runBulkAction(bulkAction);
+        }}
+        isLoading={bulkMutation.isPending}
+      />
     </div>
+  );
+}
+
+/**
+ * Text filter input that waits for a typing pause before committing the value,
+ * so list queries are not refetched on every keystroke.
+ */
+function DebouncedFilterInput({
+  value,
+  placeholder,
+  className,
+  onCommit,
+  delay = 350,
+}: {
+  value: string;
+  placeholder?: string;
+  className?: string;
+  onCommit: (value: string) => void;
+  delay?: number;
+}) {
+  const [draft, setDraft] = useState(value);
+
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  useEffect(() => {
+    if (draft === value) return;
+    const handle = setTimeout(() => onCommit(draft), delay);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft, delay, value]);
+
+  return (
+    <Input
+      value={draft}
+      placeholder={placeholder}
+      className={className}
+      onChange={(event) => setDraft(event.target.value)}
+    />
   );
 }
 
@@ -1607,6 +2094,7 @@ function RecordListRow<TRecord extends RecordShape>({
   detailHref,
   openInEditor = false,
   onOpen,
+  selection,
 }: {
   record: TRecord;
   getRecordTitle: (record: TRecord) => string;
@@ -1615,6 +2103,10 @@ function RecordListRow<TRecord extends RecordShape>({
   detailHref?: string | null;
   openInEditor?: boolean;
   onOpen?: () => void;
+  selection?: {
+    selected: boolean;
+    onSelectedChange: (checked: boolean) => void;
+  };
 }) {
   const isInteractive = openInEditor || Boolean(detailHref);
   const visualMedia = getRecordVisualMedia(record);
@@ -1636,12 +2128,30 @@ function RecordListRow<TRecord extends RecordShape>({
       onKeyDown={handleKeyDown}
     >
       <div className="flex min-w-0 flex-1 gap-4">
+        {selection ? (
+          <div
+            className="flex shrink-0 items-start pt-1"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            <Checkbox
+              aria-label={`Select ${getRecordTitle(record)}`}
+              checked={selection.selected}
+              onCheckedChange={(checked) => selection.onSelectedChange(checked === true)}
+            />
+          </div>
+        ) : null}
         <RecordMediaPreview media={visualMedia} record={record} />
         <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="break-words font-semibold tracking-tight">{getRecordTitle(record)}</p>
-          {record.status ? <Badge variant="outline">{record.status}</Badge> : null}
-          {record.workflow_status ? <Badge variant="secondary">{String(record.workflow_status).replace(/_/g, " ")}</Badge> : null}
+          {record.status && !record.workflow_status ? <Badge variant="outline">{record.status}</Badge> : null}
+          {record.workflow_status ? (
+            <StatusChip
+              status={String(record.workflow_status)}
+              scheduledFor={record.scheduled_publish_at}
+            />
+          ) : null}
           {typeof record.is_active === "boolean" ? (
             <Badge variant={record.is_active ? "default" : "secondary"}>
               {record.is_active ? "Active" : "Inactive"}
@@ -1653,12 +2163,75 @@ function RecordListRow<TRecord extends RecordShape>({
             record.updated_at ??
             record.created_at ??
             "No metadata"}
+          <RecordEditedBy record={record} />
         </p>
         </div>
       </div>
       {actions}
     </div>
   );
+}
+
+/**
+ * Resolves the display name of a record's last editor: prefers the joined
+ * `updated_by` dict when the serializer includes it, otherwise looks the user
+ * up once by `updated_by_id` (cached forever, like workflow history actors).
+ */
+function useEditorName(record: RecordShape) {
+  const joinedName =
+    typeof record.updated_by?.full_name === "string" && record.updated_by.full_name.trim()
+      ? (record.updated_by.full_name as string)
+      : null;
+  const editorId = typeof record.updated_by_id === "string" ? record.updated_by_id : null;
+  const userQuery = useQuery({
+    queryKey: ["record-editor", editorId],
+    queryFn: () => usersApi.get(editorId!),
+    enabled: Boolean(editorId) && !joinedName,
+    staleTime: Infinity,
+    retry: false,
+  });
+  return joinedName ?? userQuery.data?.data?.full_name ?? null;
+}
+
+function RecordEditedBy({ record }: { record: RecordShape }) {
+  const name = useEditorName(record);
+  if (!name) return null;
+  return <span>{` · edited by ${name}`}</span>;
+}
+
+/** "Last edited by {name}, {relative time}" line for the editor footers. */
+function LastEditedBy({ record }: { record: RecordShape | null }) {
+  const name = useEditorName(record ?? {});
+  if (!record || !name) return null;
+  const stamp = typeof record.updated_at === "string" ? record.updated_at : null;
+  return (
+    <p className="mr-auto self-center text-xs text-muted-foreground">
+      Last edited by {name}
+      {stamp ? `, ${relativeTime(stamp)}` : ""}
+    </p>
+  );
+}
+
+function relativeTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  const diffSeconds = Math.round((date.getTime() - Date.now()) / 1000);
+  const divisions: Array<[number, Intl.RelativeTimeFormatUnit]> = [
+    [60, "second"],
+    [60, "minute"],
+    [24, "hour"],
+    [7, "day"],
+    [4.34524, "week"],
+    [12, "month"],
+    [Number.POSITIVE_INFINITY, "year"],
+  ];
+  const formatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+  let duration = diffSeconds;
+  for (const [amount, unit] of divisions) {
+    if (Math.abs(duration) < amount) return formatter.format(Math.round(duration), unit);
+    duration /= amount;
+  }
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
 function RecordMediaPreview({

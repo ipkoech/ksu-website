@@ -16,6 +16,7 @@ from app.schemas.page_cms import (
     PartnershipSpotlightRead,
     PartnershipSpotlightUpdate,
     SectionItemCreate,
+    SectionItemUpdate,
 )
 
 
@@ -32,6 +33,16 @@ class PageCmsSchemaTests(unittest.TestCase):
                 section_key="hero",
                 layout_variant=PAGE_SECTION_LAYOUT_VARIANTS[0],
             )
+
+    def test_page_section_create_requires_scope_id_for_every_non_university_scope(self):
+        for scope_type in ("school", "research", "library"):
+            with self.subTest(scope_type=scope_type), self.assertRaises(ValidationError):
+                PageSectionCreate(
+                    page_key="homepage",
+                    scope_type=scope_type,
+                    section_key="hero",
+                    layout_variant=PAGE_SECTION_LAYOUT_VARIANTS[0],
+                )
 
     def test_page_section_create_rejects_unknown_layout_variant(self):
         with self.assertRaises(ValidationError):
@@ -148,6 +159,7 @@ class PageCmsSchemaTests(unittest.TestCase):
                 "description": "Primary homepage section copy",
                 "settings": {"theme": "dark"},
                 "display_order": 11,
+                "revision": 2,
                 "is_enabled": True,
                 "layout_variant": PAGE_SECTION_LAYOUT_VARIANTS[0],
                 "status": "published",
@@ -178,6 +190,7 @@ class PageCmsSchemaTests(unittest.TestCase):
         self.assertEqual(result.description, "Primary homepage section copy")
         self.assertEqual(result.settings, {"theme": "dark"})
         self.assertEqual(result.display_order, 11)
+        self.assertEqual(result.revision, 2)
 
     def test_section_item_create_rejects_external_cta_urls_without_http_scheme(self):
         with self.assertRaises(ValidationError):
@@ -196,6 +209,144 @@ class PageCmsSchemaTests(unittest.TestCase):
                 cta_label="View programme",
                 cta_url="programmes/computer-science",
             )
+
+    def test_source_id_requires_source_type(self):
+        with self.assertRaises(ValidationError):
+            SectionItemCreate(source_id=uuid.uuid4())
+
+    def test_manual_item_cannot_include_source_reference(self):
+        with self.assertRaises(ValidationError):
+            SectionItemCreate(item_type="text", source_type="news", source_id=uuid.uuid4())
+
+    def test_editorial_overrides_are_limited_to_safe_fields(self):
+        with self.assertRaises(ValidationError):
+            SectionItemCreate(
+                item_type="reference",
+                source_type="news",
+                source_id=uuid.uuid4(),
+                editorial_overrides={"unsafe_html": "<script>"},
+            )
+
+    def test_section_item_create_accepts_typed_source_reference(self):
+        source_id = uuid.uuid4()
+
+        item = SectionItemCreate(
+            item_type="reference",
+            source_type="news",
+            source_id=source_id,
+            editorial_overrides={"title": "Editorial headline", "cta_url": "/news/latest"},
+        )
+
+        self.assertEqual(item.source_type, "news")
+        self.assertEqual(item.source_id, source_id)
+        self.assertEqual(item.editorial_overrides, {"title": "Editorial headline", "cta_url": "/news/latest"})
+
+    def test_reference_item_rejects_generic_content_fields(self):
+        generic_fields = {
+            "title": "Duplicate title",
+            "subtitle": "Duplicate subtitle",
+            "body_text": "Duplicate body",
+            "content": {"duplicate": True},
+            "cta_label": "Duplicate CTA",
+            "cta_url": "/duplicate",
+            "cta_description": "Duplicate description",
+            "media_caption": "Duplicate caption",
+            "media_alt_text": "Duplicate alt text",
+            "video_provider": "youtube",
+            "video_url": "https://video.example.test/duplicate",
+            "video_duration_seconds": 60,
+        }
+
+        for field, value in generic_fields.items():
+            with self.subTest(field=field), self.assertRaises(ValidationError):
+                SectionItemCreate(
+                    item_type="reference",
+                    source_type="news",
+                    source_id=uuid.uuid4(),
+                    **{field: value},
+                )
+
+    def test_reference_item_accepts_empty_generic_fields_and_editorial_overrides(self):
+        item = SectionItemCreate(
+            item_type="reference",
+            source_type="news",
+            source_id=uuid.uuid4(),
+            title="",
+            subtitle="",
+            body_text="",
+            content={},
+            cta_label="",
+            cta_url="",
+            cta_description="",
+            media_caption="",
+            media_alt_text="",
+            video_provider="",
+            video_url="",
+            editorial_overrides={"title": "Curated title"},
+        )
+
+        self.assertEqual(item.item_type, "reference")
+        self.assertEqual(item.editorial_overrides, {"title": "Curated title"})
+
+    def test_manual_item_preserves_generic_content_fields(self):
+        item = SectionItemCreate(
+            item_type="text",
+            title="Manual title",
+            body_text="Manual body",
+            content={"key": "value"},
+            cta_label="Read more",
+            cta_url="/manual",
+            video_duration_seconds=60,
+        )
+
+        self.assertEqual(item.title, "Manual title")
+        self.assertEqual(item.content, {"key": "value"})
+        self.assertEqual(item.video_duration_seconds, 60)
+
+    def test_partial_update_schema_keeps_source_fields_pairable(self):
+        update = SectionItemUpdate(source_type=None, source_id=None, item_type="text")
+
+        self.assertEqual(update.source_type, None)
+        self.assertEqual(update.source_id, None)
+
+    def test_nested_section_item_update_accepts_persisted_identity_and_revision(self):
+        item_id = uuid.uuid4()
+
+        update = SectionItemUpdate(id=item_id, revision=3, title="Updated title")
+
+        self.assertEqual(item_id, update.id)
+        self.assertEqual(3, update.revision)
+
+    def test_nested_section_item_update_requires_revision_when_identity_is_supplied(self):
+        with self.assertRaises(ValidationError):
+            SectionItemUpdate(id=uuid.uuid4(), title="Updated title")
+
+    def test_partial_reference_update_rejects_generic_content(self):
+        with self.assertRaises(ValidationError):
+            SectionItemUpdate(item_type="reference", title="Duplicate title")
+
+    def test_page_section_read_requires_persisted_revision(self):
+        now = _utc_now()
+        section_like = type(
+            "PageSectionLike",
+            (),
+            {
+                "id": uuid.uuid4(),
+                "created_at": now,
+                "updated_at": now,
+                "page_key": "homepage",
+                "scope_type": "university",
+                "scope_id": None,
+                "section_key": "hero",
+                "display_order": 100,
+                "is_enabled": True,
+                "layout_variant": "hero_admissions",
+                "status": "draft",
+            },
+        )()
+
+        with self.assertRaises(ValidationError):
+            PageSectionRead.model_validate(section_like)
 
     def test_partnership_spotlight_create_accepts_supported_primary_cta_sources(self):
         payload = {

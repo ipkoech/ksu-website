@@ -7,105 +7,83 @@ type CampusLifeHorizontalScrollerProps = {
   children: ReactNode;
 };
 
+/** Maps ordinary page scrolling to a bounded horizontal story rail. */
 export function CampusLifeHorizontalScroller({
   children,
 }: CampusLifeHorizontalScrollerProps) {
-  const trackRef = useRef<HTMLDivElement | null>(null);
+  const sceneRef = useRef<HTMLDivElement | null>(null);
   const railRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const track = trackRef.current;
+    const scene = sceneRef.current?.closest(
+      ".campus-life-scroll-scene",
+    ) as HTMLElement | null;
     const rail = railRef.current;
-    if (!track || !rail) return;
-    const currentTrack = track;
-    const currentRail = rail;
-    let animationFrame = 0;
-    const desktopQuery = window.matchMedia("(min-width: 1024px)");
-    const reduceMotionQuery = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    );
+    const frame = sceneRef.current;
+    if (!scene || !rail || !frame) return;
 
-    function updateHorizontalPosition() {
-      animationFrame = 0;
-      const section = currentTrack.closest(
-        ".campus-life-scroll-scene",
-      ) as HTMLElement | null;
-      if (!section || !desktopQuery.matches || reduceMotionQuery.matches) {
-        currentRail.style.transform = "translate3d(0px, 0, 0)";
-        currentTrack.style.setProperty("--campus-progress", "0");
-        section?.style.setProperty("--campus-progress", "0");
-        if (section) section.style.minHeight = "";
+    let raf = 0;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const desktop = window.matchMedia("(min-width: 1024px)");
+
+    const update = () => {
+      raf = 0;
+      if (!desktop.matches || reduceMotion.matches) {
+        rail.style.transform = "translate3d(0,0,0)";
+        scene.style.height = "";
         return;
       }
 
-      const maxTranslate = Math.max(
-        currentRail.scrollWidth - currentTrack.clientWidth,
-        0,
-      );
-      const stickyFrame = currentTrack.closest(
-        ".campus-life-sticky-frame",
-      ) as HTMLElement | null;
-      const stickyHeight = stickyFrame?.clientHeight ?? window.innerHeight;
-      const stickyTop = stickyFrame
-        ? parseFloat(window.getComputedStyle(stickyFrame).top) || 0
-        : 0;
-      section.style.minHeight = `${Math.ceil(stickyHeight + maxTranslate)}px`;
+      const maxTranslate = Math.max(rail.scrollWidth - frame.clientWidth, 0);
+      const stickyHeight = frame.clientHeight;
+      const travel = Math.min(Math.max(Math.ceil(maxTranslate * 0.52), 1), 760);
+      scene.style.height = `${stickyHeight + travel}px`;
 
-      const sectionTop =
-        section.getBoundingClientRect().top + window.scrollY - stickyTop;
-      const scrollableDistance = Math.max(maxTranslate, 1);
+      const top = scene.getBoundingClientRect().top + window.scrollY;
+      const start = top - (parseFloat(getComputedStyle(frame).top) || 0);
       const progress = Math.min(
-        Math.max((window.scrollY - sectionTop) / scrollableDistance, 0),
+        Math.max((window.scrollY - start) / travel, 0),
         1,
       );
-      const translateX = -progress * maxTranslate;
+      rail.style.transform = `translate3d(${-progress * maxTranslate}px,0,0)`;
+    };
 
-      currentRail.style.transform = `translate3d(${translateX}px, 0, 0)`;
-      currentTrack.style.setProperty("--campus-progress", String(progress));
-      section.style.setProperty("--campus-progress", String(progress));
-    }
-
-    function requestUpdate() {
-      if (animationFrame) return;
-      animationFrame = window.requestAnimationFrame(updateHorizontalPosition);
-    }
-
-    requestUpdate();
+    const requestUpdate = () => {
+      if (!raf) raf = window.requestAnimationFrame(update);
+    };
+    const observer = new ResizeObserver(requestUpdate);
+    observer.observe(frame);
+    observer.observe(rail);
     window.addEventListener("scroll", requestUpdate, { passive: true });
     window.addEventListener("resize", requestUpdate);
-    desktopQuery.addEventListener("change", requestUpdate);
-    reduceMotionQuery.addEventListener("change", requestUpdate);
-
-    const resizeObserver = new ResizeObserver(requestUpdate);
-    resizeObserver.observe(currentTrack);
-    resizeObserver.observe(currentRail);
+    desktop.addEventListener("change", requestUpdate);
+    reduceMotion.addEventListener("change", requestUpdate);
+    requestUpdate();
 
     return () => {
-      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      if (raf) window.cancelAnimationFrame(raf);
+      observer.disconnect();
       window.removeEventListener("scroll", requestUpdate);
       window.removeEventListener("resize", requestUpdate);
-      desktopQuery.removeEventListener("change", requestUpdate);
-      reduceMotionQuery.removeEventListener("change", requestUpdate);
-      resizeObserver.disconnect();
-      const section = currentTrack.closest(
-        ".campus-life-scroll-scene",
-      ) as HTMLElement | null;
-      if (section) section.style.minHeight = "";
+      desktop.removeEventListener("change", requestUpdate);
+      reduceMotion.removeEventListener("change", requestUpdate);
+      scene.style.height = "";
+      rail.style.transform = "";
     };
   }, []);
 
   return (
     <div
-      ref={trackRef}
-      className="campus-life-horizontal-track overflow-visible lg:overflow-hidden"
-      tabIndex={0}
-      aria-label="Campus life audience stories"
+      ref={sceneRef}
+      className="campus-life-sticky-frame lg:sticky lg:top-[var(--public-header-offset,96px)] lg:flex lg:min-h-[460px] lg:items-center"
     >
-      <div
-        ref={railRef}
-        className="campus-life-horizontal-rail transition-transform duration-75 ease-linear will-change-transform motion-reduce:transform-none motion-reduce:transition-none"
-      >
-        {children}
+      <div className="campus-life-horizontal-track w-full overflow-hidden" aria-label="Life around studies stories">
+        <div
+          ref={railRef}
+          className="campus-life-horizontal-rail flex w-max items-stretch gap-5 transition-transform duration-75 ease-linear will-change-transform motion-reduce:transform-none motion-reduce:transition-none"
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

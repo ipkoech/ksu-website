@@ -377,7 +377,7 @@ function DonationSuccessPanel({
         <div className="rounded-lg border border-border bg-white p-4">
           <h3 className="text-base font-semibold text-foreground">Donation account details</h3>
           {hasAccountDetails ? (
-            <dl className="mt-4 divide-y divide-slate-200">
+            <dl className="mt-4 divide-y divide-border">
               {accountRows.map((row) => (
                 <div key={row.label} className="grid gap-1 py-3 sm:grid-cols-[130px_1fr]">
                   <dt className="text-xs font-semibold uppercase text-muted-foreground">{row.label}</dt>
@@ -530,7 +530,7 @@ function DonationForm({
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-secondary">Make a Gift</p>
-          <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground">
+          <h2 className="mt-2 font-[family-name:var(--app-font-display)] text-3xl font-semibold text-foreground">
             Giving details
           </h2>
         </div>
@@ -768,13 +768,13 @@ function DonationAccountPanel({
         </span>
         <div>
           <Badge>Payment details</Badge>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-8 text-foreground">
+          <h2 className="mt-3 font-[family-name:var(--app-font-display)] text-2xl font-semibold leading-8 text-foreground">
             Donation account details
           </h2>
         </div>
       </div>
       {accountRows.length > 0 ? (
-        <dl className="mt-5 divide-y divide-slate-200">
+        <dl className="mt-5 divide-y divide-border">
           {accountRows.map((row) => (
             <div key={row.label} className="grid gap-1 py-3 first:pt-0 sm:grid-cols-[128px_1fr]">
               <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{row.label}</dt>
@@ -846,7 +846,7 @@ function ImpactFeature({ impact }: { impact?: ResearchGenericRecord }) {
       </div>
       <div className="p-5">
         <Badge>{formatLabel(impact?.impact_type ?? "impact")}</Badge>
-        <h2 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
+        <h2 className="mt-4 font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">
           {impact?.title ?? impact?.name ?? "Research impact"}
         </h2>
         <p className="mt-3 text-sm leading-7 text-muted-foreground">

@@ -278,8 +278,27 @@ export const factItemsApi = {
   delete: (id: string) => api.delete<void>(`/fact-items/${id}`),
 };
 
+export type InstitutionalPageCreatePayload = {
+  page_type: InstitutionalPageType;
+  slug: string;
+  title: string;
+  introduction: string;
+  eyebrow?: string | null;
+  hero_media_id?: string | null;
+  is_enabled?: boolean;
+};
+
+export type InstitutionalSectionDocumentUpdatePayload = {
+  public_label?: string | null;
+  is_featured?: boolean;
+  is_enabled?: boolean;
+  display_order?: number;
+};
+
 export const institutionalPagesApi = {
+  list: () => api.get<InstitutionalPage[]>("/institutional-pages"),
   getBySlug: (slug: string) => api.get<InstitutionalPage[]>("/institutional-pages", { params: { slug } }),
+  create: (payload: InstitutionalPageCreatePayload) => api.post<InstitutionalPage>("/institutional-pages", payload),
   update: (id: string, payload: InstitutionalPagePayload) => api.patch<InstitutionalPage>(`/institutional-pages/${id}`, payload),
   listSections: (pageId: string) => api.get<InstitutionalPageSection[]>(`/institutional-pages/${pageId}/sections`),
   createSection: (pageId: string, payload: InstitutionalSectionPayload) => api.post<InstitutionalPageSection>(`/institutional-pages/${pageId}/sections`, payload),
@@ -293,6 +312,7 @@ export const institutionalPagesApi = {
   reorderItems: (sectionId: string, items: Array<{ id: string; display_order: number }>) => api.post<InstitutionalPageItem[]>(`/institutional-sections/${sectionId}/items/reorder`, { items }),
   listDocuments: (sectionId: string) => api.get<InstitutionalSectionDocument[]>(`/institutional-sections/${sectionId}/documents`),
   attachDocument: (sectionId: string, payload: Omit<InstitutionalSectionDocument, "id" | "section_id">) => api.post<InstitutionalSectionDocument>(`/institutional-sections/${sectionId}/documents`, payload),
+  updateDocument: (id: string, payload: InstitutionalSectionDocumentUpdatePayload) => api.patch<InstitutionalSectionDocument>(`/institutional-section-documents/${id}`, payload),
   deleteDocument: (id: string) => api.delete<void>(`/institutional-section-documents/${id}`),
 };
 

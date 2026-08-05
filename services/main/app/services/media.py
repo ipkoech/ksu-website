@@ -30,7 +30,7 @@ from ..models import (
     SliderGroup,
     User,
 )
-from ..helpers.storage import upload_file
+from ..helpers.storage import delete_file, upload_file
 from ..models import Media, MediaFolder, MediaLink
 from ._base import apply_updates, ilike_any, paginate_query
 
@@ -121,6 +121,19 @@ class MediaService:
     """Media upload and management."""
 
     @staticmethod
+    def validate_cv_mime_type(mime_type: str | None) -> None:
+        if mime_type not in CV_MIME_TYPES:
+            raise ValueError("CV file must be a PDF or Word document.")
+
+    @staticmethod
+    def validate_cv_media(media: Media) -> None:
+        if media.media_type != "document":
+            raise ValueError("CV file must be a document.")
+        mime_type = getattr(media, "mime_type", None)
+        if mime_type is not None:
+            MediaService.validate_cv_mime_type(mime_type)
+
+    @staticmethod
     async def ensure_school_media_folder(
         db: AsyncSession,
         school_id: uuid.UUID,
@@ -148,24 +161,8 @@ class MediaService:
         school = school_result.one_or_none()
         if school is None:
             raise ValueError("School not found")
-
-        # The school row lock prevents duplicate folders during simultaneous
-        # first uploads. Re-check after acquiring it in case another upload won.
-        result = await db.execute(
-            MediaFolder.active_query().where(
-                MediaFolder.parent_id.is_(None),
-                MediaFolder.slug == slug,
-                MediaFolder.scope_type == "school",
-                MediaFolder.scope_id == school_id,
-            )
-        )
-        folder = result.scalar_one_or_none()
-        if folder is not None:
-            return folder
-
-        label = school.code or school.name
         folder = MediaFolder(
-            name=f"{label} Media",
+            name=f"{school.code or school.name} Media",
             slug=slug,
             description="Media owned and managed by this school.",
             is_public=False,
@@ -175,37 +172,6 @@ class MediaService:
         db.add(folder)
         await db.flush()
         return folder
-
-    @staticmethod
-    def is_owned_by_school(media: Media, school_id: uuid.UUID) -> bool:
-        """Return whether media belongs to the server-selected school's folder."""
-        folder = getattr(media, "folder", None)
-        return bool(
-            folder
-            and folder.scope_type == "school"
-            and folder.scope_id == school_id
-        )
-
-    @staticmethod
-    def validate_profile_media(media: Media, role: str) -> None:
-        """Validate media type for a school profile slot."""
-        if role in {"logo", "cover", "gallery"} and media.media_type != "image":
-            raise ValueError(f"{role.title()} media must be an image")
-        if role == "brochure" and media.media_type != "document":
-            raise ValueError("Brochure media must be a document")
-
-    @staticmethod
-    def validate_cv_mime_type(mime_type: str | None) -> None:
-        if mime_type not in CV_MIME_TYPES:
-            raise ValueError("CV file must be a PDF or Word document.")
-
-    @staticmethod
-    def validate_cv_media(media: Media) -> None:
-        if media.media_type != "document":
-            raise ValueError("CV file must be a document.")
-        mime_type = getattr(media, "mime_type", None)
-        if mime_type is not None:
-            MediaService.validate_cv_mime_type(mime_type)
 
     @staticmethod
     async def upload(
@@ -239,10 +205,7 @@ class MediaService:
                 and attachment_scope[0] == "school"
                 and attachment_scope[1] is not None
             ):
-                folder = await MediaService.ensure_school_media_folder(
-                    db,
-                    attachment_scope[1],
-                )
+                folder = await MediaService.ensure_school_media_folder(db, attachment_scope[1])
                 folder_id = folder.id
 
         if folder_id:
@@ -253,21 +216,22 @@ class MediaService:
                 resolved_folder_path = folder.slug
 
         metadata = await upload_file(file, resolved_folder_path)
-        _validate_upload_size(metadata["file_size"])
-        media = Media(
-            folder_id=folder_id,
-            uploaded_by_id=uploaded_by_id,
-            is_public=is_public,
-            is_processed=True,
-            media_type=_infer_media_type(metadata["mime_type"]),
-            **metadata,
-        )
-        db.add(media)
-        await db.flush()
-        if entity_type and entity_id is not None:
-            scope_type, scope_id = attachment_scope or await MediaService.get_attachment_scope(
-                db, entity_type=entity_type, entity_id=entity_id
+        try:
+            _validate_upload_size(metadata["file_size"])
+            media = Media(
+                folder_id=folder_id,
+                uploaded_by_id=uploaded_by_id,
+                is_public=is_public,
+                is_processed=True,
+                media_type=_infer_media_type(metadata["mime_type"]),
+                **metadata,
             )
+            db.add(media)
+            await db.flush()
+            if entity_type and entity_id is not None:
+                scope_type, scope_id = attachment_scope or await MediaService.get_attachment_scope(
+                    db, entity_type=entity_type, entity_id=entity_id
+                )
             if scope_type == "club":
                 media.is_public = False
             link_metadata = {"is_public": is_public}
@@ -300,7 +264,14 @@ class MediaService:
                 role=role or "attachment",
                 **link_metadata,
             )
-        return media
+            return media
+        except Exception:
+            await db.rollback()
+            try:
+                await delete_file(metadata["storage_path"])
+            except Exception:
+                pass
+            raise
 
     @staticmethod
     async def get_attachment_scope(
@@ -351,12 +322,21 @@ class MediaService:
 
         content_model = CONTENT_ATTACHMENT_MODELS.get(normalized_type)
         if content_model is not None:
-            scope_type_column = getattr(content_model, "scope_type", None) or getattr(content_model, "owner_scope_type", None)
-            scope_id_column = getattr(content_model, "scope_id", None) or getattr(content_model, "owner_scope_id", None)
-            if scope_type_column is None or scope_id_column is None:
-                return "global", None
+            if normalized_type == "partnership_spotlight":
+                result = await db.execute(
+                    select(
+                        PartnershipSpotlight.owner_scope_type,
+                        PartnershipSpotlight.owner_scope_id,
+                    ).where(
+                        PartnershipSpotlight.id == entity_id,
+                        PartnershipSpotlight.deleted_at.is_(None),
+                    )
+                )
+                scope = result.one_or_none()
+                if scope is not None:
+                    return scope[0] or "global", scope[1]
             result = await db.execute(
-                select(scope_type_column, scope_id_column).where(
+                select(content_model.scope_type, content_model.scope_id).where(
                     content_model.id == entity_id,
                     content_model.deleted_at.is_(None),
                 )
@@ -591,6 +571,34 @@ class MediaService:
         if load_options:
             query = query.options(*load_options)
         result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_link_parent_snapshot(
+        db: AsyncSession,
+        link_id: uuid.UUID,
+    ) -> tuple[str, uuid.UUID] | None:
+        result = await db.execute(
+            select(MediaLink.entity_type, MediaLink.entity_id).where(
+                MediaLink.id == link_id,
+                MediaLink.deleted_at.is_(None),
+            )
+        )
+        row = result.one_or_none()
+        if row is None:
+            return None
+        return row.entity_type, row.entity_id
+
+    @staticmethod
+    async def get_link_for_update(db: AsyncSession, link_id: uuid.UUID) -> MediaLink | None:
+        """Lock and refresh a link before authorizing or mutating it."""
+        result = await db.execute(
+            MediaLink.active_query()
+            .options(selectinload(MediaLink.media), selectinload(MediaLink.folder))
+            .where(MediaLink.id == link_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
         return result.scalar_one_or_none()
 
     @staticmethod

@@ -23,8 +23,10 @@ export default async function AskLibrarianPage() {
   ]);
 
   return (
-    <main id="library-main" className="min-h-screen bg-white">
+    <main id="library-main" className="min-h-screen bg-background">
       <LibraryHero
+        imageSrc="/images/library/reading-veranda.jpg"
+        imageAlt="Students studying on the veranda of the Kisii University Library"
         eyebrow="Ask the Library"
         title="Start with a question. Continue with a person when you need one."
         body="The Library assistant searches approved Kisii University Library guidance and shows its sources. You get one free answer, then an email-verified conversation you can return to later."
@@ -50,7 +52,6 @@ export default async function AskLibrarianPage() {
       ) : null}
 
       <LibrarySection
-        eyebrow="Conversational support"
         title="Find the next useful step"
         body="Ask naturally about a resource, service, database, policy, branch, or research task. The assistant will use the Library’s published knowledge and explain when a librarian should take over."
         tone="white"
@@ -69,12 +70,12 @@ export default async function AskLibrarianPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <a href="/contact#contact-form" className="inline-flex min-h-11 items-center gap-2 rounded-md bg-secondary px-5 py-3 text-sm font-semibold text-white hover:bg-secondary/90">Contact the Library</a>
-            <a href="/hours" className="inline-flex min-h-11 items-center gap-2 rounded-md border border-white/35 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10">View opening hours</a>
+            <a href="/contact#hours" className="inline-flex min-h-11 items-center gap-2 rounded-md border border-white/35 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10">View opening hours</a>
           </div>
         </div>
       </section>
 
-      <section className="bg-white px-4 py-12 sm:px-6 lg:px-8">
+      <section className="bg-background px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-[1320px] border-t border-border pt-7">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Privacy by design</p>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">Your first question is held temporarily for the preview. We only create a persistent conversation after you verify your email. Do not share passwords, payment details, or confidential personal information.</p>

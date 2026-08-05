@@ -2,9 +2,21 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { FilterX, Layers3, MoreHorizontal, Plus, Sparkles } from "lucide-react";
+import {
+  Archive,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  FilterX,
+  Layers3,
+  MoreHorizontal,
+  Plus,
+  Send,
+  Sparkles,
+  Undo2,
+} from "lucide-react";
 import { toast } from "@ksu/ui";
 import {
   Badge,
@@ -20,8 +32,10 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
   Input,
+  Label,
   Select,
   SelectContent,
   SelectGroup,
@@ -29,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
   Switch,
+  Textarea,
 } from "@ksu/ui/components";
 import { DataTable } from "@/components/data-table/data-table";
 import { TableSearch } from "@/components/shared/table-search";
@@ -38,14 +53,24 @@ import {
   PAGE_SCOPE_TYPES,
   PAGE_SECTION_LAYOUT_VARIANTS,
   PAGE_SECTION_STATUSES,
+  PAGE_SECTION_WORKFLOW_ACTIONS,
   pageSectionsApi,
   type PageScopeType,
   type PageSection,
   type PageSectionLayoutVariant,
   type PageSectionStatus,
+  type PageSectionWorkflowAction,
 } from "@/lib/api/page-cms";
 
-const pageOptions = ["all", "homepage", "about", "research", "library"] as const;
+function workflowActionsForStatus(status: PageSectionStatus): PageSectionWorkflowAction[] {
+  const actions: PageSectionWorkflowAction[] = [];
+  if (status === "draft" || status === "changes_requested") actions.push("submit");
+  if (status === "in_review") actions.push("approve", "request_changes");
+  if (status === "approved") actions.push("publish");
+  if (status === "published") actions.push("unpublish");
+  if (status !== "archived") actions.push("archive");
+  return actions;
+}
 
 type NewSectionForm = {
   page_key: string;
@@ -69,7 +94,10 @@ function emptyNewSectionForm(): NewSectionForm {
   };
 }
 
-function getColumns(): ColumnDef<PageSection>[] {
+function getColumns(
+  onWorkflowAction: (section: PageSection, action: PageSectionWorkflowAction) => void,
+  permissions: { canReview: boolean; canPublish: boolean; canArchive: boolean; canManage: boolean },
+): ColumnDef<PageSection>[] {
   return [
     {
       accessorKey: "title",
@@ -125,24 +153,59 @@ function getColumns(): ColumnDef<PageSection>[] {
     },
     {
       id: "actions",
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal data-icon />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <Link href={`/corporate-communication/page-cms/sections/${row.original.id}`}>Edit section</Link>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
+      cell: ({ row }) => {
+        const section = row.original;
+        const availableActions = workflowActionsForStatus(section.status).filter((action) => {
+          if (action === "approve" || action === "request_changes") return permissions.canReview;
+          if (action === "publish" || action === "unpublish") return permissions.canPublish;
+          if (action === "archive") return permissions.canArchive;
+          return permissions.canManage;
+        });
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal data-icon />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuGroup>
+                <DropdownMenuItem asChild>
+                  <Link href={`/corporate-communication/page-cms/sections/${section.id}`}>Edit section</Link>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              {availableActions.length > 0 ? (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Workflow</DropdownMenuLabel>
+                  <DropdownMenuGroup>
+                    {availableActions.map((action) => (
+                      <DropdownMenuItem
+                        key={action}
+                        onClick={() => onWorkflowAction(section, action)}
+                      >
+                        {action === "submit" ? (
+                          <Send className="mr-2 size-4" />
+                        ) : action === "approve" ? (
+                          <CheckCircle2 className="mr-2 size-4" />
+                        ) : action === "request_changes" ? (
+                          <Undo2 className="mr-2 size-4" />
+                        ) : action === "archive" ? (
+                          <Archive className="mr-2 size-4" />
+                        ) : null}
+                        {action.replace(/_/g, " ")}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuGroup>
+                </>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
     },
   ];
 }
@@ -157,62 +220,141 @@ function scopeSummary(section: PageSection) {
 
 export default function PageCmsSectionsPage() {
   const router = useRouter();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, hasAnyPermission } = usePermissions();
   const [search, setSearch] = useState("");
-  const [pageKey, setPageKey] = useState<(typeof pageOptions)[number]>("all");
+  const [pageKeyFilter, setPageKeyFilter] = useState("");
   const [scopeType, setScopeType] = useState<"all" | PageScopeType>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | PageSectionStatus>("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [newSection, setNewSection] = useState<NewSectionForm>(() => emptyNewSectionForm());
   const [error, setError] = useState<string | null>(null);
   const [sections, setSections] = useState<PageSection[]>([]);
+  const [paginationMeta, setPaginationMeta] = useState<{
+    page: number;
+    per_page: number;
+    total: number;
+    pages: number;
+  } | null>(null);
+  const [pendingWorkflowAction, setPendingWorkflowAction] = useState<{
+    section: PageSection;
+    action: PageSectionWorkflowAction;
+  } | null>(null);
+  const [workflowReason, setWorkflowReason] = useState("");
+  const [workflowBusy, setWorkflowBusy] = useState(false);
+
+  const canReview = hasAnyPermission(["page_sections.review", "page_sections.manage"]);
+  const canPublish = hasAnyPermission(["page_sections.publish", "page_sections.manage", "homepage.publish"]);
+  const canArchive = hasAnyPermission([
+    "page_sections.delete",
+    "page_sections.manage",
+    "homepage.manage",
+    "school_homepage.manage",
+    "research_homepage.manage",
+    "library_homepage.manage",
+  ]);
+  const canManage = hasAnyPermission([
+    "page_sections.create",
+    "page_sections.update",
+    "page_sections.manage",
+    "homepage.manage",
+    "school_homepage.manage",
+    "research_homepage.manage",
+    "library_homepage.manage",
+  ]);
+
+  const loadSections = useCallback(async (page: number) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await pageSectionsApi.listAdmin({
+        page,
+        per_page: 25,
+        search: search || undefined,
+        page_key: pageKeyFilter || undefined,
+        scope_type: scopeType === "all" ? undefined : scopeType,
+        status: statusFilter === "all" ? undefined : statusFilter,
+      });
+      setSections(response.data ?? []);
+      const rawMeta = response.meta as { page: number; per_page: number; total: number; total_pages?: number; pages?: number } | null;
+      setPaginationMeta(rawMeta ? {
+        page: rawMeta.page,
+        per_page: rawMeta.per_page,
+        total: rawMeta.total,
+        pages: rawMeta.pages ?? rawMeta.total_pages ?? 1,
+      } : null);
+    } catch {
+      setError("Failed to load page sections.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [pageKeyFilter, scopeType, search, statusFilter]);
 
   useEffect(() => {
-    let cancelled = false;
+    setCurrentPage(1);
+    void loadSections(1);
+  }, [loadSections]);
 
-    const load = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await pageSectionsApi.listAdmin({
-          page: 1,
-          per_page: 100,
-          search: search || undefined,
-          page_key: pageKey === "all" ? undefined : pageKey,
-          scope_type: scopeType === "all" ? undefined : scopeType,
-          status: statusFilter === "all" ? undefined : statusFilter,
-        });
-        if (!cancelled) {
-          setSections(response.data ?? []);
-        }
-      } catch {
-        if (!cancelled) {
-          setError("Failed to load page sections.");
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
+  // Derive unique page_key options from loaded data
+  const pageKeyOptions = useMemo(() => {
+    const keys = new Set(sections.map((s) => s.page_key));
+    return Array.from(keys).sort();
+  }, [sections]);
+
+  const handleWorkflowAction = useCallback(
+    (section: PageSection, action: PageSectionWorkflowAction) => {
+      if (action === "request_changes") {
+        setPendingWorkflowAction({ section, action });
+        setWorkflowReason("");
+      } else {
+        void executeWorkflow(section, action);
       }
-    };
+    },
+    [],
+  );
 
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [pageKey, scopeType, search, statusFilter]);
+  const executeWorkflow = async (
+    section: PageSection,
+    action: PageSectionWorkflowAction,
+    reason?: string,
+  ) => {
+    setWorkflowBusy(true);
+    try {
+      const response = await pageSectionsApi.workflow(section.id, action, reason);
+      setSections((current) =>
+        current.map((s) => (s.id === section.id ? response.data : s)),
+      );
+      toast.success(`Section ${action.replace(/_/g, " ")} complete.`);
+      setPendingWorkflowAction(null);
+      setWorkflowReason("");
+    } catch {
+      toast.error(`Failed to ${action.replace(/_/g, " ")} section.`);
+    } finally {
+      setWorkflowBusy(false);
+    }
+  };
 
-  const columns = useMemo(() => getColumns(), []);
-  const canCreateSections =
-    hasPermission("page_sections.create") ||
-    hasPermission("page_sections.manage") ||
-    hasPermission("homepage.manage") ||
-    hasPermission("school_homepage.manage") ||
-    hasPermission("research_homepage.manage") ||
-    hasPermission("library_homepage.manage");
-  const hasFilters = Boolean(search) || pageKey !== "all" || scopeType !== "all" || statusFilter !== "all";
+  const confirmWorkflowAction = () => {
+    if (!pendingWorkflowAction) return;
+    if (pendingWorkflowAction.action === "request_changes" && !workflowReason.trim()) {
+      toast.error("Add a clear revision note before requesting changes.");
+      return;
+    }
+    void executeWorkflow(
+      pendingWorkflowAction.section,
+      pendingWorkflowAction.action,
+      workflowReason.trim() || undefined,
+    );
+  };
+
+  const columns = useMemo(
+    () => getColumns(handleWorkflowAction, { canReview, canPublish, canArchive, canManage }),
+    [handleWorkflowAction, canReview, canPublish, canArchive, canManage],
+  );
+  const canCreateSections = canManage;
+  const hasFilters = Boolean(search) || Boolean(pageKeyFilter) || scopeType !== "all" || statusFilter !== "all";
 
   const handleCreateSection = async () => {
     if (!canCreateSections) {
@@ -275,8 +417,9 @@ export default function PageCmsSectionsPage() {
                 New Section
               </Button>
             ) : null}
-            <div className="grid gap-2 sm:grid-cols-3">
-              <ScopeMetric label="Loaded" value={sections.length} />
+            <div className="grid gap-2 sm:grid-cols-4">
+              <ScopeMetric label="Total" value={paginationMeta?.total ?? sections.length} />
+              <ScopeMetric label="Page" value={`${currentPage}/${paginationMeta?.pages ?? 1}`} />
               <ScopeMetric label="Published" value={sections.filter((section) => section.status === "published").length} />
               <ScopeMetric label="Enabled" value={sections.filter((section) => section.is_enabled).length} />
             </div>
@@ -289,82 +432,118 @@ export default function PageCmsSectionsPage() {
         columns={columns}
         isLoading={isLoading}
         toolbar={(
-          <div className="grid gap-3 rounded-2xl border bg-card/90 p-3 shadow-sm lg:grid-cols-[minmax(0,1.3fr)_180px_180px_180px_auto] lg:items-end">
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Search</p>
-              <TableSearch
-                value={search}
-                onChange={setSearch}
-                placeholder="Search sections by title, key, or page"
-              />
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Page</p>
-              <Select value={pageKey} onValueChange={(value) => setPageKey(value as (typeof pageOptions)[number])}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All pages" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {pageOptions.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option === "all" ? "All pages" : option}
-                      </SelectItem>
+          <div className="space-y-3">
+            <div className="grid gap-3 rounded-2xl border bg-card/90 p-3 shadow-sm lg:grid-cols-[minmax(0,1.3fr)_180px_180px_180px_auto] lg:items-end">
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Search</p>
+                <TableSearch
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Search sections by title, key, or page"
+                />
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Page Key</p>
+                <Input
+                  value={pageKeyFilter}
+                  onChange={(e) => setPageKeyFilter(e.target.value)}
+                  placeholder="e.g. homepage"
+                  list="page-key-options"
+                />
+                {pageKeyOptions.length > 0 && (
+                  <datalist id="page-key-options">
+                    {pageKeyOptions.map((key) => (
+                      <option key={key} value={key} />
                     ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+                  </datalist>
+                )}
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Scope</p>
+                <Select value={scopeType} onValueChange={(value) => setScopeType(value as "all" | PageScopeType)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All scopes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="all">All scopes</SelectItem>
+                      {PAGE_SCOPE_TYPES.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Status</p>
+                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as "all" | PageSectionStatus)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="all">All statuses</SelectItem>
+                      {PAGE_SECTION_STATUSES.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option.replace(/_/g, " ")}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!hasFilters}
+                onClick={() => {
+                  setSearch("");
+                  setPageKeyFilter("");
+                  setScopeType("all");
+                  setStatusFilter("all");
+                }}
+              >
+                <FilterX data-icon="inline-start" />
+                Clear
+              </Button>
             </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Scope</p>
-              <Select value={scopeType} onValueChange={(value) => setScopeType(value as "all" | PageScopeType)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All scopes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">All scopes</SelectItem>
-                    {PAGE_SCOPE_TYPES.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Status</p>
-              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as "all" | PageSectionStatus)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">All statuses</SelectItem>
-                    {PAGE_SECTION_STATUSES.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option.replace(/_/g, " ")}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={!hasFilters}
-              onClick={() => {
-                setSearch("");
-                setPageKey("all");
-                setScopeType("all");
-                setStatusFilter("all");
-              }}
-            >
-              <FilterX data-icon="inline-start" />
-              Clear
-            </Button>
+            {paginationMeta && paginationMeta.pages > 1 && (
+              <div className="flex items-center justify-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage <= 1 || isLoading}
+                  onClick={() => {
+                    const newPage = currentPage - 1;
+                    setCurrentPage(newPage);
+                    void loadSections(newPage);
+                  }}
+                >
+                  <ChevronLeft className="size-4" />
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {currentPage} of {paginationMeta.pages}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage >= paginationMeta.pages || isLoading}
+                  onClick={() => {
+                    const newPage = currentPage + 1;
+                    setCurrentPage(newPage);
+                    void loadSections(newPage);
+                  }}
+                >
+                  Next
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
+            )}
           </div>
         )}
         emptyMessage={error || (search ? "No sections match this search." : "No page sections found.")}
@@ -472,15 +651,67 @@ export default function PageCmsSectionsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Workflow Reason Dialog */}
+      <Dialog
+        open={Boolean(pendingWorkflowAction)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingWorkflowAction(null);
+            setWorkflowReason("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {pendingWorkflowAction?.action === "request_changes"
+                ? "Request changes"
+                : pendingWorkflowAction?.action.replace(/_/g, " ")}
+            </DialogTitle>
+            <DialogDescription>
+              This changes the editorial state of &quot;{pendingWorkflowAction?.section.title || pendingWorkflowAction?.section.section_key}&quot; immediately.
+            </DialogDescription>
+          </DialogHeader>
+          {pendingWorkflowAction?.action === "request_changes" ? (
+            <div className="space-y-2">
+              <Label htmlFor="workflow-reason">Revision note</Label>
+              <Textarea
+                id="workflow-reason"
+                rows={4}
+                value={workflowReason}
+                onChange={(event) => setWorkflowReason(event.target.value)}
+                placeholder="Explain what must change before approval"
+              />
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setPendingWorkflowAction(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmWorkflowAction}
+              disabled={workflowBusy}
+            >
+              {workflowBusy ? "Working..." : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageTransition>
   );
 }
 
-function ScopeMetric({ label, value }: { label: string; value: number }) {
+function ScopeMetric({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="min-w-[112px] rounded-2xl border bg-background/80 p-3 shadow-sm">
+    <div className="min-w-[100px] rounded-2xl border bg-background/80 p-3 shadow-sm">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 text-xl font-semibold tracking-tight">{value}</p>
+      <p className="mt-1 text-lg font-semibold tracking-tight">{value}</p>
     </div>
   );
 }

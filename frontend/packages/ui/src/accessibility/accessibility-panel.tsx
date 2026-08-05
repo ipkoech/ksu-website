@@ -204,6 +204,7 @@ export function AccessibilityPanel() {
 
         <SheetContent
           id={PANEL_ID}
+          aria-label="Accessibility preferences"
           side={preferences.widgetPosition}
           className={cn(
             "flex h-dvh w-full flex-col gap-0 overflow-hidden bg-[#eef1f5] p-0 [&>button]:text-primary-foreground [&>button]:opacity-100",
@@ -215,8 +216,8 @@ export function AccessibilityPanel() {
           <SheetHeader className="min-h-[4.25rem] justify-center bg-primary px-5 py-4 pr-16 text-left">
             <SheetTitle className="flex items-center gap-2 text-lg text-primary-foreground">
               <Accessibility aria-hidden className="h-5 w-5" />
-              Accessibility menu
-              <span className="text-xs font-medium opacity-85">(Alt+A)</span>
+              Accessibility preferences
+              <span aria-hidden="true" className="text-xs font-medium opacity-85">(Alt+A)</span>
             </SheetTitle>
             <SheetDescription className="sr-only">
               Adjust accessibility profiles, display, reading, motion, and
@@ -440,7 +441,7 @@ export function AccessibilityPanel() {
                     />
                     <AccessibilityControlTile
                       icon={BookOpenText}
-                      label="Readable font"
+                      label="Reading support"
                       value={preferences.readableFont ? "On" : "Off"}
                       description="Use a clear system sans-serif typeface."
                       pressed={preferences.readableFont}
@@ -584,7 +585,7 @@ export function AccessibilityPanel() {
                   }}
                 >
                   <RotateCcw aria-hidden className="h-5 w-5" />
-                  Reset all accessibility settings
+                  Reset accessibility settings
                 </Button>
 
                 <section

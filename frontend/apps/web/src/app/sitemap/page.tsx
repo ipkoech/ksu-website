@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, Building2, CalendarDays, GraduationCap, Home, Landmark, Megaphone, Search } from "lucide-react";
-import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { CampusPageHeader } from "@ksu/ui/components";
+import { PageShell } from "@/components/site-shell";
 
 export const metadata = {
   title: "Sitemap",
@@ -38,27 +39,16 @@ const utilitySections = [
 export default function SitemapPage() {
   return (
     <PageShell>
+      <CampusPageHeader
+        title="Website sitemap"
+        eyebrow="Sitemap"
+        description="Browse the main public areas of the Kisii University website."
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Sitemap" }]}
+        seed="/sitemap"
+      />
+
       <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <BreadcrumbTrail
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Sitemap" },
-          ]}
-        />
-
-        <div className="mt-8">
-          <p className="text-sm font-semibold uppercase text-secondary">
-            Sitemap
-          </p>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
-            Website sitemap
-          </h1>
-          <p className="mt-4 text-base leading-8 text-muted-foreground">
-            Browse the main public areas of the Kisii University website.
-          </p>
-        </div>
-
-        <div className="mt-10 space-y-10">
+        <div className="space-y-10">
           <section>
             <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
               Main sections

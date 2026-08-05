@@ -4,23 +4,37 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request, status
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.responses import FileResponse
-from fastapi.responses import JSONResponse
+from ksu_common import (
+    configure_service_logging,
+    invalidate_prefix,
+    request_actor_id,
+)
+from ksu_common.cache import close_redis
+from ksu_common.internal_client import close_integration_pool
+from ksu_common.runtime import (
+    AuditOptions,
+    CorsConfig,
+    ServiceAppConfig,
+    create_service_app,
+)
 from sqlalchemy import select
 
-from ksu_common import configure_service_logging, invalidate_prefix, persist_audit_log, should_skip_audit
-from ksu_common.cache import close_redis
-
-from .core.config import get_settings
-from .core.database import AsyncSessionLocal
 from .api.v1 import register_routes
 from .cache_invalidation import should_invalidate_public_cache
+from .core.config import get_settings
+from .core.database import AsyncSessionLocal
 from .helpers.storage import normalize_storage_path
+from .helpers.email import close_email_transport
 from .models import Media
 from .realtime.connection_manager import manager
 from .realtime.redis_subscriber import subscriber
+from .services.change_tracking import (
+    begin_audit_context,
+    collected_audit_changes,
+    reset_audit_context,
+)
 
 settings = get_settings()
 
@@ -39,69 +53,54 @@ async def lifespan(app: FastAPI):
     finally:
         await subscriber.stop()
         await manager.close_all()
+        await close_email_transport()
+        await close_integration_pool()
         await close_redis()
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(
-        title="KSU Main Site API",
-        description="Shared university CMS, institutional structure, admissions, content, media, support, and platform API for Kisii University.",
-        version=settings.APP_VERSION,
-        debug=settings.DEBUG,
-        docs_url="/api/docs" if settings.DEBUG or settings.APP_ENV != "production" else None,
-        redoc_url="/api/redoc" if settings.DEBUG or settings.APP_ENV != "production" else None,
-        openapi_url="/api/openapi.json" if settings.DEBUG or settings.APP_ENV != "production" else None,
-        lifespan=lifespan,
-    )
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
-    @app.exception_handler(ValueError)
-    async def value_error_handler(request: Request, exc: ValueError):
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={"status": "error", "message": str(exc), "code": "bad_request"},
-        )
-
-    @app.exception_handler(PermissionError)
-    async def permission_error_handler(request: Request, exc: PermissionError):
-        return JSONResponse(
-            status_code=status.HTTP_403_FORBIDDEN,
-            content={"status": "error", "message": str(exc), "code": "forbidden"},
-        )
-
-    @app.middleware("http")
-    async def audit_middleware(request: Request, call_next):
-        if should_skip_audit(request.url.path):
-            return await call_next(request)
-
-        try:
-            response = await call_next(request)
-        except Exception as exc:
-            await persist_audit_log(
-                AsyncSessionLocal,
-                service_name=settings.SERVICE_NAME,
-                request=request,
-                status_code=500,
-                error_message=str(exc),
-            )
-            raise
-
-        await persist_audit_log(
-            AsyncSessionLocal,
+    return create_service_app(
+        ServiceAppConfig(
             service_name=settings.SERVICE_NAME,
-            request=request,
-            status_code=response.status_code,
-        )
-        if should_invalidate_public_cache(request, response.status_code):
-            await invalidate_prefix("public")
-        return response
+            title="KSU Main Site API",
+            description="Shared university CMS, institutional structure, admissions, content, media, support, and platform API for Kisii University.",
+            version=settings.APP_VERSION,
+            debug=settings.DEBUG,
+            docs_url="/api/docs" if settings.DEBUG or settings.APP_ENV != "production" else None,
+            redoc_url="/api/redoc" if settings.DEBUG or settings.APP_ENV != "production" else None,
+            openapi_url="/api/openapi.json" if settings.DEBUG or settings.APP_ENV != "production" else None,
+            lifespan=lifespan,
+        ),
+        cors=CorsConfig(origins=settings.CORS_ORIGINS),
+        register_routes=_register_service_routes,
+        audit=AuditOptions(
+            session_factory=AsyncSessionLocal,
+            service_name=settings.SERVICE_NAME,
+            begin_request=_begin_request_audit,
+            collect_changes=collected_audit_changes,
+            finish_request=reset_audit_context,
+        ),
+        after_response=_after_response,
+    )
+
+
+def _begin_request_audit(request: Request) -> object:
+    return begin_audit_context(actor_id=request_actor_id(request))
+
+
+async def _after_response(request: Request, response: Response) -> None:
+    if (override_status := getattr(request.state, "main_idempotency_status", None)) is not None:
+        response.status_code = override_status
+        if override_status == status.HTTP_204_NO_CONTENT:
+            response.body = b""
+            response.headers.pop("content-length", None)
+        if retry_after := getattr(request.state, "main_idempotency_retry_after", None):
+            response.headers["Retry-After"] = retry_after
+    if should_invalidate_public_cache(request, response.status_code):
+        await invalidate_prefix("public")
+
+
+def _register_service_routes(app: FastAPI) -> None:
 
     @app.get("/uploads/{storage_path:path}", include_in_schema=False)
     async def serve_public_upload(storage_path: str):
@@ -132,4 +131,3 @@ def create_app() -> FastAPI:
         return FileResponse(file_path, media_type=media.mime_type)
 
     register_routes(app)
-    return app

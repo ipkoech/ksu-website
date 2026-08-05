@@ -26,6 +26,7 @@ import type {
   Board,
   BoardMemberCreatePayload,
   School,
+  NavigationData,
   Division,
   Wing,
   Department,
@@ -60,8 +61,12 @@ import type {
   ContentWorkflowAction,
   ContentWorkflowActionPayload,
   ContentWorkflowActionResult,
+  ContentWorkflowBulkAction,
+  ContentWorkflowBulkItem,
+  ContentWorkflowBulkItemResult,
   ContentWorkflowLog,
   ContentWorkflowQueueFilters,
+  ContentWorkflowQueueMeta,
   ContentWorkflowQueueItem,
   SliderGroup,
   Slider,
@@ -78,6 +83,7 @@ import type {
   Testimonial,
   Newsletter,
   NewsletterSubscriber,
+  Policy,
   ProgrammeFeeStructure,
   Role,
   Permission,
@@ -135,8 +141,10 @@ import type {
   VcVideoPayload,
   VcWorkflowAction,
   VcGalleryMediaLink,
+  UserNotification,
+  UserNotificationPreferences,
 } from "./types";
-import type { FieldSelectionParams, QueryParams } from "../client";
+import type { FetchCacheOptions, FieldSelectionParams, QueryParams } from "../client";
 
 type ListParams<
   T extends Partial<Record<keyof T, string | number | boolean | undefined>> =
@@ -165,7 +173,11 @@ export function resolveMainMediaUrl(value?: string | null): string | undefined {
     path = path.replace(/^\/uploads\/uploads\//, "/uploads/");
   }
 
-  return new URL(path, MAIN_API_BASE_URL).toString();
+  // Server-side API calls use the Docker-internal hostname, but media URLs
+  // are rendered into the browser and must use the public API/gateway host.
+  const publicMediaBaseUrl =
+    process.env.NEXT_PUBLIC_MAIN_API_URL || MAIN_API_BASE_URL;
+  return new URL(path, publicMediaBaseUrl).toString();
 }
 
 async function parseImportResponse<T>(response: Response): Promise<T> {
@@ -439,6 +451,11 @@ export const publicResearchContextApi = {
       data,
       params,
     ),
+};
+
+// Aggregated public navigation (mega menu)
+export const navigationApi = {
+  get: () => mainApi.get<{ data: NavigationData }>("/api/v1/navigation"),
 };
 
 // Divisions
@@ -883,6 +900,18 @@ export const clubsApi = {
   listManaged: (params?: ListParams<{ club_id?: string }>) =>
     mainApi.get<PaginatedResponse<Club>>("/api/v1/clubs/managed", params),
 
+  /**
+   * Central CoCMS review listing: every club (public and hidden) for holders
+   * of content.review / content.manage / clubs.view at university scope.
+   */
+  listReview: (
+    params?: ListParams<{
+      q?: string;
+      club_type?: string;
+      is_active?: boolean;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Club>>("/api/v1/clubs/review", params),
+
   listManagedActivities: (clubId: string) =>
     mainApi.get<{ data: Record<string, unknown>[] }>(
       `/api/v1/clubs/id/${clubId}/activities`,
@@ -1214,6 +1243,8 @@ export const documentsApi = {
       category?: string;
       scope_type?: string;
       scope_id?: string;
+      is_public?: boolean;
+      is_active?: boolean;
     }>,
   ) =>
     mainApi.get<PaginatedResponse<Document>>("/api/v1/documents/admin", params),
@@ -1228,6 +1259,40 @@ export const documentsApi = {
     mainApi.patch<{ data: Document }>(`/api/v1/documents/${id}`, data),
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/documents/${id}`),
+};
+
+// Policies
+export const policiesApi = {
+  list: (
+    params?: ListParams<{
+      q?: string;
+      category?: string;
+      division_id?: string;
+      department_id?: string;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Policy>>("/api/v1/policies", params),
+
+  listAdmin: (
+    params?: ListParams<{
+      q?: string;
+      category?: string;
+      division_id?: string;
+      department_id?: string;
+      status?: string;
+      is_public?: boolean;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Policy>>("/api/v1/policies/admin", params),
+
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Policy }>(`/api/v1/policies/${slug}`, params),
+
+  create: (data: Partial<Policy>) =>
+    mainApi.post<{ data: Policy }>("/api/v1/policies", data),
+
+  update: (id: string, data: Partial<Policy>) =>
+    mainApi.patch<{ data: Policy }>(`/api/v1/policies/${id}`, data),
+
+  delete: (id: string) => mainApi.delete<void>(`/api/v1/policies/${id}`),
 };
 
 // Intakes
@@ -1647,6 +1712,12 @@ export const storiesApi = {
   update: (id: string, data: Partial<Story>) =>
     mainApi.patch<{ data: Story }>(`/api/v1/stories/id/${id}`, data),
 
+  /** Workflow history (reviewer feedback) for a story the caller contributed. */
+  feedback: (id: string) =>
+    mainApi.get<{ data: ContentWorkflowLog[] }>(
+      `/api/v1/stories/id/${id}/feedback`,
+    ),
+
   delete: (id: string) => mainApi.delete<void>(`/api/v1/stories/id/${id}`),
 
   requestContributorAccount: (data: StoryContributorAccountRequestPayload) =>
@@ -1736,10 +1807,12 @@ export const announcementsApi = {
       is_published?: boolean;
       search?: string;
     }>,
+    cacheOptions?: FetchCacheOptions,
   ) =>
     mainApi.get<PaginatedResponse<Announcement>>(
       "/api/v1/announcements",
       params,
+      cacheOptions,
     ),
 
   listAdmin: (
@@ -1788,10 +1861,10 @@ export const announcementsApi = {
 
 export const contentWorkflowApi = {
   listQueue: (params?: ContentWorkflowQueueFilters) =>
-    mainApi.get<{ data: ContentWorkflowQueueItem[] }>(
-      "/api/v1/content-workflow/queue",
-      params,
-    ),
+    mainApi.get<{
+      data: ContentWorkflowQueueItem[];
+      meta?: ContentWorkflowQueueMeta;
+    }>("/api/v1/content-workflow/queue", params),
 
   action: (
     item: ContentWorkflowQueueItem,
@@ -1803,6 +1876,21 @@ export const contentWorkflowApi = {
       payload,
     ),
 
+  /**
+   * Runs a workflow transition for a record outside the review queue, where
+   * no queue item (and therefore no workflow_action_path) is available.
+   */
+  actionByType: (
+    contentType: string,
+    contentId: string,
+    action: ContentWorkflowAction,
+    payload: ContentWorkflowActionPayload = {},
+  ) =>
+    mainApi.post<{ data: ContentWorkflowActionResult }>(
+      `/api/v1/content-workflow/${contentType}/${contentId}/${action}`,
+      payload,
+    ),
+
   logs: (
     contentType: ContentWorkflowQueueItem["content_type"],
     contentId: string,
@@ -1810,6 +1898,59 @@ export const contentWorkflowApi = {
     mainApi.get<{ data: ContentWorkflowLog[] }>(
       `/api/v1/content-workflow/${contentType}/${contentId}/logs`,
     ),
+
+  /**
+   * Applies one workflow action to many records (max 50). Authorization and
+   * transition failures never fail the whole request; each item reports its
+   * own `{content_id, ok, error}` result.
+   */
+  bulk: (
+    action: ContentWorkflowBulkAction,
+    items: ContentWorkflowBulkItem[],
+    comments?: string,
+  ) =>
+    mainApi.post<{ data: ContentWorkflowBulkItemResult[] }>(
+      "/api/v1/content-workflow/bulk",
+      { action, comments, items },
+    ),
+};
+
+// Record recovery (restore archived / soft-deleted records)
+export const recordRecoveryApi = {
+  restore: (contentType: string, recordId: string) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/records/${contentType}/${recordId}/restore`,
+    ),
+};
+
+// Per-resource CSV exports (GET /api/v1/exports/{resource}.csv)
+export const mainExportsApi = {
+  /**
+   * Downloads a resource's admin listing as CSV, honoring the caller's list
+   * filters. Fetched with credentials (not window.open) because access tokens
+   * live in sessionStorage, which a new tab cannot read.
+   */
+  downloadCsv: async (
+    resource: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ) => {
+    const token = getStoredAccessToken();
+    const url = new URL(`${getMainApiBaseUrl()}/api/v1/exports/${resource}.csv`);
+    Object.entries(params ?? {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        url.searchParams.append(key, String(value));
+      }
+    });
+    const response = await fetch(url.toString(), {
+      credentials: "include",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || error.message || "CSV export failed");
+    }
+    return response.blob();
+  },
 };
 
 // Sliders
@@ -1821,6 +1962,24 @@ export const slidersApi = {
       is_main?: boolean;
     }>,
   ) => mainApi.get<{ data: SliderGroup[] }>("/api/v1/sliders/groups", params),
+
+  listAdminGroups: (
+    params?: ListParams<{
+      is_active?: boolean;
+      is_public?: boolean;
+      is_main?: boolean;
+      scope_type?: string;
+      scope_id?: string;
+      search?: string;
+    }>,
+  ) =>
+    mainApi.get<{
+      data: SliderGroup[];
+      meta?: { page: number; per_page: number; total?: number; pages?: number };
+    }>(
+      "/api/v1/sliders/groups/admin",
+      params,
+    ),
 
   getGroup: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: SliderGroup }>(
@@ -1859,8 +2018,16 @@ export const slidersApi = {
       scope_id?: string;
       is_main?: boolean;
       status?: string;
+      workflow_status?: string;
+      is_active?: boolean;
+      search?: string;
+      record_state?: "active" | "archived" | "deleted";
     }>,
-  ) => mainApi.get<{ data: Slider[] }>("/api/v1/sliders/admin", params),
+  ) =>
+    mainApi.get<{
+      data: Slider[];
+      meta?: { page: number; per_page: number; total?: number; pages?: number };
+    }>("/api/v1/sliders/admin", params),
 
   listGroupSliders: (groupId: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Slider[] }>("/api/v1/sliders/admin", {
@@ -1916,6 +2083,7 @@ export const mediaApi = {
       entity_type?: string;
       entity_id?: string;
       role?: string;
+      is_public?: boolean;
       search?: string;
     }>,
   ) => mainApi.get<PaginatedResponse<Media>>("/api/v1/media", params),
@@ -1974,8 +2142,10 @@ export const mediaApi = {
 
   listLinks: (
     params: FieldSelectionParams & {
-      entity_type: string;
-      entity_id: string;
+      entity_type?: string;
+      entity_id?: string;
+      /** Where-used lookup: list every entity link referencing this media. */
+      media_id?: string;
       role?: string;
     },
   ) => mainApi.get<{ data: MediaLink[] }>("/api/v1/media/links", params),
@@ -2009,6 +2179,7 @@ export const faqsApi = {
       scope_type?: string;
       scope_id?: string;
       is_main?: boolean;
+      search?: string;
     }>,
   ) => mainApi.get<PaginatedResponse<FAQ>>("/api/v1/faqs/admin", params),
 
@@ -2064,6 +2235,16 @@ export const contactsApi = {
 
   update: (id: string, data: Partial<ContactDirectory>) =>
     mainApi.patch<{ data: ContactDirectory }>(`/api/v1/contacts/${id}`, data),
+
+  archive: (id: string) =>
+    mainApi.post<{ data: ContactDirectory }>(
+      `/api/v1/contacts/admin/${id}/archive`,
+    ),
+
+  unarchive: (id: string) =>
+    mainApi.post<{ data: ContactDirectory }>(
+      `/api/v1/contacts/admin/${id}/unarchive`,
+    ),
 };
 
 export const contactDirectoryApi = {
@@ -2105,6 +2286,7 @@ export const testimonialsApi = {
       department_id?: string;
       programme_id?: string;
       featured_only?: boolean;
+      search?: string;
     }>,
   ) =>
     mainApi.get<PaginatedResponse<Testimonial>>(
@@ -2136,6 +2318,7 @@ export const newslettersApi = {
   listAdmin: (
     params?: ListParams<{
       q?: string;
+      search?: string;
       status?: string;
     }>,
   ) =>
@@ -2158,14 +2341,34 @@ export const newslettersApi = {
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/newsletters/${id}`),
 
+  /** Queue an immediate send to all active subscribers. */
+  sendNow: (id: string) =>
+    mainApi.post<{ data: Newsletter }>(`/api/v1/newsletters/${id}/send`),
+
+  /** Schedule a future send. `scheduled_send_at` must be in the future. */
+  scheduleSend: (id: string, data: { scheduled_send_at: string }) =>
+    mainApi.post<{ data: Newsletter }>(`/api/v1/newsletters/${id}/schedule`, data),
+
+  /** Cancel a scheduled send, returning the newsletter to draft. */
+  cancelSchedule: (id: string) =>
+    mainApi.post<{ data: Newsletter }>(`/api/v1/newsletters/${id}/cancel-schedule`),
+
   listSubscribers: (
     params?: ListParams<{
       status?: string;
+      q?: string;
+      is_verified?: boolean | string;
     }>,
   ) =>
     mainApi.get<PaginatedResponse<NewsletterSubscriber>>(
       "/api/v1/newsletters/subscribers",
       params,
+    ),
+
+  /** Admin-side unsubscribe honoring phone/email opt-out requests. */
+  unsubscribeSubscriber: (id: string) =>
+    mainApi.post<{ data: NewsletterSubscriber }>(
+      `/api/v1/newsletters/subscribers/${id}/unsubscribe`,
     ),
 };
 
@@ -2208,10 +2411,13 @@ export const auditLogsApi = {
     params?: ListParams<{
       user_id?: string;
       service_name?: string;
+      /** Exact match, or a dotted prefix ("user" matches "user.login"). */
       action?: string;
       resource_type?: string;
       resource_id?: string;
       status?: string;
+      /** Restrict to requests under this path prefix (e.g. "/api/v1/news"). */
+      request_path_prefix?: string;
       date_from?: string;
       date_to?: string;
     }>,
@@ -2571,4 +2777,46 @@ export const viceChancellorApi = {
     mainApi.post<{ data: T }>(`${VC_BASE}/${resource}/${id}/${action}`, {
       reason,
     }),
+};
+
+// User Notifications (inbox)
+export const userNotificationsApi = {
+  list: (params?: {
+    page?: number;
+    per_page?: number;
+    unread_only?: boolean;
+  }) =>
+    mainApi.get<PaginatedResponse<UserNotification>>(
+      "/api/v1/notifications",
+      params,
+    ),
+
+  unreadCount: () =>
+    mainApi.get<{ data: { count: number } }>("/api/v1/notifications/unread-count"),
+
+  markRead: (id: string) =>
+    mainApi.patch<{ data: UserNotification }>(
+      `/api/v1/notifications/${id}/read`,
+    ),
+
+  markAllRead: () =>
+    mainApi.post<{ data: { updated: number } }>("/api/v1/notifications/read-all"),
+
+  archive: (id: string) =>
+    mainApi.post<{ data: UserNotification }>(
+      `/api/v1/notifications/${id}/archive`,
+    ),
+
+  remove: (id: string) => mainApi.delete<void>(`/api/v1/notifications/${id}`),
+
+  getPreferences: () =>
+    mainApi.get<{ data: UserNotificationPreferences }>(
+      "/api/v1/notifications/preferences",
+    ),
+
+  updatePreferences: (data: UserNotificationPreferences) =>
+    mainApi.put<{ data: UserNotificationPreferences }>(
+      "/api/v1/notifications/preferences",
+      data,
+    ),
 };

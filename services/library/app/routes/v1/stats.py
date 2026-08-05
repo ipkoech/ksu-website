@@ -7,13 +7,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ksu_common.auth import TokenPayload
 
 from ksu_common.cache import cached_public
+from ksu_common.internal_client import internal_key_guard
 from ksu_common.rbac import requires_scope
 from ksu_common.schemas.responses import success
 
 from ...core.database import get_db
+from ...core.config import get_settings
 from ...services.stats import admin_library_stats, public_library_stats
 
 router = APIRouter(prefix="/stats", tags=["Stats"])
+verify_internal_key = internal_key_guard(
+    lambda: get_settings().INTERNAL_API_KEY,
+    allow_legacy_header=False,
+)
 
 
 @router.get("")
@@ -32,5 +38,14 @@ async def get_admin_stats(
     db: AsyncSession = Depends(get_db),
     user: TokenPayload = Depends(requires_scope("library:read")),
 ):
+    result = await admin_library_stats(db)
+    return success(data=result.model_dump())
+
+
+@router.get("/internal/admin", dependencies=[Depends(verify_internal_key)])
+async def get_internal_admin_stats(
+    db: AsyncSession = Depends(get_db),
+):
+    """Return admin counters to an authenticated sibling service."""
     result = await admin_library_stats(db)
     return success(data=result.model_dump())

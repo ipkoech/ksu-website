@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -30,8 +31,9 @@ import type {
   ProgrammeFeeStructure,
 } from "@ksu/api-client";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
+import { AboutReveal } from "@/components/about/about-reveal";
 import { PublicImage } from "@/components/public/public-image";
-import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { PageShell } from "@/components/site-shell";
 import { publicFileUrl } from "@/lib/public-media";
 import type {
   AdmissionsIntakeSummary,
@@ -304,35 +306,59 @@ function AdmissionsHero({ data }: { data: AdmissionsPageData }) {
     "video",
   ]);
   return (
-    <section className="overflow-hidden border-b border-border bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,0.18),transparent_34%),linear-gradient(135deg,#ffffff_0%,hsl(var(--surface-subtle))_52%,rgba(14,165,233,0.12)_100%)] px-4 py-8 sm:px-6 lg:px-8 lg:py-12 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.72fr)] lg:items-center">
+    <section className="relative isolate overflow-hidden border-b border-border bg-primary text-white">
+      <Image
+        src="/images/about-us/pavilion-2.jpg"
+        alt="Kisii University campus"
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover motion-safe:animate-ken-burns"
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,28,68,.97)_0%,rgba(4,38,83,.88)_48%,rgba(4,38,83,.42)_100%)]" />
+      <div className="relative mx-auto grid max-w-[1680px] gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.72fr)] lg:items-center lg:px-8 lg:py-14 xl:px-10 2xl:px-12">
         <div className="motion-safe:animate-[admissions-rise_.7s_ease-out_both]">
-          <BreadcrumbTrail
-            items={[
-              { label: "Home", href: "/" },
-              { label: "Admissions", href: "/admissions" },
-            ]}
-          />
-          <p className="mt-8 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+          <nav aria-label="Breadcrumb" className="text-xs font-semibold text-white/70">
+            <Link href="/" className="hover:text-white">
+              Home
+            </Link>
+            <span className="mx-2" aria-hidden>
+              /
+            </span>
+            <span>Admissions</span>
+          </nav>
+          <p className="mt-8 text-xs font-bold uppercase tracking-[0.22em] text-secondary">
             Kisii University Admissions
           </p>
-          <h1 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-5xl font-semibold leading-[0.98] text-foreground sm:text-6xl lg:text-7xl">
+          <h1 className="mt-3 max-w-4xl font-[family-name:var(--font-display)] text-5xl font-semibold leading-[0.98] sm:text-6xl lg:text-7xl">
             Start with the right pathway.
           </h1>
-          <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
+          <p className="mt-5 max-w-2xl text-base leading-8 text-white/80 sm:text-lg">
             Choose your applicant route, confirm requirements, check live
             intakes and apply through official Kisii University systems.
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <ButtonLink href={officialLinks.onlineApplication} external primary>
+            <Link
+              href={officialLinks.onlineApplication}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-12 items-center gap-2 bg-secondary px-5 py-3 text-sm font-bold uppercase text-foreground transition-colors duration-200 hover:bg-amber-400 active:scale-[0.98]"
+            >
               Apply online
-            </ButtonLink>
-            <ButtonLink href={officialLinks.admissionCenter} external>
+              <ExternalLink className="h-4 w-4" aria-hidden />
+            </Link>
+            <Link
+              href={officialLinks.admissionCenter}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-12 items-center gap-2 border border-white/60 px-5 py-3 text-sm font-bold uppercase text-white transition-colors duration-200 hover:bg-white/10 active:scale-[0.98]"
+            >
               Download admission letter
-            </ButtonLink>
+              <ExternalLink className="h-4 w-4" aria-hidden />
+            </Link>
           </div>
-          <p className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
-            <ShieldCheck className="h-4 w-4" aria-hidden />
+          <p className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/90">
+            <ShieldCheck className="h-4 w-4 text-secondary" aria-hidden />
             Use only official university admissions links before submitting or
             paying.
           </p>
@@ -367,7 +393,7 @@ function CurrentIntakePanel({ intake }: { intake?: AdmissionsIntakeSummary }) {
       ];
 
   return (
-    <aside className="rounded-[1.25rem] border border-white/70 bg-white/[0.92] p-5 shadow-xl shadow-primary/10 backdrop-blur sm:p-6">
+    <aside className="border border-white/40 bg-white/[0.94] p-5 shadow-xl shadow-black/20 backdrop-blur sm:p-6">
       <div className="flex items-start gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/20">
           <CalendarDays className="h-5 w-5" aria-hidden />
@@ -418,7 +444,7 @@ function PathwaySelector({
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/75">
           Choose your applicant pathway
         </p>
-        <div className="mt-4 grid gap-px overflow-hidden rounded-2xl border border-white/20 bg-white/20 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="mt-4 grid gap-px overflow-hidden border border-white/20 bg-white/20 sm:grid-cols-2 lg:grid-cols-6">
           {pathways.map((pathway) => {
             const Icon = pathwayIcons[pathway.applicant_type] ?? GraduationCap;
             const active = pathway.slug === activeSlug;
@@ -427,21 +453,21 @@ function PathwaySelector({
                 key={pathway.id}
                 href={`/admissions/${pathway.slug}`}
                 aria-current={active ? "page" : undefined}
-                className={`group relative flex min-h-24 flex-col items-center justify-center gap-2 overflow-hidden px-3 text-center text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-secondary ${
+                className={`group relative flex min-h-24 flex-col items-center justify-center gap-2 overflow-hidden px-3 text-center text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-secondary ${
                   active
                     ? "bg-white text-primary"
                     : "bg-primary text-white hover:bg-white/10"
                 }`}
               >
                 <span
-                  className={`absolute inset-x-0 top-0 h-1 transition ${
+                  className={`absolute inset-x-0 top-0 h-1 transition-colors duration-200 ${
                     active
                       ? "bg-secondary"
                       : "bg-white/0 group-hover:bg-secondary"
                   }`}
                 />
                 <span
-                  className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
+                  className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 ${
                     active
                       ? "bg-primary/10"
                       : "bg-white/10 group-hover:bg-white/15"
@@ -473,15 +499,19 @@ function AdmissionsLanding({
       <div className="mx-auto grid max-w-[1680px] gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.42fr)]">
         <div className="min-w-0">
           <PathwayFeature pathway={selectedPathway ?? pathways[0]} />
-          <RequirementsTable
-            programmes={data.programmes}
-            requirements={data.requirements}
-          />
+          <AboutReveal>
+            <RequirementsTable
+              programmes={data.programmes}
+              requirements={data.requirements}
+            />
+          </AboutReveal>
         </div>
-        <aside className="grid content-start gap-5">
-          <JourneyList />
-          <DocumentsPanel documents={data.documents} />
-          <FaqPanel faqs={data.faqs} />
+        <aside>
+          <AboutReveal variant="right" delay={120} className="grid content-start gap-5">
+            <JourneyList />
+            <DocumentsPanel documents={data.documents} />
+            <FaqPanel faqs={data.faqs} />
+          </AboutReveal>
         </aside>
       </div>
     </div>
@@ -562,11 +592,13 @@ function RequirementsPage({ data }: { data: AdmissionsPageData }) {
             ]}
           />
         </div>
-        <RequirementsTable
-          programmes={data.programmes}
-          requirements={data.requirements}
-          full
-        />
+        <AboutReveal>
+          <RequirementsTable
+            programmes={data.programmes}
+            requirements={data.requirements}
+            full
+          />
+        </AboutReveal>
       </div>
     </div>
   );
@@ -592,7 +624,9 @@ function FeesPage({ data }: { data: AdmissionsPageData }) {
             ]}
           />
         </div>
-        <FeesGrid fees={data.feeStructures} programmes={data.programmes} />
+        <AboutReveal>
+          <FeesGrid fees={data.feeStructures} programmes={data.programmes} />
+        </AboutReveal>
       </div>
     </div>
   );
@@ -618,7 +652,9 @@ function DocumentsPage({ documents }: { documents: AdmissionDocument[] }) {
             ]}
           />
         </div>
-        <DocumentGrid documents={documents} />
+        <AboutReveal>
+          <DocumentGrid documents={documents} />
+        </AboutReveal>
       </div>
     </div>
   );
@@ -633,7 +669,7 @@ function IntakesPage({ intakes }: { intakes: AdmissionsIntakeSummary[] }) {
           title="Application windows and reporting timelines"
           body="Use these records for planning, then confirm live availability in the official application portal."
         />
-        <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <AboutReveal className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {(intakes.length ? intakes : []).map((intake) => (
             <article
               key={intake.id}
@@ -655,7 +691,7 @@ function IntakesPage({ intakes }: { intakes: AdmissionsIntakeSummary[] }) {
               </dl>
             </article>
           ))}
-        </div>
+        </AboutReveal>
       </div>
     </div>
   );
@@ -684,16 +720,16 @@ function HowToApplyPage({
             variant="compact"
           />
         </div>
-        <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.38fr)]">
+        <AboutReveal className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.38fr)]">
           <JourneyList large />
           <DocumentsPanel documents={documents} />
-        </div>
-        <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        </AboutReveal>
+        <AboutReveal delay={120} className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {pathways.map((pathway) => (
             <Link
               key={pathway.id}
               href={`/admissions/${pathway.slug}`}
-              className="group relative overflow-hidden border border-border bg-white p-5 transition hover:-translate-y-1 hover:border-primary/30 hover:bg-primary/[0.03] hover:shadow-lg hover:shadow-primary/10"
+              className="group relative overflow-hidden border border-border bg-white p-5 transition-transform duration-200 hover:-translate-y-1 hover:border-primary/30 hover:bg-primary/[0.03] hover:shadow-lg hover:shadow-primary/10"
             >
               <span className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-primary/[0.08] text-primary">
                 {(() => {
@@ -716,7 +752,7 @@ function HowToApplyPage({
               </span>
             </Link>
           ))}
-        </div>
+        </AboutReveal>
       </div>
     </div>
   );
@@ -856,7 +892,7 @@ function FeesGrid({
         return (
           <article
             key={fee.id}
-            className="group relative overflow-hidden border border-border bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10"
+            className="group relative overflow-hidden border border-border bg-white p-5 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10"
           >
             <span className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-primary/[0.08] text-primary">
               <FileText className="h-5 w-5" aria-hidden />
@@ -961,7 +997,7 @@ function DocumentCard({
       href={href}
       target={href.startsWith("http") ? "_blank" : undefined}
       rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
-      className={`group block overflow-hidden border border-border bg-white transition hover:-translate-y-1 hover:border-primary/30 hover:bg-primary/[0.03] hover:shadow-lg hover:shadow-primary/10 ${
+      className={`group block overflow-hidden border border-border bg-white transition-transform duration-200 hover:-translate-y-1 hover:border-primary/30 hover:bg-primary/[0.03] hover:shadow-lg hover:shadow-primary/10 ${
         compact ? "p-3" : "p-5 shadow-sm"
       }`}
     >
@@ -1083,7 +1119,7 @@ function JourneyList({ large = false }: { large?: boolean }) {
         {steps.map(([title, body, href], index) => (
           <li
             key={title}
-            className="relative overflow-hidden border border-border bg-white p-4 transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10"
+            className="relative overflow-hidden border border-border bg-white p-4 transition-transform duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10"
             style={{ animationDelay: `${index * 80}ms` }}
           >
             <span className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,hsl(var(--primary)),hsl(var(--secondary)))]" />
@@ -1114,7 +1150,7 @@ function JourneyList({ large = false }: { large?: boolean }) {
 function AdmissionsSupport() {
   return (
     <section className="bg-primary px-4 py-6 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto flex max-w-[1680px] flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <AboutReveal className="mx-auto flex max-w-[1680px] flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/70">
             Need help?
@@ -1134,7 +1170,7 @@ function AdmissionsSupport() {
             Admission centre
           </ButtonLink>
         </div>
-      </div>
+      </AboutReveal>
     </section>
   );
 }
@@ -1159,9 +1195,9 @@ function AdmissionsMediaFrame({
 
   return (
     <figure
-      className={`group relative overflow-hidden rounded-[1.4rem] border border-primary/15 bg-[radial-gradient(circle_at_20%_15%,rgba(56,189,248,0.2),transparent_28%),linear-gradient(135deg,#f8fdff,#eef9ff_52%,#ffffff)] shadow-xl shadow-primary/10 ${
+      className={`group relative overflow-hidden border border-primary/15 bg-[radial-gradient(circle_at_20%_15%,rgba(56,189,248,0.2),transparent_28%),linear-gradient(135deg,#f8fdff,#eef9ff_52%,#ffffff)] shadow-xl shadow-primary/10 ${
         tall ? "min-h-[360px] sm:min-h-[430px]" : "min-h-[210px]"
-      } ${variant === "document" ? "rounded-2xl shadow-sm" : ""}`}
+      } ${variant === "document" ? "shadow-sm" : ""}`}
     >
       {videoUrl ? (
         <video
@@ -1179,7 +1215,7 @@ function AdmissionsMediaFrame({
           alt={title}
           ratio="fill"
           className="absolute inset-0 h-full w-full"
-          imageClassName="object-cover transition duration-700 group-hover:scale-[1.03]"
+          imageClassName="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
           sizes={
             tall
               ? "(min-width: 1024px) 42vw, 100vw"
@@ -1418,7 +1454,7 @@ function ButtonLink({
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener noreferrer" : undefined}
-      className={`inline-flex min-h-11 items-center gap-2 rounded-md px-5 py-3 text-sm font-bold transition ${
+      className={`inline-flex min-h-11 items-center gap-2 rounded-md px-5 py-3 text-sm font-bold transition-colors duration-200 active:scale-[0.98] ${
         primary
           ? "bg-primary text-white hover:bg-primary/90"
           : "border border-primary/20 bg-white text-primary hover:bg-primary/[0.05]"

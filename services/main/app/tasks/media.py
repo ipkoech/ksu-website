@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import re
 import uuid
 from pathlib import Path
@@ -10,6 +9,7 @@ from pathlib import Path
 from PIL import Image, ImageOps
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+from ksu_common.task_queue import run_worker_async
 
 from ..core.config import get_settings
 from ..core.database import AsyncSessionLocal
@@ -23,12 +23,12 @@ from .celery_app import celery_app
 
 @celery_app.task(name="main.media.process_upload_file")
 def process_upload_file(file_id: str) -> dict:
-    return asyncio.run(_process_upload_file(uuid.UUID(file_id)))
+    return run_worker_async(_process_upload_file(uuid.UUID(file_id)))
 
 
 @celery_app.task(name="main.media.cleanup_expired_batches")
 def cleanup_expired_upload_batches() -> int:
-    return asyncio.run(_cleanup_expired_upload_batches())
+    return run_worker_async(_cleanup_expired_upload_batches())
 
 
 def _create_preview(media: Media) -> None:

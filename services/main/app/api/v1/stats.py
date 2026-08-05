@@ -1,7 +1,5 @@
 """Public display stats endpoints."""
 
-from __future__ import annotations
-
 import csv
 import io
 import json
@@ -19,7 +17,6 @@ from ...services.corporate_dashboard import (
     CorporateCommunicationDashboardService,
     build_dashboard_range,
 )
-from ...services.portal_access import build_portal_access_records
 from ...services.stats import PORTAL_ALIASES, admin_stats, portal_stats, public_stats
 
 router = APIRouter()
@@ -65,9 +62,6 @@ PORTAL_STAT_SCOPES = {
         "content.publish",
         "content.schedule",
         "content.unpublish",
-        "media.view",
-        "media.manage",
-        "media.upload",
         "homepage.view",
         "homepage.manage",
         "homepage.publish",
@@ -114,10 +108,7 @@ PORTAL_STAT_SCOPES = {
 def _user_has_portal_stats_access(user: CurrentUser, portal: str, required_scopes: tuple[str, ...]) -> bool:
     if any(user_has_scope(user, scope) for scope in required_scopes):
         return True
-    return any(
-        record.key == portal
-        for record in build_portal_access_records(user, scope_labels={})
-    )
+    return False
 
 
 def _corporate_dashboard_period(

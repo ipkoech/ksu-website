@@ -10,6 +10,8 @@ from sqlalchemy.orm import InstrumentedAttribute
 
 from ksu_common import PaginatedResult, paginate
 
+from .change_tracking import current_audit_actor
+
 
 def apply_updates(instance: Any, **data: Any) -> Any:
     """Apply provided update values to an ORM instance.
@@ -19,6 +21,9 @@ def apply_updates(instance: Any, **data: Any) -> Any:
     """
     for key, value in data.items():
         setattr(instance, key, value)
+    actor_id = current_audit_actor()
+    if actor_id is not None and hasattr(instance, "updated_by_id"):
+        instance.updated_by_id = actor_id
     return instance
 
 

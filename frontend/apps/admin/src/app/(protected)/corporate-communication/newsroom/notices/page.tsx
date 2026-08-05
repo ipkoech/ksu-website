@@ -1,5 +1,5 @@
-import { PortalResourcePage } from "@/components/portals/portal-resource-page";
+import { NewsroomWorkspace } from "@/components/corporate/newsroom-workspace";
 
 export default function CorporateCommunicationNoticesPage() {
-  return <PortalResourcePage portalKey="corporate-communication" resourceKey="notices" />;
+  return <NewsroomWorkspace contentType="notices" />;
 }

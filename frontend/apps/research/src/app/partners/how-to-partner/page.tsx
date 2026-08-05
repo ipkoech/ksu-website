@@ -61,7 +61,7 @@ export default function HowToPartnerPage() {
         <div className="relative mx-auto flex min-h-[230px] max-w-[1680px] items-center">
           <div className="max-w-3xl">
             <p className="inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white">Partner Engagement</p>
-            <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-white sm:text-5xl">How to Partner</h1>
+            <h1 className="mt-4 font-[family-name:var(--app-font-display)] text-4xl font-semibold leading-none text-white sm:text-5xl">How to Partner</h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-white/90">A direct route for institutions, industry, funders, government, and communities to work with Kisii University research.</p>
             <div className="mt-5 flex flex-wrap gap-3">
               <HeroButton href="/connect#partnership" primary>Start a conversation</HeroButton>
@@ -76,7 +76,7 @@ export default function HowToPartnerPage() {
           <div className="rounded-lg border border-border bg-white p-5 shadow-sm">
             <div className="mb-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Partnership process</p>
-              <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">From first contact to published impact</h2>
+              <h2 className="mt-2 font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">From first contact to published impact</h2>
             </div>
             <div className="grid gap-3">
               {processSteps.map((step, index) => (
@@ -104,7 +104,7 @@ export default function HowToPartnerPage() {
             </section>
             <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
               <h2 className="text-lg font-semibold text-primary">Quick paths</h2>
-              <div className="mt-3 divide-y divide-slate-200">
+              <div className="mt-3 divide-y divide-border">
                 {[
                   { href: "/partners/stories", label: "Case studies & testimonials" },
                   { href: "/partners", label: "Partner directory" },
@@ -125,7 +125,7 @@ export default function HowToPartnerPage() {
         <div className="mx-auto max-w-[1680px]">
           <div className="mb-5 max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Ways to collaborate</p>
-            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">Choose the route that matches the work</h2>
+            <h2 className="mt-2 font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">Choose the route that matches the work</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {collaborationRoutes.map((route) => {
@@ -150,7 +150,7 @@ export default function HowToPartnerPage() {
         <div className="mx-auto grid max-w-[1680px] gap-4 rounded-lg border border-border bg-white p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Ready to engage</p>
-            <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">Start with the research office</h2>
+            <h2 className="mt-2 font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">Start with the research office</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">The research office can route the request to the right center, programme, researcher, innovation pathway, or administrative process.</p>
           </div>
           <Link href="/connect#partnership" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90">

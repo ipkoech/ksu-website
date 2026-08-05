@@ -24,7 +24,10 @@ class PublicService:
         conditions = [model.deleted_at.is_(None)]
         if hasattr(model, "status"):
             now = datetime.now(timezone.utc)
-            conditions.append(or_(model.status == PublicationStatus.PUBLISHED, (model.status == PublicationStatus.SCHEDULED) & (model.scheduled_at <= now)))
+            if hasattr(model, "scheduled_at"):
+                conditions.append(or_(model.status == PublicationStatus.PUBLISHED, (model.status == PublicationStatus.SCHEDULED) & (model.scheduled_at <= now)))
+            else:
+                conditions.append(model.status == PublicationStatus.PUBLISHED)
         if hasattr(model, "is_active"):
             conditions.append(model.is_active.is_(True))
         return select(model).where(*conditions)

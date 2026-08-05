@@ -1,10 +1,12 @@
 """API v1 route registration."""
 
 from fastapi import FastAPI
+from ksu_common import install_request_body_limit_middleware
 
 from ...core.config import get_settings
 from ...routes.v1.health import router as health_router
 from ...routes.v1.internal import router as internal_router
+from ._idempotency import install_main_idempotency
 from .accommodations import router as accommodations_router
 from .academic_calendars import router as academic_calendars_router
 from .admin import router as admin_router
@@ -23,6 +25,11 @@ from .clubs import router as clubs_router
 from .contact_directory import router as contact_directory_router
 from .contacts import router as contacts_router
 from .content_workflow import router as content_workflow_router
+from .corporate_comm_engagement import (
+    engagement_router as corporate_comm_engagement_router,
+    settings_router as corporate_comm_settings_router,
+)
+from .corporate_portal import router as corporate_portal_router
 from .departments import router as departments_router
 from .department_services import router as department_services_router
 from .divisions import router as divisions_router
@@ -35,6 +42,7 @@ from .imports import router as imports_router
 from .intakes import router as intakes_router
 from .media import router as media_router
 from .me import router as me_router
+from .navigation import router as navigation_router
 from .news import router as news_router
 from .newsletters import router as newsletters_router
 from .notifications import router as notifications_router
@@ -51,6 +59,7 @@ from .public_entity_content import router as public_entity_content_router
 from .public_team import router as public_team_router
 from .public.inquiries import router as public_inquiries_router
 from .realtime import router as realtime_router
+from .record_recovery import router as record_recovery_router
 from .programmes import router as programmes_router
 from .search import router as search_router
 from .schools import router as schools_router
@@ -69,6 +78,8 @@ from .university_info import router as university_info_router
 from .users import router as users_router
 from .wings import router as wings_router
 from .vice_chancellor import router as vice_chancellor_router
+from .content_workflow_bulk import router as content_workflow_bulk_router
+from .exports import router as exports_router
 
 
 def register_routes(app: FastAPI) -> None:
@@ -85,6 +96,12 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(events_router, prefix="/api/v1/events", tags=["Content"])
     app.include_router(stories_router, prefix="/api/v1/stories", tags=["Content"])
     app.include_router(content_workflow_router, prefix="/api/v1/content-workflow", tags=["Content"])
+    app.include_router(
+        corporate_portal_router,
+        prefix="/api/v1/corporate-communication-portal",
+        tags=["Corporate Communication Portal"],
+    )
+    app.include_router(record_recovery_router, prefix="/api/v1/records", tags=["Content"])
     app.include_router(sliders_router, prefix="/api/v1/sliders", tags=["Content"])
     app.include_router(newsletters_router, prefix="/api/v1/newsletters", tags=["Marketing"])
     app.include_router(testimonials_router, prefix="/api/v1/testimonials", tags=["Marketing"])
@@ -95,6 +112,16 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(users_router, prefix="/api/v1/users", tags=["Users"])
     app.include_router(search_router, prefix="/api/v1/search", tags=["Search"])
     app.include_router(stats_router, prefix="/api/v1/stats", tags=["Stats"])
+    app.include_router(
+        corporate_comm_engagement_router,
+        prefix="/api/v1/stats/portal/corporate-communication",
+        tags=["Stats"],
+    )
+    app.include_router(
+        corporate_comm_settings_router,
+        prefix="/api/v1/corporate-communication-portal/settings",
+        tags=["Corporate Communication Portal"],
+    )
     app.include_router(settings_router, prefix="/api/v1/settings", tags=["System"])
     app.include_router(university_info_router, prefix="/api/v1/university-info", tags=["University"])
     app.include_router(notifications_router, prefix="/api/v1/notifications", tags=["Users"])
@@ -136,6 +163,7 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(support_router, prefix="/api/v1/support", tags=["Support"])
     app.include_router(media_router, prefix="/api/v1/media", tags=["Media"])
     app.include_router(admin_router, prefix="/api/v1/admin", tags=["Admin"])
+    app.include_router(navigation_router, prefix="/api/v1/navigation", tags=["Public"])
     app.include_router(public_media_router, prefix="/api/v1/public/media", tags=["Public"])
     app.include_router(public_leadership_router, prefix="/api/v1/public/leadership", tags=["Public"])
     app.include_router(public_people_router, prefix="/api/v1/public/people", tags=["Public"])
@@ -144,3 +172,7 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(public_entity_content_router, prefix="/api/v1/public/content", tags=["Public"])
     app.include_router(public_team_router, prefix="/api/v1/public", tags=["Public"])
     app.include_router(public_inquiries_router, prefix="/api/v1/public", tags=["Public"])
+    app.include_router(content_workflow_bulk_router, prefix="/api/v1/content-workflow", tags=["Content"])
+    app.include_router(exports_router, prefix="/api/v1/exports", tags=["Exports"])
+    install_request_body_limit_middleware(app)
+    install_main_idempotency(app.routes)

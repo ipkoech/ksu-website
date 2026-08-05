@@ -250,7 +250,7 @@ export function PublicCardSurface({
           ) : (
             <ArrowRight
               aria-hidden
-              className="h-4 w-4 transition-transform group-hover:translate-x-1 motion-reduce:transform-none motion-reduce:transition-none"
+              className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-1 motion-reduce:transform-none motion-reduce:transition-none"
             />
           )}
         </span>

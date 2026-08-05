@@ -53,6 +53,7 @@ ALL_PERMISSIONS: tuple[str, ...] = (
     "library.manage_resources", "library.manage_services", "library.manage_collections",
     "library.manage_staff", "library.manage_regulations", "library.manage_events",
     "library.manage_loans", "library.manage_statistics", "library.view",
+    "library.read", "library.write", "library.admin",
     # ADMISSIONS
     "admissions.view_applications", "admissions.manage_applications", "admissions.manage_intakes",
     "admissions.manage_courses", "admissions.manage_info", "admissions.view",
@@ -103,6 +104,28 @@ ALL_PERMISSIONS: tuple[str, ...] = (
     "programmes.manage", "programmes.view",
     # DEVELOPER
     "docs.access", "api.test",
+    # HERI AFRICA
+    "heri.view",
+    "heri.content.read", "heri.content.write", "heri.content.submit",
+    "heri.content.review", "heri.content.publish", "heri.content.manage",
+    "heri.workflow.publish", "heri.media.read", "heri.media.write",
+    "heri.submissions.read", "heri.submissions.write",
+    "heri.social.read", "heri.social.write", "heri.analytics.read",
+    # PORTAL-SCOPED WORKFLOWS
+    "clubs.view", "clubs.manage_own", "clubs.content_submit", "clubs.events_manage",
+    "clubs.stories_manage",
+    "school.audit.view", "school.content.bulk", "school.content.manage",
+    "school.content.submit", "school.content.view", "school.dashboard.view",
+    "school.departments.bulk", "school.departments.manage", "school.departments.view",
+    "school.inquiries.manage", "school.inquiries.reply", "school.inquiries.view",
+    "school.media.bulk", "school.media.manage", "school.media.view",
+    "school.notifications.manage", "school.notifications.view",
+    "school.profile.manage", "school.profile.view", "school.programmes.bulk",
+    "school.programmes.manage", "school.programmes.view", "school.publications.manage",
+    "school.publications.submit", "school.publications.view", "school.team.bulk",
+    "school.team.manage", "school.team.roles", "school.team.view",
+    "governance.manage_roles", "governance.manage_members", "governance.manage_order",
+    "governance.review", "governance.approve", "governance.publish", "governance.archive",
     # STAFF
     "staff.manage_assignments", "staff.view_assignments",
     # MENTORSHIP
@@ -671,6 +694,71 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
         description="Staff member for a Department.",
         scopes=("academic.view", "content.manage_news", "workflow.initiate", "media.upload", "profile.self_edit"),
     ),
+    "heri-admin": RoleDefinition(
+        name="heri-admin",
+        description="Administrator for all HERI Africa content and operations.",
+        scopes=("heri:*",),
+    ),
+    "heri-editor": RoleDefinition(
+        name="heri-editor",
+        description="HERI Africa content editor who can submit and manage drafts.",
+        scopes=(
+            "heri.content.read", "heri.content.write", "heri.content.submit",
+            "heri.media.read", "heri.media.write",
+        ),
+    ),
+    "heri-publisher": RoleDefinition(
+        name="heri-publisher",
+        description="HERI Africa reviewer and publisher.",
+        scopes=(
+            "heri.content.read", "heri.content.write", "heri.content.submit",
+            "heri.content.review", "heri.content.publish", "heri.workflow.publish",
+            "heri.media.read",
+        ),
+    ),
+    "heri-partnership-manager": RoleDefinition(
+        name="heri-partnership-manager",
+        description="HERI Africa submissions and partnership manager.",
+        scopes=(
+            "heri.content.read", "heri.content.write", "heri.content.submit",
+            "heri.submissions.read", "heri.submissions.write",
+        ),
+    ),
+    "heri-social-publisher": RoleDefinition(
+        name="heri-social-publisher",
+        description="HERI Africa social media publisher.",
+        scopes=("heri.content.read", "heri.social.read", "heri.social.write"),
+    ),
+    "heri-viewer": RoleDefinition(
+        name="heri-viewer",
+        description="Read-only HERI Africa viewer.",
+        scopes=("heri.content.read", "heri.media.read", "heri.analytics.read"),
+    ),
 }
 
-__all__ = ["RoleDefinition", "ROLE_DEFINITIONS", "ALL_PERMISSIONS"]
+ROLE_ALIASES: Mapping[str, str] = {
+    "super_admin": "super-admin",
+    "library_admin": "library-admin",
+    "library_manager": "library-manager",
+    "library_staff": "library-staff",
+    "heri_admin": "heri-admin",
+    "heri_editor": "heri-editor",
+    "heri_publisher": "heri-publisher",
+    "heri_partnership_manager": "heri-partnership-manager",
+    "heri_social_publisher": "heri-social-publisher",
+    "heri_viewer": "heri-viewer",
+}
+
+
+def normalize_role_name(role_name: str) -> str:
+    normalized = role_name.strip().lower().replace("_", "-")
+    return ROLE_ALIASES.get(normalized.replace("-", "_"), normalized)
+
+
+__all__ = [
+    "RoleDefinition",
+    "ROLE_DEFINITIONS",
+    "ROLE_ALIASES",
+    "ALL_PERMISSIONS",
+    "normalize_role_name",
+]

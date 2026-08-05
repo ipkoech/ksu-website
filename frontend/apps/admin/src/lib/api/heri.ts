@@ -31,6 +31,14 @@ export function useHeriResourceMutation(resource: string) {
   return useMutation({ mutationFn: ({ id, payload }: { id?: string; payload?: Record<string, unknown> }) => heriRequest<TypedMutationResult>(`/admin/${resource}${id ? `/${id}` : ""}`, { method: id ? "PATCH" : "POST", body: JSON.stringify(payload ?? {}) }), onSuccess: () => client.invalidateQueries({ queryKey: ["heri", resource] }) });
 }
 
+export function useHeriPartnerSync() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => heriRequest<{ created: number; updated: number; total: number }>("/admin/partners/sync", { method: "POST", body: "{}" }),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["heri", "partners"] }),
+  });
+}
+
 type TypedMutationResult = HeriRecord | undefined;
 
 export { heriRequest };

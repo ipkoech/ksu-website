@@ -1,10 +1,9 @@
-import { StoryContributorClient } from "@/components/stories/story-contributor-client";
+import ClientPage from "./client-page";
 
-export default async function EditStoryContributorStoryPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  return <StoryContributorClient mode="edit" storyId={id} />;
+export function generateStaticParams() {
+  return [{ id: "_static" }];
+}
+
+export default function EditStoryContributorStoryPage() {
+  return <ClientPage />;
 }

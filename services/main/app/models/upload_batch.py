@@ -15,7 +15,8 @@ from ksu_common.models.base import Base
 class UploadBatch(Base):
     __tablename__ = "upload_batches"
 
-    school_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey("schools.id", ondelete="CASCADE"), nullable=False, index=True)
+    school_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("schools.id", ondelete="CASCADE"), nullable=True, index=True)
+    portal: Mapped[str] = mapped_column(sa.String(64), nullable=False, server_default="schools", index=True)
     created_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     status: Mapped[str] = mapped_column(sa.String(24), nullable=False, server_default="pending", index=True)
     total_files: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("0"))

@@ -82,6 +82,7 @@ vi.mock("@/lib/public-media", () => ({
 const data: ProgrammeDetailData = {
   slug: "bachelor-of-laws",
   sourceBacked: true,
+  testimonials: [],
   programme: {
     id: "programme-llb",
     name: "Bachelor of Laws",

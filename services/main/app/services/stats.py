@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import httpx
+from datetime import datetime, timezone
+
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from ..core.config import get_settings
 from ..models import (
     Announcement,
     ArtsCulture,
@@ -56,12 +57,18 @@ PORTAL_STAT_CONTRACTS: dict[str, tuple[str, ...]] = {
         "staff_assignments_count",
         "documents_count",
     ),
-    "corporate-communication": (
+    "cocms": (
         "pending_review_count",
         "published_count",
         "draft_count",
         "scheduled_count",
         "media_count",
+        "in_review_count",
+        "changes_requested_count",
+        "approved_count",
+        "expired_count",
+        "validation_blocker_count",
+        "spotlight_count",
     ),
     "schools": ("schools_count", "programmes_count", "departments_count"),
     "departments": (
@@ -69,15 +76,24 @@ PORTAL_STAT_CONTRACTS: dict[str, tuple[str, ...]] = {
         "programmes_count",
         "unpublished_count",
     ),
+    "student-clubs": ("active_clubs_count", "active_members_count"),
     "research": (
-        "researchers_count",
-        "published_publications_count",
+        "active_projects_count",
+        "grants_count",
+        "centres_count",
+        "outputs_count",
     ),
     "library": (
         "active_branches_count",
         "catalogue_resources_count",
         "active_regulations_count",
         "loans_count",
+    ),
+    "publications": (
+        "draft_count",
+        "submitted_count",
+        "school_approved_count",
+        "published_count",
     ),
 }
 
@@ -88,72 +104,12 @@ PORTAL_ALIASES = {
     "institutional-administration": "admin",
 }
 
-settings = get_settings()
-
 
 async def _count(db: AsyncSession, model, *conditions) -> int:
     result = await db.execute(
         select(func.count(model.id)).where(model.deleted_at.is_(None), *conditions)
     )
     return int(result.scalar_one() or 0)
-
-
-async def _published_publications_count() -> int:
-    """Read the public publication count from the owning Research service."""
-
-    async with httpx.AsyncClient(
-        base_url=settings.RESEARCH_SERVICE_URL.rstrip("/"),
-        timeout=httpx.Timeout(20.0, connect=5.0),
-        headers={"X-KSU-Proxy": "main-stats"},
-    ) as client:
-        response = await client.get("/api/v1/stats")
-        response.raise_for_status()
-        payload = response.json()
-
-    if not isinstance(payload, dict) or payload.get("status") != "success":
-        raise ValueError("Research service returned an unexpected stats payload")
-    data = payload.get("data")
-    if not isinstance(data, dict) or not isinstance(data.get("stats"), list):
-        raise ValueError("Research service returned an unexpected stats payload")
-
-    for item in data["stats"]:
-        if item.get("key") == "publications" and isinstance(item.get("value"), int):
-            return item["value"]
-
-    raise ValueError("Research service did not return a publications count")
-
-
-async def _library_portal_stat_counts() -> dict[str, int]:
-    """Read dashboard counters from the owning Library service."""
-
-    async with httpx.AsyncClient(
-        base_url=settings.LIBRARY_SERVICE_URL.rstrip("/"),
-        timeout=httpx.Timeout(20.0, connect=5.0),
-        headers={"X-KSU-Proxy": "main-stats"},
-    ) as client:
-        response = await client.get("/api/v1/stats/admin")
-        response.raise_for_status()
-        payload = response.json()
-
-    if not isinstance(payload, dict) or payload.get("status") != "success":
-        raise ValueError("Library service returned an unexpected stats payload")
-    data = payload.get("data")
-    if not isinstance(data, dict) or not isinstance(data.get("stats"), list):
-        raise ValueError("Library service returned an unexpected stats payload")
-
-    service_values: dict[str, int] = {}
-    for item in data["stats"]:
-        if isinstance(item, dict) and isinstance(item.get("value"), int):
-            key = item.get("key")
-            if isinstance(key, str):
-                service_values[key] = item["value"]
-
-    return {
-        "active_branches_count": service_values.get("active_branches", 0),
-        "catalogue_resources_count": service_values.get("catalogue_resources", 0),
-        "active_regulations_count": service_values.get("active_regulations", 0),
-        "loans_count": service_values.get("loans", 0),
-    }
 
 
 async def _sum_publications_for_people(
@@ -167,6 +123,159 @@ async def _sum_publications_for_people(
         )
     )
     return int(result.scalar_one() or 0)
+
+
+async def _sum(db: AsyncSession, field, model, *conditions) -> int:
+    result = await db.execute(
+        select(func.coalesce(func.sum(field), 0)).where(
+            model.deleted_at.is_(None),
+            *conditions,
+        )
+    )
+    return int(result.scalar_one() or 0)
+
+
+class _PageCmsStatsPreviewCapability:
+    """Authorize validation only within the section's own page scope."""
+
+    def __init__(self, scope_type: str, scope_id):
+        self.scope_type = scope_type
+        self.scope_id = scope_id
+
+    async def allows(
+        self,
+        *,
+        source_scope_type: str,
+        source_scope_id,
+        destination_scope_type: str,
+        destination_scope_id,
+    ) -> bool:
+        return (
+            source_scope_type == self.scope_type == destination_scope_type
+            and source_scope_id == self.scope_id == destination_scope_id
+        )
+
+
+def _page_cms_active_publication_start(model, now):
+    return (
+        or_(model.valid_from.is_(None), model.valid_from <= now),
+        or_(model.scheduled_publish_at.is_(None), model.scheduled_publish_at <= now),
+    )
+
+
+def _page_cms_active_publication_window(model, now):
+    return (
+        *_page_cms_active_publication_start(model, now),
+        or_(model.valid_to.is_(None), model.valid_to >= now),
+        or_(model.expires_at.is_(None), model.expires_at >= now),
+    )
+
+
+def _page_cms_public_composition_candidate(model):
+    return (
+        model.is_enabled.is_(True),
+        model.status == "published",
+        model.workflow_status == "published",
+    )
+
+
+async def _page_cms_workflow_stats(db: AsyncSession) -> dict[str, int]:
+    now = datetime.now(timezone.utc)
+    future_start = or_(
+        PageSection.valid_from > now,
+        PageSection.scheduled_publish_at > now,
+    )
+    scheduled = and_(
+        *_page_cms_public_composition_candidate(PageSection),
+        future_start,
+    )
+    expired = and_(
+        *_page_cms_public_composition_candidate(PageSection),
+        *_page_cms_active_publication_start(PageSection, now),
+        or_(
+            PageSection.valid_to < now,
+            PageSection.expires_at < now,
+        ),
+    )
+    result = await db.execute(
+        select(
+            func.count(PageSection.id)
+            .filter(PageSection.workflow_status == "draft")
+            .label("draft_count"),
+            func.count(PageSection.id)
+            .filter(PageSection.workflow_status == "in_review")
+            .label("in_review_count"),
+            func.count(PageSection.id)
+            .filter(PageSection.workflow_status == "changes_requested")
+            .label("changes_requested_count"),
+            func.count(PageSection.id)
+            .filter(PageSection.workflow_status == "approved")
+            .label("approved_count"),
+            func.count(PageSection.id).filter(scheduled).label("scheduled_count"),
+            func.count(PageSection.id)
+            .filter(
+                *_page_cms_public_composition_candidate(PageSection),
+                *_page_cms_active_publication_window(PageSection, now),
+            )
+            .label("published_count"),
+            func.count(PageSection.id).filter(expired).label("expired_count"),
+        ).where(PageSection.deleted_at.is_(None))
+    )
+    return {key: int(value or 0) for key, value in result.mappings().one().items()}
+
+
+async def _page_cms_validation_blocker_count(db: AsyncSession) -> int:
+    from .page_cms import PageSectionValidationService, group_preview_media_links_many
+    from .page_cms_sources import PageCmsSourceResolutionCache
+
+    result = await db.execute(
+        select(PageSection)
+        .options(selectinload(PageSection.items))
+        .where(
+            PageSection.deleted_at.is_(None),
+            PageSection.status != "archived",
+        )
+    )
+    sections = list(result.scalars().all())
+    if not sections:
+        return 0
+
+    media_by_section = await group_preview_media_links_many(
+        db,
+        "page_section",
+        [section.id for section in sections],
+    )
+    sections_by_scope = {}
+    for section in sections:
+        key = (section.page_key, section.scope_type, section.scope_id)
+        sections_by_scope.setdefault(key, []).append(section)
+
+    blocker_count = 0
+    resolution_cache = PageCmsSourceResolutionCache()
+    for (_, scope_type, scope_id), scoped_sections in sections_by_scope.items():
+        resolved_by_section = await PageSectionValidationService.resolve_items_for_sections(
+            db,
+            scoped_sections,
+            _PageCmsStatsPreviewCapability(scope_type, scope_id),
+            resolution_cache=resolution_cache,
+        )
+        for section in scoped_sections:
+            issues = PageSectionValidationService.validate(
+                section,
+                resolved_by_section.get(section.id, []),
+                media_by_section.get(section.id, {}),
+            )
+            blocker_count += int(any(issue.blocking for issue in issues))
+    return blocker_count
+
+
+async def _page_cms_spotlight_count(db: AsyncSession) -> int:
+    result = await db.execute(
+        select(func.count(PartnershipSpotlight.id).label("spotlight_count")).where(
+            PartnershipSpotlight.deleted_at.is_(None)
+        )
+    )
+    return int(result.mappings().one()["spotlight_count"] or 0)
 
 
 def _item(
@@ -706,8 +815,6 @@ async def portal_stats(
 ) -> PortalStatsResponse | None:
     """Return definite counters for Main-service admin portal dashboards."""
 
-    portal = PORTAL_ALIASES.get(portal, portal)
-
     if portal == "admin":
         stats = {
             "boards_count": await _count(db, Board),
@@ -717,7 +824,7 @@ async def portal_stats(
             "documents_count": await _count(db, Document),
         }
         title = "Admin operational counters"
-    elif portal == "corporate-communication":
+    elif portal == "cocms":
         content_sources = (
             (News, ()),
             (Blog, ()),
@@ -741,27 +848,12 @@ async def portal_stats(
                     for model, extra_filters in content_sources
                 ]
             ),
-            "published_count": sum(
-                [
-                    await _count(db, model, model.workflow_status == "published", *extra_filters)
-                    for model, extra_filters in content_sources
-                ]
-            ),
-            "draft_count": sum(
-                [
-                    await _count(db, model, model.workflow_status == "draft", *extra_filters)
-                    for model, extra_filters in content_sources
-                ]
-            ),
-            "scheduled_count": sum(
-                [
-                    await _count(db, model, model.workflow_status == "scheduled", *extra_filters)
-                    for model, extra_filters in content_sources
-                ]
-            ),
             "media_count": await _count(db, Media),
         }
-        title = "Corporate Communication publishing counters"
+        stats.update(await _page_cms_workflow_stats(db))
+        stats["validation_blocker_count"] = await _page_cms_validation_blocker_count(db)
+        stats["spotlight_count"] = await _page_cms_spotlight_count(db)
+        title = "CoCMS publishing counters"
     elif portal == "schools":
         stats = {
             "schools_count": await _count(db, School),
@@ -787,19 +879,17 @@ async def portal_stats(
             ),
         }
         title = "Department administration counters"
-    elif portal == "research":
+    elif portal == "student-clubs":
         stats = {
-            "researchers_count": await _count(
+            "active_clubs_count": await _count(db, Club, Club.is_active.is_(True)),
+            "active_members_count": await _sum(
                 db,
-                Person,
-                Person.is_researcher.is_(True),
+                Club.membership_count,
+                Club,
+                Club.is_active.is_(True),
             ),
-            "published_publications_count": await _published_publications_count(),
         }
-        title = "Research and publications counters"
-    elif portal == "library":
-        stats = await _library_portal_stat_counts()
-        title = "Library administration counters"
+        title = "Student club counters"
     else:
         return None
 

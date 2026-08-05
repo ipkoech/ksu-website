@@ -118,7 +118,7 @@ export default async function EndowmentsPage({
                 <FeaturedEndowment fund={featuredEndowment} />
               </div>
             ) : null}
-            <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-border bg-white shadow-sm">
+            <div className="mt-6 divide-y divide-border rounded-lg border border-border bg-white shadow-sm">
               {rowEndowments.map((fund) => (
                 <EndowmentRow key={fund.id} fund={fund} />
               ))}

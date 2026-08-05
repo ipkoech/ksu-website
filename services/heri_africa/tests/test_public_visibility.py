@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from app.models.content import NewsArticle, PublicationStatus
-from app.services.public import is_public_record
+from app.models.content import NewsArticle, PublicationStatus, ResearchTheme
+from app.services.public import PublicService, is_public_record
 
 
 def test_only_published_records_or_due_scheduled_records_are_public() -> None:
@@ -17,3 +17,10 @@ def test_only_published_records_or_due_scheduled_records_are_public() -> None:
     assert not is_public_record(draft, now)
     assert not is_public_record(future, now)
     assert is_public_record(due, now)
+
+
+def test_public_query_supports_models_without_scheduled_at() -> None:
+    query = PublicService.public_query(ResearchTheme)
+
+    # Building the query must not assume every status-bearing model is schedulable.
+    assert "research_themes" in str(query)

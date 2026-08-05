@@ -1,5 +1,7 @@
 import { mainApi } from "@ksu/api-client";
 
+import { nullIfNotFound } from "./public-fetch";
+
 export type PublicMedia = {
   id?: string | null;
   url?: string | null;
@@ -189,7 +191,7 @@ export async function getPublicAboutData(): Promise<PublicAboutData | null> {
     return response.data;
   } catch (error) {
     console.error("Failed to load public About content:", error);
-    return null;
+    return nullIfNotFound(error);
   }
 }
 
@@ -204,7 +206,7 @@ export async function getPublicFactsData(
     return response.data;
   } catch (error) {
     console.error("Failed to load public institutional facts:", error);
-    return null;
+    return nullIfNotFound(error);
   }
 }
 
@@ -216,6 +218,6 @@ export async function getPublicInstitutionalPage(slug: string): Promise<PublicIn
     return response.data;
   } catch (error) {
     console.error(`Failed to load public institutional page ${slug}:`, error);
-    return null;
+    return nullIfNotFound(error);
   }
 }

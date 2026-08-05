@@ -4,6 +4,7 @@ export type SiteSettings = {
   contact: Record<string, unknown>;
   social_links: Record<string, unknown>;
   seo_defaults: Record<string, unknown>;
+  research_center_slug: string | null;
 };
 
 export type NewsSummary = {
@@ -63,8 +64,20 @@ export type HeroSlide = {
   is_active: boolean;
 };
 
-const apiBase =
-  process.env.NEXT_PUBLIC_HERI_API_URL ?? "http://localhost:8003/api/v1/heri";
+const API_PREFIX = "/api/v1/heri";
+
+// Accepts both bare origins (http://heri:8003) and full base URLs so a
+// misconfigured env var cannot silently 404 every server-side fetch.
+function normalizeBase(base: string): string {
+  const trimmed = base.replace(/\/+$/, "");
+  return trimmed.endsWith(API_PREFIX) ? trimmed : `${trimmed}${API_PREFIX}`;
+}
+
+const apiBase = normalizeBase(
+  (typeof window === "undefined"
+    ? process.env.KSU_HERI_API_URL
+    : process.env.NEXT_PUBLIC_HERI_API_URL) ?? "http://localhost:8003",
+);
 
 async function get<T>(path: string): Promise<T> {
   const response = await fetch(`${apiBase}${path}`, {
@@ -87,6 +100,10 @@ export async function getNewsDetail(slug: string): Promise<NewsDetail> {
   return get<NewsDetail>(`/news/${encodeURIComponent(slug)}`);
 }
 
+export async function getCenterPartners(centerId: string): Promise<PartnerSummary[]> {
+  return get<PartnerSummary[]>(`/centers/${encodeURIComponent(centerId)}/partners?limit=50`);
+}
+
 export async function getTeam(): Promise<TeamSummary[]> {
   return get<TeamSummary[]>("/team?limit=24");
 }
@@ -99,8 +116,9 @@ export async function getProjects(): Promise<ResearchSummary[]> {
 export async function getPublications(): Promise<ResearchSummary[]> {
   return get<ResearchSummary[]>("/research/publications?limit=24");
 }
-export async function getPartners(): Promise<PartnerSummary[]> {
-  return get<PartnerSummary[]>("/partners?limit=50");
+export async function getPartners(centerId?: string, centerSlug?: string): Promise<PartnerSummary[]> {
+  const query = centerId ? `&center_id=${encodeURIComponent(centerId)}` : centerSlug ? `&center_slug=${encodeURIComponent(centerSlug)}` : "";
+  return get<PartnerSummary[]>(`/partners?limit=50${query}`);
 }
 export async function getEvents(): Promise<EventSummary[]> {
   return get<EventSummary[]>("/events?limit=24");
@@ -113,8 +131,22 @@ export type OpportunitySummary = {
   application_url: string | null;
   closing_at: string | null;
 };
+export type ImpactMetricSummary = {
+  id: string;
+  label: string;
+  value: string;
+  unit: string | null;
+  description: string;
+  position: number;
+};
 export async function getOpportunities(): Promise<OpportunitySummary[]> {
   return get<OpportunitySummary[]>("/opportunities?limit=24");
+}
+export async function getResearchThemes(): Promise<ResearchSummary[]> {
+  return get<ResearchSummary[]>("/research/themes?limit=24");
+}
+export async function getImpactMetrics(): Promise<ImpactMetricSummary[]> {
+  return get<ImpactMetricSummary[]>("/impact-metrics");
 }
 export async function getHeroSlides(): Promise<HeroSlide[]> {
   return get<HeroSlide[]>("/hero-slides");

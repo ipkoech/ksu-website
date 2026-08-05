@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import { toast } from "@ksu/ui";
 import { RichTextEditor } from "@ksu/ui/components";
-import { useHeriResourceMutation, useHeriResourceQuery } from "@/lib/api/heri";
+import { useHeriPartnerSync, useHeriResourceMutation, useHeriResourceQuery } from "@/lib/api/heri";
+import { HeriMediaPicker } from "./heri-media-picker";
 
 type RecordValue =
   | string
@@ -43,7 +44,8 @@ type Field = {
     | "select"
     | "boolean"
     | "number"
-    | "date";
+    | "date"
+    | "media";
   required?: boolean;
   options?: string[];
 };
@@ -116,6 +118,7 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
     status: status === "all" ? undefined : status,
   });
   const resourceMutation = useHeriResourceMutation(config.resource);
+  const partnerSync = useHeriPartnerSync();
   const loading = resourceQuery.isPending || resourceQuery.isFetching;
 
   const load = useCallback(async () => {
@@ -188,6 +191,7 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
             "social_links",
             "seo_defaults",
             "payload",
+            "collaboration_areas",
           ].includes(field.name)
             ? JSON.parse(String(value))
             : field.type === "number"
@@ -262,6 +266,16 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
           : "Unable to delete selected records";
       setError(message);
       toast.error(message);
+    }
+  };
+
+  const syncPartners = async () => {
+    try {
+      const result = await partnerSync.mutateAsync();
+      toast.success(`Synced ${result.total} partners (${result.created} new, ${result.updated} updated)`);
+      await load();
+    } catch (reason) {
+      toast.error(reason instanceof Error ? reason.message : "Unable to sync partners");
     }
   };
   const toggleSelected = (id: string) =>
@@ -362,25 +376,37 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
             {config.description}
           </p>
         </div>
-        {canWrite && (
-          <button
-            onClick={() =>
-              openEditor({
-                id: "",
-                ...Object.fromEntries(
-                  config.fields.map((field) => [
-                    field.name,
-                    field.type === "boolean" ? false : "",
-                  ]),
-                ),
-              })
-            }
-            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-          >
-            <Plus className="size-4" />
-            Create record
-          </button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {config.resource === "partners" && canWrite && (
+            <button
+              onClick={() => void syncPartners()}
+              disabled={partnerSync.isPending}
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-emerald-300 px-4 py-2.5 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RefreshCw className={`size-4 ${partnerSync.isPending ? "animate-spin" : ""}`} />
+              {partnerSync.isPending ? "Syncing…" : "Sync from Research Service"}
+            </button>
+          )}
+          {canWrite && (
+            <button
+              onClick={() =>
+                openEditor({
+                  id: "",
+                  ...Object.fromEntries(
+                    config.fields.map((field) => [
+                      field.name,
+                      field.type === "boolean" ? false : "",
+                    ]),
+                  ),
+                })
+              }
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            >
+              <Plus className="size-4" />
+              Create record
+            </button>
+          )}
+        </div>
       </header>
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-3 md:flex-row">
@@ -726,6 +752,11 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
                         minHeight="14rem"
                         placeholder={`Write ${field.label.toLowerCase()}…`}
                       />
+                    ) : field.type === "media" ? (
+                      <>
+                        <input type="hidden" name={field.name} value={String(selected[field.name] ?? "")} />
+                        <HeriMediaPicker value={String(selected[field.name] ?? "")} onChange={(value) => { selected[field.name] = value; setSelected({ ...selected }); setIsDirty(true); }} />
+                      </>
                     ) : field.type === "textarea" ? (
                       <textarea
                         name={field.name}

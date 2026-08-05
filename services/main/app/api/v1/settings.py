@@ -7,7 +7,7 @@ from fastapi import APIRouter, Query
 from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
-from ...deps import ApiKeyAuth, DbSession, require_api_key_scope
+from ...deps import ApiKeyAuth, DbSession
 from ...models import Setting
 from ...services import SettingService
 from ._fields import FieldSelection, FieldsDep, build_selector

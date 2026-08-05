@@ -78,7 +78,7 @@ export function StoryAccountRequestForm() {
       <button
         type="submit"
         disabled={state === "submitting"}
-        className="inline-flex min-h-12 w-fit items-center gap-3 rounded-full bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
+        className="inline-flex min-h-12 w-fit items-center gap-3 rounded-full bg-primary px-6 text-sm font-bold text-white transition-colors duration-200 hover:bg-primary/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
       >
         {state === "submitting" ? (
           <Loader2 className="h-4 w-4 animate-spin" />

@@ -1,7 +1,5 @@
 """School-scoped inquiry inbox and conversation actions."""
 
-from __future__ import annotations
-
 import uuid
 from datetime import date, datetime, time, timedelta, timezone
 

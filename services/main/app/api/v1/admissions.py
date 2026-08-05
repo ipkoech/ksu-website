@@ -183,6 +183,7 @@ async def list_admission_requirements(
 
 
 @router.get("/requirements/{item_id}")
+@cached_public(timeout=300, vary_on=("item_id", "fields", "include"))
 async def get_admission_requirement(item_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(AdmissionRequirement, fields)
     item = await AdmissionRequirementService.get_by_id(db, item_id, load_options=selector.load_options)
@@ -241,6 +242,7 @@ async def list_programme_fee_structures(
 
 
 @router.get("/fee-structures/{item_id}")
+@cached_public(timeout=300, vary_on=("item_id", "fields", "include"))
 async def get_programme_fee_structure(item_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(ProgrammeFeeStructure, fields)
     item = await ProgrammeFeeStructureService.get_by_id(db, item_id, load_options=selector.load_options)
@@ -358,6 +360,7 @@ async def list_admission_faqs(
 
 
 @router.get("/faqs/{item_id}")
+@cached_public(timeout=300, vary_on=("item_id", "fields", "include"))
 async def get_admission_faq(item_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(AdmissionFaq, fields)
     item = await AdmissionFaqService.get_by_id(db, item_id, load_options=selector.load_options)
@@ -410,6 +413,7 @@ async def list_admission_page_sections(
 
 
 @router.get("/page-sections/{item_id}")
+@cached_public(timeout=300, vary_on=("item_id", "fields", "include"))
 async def get_admission_page_section(item_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(AdmissionPageSection, fields)
     item = await AdmissionPageSectionService.get_by_id(db, item_id, load_options=selector.load_options)

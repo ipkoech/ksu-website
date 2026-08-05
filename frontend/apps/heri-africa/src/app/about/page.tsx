@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -10,6 +11,15 @@ import {
   UsersRound,
 } from "lucide-react";
 import { SiteShell } from "../../components/site-shell";
+import { Reveal, RevealItem } from "../../components/motion/reveal";
+import { withBasePath } from "../../lib/base-path";
+
+export const metadata: Metadata = {
+  title: "About the Research Chair",
+  description:
+    "Who we are: the vision, mission, values and approach of the HERI Africa Language Education Research Chair, hosted by Kisii University.",
+};
+
 
 const values = [
   ["Excellence", "We pursue the highest standards in everything we do."],
@@ -65,7 +75,7 @@ export default function AboutPage() {
         <section className="relative overflow-hidden bg-heri-ink text-white">
           <div className="absolute inset-0 bg-[linear-gradient(115deg,#003c39,#006b62_54%,#07302d)]" />
           <div className="relative mx-auto grid min-h-[390px] max-w-7xl items-end gap-8 px-6 pb-14 pt-20 lg:grid-cols-2 lg:px-10">
-            <div>
+            <Reveal>
               <p className="text-sm text-white/70">
                 Home <span className="mx-2">/</span> About Us
               </p>
@@ -87,10 +97,10 @@ export default function AboutPage() {
               >
                 OUR APPROACH <span>→</span>
               </Link>
-            </div>
+            </Reveal>
             <div className="relative hidden h-[300px] overflow-hidden rounded-t-[5rem] rounded-bl-[5rem] lg:block">
               <Image
-                src="/images/backgrounds/about-hero.jpg"
+                src={withBasePath("/images/backgrounds/about-hero.jpg")}
                 alt="HERI Africa researchers collaborating"
                 fill
                 sizes="50vw"
@@ -100,7 +110,7 @@ export default function AboutPage() {
           </div>
         </section>
         <section className="mx-auto grid max-w-7xl items-center gap-10 px-6 py-16 lg:grid-cols-2 lg:px-10">
-          <div>
+          <Reveal>
             <div className="h-1 w-10 bg-heri-lime" />
             <h2 className="mt-4 text-4xl font-bold text-heri-blue">
               Who We Are
@@ -123,10 +133,10 @@ export default function AboutPage() {
             >
               MEET OUR TEAM <span>→</span>
             </Link>
-          </div>
+          </Reveal>
           <div className="relative h-[330px] overflow-hidden rounded-2xl">
             <Image
-              src="/images/landing-page/why-kisii/pathway-2.jpg"
+              src={withBasePath("/images/landing-page/why-kisii/pathway-2.jpg")}
               alt="Researchers working together"
               fill
               sizes="50vw"
@@ -135,10 +145,10 @@ export default function AboutPage() {
           </div>
         </section>
         <section className="bg-heri-cream/60 px-6 py-12">
-          <div className="mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+          <Reveal className="mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-[0.9fr_1.1fr]">
             <div className="flex items-center justify-center gap-5 text-heri-blue">
               <Image
-                src="/logos/ksu-logo.png"
+                src={withBasePath("/logos/ksu-logo.png")}
                 alt="Kisii University"
                 width={84}
                 height={84}
@@ -166,14 +176,16 @@ export default function AboutPage() {
                 practice to strengthen language education systems across Africa.
               </p>
             </div>
-          </div>
+          </Reveal>
         </section>
         <section className="bg-heri-ink px-6 py-14 text-white">
           <div className="mx-auto max-w-6xl">
-            <h2 className="text-center text-3xl font-bold">
-              Why Language Education Matters
-            </h2>
-            <div className="mx-auto mt-3 h-1 w-12 bg-heri-lime" />
+            <Reveal>
+              <h2 className="text-center text-3xl font-bold">
+                Why Language Education Matters
+              </h2>
+              <div className="mx-auto mt-3 h-1 w-12 bg-heri-lime" />
+            </Reveal>
             <div className="mt-10 grid gap-8 md:grid-cols-4">
               {[
                 [
@@ -196,100 +208,111 @@ export default function AboutPage() {
                   "Investing in African languages fuels innovation, local solutions and sustainable development.",
                   Lightbulb,
                 ],
-              ].map(([title, text, Icon]) => (
-                <article
-                  className="border-heri-lime/70 md:border-r md:pr-6 last:border-0"
-                  key={title as string}
-                >
-                  <Icon className="size-9 text-heri-lime" />
-                  <h3 className="mt-5 text-xl font-bold leading-tight">
-                    {title as string}
-                  </h3>
-                  <p className="mt-3 text-sm leading-6 text-white/70">
-                    {text as string}
-                  </p>
-                </article>
+              ].map(([title, text, Icon], index) => (
+                <RevealItem key={title as string} index={index}>
+                  <article
+                    className="border-heri-lime/70 md:border-r md:pr-6 last:border-0"
+                  >
+                    <Icon className="size-9 text-heri-lime" />
+                    <h3 className="mt-5 text-xl font-bold leading-tight">
+                      {title as string}
+                    </h3>
+                    <p className="mt-3 text-sm leading-6 text-white/70">
+                      {text as string}
+                    </p>
+                  </article>
+                </RevealItem>
               ))}
             </div>
           </div>
         </section>
         <section className="mx-auto max-w-6xl px-6 py-16">
           <div className="grid items-center gap-10 md:grid-cols-2">
-            <article className="flex gap-5">
-              <Eye className="mt-1 size-12 shrink-0 text-heri-teal" />
-              <div>
-                <h2 className="text-3xl font-bold text-heri-blue">
-                  Our Vision
-                </h2>
-                <div className="mt-3 h-1 w-10 bg-heri-lime" />
-                <p className="mt-5 text-sm leading-6 text-slate-600">
-                  To be a leading Africa-led Centre of Excellence in language
-                  education research, advancing foundational literacy,
-                  educational transformation, and global societal impact.
-                </p>
-              </div>
-            </article>
-            <article className="flex gap-5 border-t border-slate-200 pt-8 md:border-l md:border-t-0 md:pl-10 md:pt-0">
-              <Goal className="mt-1 size-12 shrink-0 text-heri-teal" />
-              <div>
-                <h2 className="text-3xl font-bold text-heri-blue">
-                  Our Mission
-                </h2>
-                <div className="mt-3 h-1 w-10 bg-heri-lime" />
-                <p className="mt-5 text-sm leading-6 text-slate-600">
-                  To advance impactful, policy-responsive, and practice-oriented
-                  research in language education and foundational literacy for
-                  educational transformation in Africa and beyond.
-                </p>
-              </div>
-            </article>
+            <RevealItem index={0}>
+              <article className="flex gap-5">
+                <Eye className="mt-1 size-12 shrink-0 text-heri-teal" />
+                <div>
+                  <h2 className="text-3xl font-bold text-heri-blue">
+                    Our Vision
+                  </h2>
+                  <div className="mt-3 h-1 w-10 bg-heri-lime" />
+                  <p className="mt-5 text-sm leading-6 text-slate-600">
+                    To be a leading Africa-led Centre of Excellence in language
+                    education research, advancing foundational literacy,
+                    educational transformation, and global societal impact.
+                  </p>
+                </div>
+              </article>
+            </RevealItem>
+            <RevealItem index={1}>
+              <article className="flex gap-5 border-t border-slate-200 pt-8 md:border-l md:border-t-0 md:pl-10 md:pt-0">
+                <Goal className="mt-1 size-12 shrink-0 text-heri-teal" />
+                <div>
+                  <h2 className="text-3xl font-bold text-heri-blue">
+                    Our Mission
+                  </h2>
+                  <div className="mt-3 h-1 w-10 bg-heri-lime" />
+                  <p className="mt-5 text-sm leading-6 text-slate-600">
+                    To advance impactful, policy-responsive, and practice-oriented
+                    research in language education and foundational literacy for
+                    educational transformation in Africa and beyond.
+                  </p>
+                </div>
+              </article>
+            </RevealItem>
           </div>
         </section>
         <section className="border-t border-slate-200 px-6 py-12">
           <div className="mx-auto max-w-7xl">
-            <h2 className="text-center text-3xl font-bold text-heri-blue">
-              Our Core Values
-            </h2>
-            <div className="mx-auto mt-3 h-1 w-10 bg-heri-lime" />
+            <Reveal>
+              <h2 className="text-center text-3xl font-bold text-heri-blue">
+                Our Core Values
+              </h2>
+              <div className="mx-auto mt-3 h-1 w-10 bg-heri-lime" />
+            </Reveal>
             <div className="mt-8 grid divide-y divide-slate-200 sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4">
-              {values.map(([title, text]) => (
-                <article
-                  className="border-slate-200 px-5 py-6 text-center sm:border-b lg:border-r lg:nth-[4n]:border-r-0"
-                  key={title}
-                >
-                  <Handshake className="mx-auto size-8 text-heri-lime" />
-                  <h3 className="mt-3 font-bold text-heri-blue">{title}</h3>
-                  <p className="mt-2 text-xs leading-5 text-slate-600">
-                    {text}
-                  </p>
-                </article>
+              {values.map(([title, text], index) => (
+                <RevealItem key={title} index={index}>
+                  <article
+                    className="border-slate-200 px-5 py-6 text-center sm:border-b lg:border-r lg:nth-[4n]:border-r-0"
+                  >
+                    <Handshake className="mx-auto size-8 text-heri-lime" />
+                    <h3 className="mt-3 font-bold text-heri-blue">{title}</h3>
+                    <p className="mt-2 text-xs leading-5 text-slate-600">
+                      {text}
+                    </p>
+                  </article>
+                </RevealItem>
               ))}
             </div>
           </div>
         </section>
         <section className="mx-auto max-w-7xl px-6 py-12">
-          <h2 className="text-3xl font-bold text-heri-blue">Our Approach</h2>
-          <div className="mt-3 h-1 w-10 bg-heri-lime" />
+          <Reveal>
+            <h2 className="text-3xl font-bold text-heri-blue">Our Approach</h2>
+            <div className="mt-3 h-1 w-10 bg-heri-lime" />
+          </Reveal>
           <div className="mt-8 grid gap-5 md:grid-cols-4">
-            {approaches.map(([title, text, Icon]) => (
-              <article
-                className="rounded-2xl border border-slate-200 p-6"
-                key={title}
-              >
-                <span className="grid size-12 place-items-center rounded-full bg-heri-lime text-heri-ink">
-                  <Icon className="size-6" />
-                </span>
-                <h3 className="mt-5 font-bold text-heri-blue">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{text}</p>
-              </article>
+            {approaches.map(([title, text, Icon], index) => (
+              <RevealItem key={title} index={index} className="h-full">
+                <article
+                  className="h-full rounded-2xl border border-slate-200 p-6"
+                >
+                  <span className="grid size-12 place-items-center rounded-full bg-heri-lime text-heri-ink">
+                    <Icon className="size-6" />
+                  </span>
+                  <h3 className="mt-5 font-bold text-heri-blue">{title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{text}</p>
+                </article>
+              </RevealItem>
             ))}
           </div>
         </section>
-        <section className="mx-6 mb-12 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:mx-auto md:max-w-6xl">
+        <Reveal className="mx-6 mb-12 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:mx-auto md:max-w-6xl">
           <div className="grid items-center md:grid-cols-[0.35fr_1fr_auto]">
             <div className="relative hidden h-32 md:block">
               <Image
-                src="/images/landing-page/tc-fore.png"
+                src={withBasePath("/images/landing-page/tc-fore.png")}
                 alt="Learners collaborating"
                 fill
                 sizes="20vw"
@@ -312,7 +335,7 @@ export default function AboutPage() {
               PARTNER WITH US →
             </Link>
           </div>
-        </section>
+        </Reveal>
       </main>
     </SiteShell>
   );

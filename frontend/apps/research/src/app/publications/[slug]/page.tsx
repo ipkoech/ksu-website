@@ -40,11 +40,13 @@ export default async function PublicationDetailPage({
     { title: "Where it appeared", fields: ["journal_name", "publisher", "conference_name", "book_title"] },
     { title: "How to access it", fields: ["access_type", "url", "pdf_url", "doi"] },
   ]);
-  const accessLinks = [
-    ["Open publication", publication.url],
-    ["Download PDF", publication.pdf_url],
-    ["DOI", publication.doi ? `https://doi.org/${publication.doi}` : null],
-  ].filter(([, href]) => compactText(href));
+  const accessLinks = (
+    [
+      ["Open publication", compactText(publication.url)],
+      ["Download PDF", compactText(publication.pdf_url)],
+      ["DOI", publication.doi ? `https://doi.org/${publication.doi}` : ""],
+    ] as Array<[string, string]>
+  ).filter(([, href]) => href);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
@@ -70,17 +72,14 @@ export default async function PublicationDetailPage({
         ]}
         actions={[
           { label: "Back to publications", href: "/publications", variant: "secondary" },
-          ...accessLinks.slice(0, 2).map(([label, href]) => ({
-            label: compactText(label),
-            href: href ?? "#",
-          })),
+          ...accessLinks.slice(0, 2).map(([label, href]) => ({ label, href })),
         ]}
         imageSrc="/images/research/research-home-hero.svg"
         imageAlt="Publication record and research evidence"
       />
 
       {error ? (
-        <section className="px-4 pt-4 sm:px-6 lg:px-8">
+        <section className="px-4 pt-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mx-auto max-w-[1680px]">
             <StatusMessage tone="error">{error}</StatusMessage>
           </div>
@@ -120,10 +119,7 @@ export default async function PublicationDetailPage({
               { label: "DOI", value: publication.doi },
               { label: "ISSN / ISBN", value: [publication.issn, publication.isbn].map(compactText).filter(Boolean).join(" / ") },
             ]}
-            actions={accessLinks.map(([label, href]) => ({
-              label: compactText(label),
-              href: href ?? "#",
-            }))}
+            actions={accessLinks.map(([label, href]) => ({ label, href }))}
           />
         </div>
       </ResearchSection>
@@ -185,7 +181,7 @@ function InfoPanel({ title, fields }: { title: string; fields: Array<[string, un
 
   return (
     <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+      <h2 className="font-display text-xl font-semibold text-foreground">{title}</h2>
       {entries.length ? (
         <dl className="mt-4 grid gap-3 text-sm">
           {entries.map(([label, value]) => (
@@ -203,7 +199,7 @@ function InfoPanel({ title, fields }: { title: string; fields: Array<[string, un
 function ContextCard({ title, record, hrefBase, empty }: { title: string; record?: ResearchGenericRecord; hrefBase: string; empty: string }) {
   return (
     <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+      <h2 className="font-display text-xl font-semibold text-foreground">{title}</h2>
       {record ? (
         <>
           <h3 className="mt-4 text-base font-semibold text-foreground">

@@ -359,5 +359,110 @@ class ClubPortalWorkflowTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(400, context.exception.status_code)
 
 
+class ClubCentralReviewTests(unittest.IsolatedAsyncioTestCase):
+    """Central CoCMS access to club profiles: review listing + visibility toggle."""
+
+    @staticmethod
+    def _fields():
+        from app.api.v1._fields import MainFieldsQuery
+
+        return MainFieldsQuery()
+
+    async def test_central_reviewer_lists_all_clubs_with_filters(self):
+        listing = SimpleNamespace(items=[], meta={"total": 0})
+        with (
+            patch.object(clubs, "can_access_scope", new_callable=AsyncMock, return_value=True) as scope_check,
+            patch.object(clubs.ClubService, "list", new_callable=AsyncMock, return_value=listing) as list_mock,
+        ):
+            await clubs.list_clubs_for_review(
+                db=_Db(),
+                user=SimpleNamespace(id=uuid.uuid4()),
+                page=1,
+                per_page=50,
+                q="chess",
+                club_type="academic",
+                is_active=False,
+                fields=self._fields(),
+            )
+
+        scope_check.assert_awaited()
+        self.assertEqual("university", scope_check.await_args.args[3])
+        kwargs = list_mock.await_args.kwargs
+        self.assertIsNone(kwargs["is_public"])
+        self.assertEqual("chess", kwargs["q"])
+        self.assertEqual("academic", kwargs["club_type"])
+        self.assertFalse(kwargs["is_active"])
+
+    async def test_review_listing_rejects_users_without_central_scope(self):
+        with patch.object(clubs, "can_access_scope", new_callable=AsyncMock, return_value=False):
+            with self.assertRaises(HTTPException) as context:
+                await clubs.list_clubs_for_review(
+                    db=_Db(),
+                    user=SimpleNamespace(id=uuid.uuid4()),
+                    page=1,
+                    per_page=50,
+                    q=None,
+                    club_type=None,
+                    is_active=None,
+                    fields=self._fields(),
+                )
+
+        self.assertEqual(403, context.exception.status_code)
+
+    async def test_officer_cannot_flip_visibility_through_profile_update(self):
+        club = SimpleNamespace(id=uuid.uuid4())
+        with (
+            patch.object(clubs, "permissions_for_user", return_value={"clubs.manage_own"}),
+            patch.object(clubs, "_club_or_404", new_callable=AsyncMock, return_value=club),
+            patch.object(clubs, "require_club_scope", new_callable=AsyncMock) as scope_guard,
+            patch.object(clubs.ClubService, "update", new_callable=AsyncMock, return_value=club) as update_mock,
+        ):
+            await clubs.update_club(
+                club_id=club.id,
+                data=ClubUpdate(is_public=True, is_active=False),
+                db=_Db(),
+                user=SimpleNamespace(id=uuid.uuid4()),
+            )
+
+        scope_guard.assert_awaited_once()
+        self.assertEqual({}, update_mock.await_args.kwargs)
+
+    async def test_central_publisher_toggles_visibility_without_club_scope(self):
+        club = SimpleNamespace(id=uuid.uuid4())
+        with (
+            patch.object(clubs, "permissions_for_user", return_value={"content.publish"}),
+            patch.object(clubs, "_club_or_404_any_status", new_callable=AsyncMock, return_value=club),
+            patch.object(clubs, "require_club_scope", new_callable=AsyncMock) as scope_guard,
+            patch.object(clubs.ClubService, "update", new_callable=AsyncMock, return_value=club) as update_mock,
+        ):
+            await clubs.update_club(
+                club_id=club.id,
+                data=ClubUpdate(is_public=False),
+                db=_Db(),
+                user=SimpleNamespace(id=uuid.uuid4()),
+            )
+
+        scope_guard.assert_not_awaited()
+        self.assertEqual({"is_public": False}, update_mock.await_args.kwargs)
+
+    async def test_central_publisher_cannot_rewrite_profile_fields(self):
+        club = SimpleNamespace(id=uuid.uuid4())
+        forbidden = HTTPException(status_code=403, detail="no club scope")
+        with (
+            patch.object(clubs, "permissions_for_user", return_value={"content.publish"}),
+            patch.object(clubs, "_club_or_404", new_callable=AsyncMock, return_value=club),
+            patch.object(clubs, "require_club_scope", new_callable=AsyncMock, side_effect=forbidden),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await clubs.update_club(
+                    club_id=club.id,
+                    data=ClubUpdate(name="Renamed", is_public=True),
+                    db=_Db(),
+                    user=SimpleNamespace(id=uuid.uuid4()),
+                )
+
+        self.assertEqual(403, context.exception.status_code)
+
+
 if __name__ == "__main__":
     unittest.main()

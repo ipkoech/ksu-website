@@ -1,25 +1,30 @@
 import unittest
 import uuid
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import ANY, AsyncMock, patch
 
 from fastapi import HTTPException
 
 from app.api.v1 import media
+from app.models import PageSection
 from app.models.media import MEDIA_ATTACHMENT_ROLES
-from app.schemas import MediaLinkCreate
+from app.schemas import MediaLinkCreate, MediaLinkUpdate
 from app.services.media import MediaService
 
 
 class _Db:
     def __init__(self):
         self.added = []
+        self.rollback_count = 0
 
     def add(self, record):
         self.added.append(record)
 
     async def flush(self):
         return None
+
+    async def rollback(self):
+        self.rollback_count += 1
 
 
 class _ScalarResult:
@@ -37,6 +42,17 @@ class _ScopeDb(_Db):
 
     async def execute(self, statement):
         return _ScalarResult(self.value)
+
+
+class _PageSectionDb(_Db):
+    def __init__(self, *sections):
+        super().__init__()
+        self.sections = list(sections)
+
+    async def execute(self, _statement):
+        return SimpleNamespace(
+            scalars=lambda: SimpleNamespace(all=lambda: list(self.sections)),
+        )
 
 
 class _Upload:
@@ -233,6 +249,188 @@ class MediaAttachmentContractTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(403, context.exception.status_code)
 
+    async def test_page_section_upload_requires_page_authoring_access_before_upload(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            revision=4,
+        )
+        section.id = uuid.uuid4()
+        upload = AsyncMock()
+
+        with (
+            patch.object(media, "_require_media_entity_scope", AsyncMock()),
+            patch.object(
+                media,
+                "_require_page_section_access",
+                AsyncMock(side_effect=HTTPException(status_code=403, detail="Forbidden")),
+            ),
+            patch.object(media.MediaService, "upload", upload),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await media.upload_media(
+                    db=_PageSectionDb(section),
+                    user=user,
+                    file=_Upload(),
+                    folder_id=None,
+                    is_public=False,
+                    entity_type="page_section",
+                    entity_id=section.id,
+                    role="hero_image",
+                )
+
+        self.assertEqual(403, context.exception.status_code)
+        upload.assert_not_awaited()
+
+    async def test_page_section_upload_touches_locked_parent_once_before_linking(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="published",
+            workflow_status="published",
+            revision=4,
+        )
+        section.id = uuid.uuid4()
+        uploaded = _media()
+        upload = AsyncMock(return_value=uploaded)
+
+        with (
+            patch.object(media, "_require_media_entity_scope", AsyncMock()),
+            patch.object(media, "_require_media_folder_scope", AsyncMock()),
+            patch.object(media.MediaService, "upload", upload),
+            patch("app.api.v1._scoped._can_access_scope", return_value=True),
+        ):
+            response = await media.upload_media(
+                db=_PageSectionDb(section),
+                user=user,
+                file=_Upload(),
+                folder_id=None,
+                is_public=False,
+                entity_type="page_section",
+                entity_id=section.id,
+                role="hero_image",
+            )
+
+        self.assertIs(uploaded, response["data"])
+        self.assertEqual(5, section.revision)
+        self.assertEqual("draft", section.workflow_status)
+        upload.assert_awaited_once()
+
+    async def test_page_section_upload_reauthorizes_media_scope_after_parent_lock(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        section = PageSection(
+            page_key="school_homepage",
+            scope_type="school",
+            scope_id=uuid.uuid4(),
+            section_key="hero",
+            layout_variant="hero_admissions",
+            revision=4,
+        )
+        section.id = uuid.uuid4()
+        upload = AsyncMock()
+        locked_media_scope = AsyncMock(side_effect=HTTPException(status_code=403, detail="Forbidden"))
+
+        with (
+            patch.object(media, "_require_media_entity_scope", AsyncMock()),
+            patch.object(media, "_require_media_folder_scope", locked_media_scope),
+            patch.object(media.MediaService, "upload", upload),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await media.upload_media(
+                    db=_PageSectionDb(section),
+                    user=user,
+                    file=_Upload(),
+                    folder_id=None,
+                    is_public=False,
+                    entity_type="page_section",
+                    entity_id=section.id,
+                    role="hero_image",
+                )
+
+        self.assertEqual(403, context.exception.status_code)
+        locked_media_scope.assert_awaited_once_with(
+            ANY,
+            user,
+            media.MEDIA_FOLDER_MANAGE_PERMISSIONS,
+            section.scope_type,
+            section.scope_id,
+        )
+        upload.assert_not_awaited()
+
+    async def test_upload_rolls_back_database_and_storage_when_linking_fails(self):
+        db = _Db()
+        metadata = {
+            "filename": "prospectus.pdf",
+            "original_filename": "prospectus.pdf",
+            "mime_type": "application/pdf",
+            "file_size": 2048,
+            "storage_path": "page-sections/hero/prospectus.pdf",
+            "public_url": "/media/page-sections/hero/prospectus.pdf",
+        }
+        cleanup = AsyncMock()
+
+        with (
+            patch("app.services.media.upload_file", AsyncMock(return_value=metadata)),
+            patch("app.services.media.delete_file", cleanup),
+            patch.object(MediaService, "get_attachment_scope", AsyncMock(return_value=("university", None))),
+            patch.object(MediaService, "link_media", AsyncMock(side_effect=RuntimeError("link failed"))),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "link failed"):
+                await MediaService.upload(
+                    db,
+                    file=_Upload(),
+                    uploaded_by_id=uuid.uuid4(),
+                    entity_type="page_section",
+                    entity_id=uuid.uuid4(),
+                )
+
+        self.assertEqual(1, db.rollback_count)
+        cleanup.assert_awaited_once_with(metadata["storage_path"])
+
+    async def test_get_link_for_update_uses_for_update_and_refreshes_identity_map(self):
+        link = SimpleNamespace(id=uuid.uuid4())
+
+        class _LinkDb:
+            def __init__(self):
+                self.statement = None
+
+            async def execute(self, statement):
+                self.statement = statement
+                return SimpleNamespace(scalar_one_or_none=lambda: link)
+
+        db = _LinkDb()
+        result = await MediaService.get_link_for_update(db, link.id)
+
+        self.assertIs(link, result)
+        self.assertIsNotNone(db.statement._for_update_arg)
+        self.assertTrue(db.statement.get_execution_options().get("populate_existing"))
+
+    async def test_link_parent_snapshot_is_unlocked_and_selects_only_parent_identity(self):
+        entity_id = uuid.uuid4()
+
+        class _SnapshotDb:
+            def __init__(self):
+                self.statement = None
+
+            async def execute(self, statement):
+                self.statement = statement
+                return SimpleNamespace(
+                    one_or_none=lambda: SimpleNamespace(entity_type="page_section", entity_id=entity_id),
+                )
+
+        db = _SnapshotDb()
+        snapshot = await MediaService.get_link_parent_snapshot(db, uuid.uuid4())
+
+        self.assertEqual(("page_section", entity_id), snapshot)
+        self.assertIsNone(db.statement._for_update_arg)
+        self.assertEqual(2, len(db.statement.selected_columns))
+
     async def test_create_link_rejects_entity_scope_without_attachment_permission(self):
         user = SimpleNamespace(id=uuid.uuid4())
         payload = MediaLinkCreate(
@@ -260,8 +458,18 @@ class MediaAttachmentContractTests(unittest.IsolatedAsyncioTestCase):
         )
 
         with (
-            patch.object(media.MediaService, "get_link_by_id", new_callable=AsyncMock, return_value=link),
+            patch.object(
+                media.MediaService,
+                "get_link_parent_snapshot",
+                AsyncMock(return_value=(link.entity_type, link.entity_id)),
+            ),
+            patch.object(media.MediaService, "get_link_for_update", new_callable=AsyncMock, return_value=link),
             patch.object(media, "_require_media_entity_scope", new_callable=AsyncMock),
+            patch.object(
+                media,
+                "_authorized_media_entity_scope",
+                AsyncMock(return_value=("club", link.owner_scope_id)),
+            ),
         ):
             with self.assertRaises(HTTPException) as context:
                 await media.update_media_link(
@@ -272,6 +480,41 @@ class MediaAttachmentContractTests(unittest.IsolatedAsyncioTestCase):
                 )
 
         self.assertEqual(400, context.exception.status_code)
+
+    async def test_workflow_visibility_validation_does_not_precede_source_authorization(self):
+        link = SimpleNamespace(
+            id=uuid.uuid4(),
+            entity_type="blog",
+            entity_id=uuid.uuid4(),
+            owner_portal="student-clubs",
+            owner_scope_type="club",
+            owner_scope_id=uuid.uuid4(),
+            is_public=False,
+        )
+
+        with (
+            patch.object(
+                media.MediaService,
+                "get_link_parent_snapshot",
+                AsyncMock(return_value=(link.entity_type, link.entity_id)),
+                create=True,
+            ),
+            patch.object(media.MediaService, "get_link_for_update", AsyncMock(return_value=link)),
+            patch.object(
+                media,
+                "_require_media_entity_scope",
+                AsyncMock(side_effect=HTTPException(status_code=403, detail="Forbidden")),
+            ),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await media.update_media_link(
+                    link_id=link.id,
+                    data=MediaLinkUpdate(is_public=True),
+                    db=None,
+                    user=SimpleNamespace(id=uuid.uuid4()),
+                )
+
+        self.assertEqual(403, context.exception.status_code)
 
     async def test_club_assignment_can_upload_to_own_club_scope(self):
         club_id = uuid.uuid4()
@@ -359,6 +602,243 @@ class MediaAttachmentContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("student-clubs", call["owner_portal"])
         self.assertEqual("club", call["owner_scope_type"])
         self.assertEqual(club_id, call["owner_scope_id"])
+
+    async def test_create_page_section_link_advances_parent_revision_and_resets_workflow_once(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="published",
+            workflow_status="published",
+            revision=4,
+        )
+        section.id = uuid.uuid4()
+        payload = MediaLinkCreate(
+            media_id=uuid.uuid4(),
+            entity_type="page_section",
+            entity_id=section.id,
+            role="hero_image",
+        )
+        linked = SimpleNamespace(
+            id=uuid.uuid4(),
+            media_id=payload.media_id,
+            entity_type=payload.entity_type,
+            entity_id=payload.entity_id,
+            role=payload.role,
+            folder_id=None,
+            display_order=100,
+            is_public=True,
+            media=None,
+        )
+
+        with (
+            patch.object(media, "_authorized_media_entity_scope", new_callable=AsyncMock, return_value=("university", None)),
+            patch.object(media.MediaService, "get_authorized_by_id", new_callable=AsyncMock, return_value=_media(id=payload.media_id)),
+            patch.object(media.MediaService, "link_media", new_callable=AsyncMock, return_value=linked),
+            patch.object(media, "_require_media_folder_scope", AsyncMock()),
+            patch("app.api.v1._scoped._can_access_scope", return_value=True),
+        ):
+            await media.create_media_link(payload, db=_PageSectionDb(section), user=user)
+
+        self.assertEqual(5, section.revision)
+        self.assertEqual(user.id, section.updated_by_id)
+        self.assertEqual("draft", section.workflow_status)
+
+    async def test_relinking_between_page_sections_advances_each_parent_once(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        source = PageSection(
+            page_key="homepage", scope_type="university", section_key="hero",
+            layout_variant="hero_admissions", status="published", workflow_status="published", revision=4,
+        )
+        destination = PageSection(
+            page_key="homepage", scope_type="university", section_key="news",
+            layout_variant="news_grid", status="published", workflow_status="published", revision=8,
+        )
+        source.id = uuid.uuid4()
+        destination.id = uuid.uuid4()
+        link = SimpleNamespace(
+            id=uuid.uuid4(), media_id=uuid.uuid4(), entity_type="page_section", entity_id=source.id,
+            role="hero_image", folder_id=None, display_order=100, is_public=True, media=_media(),
+        )
+
+        async def update_link(_db, record, **changes):
+            for field, value in changes.items():
+                setattr(record, field, value)
+            return record
+
+        with (
+            patch.object(
+                media.MediaService,
+                "get_link_parent_snapshot",
+                AsyncMock(return_value=(link.entity_type, link.entity_id)),
+            ),
+            patch.object(media.MediaService, "get_link_for_update", new_callable=AsyncMock, return_value=link),
+            patch.object(media, "_require_media_entity_scope", new_callable=AsyncMock),
+            patch.object(media, "_authorized_media_entity_scope", new_callable=AsyncMock, return_value=("university", None)),
+            patch.object(media, "_require_media_folder_scope", AsyncMock()),
+            patch.object(media.MediaService, "update_link", side_effect=update_link),
+            patch("app.api.v1._scoped._can_access_scope", return_value=True),
+        ):
+            await media.update_media_link(
+                link.id,
+                MediaLinkUpdate(entity_type="page_section", entity_id=destination.id),
+                db=_PageSectionDb(source, destination),
+                user=user,
+            )
+
+        self.assertEqual((5, 9), (source.revision, destination.revision))
+        self.assertEqual((user.id, user.id), (source.updated_by_id, destination.updated_by_id))
+        self.assertEqual(("draft", "draft"), (source.workflow_status, destination.workflow_status))
+
+    async def test_relink_snapshots_then_locks_parents_before_link_and_mutation(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        source_id = uuid.uuid4()
+        destination_id = uuid.uuid4()
+        link = SimpleNamespace(
+            id=uuid.uuid4(), media_id=uuid.uuid4(), entity_type="page_section", entity_id=source_id,
+            role="hero_image", folder_id=None, display_order=100, is_public=True, media=_media(),
+        )
+        events: list[str] = []
+
+        async def get_link_parent_snapshot(*_args):
+            events.append("snapshot")
+            return link.entity_type, link.entity_id
+
+        async def lock_parents(*_args, **_kwargs):
+            events.append("parents")
+            return {
+                source_id: SimpleNamespace(id=source_id, scope_type="university", scope_id=None),
+                destination_id: SimpleNamespace(id=destination_id, scope_type="university", scope_id=None),
+            }
+
+        async def get_link_for_update(*_args):
+            events.append("link")
+            return link
+
+        async def authorize_parents(*_args, **_kwargs):
+            events.append("authorize")
+
+        async def touch_parents(*_args, **_kwargs):
+            events.append("touch")
+
+        async def update_link(*_args, **_kwargs):
+            events.append("mutate")
+            return link
+
+        with (
+            patch.object(
+                media.MediaService,
+                "get_link_parent_snapshot",
+                get_link_parent_snapshot,
+                create=True,
+            ),
+            patch.object(media, "_lock_page_section_media_parents", lock_parents, create=True),
+            patch.object(media.MediaService, "get_link_for_update", get_link_for_update),
+            patch.object(
+                media,
+                "_authorize_locked_page_section_media_parents",
+                authorize_parents,
+                create=True,
+            ),
+            patch.object(media, "_touch_locked_page_section_media_parents", touch_parents),
+            patch.object(media.MediaService, "update_link", update_link),
+        ):
+            await media.update_media_link(
+                link.id,
+                MediaLinkUpdate(entity_type="page_section", entity_id=destination_id),
+                db=_Db(),
+                user=user,
+            )
+
+        self.assertEqual(["snapshot", "parents", "link", "authorize", "touch", "mutate"], events)
+
+    async def test_relink_rejects_locked_link_moved_after_parent_snapshot(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        original_id = uuid.uuid4()
+        moved_id = uuid.uuid4()
+        link = SimpleNamespace(
+            id=uuid.uuid4(), media_id=uuid.uuid4(), entity_type="page_section", entity_id=moved_id,
+            role="hero_image", folder_id=None, display_order=100, is_public=True, media=_media(),
+        )
+        authorize_parents = AsyncMock()
+        update_link = AsyncMock(return_value=link)
+
+        with (
+            patch.object(
+                media.MediaService,
+                "get_link_parent_snapshot",
+                AsyncMock(return_value=("page_section", original_id)),
+                create=True,
+            ),
+            patch.object(
+                media,
+                "_lock_page_section_media_parents",
+                AsyncMock(return_value={
+                    original_id: SimpleNamespace(id=original_id),
+                    moved_id: SimpleNamespace(id=moved_id),
+                }),
+                create=True,
+            ),
+            patch.object(media.MediaService, "get_link_for_update", AsyncMock(return_value=link)),
+            patch.object(
+                media,
+                "_authorize_locked_page_section_media_parents",
+                authorize_parents,
+                create=True,
+            ),
+            patch.object(media, "_touch_page_section_media_parents", AsyncMock()),
+            patch.object(media, "_require_media_entity_scope", AsyncMock()),
+            patch.object(
+                media,
+                "_authorized_media_entity_scope",
+                AsyncMock(return_value=("university", None)),
+            ),
+            patch.object(media.MediaService, "update_link", update_link),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await media.update_media_link(
+                    link.id,
+                    MediaLinkUpdate(entity_type="page_section", entity_id=moved_id),
+                    db=_Db(),
+                    user=user,
+                )
+
+        self.assertEqual(409, context.exception.status_code)
+        self.assertIn("reload", context.exception.detail.lower())
+        authorize_parents.assert_not_awaited()
+        update_link.assert_not_awaited()
+
+    async def test_delete_page_section_link_advances_parent_revision_before_link_deletion(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        section = PageSection(
+            page_key="homepage", scope_type="university", section_key="hero",
+            layout_variant="hero_admissions", status="published", workflow_status="published", revision=4,
+        )
+        section.id = uuid.uuid4()
+        link = SimpleNamespace(
+            id=uuid.uuid4(), media_id=uuid.uuid4(), entity_type="page_section", entity_id=section.id,
+        )
+        delete_link = AsyncMock()
+
+        with (
+            patch.object(
+                media.MediaService,
+                "get_link_parent_snapshot",
+                AsyncMock(return_value=(link.entity_type, link.entity_id)),
+            ),
+            patch.object(media.MediaService, "get_link_for_update", new_callable=AsyncMock, return_value=link),
+            patch.object(media, "_require_media_entity_scope", new_callable=AsyncMock),
+            patch.object(media, "_require_media_folder_scope", AsyncMock()),
+            patch.object(media.MediaService, "delete_link", delete_link),
+            patch("app.api.v1._scoped._can_access_scope", return_value=True),
+        ):
+            await media.delete_media_link(link.id, db=_PageSectionDb(section), user=user)
+
+        self.assertEqual(5, section.revision)
+        self.assertEqual(user.id, section.updated_by_id)
+        delete_link.assert_awaited_once_with(ANY, link)
 
     async def test_club_activity_attachment_scope_resolves_to_owning_club(self):
         club_id = uuid.uuid4()

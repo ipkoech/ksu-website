@@ -21,8 +21,15 @@ from ._fields import FieldSelection, FieldsDep, build_selector
 
 router = APIRouter()
 
+#: Marketing/communications staff can manage and publish social posts and see
+#: which platform accounts are connected. ``admin:*`` implicitly satisfies this
+#: via the wildcard-aware permission resolution in ``deps._has_permission``.
+SOCIAL_MANAGE_SCOPE = "marketing.manage_social"
+#: Connected account management (credentials!) stays admin-only.
+SOCIAL_ACCOUNT_ADMIN_SCOPE = "admin:*"
 
-@router.get("", dependencies=[Depends(require_scope("admin:*"))])
+
+@router.get("", dependencies=[Depends(require_scope(SOCIAL_MANAGE_SCOPE))])
 async def list_social_posts(
     db: DbSession,
     _: CurrentUser,
@@ -44,7 +51,7 @@ async def list_social_posts(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/accounts", dependencies=[Depends(require_scope("admin:*"))])
+@router.get("/accounts", dependencies=[Depends(require_scope(SOCIAL_MANAGE_SCOPE))])
 async def list_social_accounts(
     db: DbSession,
     _: CurrentUser,
@@ -57,7 +64,7 @@ async def list_social_accounts(
     return success(data=selector.apply(items))
 
 
-@router.post("/accounts", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("/accounts", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope(SOCIAL_ACCOUNT_ADMIN_SCOPE))])
 async def create_social_account(data: SocialPlatformAccountCreate, db: DbSession, user: CurrentUser):
     try:
         item = await SocialPlatformAccountService.create(db, created_by_id=user.id, **data.model_dump())
@@ -66,7 +73,7 @@ async def create_social_account(data: SocialPlatformAccountCreate, db: DbSession
     return success(data=item, message="Social platform account created")
 
 
-@router.patch("/accounts/{item_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.patch("/accounts/{item_id}", dependencies=[Depends(require_scope(SOCIAL_ACCOUNT_ADMIN_SCOPE))])
 async def update_social_account(item_id: uuid.UUID, data: SocialPlatformAccountUpdate, db: DbSession, _: CurrentUser):
     item = await SocialPlatformAccountService.get_by_id(db, item_id)
     if item is None:
@@ -78,7 +85,7 @@ async def update_social_account(item_id: uuid.UUID, data: SocialPlatformAccountU
     return success(data=item, message="Social platform account updated")
 
 
-@router.post("/accounts/{item_id}/validate", dependencies=[Depends(require_scope("admin:*"))])
+@router.post("/accounts/{item_id}/validate", dependencies=[Depends(require_scope(SOCIAL_ACCOUNT_ADMIN_SCOPE))])
 async def validate_social_account(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await SocialPlatformAccountService.get_by_id(db, item_id)
     if item is None:
@@ -87,7 +94,7 @@ async def validate_social_account(item_id: uuid.UUID, db: DbSession, _: CurrentU
     return success(data={"valid": ok, "error": error}, message="Social platform credentials checked")
 
 
-@router.delete("/accounts/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/accounts/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope(SOCIAL_ACCOUNT_ADMIN_SCOPE))])
 async def delete_social_account(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await SocialPlatformAccountService.get_by_id(db, item_id)
     if item is None:
@@ -95,7 +102,7 @@ async def delete_social_account(item_id: uuid.UUID, db: DbSession, _: CurrentUse
     await SocialPlatformAccountService.delete(db, item)
 
 
-@router.get("/{item_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.get("/{item_id}", dependencies=[Depends(require_scope(SOCIAL_MANAGE_SCOPE))])
 async def get_social_post(item_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(SocialMediaPost, fields)
     item = await SocialMediaPostService.get_by_id(db, item_id, load_options=selector.load_options)
@@ -104,7 +111,7 @@ async def get_social_post(item_id: uuid.UUID, db: DbSession, _: CurrentUser, fie
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope(SOCIAL_MANAGE_SCOPE))])
 async def create_social_post(data: SocialMediaPostCreate, db: DbSession, user: CurrentUser):
     try:
         item = await SocialMediaPostService.create(db, created_by_id=user.id, **data.model_dump())
@@ -113,7 +120,7 @@ async def create_social_post(data: SocialMediaPostCreate, db: DbSession, user: C
     return success(data=item, message="Social media post created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.patch("/{item_id}", dependencies=[Depends(require_scope(SOCIAL_MANAGE_SCOPE))])
 async def update_social_post(item_id: uuid.UUID, data: SocialMediaPostUpdate, db: DbSession, _: CurrentUser):
     item = await SocialMediaPostService.get_by_id(db, item_id)
     if item is None:
@@ -125,7 +132,7 @@ async def update_social_post(item_id: uuid.UUID, data: SocialMediaPostUpdate, db
     return success(data=item, message="Social media post updated")
 
 
-@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope(SOCIAL_MANAGE_SCOPE))])
 async def delete_social_post(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await SocialMediaPostService.get_by_id(db, item_id)
     if item is None:
@@ -133,7 +140,7 @@ async def delete_social_post(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     await SocialMediaPostService.delete(db, item)
 
 
-@router.get("/{item_id}/deliveries", dependencies=[Depends(require_scope("admin:*"))])
+@router.get("/{item_id}/deliveries", dependencies=[Depends(require_scope(SOCIAL_MANAGE_SCOPE))])
 async def list_social_post_deliveries(item_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     item = await SocialMediaPostService.get_by_id(db, item_id)
     if item is None:
@@ -143,7 +150,7 @@ async def list_social_post_deliveries(item_id: uuid.UUID, db: DbSession, _: Curr
     return success(data=selector.apply(deliveries))
 
 
-@router.post("/{item_id}/validate", dependencies=[Depends(require_scope("admin:*"))])
+@router.post("/{item_id}/validate", dependencies=[Depends(require_scope(SOCIAL_MANAGE_SCOPE))])
 async def validate_social_post(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await SocialMediaPostService.get_by_id(db, item_id)
     if item is None:
@@ -152,7 +159,7 @@ async def validate_social_post(item_id: uuid.UUID, db: DbSession, _: CurrentUser
     return success(data=summary, message="Social media post validated")
 
 
-@router.post("/{item_id}/publish", dependencies=[Depends(require_scope("admin:*"))])
+@router.post("/{item_id}/publish", dependencies=[Depends(require_scope(SOCIAL_MANAGE_SCOPE))])
 async def publish_social_post(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await SocialMediaPostService.get_by_id(db, item_id)
     if item is None:

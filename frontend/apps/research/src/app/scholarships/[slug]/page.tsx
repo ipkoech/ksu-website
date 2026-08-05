@@ -52,7 +52,7 @@ export default async function ScholarshipDetailPage({ params }: { params: Promis
         ]}
         actions={[{ label: "Back to scholarships", href: "/scholarships", variant: "secondary" }, ...(compactText(scholarship.application_url) ? [{ label: "Apply online", href: compactText(scholarship.application_url) }] : [])]}
       />
-      {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}
+      {error ? <section className="px-4 pt-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"><div className="mx-auto max-w-[1680px]"><StatusMessage tone="error">{error}</StatusMessage></div></section> : null}
       <ResearchSection eyebrow="Application Brief" title="Eligibility, benefits, and deadline" body="Published scholarship fields are grouped into a compact application story with deadlines, value, documents, and contact context nearby." tone="white">
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
@@ -66,7 +66,6 @@ export default async function ScholarshipDetailPage({ params }: { params: Promis
               ]}
             />
             <ScholarshipStory sections={storySections} />
-            {documents.length > 0 ? <ResearchRecordPanel title="Documents" records={documents} empty="" /> : null}
           </div>
           <FundingSidebar
             title="Scholarship facts"
@@ -112,11 +111,11 @@ function ScholarshipDeadlinePanel({ scholarship }: { scholarship: ResearchGeneri
   const deadline = getDeadlineState(compactText(scholarship.application_deadline), compactText(scholarship.status));
   if (!deadline.value) return null;
   return (
-    <section className="rounded-lg border-2 border-primary bg-primary/[0.04] p-5 shadow-sm">
+    <section className="rounded-lg border border-primary/30 bg-primary/[0.04] p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Application deadline</p>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">{deadline.label}</h2>
+          <p className="text-sm font-semibold uppercase tracking-eyebrow text-secondary">Application deadline</p>
+          <h2 className="mt-3 font-display text-2xl font-semibold leading-tight text-foreground">{deadline.label}</h2>
           <p className="mt-2 text-lg font-semibold text-foreground">{deadline.value}</p>
         </div>
         <DeadlineStatusBadge deadline={deadline} large />
@@ -138,7 +137,7 @@ function CoveragePanel({ scholarship }: { scholarship: ResearchGenericRecord }) 
 
   return (
     <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-foreground">Coverage</h2>
+      <h2 className="font-display text-xl font-semibold text-foreground">Coverage</h2>
       <dl className="mt-4 grid gap-3 text-sm">
         {items.map(([label, value]) => <div key={label} className="rounded-md bg-surface-subtle p-3"><dt className="text-xs font-semibold uppercase text-muted-foreground">{label}</dt><dd className="mt-1 font-semibold text-foreground">{value}</dd></div>)}
       </dl>
@@ -158,7 +157,7 @@ function ContactPanel({ scholarship, applicationCount }: { scholarship: Research
 
   return (
     <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-foreground">Contact</h2>
+      <h2 className="font-display text-xl font-semibold text-foreground">Contact</h2>
       <dl className="mt-4 grid gap-3 text-sm">
         {items.map(([label, value]) => <div key={label} className="rounded-md bg-surface-subtle p-3"><dt className="text-xs font-semibold uppercase text-muted-foreground">{label}</dt><dd className="mt-1 break-words font-semibold text-foreground">{value}</dd></div>)}
       </dl>

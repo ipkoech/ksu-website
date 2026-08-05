@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import unittest
 import uuid
-from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -13,7 +12,7 @@ from app.api.v1 import page_cms
 from app.deps import get_db
 from app.helpers.jwt import create_access_token
 from app.models import PageSection, PartnershipSpotlight, SectionItem
-from app.schemas import PageSectionCreate, PageSectionUpdate
+from app.schemas import PageSectionCreate, PageSectionUpdate, SectionItemUpdate
 from ksu_common import PaginatedResult
 
 
@@ -36,26 +35,8 @@ class _AuthDb:
     async def flush(self):
         return None
 
-    async def refresh(self, record):
-        now = datetime.now(timezone.utc)
-        if record.id is None:
-            record.id = uuid.uuid4()
-        if record.created_at is None:
-            record.created_at = now
-        if record.updated_at is None:
-            record.updated_at = now
-        if isinstance(record, PageSection):
-            if record.display_order is None:
-                record.display_order = 100
-            if record.is_enabled is None:
-                record.is_enabled = True
-            if record.workflow_status is None:
-                record.workflow_status = record.status or "draft"
-        elif isinstance(record, SectionItem):
-            if record.display_order is None:
-                record.display_order = 100
-            if record.is_enabled is None:
-                record.is_enabled = True
+    async def refresh(self, _record):
+        return None
 
     def add(self, record):
         self.added.append(record)
@@ -100,26 +81,6 @@ def _bearer_for(user_id: uuid.UUID) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _persisted_section(**overrides) -> PageSection:
-    payload = {
-        "page_key": "homepage",
-        "scope_type": "university",
-        "section_key": "hero",
-        "layout_variant": "hero_admissions",
-        "status": "draft",
-        **overrides,
-    }
-    section = PageSection(**payload)
-    now = datetime.now(timezone.utc)
-    section.id = uuid.uuid4()
-    section.created_at = now
-    section.updated_at = now
-    section.display_order = section.display_order or 100
-    section.is_enabled = True if section.is_enabled is None else section.is_enabled
-    section.workflow_status = section.workflow_status or section.status
-    return section
-
-
 def _build_test_app(db) -> TestClient:
     app = FastAPI()
     app.include_router(page_cms.router, prefix="/api/v1")
@@ -156,8 +117,8 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
                 user=user,
             )
 
-        self.assertEqual("draft", response["data"]["status"])
-        self.assertEqual("draft", response["data"]["workflow_status"])
+        self.assertEqual("draft", response["data"].status)
+        self.assertEqual("draft", response["data"].workflow_status)
         self.assertEqual("edit_reset", db.added[0].action)
 
     async def test_page_section_transition_adds_workflow_log(self):
@@ -176,6 +137,10 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
             patch("app.api.v1._scoped._can_access_scope", return_value=True),
+            patch(
+                "app.services.page_cms.PageSectionValidationService.validate_for_section",
+                AsyncMock(return_value=[]),
+            ),
         ):
             await page_cms.run_page_section_workflow_action(
                 section.id, "approve", db=db, user=user,
@@ -254,10 +219,28 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(403, response.status_code)
         self.assertEqual(0, list_admin_authorized.await_count)
 
+    def test_section_definitions_require_page_cms_permission(self):
+        user = _user()
+        client = _build_test_app(_AuthDb(user))
+
+        response = client.get(
+            "/api/v1/page-section-definitions",
+            headers=_bearer_for(user.id),
+        )
+
+        self.assertEqual(403, response.status_code)
+
     def test_create_section_item_route_is_not_shadowed_by_workflow_action(self):
         user = _user("section_items.manage")
         client = _build_test_app(_AuthDb(user))
-        section = _persisted_section()
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        section.id = uuid.uuid4()
 
         async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
             return permission == "section_items.manage"
@@ -266,6 +249,7 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
+            patch.object(page_cms, "_get_page_section_for_update_or_404", AsyncMock(return_value=section)),
             patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
             patch.object(page_cms.PageSectionWorkflowService, "transition", workflow_transition),
         ):
@@ -278,10 +262,226 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(201, response.status_code)
         self.assertEqual(0, workflow_transition.await_count)
 
+    async def test_update_section_item_rejects_reference_to_text_without_clearing_source(self):
+        user = _user("section_items.manage")
+        db = _AuthDb(user)
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        section.id = uuid.uuid4()
+        item = SectionItem(
+            page_section_id=section.id,
+            item_type="reference",
+            source_type="news",
+            source_id=uuid.uuid4(),
+        )
+        item.id = uuid.uuid4()
+        reset = AsyncMock()
+
+        with (
+            patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=item)),
+            patch.object(page_cms, "_get_section_item_for_update_or_404", AsyncMock(return_value=item)),
+            patch.object(page_cms, "_get_page_sections_for_update_or_404", AsyncMock(return_value={section.id: section})),
+            patch.object(page_cms, "_require_page_section_access", AsyncMock()),
+            patch.object(page_cms.ContentWorkflowService, "reset_after_authoring_edit", reset),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.update_section_item(
+                    item.id,
+                    SectionItemUpdate(item_type="text"),
+                    db=db,
+                    user=user,
+                )
+
+        self.assertEqual(422, context.exception.status_code)
+        reset.assert_not_awaited()
+        self.assertEqual("reference", item.item_type)
+
+    async def test_update_section_item_checks_revision_after_parent_and_child_locks(self):
+        user = _user("section_items.manage")
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            revision=2,
+        )
+        section.id = uuid.uuid4()
+        stale_item = SectionItem(page_section_id=section.id, item_type="text", revision=1)
+        stale_item.id = uuid.uuid4()
+        locked_item = SectionItem(page_section_id=section.id, item_type="text", revision=2)
+        locked_item.id = stale_item.id
+        events: list[str] = []
+
+        async def lock_parents(*_args):
+            events.append("parents")
+            return {section.id: section}
+
+        async def lock_item(*_args):
+            events.append("item")
+            return locked_item
+
+        with (
+            patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=stale_item)),
+            patch.object(page_cms, "_get_page_sections_for_update_or_404", lock_parents),
+            patch.object(page_cms, "_get_section_item_for_update_or_404", lock_item),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.update_section_item(
+                    stale_item.id,
+                    SectionItemUpdate(id=stale_item.id, revision=1, title="Stale write"),
+                    db=_AuthDb(user),
+                    user=user,
+                )
+
+        self.assertEqual(409, context.exception.status_code)
+        self.assertEqual(["parents", "item"], events)
+
+    async def test_update_section_item_rejects_manual_source_without_reference_type(self):
+        user = _user("section_items.manage")
+        db = _AuthDb(user)
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        section.id = uuid.uuid4()
+        item = SectionItem(page_section_id=section.id, item_type="text", title="Manual item")
+        item.id = uuid.uuid4()
+        reset = AsyncMock()
+
+        with (
+            patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=item)),
+            patch.object(page_cms, "_get_section_item_for_update_or_404", AsyncMock(return_value=item)),
+            patch.object(page_cms, "_get_page_sections_for_update_or_404", AsyncMock(return_value={section.id: section})),
+            patch.object(page_cms, "_require_page_section_access", AsyncMock()),
+            patch.object(page_cms.ContentWorkflowService, "reset_after_authoring_edit", reset),
+        ):
+            with self.assertRaises(HTTPException) as context:
+                await page_cms.update_section_item(
+                    item.id,
+                    SectionItemUpdate(source_type="news", source_id=uuid.uuid4()),
+                    db=db,
+                    user=user,
+                )
+
+        self.assertEqual(422, context.exception.status_code)
+        reset.assert_not_awaited()
+        self.assertIsNone(item.source_type)
+
+    async def test_update_section_item_can_atomically_convert_manual_to_reference(self):
+        user = _user("section_items.manage")
+        db = _AuthDb(user)
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        section.id = uuid.uuid4()
+        item = SectionItem(
+            page_section_id=section.id,
+            item_type="text",
+            title="Manual title",
+            body_text="Manual body",
+            content={"body": "Manual content"},
+        )
+        item.id = uuid.uuid4()
+        reset = AsyncMock()
+        source_id = uuid.uuid4()
+        update = SectionItemUpdate(
+            item_type="reference",
+            title=None,
+            subtitle=None,
+            body_text=None,
+            content=None,
+            cta_label=None,
+            cta_url=None,
+            cta_description=None,
+            media_caption=None,
+            media_alt_text=None,
+            video_provider=None,
+            video_url=None,
+            video_duration_seconds=None,
+            source_type="news",
+            source_id=source_id,
+            editorial_overrides={"title": "Curated title"},
+        )
+
+        with (
+            patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=item)),
+            patch.object(page_cms, "_get_section_item_for_update_or_404", AsyncMock(return_value=item)),
+            patch.object(page_cms, "_get_page_sections_for_update_or_404", AsyncMock(return_value={section.id: section})),
+            patch.object(page_cms, "_require_page_section_access", AsyncMock()),
+            patch.object(page_cms.ContentWorkflowService, "reset_after_authoring_edit", reset),
+        ):
+            await page_cms.update_section_item(item.id, update, db=db, user=user)
+
+        self.assertEqual("reference", item.item_type)
+        self.assertEqual("news", item.source_type)
+        self.assertEqual(source_id, item.source_id)
+        self.assertIsNone(item.title)
+        self.assertEqual({"title": "Curated title"}, item.editorial_overrides)
+        reset.assert_awaited_once()
+
+    async def test_update_section_item_can_atomically_convert_reference_to_manual(self):
+        user = _user("section_items.manage")
+        db = _AuthDb(user)
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        section.id = uuid.uuid4()
+        item = SectionItem(
+            page_section_id=section.id,
+            item_type="reference",
+            source_type="news",
+            source_id=uuid.uuid4(),
+        )
+        item.id = uuid.uuid4()
+        reset = AsyncMock()
+
+        with (
+            patch.object(page_cms, "_get_section_item_or_404", AsyncMock(return_value=item)),
+            patch.object(page_cms, "_get_section_item_for_update_or_404", AsyncMock(return_value=item)),
+            patch.object(page_cms, "_get_page_sections_for_update_or_404", AsyncMock(return_value={section.id: section})),
+            patch.object(page_cms, "_require_page_section_access", AsyncMock()),
+            patch.object(page_cms.ContentWorkflowService, "reset_after_authoring_edit", reset),
+        ):
+            await page_cms.update_section_item(
+                item.id,
+                SectionItemUpdate(item_type="text", source_type=None, source_id=None, title="Manual title"),
+                db=db,
+                user=user,
+            )
+
+        self.assertEqual("text", item.item_type)
+        self.assertIsNone(item.source_type)
+        self.assertIsNone(item.source_id)
+        self.assertEqual("Manual title", item.title)
+        reset.assert_awaited_once()
+
     def test_section_detail_route_returns_single_admin_record(self):
         user = _user("page_sections.view")
         client = _build_test_app(_AuthDb(user))
-        section = _persisted_section()
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="draft",
+        )
+        section.id = uuid.uuid4()
 
         async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
             return permission == "page_sections.view"
@@ -439,14 +639,20 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
             response = await page_cms.create_page_section(payload, db=db, user=user)
 
         self.assertEqual("success", response["status"])
-        self.assertEqual("draft", response["data"]["status"])
-        self.assertEqual(str(user.id), response["data"]["created_by_id"])
-        self.assertEqual(str(user.id), response["data"]["updated_by_id"])
+        self.assertEqual("draft", response["data"].status)
+        self.assertEqual(user.id, response["data"].created_by_id)
+        self.assertEqual(user.id, response["data"].updated_by_id)
 
     async def test_review_permission_can_approve_section(self):
         user = _user("page_sections.review")
         db = _AuthDb(user)
-        section = _persisted_section(status="in_review")
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="in_review",
+        )
         section.id = uuid.uuid4()
 
         async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
@@ -455,6 +661,10 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
             patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+            patch(
+                "app.services.page_cms.PageSectionValidationService.validate_for_section",
+                AsyncMock(return_value=[]),
+            ),
         ):
             response = await page_cms.run_page_section_workflow_action(
                 section.id,
@@ -463,8 +673,8 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
                 user=user,
             )
 
-        self.assertEqual("approved", response["data"]["status"])
-        self.assertEqual(str(user.id), response["data"]["approved_by_id"])
+        self.assertEqual("approved", response["data"].status)
+        self.assertEqual(user.id, response["data"].approved_by_id)
 
     async def test_publish_permission_can_publish_section(self):
         user = _user("page_sections.publish")
@@ -483,6 +693,10 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
             patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+            patch(
+                "app.services.page_cms.PageSectionValidationService.validate_for_section",
+                AsyncMock(return_value=[]),
+            ),
         ):
             response = await page_cms.run_page_section_workflow_action(
                 section.id,
@@ -491,12 +705,18 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
                 user=user,
             )
 
-        self.assertEqual("published", response["data"]["status"])
-        self.assertEqual(str(user.id), response["data"]["published_by_id"])
+        self.assertEqual("published", response["data"].status)
+        self.assertEqual(user.id, response["data"].published_by_id)
 
     async def test_review_permission_can_list_visible_sections_without_view_permission(self):
         user = _user("page_sections.review")
-        section = _persisted_section(status="in_review")
+        section = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="in_review",
+        )
 
         async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
             return permission == "page_sections.review"
@@ -517,7 +737,7 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
                 user=user,
             )
 
-        self.assertEqual([str(section.id)], [item["id"] for item in response["data"]])
+        self.assertEqual([section.id], [item.id for item in response["data"]])
         self.assertEqual(1, response["meta"]["total"])
 
     async def test_review_permission_row_visibility_is_limited_to_in_review_sections(self):
@@ -593,6 +813,10 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(page_cms.PageSection, "get_by_id", AsyncMock(return_value=section)),
             patch("app.api.v1._scoped._can_access_scope", side_effect=fake_can_access),
+            patch(
+                "app.services.page_cms.PageSectionValidationService.validate_for_section",
+                AsyncMock(return_value=[]),
+            ),
         ):
             response = await page_cms.run_page_section_workflow_action(
                 section.id,
@@ -601,16 +825,27 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
                 user=user,
             )
 
-        self.assertEqual("published", response["data"]["status"])
-        self.assertEqual(str(user.id), response["data"]["published_by_id"])
+        self.assertEqual("published", response["data"].status)
+        self.assertEqual(user.id, response["data"].published_by_id)
 
     async def test_homepage_publish_permission_lists_only_homepage_sections_it_can_publish(self):
         user = _user("homepage.publish")
-        allowed = _persisted_section(status="approved")
-        disallowed = _persisted_section(
-            page_key="research",
+        allowed = PageSection(
+            page_key="homepage",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
             status="approved",
         )
+        allowed.id = uuid.uuid4()
+        disallowed = PageSection(
+            page_key="research",
+            scope_type="university",
+            section_key="hero",
+            layout_variant="hero_admissions",
+            status="approved",
+        )
+        disallowed.id = uuid.uuid4()
 
         async def fake_can_access(_db, _user, permission, _scope_type, _scope_id):
             return permission == "homepage.publish"
@@ -632,7 +867,7 @@ class PageCmsApiTests(unittest.IsolatedAsyncioTestCase):
                 user=user,
             )
 
-        self.assertEqual([str(allowed.id)], [item["id"] for item in response["data"]])
+        self.assertEqual([allowed.id], [item.id for item in response["data"]])
 
     async def test_homepage_publish_permission_row_visibility_is_homepage_only_and_actionable(self):
         user = _user("homepage.publish")

@@ -10,7 +10,7 @@ from hashlib import sha256
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ksu_common.cache import get_redis
+from ksu_common.rate_limit import RateLimiter
 
 from ..helpers.jwt import create_token, decode_token, refresh_token as issue_refreshed_tokens
 from ..helpers.password import hash_password, verify_password
@@ -21,6 +21,29 @@ from ..tasks.email import queue_password_reset_email, queue_verification_email
 from .user import UserService
 
 settings = get_settings()
+
+_LOGIN_RATE_LIMITER = RateLimiter(requests=5, window=60, prefix="main:auth-login")
+_LOGIN_GLOBAL_RATE_LIMITER = RateLimiter(requests=60, window=60, prefix="main:auth-login-global")
+_PASSWORD_RESET_EMAIL_RATE_LIMITER = RateLimiter(
+    requests=settings.PASSWORD_RESET_RATE_LIMIT_COUNT,
+    window=settings.PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS,
+    prefix="main:auth-password-reset-email",
+)
+_PASSWORD_RESET_IP_RATE_LIMITER = RateLimiter(
+    requests=settings.PASSWORD_RESET_RATE_LIMIT_COUNT,
+    window=settings.PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS,
+    prefix="main:auth-password-reset-ip",
+)
+_PASSWORD_RESET_TOKEN_RATE_LIMITER = RateLimiter(
+    requests=10,
+    window=300,
+    prefix="main:auth-password-reset-token",
+)
+_PASSWORD_RESET_GLOBAL_RATE_LIMITER = RateLimiter(
+    requests=30,
+    window=300,
+    prefix="main:auth-password-reset-global",
+)
 
 
 def _normalize_role(role: str) -> str:
@@ -64,6 +87,8 @@ class AuthService:
 
     @staticmethod
     async def login(db: AsyncSession, email: str, password: str) -> tuple[User, str, str]:
+        await _LOGIN_GLOBAL_RATE_LIMITER.check("all", "POST:/auth/login/global")
+        await _LOGIN_RATE_LIMITER.check(email.strip().lower(), "POST:/auth/login")
         user = await UserService.get_by_email(db, email)
         if user is None:
             raise PermissionError("Invalid credentials")
@@ -177,6 +202,15 @@ class AuthService:
 
     @staticmethod
     async def reset_password(db: AsyncSession, token: str, new_password: str) -> None:
+        await _PASSWORD_RESET_GLOBAL_RATE_LIMITER.check(
+            "all",
+            "POST:/auth/reset-password/global",
+        )
+        token_hash = sha256(token.encode()).hexdigest()[:24]
+        await _PASSWORD_RESET_TOKEN_RATE_LIMITER.check(
+            token_hash,
+            "POST:/auth/reset-password",
+        )
         result = await db.execute(select(User).where(User.password_reset_token == token))
         user = result.scalar_one_or_none()
         if user is None or user.password_reset_expires is None or user.password_reset_expires < datetime.now(timezone.utc):
@@ -217,17 +251,13 @@ class AuthService:
 
     @staticmethod
     async def _enforce_password_reset_rate_limit(*, email: str, ip_address: str | None = None) -> None:
-        client = await get_redis()
-        window = settings.PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS
-        limit = settings.PASSWORD_RESET_RATE_LIMIT_COUNT
-        email_hash = sha256(email.lower().encode()).hexdigest()[:24]
-        keys = [f"auth:pwreset:email:{email_hash}"]
+        email_hash = sha256(email.strip().lower().encode()).hexdigest()[:24]
+        await _PASSWORD_RESET_EMAIL_RATE_LIMITER.check(
+            email_hash,
+            "POST:/auth/forgot-password/email",
+        )
         if ip_address:
-            keys.append(f"auth:pwreset:ip:{ip_address}")
-
-        for key in keys:
-            current = await client.incr(key)
-            if current == 1:
-                await client.expire(key, window)
-            if current > limit:
-                raise PermissionError("Too many password reset requests. Please try again later.")
+            await _PASSWORD_RESET_IP_RATE_LIMITER.check(
+                ip_address,
+                "POST:/auth/forgot-password/ip",
+            )

@@ -19,9 +19,6 @@ class NewsletterCreate(BaseSchema):
     content: str | None = None
     published_at: datetime | None = None
     scheduled_send_at: datetime | None = None
-    sent_at: datetime | None = None
-    send_status: str = Field(default="draft", max_length=32)
-    send_error: str | None = None
     cover_image_id: uuid.UUID | None = None
     pdf_file_id: uuid.UUID | None = None
     status: str = Field(default="draft", max_length=32)
@@ -36,9 +33,6 @@ class NewsletterUpdate(BaseSchema):
     content: str | None = None
     published_at: datetime | None = None
     scheduled_send_at: datetime | None = None
-    sent_at: datetime | None = None
-    send_status: str | None = Field(default=None, max_length=32)
-    send_error: str | None = None
     cover_image_id: uuid.UUID | None = None
     pdf_file_id: uuid.UUID | None = None
     status: str | None = Field(default=None, max_length=32)
@@ -56,13 +50,23 @@ class NewsletterRead(BaseReadSchema):
     sent_at: datetime | None = None
     send_status: str
     send_error: str | None = None
+    recipients_count: int | None = None
+    sent_count: int | None = None
     cover_image_id: uuid.UUID | None = None
     pdf_file_id: uuid.UUID | None = None
     view_count: int
     status: str
     cover_image: dict[str, Any] | None = None
     pdf_file: dict[str, Any] | None = None
+    updated_by_id: uuid.UUID | None = None
+    updated_by: dict[str, Any] | None = None
     is_public: bool
+
+
+class NewsletterScheduleRequest(BaseSchema):
+    """Body for POST /newsletters/{id}/schedule."""
+
+    scheduled_send_at: datetime
 
 
 class NewsletterSubscriberCreate(BaseSchema):
@@ -139,6 +143,8 @@ class TestimonialRead(BaseReadSchema):
     photo: dict[str, Any] | None = None
     programme: dict[str, Any] | None = None
     school: dict[str, Any] | None = None
+    updated_by_id: uuid.UUID | None = None
+    updated_by: dict[str, Any] | None = None
     is_public: bool
 
 
@@ -237,6 +243,7 @@ __all__ = [
     "NewsletterCreate",
     "NewsletterUpdate",
     "NewsletterRead",
+    "NewsletterScheduleRequest",
     "NewsletterSubscriberCreate",
     "NewsletterSubscriberRead",
     "TestimonialCreate",

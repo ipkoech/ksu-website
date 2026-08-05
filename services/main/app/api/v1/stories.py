@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from sqlalchemy import select
 
 from ksu_common import cached_public
 from ksu_common.schemas.responses import success
@@ -13,7 +15,7 @@ from ksu_common.schemas.responses import success
 from ._fields import FieldSelection, FieldsDep, build_selector
 from .content_workflow import authorize_content_workflow_action
 from ...deps import CurrentUser, DbSession, permissions_for_user, require_scope
-from ...models import Story
+from ...models import ContentWorkflowLog, Story
 from ...schemas import (
     StoryContributorAccountRequestCreate,
     StoryContributorAccountRequestReview,
@@ -28,6 +30,26 @@ router = APIRouter()
 STORY_MANAGE_PERMISSIONS = {"content.manage", "content.manage_stories", "admin:*"}
 STORY_CONTRIBUTOR_PERMISSIONS = {"stories.submit", "content.submit", "content.manage", "admin:*"}
 
+# Fields a contributor may change on their own story. Everything else on
+# StoryUpdate (is_featured, homepage_priority, source_type, contributor
+# identity snapshots, SEO/publication metadata, ...) is editorial and stays
+# reviewer/manager-only.
+CONTRIBUTOR_EDITABLE_FIELDS = frozenset({
+    "title",
+    "summary",
+    "plain_text",
+    "rich_text",
+    "structured_content",
+    "related_links",
+    "featured_media_id",
+    "story_type",
+    "category",
+    "contributor_affiliation_snapshot",
+    "show_contributor_name",
+    "consent_to_publish",
+    "reading_minutes",
+})
+
 
 def _can_manage_stories(permissions: set[str]) -> bool:
     return bool(STORY_MANAGE_PERMISSIONS.intersection(permissions))
@@ -35,6 +57,16 @@ def _can_manage_stories(permissions: set[str]) -> bool:
 
 def _can_submit_stories(permissions: set[str]) -> bool:
     return bool(STORY_CONTRIBUTOR_PERMISSIONS.intersection(permissions))
+
+
+def reject_non_contributor_fields(payload: dict) -> None:
+    """Block contributors from writing editorial or identity-snapshot fields."""
+    disallowed = sorted(set(payload) - CONTRIBUTOR_EDITABLE_FIELDS)
+    if disallowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Contributors cannot modify: {', '.join(disallowed)}",
+        )
 
 
 @router.get("")
@@ -151,6 +183,7 @@ async def list_admin_stories(
     scheduled_from: datetime | None = None,
     scheduled_to: datetime | None = None,
     search: str | None = None,
+    record_state: Literal["active", "archived", "deleted"] = "active",
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(Story, fields)
@@ -168,6 +201,7 @@ async def list_admin_stories(
         scheduled_from=scheduled_from,
         scheduled_to=scheduled_to,
         search=search,
+        record_state=record_state,
         load_options=selector.load_options,
     )
     return success(data=selector.apply(result.items), meta=result.meta)
@@ -209,6 +243,39 @@ async def get_story_by_id(story_id: uuid.UUID, db: DbSession, user: CurrentUser,
     if not _can_manage_stories(permissions) and item.contributor_user_id != user.id:
         raise HTTPException(status_code=403, detail="Insufficient privileges")
     return success(data=selector.apply(item))
+
+
+@router.get("/id/{story_id}/feedback")
+async def list_story_feedback(
+    story_id: uuid.UUID,
+    db: DbSession,
+    user: CurrentUser,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=100),
+):
+    """Workflow history for a story, readable by its contributor.
+
+    Contributors cannot use the generic content-workflow logs route (it
+    requires reviewer/edit permissions), so this surfaces reviewer feedback
+    (request_changes / reject comments and transitions) for their own story.
+    """
+    item = await StoryService.get_by_id(db, story_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Story not found")
+    permissions = permissions_for_user(user)
+    if not _can_manage_stories(permissions) and item.contributor_user_id != user.id:
+        raise HTTPException(status_code=403, detail="Insufficient privileges")
+    result = await db.execute(
+        select(ContentWorkflowLog)
+        .where(
+            ContentWorkflowLog.content_type == "stories",
+            ContentWorkflowLog.content_id == story_id,
+        )
+        .order_by(ContentWorkflowLog.created_at.desc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+    )
+    return success(data=result.scalars().all())
 
 
 @router.get("/{slug}")
@@ -270,6 +337,8 @@ async def update_story(story_id: uuid.UUID, data: StoryUpdate, db: DbSession, us
     if not _can_manage_stories(permissions) and item.contributor_user_id != user.id:
         raise HTTPException(status_code=403, detail="Insufficient privileges")
     payload = data.model_dump(exclude_unset=True)
+    if not _can_manage_stories(permissions):
+        reject_non_contributor_fields(payload)
     current_status = item.workflow_status or item.status
     if current_status in {"submitted", "in_review", "approved", "scheduled"}:
         authorize_content_workflow_action(user, item, "edit", permissions)

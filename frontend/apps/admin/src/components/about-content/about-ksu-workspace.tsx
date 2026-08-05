@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, ExternalLink, History, Pencil, Plus, Save, Sparkles, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, BookOpen, ExternalLink, History, Pencil, Plus, Save, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "@ksu/ui";
 import {
   Alert,
@@ -229,10 +229,7 @@ export function AboutKsuWorkspace() {
       ) : null}
 
       {!aboutQuery.isLoading && !about ? (
-        <Alert className="mb-6">
-          <AlertTitle>Launch content has not been created</AlertTitle>
-          <AlertDescription>Run the scoped About seeder before opening this editorial workspace.</AlertDescription>
-        </Alert>
+        <AboutContentCreate onCreated={refreshAbout} canManage={canManage} />
       ) : null}
 
       <Tabs defaultValue="content" className="space-y-5">
@@ -266,10 +263,14 @@ export function AboutKsuWorkspace() {
               {historyQuery.isLoading ? <StateMessage label="Loading history milestones..." /> : null}
               {historyQuery.isError ? <StateMessage label="History milestones could not be loaded." tone="error" /> : null}
               {!historyQuery.isLoading && milestones.length === 0 ? <StateMessage label="No milestones have been created." /> : null}
-              {milestones.map((milestone) => (
+              {milestones.map((milestone, index) => (
                 <MilestoneCard
                   key={milestone.id}
                   milestone={milestone}
+                  index={index}
+                  totalCount={milestones.length}
+                  aboutId={about?.id ?? ""}
+                  allMilestones={milestones}
                   canManage={canManage}
                   onEdit={() => setMilestoneEditor(milestone)}
                   onChanged={refreshAbout}
@@ -400,11 +401,23 @@ function AboutContentEditor({
   );
 }
 
-function MilestoneCard({ milestone, canManage, onEdit, onChanged }: { milestone: HistoryMilestone; canManage: boolean; onEdit: () => void; onChanged: () => Promise<void> }) {
+function MilestoneCard({ milestone, index, totalCount, aboutId, allMilestones, canManage, onEdit, onChanged }: { milestone: HistoryMilestone; index: number; totalCount: number; aboutId: string; allMilestones: HistoryMilestone[]; canManage: boolean; onEdit: () => void; onChanged: () => Promise<void> }) {
   const deleteMutation = useMutation({
     mutationFn: () => historyMilestonesApi.delete(milestone.id),
     onSuccess: async () => { toast.success("Milestone deleted"); await onChanged(); },
     onError: () => toast.error("Published milestones must be unpublished before deletion"),
+  });
+
+  const reorderMutation = useMutation({
+    mutationFn: async (direction: -1 | 1) => {
+      const target = index + direction;
+      if (target < 0 || target >= totalCount) return { data: [] };
+      const ordered = [...allMilestones];
+      [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
+      return historyMilestonesApi.reorder(aboutId, ordered.map((m, i) => ({ id: m.id, display_order: (i + 1) * 10 })));
+    },
+    onSuccess: async () => { toast.success("Milestone order updated"); await onChanged(); },
+    onError: () => toast.error("Milestones could not be reordered"),
   });
 
   return (
@@ -417,7 +430,9 @@ function MilestoneCard({ milestone, canManage, onEdit, onChanged }: { milestone:
         <div className="mt-3"><AboutWorkflowActions kind="milestone" id={milestone.id} status={milestone.workflow_status} compact onCompleted={onChanged} /></div>
       </div>
       {canManage ? (
-        <div className="flex gap-2 md:justify-end">
+        <div className="flex flex-wrap gap-1 md:justify-end">
+          <Button type="button" size="icon" variant="ghost" aria-label="Move milestone up" disabled={index === 0 || reorderMutation.isPending} onClick={() => reorderMutation.mutate(-1)}><ArrowUp className="size-4" /></Button>
+          <Button type="button" size="icon" variant="ghost" aria-label="Move milestone down" disabled={index === totalCount - 1 || reorderMutation.isPending} onClick={() => reorderMutation.mutate(1)}><ArrowDown className="size-4" /></Button>
           <Button type="button" size="icon" variant="outline" aria-label={`Edit ${milestone.title}`} onClick={onEdit}><Pencil className="size-4" /></Button>
           <Button type="button" size="icon" variant="outline" aria-label={`Delete ${milestone.title}`} disabled={deleteMutation.isPending || milestone.workflow_status === "published"} onClick={() => { if (window.confirm(`Delete ${milestone.title}?`)) deleteMutation.mutate(); }}><Trash2 className="size-4" /></Button>
         </div>
@@ -508,6 +523,46 @@ function AreaField({ label, value, onChange, rows, help }: { label: string; valu
 
 function ToggleField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
   return <label className="flex items-center justify-between rounded-xl border p-3 text-sm font-medium"><span>{label}</span><Switch checked={checked} onCheckedChange={onChange} /></label>;
+}
+
+function AboutContentCreate({ onCreated, canManage }: { onCreated: () => Promise<void>; canManage: boolean }) {
+  const [heroHeadline, setHeroHeadline] = useState("About Kisii University");
+  const [heroIntro, setHeroIntro] = useState("");
+  const createMutation = useMutation({
+    mutationFn: () => aboutContentApi.create({
+      hero_headline: heroHeadline.trim() || null,
+      hero_introduction: heroIntro.trim() || null,
+      is_enabled: true,
+    } as Parameters<typeof aboutContentApi.create>[0]),
+    onSuccess: async () => { toast.success("About KSU content created"); await onCreated(); },
+    onError: () => toast.error("About content could not be created"),
+  });
+
+  if (!canManage) {
+    return (
+      <Alert className="mb-6">
+        <AlertTitle>Launch content has not been created</AlertTitle>
+        <AlertDescription>The About KSU record must be created by an administrator.</AlertDescription>
+      </Alert>
+    );
+  }
+
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle>Create About KSU content</CardTitle>
+        <CardDescription>Initialize the About page with a headline and introduction.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <TextField label="Hero headline" value={heroHeadline} onChange={setHeroHeadline} placeholder="About Kisii University" />
+        <AreaField label="Hero introduction" value={heroIntro} onChange={setHeroIntro} rows={4} />
+        <Button type="button" onClick={() => createMutation.mutate()} disabled={createMutation.isPending || !heroHeadline.trim()}>
+          <Plus className="size-4 mr-2" />
+          {createMutation.isPending ? "Creating..." : "Create About content"}
+        </Button>
+      </CardContent>
+    </Card>
+  );
 }
 
 function WorkflowBadge({ status }: { status: string }) {

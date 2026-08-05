@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Play, Quote } from "lucide-react";
+import { ArrowRight, Quote } from "lucide-react";
 import type {
   StaffAssignment,
   VcPublicHub,
@@ -12,6 +12,7 @@ import {
   VcGallerySection,
   VcPodiumSection,
 } from "./vc-public-sections";
+import { VcHero } from "./vc-hero";
 import { VcVideoPlayer } from "./vc-video-player";
 
 const navigation = [
@@ -54,65 +55,10 @@ export function VcPublicPage({
 
   return (
     <>
-      <section className="relative isolate min-h-[620px] overflow-hidden bg-primary text-white lg:min-h-[700px]">
-        <PublicImage
-          src={portrait}
-          alt={hub.hero_media?.alt_text || name}
-          ratio="fill"
-          priority
-          sizes="100vw"
-          className="absolute inset-0"
-          imageClassName="object-cover object-[68%_center] sm:object-[72%_center]"
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--primary)/.98)_0%,hsl(var(--primary)/.93)_28%,hsl(var(--primary)/.54)_50%,hsl(var(--primary)/.06)_78%)]" />
-        <div className="absolute inset-y-0 left-0 w-1/2 bg-[radial-gradient(circle_at_15%_20%,hsl(var(--secondary)/.13),transparent_42%)]" />
-        <div className="container relative flex min-h-[620px] items-center py-16 lg:min-h-[700px]">
-          <div className="hidden w-16 shrink-0 items-center self-stretch border-r border-secondary/70 lg:flex">
-            <p className="-rotate-90 whitespace-nowrap text-[0.68rem] font-bold uppercase tracking-[0.2em] text-secondary">
-              {hub.eyebrow || "Leadership in motion"}
-            </p>
-          </div>
-          <div className="max-w-[690px] py-10 lg:pl-16">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary lg:hidden">
-              {hub.eyebrow || "Leadership in motion"}
-            </p>
-            <h1 className="mt-5 max-w-[650px] font-[family-name:var(--font-display)] text-5xl font-semibold leading-[0.95] sm:text-6xl lg:mt-0 lg:text-7xl xl:text-8xl">
-              {hub.title}
-            </h1>
-            <p className="mt-7 max-w-[560px] text-base leading-7 text-white/90 sm:text-lg sm:leading-8">
-              {hub.introduction ||
-                `Meet ${name} and discover the ideas, engagements and moments shaping Kisii University.`}
-            </p>
-            <div className="mt-9 flex flex-wrap gap-3">
-              {hub.welcome_video ? (
-                <a
-                  href="#vc-story"
-                  className="inline-flex min-h-12 items-center gap-3 bg-secondary px-6 font-bold text-secondary-foreground transition-colors hover:bg-white hover:text-primary"
-                >
-                  <span className="grid size-6 place-items-center rounded-full bg-primary text-white">
-                    <Play
-                      className="ml-0.5 size-3.5 fill-current"
-                      aria-hidden
-                    />
-                  </span>
-                  Watch the welcome
-                </a>
-              ) : null}
-              <Link
-                href={hub.professional_profile_url}
-                className="inline-flex min-h-12 items-center gap-3 border border-white/65 bg-black/10 px-6 font-semibold text-white transition-colors hover:bg-white hover:text-primary"
-              >
-                View professional profile
-              </Link>
-            </div>
-            <p className="mt-8 text-sm text-white/75">
-              <span className="font-semibold text-white">{name}</span>
-              <span className="mx-2 text-secondary">—</span>
-              {role}
-            </p>
-          </div>
-        </div>
-      </section>
+      <VcHero
+        professionalProfileUrl={hub.professional_profile_url}
+        hasWelcomeVideo={Boolean(hub.welcome_video)}
+      />
 
       <nav
         aria-label="Vice Chancellor page sections"
@@ -210,7 +156,7 @@ export function VcPublicPage({
           </p>
           <Link
             href={hub.professional_profile_url}
-            className="inline-flex min-h-12 shrink-0 items-center gap-3 border border-secondary px-6 font-semibold text-secondary transition-colors hover:bg-secondary hover:text-secondary-foreground"
+            className="inline-flex min-h-12 shrink-0 items-center gap-3 border border-secondary px-6 font-semibold text-secondary transition-colors duration-200 hover:bg-secondary hover:text-secondary-foreground active:scale-[0.98]"
           >
             View professional profile <ArrowRight className="size-4" />
           </Link>

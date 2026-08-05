@@ -8,7 +8,8 @@ import {
   Landmark,
   UserRound,
 } from "lucide-react";
-import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { CampusPageHeader } from "@ksu/ui/components";
+import { PageShell } from "@/components/site-shell";
 
 export const metadata = {
   title: "Visitors",
@@ -59,27 +60,16 @@ const visitorRoutes = [
 export default function VisitorsPage() {
   return (
     <PageShell>
+      <CampusPageHeader
+        title="Visitor information"
+        eyebrow="Visitors"
+        description="Welcome to Kisii University. Use the links below to explore the institution, learn about campus life, find upcoming events, browse academic schools, get in touch, or access the official student and staff portal."
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Visitors" }]}
+        seed="/visitors"
+      />
+
       <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <BreadcrumbTrail
-          items={[{ label: "Home", href: "/" }, { label: "Visitors" }]}
-        />
-
-        <div className="mt-8">
-          <p className="text-sm font-semibold uppercase text-secondary">
-            Visitors
-          </p>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-semibold leading-tight text-foreground">
-            Visitor information
-          </h1>
-          <p className="mt-4 text-base leading-8 text-muted-foreground">
-            Welcome to Kisii University. Use the links below to explore the
-            institution, learn about campus life, find upcoming events, browse
-            academic schools, get in touch, or access the official student and
-            staff portal.
-          </p>
-        </div>
-
-        <section className="mt-10">
+        <section className="mt-0">
           <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-foreground">
             Useful visitor routes
           </h2>

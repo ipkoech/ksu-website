@@ -602,7 +602,7 @@ function HeadMessage({ data }: { data: AdministrationOfficeDetailData }) {
     >
       <SectionKicker>Leadership Message</SectionKicker>
       <Quote aria-hidden className="mt-3 h-7 w-7 text-secondary" />
-      <p className="mt-2 text-sm leading-7 text-white/82 sm:text-base">
+      <p className="mt-2 text-sm leading-7 text-white/80 sm:text-base">
         {message}
       </p>
     </section>
@@ -686,7 +686,7 @@ function LinkedRecordCard({
   return (
     <Link
       href={href}
-      className="group rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
+      className="group rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition-colors hover:border-primary/30 hover:bg-primary/[0.03]"
     >
       <div className="flex gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
@@ -709,7 +709,7 @@ function LinkedRecordCard({
         </div>
         <ArrowRight
           aria-hidden
-          className="h-4 w-4 shrink-0 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:text-primary"
+          className="h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary"
         />
       </div>
     </Link>
@@ -1086,7 +1086,7 @@ function MediaSection({
           <Link
             key={`${item.recordType}-${item.id}`}
             href={mediaHref(item)}
-            className="group rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
+            className="group rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition-colors hover:border-primary/30 hover:bg-primary/[0.03]"
           >
             <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
               {mediaLabel(item) ?? "Media"}
@@ -1158,7 +1158,7 @@ function DownloadsSection({ data }: { data: AdministrationOfficeDetailData }) {
                 {fileUrl ? (
                   <a
                     href={fileUrl}
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 text-primary transition hover:bg-primary hover:text-white"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 text-primary transition-colors hover:bg-primary hover:text-white"
                     aria-label={`Download ${document.title}`}
                   >
                     <Download aria-hidden className="h-4 w-4" />
@@ -1215,7 +1215,7 @@ function ContactRows({ data }: { data: AdministrationOfficeDetailData }) {
           <a
             key={item.label}
             href={item.href}
-            className="flex gap-3 rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition hover:border-primary/30"
+            className="flex gap-3 rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition-colors hover:border-primary/30"
           >
             {content}
           </a>
@@ -1388,7 +1388,7 @@ function ContactPanel({ data }: { data: AdministrationOfficeDetailData }) {
             <a
               key={item.label}
               href={item.href}
-              className="flex w-full min-w-0 gap-3 rounded-xl p-2 transition hover:bg-primary/5"
+              className="flex w-full min-w-0 gap-3 rounded-xl p-2 transition-colors hover:bg-primary/5"
             >
               {content}
             </a>
@@ -1435,13 +1435,13 @@ function ParentPanel({ data }: { data: AdministrationOfficeDetailData }) {
       <SectionKicker>Administration</SectionKicker>
       <Link
         href={data.parent.href}
-        className="group mt-3 flex min-h-10 items-center gap-3 text-sm font-medium text-muted-foreground transition hover:text-primary"
+        className="group mt-3 flex min-h-10 items-center gap-3 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
         <Landmark aria-hidden className="h-4 w-4 shrink-0 text-primary" />
         <span className="min-w-0 flex-1">{data.parent.label}</span>
         <ArrowRight
           aria-hidden
-          className="h-4 w-4 shrink-0 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:text-primary"
+          className="h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary"
         />
       </Link>
     </section>

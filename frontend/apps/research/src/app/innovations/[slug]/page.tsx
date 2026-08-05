@@ -98,7 +98,7 @@ export default async function InnovationDetailPage({
       {[error, projects.error, centers.error, outputs.error]
         .filter(Boolean)
         .map((message, i) => (
-          <section key={i} className="px-4 pt-4 sm:px-6 lg:px-8">
+          <section key={i} className="px-4 pt-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
             <div className="mx-auto max-w-[1680px]">
               <StatusMessage tone="error">{message}</StatusMessage>
             </div>
@@ -196,7 +196,7 @@ function SourceContext({
 
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-foreground">Source context</h2>
+      <h2 className="font-display text-xl font-semibold text-foreground">Source context</h2>
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {cards.map((card) => (
           <Link
@@ -226,7 +226,7 @@ function CommercialNotes({ innovation }: { innovation: ResearchGenericRecord }) 
 
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold text-foreground">Commercial notes</h2>
+      <h2 className="font-display text-xl font-semibold text-foreground">Commercial notes</h2>
       {notes.length > 0 ? (
         <dl className="mt-4 grid gap-3 text-sm">
           {notes.map((item) => (

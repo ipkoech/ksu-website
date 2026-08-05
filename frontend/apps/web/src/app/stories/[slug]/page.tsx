@@ -37,6 +37,8 @@ export default async function StoryDetailPage({
     getNavData(),
     storiesApi
       .getBySlug(slug, {
+        fields:
+          "id,title,slug,summary,plain_text,rich_text,story_type,category,published_at,created_at,reading_minutes,contributor_name_snapshot,show_contributor_name,featured_media_id,related_links",
         include:
           "featured_media(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
       })
@@ -225,7 +227,7 @@ export default async function StoryDetailPage({
                         ratio="fill"
                         sizes="(min-width: 1024px) 33vw, 50vw"
                         className="h-full w-full"
-                        imageClassName="transition duration-500 group-hover:scale-105"
+                        imageClassName="transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
                       />
                     </div>
                     {image.title ? (
@@ -256,7 +258,7 @@ export default async function StoryDetailPage({
                       rel={
                         cta.href.startsWith("http") ? "noreferrer" : undefined
                       }
-                      className="group rounded-2xl border border-white/15 bg-white/10 p-5 transition hover:bg-white/15"
+                      className="group rounded-2xl border border-white/15 bg-white/10 p-5 transition-colors duration-200 hover:bg-white/15"
                     >
                       <span className="flex items-center justify-between gap-4">
                         <span className="font-[family-name:var(--font-display)] text-xl font-bold">
@@ -265,7 +267,7 @@ export default async function StoryDetailPage({
                         {cta.href.startsWith("http") ? (
                           <ExternalLink className="h-4 w-4 shrink-0" />
                         ) : (
-                          <ArrowRight className="h-4 w-4 shrink-0 transition group-hover:translate-x-1" />
+                          <ArrowRight className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:translate-x-1" />
                         )}
                       </span>
                       {cta.description ? (
@@ -303,7 +305,7 @@ export default async function StoryDetailPage({
                   <Link
                     key={related.id}
                     href={`/stories/${related.slug}`}
-                    className="group overflow-hidden rounded-2xl border border-primary/10 bg-white/80 shadow-[0_16px_48px_rgba(0,53,37,.08)] transition hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(0,53,37,.13)]"
+                    className="group overflow-hidden rounded-2xl border border-primary/10 bg-white/80 shadow-[0_16px_48px_rgba(0,53,37,.08)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(0,53,37,.13)]"
                   >
                     <div className="relative h-40 overflow-hidden bg-primary/10">
                       <PublicImage
@@ -317,7 +319,7 @@ export default async function StoryDetailPage({
                         fallbackContent={<Newspaper className="h-8 w-8" />}
                         sizes="(min-width: 1024px) 25vw, 50vw"
                         className="absolute inset-0 h-full w-full"
-                        imageClassName="object-cover transition duration-500 group-hover:scale-105"
+                        imageClassName="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
                       />
                     </div>
                     <div className="p-4">

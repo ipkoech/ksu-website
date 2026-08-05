@@ -8,4 +8,4 @@ export const libraryFrontendUrl =
   process.env.NEXT_PUBLIC_LIBRARY_FRONTEND_URL || "http://localhost:3003";
 
 export const heriAfricaFrontendUrl =
-  process.env.NEXT_PUBLIC_HERI_AFRICA_FRONTEND_URL || "http://localhost:3004";
+  process.env.NEXT_PUBLIC_HERI_AFRICA_FRONTEND_URL || "/heri-africa";

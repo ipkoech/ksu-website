@@ -34,7 +34,7 @@ export function ResearchPortfolioHero({
 }) {
   return (
     <section className="relative isolate overflow-hidden bg-[hsl(var(--brand-overlay))] px-4 py-7 text-white sm:px-6 lg:px-8 lg:py-8 xl:px-10 2xl:px-12">
-      <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_78%_18%,rgba(13,148,136,0.38),transparent_28%),radial-gradient(circle_at_50%_90%,rgba(245,158,11,0.24),transparent_24%),linear-gradient(120deg,hsl(var(--brand-overlay))_0%,#082B57_52%,hsl(var(--primary)/.62)_100%)]" />
+      <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_78%_18%,hsl(var(--primary)/0.38),transparent_28%),radial-gradient(circle_at_50%_90%,hsl(var(--secondary)/0.24),transparent_24%),linear-gradient(120deg,hsl(var(--brand-overlay))_0%,hsl(var(--brand-overlay)/0.85)_52%,hsl(var(--primary)/.62)_100%)]" />
       <div aria-hidden className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.045)_1px,transparent_1px)] bg-[size:48px_48px] opacity-55" />
       <HeroIllustration variant={illustration} />
       <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--brand-overlay))]/92 via-[hsl(var(--brand-overlay))]/62 to-[hsl(var(--brand-overlay))]/10" />
@@ -43,7 +43,7 @@ export function ResearchPortfolioHero({
         <span className="inline-flex rounded-md border border-white/25 bg-primary/80 px-3 py-1 text-xs font-semibold text-white shadow-sm backdrop-blur">
           {eyebrow}
         </span>
-        <h1 className="mt-4 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-none text-white sm:text-5xl lg:text-6xl">
+        <h1 className="mt-4 max-w-3xl font-display text-4xl font-semibold leading-tight text-white sm:text-5xl">
           {title}
         </h1>
         <p className="mt-4 max-w-2xl text-pretty text-base leading-7 text-white/92 sm:text-lg">
@@ -61,8 +61,13 @@ export function ResearchPortfolioHero({
 }
 
 function HeroIllustration({ variant }: { variant: PortfolioHeroIllustration }) {
-  const accent = variant === "outputs" || variant === "publications" ? "#F59E0B" : variant === "centers" ? "#38BDF8" : "#10B981";
-  const secondary = variant === "facilities" ? "#A7F3D0" : "#FDE68A";
+  const accent =
+    variant === "outputs" || variant === "publications"
+      ? "hsl(var(--secondary))"
+      : variant === "centers"
+        ? "hsl(var(--primary))"
+        : "hsl(var(--success))";
+  const secondary = variant === "facilities" ? "hsl(var(--success))" : "hsl(var(--secondary))";
   const nodes = getHeroNodes(variant);
 
   return (
@@ -230,7 +235,7 @@ export function ResearchPortfolioShell({
         <div className="min-w-0">
           <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
             <div className="pt-1">
-              <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground lg:whitespace-nowrap">
+              <h2 className="font-display text-3xl font-semibold leading-tight text-foreground lg:whitespace-nowrap">
                 {title}
               </h2>
               <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">{body}</p>
@@ -248,11 +253,11 @@ export function ResearchPortfolioShell({
 
 export function ResearchPortfolioQuickLinks({ links }: { links: PortfolioQuickLink[] }) {
   return (
-    <aside className="rounded-lg border border-border bg-white p-4 shadow-sm xl:sticky xl:top-24">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+    <aside className="rounded-lg border border-border bg-card p-4 shadow-sm xl:sticky xl:top-24">
+      <p className="text-sm font-semibold uppercase tracking-eyebrow text-secondary">
         Quick links
       </p>
-      <div className="mt-3 divide-y divide-slate-200">
+      <div className="mt-3 divide-y divide-border">
         {links.map((link) => (
           <Link
             key={link.href}
@@ -260,7 +265,7 @@ export function ResearchPortfolioQuickLinks({ links }: { links: PortfolioQuickLi
             className="group flex items-start justify-between gap-4 py-3 text-sm transition first:pt-0 last:pb-0"
           >
             <span>
-              <span className="block font-semibold text-primary group-hover:text-secondary">
+              <span className="block font-semibold text-foreground group-hover:text-primary">
                 {link.label}
               </span>
               {link.body ? (
@@ -269,7 +274,7 @@ export function ResearchPortfolioQuickLinks({ links }: { links: PortfolioQuickLi
             </span>
             <ArrowRight
               aria-hidden
-              className="mt-1 h-4 w-4 shrink-0 text-muted-foreground/70 transition group-hover:translate-x-1 group-hover:text-secondary"
+              className="mt-1 h-4 w-4 shrink-0 text-muted-foreground/70 transition group-hover:translate-x-1 group-hover:text-primary"
             />
           </Link>
         ))}
@@ -290,8 +295,8 @@ function PortfolioHeroAction({
       href={link.href}
       className={
         primary
-          ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
-          : "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/40 bg-white/8 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
+          ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+          : "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/40 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15"
       }
     >
       {link.label}

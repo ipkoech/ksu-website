@@ -73,7 +73,7 @@ function FormsMasthead({
             <span className="text-foreground">Forms</span>
           </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Funding / Support</p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">Forms, templates, and practical research resources</h1>
+          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--app-font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">Forms, templates, and practical research resources</h1>
           <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">Search backend-published forms, templates, and guidance records with direct detail links.</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <PrimaryLink href="/resources-tools">Open resources</PrimaryLink>
@@ -94,7 +94,7 @@ function FormsMasthead({
 }
 
 function ResourceColumn({ title, records }: { title: string; records: ResearchGenericRecord[] }) {
-  return <section className="rounded-lg border border-border bg-white p-5 shadow-sm"><h2 className="text-xl font-semibold text-foreground">{title}</h2><div className="mt-4 divide-y divide-slate-200">{records.map((record) => {
+  return <section className="rounded-lg border border-border bg-white p-5 shadow-sm"><h2 className="text-xl font-semibold text-foreground">{title}</h2><div className="mt-4 divide-y divide-border">{records.map((record) => {
     const downloadHref = getResearchRecordDownloadHref(record, record.resource_type ? "resource" : "guideline");
     return <article key={record.id} className="py-4 first:pt-0 last:pb-0"><Badge>{formatLabel(record.resource_type ?? record.guideline_type ?? record.category ?? "document")}</Badge><h3 className="mt-3 text-base font-semibold leading-6 text-foreground">{record.name ?? record.title}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{compactText(record.description) || compactText(record.summary) || compactText(record.scope) || "Document details are not published yet."}</p><p className="mt-2 text-xs font-semibold uppercase text-muted-foreground">{formatDate(record.effective_date) || formatLabel(record.status)}</p><div className="mt-3 flex flex-wrap gap-3">{downloadHref ? <a href={downloadHref} className="inline-flex text-sm font-semibold text-primary">Download</a> : null}{record.slug ? <Link href={record.resource_type ? `/resources-tools/${record.slug}` : `/guidelines/${record.slug}`} className="inline-flex text-sm font-semibold text-primary">Open details</Link> : null}</div></article>;
   })}{records.length === 0 ? <p className="py-4 text-sm text-muted-foreground">No records are published yet.</p> : null}</div></section>;

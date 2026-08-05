@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 from datetime import date, datetime, time, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import and_, case, func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from ksu_common.auth import TokenPayload
 

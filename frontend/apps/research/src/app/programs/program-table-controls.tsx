@@ -86,14 +86,14 @@ export function ProgramTableControls({
                 defaultValue={searchValue ?? ""}
                 placeholder={searchPlaceholder}
                 autoComplete="off"
-                className="h-11 w-full rounded-md border border-border bg-white px-3 pl-9 text-sm font-medium text-foreground outline-none ring-primary/20 transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4"
+                className="h-11 w-full rounded-md border border-border bg-white px-3 pl-9 text-sm font-medium text-foreground outline-none ring-ring transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2"
               />
             </span>
           </label>
           <div className="grid grid-cols-3 gap-2 sm:flex">
             <button
               type="submit"
-              className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+              className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
             >
               Search
             </button>
@@ -182,7 +182,7 @@ function ProgramSelectField({
         form={formId}
         name={name}
         defaultValue={value ?? ""}
-        className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
+        className="mt-2 h-11 w-full rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground outline-none ring-ring transition focus:border-primary focus:ring-2"
       >
         {includeAllOption ? <option value="">{allLabel ?? `All ${label.toLowerCase()}`}</option> : null}
         {normalizeOptions(options).map((option) => (

@@ -5,7 +5,13 @@ import { Clock3, Mail, MapPin, Phone } from "lucide-react";
 import { useState } from "react";
 import { compactText } from "../../lib/library-public-data";
 
-export function ContactBranchSelector({ branches }: { branches: LibraryBranch[] }) {
+export function ContactBranchSelector({
+  branches,
+  todayByBranch = {},
+}: {
+  branches: LibraryBranch[];
+  todayByBranch?: Record<string, string | null>;
+}) {
   const [selectedId, setSelectedId] = useState(branches[0]?.id ?? "");
   const selected = branches.find((branch) => branch.id === selectedId) ?? null;
 
@@ -22,7 +28,7 @@ export function ContactBranchSelector({ branches }: { branches: LibraryBranch[] 
       </div>
       <div className="border-l-4 border-secondary bg-surface-subtle p-6 sm:p-8">
         <h3 className="text-2xl font-semibold text-foreground">{selected?.name ?? "General library desk"}</h3>
-        {selected ? <dl className="mt-6 grid gap-5 sm:grid-cols-2"><ContactDetail icon={<MapPin aria-hidden />} label="Location" value={selected.address ?? selected.location} /><ContactDetail icon={<Phone aria-hidden />} label="Phone" value={selected.phone} /><ContactDetail icon={<Mail aria-hidden />} label="Email" value={selected.email} /><ContactDetail icon={<Clock3 aria-hidden />} label="Opening hours" value="See published branch hours" /></dl> : <p className="mt-4 text-sm leading-7 text-muted-foreground">Branch contact details are being updated.</p>}
+        {selected ? <dl className="mt-6 grid gap-5 sm:grid-cols-2"><ContactDetail icon={<MapPin aria-hidden />} label="Location" value={selected.address ?? selected.location} /><ContactDetail icon={<Phone aria-hidden />} label="Phone" value={selected.phone} /><ContactDetail icon={<Mail aria-hidden />} label="Email" value={selected.email} /><ContactDetail icon={<Clock3 aria-hidden />} label="Opening hours" value={todayByBranch[selected.id] ?? "See the branch schedule below"} /></dl> : <p className="mt-4 text-sm leading-7 text-muted-foreground">Branch contact details are being updated.</p>}
       </div>
     </div>
   );

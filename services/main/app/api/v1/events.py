@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Request, status
 from fastapi.encoders import jsonable_encoder
 
 from ksu_common import cached_public
@@ -19,6 +19,7 @@ from ...models import Event
 from ...schemas import EventCreate, EventUpdate
 from ...services import ContentWorkflowService, EventService
 from .content_workflow import authorize_content_workflow_action
+from ...core.config import public_content_rate_limit
 
 router = APIRouter()
 
@@ -109,8 +110,10 @@ def _with_scope_summaries(serialized_items: Any, source_items: list[Any]) -> lis
 
 
 @router.get("")
+@public_content_rate_limit
 @cached_public(timeout=300, vary_on=("page", "per_page", "scope_type", "scope_id", "is_main", "is_published", "upcoming", "search", "fields", "include", "include_scope"))
 async def list_events(
+    request: Request,
     db: DbSession,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -161,6 +164,7 @@ async def list_admin_events(
     scheduled_from: datetime | None = None,
     scheduled_to: datetime | None = None,
     search: str | None = None,
+    record_state: Literal["active", "archived", "deleted"] = "active",
     include_scope: bool = False,
     fields: FieldSelection = FieldsDep,
 ):
@@ -182,6 +186,7 @@ async def list_admin_events(
         scheduled_from=scheduled_from,
         scheduled_to=scheduled_to,
         search=search,
+        record_state=record_state,
         load_options=selector.load_options,
     )
     items = []
@@ -229,8 +234,9 @@ async def get_event_by_id(
 
 
 @router.get("/{slug}")
+@public_content_rate_limit
 @cached_public(timeout=300, vary_on=("slug", "fields", "include", "include_scope"))
-async def get_event(slug: str, db: DbSession, include_scope: bool = False, fields: FieldSelection = FieldsDep):
+async def get_event(request: Request, slug: str, db: DbSession, include_scope: bool = False, fields: FieldSelection = FieldsDep):
     selector = build_selector(Event, fields)
     item = await EventService.get_by_slug(db, slug, public_only=True, load_options=selector.load_options)
     if item is None:

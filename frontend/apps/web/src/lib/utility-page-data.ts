@@ -53,15 +53,19 @@ const utilityNav = [
   ),
   pageCard(
     "Careers",
-    "/careers",
+    "https://digital.kisiiuniversity.ac.ke/job_portal/open_adverts",
     "Open job adverts and application guidance.",
     "users",
+    "Open job portal",
+    true,
   ),
   pageCard(
     "Tenders",
-    "/tenders",
+    "https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders",
     "Procurement notices and supplier opportunities.",
     "clipboard",
+    "Open tenders portal",
+    true,
   ),
   pageCard(
     "Conferences",
