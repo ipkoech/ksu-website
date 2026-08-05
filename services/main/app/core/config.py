@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: str | None
     SMTP_FROM_NAME: str | None
     FRONTEND_BASE_URL: str
+    # Public origin of the API gateway, used for links embedded in emails
+    # (e.g. newsletter unsubscribe). Defaults to the local dev gateway.
+    PUBLIC_API_BASE_URL: str = "http://localhost:8080"
     FRONTEND_ADMIN_URL: str
     FRONTEND_RESEARCH_URL: str
     FRONTEND_LIBRARY_URL: str

@@ -2643,6 +2643,16 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       { name: "name", label: "Name", required: true },
       { name: "slug", label: "Slug" },
       { name: "location", label: "Location" },
+      {
+        name: "scope_type",
+        label: "Scope Type",
+        type: "select",
+        options: [
+          { label: "School", value: "school" },
+          { label: "Department", value: "department" },
+        ],
+      },
+      { name: "scope_id", label: "Scope ID (UUID)" },
       { name: "is_main", label: "Main", type: "boolean", defaultValue: true },
       { name: "is_public", label: "Public", type: "boolean", defaultValue: true },
       { name: "is_active", label: "Active", type: "boolean", defaultValue: true },
@@ -2654,11 +2664,29 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       { name: "transition_effect", label: "Transition Effect" },
     ],
     listFilters: [
+      {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search by name, slug, or location…",
+      },
       { name: "is_main", label: "Main", type: "boolean" },
       { name: "is_active", label: "Active", type: "boolean" },
+      { name: "is_public", label: "Public", type: "boolean" },
+      {
+        name: "scope_type",
+        label: "Scope Type",
+        type: "select",
+        options: [
+          { label: "School", value: "school" },
+          { label: "Department", value: "department" },
+        ],
+      },
+      { name: "scope_id", label: "Scope ID", type: "text" },
     ],
-    list: (filters) =>
-      slidersApi.listGroups({ ...filters, is_main: filters?.is_main ?? true }),
+    // Admin route: shows every group, including inactive/non-public ones the
+    // cached public route hides. No forced is_main default — use the filter.
+    list: (filters) => slidersApi.listAdminGroups({ ...pageParams, ...filters }),
     create: (payload) => slidersApi.createGroup(payload as any),
     update: (id, payload) => slidersApi.updateGroup(id, payload),
     delete: (id) => slidersApi.deleteGroup(id),
@@ -2666,6 +2694,8 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     getRecordMeta: (record) =>
       metaOf(record, ["location", "slug", "updated_at"]),
     emptyMessage: "No homepage slider groups were returned.",
+    buildPayload: (values) =>
+      pickPayloadKeys(values, SLIDER_GROUP_PAYLOAD_KEYS),
     viewScopes: ["marketing.view", "marketing.manage_sliders"],
     manageScopes: ["marketing.manage_sliders"],
   } as PortalResourceConfig<SliderGroup>,
@@ -2735,7 +2765,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
         relation: { adapter: "sliderGroup", filters: { is_main: true } },
       },
       {
-        name: "status",
+        name: "workflow_status",
         label: "Status",
         type: "select",
         options: contentStatusOptions,
@@ -2743,7 +2773,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       { name: "is_active", label: "Active", type: "boolean" },
     ],
     list: (filters) =>
-      slidersApi.listAdminSliders({ ...filters, is_main: true }),
+      slidersApi.listAdminSliders({ ...pageParams, ...filters, is_main: true }),
     create: async (payload) => {
       const groupId = payload.slider_group_id || (await firstSliderGroupId());
       if (!groupId)
@@ -2754,16 +2784,41 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     },
     update: (id, payload) => slidersApi.updateSlider(id, payload),
     delete: (id) => slidersApi.deleteSlider(id),
+    getRecordWorkflowActions: (record) => [
+      {
+        label: "Publish",
+        successMessage: "Slider item published",
+        payload: {},
+        run: () => contentWorkflowApi.actionByType("sliders", record.id, "publish"),
+        confirmTitle: "Publish slider item?",
+        confirmDescription: `This will publish "${record.title}" to the public homepage rotation.`,
+      },
+      {
+        label: "Unpublish",
+        variant: "outline",
+        successMessage: "Slider item unpublished",
+        payload: {},
+        run: () => contentWorkflowApi.actionByType("sliders", record.id, "unpublish"),
+        confirmTitle: "Unpublish slider item?",
+        confirmDescription: `This will remove "${record.title}" from public visibility.`,
+      },
+    ],
     getRecordTitle: titleOf,
     getRecordMeta: (record) =>
       metaOf(record, ["workflow_status", "display_order", "updated_at"]),
     emptyMessage: "No homepage slider items were returned.",
-    buildPayload: (values) => ({
-      ...values,
-      plain_text: plainTextFromRichText(values.rich_text),
-      is_main: values.is_main ?? true,
-      display_order: values.display_order ?? 0,
-    }),
+    // SliderCreate/SliderUpdate are extra="forbid": strip anything the form
+    // carries that the backend schema does not accept.
+    buildPayload: (values) =>
+      pickPayloadKeys(
+        {
+          ...values,
+          plain_text: plainTextFromRichText(values.rich_text),
+          is_main: values.is_main ?? true,
+          display_order: values.display_order ?? 0,
+        },
+        SLIDER_PAYLOAD_KEYS,
+      ),
     viewScopes: ["marketing.view", "marketing.manage_sliders"],
     manageScopes: ["marketing.manage_sliders"],
     supportsRecovery: true,
@@ -2787,8 +2842,39 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
         relation: { adapter: "mediaFolder", allowClear: true },
       },
       { name: "is_public", label: "Public", type: "boolean" },
+      {
+        name: "scope_type",
+        label: "Scope Type",
+        helpText:
+          "Optional owning scope, e.g. school, department, division, wing. Leave blank for a global folder.",
+      },
+      {
+        name: "scope_id",
+        label: "Scope ID",
+        helpText: "UUID of the owning scope record. Required when a scope type is set.",
+      },
     ],
-    list: () => mediaApi.listFolders(),
+    listFilters: [
+      {
+        name: "parent_id",
+        label: "Parent Folder",
+        type: "entity",
+        relation: { adapter: "mediaFolder" },
+      },
+      {
+        name: "scope_type",
+        label: "Scope Type",
+        type: "text",
+        placeholder: "e.g. school, department…",
+      },
+    ],
+    list: (filters) => mediaApi.listFolders(filters),
+    buildPayload: (values) => ({
+      ...values,
+      slug: values.slug || undefined,
+      scope_type: values.scope_type || null,
+      scope_id: values.scope_id || null,
+    }),
     create: (payload) => mediaApi.createFolder(payload as any),
     update: (id, payload) => mediaApi.updateFolder(id, payload as any),
     delete: (id) => mediaApi.deleteFolder(id),
@@ -2817,6 +2903,12 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
         type: "entity",
         relation: { adapter: "mediaFolder", allowClear: true },
       },
+      {
+        name: "tags",
+        label: "Tags",
+        helpText: "Separate tags with commas.",
+      },
+      { name: "credit", label: "Credit", helpText: "Photographer or source attribution." },
       { name: "is_public", label: "Public", type: "boolean" },
     ],
     listFilters: [
@@ -2843,6 +2935,29 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
           { label: "Audio", value: "audio" },
         ],
       },
+      {
+        name: "role",
+        label: "Attachment Role",
+        type: "select",
+        options: [
+          { label: "Cover", value: "cover" },
+          { label: "Gallery", value: "gallery" },
+          { label: "Logo", value: "logo" },
+          { label: "Video", value: "video" },
+          { label: "Document", value: "document" },
+          { label: "Poster", value: "poster" },
+          { label: "CV", value: "cv" },
+          { label: "Brochure", value: "brochure" },
+          { label: "Attachment", value: "attachment" },
+        ],
+      },
+      {
+        name: "uploaded_by_id",
+        label: "Uploaded By",
+        type: "entity",
+        relation: { adapter: "user" },
+      },
+      { name: "is_public", label: "Public", type: "boolean" },
     ],
     list: (filters) => mediaApi.list({ ...pageParams, ...filters }),
     create: async () => {
@@ -2850,6 +2965,34 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     },
     update: (id, payload) => mediaApi.update(id, payload as any),
     delete: (id) => mediaApi.delete(id),
+    beforeDelete: async (record) => {
+      const response = await mediaApi.listLinks({ media_id: record.id });
+      const links = response.data ?? [];
+      if (links.length === 0) {
+        return "It is not referenced by any pages.";
+      }
+      const labels = Array.from(
+        new Set(
+          links.map((link) => {
+            const entity = String(link.entity_type).replace(/_/g, " ");
+            return link.role ? `${entity} (${link.role})` : entity;
+          }),
+        ),
+      );
+      const preview = labels.slice(0, 5).join(", ");
+      const suffix = labels.length > 5 ? `, and ${labels.length - 5} more` : "";
+      return `Used in ${links.length} ${links.length === 1 ? "place" : "places"} — ${preview}${suffix}. Deleting will remove it from those pages.`;
+    },
+    buildPayload: (values) => ({
+      ...values,
+      tags:
+        typeof values.tags === "string"
+          ? values.tags
+              .split(",")
+              .map((tag: string) => tag.trim())
+              .filter(Boolean)
+          : values.tags ?? null,
+    }),
     getRecordTitle: (record) =>
       record.title || record.original_filename || record.filename || "Media asset",
     getRecordMeta: (record) =>
@@ -3052,12 +3195,24 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
       newslettersApi.listAdmin({
         ...pageParams,
         fields:
-          "id,title,slug,edition,summary,status,is_public,published_at,scheduled_send_at,sent_at,send_status,send_error,cover_image_id,pdf_file_id,created_at,updated_at",
+          "id,title,slug,edition,summary,status,is_public,published_at,scheduled_send_at,sent_at,send_status,send_error,recipients_count,sent_count,cover_image_id,pdf_file_id,created_at,updated_at",
         include: "cover_image:id,title,public_url,thumbnail_url,media_type,mime_type;pdf_file:id,title,public_url,media_type,mime_type",
         ...filters,
       }),
     create: (payload) => newslettersApi.create(payload),
-    update: (id, payload) => newslettersApi.update(id, payload),
+    update: (id, payload) => {
+      // The "Schedule send…" workflow sheet routes through update() because the
+      // shared workflow runner only passes sheet values along this path. The
+      // sentinel dispatches to the dedicated schedule endpoint instead of PATCH
+      // (which no longer accepts send-state fields).
+      const { __workflow, ...rest } = payload as PortalPayload;
+      if (__workflow === "schedule" && typeof rest.scheduled_send_at === "string") {
+        return newslettersApi.scheduleSend(id, {
+          scheduled_send_at: rest.scheduled_send_at,
+        });
+      }
+      return newslettersApi.update(id, rest);
+    },
     delete: (id) => newslettersApi.delete(id),
     getRecordWorkflowActions: (record) => {
       const actions: Array<{
@@ -3070,6 +3225,7 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
         validate?: (values: PortalPayload) => Record<string, string>;
         buildPayload?: (values: PortalPayload) => PortalPayload;
         payload: PortalPayload;
+        run?: (record: Newsletter) => Promise<unknown>;
         confirmTitle?: string;
         confirmDescription?: string;
       }> = [];
@@ -3079,10 +3235,8 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
           label: sendState === "failed" ? "Try again" : "Send now",
           successMessage:
             "Newsletter queued for sending. Delivery starts within a few minutes.",
-          payload: {
-            send_status: "scheduled",
-            scheduled_send_at: new Date().toISOString(),
-          },
+          payload: {},
+          run: () => newslettersApi.sendNow(String(record.id)),
           confirmTitle:
             sendState === "failed" ? "Retry sending this newsletter?" : "Send newsletter now?",
           confirmDescription: `Send "${record.title}" to all active subscribers? This cannot be undone.`,
@@ -3112,9 +3266,13 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
             }
             return errors;
           },
+          // Routed by the update() sentinel to POST /newsletters/{id}/schedule.
           buildPayload: (values) => ({
-            send_status: "scheduled",
-            scheduled_send_at: values.scheduled_send_at,
+            __workflow: "schedule",
+            scheduled_send_at:
+              typeof values.scheduled_send_at === "string" && values.scheduled_send_at
+                ? new Date(values.scheduled_send_at).toISOString()
+                : values.scheduled_send_at,
           }),
           payload: {},
         });
@@ -3124,7 +3282,8 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
           label: "Cancel schedule",
           variant: "outline",
           successMessage: "Scheduled send cancelled",
-          payload: { send_status: "draft", scheduled_send_at: null },
+          payload: {},
+          run: () => newslettersApi.cancelSchedule(String(record.id)),
           confirmTitle: "Cancel the scheduled send?",
           confirmDescription: `"${record.title}" will go back to Draft and will not be emailed until you send it again.`,
         });
@@ -3137,6 +3296,9 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
         record.edition,
         record.status,
         newsletterSendStateLabel(record),
+        typeof record.sent_count === "number" && typeof record.recipients_count === "number"
+          ? `Delivered to ${record.sent_count} of ${record.recipients_count} subscribers`
+          : null,
         record.send_status === "failed" && record.send_error
           ? `Problem: ${record.send_error}`
           : null,
@@ -3162,6 +3324,12 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     fields: [],
     listFilters: [
       {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search by email or name…",
+      },
+      {
         name: "status",
         label: "Status",
         type: "select",
@@ -3170,18 +3338,50 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
           { label: "Unsubscribed", value: "unsubscribed" },
         ],
       },
+      {
+        name: "is_verified",
+        label: "Verification",
+        type: "select",
+        options: [
+          { label: "Verified", value: "true" },
+          { label: "Unverified", value: "false" },
+        ],
+      },
     ],
-    list: (filters) => newslettersApi.listSubscribers({ ...pageParams, ...filters }),
+    list: ({ search, ...filters } = {}) =>
+      newslettersApi.listSubscribers({
+        ...pageParams,
+        ...(typeof search === "string" && search ? { q: search } : {}),
+        ...filters,
+      }),
     create: async () => undefined,
     update: async () => undefined,
+    getRecordWorkflowActions: (record) =>
+      record.status === "unsubscribed"
+        ? []
+        : [
+            {
+              label: "Unsubscribe",
+              variant: "destructive" as const,
+              successMessage: "Subscriber unsubscribed",
+              payload: {},
+              run: () => newslettersApi.unsubscribeSubscriber(String(record.id)),
+              confirmTitle: "Unsubscribe this reader?",
+              confirmDescription: `${record.email} will stop receiving newsletter emails. Use this to honor unsubscribe requests received by phone or email.`,
+            },
+          ],
     getRecordTitle: (record) => record.email,
     getRecordMeta: (record) =>
       [
         record.name,
         record.frequency,
+        record.is_verified ? "Verified" : "Unverified",
         record.categories?.join(", "),
         record.subscribed_at
           ? `Subscribed ${new Date(record.subscribed_at).toLocaleDateString()}`
+          : null,
+        record.status === "unsubscribed" && record.unsubscribed_at
+          ? `Unsubscribed ${new Date(record.unsubscribed_at).toLocaleDateString()}`
           : null,
       ]
         .filter(Boolean)
@@ -3190,7 +3390,9 @@ const corporateResources: Record<string, PortalResourceConfig<any, any>> = {
     viewScopes: ["marketing.view", "marketing.manage_newsletters"],
     manageScopes: ["marketing.manage_newsletters"],
     canCreate: false,
-    canEdit: false,
+    // canEdit stays on so the shared workflow runner allows the Unsubscribe
+    // action; with no editable fields the record itself is still read-only.
+    canEdit: true,
     canDelete: false,
     readOnlyMessage: "Subscribers are created from the public website subscription form.",
     exportResource: "newsletter-subscribers",
@@ -3779,8 +3981,30 @@ const corporateCommunicationResources: Record<string, PortalResourceConfig<any, 
       "Review student club profiles and scoped content submitted for Corporate Communication approval.",
     backHref: "/corporate-communication",
     queryKey: ["corporate-communication", "student-clubs"],
-    viewScopes: ["content.review", "clubs.view", "clubs.manage_own", "admin:*"],
-    manageScopes: ["content.review", "content.manage", "admin:*"],
+    // Central review listing: /clubs/review honors university-scope
+    // content.review / content.manage / clubs.view grants and forwards the
+    // q / club_type / is_active filters the club_id-only managed route dropped.
+    list: (filters) =>
+      clubsApi.listReview({
+        ...pageParams,
+        q: typeof filters?.q === "string" && filters.q ? filters.q : undefined,
+        club_type:
+          typeof filters?.club_type === "string" && filters.club_type
+            ? filters.club_type
+            : undefined,
+        is_active:
+          typeof filters?.is_active === "boolean"
+            ? filters.is_active
+            : filters?.is_active === "true"
+              ? true
+              : filters?.is_active === "false"
+                ? false
+                : undefined,
+      }),
+    viewScopes: ["content.review", "content.manage", "clubs.view", "admin:*"],
+    // PATCH /clubs/{id} only lets central holders flip is_public/is_active;
+    // full profile edits stay with club-scoped officers and clubs.admin.
+    manageScopes: ["content.publish", "clubs.admin", "admin:*"],
     canCreate: false,
     canDelete: false,
   },
@@ -3809,6 +4033,21 @@ const corporateCommunicationResources: Record<string, PortalResourceConfig<any, 
       },
       { name: "category", label: "Category" },
       { name: "description", label: "Description", type: "textarea" },
+      {
+        name: "scope",
+        label: "Owning Office",
+        type: "entity-record",
+        entityRecord: {
+          typeName: "scope_type",
+          idName: "scope_id",
+          configs: portalScopeConfigs,
+          description:
+            "Attach this document to the university, a DVC division, registrar office, or administrative department. Leave empty for a global record.",
+          typePlaceholder: "Select owner scope",
+          recordPlaceholder: "Select office or unit",
+          allowNone: true,
+        },
+      },
       {
         name: "file_id",
         label: "Document File",
@@ -3849,11 +4088,20 @@ const corporateCommunicationResources: Record<string, PortalResourceConfig<any, 
         ],
       },
       { name: "category", label: "Category", type: "text" },
+      {
+        name: "scope_type",
+        label: "Owner Scope",
+        type: "select",
+        options: portalScopeConfigs.map((config) => ({
+          label: config.label,
+          value: config.value,
+        })),
+      },
+      { name: "is_public", label: "Public", type: "boolean" },
     ],
     list: (filters) => {
       const { search: _search, ...params } = filters ?? {};
       return documentsApi.listAdmin({
-        ...pageParams,
         ...params,
         q: typeof filters?.search === "string" ? filters.search : undefined,
       });
@@ -3891,6 +4139,7 @@ const corporateCommunicationResources: Record<string, PortalResourceConfig<any, 
       { name: "code", label: "Policy Code" },
       { name: "category", label: "Category", required: true },
       { name: "summary", label: "Summary", type: "textarea" },
+      { name: "content", label: "Policy Content", type: "richtext" },
       {
         name: "version",
         label: "Version",
@@ -3941,11 +4190,32 @@ const corporateCommunicationResources: Record<string, PortalResourceConfig<any, 
         placeholder: "Search policies by title, code, or summary",
       },
       { name: "category", label: "Category", type: "text" },
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        options: [
+          { label: "Draft", value: "draft" },
+          { label: "Active", value: "active" },
+          { label: "Archived", value: "archived" },
+        ],
+      },
+      {
+        name: "division_id",
+        label: "Division",
+        type: "entity",
+        relation: { adapter: "division", filters: { is_active: true } },
+      },
+      {
+        name: "department_id",
+        label: "Department",
+        type: "entity",
+        relation: { adapter: "department", filters: { is_active: true } },
+      },
     ],
     list: (filters) => {
       const { search: _search, ...params } = filters ?? {};
-      return policiesApi.list({
-        ...pageParams,
+      return policiesApi.listAdmin({
         ...params,
         q: typeof filters?.search === "string" ? filters.search : undefined,
       });
@@ -3988,6 +4258,7 @@ const corporateCommunicationResources: Record<string, PortalResourceConfig<any, 
     canDelete: false,
     viewScopes: ["policy.view", "content.view"],
     manageScopes: ["policy.manage", "admin:*"],
+    exportResource: "policies",
   } as PortalResourceConfig<Policy>,
 };
 
@@ -4058,8 +4329,79 @@ const corporateResourceRouteAliases: Record<string, string> = {
 };
 
 async function firstSliderGroupId() {
-  const groups = await slidersApi.listGroups({ is_main: true });
+  const groups = await slidersApi.listAdminGroups({
+    page: 1,
+    per_page: 1,
+    is_main: true,
+  });
   return groups.data?.[0]?.id;
+}
+
+/** Field names accepted by SliderGroupCreate/SliderGroupUpdate. */
+const SLIDER_GROUP_PAYLOAD_KEYS = [
+  "name",
+  "slug",
+  "location",
+  "scope_type",
+  "scope_id",
+  "is_main",
+  "is_public",
+  "is_active",
+  "max_slides",
+  "auto_play",
+  "auto_play_duration",
+  "show_navigation_dots",
+  "show_arrows",
+  "transition_effect",
+] as const;
+
+/** Field names accepted by SliderCreate/SliderUpdate (extra="forbid"). */
+const SLIDER_PAYLOAD_KEYS = [
+  "slider_group_id",
+  "title",
+  "subtitle",
+  "plain_text",
+  "rich_text",
+  "structured_content",
+  "desktop_media_id",
+  "mobile_media_id",
+  "external_url",
+  "link_text",
+  "open_in_new_tab",
+  "scope_type",
+  "scope_id",
+  "is_main",
+  "is_active",
+  "start_datetime",
+  "end_datetime",
+  "display_order",
+] as const;
+
+/** UUID-ish fields where an empty form string must become null, not "". */
+const UUID_PAYLOAD_FIELDS = new Set([
+  "slider_group_id",
+  "scope_id",
+  "desktop_media_id",
+  "mobile_media_id",
+]);
+
+/**
+ * Keeps only schema-known keys (backend slider schemas are extra="forbid")
+ * and normalizes empty-string UUID fields to null.
+ */
+function pickPayloadKeys(
+  values: PortalPayload,
+  keys: readonly string[],
+): PortalPayload {
+  const payload: PortalPayload = {};
+  for (const key of keys) {
+    if (!(key in values)) continue;
+    let value = values[key];
+    if (value === undefined) continue;
+    if (value === "" && UUID_PAYLOAD_FIELDS.has(key)) value = null;
+    payload[key] = value;
+  }
+  return payload;
 }
 
 async function firstDivisionId() {

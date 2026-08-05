@@ -237,6 +237,7 @@ from .imports import (
 from .marketing import (
     NewsletterCreate,
     NewsletterRead,
+    NewsletterScheduleRequest,
     NewsletterSubscriberCreate,
     NewsletterSubscriberRead,
     NewsletterUpdate,
@@ -508,6 +509,7 @@ __all__ = [
     "StudentGovernanceUpdate",
     "StudentGovernanceRead",
     "NewsletterCreate",
+    "NewsletterScheduleRequest",
     "NewsletterUpdate",
     "NewsletterRead",
     "NewsletterSubscriberCreate",

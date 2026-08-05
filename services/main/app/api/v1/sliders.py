@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ksu_common import cached_public
 from ksu_common.schemas.responses import success
@@ -33,6 +33,37 @@ async def list_slider_groups(
     selector = build_selector(SliderGroup, fields)
     items = await SliderGroupService.list(db, scope_type=scope_type, scope_id=scope_id, is_main=is_main)
     return success(data=selector.apply(items))
+
+
+@router.get("/groups/admin", dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])
+async def list_admin_slider_groups(
+    db: DbSession,
+    _: CurrentUser,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    is_active: bool | None = None,
+    is_public: bool | None = None,
+    is_main: bool | None = None,
+    scope_type: str | None = None,
+    scope_id: uuid.UUID | None = None,
+    search: str | None = None,
+    fields: FieldSelection = FieldsDep,
+):
+    """Admin listing of slider groups: includes inactive and non-public groups."""
+    selector = build_selector(SliderGroup, fields)
+    result = await SliderGroupService.list_admin(
+        db,
+        page=page,
+        per_page=per_page,
+        is_active=is_active,
+        is_public=is_public,
+        is_main=is_main,
+        scope_type=scope_type,
+        scope_id=scope_id,
+        search=search,
+        load_options=selector.load_options,
+    )
+    return success(data=selector.apply(result.items), meta=result.meta)
 
 
 @router.get("/groups/{slug}")
@@ -80,28 +111,36 @@ async def list_sliders(
 async def list_admin_sliders(
     db: DbSession,
     _: CurrentUser,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=100),
     slider_group_id: uuid.UUID | None = None,
     scope_type: str | None = None,
     scope_id: uuid.UUID | None = None,
     is_main: bool | None = None,
     status: str | None = None,
+    workflow_status: str | None = None,
+    is_active: bool | None = None,
     search: str | None = None,
     record_state: Literal["active", "archived", "deleted"] = "active",
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(Slider, fields)
-    items = await SliderService.list_admin(
+    result = await SliderService.list_admin(
         db,
+        page=page,
+        per_page=per_page,
         slider_group_id=slider_group_id,
         scope_type=scope_type,
         scope_id=scope_id,
         is_main=is_main,
         status=status,
+        workflow_status=workflow_status,
+        is_active=is_active,
         search=search,
         record_state=record_state,
         load_options=selector.load_options,
     )
-    return success(data=selector.apply(items))
+    return success(data=selector.apply(result.items), meta=result.meta)
 
 
 @router.post("/groups", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope(SLIDER_ADMIN_SCOPE))])

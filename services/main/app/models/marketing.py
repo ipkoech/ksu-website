@@ -35,6 +35,8 @@ class Newsletter(Base, UpdatedByMixin):
     sent_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True, index=True)
     send_status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="draft", index=True)
     send_error: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    recipients_count: Mapped[Optional[int]] = mapped_column(sa.Integer, nullable=True)
+    sent_count: Mapped[Optional[int]] = mapped_column(sa.Integer, nullable=True)
     cover_image_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True, index=True)
     pdf_file_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.ForeignKey("media.id", ondelete="SET NULL"), nullable=True, index=True)
     view_count: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("0"))

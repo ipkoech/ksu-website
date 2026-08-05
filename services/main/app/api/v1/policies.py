@@ -18,11 +18,17 @@ from ...services import PolicyService
 router = APIRouter()
 
 POLICY_MANAGE_SCOPES = ("policy.manage", "office.manage_content", "content.manage_pages")
+POLICY_VIEW_SCOPES = POLICY_MANAGE_SCOPES + ("policy.view", "content.view")
 
 
 def require_policy_manage(user: CurrentUser) -> None:
     if not any(user_has_scope(user, scope) for scope in POLICY_MANAGE_SCOPES):
         raise HTTPException(status_code=403, detail="Not authorized to manage policies")
+
+
+def require_policy_view(user: CurrentUser) -> None:
+    if not any(user_has_scope(user, scope) for scope in POLICY_VIEW_SCOPES):
+        raise HTTPException(status_code=403, detail="Not authorized to view policy records")
 
 
 @router.get("")
@@ -46,6 +52,43 @@ async def list_policies(
         category=category,
         division_id=division_id,
         department_id=department_id,
+        load_options=selector.load_options,
+    )
+    return success(data=selector.apply(result.items), meta=result.meta)
+
+
+@router.get("/admin")
+async def list_admin_policies(
+    db: DbSession,
+    user: CurrentUser,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    q: str | None = None,
+    category: str | None = None,
+    division_id: uuid.UUID | None = None,
+    department_id: uuid.UUID | None = None,
+    status: str | None = None,
+    is_public: bool | None = None,
+    fields: FieldSelection = FieldsDep,
+):
+    """Admin register listing: drafts and archived policies included.
+
+    The permission check runs in the function body (not as a dependency) so the
+    CSV export path, which calls this endpoint directly, is gated too.
+    """
+    require_policy_view(user)
+    selector = build_selector(Policy, fields)
+    result = await PolicyService.list(
+        db,
+        page=page,
+        per_page=per_page,
+        q=q,
+        category=category,
+        division_id=division_id,
+        department_id=department_id,
+        public_only=False,
+        status=status,
+        is_public=is_public,
         load_options=selector.load_options,
     )
     return success(data=selector.apply(result.items), meta=result.meta)

@@ -899,6 +899,18 @@ export const clubsApi = {
   listManaged: (params?: ListParams<{ club_id?: string }>) =>
     mainApi.get<PaginatedResponse<Club>>("/api/v1/clubs/managed", params),
 
+  /**
+   * Central CoCMS review listing: every club (public and hidden) for holders
+   * of content.review / content.manage / clubs.view at university scope.
+   */
+  listReview: (
+    params?: ListParams<{
+      q?: string;
+      club_type?: string;
+      is_active?: boolean;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Club>>("/api/v1/clubs/review", params),
+
   listManagedActivities: (clubId: string) =>
     mainApi.get<{ data: Record<string, unknown>[] }>(
       `/api/v1/clubs/id/${clubId}/activities`,
@@ -1230,6 +1242,8 @@ export const documentsApi = {
       category?: string;
       scope_type?: string;
       scope_id?: string;
+      is_public?: boolean;
+      is_active?: boolean;
     }>,
   ) =>
     mainApi.get<PaginatedResponse<Document>>("/api/v1/documents/admin", params),
@@ -1256,6 +1270,17 @@ export const policiesApi = {
       department_id?: string;
     }>,
   ) => mainApi.get<PaginatedResponse<Policy>>("/api/v1/policies", params),
+
+  listAdmin: (
+    params?: ListParams<{
+      q?: string;
+      category?: string;
+      division_id?: string;
+      department_id?: string;
+      status?: string;
+      is_public?: boolean;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Policy>>("/api/v1/policies/admin", params),
 
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Policy }>(`/api/v1/policies/${slug}`, params),
@@ -1931,6 +1956,24 @@ export const slidersApi = {
     }>,
   ) => mainApi.get<{ data: SliderGroup[] }>("/api/v1/sliders/groups", params),
 
+  listAdminGroups: (
+    params?: ListParams<{
+      is_active?: boolean;
+      is_public?: boolean;
+      is_main?: boolean;
+      scope_type?: string;
+      scope_id?: string;
+      search?: string;
+    }>,
+  ) =>
+    mainApi.get<{
+      data: SliderGroup[];
+      meta?: { page: number; per_page: number; total?: number; pages?: number };
+    }>(
+      "/api/v1/sliders/groups/admin",
+      params,
+    ),
+
   getGroup: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: SliderGroup }>(
       `/api/v1/sliders/groups/id/${id}`,
@@ -1968,9 +2011,16 @@ export const slidersApi = {
       scope_id?: string;
       is_main?: boolean;
       status?: string;
+      workflow_status?: string;
+      is_active?: boolean;
       search?: string;
+      record_state?: "active" | "archived" | "deleted";
     }>,
-  ) => mainApi.get<{ data: Slider[] }>("/api/v1/sliders/admin", params),
+  ) =>
+    mainApi.get<{
+      data: Slider[];
+      meta?: { page: number; per_page: number; total?: number; pages?: number };
+    }>("/api/v1/sliders/admin", params),
 
   listGroupSliders: (groupId: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Slider[] }>("/api/v1/sliders/admin", {
@@ -2026,6 +2076,7 @@ export const mediaApi = {
       entity_type?: string;
       entity_id?: string;
       role?: string;
+      is_public?: boolean;
       search?: string;
     }>,
   ) => mainApi.get<PaginatedResponse<Media>>("/api/v1/media", params),
@@ -2084,8 +2135,10 @@ export const mediaApi = {
 
   listLinks: (
     params: FieldSelectionParams & {
-      entity_type: string;
-      entity_id: string;
+      entity_type?: string;
+      entity_id?: string;
+      /** Where-used lookup: list every entity link referencing this media. */
+      media_id?: string;
       role?: string;
     },
   ) => mainApi.get<{ data: MediaLink[] }>("/api/v1/media/links", params),
@@ -2281,14 +2334,34 @@ export const newslettersApi = {
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/newsletters/${id}`),
 
+  /** Queue an immediate send to all active subscribers. */
+  sendNow: (id: string) =>
+    mainApi.post<{ data: Newsletter }>(`/api/v1/newsletters/${id}/send`),
+
+  /** Schedule a future send. `scheduled_send_at` must be in the future. */
+  scheduleSend: (id: string, data: { scheduled_send_at: string }) =>
+    mainApi.post<{ data: Newsletter }>(`/api/v1/newsletters/${id}/schedule`, data),
+
+  /** Cancel a scheduled send, returning the newsletter to draft. */
+  cancelSchedule: (id: string) =>
+    mainApi.post<{ data: Newsletter }>(`/api/v1/newsletters/${id}/cancel-schedule`),
+
   listSubscribers: (
     params?: ListParams<{
       status?: string;
+      q?: string;
+      is_verified?: boolean | string;
     }>,
   ) =>
     mainApi.get<PaginatedResponse<NewsletterSubscriber>>(
       "/api/v1/newsletters/subscribers",
       params,
+    ),
+
+  /** Admin-side unsubscribe honoring phone/email opt-out requests. */
+  unsubscribeSubscriber: (id: string) =>
+    mainApi.post<{ data: NewsletterSubscriber }>(
+      `/api/v1/newsletters/subscribers/${id}/unsubscribe`,
     ),
 };
 

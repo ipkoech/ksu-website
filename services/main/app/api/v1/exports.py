@@ -24,6 +24,7 @@ from .events import list_admin_events
 from .faqs import list_admin_faqs
 from .news import list_admin_news
 from .newsletters import NEWSLETTER_ADMIN_SCOPE, list_newsletter_subscribers
+from .policies import list_admin_policies
 from .stories import list_admin_stories
 from .testimonials import list_admin_testimonials
 
@@ -33,8 +34,8 @@ EXPORT_PAGE_SIZE = 100
 MAX_EXPORT_ROWS = 10_000
 LIFECYCLE_COLUMNS = ("status", "workflow_status", "published_at", "updated_at", "created_at")
 
-_UUID_PARAMS = {"scope_id", "owner_scope_id", "contributor_user_id", "school_id", "department_id", "programme_id"}
-_BOOL_PARAMS = {"is_main", "is_published", "is_public", "featured_only", "is_featured"}
+_UUID_PARAMS = {"scope_id", "owner_scope_id", "contributor_user_id", "school_id", "division_id", "department_id", "programme_id"}
+_BOOL_PARAMS = {"is_main", "is_published", "is_public", "is_active", "featured_only", "is_featured"}
 _DATETIME_PARAMS = {"scheduled_from", "scheduled_to"}
 _RESERVED_PARAMS = {"db", "user", "_", "page", "per_page", "fields", "include"}
 _RECORD_STATES = {"active", "archived", "deleted"}
@@ -121,6 +122,10 @@ EXPORT_SOURCES: dict[str, ExportSource] = {
     "documents": ExportSource(
         list_admin_documents,
         ("id", "title", "document_type", "category", "scope_type", "scope_id"),
+    ),
+    "policies": ExportSource(
+        list_admin_policies,
+        ("id", "title", "code", "category", "division_id", "department_id", "version", "effective_date", "is_public"),
     ),
 }
 

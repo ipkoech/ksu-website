@@ -701,6 +701,35 @@ class SliderGroupService:
         return list(result.scalars().unique().all())
 
     @staticmethod
+    async def list_admin(
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
+        is_active: bool | None = None,
+        is_public: bool | None = None,
+        is_main: bool | None = None,
+        search: str | None = None,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        """Admin listing: every non-deleted group, regardless of visibility flags."""
+        query = select(SliderGroup).options(selectinload(SliderGroup.sliders)).where(SliderGroup.deleted_at.is_(None))
+        if load_options:
+            query = query.options(*load_options)
+        query = _apply_scope_filters(
+            query, SliderGroup, scope_type=scope_type, scope_id=scope_id,
+            is_public=is_public, is_main=is_main,
+        )
+        if is_active is not None:
+            query = query.where(SliderGroup.is_active.is_(is_active))
+        if search:
+            query = query.where(ilike_any(search, SliderGroup.name, SliderGroup.slug, SliderGroup.location))
+        query = query.order_by(SliderGroup.name.asc())
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+    @staticmethod
     async def delete(db: AsyncSession, group: SliderGroup):
         group.soft_delete()
         await db.flush()
@@ -766,15 +795,19 @@ class SliderService:
     async def list_admin(
         db: AsyncSession,
         *,
+        page: int = 1,
+        per_page: int = 50,
         slider_group_id: uuid.UUID | None = None,
         scope_type: str | None = None,
         scope_id: uuid.UUID | None = None,
         is_main: bool | None = None,
         status: str | None = None,
+        workflow_status: str | None = None,
+        is_active: bool | None = None,
         search: str | None = None,
         record_state: str = "active",
         load_options: Sequence = (),
-    ) -> list[Slider]:
+    ) -> PaginatedResult:
         query = _record_state_query(Slider, record_state)
         if load_options:
             query = query.options(*load_options)
@@ -796,9 +829,12 @@ class SliderService:
             query = query.where(Slider.is_active.is_(False))
         elif status == "archived":
             query = query.where(Slider.archived_at.is_not(None))
+        if workflow_status:
+            query = query.where(Slider.workflow_status == workflow_status)
+        if is_active is not None:
+            query = query.where(Slider.is_active.is_(is_active))
         query = query.order_by(Slider.display_order.asc(), Slider.created_at.desc())
-        result = await db.execute(query)
-        return list(result.scalars().all())
+        return await paginate_query(db, query, page=page, per_page=per_page)
 
     @staticmethod
     async def delete(db: AsyncSession, slider: Slider):

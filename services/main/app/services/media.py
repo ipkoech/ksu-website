@@ -482,6 +482,7 @@ class MediaService:
         entity_type: str | None = None,
         entity_id: uuid.UUID | None = None,
         role: str | None = None,
+        is_public: bool | None = None,
         search: str | None = None,
         record_state: str = "active",
         load_options: Sequence = (),
@@ -501,6 +502,8 @@ class MediaService:
             query = query.where(Media.media_type == media_type)
         if uploaded_by_id:
             query = query.where(Media.uploaded_by_id == uploaded_by_id)
+        if is_public is not None:
+            query = query.where(Media.is_public.is_(is_public))
         if entity_type or entity_id or role:
             query = query.join(MediaLink, MediaLink.media_id == Media.id).where(MediaLink.deleted_at.is_(None))
             if entity_type:
@@ -649,8 +652,9 @@ class MediaService:
         db: AsyncSession,
         *,
         user: User,
-        entity_type: str,
-        entity_id: uuid.UUID,
+        entity_type: str | None = None,
+        entity_id: uuid.UUID | None = None,
+        media_id: uuid.UUID | None = None,
         role: str | None = None,
         load_options: Sequence = (),
     ) -> list[MediaLink]:
@@ -659,11 +663,13 @@ class MediaService:
             .options(selectinload(MediaLink.media), selectinload(MediaLink.folder))
             .join(Media, MediaLink.media_id == Media.id)
             .outerjoin(MediaFolder, Media.folder_id == MediaFolder.id)
-            .where(
-                MediaLink.entity_type == entity_type,
-                MediaLink.entity_id == entity_id,
-            )
         )
+        if entity_type is not None:
+            query = query.where(MediaLink.entity_type == entity_type)
+        if entity_id is not None:
+            query = query.where(MediaLink.entity_id == entity_id)
+        if media_id is not None:
+            query = query.where(MediaLink.media_id == media_id)
         query = query.where(await MediaService._visibility_filter(user))
         if load_options:
             query = query.options(*load_options)

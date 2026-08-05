@@ -96,6 +96,33 @@ class ExportsApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("unsubscribed", service_list.await_args.kwargs["status"])
         self.assertNotIn("ignored", service_list.await_args.kwargs)
 
+    async def test_policies_export_passes_status_filter_and_admin_visibility(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+        service_list = AsyncMock(return_value=_Page([]))
+
+        with patch(
+            "app.api.v1.policies.PolicyService.list", service_list
+        ), patch("app.api.v1.policies.user_has_scope", return_value=True):
+            await export_resource_csv(
+                "policies",
+                _request({"status": "archived"}),
+                db=None,
+                user=user,
+            )
+
+        kwargs = service_list.await_args.kwargs
+        self.assertEqual("archived", kwargs["status"])
+        self.assertFalse(kwargs["public_only"])
+
+    async def test_policies_export_requires_policy_view_scope(self):
+        user = SimpleNamespace(id=uuid.uuid4())
+
+        with patch("app.api.v1.policies.user_has_scope", return_value=False):
+            with self.assertRaises(HTTPException) as context:
+                await export_resource_csv("policies", _request(), db=None, user=user)
+
+        self.assertEqual(403, context.exception.status_code)
+
     async def test_viewer_without_permission_gets_403(self):
         user = SimpleNamespace(id=uuid.uuid4())
 
@@ -118,6 +145,7 @@ class ExportsApiTests(unittest.IsolatedAsyncioTestCase):
             {
                 "news", "announcements", "events", "blogs", "stories",
                 "contacts", "faqs", "testimonials", "newsletter-subscribers", "documents",
+                "policies",
             },
             set(EXPORT_SOURCES),
         )

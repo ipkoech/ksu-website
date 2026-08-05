@@ -58,11 +58,24 @@ async def list_admin_documents(
     category: str | None = None,
     scope_type: str | None = None,
     scope_id: uuid.UUID | None = None,
+    is_public: bool | None = None,
+    is_active: bool | None = None,
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(Document, fields)
-    result = await DocumentService.list(
+
+    async def _is_visible(candidate_scope_type: str | None, candidate_scope_id: uuid.UUID | None) -> bool:
+        return await can_access_scoped_record(
+            db,
+            user,
+            ["office.view", "policy.view", "content.view"],
+            candidate_scope_type,
+            candidate_scope_id,
+        )
+
+    result = await DocumentService.list_admin_authorized(
         db,
+        is_visible=_is_visible,
         page=page,
         per_page=per_page,
         q=q,
@@ -70,22 +83,11 @@ async def list_admin_documents(
         category=category,
         scope_type=scope_type,
         scope_id=scope_id,
-        public_only=False,
+        is_public=is_public,
+        is_active=is_active,
         load_options=selector.load_options,
     )
-    items = []
-    for item in result.items:
-        if await can_access_scoped_record(
-            db,
-            user,
-            ["office.view", "policy.view", "content.view"],
-            item.scope_type,
-            item.scope_id,
-        ):
-            items.append(item)
-    meta = dict(result.meta)
-    meta["total"] = len(items)
-    return success(data=selector.apply(items), meta=meta)
+    return success(data=selector.apply(result.items), meta=result.meta)
 
 
 @router.get("/{slug}")

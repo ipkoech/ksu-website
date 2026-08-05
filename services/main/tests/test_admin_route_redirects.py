@@ -22,6 +22,15 @@ class AdminRouteRedirectTests(unittest.TestCase):
         source = (ADMIN_APP / "corporate-communication" / "layout.tsx").read_text()
         legacy = (ADMIN_APP / "cocms" / "page.tsx").read_text()
 
-        self.assertIn('portalKey="corporate-communication"', source)
+        # The layout delegates the portal shell to CorporatePortalProvider,
+        # which mounts PortalShell with the canonical portal key.
+        self.assertIn("CorporatePortalProvider", source)
+        provider = (
+            ADMIN_APP.parents[1]
+            / "components"
+            / "corporate"
+            / "corporate-portal-provider.tsx"
+        ).read_text()
+        self.assertIn('portalKey="corporate-communication"', provider)
         self.assertNotIn("redirect(", source)
         self.assertIn('redirect("/corporate-communication")', legacy)

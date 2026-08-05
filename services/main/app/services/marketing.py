@@ -94,6 +94,18 @@ class NewsletterService:
 
 class NewsletterSubscriberService:
     @staticmethod
+    async def get_by_id(db: AsyncSession, item_id: uuid.UUID) -> NewsletterSubscriber | None:
+        result = await db.execute(select(NewsletterSubscriber).where(NewsletterSubscriber.id == item_id))
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_by_token(db: AsyncSession, token: str) -> NewsletterSubscriber | None:
+        result = await db.execute(
+            select(NewsletterSubscriber).where(NewsletterSubscriber.verification_token == token)
+        )
+        return result.scalar_one_or_none()
+
+    @staticmethod
     async def subscribe(db: AsyncSession, *, email: str, name: str | None = None, frequency: str = "all", categories: list[str] | None = None) -> NewsletterSubscriber:
         normalized = email.strip().lower()
         result = await db.execute(select(NewsletterSubscriber).where(NewsletterSubscriber.email == normalized))
@@ -139,10 +151,16 @@ class NewsletterSubscriberService:
         page: int = 1,
         per_page: int = 20,
         status: str | None = None,
+        q: str | None = None,
+        is_verified: bool | None = None,
     ) -> PaginatedResult:
         query = select(NewsletterSubscriber).order_by(NewsletterSubscriber.subscribed_at.desc())
         if status:
             query = query.where(NewsletterSubscriber.status == status)
+        if q:
+            query = query.where(ilike_any(q, NewsletterSubscriber.email, NewsletterSubscriber.name))
+        if is_verified is not None:
+            query = query.where(NewsletterSubscriber.is_verified.is_(is_verified))
         return await paginate_query(db, query, page=page, per_page=per_page)
 
 

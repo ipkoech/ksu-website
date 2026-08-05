@@ -2698,7 +2698,8 @@ export interface MediaUpdatePayload {
 
 export interface MediaFolderCreatePayload {
   name: string;
-  slug: string;
+  /** Auto-generated from name when omitted. */
+  slug?: string | null;
   parent_id?: string | null;
   description?: string | null;
   is_public?: boolean;
@@ -2936,6 +2937,8 @@ export interface Newsletter {
   sent_at?: string | null;
   send_status: string;
   send_error?: string | null;
+  recipients_count?: number | null;
+  sent_count?: number | null;
   cover_image_id?: string | null;
   pdf_file_id?: string | null;
   cover_image?: Media | null;
