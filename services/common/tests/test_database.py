@@ -345,3 +345,15 @@ async def test_database_request_budget_dependency_scopes_query_count() -> None:
         await dependency.__anext__()
 
     assert observation.count == 2
+
+
+@pytest.mark.asyncio
+async def test_database_request_budget_zero_timeout_acquires_free_permit() -> None:
+    budget = database_module.DatabaseRequestBudget(
+        max_concurrency=1,
+        max_queries=1,
+        acquire_timeout_seconds=0,
+    )
+
+    async with budget.limit() as observation:
+        assert observation.count == 0

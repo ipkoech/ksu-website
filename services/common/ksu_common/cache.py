@@ -27,18 +27,32 @@ from functools import wraps
 from typing import Any, Callable, Sequence
 
 import redis.asyncio as redis
-from fastapi import Request, Response
+from fastapi import HTTPException, Request, Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 _redis_client: redis.Redis | None = None
 _cache_context: ContextVar[dict[str, Any] | None] = ContextVar("ksu_cache_context", default=None)
 _SINGLE_FLIGHT_LOCK_TTL_MS = 30_000
-_SINGLE_FLIGHT_WAIT_SECONDS = 1.0
+_SINGLE_FLIGHT_RENEW_INTERVAL_SECONDS = 10.0
+_SINGLE_FLIGHT_WAIT_SECONDS = 60.0
 _SINGLE_FLIGHT_POLL_SECONDS = 0.025
 _LOCK_RELEASE_SCRIPT = """
 if redis.call('get', KEYS[1]) == ARGV[1] then
     return redis.call('del', KEYS[1])
+end
+return 0
+"""
+_LOCK_RENEW_SCRIPT = """
+if redis.call('get', KEYS[1]) == ARGV[1] then
+    return redis.call('pexpire', KEYS[1], ARGV[2])
+end
+return 0
+"""
+_LOCK_PUBLISH_SCRIPT = """
+if redis.call('get', KEYS[2]) == ARGV[3] then
+    redis.call('set', KEYS[1], ARGV[1], 'EX', ARGV[2])
+    return redis.call('del', KEYS[2])
 end
 return 0
 """
@@ -144,6 +158,37 @@ async def _release_single_flight_lock(client: redis.Redis, lock_key: str, token:
         pass
 
 
+async def _renew_single_flight_lock(
+    client: redis.Redis,
+    lock_key: str,
+    token: str,
+    stopped: asyncio.Event,
+) -> None:
+    """Extend an owned lease while a valid loader is still running."""
+    while not stopped.is_set():
+        try:
+            await asyncio.wait_for(
+                stopped.wait(),
+                timeout=_SINGLE_FLIGHT_RENEW_INTERVAL_SECONDS,
+            )
+            return
+        except TimeoutError:
+            pass
+
+        try:
+            renewed = await client.eval(
+                _LOCK_RENEW_SCRIPT,
+                1,
+                lock_key,
+                token,
+                _SINGLE_FLIGHT_LOCK_TTL_MS,
+            )
+        except redis.RedisError:
+            return
+        if not renewed:
+            return
+
+
 async def _load_while_holding_single_flight_lock(
     client: redis.Redis,
     cache_key: str,
@@ -152,18 +197,36 @@ async def _load_while_holding_single_flight_lock(
     timeout: int,
     loader: Callable[[], Any],
 ) -> Any:
+    renewal_stopped = asyncio.Event()
+    renewal_task = asyncio.create_task(
+        _renew_single_flight_lock(client, lock_key, token, renewal_stopped)
+    )
     try:
         result = await loader()
         encoded_result = _cacheable_json_value(result)
         if encoded_result is None:
             return result
         try:
-            await client.setex(cache_key, timeout, json.dumps(encoded_result))
+            published = await client.eval(
+                _LOCK_PUBLISH_SCRIPT,
+                2,
+                cache_key,
+                lock_key,
+                json.dumps(encoded_result),
+                timeout,
+                token,
+            )
         except redis.RedisError:
             # The loader result is still valid when Redis is unavailable.
-            pass
+            return _cache_result(encoded_result, "MISS")
+        if not published:
+            # The lease expired and another request owns the lock. Never let a
+            # stale loader overwrite that request's more recent cache value.
+            return _cache_result(encoded_result, "MISS")
         return _cache_result(encoded_result, "MISS")
     finally:
+        renewal_stopped.set()
+        await renewal_task
         await _release_single_flight_lock(client, lock_key, token)
 
 
@@ -201,6 +264,14 @@ async def _cached_single_flight(
             return await loader()
 
         if acquired:
+            try:
+                cached = await _cached_value(client, cache_key)
+            except redis.RedisError:
+                await _release_single_flight_lock(client, lock_key, token)
+                return await loader()
+            if cached is not _CACHE_MISS:
+                await _release_single_flight_lock(client, lock_key, token)
+                return cached
             return await _load_while_holding_single_flight_lock(
                 client,
                 cache_key,
@@ -211,9 +282,10 @@ async def _cached_single_flight(
             )
 
         if asyncio.get_running_loop().time() >= deadline:
-            # The owner may be stuck until its lease expires. Do not make the
-            # request wait indefinitely; preserve the ordinary cache fallback.
-            return await loader()
+            raise HTTPException(
+                status_code=503,
+                detail="Cache refresh is still in progress; please retry shortly.",
+            )
 
         await asyncio.sleep(_SINGLE_FLIGHT_POLL_SECONDS)
         try:

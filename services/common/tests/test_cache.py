@@ -79,16 +79,29 @@ class _FakeRedis:
         self.values[key] = value
         return True
 
-    async def eval(self, _script, _num_keys, key, token):
-        if self.locks.get(key) == token:
-            del self.locks[key]
+    async def eval(self, _script, num_keys, *args):
+        if num_keys == 2:
+            cache_key, lock_key, value, _timeout, token = args
+            if self.locks.get(lock_key) == token:
+                self.values[cache_key] = value
+                del self.locks[lock_key]
+                return 1
+            return 0
+
+        lock_key, token, *renewal_ttl = args
+        if self.locks.get(lock_key) != token:
+            return 0
+        if renewal_ttl:
             return 1
-        return 0
+        del self.locks[lock_key]
+        return 1
 
 
 class _WriteFailRedis(_FakeRedis):
-    async def setex(self, key, timeout, value):
-        raise cache_module.redis.RedisError("cache write failed")
+    async def eval(self, _script, num_keys, *args):
+        if num_keys == 2:
+            raise cache_module.redis.RedisError("cache write failed")
+        return await super().eval(_script, num_keys, *args)
 
 
 class _SingleFlightRedis(_FakeRedis):
@@ -269,6 +282,70 @@ async def test_cached_public_falls_back_when_single_flight_lock_is_unavailable(m
 
     assert first == second == {"slug": "computer-science"}
     assert calls == 2
+
+
+@pytest.mark.asyncio
+async def test_cached_public_waiters_do_not_reload_after_one_second(monkeypatch):
+    redis = _SingleFlightRedis()
+    calls = 0
+    loader_started = asyncio.Event()
+    release_loader = asyncio.Event()
+
+    async def endpoint(*, slug: str):
+        nonlocal calls
+        calls += 1
+        loader_started.set()
+        await release_loader.wait()
+        return {"slug": slug}
+
+    monkeypatch.setattr(cache_module, "get_redis", lambda: _async_value(redis))
+    cached_endpoint = cache_module.cached_public(timeout=60, vary_on=("slug",))(endpoint)
+
+    first = asyncio.create_task(cached_endpoint(slug="computer-science"))
+    await loader_started.wait()
+    second = asyncio.create_task(cached_endpoint(slug="computer-science"))
+    await asyncio.sleep(1.1)
+
+    assert calls == 1
+    assert not second.done()
+    release_loader.set()
+
+    first_response, second_response = await asyncio.gather(first, second)
+    assert first_response.body == second_response.body == b'{"slug":"computer-science"}'
+
+
+@pytest.mark.asyncio
+async def test_stale_loader_cannot_publish_over_new_lock_owner(monkeypatch):
+    redis = _SingleFlightRedis()
+    calls = 0
+    first_loader_started = asyncio.Event()
+    release_first_loader = asyncio.Event()
+
+    async def endpoint(*, slug: str):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            first_loader_started.set()
+            await release_first_loader.wait()
+            return {"slug": slug, "version": "old"}
+        return {"slug": slug, "version": "new"}
+
+    monkeypatch.setattr(cache_module, "get_redis", lambda: _async_value(redis))
+    cached_endpoint = cache_module.cached_public(timeout=60, vary_on=("slug",))(endpoint)
+
+    old_owner = asyncio.create_task(cached_endpoint(slug="computer-science"))
+    await first_loader_started.wait()
+    redis.locks.clear()
+    new_owner = await cached_endpoint(slug="computer-science")
+    release_first_loader.set()
+    old_response = await old_owner
+    cached_response = await cached_endpoint(slug="computer-science")
+
+    assert calls == 2
+    assert old_response.body == b'{"slug":"computer-science","version":"old"}'
+    assert new_owner.body == b'{"slug":"computer-science","version":"new"}'
+    assert cached_response.headers["X-Cache"] == "HIT"
+    assert cached_response.body == b'{"slug":"computer-science","version":"new"}'
 
 
 async def _async_value(value):

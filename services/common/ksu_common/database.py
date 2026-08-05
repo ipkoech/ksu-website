@@ -132,13 +132,18 @@ class DatabaseRequestBudget:
     @asynccontextmanager
     async def limit(self) -> AsyncIterator[QueryCountObservation]:
         """Acquire a route slot and enforce its query budget for this scope."""
-        try:
-            await asyncio.wait_for(
-                self._semaphore.acquire(),
-                timeout=self.acquire_timeout_seconds,
-            )
-        except TimeoutError as exc:
-            raise DatabaseConcurrencyLimitExceeded() from exc
+        if self.acquire_timeout_seconds == 0:
+            if self._semaphore.locked():
+                raise DatabaseConcurrencyLimitExceeded()
+            await self._semaphore.acquire()
+        else:
+            try:
+                await asyncio.wait_for(
+                    self._semaphore.acquire(),
+                    timeout=self.acquire_timeout_seconds,
+                )
+            except TimeoutError as exc:
+                raise DatabaseConcurrencyLimitExceeded() from exc
 
         try:
             with query_budget_context(self.max_queries) as observation:
