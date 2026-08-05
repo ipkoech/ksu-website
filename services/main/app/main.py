@@ -26,6 +26,7 @@ from .cache_invalidation import should_invalidate_public_cache
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal
 from .helpers.storage import normalize_storage_path
+from .helpers.email import close_email_transport
 from .models import Media
 from .realtime.connection_manager import manager
 from .realtime.redis_subscriber import subscriber
@@ -52,6 +53,7 @@ async def lifespan(app: FastAPI):
     finally:
         await subscriber.stop()
         await manager.close_all()
+        await close_email_transport()
         await close_integration_pool()
         await close_redis()
 

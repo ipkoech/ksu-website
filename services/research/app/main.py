@@ -11,6 +11,7 @@ from ksu_common import (
     configure_service_logging,
     invalidate_prefix,
 )
+from ksu_common.gemini import close_gemini_transports
 from ksu_common.internal_client import close_integration_pool
 from ksu_common.runtime import (
     AuditOptions,
@@ -44,6 +45,7 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
+        await close_gemini_transports()
         await close_integration_pool()
 
 

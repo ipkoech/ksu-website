@@ -1,16 +1,24 @@
-FROM python:3.12-slim
+FROM python@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de AS builder
+
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends gcc libpq-dev && rm -rf /var/lib/apt/lists/*
+
+COPY common /common
+COPY heri_africa /build/heri_africa
+RUN pip wheel --no-cache-dir --wheel-dir /wheels /common /build/heri_africa
+
+FROM python@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends bash curl gcc libpq-dev \
+RUN apt-get update && apt-get install -y --no-install-recommends bash curl libpq5 \
   && rm -rf /var/lib/apt/lists/*
 
-COPY common /common
-RUN pip install --no-cache-dir -e /common
-
+COPY --from=builder /wheels /wheels
+RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
 COPY heri_africa/ .
-RUN pip install --no-cache-dir -e . \
-  && groupadd --system --gid 10001 ksu \
+RUN groupadd --system --gid 10001 ksu \
   && useradd --system --uid 10001 --gid 10001 --home-dir /app --shell /usr/sbin/nologin ksu \
   && mkdir -p /app/logs \
   && chown -R ksu:ksu /app
@@ -19,4 +27,4 @@ USER ksu
 
 EXPOSE 8003
 
-CMD ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8003", "--proxy-headers", "--forwarded-allow-ips", "*"]
+CMD ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8003", "--proxy-headers", "--forwarded-allow-ips", "172.31.0.2"]

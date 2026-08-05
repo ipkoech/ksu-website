@@ -8,6 +8,7 @@ from urllib.parse import parse_qs, urlparse
 
 import httpx
 from ksu_common.internal_client import get_integration_pool
+from ksu_common.reliability import CircuitOpenError
 
 YOUTUBE_OEMBED_URL = "https://www.youtube.com/oembed"
 _YOUTUBE_HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"}
@@ -74,24 +75,16 @@ def normalize_youtube_url(value: str) -> YouTubeReference:
 
 async def fetch_youtube_oembed(
     reference: YouTubeReference,
-    *,
-    client: httpx.AsyncClient | None = None,
 ) -> YouTubeMetadata:
     """Fetch optional metadata from YouTube's fixed oEmbed endpoint."""
     try:
-        if client is None:
-            response = await get_integration_pool().request(
-                "youtube-oembed",
-                "https://www.youtube.com",
-                "GET",
-                "/oembed",
-                params={"url": reference.canonical_url, "format": "json"},
-            )
-        else:
-            response = await client.get(
-                YOUTUBE_OEMBED_URL,
-                params={"url": reference.canonical_url, "format": "json"},
-            )
+        response = await get_integration_pool().request(
+            "youtube-oembed",
+            "https://www.youtube.com",
+            "GET",
+            "/oembed",
+            params={"url": reference.canonical_url, "format": "json"},
+        )
         response.raise_for_status()
         payload = response.json()
         title = payload.get("title")
@@ -106,7 +99,7 @@ async def fetch_youtube_oembed(
             if isinstance(payload.get("thumbnail_url"), str)
             else None,
         )
-    except (httpx.HTTPError, ValueError, TypeError) as exc:
+    except (httpx.HTTPError, ValueError, TypeError, CircuitOpenError) as exc:
         raise YouTubeMetadataUnavailable(
             "YouTube metadata is temporarily unavailable"
         ) from exc

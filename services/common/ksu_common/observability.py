@@ -304,6 +304,23 @@ def current_correlation_id() -> str | None:
     return _correlation_id.get()
 
 
+@contextmanager
+def request_context(request_id: str, correlation_id: str | None = None) -> Iterator[None]:
+    """Install bounded request correlation for workers and non-HTTP adapters."""
+
+    normalized_request_id = normalize_request_id(request_id)
+    if normalized_request_id is None:
+        raise ValueError("request_id is invalid")
+    normalized_correlation_id = normalize_request_id(correlation_id) or normalized_request_id
+    request_token = _request_id.set(normalized_request_id)
+    correlation_token = _correlation_id.set(normalized_correlation_id)
+    try:
+        yield
+    finally:
+        _correlation_id.reset(correlation_token)
+        _request_id.reset(request_token)
+
+
 def correlation_headers(
     *,
     request_id: str | None = None,

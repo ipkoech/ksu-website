@@ -17,6 +17,7 @@ from app.services.vice_chancellor_youtube import (
     fetch_youtube_oembed,
     normalize_youtube_url,
 )
+import app.services.vice_chancellor_youtube as youtube_service
 
 
 YOUTUBE_ID = "dQw4w9WgXcQ"
@@ -57,7 +58,7 @@ def test_youtube_normalizer_rejects_untrusted_or_invalid_urls(url):
 
 
 @pytest.mark.asyncio
-async def test_oembed_uses_fixed_endpoint_and_returns_typed_metadata():
+async def test_oembed_uses_fixed_endpoint_and_returns_typed_metadata(monkeypatch):
     reference = normalize_youtube_url(f"https://youtu.be/{YOUTUBE_ID}")
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -73,8 +74,15 @@ async def test_oembed_uses_fixed_endpoint_and_returns_typed_metadata():
             },
         )
 
-    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-        metadata = await fetch_youtube_oembed(reference, client=client)
+    class Pool:
+        async def request(self, _integration, _base_url, _method, _path, *, params):
+            request = httpx.Request("GET", "https://www.youtube.com/oembed", params=params)
+            response = handler(request)
+            response.request = request
+            return response
+
+    monkeypatch.setattr(youtube_service, "get_integration_pool", lambda: Pool())
+    metadata = await fetch_youtube_oembed(reference)
 
     assert metadata.title == "VC welcome"
     assert metadata.author_name == "Kisii University"
@@ -82,14 +90,16 @@ async def test_oembed_uses_fixed_endpoint_and_returns_typed_metadata():
 
 
 @pytest.mark.asyncio
-async def test_oembed_failure_is_exposed_as_non_domain_failure():
+async def test_oembed_failure_is_exposed_as_non_domain_failure(monkeypatch):
     reference = normalize_youtube_url(f"https://youtu.be/{YOUTUBE_ID}")
 
-    async with httpx.AsyncClient(
-        transport=httpx.MockTransport(lambda _request: httpx.Response(503))
-    ) as client:
-        with pytest.raises(YouTubeMetadataUnavailable, match="metadata"):
-            await fetch_youtube_oembed(reference, client=client)
+    class Pool:
+        async def request(self, *_args, **_kwargs):
+            return httpx.Response(503, request=httpx.Request("GET", "https://www.youtube.com/oembed"))
+
+    monkeypatch.setattr(youtube_service, "get_integration_pool", lambda: Pool())
+    with pytest.raises(YouTubeMetadataUnavailable, match="metadata"):
+        await fetch_youtube_oembed(reference)
 
 
 def test_video_create_requires_the_source_for_its_provider():
@@ -151,4 +161,3 @@ def test_speech_create_rejects_lifecycle_and_unknown_fields():
             slug="graduation-address",
             unexpected="value",
         )
-

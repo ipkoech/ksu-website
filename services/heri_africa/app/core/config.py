@@ -7,8 +7,8 @@ from typing import Literal
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from ksu_common.security import (
-    require_explicit_production_values,
+from ksu_common.config import (
+    validate_explicit_production_settings,
     validate_cors_origins,
     validate_secret,
     validate_service_url,
@@ -48,9 +48,9 @@ class HeriSettings(BaseSettings):
 
     @model_validator(mode="after")
     def reject_insecure_production_defaults(self) -> "HeriSettings":
-        require_explicit_production_values(
-            self.model_fields_set,
-            field_names=("APP_ENV", "RESEARCH_SERVICE_URL", "CORS_ORIGINS"),
+        validate_explicit_production_settings(
+            configured_fields=self.model_fields_set,
+            required_fields=("APP_ENV", "RESEARCH_SERVICE_URL", "CORS_ORIGINS"),
             app_env=self.APP_ENV,
         )
         validate_secret(self.JWT_SECRET_KEY, field_name="JWT_SECRET_KEY", app_env=self.APP_ENV)

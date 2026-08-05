@@ -30,6 +30,43 @@ from .rate_limit import (
 )
 from .repository import BaseRepository
 from .logging import configure_service_logging
+from .authorization import (
+    AuthorizationDecision,
+    AuthorizationScope,
+    authorize,
+    authorize_exact_scope,
+    authorize_permission,
+)
+from .config import (
+    is_production_environment,
+    validate_cors_origins,
+    validate_environment,
+    validate_explicit_production_settings,
+    validate_secret,
+    validate_service_url,
+)
+from .internal_client import (
+    PooledIntegrationClient,
+    close_integration_pool,
+    get_integration_pool,
+)
+from .gemini import GeminiTransport, close_gemini_transports, get_gemini_transport
+from .observability import AuditEvent, Metrics, Span, Tracer, audit_event, request_context
+from .reliability import (
+    CircuitBreaker,
+    IdempotencyStore,
+    RetryPolicy,
+    TimeoutConfig,
+    retry_async,
+)
+from .responses import ErrorResponse, SuccessResponse, error, success
+from .smtp import SmtpConfig, SmtpTransport
+from .task_queue import (
+    TaskQueueConfig,
+    close_worker_async_runtime,
+    create_celery_app,
+    run_worker_async,
+)
 
 __all__ = [
     # Auth
@@ -77,4 +114,43 @@ __all__ = [
     "BaseRepository",
     # Logging
     "configure_service_logging",
+    # Canonical platform interfaces
+    "AuthorizationDecision",
+    "AuthorizationScope",
+    "authorize",
+    "authorize_exact_scope",
+    "authorize_permission",
+    "is_production_environment",
+    "validate_cors_origins",
+    "validate_environment",
+    "validate_explicit_production_settings",
+    "validate_secret",
+    "validate_service_url",
+    "PooledIntegrationClient",
+    "get_integration_pool",
+    "close_integration_pool",
+    "GeminiTransport",
+    "get_gemini_transport",
+    "close_gemini_transports",
+    "Metrics",
+    "Span",
+    "Tracer",
+    "AuditEvent",
+    "audit_event",
+    "request_context",
+    "CircuitBreaker",
+    "IdempotencyStore",
+    "RetryPolicy",
+    "TimeoutConfig",
+    "retry_async",
+    "SuccessResponse",
+    "ErrorResponse",
+    "success",
+    "error",
+    "SmtpConfig",
+    "SmtpTransport",
+    "TaskQueueConfig",
+    "close_worker_async_runtime",
+    "create_celery_app",
+    "run_worker_async",
 ]

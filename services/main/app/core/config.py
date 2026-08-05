@@ -10,7 +10,7 @@ from typing import Literal
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from ksu_common.security import validate_cors_origins, validate_secret, validate_service_url
+from ksu_common.config import validate_cors_origins, validate_secret, validate_service_url
 
 FrontendService = Literal["web", "admin", "research", "library"]
 SERVICE_DIR = Path(__file__).resolve().parents[2]

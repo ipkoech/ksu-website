@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
 
 from ksu_common.internal_client import get_integration_pool
+from ksu_common.task_queue import run_worker_async
 
 from ..core.config import get_settings
 from .celery_app import celery_app
 
 
 def _post_main_internal(path: str, payload: dict[str, Any]) -> dict[str, Any]:
-    return asyncio.run(_post_main_internal_async(path, payload))
+    return run_worker_async(_post_main_internal_async(path, payload))
 
 
 async def _post_main_internal_async(path: str, payload: dict[str, Any]) -> dict[str, Any]:
