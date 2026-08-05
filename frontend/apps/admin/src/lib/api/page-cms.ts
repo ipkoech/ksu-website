@@ -26,6 +26,7 @@ export const PAGE_SECTION_LAYOUT_VARIANTS = [
   "facts_strip",
 ] as const;
 export const SECTION_ITEM_TYPES = ["text", "card", "stat", "cta", "media", "video"] as const;
+export const SECTION_ITEM_STATUSES = ["draft", "in_review", "published", "archived"] as const;
 export const LIFE_AROUND_STUDIES_AUDIENCES = ["all", "prospective", "current_student", "visitor_partner"] as const;
 export const LIFE_AROUND_STUDIES_SOURCE_TYPES = [
   "manual",
@@ -66,6 +67,7 @@ export type PageScopeType = (typeof PAGE_SCOPE_TYPES)[number];
 export type PageSectionStatus = (typeof PAGE_SECTION_STATUSES)[number];
 export type PageSectionLayoutVariant = (typeof PAGE_SECTION_LAYOUT_VARIANTS)[number];
 export type SectionItemType = (typeof SECTION_ITEM_TYPES)[number];
+export type SectionItemStatus = (typeof SECTION_ITEM_STATUSES)[number];
 export type PartnershipCtaSource = (typeof PARTNERSHIP_CTA_SOURCES)[number];
 export type PageSectionWorkflowAction = (typeof PAGE_SECTION_WORKFLOW_ACTIONS)[number];
 export type PartnershipSpotlightWorkflowAction = PageSectionWorkflowAction;
@@ -111,6 +113,7 @@ export interface SectionItem {
   transcript?: string | null;
   display_order: number;
   is_enabled: boolean;
+  status?: SectionItemStatus | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -138,6 +141,18 @@ export interface SectionItemPayload {
   transcript?: string | null;
   display_order?: number;
   is_enabled?: boolean;
+  status?: SectionItemStatus | null;
+}
+
+/** Batch save entry: with `id` the item is updated, without `id` it is created. */
+export interface SectionItemBatchEntry extends SectionItemPayload {
+  id?: string;
+}
+
+export interface SectionItemBatchPayload {
+  items: SectionItemBatchEntry[];
+  /** Item ids to soft-disable (is_enabled=false) in the same transaction. */
+  remove_ids: string[];
 }
 
 export interface PageSection {
@@ -275,6 +290,14 @@ export const sectionItemsApi = {
     api.patch<SectionItem>(`/section-items/${itemId}`, data),
   disable: (itemId: string) =>
     api.patch<SectionItem>(`/section-items/${itemId}`, { is_enabled: false }),
+  /**
+   * Transactional batch save: updates entries with ids, creates entries
+   * without ids, and soft-disables remove_ids — all in a single DB
+   * transaction. Rejects with 422 (detail.invalid_ids) if any id does not
+   * belong to the section. Returns the full refreshed item list.
+   */
+  batchSave: (sectionId: string, data: SectionItemBatchPayload) =>
+    api.put<SectionItem[]>(`/page-sections/${sectionId}/items/batch`, data),
 };
 
 export const partnershipSpotlightsApi = {
