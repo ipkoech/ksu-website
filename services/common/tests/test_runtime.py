@@ -260,12 +260,33 @@ def test_runtime_validates_cached_response_once_for_a_cache_miss_and_hit(monkeyp
     class FakeRedis:
         def __init__(self) -> None:
             self.values: dict[str, str] = {}
+            self.locks: dict[str, str] = {}
 
         async def get(self, key: str) -> str | None:
             return self.values.get(key)
 
-        async def setex(self, key: str, _timeout: int, value: str) -> None:
-            self.values[key] = value
+        async def set(self, key: str, value: str, *, nx: bool = False, px: int | None = None) -> bool:
+            if nx and key in self.locks:
+                return False
+            if nx:
+                self.locks[key] = value
+            else:
+                self.values[key] = value
+            return True
+
+        async def eval(self, _script: str, num_keys: int, *args: str | int) -> int:
+            if num_keys == 2:
+                cache_key, lock_key, value, _timeout, token = args
+                if self.locks.get(str(lock_key)) != str(token):
+                    return 0
+                self.values[str(cache_key)] = str(value)
+                del self.locks[str(lock_key)]
+                return 1
+            lock_key, token, *_ = args
+            if self.locks.get(str(lock_key)) != str(token):
+                return 0
+            del self.locks[str(lock_key)]
+            return 1
 
     fake_redis = FakeRedis()
 

@@ -69,3 +69,27 @@ def test_gateway_has_a_stable_api_network_identity_trusted_by_all_apis() -> None
     assert "subnet: 172.30.0.0/24" in COMPOSE
     assert "ipv4_address: 172.30.0.2" in COMPOSE
     assert COMPOSE.count('"--forwarded-allow-ips", "172.30.0.2"') == 4
+
+
+def test_backend_services_use_distinct_database_roles_and_owned_schemas() -> None:
+    expected = {
+        "main": ("MAIN_DB_USER", "MAIN_DB_PASSWORD", "main"),
+        "research": ("RESEARCH_DB_USER", "RESEARCH_DB_PASSWORD", "research"),
+        "library": ("LIBRARY_DB_USER", "LIBRARY_DB_PASSWORD", "library"),
+        "heri": ("HERI_DB_USER", "HERI_DB_PASSWORD", "heri"),
+    }
+    for service, (user, password, schema) in expected.items():
+        block = re.search(
+            rf"^  {service}:.*?(?=^  \S|\Z)",
+            COMPOSE,
+            re.MULTILINE | re.DOTALL,
+        )
+        assert block, f"missing Compose block for {service}"
+        text = block.group(0)
+        assert f"${{{user}:-ksu_{schema}}}" in text
+        assert f"${{{password}:?{password} is required}}" in text
+        assert f"DB_SCHEMA: {schema}" in text
+
+
+def test_database_ownership_bootstrap_is_mounted_before_application_start() -> None:
+    assert "./scripts/init-database-ownership.sh:/docker-entrypoint-initdb.d/10-database-ownership.sh:ro" in COMPOSE

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator, Iterator, Mapping
+import json
+from collections.abc import AsyncIterator, Iterator, Mapping, Sequence
 from contextlib import asynccontextmanager, contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, field
@@ -155,6 +156,91 @@ class DatabaseRequestBudget:
         """FastAPI-compatible async-generator dependency."""
         async with self.limit() as observation:
             yield observation
+
+
+@dataclass(frozen=True)
+class DatabaseBudgetRule:
+    """A path-prefix database budget applied before route execution."""
+
+    path_prefix: str
+    max_concurrency: int
+    max_queries: int
+    acquire_timeout_seconds: float = 0.1
+
+
+class DatabaseBudgetRegistry:
+    """Resolve explicit per-route database budgets with a safe default."""
+
+    def __init__(
+        self,
+        *,
+        default: DatabaseRequestBudget | None = None,
+        rules: Sequence[DatabaseBudgetRule] = (),
+    ) -> None:
+        self.default = default or DatabaseRequestBudget()
+        normalized_rules = tuple(
+            DatabaseBudgetRule(
+                path_prefix=rule.path_prefix.rstrip("/") or "/",
+                max_concurrency=rule.max_concurrency,
+                max_queries=rule.max_queries,
+                acquire_timeout_seconds=rule.acquire_timeout_seconds,
+            )
+            for rule in rules
+        )
+        if len({rule.path_prefix for rule in normalized_rules}) != len(normalized_rules):
+            raise ValueError("database budget path_prefix values must be unique")
+        self.rules = tuple(sorted(normalized_rules, key=lambda rule: len(rule.path_prefix), reverse=True))
+        self._budgets = {
+            rule.path_prefix: DatabaseRequestBudget(
+                max_concurrency=rule.max_concurrency,
+                max_queries=rule.max_queries,
+                acquire_timeout_seconds=rule.acquire_timeout_seconds,
+            )
+            for rule in self.rules
+        }
+
+    def for_path(self, path: str) -> DatabaseRequestBudget:
+        for rule in self.rules:
+            if rule.path_prefix == "/" or path == rule.path_prefix or path.startswith(
+                f"{rule.path_prefix}/"
+            ):
+                return self._budgets[rule.path_prefix]
+        return self.default
+
+    @classmethod
+    def from_environment(cls) -> "DatabaseBudgetRegistry":
+        """Build route budgets from bounded JSON deployment configuration."""
+        import os
+
+        default = DatabaseRequestBudget(
+            max_concurrency=int(os.getenv("DB_DEFAULT_CONCURRENCY", "8")),
+            max_queries=int(os.getenv("DB_DEFAULT_QUERY_BUDGET", "40")),
+        )
+        raw_rules = os.getenv("DB_ROUTE_BUDGETS", "").strip()
+        if not raw_rules:
+            return cls(default=default)
+        try:
+            values = json.loads(raw_rules)
+        except json.JSONDecodeError as exc:
+            raise ValueError("DB_ROUTE_BUDGETS must be valid JSON") from exc
+        if not isinstance(values, list):
+            raise ValueError("DB_ROUTE_BUDGETS must be a JSON list")
+        rules = []
+        for value in values:
+            if not isinstance(value, dict):
+                raise ValueError("each DB_ROUTE_BUDGETS item must be an object")
+            prefix = str(value.get("path_prefix", "")).strip()
+            if not prefix.startswith("/"):
+                raise ValueError("database budget path_prefix must be absolute")
+            rules.append(
+                DatabaseBudgetRule(
+                    path_prefix=prefix.rstrip("/") or "/",
+                    max_concurrency=int(value.get("max_concurrency", 4)),
+                    max_queries=int(value.get("max_queries", 20)),
+                    acquire_timeout_seconds=float(value.get("acquire_timeout_seconds", 0.1)),
+                )
+            )
+        return cls(default=default, rules=rules)
 
 
 @dataclass(frozen=True)

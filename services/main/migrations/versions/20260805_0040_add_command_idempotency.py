@@ -53,10 +53,14 @@ def upgrade() -> None:
             END IF;
             RETURN NEW;
         END;
-        $$ LANGUAGE plpgsql;
+        $$ LANGUAGE plpgsql
+        """
+    )
+    op.execute(
+        """
         CREATE TRIGGER command_idempotency_terminal_immutable
         BEFORE UPDATE ON command_idempotency
-        FOR EACH ROW EXECUTE FUNCTION command_idempotency_reject_terminal_update();
+        FOR EACH ROW EXECUTE FUNCTION command_idempotency_reject_terminal_update()
         """
     )
 

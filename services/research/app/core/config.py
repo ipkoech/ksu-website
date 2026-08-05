@@ -9,6 +9,7 @@ from typing import Literal
 from ksu_common.config import (
     validate_explicit_production_settings,
     validate_cors_origins,
+    validate_read_replica_settings,
     validate_secret,
     validate_service_url,
 )
@@ -29,6 +30,9 @@ class Settings(BaseSettings):
     DB_SCHEMA: str = "research"
     DB_POOL_SIZE: int = Field(default=10, ge=1)
     DB_MAX_OVERFLOW: int = Field(default=20, ge=0)
+    READ_DATABASE_URL: str | None = None
+    READ_REPLICA_ENABLED: bool = False
+    READ_REPLICA_APPROVED: bool = False
 
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
@@ -104,6 +108,12 @@ class Settings(BaseSettings):
         validate_service_url(self.DATABASE_URL, field_name="DATABASE_URL", app_env=self.APP_ENV)
         validate_service_url(self.REDIS_URL, field_name="REDIS_URL", app_env=self.APP_ENV)
         validate_service_url(self.MAIN_SERVICE_URL, field_name="MAIN_SERVICE_URL", app_env=self.APP_ENV)
+        validate_read_replica_settings(
+            enabled=self.READ_REPLICA_ENABLED,
+            approved=self.READ_REPLICA_APPROVED,
+            url=self.READ_DATABASE_URL,
+            app_env=self.APP_ENV,
+        )
         validate_cors_origins(self.CORS_ORIGINS, app_env=self.APP_ENV)
         if self.APP_ENV.lower() not in {"development", "dev", "local", "test", "testing"}:
             if self.REFERENCE_VALIDATION_MODE != "strict":

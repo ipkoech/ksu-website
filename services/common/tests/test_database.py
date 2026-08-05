@@ -7,6 +7,8 @@ from types import SimpleNamespace
 import pytest
 import ksu_common.database as database_module
 from ksu_common.database import (
+    DatabaseBudgetRegistry,
+    DatabaseBudgetRule,
     DatabaseConfig,
     DatabaseRuntime,
     create_database_runtime,
@@ -15,6 +17,44 @@ from ksu_common.database import (
 )
 from ksu_common.observability import Metrics
 from sqlalchemy.pool import NullPool
+
+
+def test_database_budget_registry_uses_longest_matching_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DB_DEFAULT_CONCURRENCY", "8")
+    monkeypatch.setenv("DB_DEFAULT_QUERY_BUDGET", "40")
+    monkeypatch.setenv(
+        "DB_ROUTE_BUDGETS",
+        '[{"path_prefix":"/api/v1","max_concurrency":6,"max_queries":30},'
+        '{"path_prefix":"/api/v1/search","max_concurrency":2,"max_queries":10}]',
+    )
+
+    registry = DatabaseBudgetRegistry.from_environment()
+
+    assert registry.for_path("/api/v1/search") is registry.for_path("/api/v1/search/foo")
+    assert registry.for_path("/api/v1") is registry.for_path("/api/v1/other")
+    assert registry.for_path("/api/v1/search").max_concurrency == 2
+    assert registry.for_path("/api/v1/search").max_queries == 10
+    assert registry.for_path("/api/v1/other").max_concurrency == 6
+    assert registry.for_path("/unmatched").max_concurrency == 8
+    assert registry.for_path("/unmatched").max_queries == 40
+
+
+@pytest.mark.parametrize("raw", ["not-json", "{}", "[1]", '[{"path_prefix":"relative"}'])
+def test_database_budget_registry_rejects_invalid_environment(
+    monkeypatch: pytest.MonkeyPatch, raw: str
+) -> None:
+    monkeypatch.setenv("DB_ROUTE_BUDGETS", raw)
+
+    with pytest.raises(ValueError):
+        DatabaseBudgetRegistry.from_environment()
+
+
+def test_database_budget_rule_normalizes_root_prefix() -> None:
+    registry = DatabaseBudgetRegistry(
+        rules=[DatabaseBudgetRule(path_prefix="/", max_concurrency=1, max_queries=1)]
+    )
+
+    assert registry.for_path("/anything").max_concurrency == 1
 
 
 class _Session:

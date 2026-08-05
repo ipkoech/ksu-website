@@ -10,7 +10,12 @@ from typing import Literal
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from ksu_common.config import validate_cors_origins, validate_secret, validate_service_url
+from ksu_common.config import (
+    validate_cors_origins,
+    validate_read_replica_settings,
+    validate_secret,
+    validate_service_url,
+)
 from ksu_common.rate_limit import rate_limit
 
 FrontendService = Literal["web", "admin", "research", "library"]
@@ -28,6 +33,9 @@ class Settings(BaseSettings):
     DB_SCHEMA: str
     DB_POOL_SIZE: int
     DB_MAX_OVERFLOW: int
+    READ_DATABASE_URL: str | None = None
+    READ_REPLICA_ENABLED: bool = False
+    READ_REPLICA_APPROVED: bool = False
 
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
@@ -203,6 +211,12 @@ class Settings(BaseSettings):
         validate_service_url(self.REDIS_URL, field_name="REDIS_URL", app_env=self.APP_ENV)
         validate_service_url(self.RESEARCH_SERVICE_URL, field_name="RESEARCH_SERVICE_URL", app_env=self.APP_ENV)
         validate_service_url(self.LIBRARY_SERVICE_URL, field_name="LIBRARY_SERVICE_URL", app_env=self.APP_ENV)
+        validate_read_replica_settings(
+            enabled=self.READ_REPLICA_ENABLED,
+            approved=self.READ_REPLICA_APPROVED,
+            url=self.READ_DATABASE_URL,
+            app_env=self.APP_ENV,
+        )
         validate_secret(
             self.RESEARCH_SERVICE_API_KEY,
             field_name="RESEARCH_SERVICE_API_KEY",
