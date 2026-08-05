@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.auth import get_current_user, require_scope, require_scoped_record
 from ...core.database import get_db
+from ...schemas.base import JsonObject, SuccessEnvelope, SuccessEnvelopeWithMeta
 from ._fields import FieldsDep, FieldSelection, build_selector
 
 
@@ -47,7 +48,11 @@ def build_crud_router(
 
         return decorator
 
-    @router.get("", dependencies=read_dependencies)
+    @router.get(
+        "",
+        dependencies=read_dependencies,
+        response_model=SuccessEnvelopeWithMeta[list[JsonObject]],
+    )
     @maybe_cached_public(
         timeout=cache_timeout,
         vary_on=(
@@ -289,7 +294,11 @@ def build_crud_router(
         )
         return success(data=selector.apply(result.items), meta=result.meta)
 
-    @router.get("/{slug}", dependencies=read_dependencies)
+    @router.get(
+        "/{slug}",
+        dependencies=read_dependencies,
+        response_model=SuccessEnvelope[JsonObject],
+    )
     @maybe_cached_public(timeout=cache_timeout, vary_on=("slug", "fields", "include"))
     async def get_item(
         slug: str,
@@ -308,7 +317,11 @@ def build_crud_router(
         requests, window = public_create_rate_limit
         public_create_prefix = prefix.strip("/").replace("/", ":")
 
-        @router.post("", status_code=status.HTTP_201_CREATED)
+        @router.post(
+            "",
+            status_code=status.HTTP_201_CREATED,
+            response_model=SuccessEnvelope[JsonObject],
+        )
         @rate_limit(
             requests=requests,
             window=window,
@@ -325,12 +338,14 @@ def build_crud_router(
                 item = await service.create(db, data)
             except ValueError as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
-            return success(data=item, message=f"{tag.rstrip('s')} created")
+            selector = build_selector(service.model, FieldSelection(fields=()))
+            return success(data=selector.apply(item), message=f"{tag.rstrip('s')} created")
 
     else:
         @router.post(
             "",
             status_code=status.HTTP_201_CREATED,
+            response_model=SuccessEnvelope[JsonObject],
         )
         async def create_item(
             data: create_schema = Body(...),
@@ -348,9 +363,14 @@ def build_crud_router(
                 )
             except ValueError as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
-            return success(data=item, message=f"{tag.rstrip('s')} created")
+            selector = build_selector(service.model, FieldSelection(fields=()))
+            return success(data=selector.apply(item), message=f"{tag.rstrip('s')} created")
 
-    @router.patch("/id/{item_id}", dependencies=[Depends(require_scope(write_scope))])
+    @router.patch(
+        "/id/{item_id}",
+        dependencies=[Depends(require_scope(write_scope))],
+        response_model=SuccessEnvelope[JsonObject],
+    )
     async def update_item(
         item_id: uuid.UUID,
         data: update_schema = Body(...),
@@ -372,9 +392,14 @@ def build_crud_router(
             item = await service.update(db, item, data, actor_id=user.sub)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
-        return success(data=item, message=f"{tag.rstrip('s')} updated")
+        selector = build_selector(service.model, FieldSelection(fields=()))
+        return success(data=selector.apply(item), message=f"{tag.rstrip('s')} updated")
 
-    @router.delete("/id/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope(write_scope))])
+    @router.delete(
+        "/id/{item_id}",
+        dependencies=[Depends(require_scope(write_scope))],
+        response_model=SuccessEnvelope[JsonObject],
+    )
     async def delete_item(
         item_id: uuid.UUID,
         db: AsyncSession = Depends(get_db),
@@ -387,6 +412,9 @@ def build_crud_router(
         if model_has_center_scope or center_id is not None:
             require_scoped_record(user, write_scope, "research", center_id)
         await service.soft_delete(db, item, actor_id=user.sub)
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
+        return success(
+            data={"id": str(item_id), "deleted": True},
+            message=f"{tag.rstrip('s')} deleted",
+        )
 
     return router

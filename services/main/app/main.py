@@ -89,6 +89,13 @@ def _begin_request_audit(request: Request) -> object:
 
 
 async def _after_response(request: Request, response: Response) -> None:
+    if (override_status := getattr(request.state, "main_idempotency_status", None)) is not None:
+        response.status_code = override_status
+        if override_status == status.HTTP_204_NO_CONTENT:
+            response.body = b""
+            response.headers.pop("content-length", None)
+        if retry_after := getattr(request.state, "main_idempotency_retry_after", None):
+            response.headers["Retry-After"] = retry_after
     if should_invalidate_public_cache(request, response.status_code):
         await invalidate_prefix("public")
 

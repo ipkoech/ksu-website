@@ -1,7 +1,5 @@
 """Page CMS endpoints for public composition and admin editing workflows."""
 
-from __future__ import annotations
-
 import uuid
 from typing import Any
 

@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse
 
 from .audit import persist_audit_log, should_skip_audit
 from .cache import begin_cache_context, end_cache_context, get_cache_context
+from .database import DatabaseBudgetRegistry
 from .observability import (
     CompositeMetricsSink,
     Metrics,
@@ -123,6 +124,7 @@ def create_service_app(
         app_options["default_response_class"] = config.default_response_class
     app = FastAPI(**app_options)
     app.router.route_class = StrictResponseValidationRoute
+    database_budget_registry = DatabaseBudgetRegistry.from_environment()
     registry = metrics_registry or get_prometheus_registry()
     sinks = [registry]
     if metrics_sink is not None:
@@ -211,7 +213,8 @@ def create_service_app(
         cache_context_token = begin_cache_context(request)
         try:
             try:
-                response = await call_next(request)
+                async with database_budget_registry.for_path(request.url.path).limit():
+                    response = await call_next(request)
                 status_code = response.status_code
             except Exception as exc:
                 error_type = type(exc).__name__

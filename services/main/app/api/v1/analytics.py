@@ -20,7 +20,8 @@ settings = get_settings()
 @rate_limit(
     requests=settings.ANALYTICS_RATE_LIMIT_COUNT,
     window=settings.ANALYTICS_RATE_LIMIT_WINDOW_SECONDS,
-    prefix="main:analytics",
+    prefix="main:analytics:ip",
+    max_body_bytes=64 * 1024,
 )
 async def ingest_events(request: Request, payload: AnalyticsEventBatchCreate, db: DbSession):
     events = await AnalyticsService.ingest(db, payload.events)

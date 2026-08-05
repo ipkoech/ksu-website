@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from app.models import Base
 from app.models.content import PublicationStatus
+from app.models.submissions import CommandIdempotency
 
 
 def test_heri_metadata_uses_heri_schema_and_publication_states() -> None:
@@ -15,4 +16,11 @@ def test_heri_metadata_uses_heri_schema_and_publication_states() -> None:
         "archived",
     }
 
-    assert {"heri.site_settings", "heri.pages", "heri.page_sections", "heri.news_articles"}.issubset(Base.metadata.tables)
+    assert {
+        "heri.site_settings",
+        "heri.pages",
+        "heri.page_sections",
+        "heri.news_articles",
+        "heri.command_idempotency",
+    }.issubset(Base.metadata.tables)
+    assert CommandIdempotency.__table__.schema == "heri"

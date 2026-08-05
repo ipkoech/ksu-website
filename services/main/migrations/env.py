@@ -86,23 +86,8 @@ async def run_migrations_online() -> None:
         version_schema = _version_table_schema()
         async with conn.begin():
             if version_schema:
-                # Only issue CREATE SCHEMA when it's genuinely missing:
-                # Postgres checks database-level CREATE privilege even for
-                # IF NOT EXISTS, which breaks least-privilege schema owners
-                # (e.g. ksu_main) migrating a pre-provisioned schema.
-                schema_exists = (
-                    await conn.execute(
-                        text(
-                            "SELECT 1 FROM information_schema.schemata"
-                            " WHERE schema_name = :name"
-                        ),
-                        {"name": version_schema},
-                    )
-                ).scalar() is not None
-                if not schema_exists:
-                    await conn.execute(
-                        text(f'CREATE SCHEMA IF NOT EXISTS "{version_schema}"')
-                    )
+                # Schemas are provisioned by the privileged ownership bootstrap.
+                # Service roles must not be able to create arbitrary schemas.
                 await conn.execute(text(f'SET search_path TO "{version_schema}", public'))
             marker_exists = await conn.run_sync(
                 lambda sync_conn: inspect(sync_conn).has_table(

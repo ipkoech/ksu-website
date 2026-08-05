@@ -23,11 +23,11 @@ from .media import MediaAsset
 from .people import TeamMember
 from .partners import Partner
 from .social import SocialPublication
-from .submissions import Submission
+from .submissions import CommandIdempotency, Submission
 
 __all__ = [
     "AnalyticsEvent", "AuditLog", "Base", "ContentRevision", "Event", "FooterLink", "HeroSlide", "MediaAsset", "NewsArticle", "NavigationItem", "Opportunity", "Page",
     "PageSection", "ImpactMetric", "Partner", "PublicationStatus", "ResearchPublication",
     "ResearchProject", "ResearchTheme", "SiteSettings", "SocialPublication",
-    "Submission", "SubmissionStatus", "TeamMember",
+    "Submission", "CommandIdempotency", "SubmissionStatus", "TeamMember",
 ]

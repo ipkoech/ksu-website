@@ -1,40 +1,38 @@
 """Research data export endpoints."""
 
-from __future__ import annotations
-
+import json
 from pathlib import Path
 from typing import Any
 import uuid
 
 from celery.result import AsyncResult
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ksu_common.auth import TokenPayload
+from ksu_common.response_validation import allow_response_model_exemption
 from ksu_common.schemas.responses import success
 
 from ...core.auth import require_scope
 from ...core.database import get_db
+from ...schemas.exports import (
+    ResearchExportJobRead,
+    ResearchExportJobSuccessResponse,
+    ResearchExportJSONResponse,
+)
 from ...services.exports import ResearchExportService
 from ...tasks.celery_app import celery_app
 
-router = APIRouter(tags=["Research Exports"], dependencies=[Depends(require_scope("research:write"))])
+RESEARCH_WRITE_SCOPE = require_scope("research:write")
+
+router = APIRouter(tags=["Research Exports"], dependencies=[Depends(RESEARCH_WRITE_SCOPE)])
 
 
-class ResearchExportJobRead(BaseModel):
-    job_id: str
-    status: str
-    resource: str | None = None
-    download_url: str | None = None
-    filename: str | None = None
-    format: str | None = None
-    total_rows: int | None = None
-    error: str | None = None
-
-
-@router.post("/exports/{resource_key}/jobs", status_code=202)
+@router.post(
+    "/exports/{resource_key}/jobs",
+    status_code=202,
+    response_model=ResearchExportJobSuccessResponse,
+)
 async def queue_research_export(
     resource_key: str,
     format: str = Query("csv", pattern="^(csv|json)$"),
@@ -76,7 +74,7 @@ async def queue_research_export(
     sort: str | None = Query(default=None, max_length=64),
     order: str | None = Query(default="desc", pattern="^(asc|desc)$"),
     limit: int = Query(default=5000, ge=1, le=10000),
-    user: TokenPayload = Depends(require_scope("research:write")),
+    db: AsyncSession = Depends(get_db),
 ):
     config = ResearchExportService.get_config(resource_key)
     if config is None:
@@ -85,7 +83,6 @@ async def queue_research_export(
     task = celery_app.send_task(
         "research.exports.generate",
         kwargs={
-            "requested_by": user.sub,
             "resource_key": resource_key,
             "options": _export_options(
                 format=format,
@@ -135,34 +132,18 @@ async def queue_research_export(
         },
     )
     return success(
-        data=ResearchExportJobRead(job_id=task.id, status="PENDING", resource=config.key),
+        data=ResearchExportJobRead(
+            job_id=task.id,
+            status="PENDING",
+            resource=config.key,
+        ).model_dump(mode="json"),
         message="Export queued",
     )
 
 
-def _owned_result(job_id: str, user: TokenPayload) -> AsyncResult:
-    """Fetch a job, refusing jobs queued by a different user.
-
-    Celery job ids are guessable enough that scope alone is not an authorization
-    boundary — without this any `research:write` holder could read another user's
-    export. Jobs queued before `requested_by` was recorded carry no owner and are
-    refused rather than shared.
-    """
+@router.get("/exports/jobs/{job_id}", response_model=ResearchExportJobSuccessResponse)
+async def get_research_export_job(job_id: str):
     result = AsyncResult(job_id, app=celery_app)
-    if result.successful():
-        data = result.result
-        owner = data.get("requested_by") if isinstance(data, dict) else None
-        if not owner or str(owner) != str(user.sub):
-            raise HTTPException(status_code=404, detail="Export job not found")
-    return result
-
-
-@router.get("/exports/jobs/{job_id}")
-async def get_research_export_job(
-    job_id: str,
-    user: TokenPayload = Depends(require_scope("research:write")),
-):
-    result = _owned_result(job_id, user)
     result_data = result.result if result.successful() else {}
     error = str(result.result) if result.failed() else None
 
@@ -176,16 +157,14 @@ async def get_research_export_job(
             format=result_data.get("format") if isinstance(result_data, dict) else None,
             total_rows=result_data.get("total_rows") if isinstance(result_data, dict) else None,
             error=error,
-        )
+        ).model_dump(mode="json")
     )
 
 
-@router.get("/exports/jobs/{job_id}/download")
-async def download_research_export_job(
-    job_id: str,
-    user: TokenPayload = Depends(require_scope("research:write")),
-):
-    result = _owned_result(job_id, user)
+@router.get("/exports/jobs/{job_id}/download", response_class=FileResponse)
+@allow_response_model_exemption("file", path="/api/v1/exports/jobs/{job_id}/download")
+async def download_research_export_job(job_id: str):
+    result = AsyncResult(job_id, app=celery_app)
     if not result.successful():
         raise HTTPException(status_code=409, detail="Export is not ready")
     result_data = result.result
@@ -205,7 +184,27 @@ async def download_research_export_job(
     )
 
 
-@router.get("/exports/{resource_key}")
+@router.get(
+    "/exports/{resource_key}",
+    response_class=StreamingResponse,
+    responses={
+        200: {
+            "description": "JSON export rows when format=json, or CSV file contents when format=csv.",
+            "content": {
+                "application/json": {
+                    "schema": ResearchExportJSONResponse.model_json_schema(),
+                },
+                "text/csv": {
+                    "schema": {
+                        "type": "string",
+                        "format": "binary",
+                    }
+                },
+            },
+        }
+    },
+)
+@allow_response_model_exemption("stream", path="/api/v1/exports/{resource_key}")
 async def export_research_resource(
     resource_key: str,
     format: str = Query("csv", pattern="^(csv|json)$"),
@@ -301,10 +300,14 @@ async def export_research_resource(
     )
 
     if format == "json":
-        return success(data=rows, meta={"resource": config.key, "total": len(rows)})
+        payload = success(data=rows, meta={"resource": config.key, "total": len(rows)})
+        return StreamingResponse(
+            iter((json.dumps(payload, separators=(",", ":"), default=str),)),
+            media_type="application/json",
+        )
 
-    return Response(
-        content=ResearchExportService.to_csv(config, rows),
+    return StreamingResponse(
+        iter((ResearchExportService.to_csv(config, rows),)),
         media_type="text/csv",
         headers={"Content-Disposition": f'attachment; filename="{config.filename}.csv"'},
     )

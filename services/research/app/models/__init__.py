@@ -4,6 +4,7 @@ from ksu_common.models import AuditLog
 from ksu_common.models.base import SEOMixin, PolymorphicMixin
 
 from .base import Base
+from .idempotency import CommandIdempotency
 
 from .ask_ai import ResearchAIConversation, ResearchAIMessage
 from .media import PublicMedia

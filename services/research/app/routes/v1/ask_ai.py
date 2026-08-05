@@ -1,7 +1,5 @@
 """Read-only Ask AI advisor endpoints for research admins."""
 
-from __future__ import annotations
-
 import uuid
 import asyncio
 import json
@@ -9,17 +7,23 @@ import json
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
+from ksu_common.response_validation import allow_response_model_exemption
 from ksu_common.schemas.responses import success
 
 from ...core.auth import require_scope
 from ...core.database import get_db
-from ...schemas.ask_ai import ResearchAskAIRequest
+from ...schemas.ask_ai import (
+    ResearchAskAIConversationListResponse,
+    ResearchAskAIMessageListResponse,
+    ResearchAskAIRequest,
+    ResearchAskAISuccessResponse,
+)
 from ...services.ask_ai import ResearchAskAIService
 
 router = APIRouter(tags=["Research Ask AI"], dependencies=[Depends(require_scope("research.view"))])
 
 
-@router.post("/ask-ai")
+@router.post("/ask-ai", response_model=ResearchAskAISuccessResponse)
 async def ask_research_ai(
     request: ResearchAskAIRequest,
     db=Depends(get_db),
@@ -42,7 +46,8 @@ async def ask_research_ai(
     return success(data=response.model_dump(mode="json"))
 
 
-@router.post("/ask-ai/stream")
+@router.post("/ask-ai/stream", response_class=StreamingResponse)
+@allow_response_model_exemption("stream", path="/api/v1/ask-ai/stream")
 async def stream_research_ai(
     request: ResearchAskAIRequest,
     db=Depends(get_db),
@@ -84,7 +89,7 @@ async def stream_research_ai(
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
-@router.get("/ask-ai/conversations")
+@router.get("/ask-ai/conversations", response_model=ResearchAskAIConversationListResponse)
 async def list_ask_ai_conversations(
     db=Depends(get_db),
     user=Depends(require_scope("research.view")),
@@ -93,7 +98,10 @@ async def list_ask_ai_conversations(
     return success(data=[conversation.model_dump(mode="json") for conversation in conversations])
 
 
-@router.get("/ask-ai/conversations/{conversation_id}/messages")
+@router.get(
+    "/ask-ai/conversations/{conversation_id}/messages",
+    response_model=ResearchAskAIMessageListResponse,
+)
 async def list_ask_ai_messages(
     conversation_id: uuid.UUID,
     db=Depends(get_db),

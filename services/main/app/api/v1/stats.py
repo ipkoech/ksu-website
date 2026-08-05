@@ -1,7 +1,5 @@
 """Public display stats endpoints."""
 
-from __future__ import annotations
-
 import csv
 import io
 import json

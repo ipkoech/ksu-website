@@ -897,10 +897,11 @@ def _jsonable_value(value: Any) -> Any:
 
 
 def _sanitize_service_exposure(service_exposure: dict) -> dict:
-    safe_exposure = dict(service_exposure)
+    normalized_exposure = _service_exposure_dict(service_exposure)
+    safe_exposure = dict(normalized_exposure)
     safe_exposure["record_samples"] = [
         _sanitize_record_sample_group(group)
-        for group in service_exposure.get("record_samples", [])
+        for group in normalized_exposure.get("record_samples", [])
         if isinstance(group, dict)
     ]
     return safe_exposure
@@ -923,6 +924,17 @@ def _sanitize_record_sample_group(group: dict[str, Any]) -> dict[str, Any]:
         if isinstance(record, dict)
     ]
     return safe_group
+
+
+def _service_exposure_dict(service_exposure: Any) -> dict[str, Any]:
+    if isinstance(service_exposure, dict):
+        return service_exposure
+    model_dump = getattr(service_exposure, "model_dump", None)
+    if callable(model_dump):
+        dumped = model_dump(mode="python")
+        if isinstance(dumped, dict):
+            return dumped
+    return {}
 
 
 def _is_internal_record_field(key: str) -> bool:

@@ -1,7 +1,5 @@
 """Funding and grant endpoints."""
 
-from __future__ import annotations
-
 import uuid
 
 from fastapi import APIRouter, Depends, status
@@ -11,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.auth import require_scope
 from ...core.database import get_db
+from ...schemas.base import JsonObject, SuccessEnvelope
 from ...schemas import (
     EndowmentFundCreate,
     EndowmentFundUpdate,
@@ -44,47 +43,48 @@ from ._crud import build_crud_router
 router = APIRouter()
 
 
-@router.get("/grants/id/{grant_id}/projects", tags=["Grants"])
+@router.get("/grants/id/{grant_id}/projects", tags=["Grants"], response_model=SuccessEnvelope[list[JsonObject]])
 @cached_public(timeout=300)
 async def list_grant_projects(grant_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await GrantRelationshipService.list_projects(db, grant_id))
 
 
-@router.get("/grants/id/{grant_id}/themes", tags=["Grants"])
+@router.get("/grants/id/{grant_id}/themes", tags=["Grants"], response_model=SuccessEnvelope[list[JsonObject]])
 @cached_public(timeout=300)
 async def list_grant_themes(grant_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await GrantRelationshipService.list_themes(db, grant_id))
 
 
-@router.put("/grants/id/{grant_id}/themes/{theme_id}", tags=["Grants"], dependencies=[Depends(require_scope("funding.manage"))])
+@router.put("/grants/id/{grant_id}/themes/{theme_id}", tags=["Grants"], dependencies=[Depends(require_scope("funding.manage"))], response_model=SuccessEnvelope[JsonObject])
 async def add_grant_theme(grant_id: uuid.UUID, theme_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     await GrantRelationshipService.add_theme(db, grant_id, theme_id)
     return success(data={"grant_id": grant_id, "theme_id": theme_id}, message="Grant theme linked")
 
 
-@router.delete("/grants/id/{grant_id}/themes/{theme_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Grants"], dependencies=[Depends(require_scope("funding.manage"))])
+@router.delete("/grants/id/{grant_id}/themes/{theme_id}", tags=["Grants"], dependencies=[Depends(require_scope("funding.manage"))], response_model=SuccessEnvelope[JsonObject])
 async def remove_grant_theme(grant_id: uuid.UUID, theme_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     await GrantRelationshipService.remove_theme(db, grant_id, theme_id)
+    return success(data={"grant_id": grant_id, "theme_id": theme_id, "deleted": True}, message="Grant theme unlinked")
 
 
-@router.get("/funders/id/{funder_id}/projects", tags=["Funding Sources"])
+@router.get("/funders/id/{funder_id}/projects", tags=["Funding Sources"], response_model=SuccessEnvelope[list[JsonObject]])
 @cached_public(timeout=300)
 async def list_funder_projects(funder_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await FundingRelationshipService.list_projects(db, funder_id))
 
 
-@router.get("/funders/id/{funder_id}/grants", tags=["Funding Sources"])
+@router.get("/funders/id/{funder_id}/grants", tags=["Funding Sources"], response_model=SuccessEnvelope[list[JsonObject]])
 @cached_public(timeout=300)
 async def list_funder_grants(funder_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await FundingRelationshipService.list_grants(db, funder_id))
 
 
-@router.get("/grant-applications/id/{application_id}/reviews", tags=["Grant Applications"], dependencies=[Depends(require_scope("funding.manage"))])
+@router.get("/grant-applications/id/{application_id}/reviews", tags=["Grant Applications"], dependencies=[Depends(require_scope("funding.manage"))], response_model=SuccessEnvelope[list[JsonObject]])
 async def list_application_reviews(application_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await ApplicationRelationshipService.list_reviews(db, application_id))
 
 
-@router.get("/grant-applications/id/{application_id}/reports", tags=["Grant Applications"], dependencies=[Depends(require_scope("funding.manage"))])
+@router.get("/grant-applications/id/{application_id}/reports", tags=["Grant Applications"], dependencies=[Depends(require_scope("funding.manage"))], response_model=SuccessEnvelope[list[JsonObject]])
 async def list_application_reports(application_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return success(data=await ApplicationRelationshipService.list_reports(db, application_id))
 

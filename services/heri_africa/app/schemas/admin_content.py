@@ -44,3 +44,10 @@ class EventCreate(BaseModel):
     ends_at: datetime | None = None
     location: str | None = None
     registration_url: str | None = None
+
+
+NewsCreate.model_rebuild()
+NewsUpdate.model_rebuild()
+NewsAdminResponse.model_rebuild()
+TransitionRequest.model_rebuild()
+EventCreate.model_rebuild()

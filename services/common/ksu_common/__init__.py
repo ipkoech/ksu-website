@@ -51,7 +51,16 @@ from .internal_client import (
     close_integration_pool,
     get_integration_pool,
 )
-from .database import current_query_count, query_count_context
+from .database import (
+    DatabaseBudgetRegistry,
+    DatabaseBudgetRule,
+    DatabaseConcurrencyLimitExceeded,
+    DatabaseRequestBudget,
+    QueryBudgetExceeded,
+    current_query_count,
+    query_budget_context,
+    query_count_context,
+)
 from .gemini import GeminiTransport, close_gemini_transports, get_gemini_transport
 from .observability import (
     AuditEvent,
@@ -152,7 +161,13 @@ __all__ = [
     "get_integration_pool",
     "close_integration_pool",
     "current_query_count",
+    "query_budget_context",
     "query_count_context",
+    "DatabaseBudgetRegistry",
+    "DatabaseBudgetRule",
+    "DatabaseConcurrencyLimitExceeded",
+    "DatabaseRequestBudget",
+    "QueryBudgetExceeded",
     "GeminiTransport",
     "get_gemini_transport",
     "close_gemini_transports",

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from ksu_common.cache import cached_public
 from sqlalchemy import func, select

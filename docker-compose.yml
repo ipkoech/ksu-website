@@ -61,6 +61,9 @@ x-frontend-dev: &frontend-dev
 x-backend-database-capacity: &backend-database-capacity
   DB_POOL_SIZE: ${DB_POOL_SIZE:-5}
   DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW:-0}
+  DB_DEFAULT_CONCURRENCY: ${DB_DEFAULT_CONCURRENCY:-8}
+  DB_DEFAULT_QUERY_BUDGET: ${DB_DEFAULT_QUERY_BUDGET:-40}
+  DB_ROUTE_BUDGETS: ${DB_ROUTE_BUDGETS:-}
 
 services:
 
@@ -98,12 +101,20 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-ksu_services_db}
       POSTGRES_USER: ${POSTGRES_USER:-ksu_service_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      MAIN_DB_USER: ${MAIN_DB_USER:-ksu_main}
+      MAIN_DB_PASSWORD: ${MAIN_DB_PASSWORD:?MAIN_DB_PASSWORD is required}
+      RESEARCH_DB_USER: ${RESEARCH_DB_USER:-ksu_research}
+      RESEARCH_DB_PASSWORD: ${RESEARCH_DB_PASSWORD:?RESEARCH_DB_PASSWORD is required}
+      LIBRARY_DB_USER: ${LIBRARY_DB_USER:-ksu_library}
+      LIBRARY_DB_PASSWORD: ${LIBRARY_DB_PASSWORD:?LIBRARY_DB_PASSWORD is required}
+      HERI_DB_USER: ${HERI_DB_USER:-ksu_heri}
+      HERI_DB_PASSWORD: ${HERI_DB_PASSWORD:?HERI_DB_PASSWORD is required}
       # Kept explicit for deployment capacity validation; the Compose budget
       # holds it back for migrations, exporters, and administration.
       POSTGRES_CONNECTION_RESERVE: ${POSTGRES_CONNECTION_RESERVE:-20}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-schemas.sql:/docker-entrypoint-initdb.d/init-schemas.sql:ro
+      - ./scripts/init-database-ownership.sh:/docker-entrypoint-initdb.d/10-database-ownership.sh:ro
     networks: [ksu]
     restart: unless-stopped
     healthcheck:
@@ -147,6 +158,7 @@ services:
       <<: *backend-database-capacity
       APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://${MAIN_DB_USER:-ksu_main}:${MAIN_DB_PASSWORD:?MAIN_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
+      DB_SCHEMA: main
       INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
@@ -198,6 +210,7 @@ services:
       <<: *backend-database-capacity
       APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://${RESEARCH_DB_USER:-ksu_research}:${RESEARCH_DB_PASSWORD:?RESEARCH_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
+      DB_SCHEMA: research
       REDIS_URL: redis://redis:6379/2
       MAIN_SERVICE_URL: http://main:8000
       MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
@@ -244,6 +257,7 @@ services:
       <<: *backend-database-capacity
       APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://${HERI_DB_USER:-ksu_heri}:${HERI_DB_PASSWORD:?HERI_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
+      DB_SCHEMA: heri
       REDIS_URL: redis://redis:6379/3
       CELERY_BROKER_URL: redis://redis:6379/3
       CELERY_RESULT_BACKEND: redis://redis:6379/3
@@ -287,6 +301,7 @@ services:
       <<: *backend-database-capacity
       APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://${LIBRARY_DB_USER:-ksu_library}:${LIBRARY_DB_PASSWORD:?LIBRARY_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
+      DB_SCHEMA: library
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/1
@@ -331,6 +346,7 @@ services:
       APP_ENV: production
       CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${MAIN_DB_USER:-ksu_main}:${MAIN_DB_PASSWORD:?MAIN_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
+      DB_SCHEMA: main
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
@@ -370,6 +386,7 @@ services:
       APP_ENV: production
       CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${LIBRARY_DB_USER:-ksu_library}:${LIBRARY_DB_PASSWORD:?LIBRARY_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
+      DB_SCHEMA: library
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/1
@@ -406,6 +423,7 @@ services:
       APP_ENV: production
       CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${RESEARCH_DB_USER:-ksu_research}:${RESEARCH_DB_PASSWORD:?RESEARCH_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
+      DB_SCHEMA: research
       REDIS_URL: redis://redis:6379/2
       CELERY_BROKER_URL: redis://redis:6379/2
       CELERY_RESULT_BACKEND: redis://redis:6379/2
@@ -453,6 +471,7 @@ services:
       APP_ENV: production
       CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${HERI_DB_USER:-ksu_heri}:${HERI_DB_PASSWORD:?HERI_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
+      DB_SCHEMA: heri
       REDIS_URL: redis://redis:6379/3
       CELERY_BROKER_URL: redis://redis:6379/3
       CELERY_RESULT_BACKEND: redis://redis:6379/3

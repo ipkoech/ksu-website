@@ -79,6 +79,26 @@ def validate_service_url(
     )
 
 
+def validate_read_replica_settings(
+    *,
+    enabled: bool,
+    approved: bool,
+    url: str | None,
+    app_env: str | None,
+) -> str | None:
+    """Gate replicas on measured query-plan and pool-saturation evidence."""
+    if not enabled:
+        return url
+    if not approved:
+        raise ValueError(
+            "READ_REPLICA_ENABLED requires READ_REPLICA_APPROVED after query-plan "
+            "and pool-saturation review"
+        )
+    if not url:
+        raise ValueError("READ_DATABASE_URL is required when READ_REPLICA_ENABLED=true")
+    return validate_service_url(url, field_name="READ_DATABASE_URL", app_env=app_env)
+
+
 def validate_cors_origins(
     origins: Collection[str],
     *,
@@ -119,6 +139,7 @@ __all__ = [
     "validate_environment",
     "validate_secret",
     "validate_service_url",
+    "validate_read_replica_settings",
     "validate_cors_origins",
     "validate_explicit_production_settings",
     "validate_service_configuration",

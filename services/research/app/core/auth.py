@@ -15,6 +15,7 @@ from ksu_common.authorization import (
 from ksu_common.security import decode_token
 
 from .config import get_settings
+from .idempotency_context import set_authenticated_scope
 
 settings = get_settings()
 _bearer = HTTPBearer(auto_error=False)
@@ -45,12 +46,14 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         ) from exc
 
-    return TokenPayload(
+    token_payload = TokenPayload(
         sub=payload["sub"],
         jti=payload["jti"],
         roles=payload.get("roles", []),
         raw=payload,
     )
+    set_authenticated_scope(token_payload.sub)
+    return token_payload
 
 
 async def get_optional_user(

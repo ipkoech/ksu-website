@@ -2,6 +2,7 @@ import unittest
 
 from fastapi.routing import APIRoute
 
+from app.main import create_app
 from app.routes.v1 import router as v1_router
 from app.routes.v1.search import router as search_router
 from app.services.search import RESEARCH_SEARCH_AREAS
@@ -20,6 +21,36 @@ def _route(router, path: str, method: str) -> APIRoute:
         if route.path == path and method in route.methods:
             return route
     raise AssertionError(f"{method} {path} route not found")
+
+
+def _permissive_schema_paths(components: dict, schema_name: str) -> list[str]:
+    findings: list[str] = []
+    visited: set[str] = set()
+
+    def visit(node, path: str) -> None:
+        if isinstance(node, dict):
+            ref = node.get("$ref")
+            if isinstance(ref, str) and ref.startswith("#/components/schemas/"):
+                name = ref.rsplit("/", 1)[-1]
+                if name in visited:
+                    return
+                visited.add(name)
+                visit(components[name], f"{path}->$ref({name})")
+                return
+
+            if node.get("additionalProperties") is True:
+                findings.append(path)
+
+            for key, value in node.items():
+                visit(value, f"{path}.{key}")
+            return
+
+        if isinstance(node, list):
+            for index, value in enumerate(node):
+                visit(value, f"{path}[{index}]")
+
+    visit(components[schema_name], schema_name)
+    return findings
 
 
 class ResearchSearchContractTests(unittest.TestCase):
@@ -52,6 +83,12 @@ class ResearchSearchContractTests(unittest.TestCase):
         self.assertIn("resources", keys)
         self.assertNotIn("grant_applications", keys)
         self.assertNotIn("donations", keys)
+
+    def test_search_openapi_schemas_do_not_expose_permissive_objects(self):
+        components = create_app().openapi()["components"]["schemas"]
+
+        self.assertEqual(_permissive_schema_paths(components, "ResearchSearchResponse"), [])
+        self.assertEqual(_permissive_schema_paths(components, "ResearchSearchResult"), [])
 
 
 if __name__ == "__main__":
