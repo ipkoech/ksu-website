@@ -9,7 +9,12 @@ from typing import Literal
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from ksu_common.security import validate_secret, validate_service_url
+from ksu_common.security import (
+    require_explicit_production_values,
+    validate_cors_origins,
+    validate_secret,
+    validate_service_url,
+)
 
 SERVICE_DIR = Path(__file__).resolve().parents[2]
 
@@ -83,6 +88,11 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def reject_insecure_production_defaults(self) -> "Settings":
+        require_explicit_production_values(
+            self.model_fields_set,
+            field_names=("APP_ENV", "MAIN_SERVICE_URL", "CORS_ORIGINS"),
+            app_env=self.APP_ENV,
+        )
         validate_secret(self.JWT_SECRET_KEY, field_name="JWT_SECRET_KEY", app_env=self.APP_ENV)
         validate_secret(
             self.MAIN_SERVICE_API_KEY,
@@ -92,9 +102,9 @@ class Settings(BaseSettings):
         validate_secret(self.INTERNAL_API_KEY, field_name="INTERNAL_API_KEY", app_env=self.APP_ENV)
         validate_service_url(self.DATABASE_URL, field_name="DATABASE_URL", app_env=self.APP_ENV)
         validate_service_url(self.REDIS_URL, field_name="REDIS_URL", app_env=self.APP_ENV)
+        validate_service_url(self.MAIN_SERVICE_URL, field_name="MAIN_SERVICE_URL", app_env=self.APP_ENV)
+        validate_cors_origins(self.CORS_ORIGINS, app_env=self.APP_ENV)
         if self.APP_ENV.lower() not in {"development", "dev", "local", "test", "testing"}:
-            if not self.CORS_ORIGINS:
-                raise ValueError("CORS_ORIGINS must not be empty outside local development")
             if self.REFERENCE_VALIDATION_MODE != "strict":
                 raise ValueError("REFERENCE_VALIDATION_MODE must be strict outside local development")
         return self

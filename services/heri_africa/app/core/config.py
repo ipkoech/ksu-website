@@ -4,8 +4,15 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from ksu_common.security import (
+    require_explicit_production_values,
+    validate_cors_origins,
+    validate_secret,
+    validate_service_url,
+)
 
 SERVICE_DIR = Path(__file__).resolve().parents[2]
 
@@ -38,6 +45,25 @@ class HeriSettings(BaseSettings):
         if not value.startswith("postgresql+asyncpg"):
             raise ValueError("DATABASE_URL must use postgresql+asyncpg driver")
         return value
+
+    @model_validator(mode="after")
+    def reject_insecure_production_defaults(self) -> "HeriSettings":
+        require_explicit_production_values(
+            self.model_fields_set,
+            field_names=("APP_ENV", "RESEARCH_SERVICE_URL", "CORS_ORIGINS"),
+            app_env=self.APP_ENV,
+        )
+        validate_secret(self.JWT_SECRET_KEY, field_name="JWT_SECRET_KEY", app_env=self.APP_ENV)
+        validate_secret(
+            self.RESEARCH_SERVICE_API_KEY,
+            field_name="RESEARCH_SERVICE_API_KEY",
+            app_env=self.APP_ENV,
+        )
+        validate_service_url(self.DATABASE_URL, field_name="DATABASE_URL", app_env=self.APP_ENV)
+        validate_service_url(self.REDIS_URL, field_name="REDIS_URL", app_env=self.APP_ENV)
+        validate_service_url(self.RESEARCH_SERVICE_URL, field_name="RESEARCH_SERVICE_URL", app_env=self.APP_ENV)
+        validate_cors_origins(self.CORS_ORIGINS, app_env=self.APP_ENV)
+        return self
 
 
 @lru_cache

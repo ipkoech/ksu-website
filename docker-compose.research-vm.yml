@@ -3,12 +3,22 @@
 services:
   main:
     ports: !reset []
+    environment:
+      APP_ENV: production
 
   research:
     ports: !reset []
+    environment:
+      APP_ENV: production
 
   library:
     ports: !reset []
+    environment:
+      APP_ENV: production
+
+  heri:
+    environment:
+      APP_ENV: production
 
   celery-research:
     depends_on: !reset []

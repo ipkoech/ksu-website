@@ -1,5 +1,12 @@
 import unittest
+import importlib
+import json
+import os
+import sys
+import tempfile
+from unittest.mock import patch
 
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 
 from app.core.config import Settings
@@ -34,8 +41,8 @@ def base_settings(**overrides):
         "FRONTEND_ADMIN_URL": "http://localhost:3001",
         "FRONTEND_RESEARCH_URL": "http://localhost:3002",
         "FRONTEND_LIBRARY_URL": "http://localhost:3003",
-        "RESEARCH_SERVICE_URL": "http://localhost:8001",
-        "LIBRARY_SERVICE_URL": "http://localhost:8002",
+        "RESEARCH_SERVICE_URL": "http://research:8001",
+        "LIBRARY_SERVICE_URL": "http://library:8002",
         "PASSWORD_RESET_RATE_LIMIT_COUNT": 5,
         "PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS": 900,
         "AUTH_LOGIN_MAX_ATTEMPTS": 5,
@@ -94,7 +101,87 @@ class SettingsTests(unittest.TestCase):
 
     def test_internal_api_key_default_rejected_outside_development(self):
         with self.assertRaisesRegex(ValidationError, "INTERNAL_API_KEY"):
-            Settings(**base_settings(APP_ENV="production", INTERNAL_API_KEY="change-me-internal"))
+            Settings(
+                **base_settings(
+                    APP_ENV="production",
+                    JWT_SECRET_KEY="j" * 32,
+                    INTERNAL_API_KEY="change-me-internal",
+                )
+            )
+
+    def test_production_rejects_default_and_short_jwt_secrets(self):
+        for secret in ("change-me-local", "short-secret"):
+            with self.subTest(secret=secret), self.assertRaisesRegex(ValidationError, "JWT_SECRET_KEY"):
+                Settings(
+                    **base_settings(
+                        APP_ENV="production",
+                        JWT_SECRET_KEY=secret,
+                        INTERNAL_API_KEY="i" * 32,
+                    )
+                )
+
+    def test_production_rejects_missing_internal_api_key(self):
+        values = base_settings(
+            APP_ENV="production",
+            JWT_SECRET_KEY="j" * 32,
+        )
+        values.pop("INTERNAL_API_KEY")
+
+        with self.assertRaisesRegex(ValidationError, "INTERNAL_API_KEY"):
+            Settings(**values)
+
+    def test_production_rejects_local_database_and_redis_urls(self):
+        with self.assertRaisesRegex(ValidationError, "DATABASE_URL"):
+            Settings(
+                **base_settings(
+                    APP_ENV="production",
+                    JWT_SECRET_KEY="j" * 32,
+                    INTERNAL_API_KEY="i" * 32,
+                )
+            )
+
+    def test_production_rejects_local_redis_url(self):
+        with self.assertRaisesRegex(ValidationError, "REDIS_URL"):
+            Settings(
+                **base_settings(
+                    APP_ENV="production",
+                    JWT_SECRET_KEY="j" * 32,
+                    INTERNAL_API_KEY="i" * 32,
+                    DATABASE_URL="postgresql+asyncpg://user:pass@postgres:5432/ksu",
+                )
+            )
+
+    def test_production_rejects_empty_cors_origins(self):
+        with self.assertRaisesRegex(ValidationError, "CORS_ORIGINS"):
+            Settings(
+                **base_settings(
+                    APP_ENV="production",
+                    JWT_SECRET_KEY="j" * 32,
+                    INTERNAL_API_KEY="i" * 32,
+                    DATABASE_URL="postgresql+asyncpg://user:pass@postgres:5432/ksu",
+                    REDIS_URL="redis://redis:6379/0",
+                    CORS_ORIGINS=[],
+                )
+            )
+
+    def test_cors_uses_explicit_client_allowlists(self):
+        environment = {
+            key: json.dumps(value) if isinstance(value, list) else str(value)
+            for key, value in base_settings().items()
+        }
+        from app.core.config import get_settings
+
+        with tempfile.TemporaryDirectory() as log_dir:
+            environment["LOG_DIR"] = log_dir
+            with patch.dict(os.environ, environment, clear=True):
+                get_settings.cache_clear()
+                sys.modules.pop("app.main", None)
+                main = importlib.import_module("app.main")
+                cors = next(middleware for middleware in main.app.user_middleware if middleware.cls is CORSMiddleware)
+
+                self.assertEqual(cors.kwargs["allow_methods"], ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+                self.assertEqual(cors.kwargs["allow_headers"], ["Authorization", "Content-Type", "X-Internal-Key"])
+            get_settings.cache_clear()
 
 
 if __name__ == "__main__":

@@ -108,12 +108,15 @@ services:
       - "8000"
     env_file: ./services/main/.env
     environment:
+      APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       RESEARCH_SERVICE_URL: http://research:8001
+      LIBRARY_SERVICE_URL: http://library:8002
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
       REALTIME_HEARTBEAT_SECONDS: ${REALTIME_HEARTBEAT_SECONDS:-25}
       REALTIME_MAX_CONNECTIONS_PER_USER: ${REALTIME_MAX_CONNECTIONS_PER_USER:-5}
       REALTIME_MAX_CONNECTIONS_PER_IP: ${REALTIME_MAX_CONNECTIONS_PER_IP:-20}
@@ -149,12 +152,14 @@ services:
       - "8001"
     env_file: ./services/research/.env
     environment:
+      APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/2
       MAIN_SERVICE_URL: http://main:8000
       MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       INTERNAL_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
       REFERENCE_VALIDATION_MODE: strict
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
       LOG_LEVEL: ${RESEARCH_LOG_LEVEL:-INFO}
       LOG_FORMAT: ${RESEARCH_LOG_FORMAT:-json}
       LOG_DIR: /app/logs
@@ -188,12 +193,14 @@ services:
       - "8003"
     env_file: ./services/heri_africa/.env
     environment:
+      APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/3
       CELERY_BROKER_URL: redis://redis:6379/3
       CELERY_RESULT_BACKEND: redis://redis:6379/3
       RESEARCH_SERVICE_URL: ${HERI_RESEARCH_SERVICE_URL:-http://research:8001}
       RESEARCH_SERVICE_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
       LOG_LEVEL: ${HERI_LOG_LEVEL:-INFO}
       LOG_FORMAT: ${HERI_LOG_FORMAT:-json}
       LOG_DIR: /app/logs
@@ -224,12 +231,14 @@ services:
       - "8002"
     env_file: ./services/library/.env
     environment:
+      APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/1
       MAIN_SERVICE_URL: http://main:8000
       INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
       LOG_LEVEL: ${LIBRARY_LOG_LEVEL:-INFO}
       LOG_FORMAT: ${LIBRARY_LOG_FORMAT:-json}
       LOG_DIR: /app/logs
@@ -260,10 +269,15 @@ services:
     command: ./scripts/start-celery-worker.sh
     env_file: ./services/main/.env
     environment:
+      APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
+      INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
+      RESEARCH_SERVICE_URL: http://research:8001
+      LIBRARY_SERVICE_URL: http://library:8002
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
       SCHOOL_PORTAL_EVENTS_ENABLED: ${SCHOOL_PORTAL_EVENTS_ENABLED:-true}
       LOG_DIR: /app/logs
     volumes:
@@ -284,10 +298,14 @@ services:
     command: ./scripts/start-celery-worker.sh
     env_file: ./services/library/.env
     environment:
+      APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/1
+      MAIN_SERVICE_URL: http://main:8000
+      INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
       LOG_DIR: /app/logs
     volumes:
       - ./logs/library:/app/logs
@@ -307,6 +325,7 @@ services:
     command: ./scripts/start-celery-worker.sh
     env_file: ./services/research/.env
     environment:
+      APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/2
       CELERY_BROKER_URL: redis://redis:6379/2
@@ -315,6 +334,7 @@ services:
       MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       INTERNAL_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
       REFERENCE_VALIDATION_MODE: strict
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
       LOG_DIR: /app/logs
       EXPORT_DIR: /app/exports
     volumes:
@@ -338,10 +358,14 @@ services:
     command: ./scripts/start-celery-worker.sh
     env_file: ./services/heri_africa/.env
     environment:
+      APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ksu_service_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       REDIS_URL: redis://redis:6379/3
       CELERY_BROKER_URL: redis://redis:6379/3
       CELERY_RESULT_BACKEND: redis://redis:6379/3
+      RESEARCH_SERVICE_URL: http://research:8001
+      RESEARCH_SERVICE_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
       LOG_DIR: /app/logs
     volumes:
       - ./logs/heri:/app/logs

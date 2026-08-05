@@ -18,7 +18,9 @@ def base_settings(**overrides):
         "DATABASE_URL": "postgresql+asyncpg://user:pass@postgres:5432/ksu",
         "JWT_SECRET_KEY": "j" * 32,
         "REDIS_URL": "redis://redis:6379/2",
+        "MAIN_SERVICE_URL": "http://main:8000",
         "MAIN_SERVICE_API_KEY": "m" * 32,
+        "CORS_ORIGINS": ["https://research.example.edu"],
         **overrides,
     }
 
