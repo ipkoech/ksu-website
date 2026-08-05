@@ -16,7 +16,12 @@ def authorize_exact_scope(
     permission: str,
     scope: AuthorizationScope,
 ) -> AuthorizationDecision:
-    """Evaluate one declared permission against one exact service-owned scope."""
+    """Evaluate a declared permission for a service-owned scope.
+
+    The shared evaluator also permits applicable global and university-wide
+    grants; this helper does not restrict a decision to an identical scoped
+    grant.
+    """
     return authorize_permission(subject, permission, scope)
 
 

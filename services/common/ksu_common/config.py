@@ -51,6 +51,43 @@ def validate_explicit_production_settings(
     )
 
 
+def validate_secret(
+    secret: str | None,
+    *,
+    field_name: str,
+    app_env: str | None,
+) -> str | None:
+    """Validate a secret through the shared policy using a normalized environment."""
+    return security.validate_secret(
+        secret,
+        field_name=field_name,
+        app_env=validate_environment(app_env),
+    )
+
+
+def validate_service_url(
+    url: str | None,
+    *,
+    field_name: str,
+    app_env: str | None,
+) -> str | None:
+    """Validate a service URL through the shared policy using a normalized environment."""
+    return security.validate_service_url(
+        url,
+        field_name=field_name,
+        app_env=validate_environment(app_env),
+    )
+
+
+def validate_cors_origins(
+    origins: Collection[str],
+    *,
+    app_env: str | None,
+) -> Collection[str]:
+    """Validate CORS origins through the shared policy using a normalized environment."""
+    return security.validate_cors_origins(origins, app_env=validate_environment(app_env))
+
+
 def validate_service_configuration(
     *,
     app_env: str | None,
@@ -65,15 +102,12 @@ def validate_service_configuration(
     The returned values let a service apply the checks from a settings model
     without coupling this module to Pydantic or any service-specific fields.
     """
-    normalized_env = validate_environment(app_env)
     return {
-        "secret": security.validate_secret(
-            secret, field_name=secret_field, app_env=normalized_env
+        "secret": validate_secret(secret, field_name=secret_field, app_env=app_env),
+        "service_url": validate_service_url(
+            service_url, field_name=service_url_field, app_env=app_env
         ),
-        "service_url": security.validate_service_url(
-            service_url, field_name=service_url_field, app_env=normalized_env
-        ),
-        "cors_origins": security.validate_cors_origins(cors_origins, app_env=normalized_env),
+        "cors_origins": validate_cors_origins(cors_origins, app_env=app_env),
     }
 
 
@@ -83,6 +117,9 @@ __all__ = [
     "PRODUCTION_ENVIRONMENT",
     "is_production_environment",
     "validate_environment",
+    "validate_secret",
+    "validate_service_url",
+    "validate_cors_origins",
     "validate_explicit_production_settings",
     "validate_service_configuration",
 ]

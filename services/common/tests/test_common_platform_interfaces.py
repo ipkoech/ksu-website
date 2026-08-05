@@ -9,9 +9,12 @@ from ksu_common.authorization import (
     authorize_permission,
 )
 from ksu_common.config import (
+    validate_cors_origins,
     validate_environment,
     validate_explicit_production_settings,
+    validate_secret,
     validate_service_configuration,
+    validate_service_url,
 )
 from ksu_common.responses import ErrorResponse, SuccessResponse, error, success
 
@@ -48,6 +51,42 @@ def test_config_validation_delegates_to_existing_security_validators(monkeypatch
 
     assert result == {"secret": "s" * 32, "service_url": "https://api.ksu.edu", "cors_origins": ["https://ksu.edu"]}
     assert [name for name, _ in calls] == ["secret", "url", "cors"]
+
+
+def test_direct_config_adapters_delegate_with_normalized_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import ksu_common.config as config
+
+    calls: list[tuple[str, object, dict[str, object]]] = []
+
+    monkeypatch.setattr(
+        config.security,
+        "validate_secret",
+        lambda value, **kwargs: calls.append(("secret", value, kwargs)) or value,
+    )
+    monkeypatch.setattr(
+        config.security,
+        "validate_service_url",
+        lambda value, **kwargs: calls.append(("url", value, kwargs)) or value,
+    )
+    monkeypatch.setattr(
+        config.security,
+        "validate_cors_origins",
+        lambda value, **kwargs: calls.append(("cors", value, kwargs)) or value,
+    )
+
+    assert validate_secret("s" * 32, field_name="JWT_SECRET_KEY", app_env=" Production ") == "s" * 32
+    assert validate_service_url(
+        "https://api.ksu.edu", field_name="RESEARCH_URL", app_env="PRODUCTION"
+    ) == "https://api.ksu.edu"
+    assert validate_cors_origins(["https://ksu.edu"], app_env="production") == ["https://ksu.edu"]
+
+    assert calls == [
+        ("secret", "s" * 32, {"field_name": "JWT_SECRET_KEY", "app_env": "production"}),
+        ("url", "https://api.ksu.edu", {"field_name": "RESEARCH_URL", "app_env": "production"}),
+        ("cors", ["https://ksu.edu"], {"app_env": "production"}),
+    ]
 
 
 def test_config_rejects_unknown_environment_and_requires_explicit_production_values() -> None:
