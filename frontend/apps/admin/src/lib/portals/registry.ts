@@ -7350,12 +7350,14 @@ export const portalConfigs: Record<string, PortalConfig> = {
         href: "/corporate-communication",
         icon: PanelsTopLeft,
         scope: "content.view",
+        navKey: "dashboard",
       },
       {
         title: "Workflow",
         href: "/corporate-communication/review-queue",
         icon: ClipboardCheck,
         scope: ["content.review", "content.publish"],
+        navKey: "review-queue",
         children: [
           {
             title: "Review Queue",
@@ -7370,6 +7372,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         href: "/corporate-communication/records/documents",
         icon: FileArchive,
         scope: ["policy.view", "policy.manage", "content.manage_pages", "office.manage_content", "admin:*"],
+        navKey: "records",
         children: [
           {
             title: "Official Documents",
@@ -7389,6 +7392,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         title: "Website Content",
         href: "/corporate-communication/page-cms",
         icon: PanelsTopLeft,
+        navKey: "website-content",
         scope: [
           "page_sections.view",
           "page_sections.manage",
@@ -7474,6 +7478,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         href: "/corporate-communication/newsroom/news",
         icon: Newspaper,
         scope: ["content.manage_news", "content.manage_blogs", "content.manage_stories", "content.manage_announcements", "content.manage_events"],
+        navKey: "newsroom",
         children: [
           {
             title: "News",
@@ -7512,6 +7517,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         href: "/corporate-communication/media/assets",
         icon: ImageIcon,
         scope: ["media.view", "media.manage", "marketing.manage_sliders"],
+        navKey: "media",
         children: [
           {
             title: "Media Assets",
@@ -7538,6 +7544,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         href: "/corporate-communication/engagement/faqs",
         icon: ScrollText,
         scope: ["content.manage", "marketing.manage_newsletters"],
+        navKey: "engagement",
         children: [
           {
             title: "FAQs",
@@ -7576,6 +7583,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         href: "/corporate-communication/student-life/club-submissions",
         icon: Trophy,
         scope: ["content.review", "clubs.view", "clubs.manage_own"],
+        navKey: "student-life",
         children: [
           {
             title: "Club Submissions",
@@ -7596,6 +7604,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
         href: "/corporate-communication/audit",
         icon: ScrollText,
         scope: ["audit.view", "content.view", "admin:*"],
+        navKey: "oversight",
         children: [
           {
             title: "Audit Log",

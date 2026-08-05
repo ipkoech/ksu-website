@@ -27,6 +27,8 @@ export interface PortalNavItem {
   href: string;
   icon: LucideIcon;
   scope?: string | string[];
+  /** Stable key used by server-authorized portals to filter navigation. */
+  navKey?: string;
   group?: string;
   children?: PortalNavItem[];
 }

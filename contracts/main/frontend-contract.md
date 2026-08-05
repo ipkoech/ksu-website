@@ -2778,6 +2778,19 @@ Get Story
 - Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
+## Corporate Communication Portal
+
+### `GET /api/v1/corporate-communication-portal/context`
+
+Get Context
+
+Return server-derived capabilities and navigation for the portal.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ## Documents
 
 ### `GET /api/v1/documents`

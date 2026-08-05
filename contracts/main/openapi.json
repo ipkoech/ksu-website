@@ -50841,6 +50841,59 @@
         ]
       }
     },
+    "/api/v1/corporate-communication-portal/context": {
+      "get": {
+        "description": "Return server-derived capabilities and navigation for the portal.",
+        "operationId": "get_context_api_v1_corporate_communication_portal_context_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Context",
+        "tags": [
+          "Corporate Communication Portal"
+        ]
+      }
+    },
     "/api/v1/department-services": {
       "post": {
         "operationId": "create_department_service_api_v1_department_services_post",
