@@ -33,6 +33,11 @@ import {
   PortalWorkspaceHeader,
   type PortalMetric,
 } from "@/components/portals/portal-workspace";
+import { useCorporatePortal } from "./corporate-portal-provider";
+import {
+  SocialShareButton,
+  type SocialShareSource,
+} from "./social-share-button";
 
 type ContentType = "news" | "press-releases" | "notices" | "events" | "stories";
 
@@ -51,6 +56,8 @@ const CONTENT_CONFIG: Record<
     resourceKey: string;
     singularLabel: string;
     listFn: (filters: Record<string, unknown>) => Promise<{ data?: unknown[]; meta?: Record<string, unknown> }>;
+    /** "Share to social" wiring: source_type + public site path prefix. */
+    share: { sourceType: string; publicPathPrefix: string };
   }
 > = {
   news: {
@@ -60,6 +67,7 @@ const CONTENT_CONFIG: Record<
     resourceKey: "news",
     singularLabel: "news article",
     listFn: (filters) => newsApi.listAdmin({ is_main: true, per_page: 100, fields: "id,workflow_status,status", ...filters }),
+    share: { sourceType: "news", publicPathPrefix: "/news" },
   },
   "press-releases": {
     title: "Press Releases",
@@ -68,6 +76,7 @@ const CONTENT_CONFIG: Record<
     resourceKey: "press-releases",
     singularLabel: "press release",
     listFn: (filters) => blogsApi.listAdmin({ is_main: true, per_page: 100, fields: "id,workflow_status,status", ...filters }),
+    share: { sourceType: "blog", publicPathPrefix: "/blogs" },
   },
   notices: {
     title: "Public Notices",
@@ -76,6 +85,7 @@ const CONTENT_CONFIG: Record<
     resourceKey: "notices",
     singularLabel: "notice",
     listFn: (filters) => announcementsApi.listAdmin({ is_main: true, per_page: 100, fields: "id,workflow_status,status", ...filters }),
+    share: { sourceType: "announcement", publicPathPrefix: "/announcements" },
   },
   events: {
     title: "Events Calendar",
@@ -84,6 +94,7 @@ const CONTENT_CONFIG: Record<
     resourceKey: "events",
     singularLabel: "event",
     listFn: (filters) => eventsApi.listAdmin({ is_main: true, per_page: 100, fields: "id,workflow_status,status", ...filters }),
+    share: { sourceType: "event", publicPathPrefix: "/events" },
   },
   stories: {
     title: "Stories",
@@ -92,6 +103,7 @@ const CONTENT_CONFIG: Record<
     resourceKey: "stories",
     singularLabel: "story",
     listFn: (filters) => storiesApi.listAdmin({ is_main: true, per_page: 100, fields: "id,workflow_status,status", ...filters }),
+    share: { sourceType: "story", publicPathPrefix: "/stories" },
   },
 };
 
@@ -141,7 +153,27 @@ export function NewsroomWorkspace({ contentType, children }: NewsroomWorkspacePr
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
+  const { can } = useCorporatePortal();
   const lane = params.get("lane") as WorkflowStatus | null;
+
+  // "Share to social" pulls the latest published records with the fields the
+  // composer prefill needs (plain-text summary + slug for the public URL).
+  const shareSource = useMemo<SocialShareSource>(
+    () => ({
+      sourceType: config.share.sourceType,
+      contentLabel: config.singularLabel,
+      publicPathPrefix: config.share.publicPathPrefix,
+      fetchPublished: async () => {
+        const response = await config.listFn({
+          workflow_status: "published",
+          per_page: 10,
+          fields: "id,title,slug,summary",
+        });
+        return (response.data ?? []) as Array<Record<string, unknown>>;
+      },
+    }),
+    [config],
+  );
 
   // Lightweight count query: sparse fieldset, capped at the backend's
   // per_page maximum (100) — counts beyond that read "100+".
@@ -238,6 +270,11 @@ export function NewsroomWorkspace({ contentType, children }: NewsroomWorkspacePr
         title={config.title}
         description={config.description}
         icon={Icon}
+        actions={
+          can("marketing.manage_social") ? (
+            <SocialShareButton source={shareSource} />
+          ) : undefined
+        }
         badge={
           lane && activeLaneConfig ? (
             <Badge variant="secondary" className="gap-1.5 font-normal">

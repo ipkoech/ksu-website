@@ -38,6 +38,7 @@ CORPORATE_PORTAL_CAPABILITIES = (
     "life_around_studies.view",
     "marketing.manage_newsletters",
     "marketing.manage_sliders",
+    "marketing.manage_social",
     "media.manage",
     "media.view",
     "office.manage_content",
@@ -95,6 +96,7 @@ CORPORATE_PORTAL_NAVIGATION = (
             "content.manage_events",
         ),
     ),
+    ("social", ("marketing.manage_social",)),
     ("media", ("media.view", "media.manage", "marketing.manage_sliders")),
     (
         "engagement",
@@ -119,6 +121,7 @@ CORPORATE_PORTAL_NAVIGATION = (
         ),
     ),
     ("oversight", ("audit.view", "content.view")),
+    ("settings", ("homepage.manage", "content.manage", "marketing.manage_social")),
 )
 
 
