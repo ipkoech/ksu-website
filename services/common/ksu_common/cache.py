@@ -97,18 +97,18 @@ def _cache_result(value: Any, status: str) -> Any:
 
 
 def _cache_redis_failure_mode() -> str:
+    try:
+        if is_production_environment(os.getenv("APP_ENV", "development")):
+            return _CACHE_REDIS_FAILURE_MODE_FAIL_CLOSED
+    except ValueError:
+        pass
+
     configured_mode = os.getenv(_CACHE_REDIS_FAILURE_MODE_ENV, "").strip().lower()
     if configured_mode in {
         _CACHE_REDIS_FAILURE_MODE_FAIL_CLOSED,
         _CACHE_REDIS_FAILURE_MODE_FALLBACK,
     }:
         return configured_mode
-
-    try:
-        if is_production_environment(os.getenv("APP_ENV", "development")):
-            return _CACHE_REDIS_FAILURE_MODE_FAIL_CLOSED
-    except ValueError:
-        pass
 
     return _CACHE_REDIS_FAILURE_MODE_FALLBACK
 

@@ -488,6 +488,30 @@ async def test_cache_decorators_keep_uncached_fallback_in_development_when_redis
 
 
 @pytest.mark.asyncio
+async def test_production_ignores_explicit_cache_fallback_mode(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("KSU_CACHE_REDIS_FAILURE_MODE", "fallback")
+    calls = 0
+
+    async def endpoint(*, slug: str):
+        nonlocal calls
+        calls += 1
+        return {"slug": slug}
+
+    async def fail_get_redis():
+        raise cache_module.redis.RedisError("cache connect unavailable")
+
+    monkeypatch.setattr(cache_module, "get_redis", fail_get_redis)
+    cached_endpoint = cache_module.cached_public(timeout=60, vary_on=("slug",))(endpoint)
+
+    with pytest.raises(cache_module.HTTPException, match="cache-unavailable") as exc_info:
+        await cached_endpoint(slug="computer-science")
+
+    assert exc_info.value.status_code == 503
+    assert calls == 0
+
+
+@pytest.mark.asyncio
 async def test_cached_public_waiters_do_not_reload_after_one_second(monkeypatch):
     redis = _SingleFlightRedis()
     calls = 0
