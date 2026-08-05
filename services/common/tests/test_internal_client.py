@@ -1,9 +1,9 @@
 import importlib
+from typing import Self
 
+import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
-import pytest
-
 from ksu_common.internal_client import (
     authenticated_client,
     internal_headers,
@@ -36,7 +36,7 @@ class _ClientContext:
     def __init__(self, **options: object) -> None:
         self.options = options
 
-    async def __aenter__(self) -> "_ClientContext":
+    async def __aenter__(self) -> Self:
         return self
 
     async def __aexit__(self, *_args: object) -> None:
@@ -80,4 +80,13 @@ async def test_outbound_client_applies_bounded_timeouts_and_correlation(monkeypa
 async def test_authenticated_client_fails_closed_without_authentication():
     with pytest.raises(RuntimeError, match="authentication headers"):
         async with authenticated_client("https://service.example", auth_headers={}):
+            pass
+
+
+@pytest.mark.asyncio
+async def test_authenticated_client_fails_closed_for_empty_authentication_values():
+    with pytest.raises(RuntimeError, match="authentication headers"):
+        async with authenticated_client(
+            "https://service.example", auth_headers={"Authorization": ""}
+        ):
             pass
