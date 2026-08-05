@@ -2,9 +2,11 @@ import {
   clubsApi,
   departmentsApi,
   divisionsApi,
+  navigationApi,
   schoolsApi,
   wingsApi,
 } from "@ksu/api-client";
+import type { NavigationData } from "@ksu/api-client";
 import type {
   MegaMenuData,
   NavAdminUnit,
@@ -14,6 +16,84 @@ import type {
 } from "@ksu/ui/layout/public";
 
 export async function getNavData(): Promise<MegaMenuData> {
+  try {
+    const response = await navigationApi.get();
+    if (!response?.data) {
+      throw new Error("Empty navigation payload");
+    }
+    return mapNavigationData(response.data);
+  } catch (error) {
+    console.warn(
+      "Aggregated navigation endpoint unavailable; composing the menu from individual endpoints.",
+      error instanceof Error ? error.message : String(error),
+    );
+    return getNavDataFallback();
+  }
+}
+
+function mapNavigationData(data: NavigationData): MegaMenuData {
+  const schools: NavSchool[] = (data.schools ?? []).map((school) => ({
+    id: school.id,
+    name: school.name,
+    slug: school.slug,
+  }));
+
+  const divisions: NavAdminUnit[] = uniqueNavUnits(
+    (data.divisions ?? [])
+      .filter((division) => division.division_type === "division")
+      .map((division) => ({
+        id: division.id,
+        name: division.name,
+        slug: division.slug,
+      })),
+  );
+
+  const wings: NavAdminUnit[] = uniqueNavUnits(
+    (data.wings ?? []).map((wing) => ({
+      id: wing.id,
+      name: wing.name,
+      slug: wing.slug,
+      code: wing.code ?? undefined,
+    })),
+  );
+
+  const adminUnits: NavAdminUnit[] = uniqueNavUnits(
+    (data.departments ?? []).map((department) => ({
+      id: department.id,
+      name: department.name,
+      slug: department.slug,
+      code: department.code ?? undefined,
+    })),
+  );
+
+  const departments: NavDepartment[] = uniqueNavUnits(
+    (data.departments ?? []).map((department) => ({
+      id: department.id,
+      name: department.name,
+      slug: department.slug,
+      code: department.code ?? undefined,
+      school_id: department.school_id ?? undefined,
+      department_type: department.department_type ?? undefined,
+    })),
+  );
+
+  const clubs: NavClub[] = (data.clubs ?? []).map((club) => ({
+    id: club.id,
+    name: club.name,
+    slug: club.slug,
+  }));
+
+  return {
+    schools,
+    departments,
+    divisions,
+    wings,
+    adminUnits,
+    clubs,
+  };
+}
+
+async function getNavDataFallback(): Promise<MegaMenuData> {
   const [schoolsResult, divisionsResult, adminDepartmentsResult, clubsResult] =
     await Promise.allSettled([
       retryOnce(() =>

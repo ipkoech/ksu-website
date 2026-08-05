@@ -1443,6 +1443,34 @@ export interface School {
   updated_at: string;
 }
 
+export interface NavigationEntry {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface NavigationDivision extends NavigationEntry {
+  division_type?: string | null;
+}
+
+export interface NavigationDepartment extends NavigationEntry {
+  code?: string | null;
+  school_id?: string | null;
+  department_type?: string | null;
+}
+
+export interface NavigationWing extends NavigationEntry {
+  code?: string | null;
+}
+
+export interface NavigationData {
+  schools: NavigationEntry[];
+  divisions: NavigationDivision[];
+  departments: NavigationDepartment[];
+  clubs: NavigationEntry[];
+  wings: NavigationWing[];
+}
+
 export interface Division {
   id: string;
   name: string;
