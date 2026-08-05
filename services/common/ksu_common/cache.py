@@ -256,6 +256,8 @@ async def _load_while_holding_single_flight_lock(
                 token,
             )
         except redis.RedisError:
+            if _cache_redis_failure_mode() == _CACHE_REDIS_FAILURE_MODE_FAIL_CLOSED:
+                raise CacheUnavailable()
             # The loader result is still valid when Redis is unavailable.
             return _cache_result(encoded_result, "MISS")
         if not published:

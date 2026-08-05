@@ -2,6 +2,10 @@ import asyncio
 from types import SimpleNamespace
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from ksu_common.runtime import CorsConfig, ServiceAppConfig, create_service_app
+from pydantic import BaseModel, field_validator
 
 from ksu_common.cache import _build_function_cache_key
 import ksu_common.cache as cache_module
@@ -135,6 +139,18 @@ class _PollReadFailRedis(_FakeRedis):
         return await super().set(_key, _value, nx=nx, px=px)
 
 
+def _response_validation_app(register_routes) -> FastAPI:
+    return create_service_app(
+        ServiceAppConfig(
+            service_name="test-service",
+            title="Test",
+            version="1.0.0",
+        ),
+        cors=CorsConfig(origins=("https://example.test",)),
+        register_routes=register_routes,
+    )
+
+
 @pytest.mark.asyncio
 async def test_cached_public_caches_json_serializable_list_responses(monkeypatch):
     redis = _FakeRedis()
@@ -162,6 +178,8 @@ async def test_cached_public_caches_json_serializable_list_responses(monkeypatch
 
 @pytest.mark.asyncio
 async def test_cached_public_does_not_execute_endpoint_twice_when_cache_write_fails(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "development")
+    monkeypatch.setenv("KSU_CACHE_REDIS_FAILURE_MODE", "fallback")
     redis = _WriteFailRedis()
     calls = 0
 
@@ -179,6 +197,31 @@ async def test_cached_public_does_not_execute_endpoint_twice_when_cache_write_fa
     response = await cached_endpoint(slug="computer-science")
 
     assert response.headers["X-Cache"] == "MISS"
+    assert calls == 1
+
+
+@pytest.mark.asyncio
+async def test_cached_public_fails_closed_in_production_when_cache_write_fails(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("KSU_CACHE_REDIS_FAILURE_MODE", "fail_closed")
+    redis = _WriteFailRedis()
+    calls = 0
+
+    async def endpoint(*, slug: str):
+        nonlocal calls
+        calls += 1
+        return {"slug": slug}
+
+    async def get_fake_redis():
+        return redis
+
+    monkeypatch.setattr(cache_module, "get_redis", get_fake_redis)
+    cached_endpoint = cache_module.cached_public(timeout=60, vary_on=("slug",))(endpoint)
+
+    with pytest.raises(cache_module.HTTPException, match="cache-unavailable") as exc_info:
+        await cached_endpoint(slug="computer-science")
+
+    assert exc_info.value.status_code == 503
     assert calls == 1
 
 
@@ -506,6 +549,92 @@ async def test_stale_loader_cannot_publish_over_new_lock_owner(monkeypatch):
     assert new_owner.body == b'{"slug":"computer-science","version":"new"}'
     assert cached_response.headers["X-Cache"] == "HIT"
     assert cached_response.body == b'{"slug":"computer-science","version":"new"}'
+
+
+def test_cached_public_preserves_response_model_validation_for_miss_and_hit(monkeypatch) -> None:
+    monkeypatch.setenv("APP_ENV", "development")
+    monkeypatch.setenv("KSU_CACHE_REDIS_FAILURE_MODE", "fallback")
+
+    class _RuntimeFakeRedis(_FakeRedis):
+        pass
+
+    fake_redis = _RuntimeFakeRedis()
+    validation_calls = 0
+    handler_calls = 0
+
+    class CountingWidget(BaseModel):
+        name: str
+
+        @field_validator("name")
+        @classmethod
+        def count_validation(cls, value: str) -> str:
+            nonlocal validation_calls
+            validation_calls += 1
+            return value
+
+    async def get_fake_redis():
+        return fake_redis
+
+    monkeypatch.setattr(cache_module, "get_redis", get_fake_redis)
+
+    def register_routes(app: FastAPI) -> None:
+        @app.get("/widget", response_model=CountingWidget)
+        @cache_module.cached_public()
+        async def widget() -> dict[str, str]:
+            nonlocal handler_calls
+            handler_calls += 1
+            return {"name": "fresh"}
+
+    client = TestClient(_response_validation_app(register_routes))
+
+    first = client.get("/widget")
+    second = client.get("/widget")
+
+    assert first.headers["X-Cache"] == "MISS"
+    assert second.headers["X-Cache"] == "HIT"
+    assert first.json() == second.json() == {"name": "fresh"}
+    assert handler_calls == 1
+    assert validation_calls == 2
+
+
+def test_cached_public_write_failure_executes_loader_once_with_response_model_validation(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("APP_ENV", "development")
+    monkeypatch.setenv("KSU_CACHE_REDIS_FAILURE_MODE", "fallback")
+    validation_calls = 0
+    handler_calls = 0
+
+    class CountingWidget(BaseModel):
+        name: str
+
+        @field_validator("name")
+        @classmethod
+        def count_validation(cls, value: str) -> str:
+            nonlocal validation_calls
+            validation_calls += 1
+            return value
+
+    async def get_fake_redis():
+        return _WriteFailRedis()
+
+    monkeypatch.setattr(cache_module, "get_redis", get_fake_redis)
+
+    def register_routes(app: FastAPI) -> None:
+        @app.get("/widget", response_model=CountingWidget)
+        @cache_module.cached_public()
+        async def widget() -> dict[str, str]:
+            nonlocal handler_calls
+            handler_calls += 1
+            return {"name": "fresh"}
+
+    response = TestClient(_response_validation_app(register_routes)).get("/widget")
+
+    assert response.status_code == 200
+    assert response.headers["X-Cache"] == "MISS"
+    assert response.json() == {"name": "fresh"}
+    assert handler_calls == 1
+    assert validation_calls == 1
 
 
 async def _async_value(value):
