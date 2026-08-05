@@ -47,9 +47,7 @@ class _SubmissionDB:
 
 def _fake_redis() -> MagicMock:
     redis = MagicMock()
-    pipeline = MagicMock()
-    pipeline.execute = AsyncMock(return_value=[0, 1, 1, True])
-    redis.pipeline.return_value = pipeline
+    redis.eval = AsyncMock(return_value=[1, 1, 0])
     return redis
 
 

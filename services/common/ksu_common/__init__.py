@@ -21,7 +21,13 @@ from .cache import (
     invalidate_prefix,
 )
 from .audit import AuditEntry, AuditLogger, audit_action, get_audit_logger, persist_audit_log, request_actor_id, should_skip_audit
-from .rate_limit import RateLimiter, RateLimitExceeded, rate_limit, reset_rate_limit
+from .rate_limit import (
+    RateLimiter,
+    RateLimitExceeded,
+    install_request_body_limit_middleware,
+    rate_limit,
+    reset_rate_limit,
+)
 from .repository import BaseRepository
 from .logging import configure_service_logging
 
@@ -64,6 +70,7 @@ __all__ = [
     # Rate limiting
     "RateLimiter",
     "RateLimitExceeded",
+    "install_request_body_limit_middleware",
     "rate_limit",
     "reset_rate_limit",
     # Repository
