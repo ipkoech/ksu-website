@@ -13,7 +13,7 @@ from types import NoneType, UnionType
 from typing import Any, Awaitable, Callable, Union, get_args, get_origin
 from zipfile import BadZipFile, ZipFile
 
-import httpx
+from ksu_common.internal_client import outbound_client
 from pydantic import BaseModel, ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -248,9 +248,10 @@ def _make_research_create(api_path: str) -> CreateFunc:
     """Factory that creates records by POSTing to the research service."""
 
     async def _create(db: AsyncSession, payload: dict[str, Any]) -> None:
-        async with httpx.AsyncClient(
+        async with outbound_client(
             base_url=_settings.RESEARCH_SERVICE_URL.rstrip("/"),
-            timeout=httpx.Timeout(30.0, connect=5.0),
+            timeout=30.0,
+            connect_timeout=5.0,
             headers={"X-KSU-Proxy": "main-imports"},
         ) as client:
             response = await client.post(api_path, json=payload)

@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Protocol
 
 import httpx
+from ksu_common.internal_client import create_outbound_client
 
 from ..core.config import get_settings
 from ..models import Media, SocialPlatformAccount
@@ -163,10 +164,11 @@ class BaseSocialAdapter:
         return url
 
     def _client(self, *, headers: dict[str, str] | None = None, base_url: str | None = None) -> httpx.AsyncClient:
-        return httpx.AsyncClient(
+        return create_outbound_client(
             headers=headers,
             base_url=base_url,
-            timeout=httpx.Timeout(60.0, connect=20.0),
+            timeout=60.0,
+            connect_timeout=20.0,
         )
 
     async def _request_json(

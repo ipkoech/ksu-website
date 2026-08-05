@@ -8,7 +8,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Optional, Sequence
 
-import httpx
+from ksu_common.internal_client import outbound_client
 from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -316,7 +316,7 @@ async def _search_crossref(
         params["query.author"] = author
     if year:
         params["filter"] = f"from-pub-date:{year},until-pub-date:{year}"
-    async with httpx.AsyncClient(timeout=_HTTPX_TIMEOUT) as client:
+    async with outbound_client(timeout=_HTTPX_TIMEOUT) as client:
         resp = await client.get("https://api.crossref.org/works", params=params)
         resp.raise_for_status()
         items = resp.json().get("message", {}).get("items", [])
@@ -355,7 +355,7 @@ async def _search_openalex(
     params: dict = {"search": q, "per-page": per_page, "page": page}
     if year:
         params["filter"] = f"publication_year:{year}"
-    async with httpx.AsyncClient(timeout=_HTTPX_TIMEOUT) as client:
+    async with outbound_client(timeout=_HTTPX_TIMEOUT) as client:
         resp = await client.get("https://api.openalex.org/works", params=params)
         resp.raise_for_status()
         items = resp.json().get("results", [])
@@ -404,7 +404,7 @@ async def _search_pubmed(
         "retstart": (page - 1) * per_page,
         "retmode": "json",
     }
-    async with httpx.AsyncClient(timeout=_HTTPX_TIMEOUT) as client:
+    async with outbound_client(timeout=_HTTPX_TIMEOUT) as client:
         esearch = await client.get(
             "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
             params=esearch_params,
@@ -450,7 +450,7 @@ async def _search_doaj(
     per_page: int,
 ) -> list[PublicationResult]:
     params: dict = {"q": q, "pageSize": per_page, "page": page}
-    async with httpx.AsyncClient(timeout=_HTTPX_TIMEOUT) as client:
+    async with outbound_client(timeout=_HTTPX_TIMEOUT) as client:
         resp = await client.get(
             "https://doaj.org/api/search/articles/" + q,
             params={"pageSize": per_page, "page": page},

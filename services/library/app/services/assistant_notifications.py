@@ -6,8 +6,8 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote
 
-import httpx
 from fastapi import HTTPException, status
+from ksu_common.internal_client import internal_client
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -56,10 +56,13 @@ async def send_reply_notification(
         f'<p><a href="{link}">Open your Library conversation</a></p>'
         "<p>This recovery link expires soon.</p>"
     )
-    async with httpx.AsyncClient(timeout=10) as client:
+    async with internal_client(
+        settings.MAIN_SERVICE_URL,
+        settings.INTERNAL_API_KEY,
+        timeout=10,
+    ) as client:
         response = await client.post(
-            f"{settings.MAIN_SERVICE_URL.rstrip('/')}/api/v1/internal/email/send",
-            headers={"X-Internal-Key": settings.INTERNAL_API_KEY},
+            "/api/v1/internal/email/send",
             json={
                 "to_email": email,
                 "subject": "A librarian replied to your conversation",

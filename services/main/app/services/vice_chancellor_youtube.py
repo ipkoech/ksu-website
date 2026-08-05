@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from urllib.parse import parse_qs, urlparse
 
 import httpx
+from ksu_common.internal_client import create_outbound_client
 
 YOUTUBE_OEMBED_URL = "https://www.youtube.com/oembed"
 _YOUTUBE_HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"}
@@ -79,7 +80,7 @@ async def fetch_youtube_oembed(
     """Fetch optional metadata from YouTube's fixed oEmbed endpoint."""
     owns_client = client is None
     if client is None:
-        client = httpx.AsyncClient(timeout=5.0, follow_redirects=False)
+        client = create_outbound_client(timeout=5.0, follow_redirects=False)
     try:
         response = await client.get(
             YOUTUBE_OEMBED_URL,

@@ -1,6 +1,7 @@
 """Health check endpoint."""
 
 from fastapi import APIRouter
+from ksu_common.observability import health_status
 from ksu_common.schemas import success
 
 router = APIRouter(tags=["Health"])
@@ -8,4 +9,4 @@ router = APIRouter(tags=["Health"])
 
 @router.get("/health")
 async def health():
-    return success(data={"service": "library", "status": "ok"})
+    return success(data=health_status("library"))

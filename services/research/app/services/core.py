@@ -6,8 +6,8 @@ import uuid
 import logging
 from typing import Any
 
-import httpx
 from fastapi import HTTPException, status
+from ksu_common.internal_client import outbound_client
 from ksu_common.models import AuditLog
 from sqlalchemy import delete, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -114,9 +114,9 @@ class MainScopedEventService:
     async def list(scope_type: str, scope_id: uuid.UUID, *, per_page: int = 20) -> list[dict[str, Any]]:
         settings = get_settings()
         try:
-            async with httpx.AsyncClient(
+            async with outbound_client(
                 base_url=settings.MAIN_SERVICE_URL.rstrip("/"),
-                timeout=httpx.Timeout(settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS),
+                timeout=settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS,
             ) as client:
                 response = await client.get(
                     "/api/v1/events",

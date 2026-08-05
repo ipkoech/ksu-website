@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 
-import httpx
+from ksu_common.internal_client import outbound_client
 
 from ..core.config import get_settings
 
@@ -23,7 +23,7 @@ async def _send_webhook_push(push_token: str, title: str, message: str) -> str:
     if settings.PUSH_WEBHOOK_TOKEN:
         headers["Authorization"] = f"Bearer {settings.PUSH_WEBHOOK_TOKEN}"
 
-    async with httpx.AsyncClient(timeout=httpx.Timeout(20.0, connect=5.0)) as client:
+    async with outbound_client(timeout=20.0, connect_timeout=5.0) as client:
         response = await client.post(
             settings.PUSH_WEBHOOK_URL,
             json={"token": push_token, "title": title, "message": message},
@@ -39,7 +39,7 @@ async def _send_fcm_legacy_push(push_token: str, title: str, message: str) -> st
     if not settings.FCM_SERVER_KEY:
         raise RuntimeError("FCM_SERVER_KEY is required when PUSH_PROVIDER=fcm_legacy")
 
-    async with httpx.AsyncClient(timeout=httpx.Timeout(20.0, connect=5.0)) as client:
+    async with outbound_client(timeout=20.0, connect_timeout=5.0) as client:
         response = await client.post(
             "https://fcm.googleapis.com/fcm/send",
             json={"to": push_token, "notification": {"title": title, "body": message}},

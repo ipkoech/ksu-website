@@ -7,6 +7,7 @@ import uuid
 from typing import Any
 
 import httpx
+from ksu_common.internal_client import outbound_client
 
 
 class ResearchClient:
@@ -40,9 +41,10 @@ class ResearchClient:
         params: dict[str, Any] | None = None,
         json: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        async with httpx.AsyncClient(
+        async with outbound_client(
             base_url=self.base_url,
-            timeout=httpx.Timeout(10.0, connect=2.0),
+            timeout=10.0,
+            connect_timeout=2.0,
         ) as client:
             response = await client.request(
                 method,

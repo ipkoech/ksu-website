@@ -4,14 +4,17 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request, status
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.responses import FileResponse
-from fastapi.responses import JSONResponse
 from sqlalchemy import select
 
-from ksu_common import configure_service_logging, invalidate_prefix, persist_audit_log, request_actor_id, should_skip_audit
+from ksu_common import (
+    configure_service_logging,
+    invalidate_prefix,
+    request_actor_id,
+)
 from ksu_common.cache import close_redis
+from ksu_common.runtime import AuditOptions, CorsConfig, ServiceAppConfig, create_service_app
 
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal
@@ -44,71 +47,41 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(
-        title="KSU Main Site API",
-        description="Shared university CMS, institutional structure, admissions, content, media, support, and platform API for Kisii University.",
-        version=settings.APP_VERSION,
-        debug=settings.DEBUG,
-        docs_url="/api/docs" if settings.DEBUG or settings.APP_ENV != "production" else None,
-        redoc_url="/api/redoc" if settings.DEBUG or settings.APP_ENV != "production" else None,
-        openapi_url="/api/openapi.json" if settings.DEBUG or settings.APP_ENV != "production" else None,
-        lifespan=lifespan,
+    return create_service_app(
+        ServiceAppConfig(
+            service_name=settings.SERVICE_NAME,
+            title="KSU Main Site API",
+            description="Shared university CMS, institutional structure, admissions, content, media, support, and platform API for Kisii University.",
+            version=settings.APP_VERSION,
+            debug=settings.DEBUG,
+            docs_url="/api/docs" if settings.DEBUG or settings.APP_ENV != "production" else None,
+            redoc_url="/api/redoc" if settings.DEBUG or settings.APP_ENV != "production" else None,
+            openapi_url="/api/openapi.json" if settings.DEBUG or settings.APP_ENV != "production" else None,
+            lifespan=lifespan,
+        ),
+        cors=CorsConfig(origins=settings.CORS_ORIGINS),
+        register_routes=_register_service_routes,
+        audit=AuditOptions(
+            session_factory=AsyncSessionLocal,
+            service_name=settings.SERVICE_NAME,
+            begin_request=_begin_request_audit,
+            collect_changes=collected_audit_changes,
+            finish_request=reset_audit_context,
+        ),
+        after_response=_after_response,
     )
 
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
 
-    @app.exception_handler(ValueError)
-    async def value_error_handler(request: Request, exc: ValueError):
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={"status": "error", "message": str(exc), "code": "bad_request"},
-        )
+def _begin_request_audit(request: Request) -> object:
+    return begin_audit_context(actor_id=request_actor_id(request))
 
-    @app.exception_handler(PermissionError)
-    async def permission_error_handler(request: Request, exc: PermissionError):
-        return JSONResponse(
-            status_code=status.HTTP_403_FORBIDDEN,
-            content={"status": "error", "message": str(exc), "code": "forbidden"},
-        )
 
-    @app.middleware("http")
-    async def audit_middleware(request: Request, call_next):
-        if should_skip_audit(request.url.path):
-            return await call_next(request)
+async def _after_response(request: Request, response: Response) -> None:
+    if should_invalidate_public_cache(request, response.status_code):
+        await invalidate_prefix("public")
 
-        audit_token = begin_audit_context(actor_id=request_actor_id(request))
-        try:
-            try:
-                response = await call_next(request)
-            except Exception as exc:
-                await persist_audit_log(
-                    AsyncSessionLocal,
-                    service_name=settings.SERVICE_NAME,
-                    request=request,
-                    status_code=500,
-                    error_message=str(exc),
-                    changes=collected_audit_changes(),
-                )
-                raise
 
-            await persist_audit_log(
-                AsyncSessionLocal,
-                service_name=settings.SERVICE_NAME,
-                request=request,
-                status_code=response.status_code,
-                changes=collected_audit_changes(),
-            )
-        finally:
-            reset_audit_context(audit_token)
-        if should_invalidate_public_cache(request, response.status_code):
-            await invalidate_prefix("public")
-        return response
+def _register_service_routes(app: FastAPI) -> None:
 
     @app.get("/uploads/{storage_path:path}", include_in_schema=False)
     async def serve_public_upload(storage_path: str):
@@ -139,4 +112,3 @@ def create_app() -> FastAPI:
         return FileResponse(file_path, media_type=media.mime_type)
 
     register_routes(app)
-    return app

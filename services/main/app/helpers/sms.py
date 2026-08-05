@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 import hashlib
 
-import httpx
+from ksu_common.internal_client import outbound_client
 
 from ..core.config import get_settings
 
@@ -24,7 +24,7 @@ async def _send_webhook_sms(phone_number: str, message: str) -> str:
     if settings.SMS_WEBHOOK_TOKEN:
         headers["Authorization"] = f"Bearer {settings.SMS_WEBHOOK_TOKEN}"
 
-    async with httpx.AsyncClient(timeout=httpx.Timeout(20.0, connect=5.0)) as client:
+    async with outbound_client(timeout=20.0, connect_timeout=5.0) as client:
         response = await client.post(
             settings.SMS_WEBHOOK_URL,
             json={"to": phone_number, "message": message},
@@ -50,7 +50,7 @@ async def _send_twilio_sms(phone_number: str, message: str) -> str:
         raise RuntimeError(f"Missing Twilio SMS settings: {', '.join(missing)}")
 
     auth = base64.b64encode(f"{settings.TWILIO_ACCOUNT_SID}:{settings.TWILIO_AUTH_TOKEN}".encode("utf-8")).decode("ascii")
-    async with httpx.AsyncClient(timeout=httpx.Timeout(20.0, connect=5.0)) as client:
+    async with outbound_client(timeout=20.0, connect_timeout=5.0) as client:
         response = await client.post(
             f"https://api.twilio.com/2010-04-01/Accounts/{settings.TWILIO_ACCOUNT_SID}/Messages.json",
             data={"To": phone_number, "From": settings.TWILIO_FROM_NUMBER, "Body": message},

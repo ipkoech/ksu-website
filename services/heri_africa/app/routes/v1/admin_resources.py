@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-import httpx
 from uuid import UUID
 from ksu_common.auth import TokenPayload
-from ksu_common.internal_client import internal_headers
+from ksu_common.internal_client import authenticated_client, internal_headers
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,7 +31,7 @@ async def sync_partners_from_research(request: Request, db: AsyncSession = Depen
             detail="Research integration is not configured",
         ) from exc
     base = settings.RESEARCH_SERVICE_URL.rstrip("/")
-    async with httpx.AsyncClient(timeout=15.0, headers=headers) as client:
+    async with authenticated_client(base, auth_headers=headers, timeout=15.0) as client:
         response = await client.get(f"{base}/api/v1/partners", params={"page": 1, "per_page": 100})
         response.raise_for_status()
         payload = response.json()

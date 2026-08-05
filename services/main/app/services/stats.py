@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import httpx
+from ksu_common.internal_client import outbound_client
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -101,9 +101,10 @@ async def _count(db: AsyncSession, model, *conditions) -> int:
 async def _published_publications_count() -> int:
     """Read the public publication count from the owning Research service."""
 
-    async with httpx.AsyncClient(
+    async with outbound_client(
         base_url=settings.RESEARCH_SERVICE_URL.rstrip("/"),
-        timeout=httpx.Timeout(20.0, connect=5.0),
+        timeout=20.0,
+        connect_timeout=5.0,
         headers={"X-KSU-Proxy": "main-stats"},
     ) as client:
         response = await client.get("/api/v1/stats")
@@ -126,9 +127,10 @@ async def _published_publications_count() -> int:
 async def _library_portal_stat_counts() -> dict[str, int]:
     """Read dashboard counters from the owning Library service."""
 
-    async with httpx.AsyncClient(
+    async with outbound_client(
         base_url=settings.LIBRARY_SERVICE_URL.rstrip("/"),
-        timeout=httpx.Timeout(20.0, connect=5.0),
+        timeout=20.0,
+        connect_timeout=5.0,
         headers={"X-KSU-Proxy": "main-stats"},
     ) as client:
         response = await client.get("/api/v1/stats/admin")

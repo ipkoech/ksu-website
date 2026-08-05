@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-import httpx
+from ksu_common.internal_client import outbound_client
 
 from ..core.config import get_settings
 
@@ -36,9 +36,10 @@ class ResearchPartnersProxyService:
         if search:
             params["search"] = search
 
-        async with httpx.AsyncClient(
+        async with outbound_client(
             base_url=settings.RESEARCH_SERVICE_URL.rstrip("/"),
-            timeout=httpx.Timeout(20.0, connect=5.0),
+            timeout=20.0,
+            connect_timeout=5.0,
             headers={"X-KSU-Proxy": "main-partners"},
         ) as client:
             response = await client.get("/api/v1/partners", params=params)
@@ -51,9 +52,10 @@ class ResearchPartnersProxyService:
 
     @staticmethod
     async def get_partner(slug: str) -> dict[str, Any]:
-        async with httpx.AsyncClient(
+        async with outbound_client(
             base_url=settings.RESEARCH_SERVICE_URL.rstrip("/"),
-            timeout=httpx.Timeout(20.0, connect=5.0),
+            timeout=20.0,
+            connect_timeout=5.0,
             headers={"X-KSU-Proxy": "main-partners"},
         ) as client:
             response = await client.get(f"/api/v1/partners/{slug}")
