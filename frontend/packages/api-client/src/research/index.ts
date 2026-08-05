@@ -839,13 +839,15 @@ function readonlyInnovationRelationApi(
 }
 
 export const researchServiceApi = {
-  stats: () => researchApi.get<{ data: PublicStatsResponse }>("/api/v1/stats"),
+  // /research-prefixed paths: the gateway's shared /api/v1 space resolves
+  // bare /search, /analytics, and /stats to the main service.
+  stats: () => researchApi.get<{ data: PublicStatsResponse }>("/api/v1/research/stats"),
   adminStats: () =>
-    researchApi.get<{ data: PublicStatsResponse }>("/api/v1/stats/admin"),
+    researchApi.get<{ data: PublicStatsResponse }>("/api/v1/research/stats/admin"),
   dashboardAnalytics: () =>
-    researchApi.get<{ data: ResearchDashboardAnalytics }>("/api/v1/analytics/dashboard"),
+    researchApi.get<{ data: ResearchDashboardAnalytics }>("/api/v1/research/analytics/dashboard"),
   search: (params: { q: string; types?: string; limit?: number }) =>
-    researchApi.get<{ data: ResearchSearchResponse }>("/api/v1/search", params),
+    researchApi.get<{ data: ResearchSearchResponse }>("/api/v1/research/search", params),
   askAI: (data: ResearchAskAIRequest) =>
     researchApi.post<{ data: ResearchAskAIResponse }>("/api/v1/ask-ai", data),
   submitDonation: (data: PublicDonationSubmission) =>

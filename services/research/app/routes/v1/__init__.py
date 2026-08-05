@@ -44,3 +44,11 @@ router.include_router(partners_router)
 router.include_router(donations_router)
 router.include_router(stories_router)
 router.include_router(content_router)
+
+# Namespaced aliases under /research so the gateway can route these to the
+# research service without shadowing the main service's /search, /analytics,
+# and /stats endpoints on the shared /api/v1 path space. The un-prefixed
+# mounts above are kept for backward compatibility with direct-service URLs.
+router.include_router(search_router, prefix="/research")
+router.include_router(analytics_router, prefix="/research")
+router.include_router(stats_router, prefix="/research")
