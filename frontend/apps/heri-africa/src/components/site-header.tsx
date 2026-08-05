@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import heriLogo from "../../public/logos/heri-africa-logo.svg";
+import { withBasePath } from "../lib/base-path";
 
 type NavItem = {
   label: string;
@@ -63,7 +64,7 @@ export function SiteHeader() {
           >
             <span className="hidden items-center gap-2 border-r border-slate-300 pr-4 sm:flex">
               <Image
-                src="/logos/ksu-logo.png"
+                src={withBasePath("/logos/ksu-logo.png")}
                 alt="Kisii University"
                 width={42}
                 height={42}

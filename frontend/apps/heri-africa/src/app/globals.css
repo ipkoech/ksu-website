@@ -7,7 +7,7 @@
   --heri-teal: #006b62;
   --heri-lime: #c7d900;
   --heri-cream: #f6f4e8;
-  --heri-blue: #063d91;
+  --heri-blue: #274881;
 }
 
 * { box-sizing: border-box; }
@@ -17,4 +17,19 @@ body { margin: 0; background: var(--heri-cream); color: var(--heri-ink); }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+@keyframes heri-marquee {
+  to { transform: translateX(-50%); }
+}
+.heri-marquee-track {
+  animation: heri-marquee 36s linear infinite;
+  will-change: transform;
+}
+.heri-marquee:hover .heri-marquee-track,
+.heri-marquee:focus-within .heri-marquee-track {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .heri-marquee-track { animation: none; transform: none; }
 }

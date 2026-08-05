@@ -2,15 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { TeamDirectory } from "../../components/team/team-directory";
 import { SiteShell } from "../../components/site-shell";
+import { Reveal } from "../../components/motion/reveal";
 import { getTeam } from "../../lib/api";
-import { fallbackTeam } from "../../lib/team-fallback";
+import { withBasePath } from "../../lib/base-path";
 
 export const revalidate = 300;
 
 export default async function TeamPage() {
-  const team = await getTeam()
-    .then((items) => (items.length ? items : fallbackTeam))
-    .catch(() => fallbackTeam);
+  const team = await getTeam().catch(() => []);
   const chair = team.find((member) =>
     member.role.toLowerCase().includes("chair"),
   );
@@ -21,7 +20,7 @@ export default async function TeamPage() {
         <section className="relative overflow-hidden bg-heri-ink text-white">
           <div className="absolute inset-0 bg-[linear-gradient(115deg,#003c39,#006b62_54%,#07302d)]" />
           <div className="relative mx-auto grid min-h-[430px] max-w-7xl items-center gap-10 px-6 py-16 lg:grid-cols-[0.85fr_1.15fr] lg:px-10">
-            <div>
+            <Reveal>
               <p className="text-sm text-white/70">
                 Home <span className="mx-2">/</span> Our Team
               </p>
@@ -40,35 +39,39 @@ export default async function TeamPage() {
                 evidence-based solutions for language education and foundational
                 literacy across Africa.
               </p>
-            </div>
-            <div className="relative h-[300px] overflow-hidden rounded-t-[6rem] rounded-bl-[6rem] lg:h-[360px]">
-              <Image
-                alt="HERI Africa research team"
-                className="object-cover"
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 55vw"
-                src="/images/HERIAfricaLaunch.jpg"
-              />
-            </div>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <div className="relative h-[300px] overflow-hidden rounded-t-[6rem] rounded-bl-[6rem] lg:h-[360px]">
+                <Image
+                  alt="HERI Africa research team"
+                  className="object-cover"
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 55vw"
+                  src={withBasePath("/images/HERIAfricaLaunch.jpg")}
+                />
+              </div>
+            </Reveal>
           </div>
         </section>
 
         {chair && (
           <section className="mx-auto grid max-w-7xl items-center gap-10 px-6 py-16 lg:grid-cols-[0.45fr_0.55fr] lg:px-10">
-            <div className="relative aspect-square overflow-hidden rounded-3xl bg-heri-cream">
-              {chair.photo_url ? (
-                <Image
-                  alt={chair.name}
-                  className="object-cover"
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 40vw"
-                  src={chair.photo_url}
-                  unoptimized
-                />
-              ) : null}
-            </div>
-            <div>
+            <Reveal>
+              <div className="relative aspect-square overflow-hidden rounded-3xl bg-heri-cream">
+                {chair.photo_url ? (
+                  <Image
+                    alt={chair.name}
+                    className="object-cover"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 40vw"
+                    src={chair.photo_url}
+                    unoptimized
+                  />
+                ) : null}
+              </div>
+            </Reveal>
+            <Reveal delay={0.1}>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-heri-lime">
                 Research Chair
               </p>
@@ -87,23 +90,25 @@ export default async function TeamPage() {
               >
                 VIEW FULL PROFILE <span className="ml-5">→</span>
               </Link>
-            </div>
+            </Reveal>
           </section>
         )}
 
         <section className="bg-slate-50 px-6 py-14">
           <div className="mx-auto max-w-7xl">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-heri-teal">
-              Meet our team
-            </p>
-            <h2 className="mt-3 text-4xl font-bold text-heri-blue">
-              People driving the work
-            </h2>
+            <Reveal>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-heri-teal">
+                Meet our team
+              </p>
+              <h2 className="mt-3 text-4xl font-bold text-heri-blue">
+                People driving the work
+              </h2>
+            </Reveal>
             <TeamDirectory members={team} />
           </div>
         </section>
         <section className="bg-heri-blue px-6 py-12 text-white">
-          <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+          <Reveal className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 md:flex-row md:items-center">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-heri-lime">
                 Join our research community
@@ -118,7 +123,7 @@ export default async function TeamPage() {
             >
               PARTNER WITH US →
             </Link>
-          </div>
+          </Reveal>
         </section>
       </main>
     </SiteShell>

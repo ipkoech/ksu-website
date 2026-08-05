@@ -1,53 +1,50 @@
 "use client";
 
-import { motion, useReducedMotion, type MotionProps } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import type { ReactNode } from "react";
 
-type RevealProps = {
-  children: ReactNode;
-  className?: string;
-  delay?: number;
-  distance?: number;
-  duration?: number;
-  once?: boolean;
-} & Pick<MotionProps, "viewport">;
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 export function Reveal({
   children,
-  className,
   delay = 0,
-  distance = 24,
-  duration = 0.65,
-  once = true,
-  viewport,
-}: RevealProps) {
-  const reduceMotion = useReducedMotion();
+  className,
+}: {
+  children: ReactNode;
+  delay?: number;
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
   return (
     <motion.div
       className={className}
-      initial={reduceMotion ? false : { opacity: 0, y: distance }}
+      initial={reduce ? false : { opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
-      transition={reduceMotion ? { duration: 0 } : { duration, delay, ease: [0.22, 1, 0.36, 1] }}
-      viewport={{ once, amount: 0.18, ...viewport }}
+      viewport={{ once: true, amount: 0.25 }}
+      transition={{ duration: 0.7, delay, ease: EASE }}
     >
       {children}
     </motion.div>
   );
 }
 
-export function ImageReveal({
+export function RevealItem({
   children,
+  index = 0,
   className,
-  delay = 0,
-}: Pick<RevealProps, "children" | "className" | "delay">) {
-  const reduceMotion = useReducedMotion();
+}: {
+  children: ReactNode;
+  index?: number;
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
   return (
     <motion.div
       className={className}
-      initial={reduceMotion ? false : { opacity: 0, scale: 1.04, y: 18 }}
-      whileInView={{ opacity: 1, scale: 1, y: 0 }}
-      transition={reduceMotion ? { duration: 0 } : { duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }}
+      initial={reduce ? false : { opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.6, delay: index * 0.08, ease: EASE }}
     >
       {children}
     </motion.div>
