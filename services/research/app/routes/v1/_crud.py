@@ -8,7 +8,7 @@ from ksu_common import cached_public, rate_limit
 from ksu_common.schemas.responses import success
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...core.auth import get_current_user, require_scope, require_scoped_record
+from ...core.auth import get_current_user, require_scope, require_scoped_record, require_write_or_internal
 from ...core.database import get_db
 from ._fields import FieldSelection, FieldsDep, build_selector
 
@@ -298,9 +298,16 @@ def build_crud_router(
 
     if public_create:
         requests, window = public_create_rate_limit
+        public_create_prefix = prefix.strip("/").replace("/", ":")
 
         @router.post("", status_code=status.HTTP_201_CREATED)
-        @rate_limit(requests=requests, window=window, by_user=False)
+        @rate_limit(
+            requests=requests,
+            window=window,
+            by_user=False,
+            prefix=f"research:public-create:{public_create_prefix}",
+            max_body_bytes=64 * 1024,
+        )
         async def create_item(
             request: Request,
             data: create_schema = Body(...),
@@ -316,18 +323,21 @@ def build_crud_router(
         @router.post(
             "",
             status_code=status.HTTP_201_CREATED,
-            dependencies=[Depends(require_scope(write_scope))],
         )
         async def create_item(
             data: create_schema = Body(...),
             db: AsyncSession = Depends(get_db),
-            user=Depends(get_current_user),
+            access=Depends(require_write_or_internal(write_scope)),
         ):
             center_id = getattr(data, "center_id", None)
-            if model_has_center_scope or center_id is not None:
-                require_scoped_record(user, write_scope, "research", center_id)
+            if access is not None and (model_has_center_scope or center_id is not None):
+                require_scoped_record(access, write_scope, "research", center_id)
             try:
-                item = await service.create(db, data, actor_id=user.sub)
+                item = await service.create(
+                    db,
+                    data,
+                    actor_id=access.sub if access is not None else "service:main",
+                )
             except ValueError as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
             return success(data=item, message=f"{tag.rstrip('s')} created")

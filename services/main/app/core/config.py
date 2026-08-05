@@ -52,6 +52,8 @@ class Settings(BaseSettings):
     FRONTEND_LIBRARY_URL: str
     RESEARCH_SERVICE_URL: str
     LIBRARY_SERVICE_URL: str
+    RESEARCH_SERVICE_API_KEY: str | None = None
+    LIBRARY_SERVICE_API_KEY: str | None = None
     PASSWORD_RESET_RATE_LIMIT_COUNT: int
     PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS: int
     AUTH_LOGIN_MAX_ATTEMPTS: int = 5
@@ -192,6 +194,16 @@ class Settings(BaseSettings):
         validate_service_url(self.REDIS_URL, field_name="REDIS_URL", app_env=self.APP_ENV)
         validate_service_url(self.RESEARCH_SERVICE_URL, field_name="RESEARCH_SERVICE_URL", app_env=self.APP_ENV)
         validate_service_url(self.LIBRARY_SERVICE_URL, field_name="LIBRARY_SERVICE_URL", app_env=self.APP_ENV)
+        validate_secret(
+            self.RESEARCH_SERVICE_API_KEY,
+            field_name="RESEARCH_SERVICE_API_KEY",
+            app_env=self.APP_ENV,
+        )
+        validate_secret(
+            self.LIBRARY_SERVICE_API_KEY,
+            field_name="LIBRARY_SERVICE_API_KEY",
+            app_env=self.APP_ENV,
+        )
         validate_cors_origins(self.CORS_ORIGINS, app_env=self.APP_ENV)
         return self
 

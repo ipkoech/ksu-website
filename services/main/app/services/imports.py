@@ -13,7 +13,7 @@ from types import NoneType, UnionType
 from typing import Any, Awaitable, Callable, Union, get_args, get_origin
 from zipfile import BadZipFile, ZipFile
 
-from ksu_common.internal_client import outbound_client
+from ksu_common.internal_client import internal_headers, outbound_client
 from pydantic import BaseModel, ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -252,7 +252,10 @@ def _make_research_create(api_path: str) -> CreateFunc:
             base_url=_settings.RESEARCH_SERVICE_URL.rstrip("/"),
             timeout=30.0,
             connect_timeout=5.0,
-            headers={"X-KSU-Proxy": "main-imports"},
+            headers={
+                **internal_headers(_settings.RESEARCH_SERVICE_API_KEY),
+                "X-KSU-Proxy": "main-imports",
+            },
         ) as client:
             response = await client.post(api_path, json=payload)
             response.raise_for_status()

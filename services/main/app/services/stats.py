@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ksu_common.internal_client import outbound_client
+from ksu_common.internal_client import internal_headers, outbound_client
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -131,9 +131,12 @@ async def _library_portal_stat_counts() -> dict[str, int]:
         base_url=settings.LIBRARY_SERVICE_URL.rstrip("/"),
         timeout=20.0,
         connect_timeout=5.0,
-        headers={"X-KSU-Proxy": "main-stats"},
+        headers={
+            **internal_headers(settings.LIBRARY_SERVICE_API_KEY),
+            "X-KSU-Proxy": "main-stats",
+        },
     ) as client:
-        response = await client.get("/api/v1/stats/admin")
+        response = await client.get("/api/v1/stats/internal/admin")
         response.raise_for_status()
         payload = response.json()
 

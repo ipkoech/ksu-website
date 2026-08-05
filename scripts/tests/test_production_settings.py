@@ -62,6 +62,8 @@ def main_fixture() -> dict[str, object]:
         "FRONTEND_LIBRARY_URL": "https://library.example.edu",
         "RESEARCH_SERVICE_URL": "http://research:8001",
         "LIBRARY_SERVICE_URL": "http://library:8002",
+        "RESEARCH_SERVICE_API_KEY": "r" * 32,
+        "LIBRARY_SERVICE_API_KEY": "l" * 32,
         "PASSWORD_RESET_RATE_LIMIT_COUNT": 5,
         "PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS": 900,
         "SMS_PROVIDER": "disabled",

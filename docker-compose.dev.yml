@@ -10,6 +10,8 @@ services:
       APP_ENV: development
       JWT_SECRET_KEY: change-me-local
       INTERNAL_API_KEY: change-me-internal
+      RESEARCH_SERVICE_API_KEY: change-me-internal
+      LIBRARY_SERVICE_API_KEY: change-me-internal
       CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003"]'
   research:
     ports:
