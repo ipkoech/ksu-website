@@ -1,7 +1,5 @@
 """Research admin analytics dashboard endpoints."""
 
-from __future__ import annotations
-
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 

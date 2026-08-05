@@ -1,7 +1,5 @@
 """Shared field-selection helpers for Research service routes."""
 
-from __future__ import annotations
-
 from typing import Type
 
 from fastapi import Depends
@@ -17,7 +15,12 @@ def build_selector(model_class: Type, fields: FieldSelection) -> FieldSelector:
     return FieldSelector(model_class, fields, always_include={"id"})
 
 
+def serialize_full_record(model_class: Type, data):
+    """Serialize a model instance or list using the default full-field selection."""
+    return build_selector(model_class, FieldSelection(fields=())).apply(data)
+
+
 FieldsDep = Depends(ResearchFieldsQuery)
 
 
-__all__ = ["FieldsDep", "FieldSelection", "build_selector"]
+__all__ = ["FieldsDep", "FieldSelection", "build_selector", "serialize_full_record"]

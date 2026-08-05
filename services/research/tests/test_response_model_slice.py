@@ -48,7 +48,7 @@ def _inspected_routes(app: FastAPI):
     return {inspection.path: inspection for inspection in _iter_route_inspections(app.routes)}
 
 
-def test_selected_public_routes_keep_only_the_documented_mixed_export_gap(
+def test_selected_public_routes_have_complete_response_model_coverage(
     monkeypatch, tmp_path
 ) -> None:
     _configure_research_env(monkeypatch, tmp_path)
@@ -56,7 +56,7 @@ def test_selected_public_routes_keep_only_the_documented_mixed_export_gap(
     app = _selected_routes_app()
     coverage = app.state.response_model_coverage
 
-    assert coverage.missing == ("GET /api/v1/exports/{resource_key}",)
+    assert coverage.missing == ()
     assert coverage.nonconcrete == ()
     assert coverage.invalid_exemptions == ()
 
@@ -88,4 +88,4 @@ def test_selected_public_routes_declare_concrete_models_or_real_stream_file_resp
     assert "text/csv" in export_content
     assert routes["/api/v1/ask-ai/stream"].response_class is StreamingResponse
     assert routes["/api/v1/exports/jobs/{job_id}/download"].response_class is FileResponse
-    assert routes["/api/v1/exports/{resource_key}"].route.response_model is None
+    assert routes["/api/v1/exports/{resource_key}"].response_class is StreamingResponse

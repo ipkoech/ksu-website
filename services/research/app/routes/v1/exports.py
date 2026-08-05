@@ -1,14 +1,13 @@
 """Research data export endpoints."""
 
-from __future__ import annotations
-
+import json
 from pathlib import Path
 from typing import Any
 import uuid
 
 from celery.result import AsyncResult
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.response_validation import allow_response_model_exemption
@@ -186,6 +185,7 @@ async def download_research_export_job(job_id: str):
 
 @router.get(
     "/exports/{resource_key}",
+    response_class=StreamingResponse,
     responses={
         200: {
             "description": "JSON export rows when format=json, or CSV file contents when format=csv.",
@@ -203,6 +203,7 @@ async def download_research_export_job(job_id: str):
         }
     },
 )
+@allow_response_model_exemption("stream", path="/api/v1/exports/{resource_key}")
 async def export_research_resource(
     resource_key: str,
     format: str = Query("csv", pattern="^(csv|json)$"),
@@ -298,10 +299,14 @@ async def export_research_resource(
     )
 
     if format == "json":
-        return success(data=rows, meta={"resource": config.key, "total": len(rows)})
+        payload = success(data=rows, meta={"resource": config.key, "total": len(rows)})
+        return StreamingResponse(
+            iter((json.dumps(payload, separators=(",", ":"), default=str),)),
+            media_type="application/json",
+        )
 
-    return Response(
-        content=ResearchExportService.to_csv(config, rows),
+    return StreamingResponse(
+        iter((ResearchExportService.to_csv(config, rows),)),
         media_type="text/csv",
         headers={"Content-Disposition": f'attachment; filename="{config.filename}.csv"'},
     )

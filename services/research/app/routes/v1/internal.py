@@ -1,7 +1,5 @@
 """Narrow, authenticated Research endpoints for sibling services."""
 
-from __future__ import annotations
-
 import uuid
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
@@ -11,6 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.config import get_settings
 from ...core.database import get_db
+from ...schemas.base import JsonObject, SuccessEnvelope, SuccessEnvelopeWithMeta
+from ._fields import serialize_full_record
 from ...services import (
     CenterRelationshipService,
     CenterService,
@@ -93,7 +93,7 @@ INTERNAL_IMPORT_SERVICES = {
 }
 
 
-@router.post("/imports/{resource}", dependencies=[Depends(verify_internal_key)])
+@router.post("/imports/{resource}", dependencies=[Depends(verify_internal_key)], response_model=SuccessEnvelope[JsonObject])
 async def create_internal_import(
     resource: str,
     payload: dict = Body(...),
@@ -115,17 +115,17 @@ async def create_internal_import(
         item = await service.create(db, _InternalPayload(payload), actor_id="service:main")
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return success(data=item, message=f"{resource} created")
+    return success(data=serialize_full_record(service.model, item), message=f"{resource} created")
 
 
-@router.get("/stats", dependencies=[Depends(verify_internal_key)])
+@router.get("/stats", dependencies=[Depends(verify_internal_key)], response_model=SuccessEnvelope[JsonObject])
 async def get_internal_stats(db: AsyncSession = Depends(get_db)):
     """Return the public Research statistics contract to authenticated peers."""
     result = await public_research_stats(db)
     return success(data=result.model_dump())
 
 
-@router.get("/partners", dependencies=[Depends(verify_internal_key)])
+@router.get("/partners", dependencies=[Depends(verify_internal_key)], response_model=SuccessEnvelopeWithMeta[list[JsonObject]])
 async def list_internal_partners(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -151,15 +151,15 @@ async def list_internal_partners(
     return success(data=result.items, meta=result.meta)
 
 
-@router.get("/partners/{slug}", dependencies=[Depends(verify_internal_key)])
+@router.get("/partners/{slug}", dependencies=[Depends(verify_internal_key)], response_model=SuccessEnvelope[JsonObject])
 async def get_internal_partner(slug: str, db: AsyncSession = Depends(get_db)):
     item = await PartnerService.get_public_by_slug(db, slug)
     if item is None:
         raise HTTPException(status_code=404, detail="Partner not found")
-    return success(data=item)
+    return success(data=serialize_full_record(PartnerService.model, item))
 
 
-@router.get("/centers", dependencies=[Depends(verify_internal_key)])
+@router.get("/centers", dependencies=[Depends(verify_internal_key)], response_model=SuccessEnvelopeWithMeta[list[JsonObject]])
 async def list_internal_centers(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -178,7 +178,7 @@ async def list_internal_centers(
     return success(data=result.items, meta=result.meta)
 
 
-@router.get("/centers/{center_id}/partners", dependencies=[Depends(verify_internal_key)])
+@router.get("/centers/{center_id}/partners", dependencies=[Depends(verify_internal_key)], response_model=SuccessEnvelope[list[JsonObject]])
 async def list_internal_center_partners(
     center_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),

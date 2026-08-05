@@ -1,7 +1,5 @@
 """Read-only Ask AI advisor endpoints for research admins."""
 
-from __future__ import annotations
-
 import uuid
 import asyncio
 import json
