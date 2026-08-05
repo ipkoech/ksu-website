@@ -12,8 +12,10 @@ from ...services.corporate_portal_context import (
     allowed_corporate_navigation,
     corporate_portal_capabilities,
 )
+from .corporate_portal_media import router as corporate_portal_media_router
 
 router = APIRouter()
+router.include_router(corporate_portal_media_router)
 
 
 def context_response(user) -> CorporatePortalContextResponse:

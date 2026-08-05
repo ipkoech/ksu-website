@@ -6,6 +6,7 @@ import {
   faqsApi,
   sportsFacilitiesApi,
   studentGovernanceApi,
+  testimonialsApi,
   mainApi,
   type Accommodation,
   type ArtsCulture,
@@ -14,6 +15,7 @@ import {
   type FAQ,
   type SportsFacility,
   type StudentGovernance,
+  type Testimonial,
 } from "@ksu/api-client";
 
 type ListEnvelope<T> = { data?: T[] };
@@ -41,6 +43,8 @@ const faqFields =
   "id,question,answer,answer_plain_text,category,display_order,is_main,is_public,status";
 const contactFields =
   "id,name,contact_type,email,phone,extension,physical_address,building,room_number,operating_hours,is_main,is_public,status";
+const testimonialFields =
+  "id,name,role,quote,testimonial_type,photo_id,is_featured,display_order";
 
 export interface CampusLifePageData {
   clubs: Club[];
@@ -50,6 +54,7 @@ export interface CampusLifePageData {
   governance: StudentGovernance[];
   faqs: FAQ[];
   contacts: ContactDirectory[];
+  testimonials: Testimonial[];
   detail?: {
     club?: Club | null;
     accommodation?: Accommodation | null;
@@ -217,6 +222,7 @@ export async function getCampusLifeData(
     governanceResult,
     faqs,
     contacts,
+    testimonials,
   ] = await Promise.all([
     fetchArea("clubs", 24, clubListFields, clubsApi.list.bind(clubsApi), "club_type"),
     fetchArea("accommodation", 16, accommodationFields, accommodationsApi.list.bind(accommodationsApi), "accommodation_type"),
@@ -237,6 +243,14 @@ export async function getCampusLifeData(
         fields: contactFields,
       }),
     ),
+    area
+      ? Promise.resolve<Testimonial[]>([])
+      : safeList(
+          testimonialsApi.list({
+            per_page: 6,
+            fields: testimonialFields,
+          }),
+        ),
   ]);
 
   const detail: CampusLifePageData["detail"] = {};
@@ -288,6 +302,7 @@ export async function getCampusLifeData(
     governance: governanceResult.data,
     faqs,
     contacts,
+    testimonials,
     detail,
     totals: {
       clubs: clubsResult.total,

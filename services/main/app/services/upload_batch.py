@@ -42,7 +42,7 @@ def validate_file_signature(mime_type: str, prefix: bytes) -> None:
 def enqueue_upload_progress(
     db,
     *,
-    school_id: uuid.UUID,
+    school_id: uuid.UUID | None,
     actor_id: uuid.UUID,
     batch_id: uuid.UUID,
     completed: int,
@@ -53,10 +53,15 @@ def enqueue_upload_progress(
     step = settings.UPLOAD_PROGRESS_STEP_PERCENT
     if percent < 100 and percent - last_percent < step:
         return last_percent
+    if school_id is not None:
+        event_type, scope_type = "school.upload.progress", "school"
+    else:
+        # Portal batches (e.g. Corporate Communication) have no school scope.
+        event_type, scope_type = "portal.upload.progress", "portal"
     enqueue_domain_event(
         db,
-        event_type="school.upload.progress",
-        scope_type="school",
+        event_type=event_type,
+        scope_type=scope_type,
         scope_id=school_id,
         actor_id=actor_id,
         resource_type="upload_batch",
@@ -76,6 +81,23 @@ class UploadBatchService:
     ) -> None:
         if resolved_scope_type != "school" or resolved_scope_id != expected_school_id:
             raise HTTPException(status_code=404, detail="Upload target not found")
+
+    @classmethod
+    async def get_for_portal(cls, db, batch_id: uuid.UUID, portal: str):
+        result = await db.execute(
+            select(UploadBatch)
+            .options(selectinload(UploadBatch.files))
+            .where(
+                UploadBatch.id == batch_id,
+                UploadBatch.portal == portal,
+                UploadBatch.school_id.is_(None),
+                UploadBatch.deleted_at.is_(None),
+            )
+        )
+        batch = result.scalar_one_or_none()
+        if batch is None:
+            raise HTTPException(status_code=404, detail="Upload batch not found")
+        return batch
 
     @classmethod
     async def get_for_school(cls, db, batch_id: uuid.UUID, school_id: uuid.UUID):
@@ -123,6 +145,95 @@ class UploadBatchService:
             return result.scalar_one_or_none()
         return None
 
+    @staticmethod
+    async def _validate_uploads(
+        uploads: list[UploadFile],
+    ) -> list[tuple[UploadFile, bytes, str]]:
+        validated_uploads: list[tuple[UploadFile, bytes, str]] = []
+        for upload in uploads:
+            content = await upload.read(settings.MAX_UPLOAD_MB * 1024 * 1024 + 1)
+            await upload.seek(0)
+            if len(content) > settings.MAX_UPLOAD_MB * 1024 * 1024:
+                raise HTTPException(status_code=413, detail=f"{upload.filename} exceeds upload limit")
+            mime_type = upload.content_type or "application/octet-stream"
+            try:
+                validate_file_signature(mime_type, content[:16])
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=f"{upload.filename}: {exc}") from exc
+            validated_uploads.append((upload, content, mime_type))
+        return validated_uploads
+
+    @classmethod
+    async def create_for_portal(
+        cls,
+        db,
+        *,
+        portal: str,
+        actor_id: uuid.UUID,
+        files: Iterable[UploadFile],
+        folder_id: uuid.UUID | None = None,
+        is_public: bool = False,
+        target_role: str = "attachment",
+    ) -> UploadBatch:
+        """Create a portal-scoped batch whose files land as plain media rows."""
+        uploads = list(files)
+        if not uploads:
+            raise HTTPException(status_code=422, detail="At least one file is required")
+        validated_uploads = await cls._validate_uploads(uploads)
+
+        batch = UploadBatch(
+            school_id=None,
+            portal=portal,
+            created_by_id=actor_id,
+            status="processing",
+            total_files=len(uploads),
+            completed_files=0,
+            failed_files=0,
+            total_bytes=sum(len(content) for _, content, _ in validated_uploads),
+            received_bytes=0,
+            expires_at=datetime.now(timezone.utc)
+            + timedelta(hours=settings.UPLOAD_BATCH_EXPIRY_HOURS),
+        )
+        db.add(batch)
+        await db.flush()
+
+        for index, (upload, content, mime_type) in enumerate(validated_uploads):
+            item = UploadBatchFile(
+                batch_id=batch.id,
+                client_reference=f"{index + 1}:{upload.filename or 'file'}",
+                original_filename=upload.filename or "file",
+                mime_type=mime_type,
+                file_size=len(content),
+                bytes_received=len(content),
+                checksum_sha256=hashlib.sha256(content).hexdigest(),
+                target_entity_type=None,
+                target_entity_id=None,
+                target_role=target_role,
+                display_order=index,
+                status="processing",
+                attempts=1,
+            )
+            db.add(item)
+            await db.flush()
+            media = await MediaService.upload(
+                db,
+                file=upload,
+                folder_id=folder_id,
+                uploaded_by_id=actor_id,
+                is_public=is_public,
+            )
+            media.is_processed = False
+            if media.file_hash != item.checksum_sha256:
+                raise HTTPException(status_code=400, detail=f"{upload.filename}: checksum mismatch")
+            item.media_id = media.id
+
+            # Delay dispatch slightly so the request transaction can commit.
+            from ..tasks.media import process_upload_file
+
+            process_upload_file.apply_async(args=[str(item.id)], countdown=1)
+        await db.flush()
+        return batch
+
     @classmethod
     async def create(
         cls,
@@ -158,18 +269,7 @@ class UploadBatchService:
             resolved_scope_id=target_school_id or resolved_id,
         )
 
-        validated_uploads: list[tuple[UploadFile, bytes, str]] = []
-        for upload in uploads:
-            content = await upload.read(settings.MAX_UPLOAD_MB * 1024 * 1024 + 1)
-            await upload.seek(0)
-            if len(content) > settings.MAX_UPLOAD_MB * 1024 * 1024:
-                raise HTTPException(status_code=413, detail=f"{upload.filename} exceeds upload limit")
-            mime_type = upload.content_type or "application/octet-stream"
-            try:
-                validate_file_signature(mime_type, content[:16])
-            except ValueError as exc:
-                raise HTTPException(status_code=400, detail=f"{upload.filename}: {exc}") from exc
-            validated_uploads.append((upload, content, mime_type))
+        validated_uploads = await cls._validate_uploads(uploads)
 
         batch = UploadBatch(
             school_id=school_id,

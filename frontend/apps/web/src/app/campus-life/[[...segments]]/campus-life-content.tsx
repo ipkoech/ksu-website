@@ -1660,7 +1660,7 @@ export function CampusLifeContent({
     <PageShell>
       <AboutPageLenis>
         {area === "landing" ? (
-          <CampusLifeStoryLanding />
+          <CampusLifeStoryLanding testimonials={data.testimonials ?? []} />
         ) : (
           <>
             <Hero

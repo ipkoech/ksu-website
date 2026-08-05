@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight, ChevronDown, Quote } from "lucide-react";
+import type { Testimonial } from "@ksu/api-client";
 import { cn } from "@ksu/ui/lib/utils";
+import { publicFileUrl } from "@/lib/public-media";
 import { ImageCurtainReveal } from "@/components/about/image-curtain-reveal";
 import { SectionFadeIn } from "@/components/home/section-fade-in";
 import { Reveal, RevealGroup } from "@/components/home/motion-reveal";
@@ -16,7 +18,11 @@ import {
   type StudentLifeStoryCard,
 } from "@/components/campus-life/student-life-content";
 
-export function CampusLifeStoryLanding() {
+export function CampusLifeStoryLanding({
+  testimonials = [],
+}: {
+  testimonials?: Testimonial[];
+}) {
   return (
     <div className="bg-white">
       <StoryHero />
@@ -26,6 +32,7 @@ export function CampusLifeStoryLanding() {
           <StoryChapter key={category.id} category={category} index={index} />
         ))}
       </div>
+      <StudentVoices testimonials={testimonials} />
       <ClosingGallery />
     </div>
   );
@@ -279,6 +286,96 @@ function StoryCard({
         />
       </span>
     </Link>
+  );
+}
+
+/* -------------------------- Student voices ------------------------- */
+
+function testimonialTypeLabel(value?: string | null) {
+  const type = (value ?? "").toLowerCase();
+  if (type === "alumni") return "Alumni voice";
+  if (type === "staff") return "Staff voice";
+  return "Student voice";
+}
+
+function testimonialInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+}
+
+function TestimonialCard({ item }: { item: Testimonial }) {
+  const photoUrl = publicFileUrl(item.photo_id);
+  return (
+    <figure className="flex h-full flex-col rounded-2xl border border-border bg-white p-6 shadow-sm">
+      <Quote aria-hidden className="h-6 w-6 text-secondary" />
+      <blockquote className="mt-4 flex-1 text-sm leading-7 text-foreground/85">
+        &ldquo;{item.quote}&rdquo;
+      </blockquote>
+      <figcaption className="mt-6 flex items-center gap-3 border-t border-border pt-4">
+        {photoUrl ? (
+          <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-accent">
+            <PublicImage
+              src={photoUrl}
+              alt={item.name}
+              ratio="fill"
+              sizes="44px"
+              className="absolute inset-0 h-full w-full"
+              imageClassName="object-cover"
+            />
+          </span>
+        ) : (
+          <span
+            aria-hidden
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary"
+          >
+            {testimonialInitials(item.name)}
+          </span>
+        )}
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold text-foreground">
+            {item.name}
+          </span>
+          <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
+            {item.role ?? testimonialTypeLabel(item.testimonial_type)}
+          </span>
+        </span>
+      </figcaption>
+    </figure>
+  );
+}
+
+function StudentVoices({ testimonials }: { testimonials: Testimonial[] }) {
+  if (!testimonials.length) return null;
+  return (
+    <section className="border-b border-border bg-surface-subtle py-12 lg:py-16">
+      <SectionFadeIn className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <div className="max-w-2xl">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+            Student voices
+          </p>
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-bold leading-tight text-primary sm:text-3xl">
+            Told by the people who live it
+          </h2>
+          <p className="mt-3 max-w-xl text-base leading-7 text-muted-foreground">
+            Students, alumni, and staff on what everyday life at Kisii
+            University actually feels like.
+          </p>
+        </div>
+        <RevealGroup
+          variant="fade-up"
+          staggerDelay={120}
+          className="mt-10 grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
+        >
+          {testimonials.slice(0, 6).map((item) => (
+            <TestimonialCard key={item.id} item={item} />
+          ))}
+        </RevealGroup>
+      </SectionFadeIn>
+    </section>
   );
 }
 

@@ -3,7 +3,11 @@
 import Image from "next/image";
 import { useId, useMemo, useRef, useState, type DragEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { mediaApi, type MediaUploadOptions } from "@ksu/api-client";
+import {
+  corporatePortalApi,
+  mediaApi,
+  type CorporateUploadBatch,
+} from "@ksu/api-client";
 import {
   ArrowDown,
   ArrowUp,
@@ -23,9 +27,6 @@ import {
   Button,
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -51,7 +52,26 @@ type PendingFile = {
   status: "pending" | "uploading" | "completed" | "failed";
   error?: string;
   mediaId?: string;
+  /** Server-side upload batch this file belongs to (set after createBatch). */
+  batchId?: string;
+  /** Server-side batch file id, used for polling status and server retry. */
+  serverFileId?: string;
+  bytesReceived?: number;
 };
+
+type FileMeta = {
+  key: string;
+  title: string;
+  altText: string;
+  description: string;
+  isPublic: boolean;
+  applied: boolean;
+};
+
+const POLL_INTERVAL_MS = 1000;
+const MAX_POLL_ERRORS = 8;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 type DropZoneState = "idle" | "dragging" | "uploading" | "partial-failure";
 
@@ -94,6 +114,7 @@ export function MediaBatchUploaderDialog({
   onOpenChange,
   queryKey,
   folderId,
+  onComplete,
 }: MediaBatchUploaderProps & {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -121,10 +142,20 @@ export function MediaBatchUploaderDialog({
     [items],
   );
 
-  // Honest progress: the upload client cannot report byte-level progress, so
-  // the overall bar tracks settled files (completed + failed) out of the total.
+  // Real progress: while a server batch is processing, the overall bar tracks
+  // server-reported bytes; otherwise it falls back to settled files.
   const settledCount = completedCount + failedCount;
-  const overall = items.length ? (settledCount / items.length) * 100 : 0;
+  const [serverProgress, setServerProgress] = useState<{
+    received: number;
+    total: number;
+  } | null>(null);
+  const fileMetaRef = useRef<Map<string, FileMeta>>(new Map());
+  const overall =
+    uploading && serverProgress && serverProgress.total > 0
+      ? (serverProgress.received / serverProgress.total) * 100
+      : items.length
+        ? (settledCount / items.length) * 100
+        : 0;
 
   const dropZoneState: DropZoneState = useMemo(() => {
     if (uploading) return "uploading";
@@ -186,71 +217,180 @@ export function MediaBatchUploaderDialog({
     });
   };
 
-  const uploadOne = async (item: PendingFile): Promise<void> => {
-    patch(item.key, { status: "uploading", error: undefined });
+  // Apply per-file metadata (frozen once the upload starts) to the media row
+  // the server created for a completed batch file.
+  const applyMetadata = async (meta: FileMeta, mediaId: string) => {
+    if (meta.applied) return;
+    meta.applied = true;
+    if (!meta.title && !meta.altText && !meta.description && !meta.isPublic) {
+      return;
+    }
     try {
-      const options: MediaUploadOptions = {
-        folderId: folderId || undefined,
-        isPublic: item.isPublic,
-      };
+      await mediaApi.update(mediaId, {
+        title: meta.title || null,
+        alt_text: meta.altText || null,
+        description: meta.description || null,
+        is_public: meta.isPublic,
+      });
+    } catch {
+      // Metadata is best-effort; the upload itself already succeeded.
+    }
+  };
 
-      const result = await mediaApi.upload(item.file, options);
-      const media = result.data;
-
-      // Update metadata if title/alt/description provided
-      if (item.title || item.altText || item.description) {
-        await mediaApi.update(media.id, {
-          title: item.title || null,
-          alt_text: item.altText || null,
-          description: item.description || null,
-        });
+  // Poll the server batch until it settles, reflecting real per-file
+  // bytes/status into the row list. Returns the last observed batch.
+  const pollBatch = async (
+    batchId: string,
+  ): Promise<CorporateUploadBatch | null> => {
+    let lastBatch: CorporateUploadBatch | null = null;
+    let pollErrors = 0;
+    for (;;) {
+      let batch: CorporateUploadBatch;
+      try {
+        batch = (await corporatePortalApi.media.getBatch(batchId)).data;
+        pollErrors = 0;
+      } catch {
+        pollErrors += 1;
+        if (pollErrors >= MAX_POLL_ERRORS) break;
+        await sleep(POLL_INTERVAL_MS * 1.5);
+        continue;
       }
+      lastBatch = batch;
+      for (const file of batch.files) {
+        const meta = fileMetaRef.current.get(file.id);
+        if (!meta) continue;
+        if (file.status === "completed" && file.media_id) {
+          await applyMetadata(meta, file.media_id);
+          patch(meta.key, {
+            status: "completed",
+            mediaId: file.media_id,
+            bytesReceived: file.bytes_received,
+            error: undefined,
+          });
+        } else if (file.status === "failed") {
+          patch(meta.key, {
+            status: "failed",
+            error: file.error || "Upload processing failed",
+          });
+        } else {
+          patch(meta.key, {
+            status: "uploading",
+            bytesReceived: file.bytes_received,
+          });
+        }
+      }
+      setServerProgress({
+        received: batch.received_bytes,
+        total: batch.total_bytes,
+      });
+      if (batch.status !== "pending" && batch.status !== "processing") break;
+      await sleep(POLL_INTERVAL_MS);
+    }
+    return lastBatch;
+  };
 
-      patch(item.key, {
-        status: "completed",
-        mediaId: media.id,
-      });
+  // One createBatch call for the whole selection, then poll for real progress.
+  const runBatch = async (
+    targets: PendingFile[],
+  ): Promise<CorporateUploadBatch | null> => {
+    if (!targets.length) return null;
+    targets.forEach((item) =>
+      patch(item.key, { status: "uploading", error: undefined }),
+    );
+    let batch: CorporateUploadBatch;
+    try {
+      const created = await corporatePortalApi.media.createBatch(
+        targets.map((item) => item.file),
+        { folderId: folderId || undefined },
+      );
+      batch = created.data;
     } catch (caught) {
-      patch(item.key, {
-        status: "failed",
-        error: caught instanceof Error ? caught.message : "Upload failed",
+      const message =
+        caught instanceof Error ? caught.message : "Upload failed";
+      targets.forEach((item) =>
+        patch(item.key, { status: "failed", error: message }),
+      );
+      return null;
+    }
+    // Server files keep the submitted order (display_order === index).
+    batch.files.forEach((file, index) => {
+      const item = targets[index];
+      if (!item) return;
+      patch(item.key, { batchId: batch.id, serverFileId: file.id });
+      fileMetaRef.current.set(file.id, {
+        key: item.key,
+        title: item.title,
+        altText: item.altText,
+        description: item.description,
+        isPublic: item.isPublic,
+        applied: false,
       });
+    });
+    return pollBatch(batch.id);
+  };
+
+  const toastBatchResult = (batch: CorporateUploadBatch | null) => {
+    if (!batch) return;
+    if (batch.failed_files === 0 && batch.completed_files > 0) {
+      toast.success(`${batch.completed_files} file(s) uploaded successfully`);
+    } else if (batch.failed_files > 0) {
+      toast.info(`Upload complete with ${batch.failed_files} failure(s)`);
     }
   };
 
   const uploadAll = async () => {
     setUploading(true);
+    setServerProgress(null);
     const pending = items.filter((item) => item.status === "pending");
-    // Upload concurrently with a concurrency limit of 3
-    const concurrency = 3;
-    for (let i = 0; i < pending.length; i += concurrency) {
-      const batch = pending.slice(i, i + concurrency);
-      await Promise.allSettled(batch.map(uploadOne));
-    }
+    const batch = await runBatch(pending);
     await queryClient.invalidateQueries({ queryKey });
     setUploading(false);
-
-    // Recount after upload
-    const completed = items.filter((i) => i.status === "completed").length + pending.filter((p) => items.find((i) => i.key === p.key)?.status === "completed").length;
-    const failed = items.filter((i) => i.status === "failed").length;
-
-    if (failed === 0 && completed > 0) {
-      toast.success(`${completed} file(s) uploaded successfully`);
-    } else if (failed > 0) {
-      toast.info(`Upload complete with ${failed} failure(s)`);
-    }
+    setServerProgress(null);
+    toastBatchResult(batch);
+    if (batch && batch.failed_files === 0) onComplete?.();
   };
 
   const retryFailed = async () => {
     const failed = items.filter((item) => item.status === "failed");
     if (!failed.length) return;
     setUploading(true);
-    for (const item of failed) {
-      patch(item.key, { status: "pending", error: undefined });
+    setServerProgress(null);
+
+    // Files the server already knows about are retried server-side.
+    const byBatch = new Map<string, PendingFile[]>();
+    failed
+      .filter((item) => item.batchId && item.serverFileId)
+      .forEach((item) => {
+        const group = byBatch.get(item.batchId as string) ?? [];
+        group.push(item);
+        byBatch.set(item.batchId as string, group);
+      });
+    let lastBatch: CorporateUploadBatch | null = null;
+    for (const [batchId, group] of byBatch) {
+      const retried = await Promise.allSettled(
+        group.map((item) =>
+          corporatePortalApi.media.retryFile(batchId, item.serverFileId as string),
+        ),
+      );
+      group.forEach((item, index) => {
+        const outcome = retried[index];
+        if (outcome?.status === "fulfilled") {
+          patch(item.key, { status: "uploading", error: undefined });
+        }
+      });
+      if (retried.some((outcome) => outcome.status === "fulfilled")) {
+        lastBatch = await pollBatch(batchId);
+      }
     }
-    await Promise.allSettled(failed.map(uploadOne));
+
+    // Files that never reached the server go through a fresh batch.
+    const clientFailed = failed.filter((item) => !item.serverFileId);
+    const freshBatch = await runBatch(clientFailed);
+
     await queryClient.invalidateQueries({ queryKey });
     setUploading(false);
+    setServerProgress(null);
+    toastBatchResult(freshBatch ?? lastBatch);
   };
 
   const removeItem = (key: string) => {
@@ -528,15 +668,32 @@ export function MediaBatchUploaderDialog({
                           <span className="hidden truncate sm:inline">- {item.file.name}</span>
                         </div>
                       </div>
-                      {/* Honest per-file state: the client cannot stream upload
-                          progress, so uploading shows an indeterminate bar. */}
+                      {/* Real per-file state: while processing, the bar tracks
+                          server-reported bytes for this file. */}
                       <div
                         className="h-1.5 w-full overflow-hidden rounded-full bg-muted sm:col-span-2"
                         role="status"
                         aria-label={`${item.file.name} upload status: ${item.status}`}
                       >
                         {item.status === "uploading" ? (
-                          <div className="h-full w-full animate-pulse rounded-full bg-primary/60" />
+                          <div
+                            className="h-full animate-pulse rounded-full bg-primary/60 transition-[width] duration-300"
+                            style={{
+                              width: `${
+                                item.file.size > 0
+                                  ? Math.max(
+                                      8,
+                                      Math.min(
+                                        100,
+                                        ((item.bytesReceived ?? 0) /
+                                          item.file.size) *
+                                          100,
+                                      ),
+                                    )
+                                  : 100
+                              }%`,
+                            }}
+                          />
                         ) : item.status === "completed" ? (
                           <div className="h-full w-full rounded-full bg-emerald-500" />
                         ) : item.status === "failed" ? (

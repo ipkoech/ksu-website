@@ -2577,7 +2577,7 @@ List Admin Sliders
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `slider_group_id` (query, string | null), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `status` (query, string | null), `search` (query, string | null), `record_state` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `slider_group_id` (query, string | null), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_main` (query, boolean | null), `status` (query, string | null), `workflow_status` (query, string | null), `is_active` (query, boolean | null), `search` (query, string | null), `record_state` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/sliders/groups`
@@ -2597,6 +2597,17 @@ Create Slider Group
 - Request body: SliderGroupCreate
 - Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/sliders/groups/admin`
+
+List Admin Slider Groups
+
+Admin listing of slider groups: includes inactive and non-public groups.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `is_active` (query, boolean | null), `is_public` (query, boolean | null), `is_main` (query, boolean | null), `scope_type` (query, string | null), `scope_id` (query, string | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/sliders/groups/id/{group_id}`
 
@@ -2791,6 +2802,33 @@ Return server-derived capabilities and navigation for the portal.
 - Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
+### `POST /api/v1/corporate-communication-portal/media/batches`
+
+Create Media Batch
+
+- Auth: HTTPBearer
+- Request body: Body_create_media_batch_api_v1_corporate_communication_portal_media_batches_post
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/corporate-communication-portal/media/batches/{batch_id}`
+
+Get Media Batch
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `batch_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/corporate-communication-portal/media/batches/{batch_id}/files/{file_id}/retry`
+
+Retry Media File
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `batch_id` (path, string), `file_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ## Documents
 
 ### `GET /api/v1/documents`
@@ -2817,7 +2855,7 @@ List Admin Documents
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `document_type` (query, string | null), `category` (query, string | null), `scope_type` (query, string | null), `scope_id` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `document_type` (query, string | null), `category` (query, string | null), `scope_type` (query, string | null), `scope_id` (query, string | null), `is_public` (query, boolean | null), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/documents/{item_id}`
@@ -2864,6 +2902,20 @@ Create Policy
 - Request body: PolicyCreate
 - Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
+
+### `GET /api/v1/policies/admin`
+
+List Admin Policies
+
+Admin register listing: drafts and archived policies included.
+
+The permission check runs in the function body (not as a dependency) so the
+CSV export path, which calls this endpoint directly, is gated too.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `category` (query, string | null), `division_id` (query, string | null), `department_id` (query, string | null), `status` (query, string | null), `is_public` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `PATCH /api/v1/policies/{item_id}`
 
@@ -3732,7 +3784,18 @@ List Newsletter Subscribers
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `status` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `status` (query, string | null), `q` (query, string | null), `is_verified` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/newsletters/subscribers/{item_id}/unsubscribe`
+
+Unsubscribe Newsletter Subscriber Admin
+
+Honor unsubscribe requests received out-of-band (phone or email).
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/newsletters/unsubscribe`
@@ -3742,6 +3805,17 @@ Unsubscribe Newsletter
 - Auth: public
 - Request body: -
 - Parameters: `email` (query, string)
+- Success response: 200 -
+
+### `GET /api/v1/newsletters/unsubscribe/{token}`
+
+Unsubscribe Newsletter By Token
+
+One-click unsubscribe used by the link embedded in every newsletter email.
+
+- Auth: public
+- Request body: -
+- Parameters: `token` (path, string)
 - Success response: 200 -
 
 ### `PATCH /api/v1/newsletters/{item_id}`
@@ -3761,6 +3835,33 @@ Delete Newsletter
 - Request body: -
 - Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
+
+### `POST /api/v1/newsletters/{item_id}/cancel-schedule`
+
+Cancel Newsletter Schedule
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/newsletters/{item_id}/schedule`
+
+Schedule Newsletter Send
+
+- Auth: HTTPBearer
+- Request body: NewsletterScheduleRequest
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/newsletters/{item_id}/send`
+
+Send Newsletter Now
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ### `GET /api/v1/newsletters/{slug}`
 
@@ -4007,7 +4108,7 @@ List Media
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `folder_id` (query, string | null), `media_type` (query, string | null), `uploaded_by_id` (query, string | null), `entity_type` (query, string | null), `entity_id` (query, string | null), `role` (query, string | null), `search` (query, string | null), `record_state` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `folder_id` (query, string | null), `media_type` (query, string | null), `uploaded_by_id` (query, string | null), `entity_type` (query, string | null), `entity_id` (query, string | null), `role` (query, string | null), `is_public` (query, boolean | null), `search` (query, string | null), `record_state` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/media/folders`
@@ -4061,7 +4162,7 @@ List Media Links
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `entity_type` (query, string), `entity_id` (query, string), `role` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `entity_type` (query, string | null), `entity_id` (query, string | null), `media_id` (query, string | null), `role` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/media/links`
@@ -5778,6 +5879,17 @@ List Managed Clubs
 - Parameters: `club_id` (query, string | null), `page` (query, integer), `per_page` (query, integer), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
+### `GET /api/v1/clubs/review`
+
+List Clubs For Review
+
+List every club (public and hidden) for central CoCMS review.
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page` (query, integer), `per_page` (query, integer), `q` (query, string | null), `club_type` (query, string | null), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ### `PATCH /api/v1/clubs/stories/{story_id}`
 
 Update Club Story
@@ -6683,7 +6795,7 @@ Transition Content
 
 ## Schemas
 
-Generated component schemas: `254`
+Generated component schemas: `256`
 
 ### `AboutPageContentCreate`
 
@@ -7333,6 +7445,12 @@ Generated component schemas: `254`
 - `status`: `string | null` (optional)
 - `vice_chairperson_id`: `string | null` (optional)
 - `vision`: `string | null` (optional)
+
+### `Body_create_media_batch_api_v1_corporate_communication_portal_media_batches_post`
+
+- `files`: `array<string>` (required)
+- `folder_id`: `string | null` (optional)
+- `is_public`: `boolean` (optional)
 
 ### `Body_create_media_batch_api_v1_school_portal_media_batches_post`
 
@@ -8423,7 +8541,7 @@ Generated component schemas: `254`
 - `parent_id`: `string | null` (optional)
 - `scope_id`: `string | null` (optional)
 - `scope_type`: `string | null` (optional)
-- `slug`: `string` (required)
+- `slug`: `string | null` (optional)
 
 ### `MediaFolderUpdate`
 
@@ -8558,13 +8676,14 @@ Generated component schemas: `254`
 - `pdf_file_id`: `string | null` (optional)
 - `published_at`: `string | null` (optional)
 - `scheduled_send_at`: `string | null` (optional)
-- `send_error`: `string | null` (optional)
-- `send_status`: `string` (optional)
-- `sent_at`: `string | null` (optional)
 - `slug`: `string | null` (optional)
 - `status`: `string` (optional)
 - `summary`: `string | null` (optional)
 - `title`: `string` (required)
+
+### `NewsletterScheduleRequest`
+
+- `scheduled_send_at`: `string` (required)
 
 ### `NewsletterSubscriberCreate`
 
@@ -8582,9 +8701,6 @@ Generated component schemas: `254`
 - `pdf_file_id`: `string | null` (optional)
 - `published_at`: `string | null` (optional)
 - `scheduled_send_at`: `string | null` (optional)
-- `send_error`: `string | null` (optional)
-- `send_status`: `string | null` (optional)
-- `sent_at`: `string | null` (optional)
 - `slug`: `string | null` (optional)
 - `status`: `string | null` (optional)
 - `summary`: `string | null` (optional)

@@ -696,6 +696,17 @@ const testimonialFields = [
     type: "entity" as const,
     relation: { adapter: "programme" as const, allowClear: true },
   },
+  {
+    name: "photo_id",
+    label: "Photo",
+    type: "media" as const,
+    media: {
+      mediaType: "image",
+      accept: "image/*",
+      uploadEntityType: "testimonial",
+      uploadRole: "photo",
+    },
+  },
   { name: "video_url", label: "Video URL", type: "url" as const },
   { name: "display_order", label: "Display Order", type: "number" as const },
   { name: "is_featured", label: "Featured", type: "boolean" as const },

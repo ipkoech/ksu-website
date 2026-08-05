@@ -11,6 +11,7 @@ import {
   Download,
   ExternalLink,
   GraduationCap,
+  Quote,
   ReceiptText,
   Users,
 } from "lucide-react";
@@ -701,6 +702,83 @@ function ApplicationSupport() {
   );
 }
 
+function voiceInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+}
+
+function voiceTypeLabel(value?: string | null) {
+  const type = present(value)?.toLowerCase();
+  if (type === "alumni") return "Alumni voice";
+  if (type === "staff") return "Staff voice";
+  return "Student voice";
+}
+
+function ProgrammeVoices({
+  testimonials,
+}: {
+  testimonials: ProgrammeDetailData["testimonials"];
+}) {
+  if (!testimonials.length) return null;
+  return (
+    <section className="mt-4 rounded-[1.5rem] border border-primary/10 bg-primary/[0.04] p-5 shadow-sm sm:p-6">
+      <SectionKicker>Student voices</SectionKicker>
+      <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold text-primary">
+        From students and graduates of this school
+      </h2>
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {testimonials.slice(0, 3).map((item) => {
+          const photoUrl = publicFileUrl(item.photo_id);
+          return (
+            <figure
+              key={item.id}
+              className="flex min-w-0 flex-col rounded-2xl border border-border bg-white p-5 shadow-sm"
+            >
+              <Quote aria-hidden className="h-5 w-5 text-secondary" />
+              <blockquote className="mt-3 flex-1 text-sm leading-6 text-foreground/85">
+                &ldquo;{item.quote}&rdquo;
+              </blockquote>
+              <figcaption className="mt-4 flex items-center gap-3 border-t border-border pt-4">
+                {photoUrl ? (
+                  <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-primary/10">
+                    <PublicImage
+                      src={photoUrl}
+                      alt={item.name}
+                      ratio="fill"
+                      sizes="40px"
+                      className="absolute inset-0 h-full w-full"
+                      imageClassName="object-cover"
+                    />
+                  </span>
+                ) : (
+                  <span
+                    aria-hidden
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary"
+                  >
+                    {voiceInitials(item.name)}
+                  </span>
+                )}
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-foreground">
+                    {item.name}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    {item.role ?? voiceTypeLabel(item.testimonial_type)}
+                  </span>
+                </span>
+              </figcaption>
+            </figure>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function RelatedProgrammes({
   programmes,
 }: {
@@ -864,6 +942,8 @@ export function ProgrammeDetailPage({ data }: { data: ProgrammeDetailData }) {
               <ApplicationSupport />
             </aside>
           </div>
+
+          <ProgrammeVoices testimonials={data.testimonials} />
 
           <RelatedProgrammes programmes={data.relatedProgrammes} />
         </section>
