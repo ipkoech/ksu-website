@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { resolveMainMediaUrl } from "@ksu/api-client";
+import { getMainApiBaseUrl, resolveMainMediaUrl } from "@ksu/api-client";
 
 type PublicMediaResponse = {
   data?: {
@@ -10,7 +10,7 @@ type PublicMediaResponse = {
   };
 };
 
-const mainApiBaseUrl = (process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000").replace(/\/$/, "");
+const mainApiBaseUrl = getMainApiBaseUrl();
 
 function resolveMediaTarget(media: PublicMediaResponse["data"]) {
   return (

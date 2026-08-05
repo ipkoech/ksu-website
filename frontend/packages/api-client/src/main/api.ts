@@ -1,10 +1,13 @@
 import { mainApi } from "../client";
 import { getStoredAccessToken } from "../auth-tokens";
+import { getMainApiBaseUrl } from "../service-urls";
 import type {
   User,
   MyProfile,
   MyProfileUpdatePayload,
   PortalAccessResponse,
+  UserPreferencesResponse,
+  UserPreferencesUpdatePayload,
   Person,
   PersonCreatePayload,
   PersonStatusFilter,
@@ -23,9 +26,11 @@ import type {
   Board,
   BoardMemberCreatePayload,
   School,
+  NavigationData,
   Division,
   Wing,
   Department,
+  DepartmentService,
   Programme,
   Club,
   Accommodation,
@@ -36,12 +41,33 @@ import type {
   AlumniAssociation,
   Document,
   Intake,
+  IntakeHomepageAdmission,
+  IntakeHomepageAdmissionUpdate,
   AcademicCalendar,
+  AdmissionDocument,
+  AdmissionFaq,
   AdmissionInfo,
+  AdmissionPageSection,
+  AdmissionPathway,
+  AdmissionRequirement,
   News,
   Blog,
+  Story,
+  StoryContributorAccountRequest,
+  StoryContributorAccountRequestPayload,
+  StorySubmissionPayload,
   Event,
   Announcement,
+  ContentWorkflowAction,
+  ContentWorkflowActionPayload,
+  ContentWorkflowActionResult,
+  ContentWorkflowBulkAction,
+  ContentWorkflowBulkItem,
+  ContentWorkflowBulkItemResult,
+  ContentWorkflowLog,
+  ContentWorkflowQueueFilters,
+  ContentWorkflowQueueMeta,
+  ContentWorkflowQueueItem,
   SliderGroup,
   Slider,
   Media,
@@ -49,7 +75,16 @@ import type {
   MediaLink,
   FAQ,
   ContactDirectory,
+  ContactDirectoryListParams,
+  ContactOwnerOption,
+  ContactOwnerScopeType,
+  PublicContactDirectory,
+  PublicContactDirectoryParams,
   Testimonial,
+  Newsletter,
+  NewsletterSubscriber,
+  Policy,
+  ProgrammeFeeStructure,
   Role,
   Permission,
   UniversityInfo,
@@ -58,8 +93,11 @@ import type {
   AnalyticsEventPayload,
   ApiKey,
   ContentReport,
+  CorporateDashboardParams,
+  CorporateDashboardResponse,
   ImportCommitRequest,
   ImportCommitResult,
+  ImportJob,
   ImportPreview,
   ImportResource,
   Setting,
@@ -75,18 +113,47 @@ import type {
   MediaUpdatePayload,
   MediaUploadOptions,
   PaginatedResponse,
+  PortalStatsResponse,
   PublicStatsResponse,
+  PublicResearchContextResponse,
+  PublicResearchContextUpdatePayload,
+  PublicTeamResponse,
+  PublicEntityContent,
+  PublicEntityContentType,
+  PublicEntityTeam,
+  PublicEntityType,
+  VcGalleryAlbum,
+  VcGalleryPayload,
+  VcHub,
+  VcHubPlacement,
+  VcHubUpdatePayload,
+  VcListResponse,
+  VcPlacementPayload,
+  VcPortrait,
+  VcPortraitPayload,
+  VcPublicGallery,
+  VcPublicHub,
+  VcPublicSpeech,
+  VcSpeech,
+  VcSpeechPayload,
+  VcSpeechVideoLink,
+  VcVideo,
+  VcVideoPayload,
+  VcWorkflowAction,
+  VcGalleryMediaLink,
+  UserNotification,
+  UserNotificationPreferences,
 } from "./types";
-import type { FieldSelectionParams, QueryParams } from "../client";
+import type { FetchCacheOptions, FieldSelectionParams, QueryParams } from "../client";
 
 type ListParams<
-  T extends Record<string, string | number | boolean | undefined> = Record<
-    string,
-    string | number | boolean | undefined
-  >,
+  T extends Partial<Record<keyof T, string | number | boolean | undefined>> =
+    Record<string, string | number | boolean | undefined>,
 > = QueryParams & T;
-const MAIN_API_BASE_URL =
-  process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000";
+type EventFieldSelectionParams = FieldSelectionParams & {
+  include_scope?: boolean;
+};
+const MAIN_API_BASE_URL = getMainApiBaseUrl();
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -106,7 +173,11 @@ export function resolveMainMediaUrl(value?: string | null): string | undefined {
     path = path.replace(/^\/uploads\/uploads\//, "/uploads/");
   }
 
-  return new URL(path, MAIN_API_BASE_URL).toString();
+  // Server-side API calls use the Docker-internal hostname, but media URLs
+  // are rendered into the browser and must use the public API/gateway host.
+  const publicMediaBaseUrl =
+    process.env.NEXT_PUBLIC_MAIN_API_URL || MAIN_API_BASE_URL;
+  return new URL(path, publicMediaBaseUrl).toString();
 }
 
 async function parseImportResponse<T>(response: Response): Promise<T> {
@@ -177,6 +248,33 @@ export const statsApi = {
   ) => mainApi.get<{ data: PublicStatsResponse }>("/api/v1/stats", params),
   admin: () =>
     mainApi.get<{ data: PublicStatsResponse }>("/api/v1/stats/admin"),
+  portal: (
+    portal:
+      | "admin"
+      | "corporate-communication"
+      | "schools"
+      | "departments"
+      | "research"
+      | "library",
+  ) =>
+    mainApi.get<{ data: PortalStatsResponse }>(
+      `/api/v1/stats/portal/${portal}`,
+    ),
+  corporateDashboard: (params?: CorporateDashboardParams) =>
+    mainApi.get<{ data: CorporateDashboardResponse }>(
+      "/api/v1/stats/portal/corporate-communication/dashboard",
+      params ? { ...params } : undefined,
+    ),
+  corporateDashboardExportUrl: (params?: CorporateDashboardParams) => {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(params ?? {})) {
+      if (value !== undefined && value !== null && value !== "") {
+        query.set(key, String(value));
+      }
+    }
+    const suffix = query.toString();
+    return `${MAIN_API_BASE_URL}/api/v1/stats/portal/corporate-communication/dashboard/export${suffix ? `?${suffix}` : ""}`;
+  },
 };
 
 // Users
@@ -205,7 +303,19 @@ export const myProfileApi = {
 };
 
 export const portalAccessApi = {
-  get: () => mainApi.get<{ data: PortalAccessResponse }>("/api/v1/me/portal-access"),
+  get: () =>
+    mainApi.get<{ data: PortalAccessResponse }>("/api/v1/me/portal-access"),
+};
+
+export const userPreferencesApi = {
+  get: () =>
+    mainApi.get<{ data: UserPreferencesResponse }>("/api/v1/me/preferences"),
+
+  update: (data: UserPreferencesUpdatePayload) =>
+    mainApi.patch<{ data: UserPreferencesResponse }>(
+      "/api/v1/me/preferences",
+      data,
+    ),
 };
 
 // Persons
@@ -257,7 +367,7 @@ export const personsApi = {
     formData.append("file", file);
     const token = getStoredAccessToken();
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000"}/api/v1/persons/${id}/photo`,
+      `${MAIN_API_BASE_URL}/api/v1/persons/${id}/photo`,
       {
         method: "POST",
         credentials: "include",
@@ -276,6 +386,76 @@ export const personsApi = {
     mainApi.delete<{ data: Person }>(`/api/v1/persons/${id}/photo`),
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/persons/${id}`),
+};
+
+export const publicTeamApi = {
+  get: (params: {
+    entity_type:
+      | "university"
+      | "school"
+      | "department"
+      | "division"
+      | "wing"
+      | "directorate"
+      | "board";
+    entity_id?: string;
+  }) =>
+    mainApi.get<{ data: PublicTeamResponse }>("/api/v1/public/team", params),
+};
+
+const publicEntityTeamFields =
+  "entity(id,type,name,slug,department_type),tiers(key,label,members(id,person_id,profile_slug,name,title,position,photo_url,hierarchy_level,display_order)),counts(members,tiers)";
+
+export const publicEntityApi = {
+  schoolTeam: (schoolId: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: PublicEntityTeam }>(
+      `/api/v1/public/schools/${schoolId}/team`,
+      { fields: publicEntityTeamFields, ...params },
+    ),
+
+  departmentTeam: (departmentId: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: PublicEntityTeam }>(
+      `/api/v1/public/departments/${departmentId}/team`,
+      { fields: publicEntityTeamFields, ...params },
+    ),
+
+  content: (
+    entityType: PublicEntityType,
+    entityId: string,
+    params?: FieldSelectionParams & {
+      content_type?: PublicEntityContentType;
+      page?: number;
+      per_page?: number;
+      search?: string;
+    },
+  ) =>
+    mainApi.get<{
+      data: PublicEntityContent;
+      meta?: PublicEntityContent["meta"];
+    }>(`/api/v1/public/content/${entityType}/${entityId}`, params),
+};
+
+export const publicResearchContextApi = {
+  get: (params?: FieldSelectionParams) =>
+    mainApi.get<{ data: PublicResearchContextResponse }>(
+      "/api/v1/public/research/context",
+      params,
+    ),
+
+  update: (
+    data: PublicResearchContextUpdatePayload,
+    params?: FieldSelectionParams,
+  ) =>
+    mainApi.patch<{ data: PublicResearchContextResponse }>(
+      "/api/v1/public/research/context",
+      data,
+      params,
+    ),
+};
+
+// Aggregated public navigation (mega menu)
+export const navigationApi = {
+  get: () => mainApi.get<{ data: NavigationData }>("/api/v1/navigation"),
 };
 
 // Divisions
@@ -599,6 +779,42 @@ export const departmentsApi = {
   delete: (id: string) => mainApi.delete<void>(`/api/v1/departments/${id}`),
 };
 
+// Department Services
+export const departmentServicesApi = {
+  listAdmin: (
+    params?: ListParams<{
+      department_id?: string;
+      search?: string;
+      is_active?: boolean;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<DepartmentService>>(
+      "/api/v1/department-services/admin",
+      params,
+    ),
+
+  get: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: DepartmentService }>(
+      `/api/v1/department-services/${id}`,
+      params,
+    ),
+
+  create: (data: Partial<DepartmentService>) =>
+    mainApi.post<{ data: DepartmentService }>(
+      "/api/v1/department-services",
+      data,
+    ),
+
+  update: (id: string, data: Partial<DepartmentService>) =>
+    mainApi.patch<{ data: DepartmentService }>(
+      `/api/v1/department-services/${id}`,
+      data,
+    ),
+
+  delete: (id: string) =>
+    mainApi.delete<void>(`/api/v1/department-services/${id}`),
+};
+
 // Programmes
 export const programmesApi = {
   list: (
@@ -679,6 +895,142 @@ export const clubsApi = {
     mainApi.get<{ data: unknown[] }>(
       `/api/v1/clubs/${slug}/activities`,
       params,
+    ),
+
+  listManaged: (params?: ListParams<{ club_id?: string }>) =>
+    mainApi.get<PaginatedResponse<Club>>("/api/v1/clubs/managed", params),
+
+  /**
+   * Central CoCMS review listing: every club (public and hidden) for holders
+   * of content.review / content.manage / clubs.view at university scope.
+   */
+  listReview: (
+    params?: ListParams<{
+      q?: string;
+      club_type?: string;
+      is_active?: boolean;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Club>>("/api/v1/clubs/review", params),
+
+  listManagedActivities: (clubId: string) =>
+    mainApi.get<{ data: Record<string, unknown>[] }>(
+      `/api/v1/clubs/id/${clubId}/activities`,
+    ),
+
+  createActivity: (clubId: string, data: Record<string, unknown>) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/id/${clubId}/activities`,
+      data,
+    ),
+
+  updateActivity: (activityId: string, data: Record<string, unknown>) =>
+    mainApi.patch<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/activities/${activityId}`,
+      data,
+    ),
+
+  deleteActivity: (activityId: string) =>
+    mainApi.delete<void>(`/api/v1/clubs/activities/${activityId}`),
+
+  submitActivity: (activityId: string) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/activities/${activityId}/workflow/submit`,
+      {},
+    ),
+
+  listStories: (clubId: string) =>
+    mainApi.get<PaginatedResponse<Record<string, unknown>>>(
+      `/api/v1/clubs/id/${clubId}/stories`,
+    ),
+
+  createStory: (clubId: string, data: Record<string, unknown>) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/id/${clubId}/stories`,
+      data,
+    ),
+
+  updateStory: (storyId: string, data: Record<string, unknown>) =>
+    mainApi.patch<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/stories/${storyId}`,
+      data,
+    ),
+
+  deleteStory: (storyId: string) =>
+    mainApi.delete<void>(`/api/v1/clubs/stories/${storyId}`),
+
+  submitStory: (storyId: string) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/stories/${storyId}/workflow/submit`,
+      {},
+    ),
+
+  listAnnouncements: (clubId: string) =>
+    mainApi.get<PaginatedResponse<Record<string, unknown>>>(
+      `/api/v1/clubs/id/${clubId}/announcements`,
+    ),
+
+  createAnnouncement: (clubId: string, data: Record<string, unknown>) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/id/${clubId}/announcements`,
+      data,
+    ),
+
+  updateAnnouncement: (announcementId: string, data: Record<string, unknown>) =>
+    mainApi.patch<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/announcements/${announcementId}`,
+      data,
+    ),
+
+  deleteAnnouncement: (announcementId: string) =>
+    mainApi.delete<void>(`/api/v1/clubs/announcements/${announcementId}`),
+
+  submitAnnouncement: (announcementId: string) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/announcements/${announcementId}/workflow/submit`,
+      {},
+    ),
+
+  listLeaders: (clubId: string) =>
+    mainApi.get<{ data: Record<string, unknown>[] }>(
+      `/api/v1/clubs/id/${clubId}/leaders`,
+    ),
+
+  listMedia: (clubId: string) =>
+    mainApi.get<{ data: Record<string, unknown>[] }>(
+      `/api/v1/clubs/id/${clubId}/media`,
+    ),
+
+  attachMedia: (clubId: string, data: Record<string, unknown>) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/id/${clubId}/media`,
+      data,
+    ),
+
+  updateMedia: (
+    clubId: string,
+    linkId: string,
+    data: Record<string, unknown>,
+  ) =>
+    mainApi.patch<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/id/${clubId}/media/${linkId}`,
+      data,
+    ),
+
+  transitionMedia: (
+    clubId: string,
+    linkId: string,
+    action: string,
+    data: Record<string, unknown> = {},
+  ) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/id/${clubId}/media/${linkId}/workflow/${action}`,
+      data,
+    ),
+
+  setMediaPublication: (clubId: string, linkId: string, isPublic: boolean) =>
+    mainApi.patch<{ data: Record<string, unknown> }>(
+      `/api/v1/clubs/id/${clubId}/media/${linkId}/publication`,
+      { is_public: isPublic },
     ),
 
   create: (data: Partial<Club>) =>
@@ -891,8 +1243,11 @@ export const documentsApi = {
       category?: string;
       scope_type?: string;
       scope_id?: string;
+      is_public?: boolean;
+      is_active?: boolean;
     }>,
-  ) => mainApi.get<PaginatedResponse<Document>>("/api/v1/documents/admin", params),
+  ) =>
+    mainApi.get<PaginatedResponse<Document>>("/api/v1/documents/admin", params),
 
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Document }>(`/api/v1/documents/${slug}`, params),
@@ -904,6 +1259,40 @@ export const documentsApi = {
     mainApi.patch<{ data: Document }>(`/api/v1/documents/${id}`, data),
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/documents/${id}`),
+};
+
+// Policies
+export const policiesApi = {
+  list: (
+    params?: ListParams<{
+      q?: string;
+      category?: string;
+      division_id?: string;
+      department_id?: string;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Policy>>("/api/v1/policies", params),
+
+  listAdmin: (
+    params?: ListParams<{
+      q?: string;
+      category?: string;
+      division_id?: string;
+      department_id?: string;
+      status?: string;
+      is_public?: boolean;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Policy>>("/api/v1/policies/admin", params),
+
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Policy }>(`/api/v1/policies/${slug}`, params),
+
+  create: (data: Partial<Policy>) =>
+    mainApi.post<{ data: Policy }>("/api/v1/policies", data),
+
+  update: (id: string, data: Partial<Policy>) =>
+    mainApi.patch<{ data: Policy }>(`/api/v1/policies/${id}`, data),
+
+  delete: (id: string) => mainApi.delete<void>(`/api/v1/policies/${id}`),
 };
 
 // Intakes
@@ -923,6 +1312,11 @@ export const intakesApi = {
   get: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Intake }>(`/api/v1/intakes/id/${id}`, params),
 
+  getHomepageAdmission: (id: string) =>
+    mainApi.get<{ data: IntakeHomepageAdmission }>(
+      `/api/v1/intakes/id/${id}/homepage-admission`,
+    ),
+
   getBySlug: (slug: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Intake }>(`/api/v1/intakes/${slug}`, params),
 
@@ -931,6 +1325,12 @@ export const intakesApi = {
 
   update: (id: string, data: Partial<Intake>) =>
     mainApi.patch<{ data: Intake }>(`/api/v1/intakes/${id}`, data),
+
+  updateHomepageAdmission: (id: string, data: IntakeHomepageAdmissionUpdate) =>
+    mainApi.patch<{ data: IntakeHomepageAdmission }>(
+      `/api/v1/intakes/id/${id}/homepage-admission`,
+      data,
+    ),
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/intakes/${id}`),
 };
@@ -1010,6 +1410,171 @@ export const admissionsApi = {
     mainApi.patch<{ data: AdmissionInfo }>(`/api/v1/admissions/${id}`, data),
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/admissions/${id}`),
+
+  listPathways: (params?: ListParams<{ applicant_type?: string }>) =>
+    mainApi.get<PaginatedResponse<AdmissionPathway>>(
+      "/api/v1/admissions/pathways",
+      params,
+    ),
+
+  getPathwayBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: AdmissionPathway }>(
+      `/api/v1/admissions/pathways/${slug}`,
+      params,
+    ),
+
+  createPathway: (data: Partial<AdmissionPathway>) =>
+    mainApi.post<{ data: AdmissionPathway }>(
+      "/api/v1/admissions/pathways",
+      data,
+    ),
+
+  updatePathway: (id: string, data: Partial<AdmissionPathway>) =>
+    mainApi.patch<{ data: AdmissionPathway }>(
+      `/api/v1/admissions/pathways/${id}`,
+      data,
+    ),
+
+  deletePathway: (id: string) =>
+    mainApi.delete<void>(`/api/v1/admissions/pathways/${id}`),
+
+  listRequirements: (
+    params?: ListParams<{
+      programme_id?: string;
+      school_id?: string;
+      intake_id?: string;
+      pathway_id?: string;
+      applicant_type?: string;
+      level?: string;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<AdmissionRequirement>>(
+      "/api/v1/admissions/requirements",
+      params,
+    ),
+
+  createRequirement: (data: Partial<AdmissionRequirement>) =>
+    mainApi.post<{ data: AdmissionRequirement }>(
+      "/api/v1/admissions/requirements",
+      data,
+    ),
+
+  updateRequirement: (id: string, data: Partial<AdmissionRequirement>) =>
+    mainApi.patch<{ data: AdmissionRequirement }>(
+      `/api/v1/admissions/requirements/${id}`,
+      data,
+    ),
+
+  deleteRequirement: (id: string) =>
+    mainApi.delete<void>(`/api/v1/admissions/requirements/${id}`),
+
+  listFeeStructures: (
+    params?: ListParams<{
+      programme_id?: string;
+      intake_id?: string;
+      applicant_type?: string;
+      fee_category?: string;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<ProgrammeFeeStructure>>(
+      "/api/v1/admissions/fee-structures",
+      params,
+    ),
+
+  createFeeStructure: (data: Partial<ProgrammeFeeStructure>) =>
+    mainApi.post<{ data: ProgrammeFeeStructure }>(
+      "/api/v1/admissions/fee-structures",
+      data,
+    ),
+
+  updateFeeStructure: (id: string, data: Partial<ProgrammeFeeStructure>) =>
+    mainApi.patch<{ data: ProgrammeFeeStructure }>(
+      `/api/v1/admissions/fee-structures/${id}`,
+      data,
+    ),
+
+  deleteFeeStructure: (id: string) =>
+    mainApi.delete<void>(`/api/v1/admissions/fee-structures/${id}`),
+
+  listDocuments: (
+    params?: ListParams<{
+      document_type?: string;
+      applicant_type?: string;
+      pathway_id?: string;
+      programme_id?: string;
+      intake_id?: string;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<AdmissionDocument>>(
+      "/api/v1/admissions/documents",
+      params,
+    ),
+
+  getDocumentBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: AdmissionDocument }>(
+      `/api/v1/admissions/documents/${slug}`,
+      params,
+    ),
+
+  createDocument: (data: Partial<AdmissionDocument>) =>
+    mainApi.post<{ data: AdmissionDocument }>(
+      "/api/v1/admissions/documents",
+      data,
+    ),
+
+  updateDocument: (id: string, data: Partial<AdmissionDocument>) =>
+    mainApi.patch<{ data: AdmissionDocument }>(
+      `/api/v1/admissions/documents/${id}`,
+      data,
+    ),
+
+  deleteDocument: (id: string) =>
+    mainApi.delete<void>(`/api/v1/admissions/documents/${id}`),
+
+  listFaqs: (
+    params?: ListParams<{
+      category?: string;
+      applicant_type?: string;
+      pathway_id?: string;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<AdmissionFaq>>(
+      "/api/v1/admissions/faqs",
+      params,
+    ),
+
+  createFaq: (data: Partial<AdmissionFaq>) =>
+    mainApi.post<{ data: AdmissionFaq }>("/api/v1/admissions/faqs", data),
+
+  updateFaq: (id: string, data: Partial<AdmissionFaq>) =>
+    mainApi.patch<{ data: AdmissionFaq }>(
+      `/api/v1/admissions/faqs/${id}`,
+      data,
+    ),
+
+  deleteFaq: (id: string) =>
+    mainApi.delete<void>(`/api/v1/admissions/faqs/${id}`),
+
+  listPageSections: (params?: ListParams<{ page_key?: string }>) =>
+    mainApi.get<PaginatedResponse<AdmissionPageSection>>(
+      "/api/v1/admissions/page-sections",
+      params,
+    ),
+
+  createPageSection: (data: Partial<AdmissionPageSection>) =>
+    mainApi.post<{ data: AdmissionPageSection }>(
+      "/api/v1/admissions/page-sections",
+      data,
+    ),
+
+  updatePageSection: (id: string, data: Partial<AdmissionPageSection>) =>
+    mainApi.patch<{ data: AdmissionPageSection }>(
+      `/api/v1/admissions/page-sections/${id}`,
+      data,
+    ),
+
+  deletePageSection: (id: string) =>
+    mainApi.delete<void>(`/api/v1/admissions/page-sections/${id}`),
 };
 
 // News
@@ -1100,6 +1665,90 @@ export const blogsApi = {
   delete: (id: string) => mainApi.delete<void>(`/api/v1/blogs/id/${id}`),
 };
 
+// Stories
+export const storiesApi = {
+  list: (
+    params?: ListParams<{
+      story_type?: string;
+      category?: string;
+      is_featured?: boolean;
+      search?: string;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Story>>("/api/v1/stories", params),
+
+  listAdmin: (
+    params?: ListParams<{
+      is_published?: boolean;
+      status?: string;
+      workflow_status?: string;
+      story_type?: string;
+      category?: string;
+      contributor_user_id?: string;
+      scheduled_from?: string;
+      scheduled_to?: string;
+      search?: string;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Story>>("/api/v1/stories/admin", params),
+
+  listMine: (
+    params?: ListParams<{
+      workflow_status?: string;
+      search?: string;
+    }>,
+  ) => mainApi.get<PaginatedResponse<Story>>("/api/v1/stories/mine", params),
+
+  get: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Story }>(`/api/v1/stories/id/${id}`, params),
+
+  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Story }>(`/api/v1/stories/${slug}`, params),
+
+  create: (data: Partial<Story>) =>
+    mainApi.post<{ data: Story }>("/api/v1/stories", data),
+
+  submitDraft: (data: StorySubmissionPayload) =>
+    mainApi.post<{ data: Story }>("/api/v1/stories/submissions", data),
+
+  update: (id: string, data: Partial<Story>) =>
+    mainApi.patch<{ data: Story }>(`/api/v1/stories/id/${id}`, data),
+
+  /** Workflow history (reviewer feedback) for a story the caller contributed. */
+  feedback: (id: string) =>
+    mainApi.get<{ data: ContentWorkflowLog[] }>(
+      `/api/v1/stories/id/${id}/feedback`,
+    ),
+
+  delete: (id: string) => mainApi.delete<void>(`/api/v1/stories/id/${id}`),
+
+  requestContributorAccount: (data: StoryContributorAccountRequestPayload) =>
+    mainApi.post<{ data: StoryContributorAccountRequest }>(
+      "/api/v1/stories/account-requests",
+      data,
+    ),
+
+  listContributorAccountRequests: (
+    params?: ListParams<{ status?: string; search?: string }>,
+  ) =>
+    mainApi.get<PaginatedResponse<StoryContributorAccountRequest>>(
+      "/api/v1/stories/account-requests/admin",
+      params,
+    ),
+
+  approveContributorAccountRequest: (id: string) =>
+    mainApi.post<{ data: StoryContributorAccountRequest }>(
+      `/api/v1/stories/account-requests/admin/${id}/approve`,
+    ),
+
+  rejectContributorAccountRequest: (
+    id: string,
+    data: { rejection_reason?: string | null },
+  ) =>
+    mainApi.post<{ data: StoryContributorAccountRequest }>(
+      `/api/v1/stories/account-requests/admin/${id}/reject`,
+      data,
+    ),
+};
+
 // Events
 export const eventsApi = {
   list: (
@@ -1110,6 +1759,7 @@ export const eventsApi = {
       is_published?: boolean;
       upcoming?: boolean;
       search?: string;
+      include_scope?: boolean;
     }>,
   ) => mainApi.get<PaginatedResponse<Event>>("/api/v1/events", params),
 
@@ -1122,13 +1772,14 @@ export const eventsApi = {
       upcoming?: boolean;
       status?: string;
       search?: string;
+      include_scope?: boolean;
     }>,
   ) => mainApi.get<PaginatedResponse<Event>>("/api/v1/events/admin", params),
 
-  get: (id: string, params?: FieldSelectionParams) =>
+  get: (id: string, params?: EventFieldSelectionParams) =>
     mainApi.get<{ data: Event }>(`/api/v1/events/id/${id}`, params),
 
-  getBySlug: (slug: string, params?: FieldSelectionParams) =>
+  getBySlug: (slug: string, params?: EventFieldSelectionParams) =>
     mainApi.get<{ data: Event }>(`/api/v1/events/${slug}`, params),
 
   create: (data: Partial<Event>) =>
@@ -1156,10 +1807,12 @@ export const announcementsApi = {
       is_published?: boolean;
       search?: string;
     }>,
+    cacheOptions?: FetchCacheOptions,
   ) =>
     mainApi.get<PaginatedResponse<Announcement>>(
       "/api/v1/announcements",
       params,
+      cacheOptions,
     ),
 
   listAdmin: (
@@ -1206,6 +1859,100 @@ export const announcementsApi = {
   delete: (id: string) => mainApi.delete<void>(`/api/v1/announcements/${id}`),
 };
 
+export const contentWorkflowApi = {
+  listQueue: (params?: ContentWorkflowQueueFilters) =>
+    mainApi.get<{
+      data: ContentWorkflowQueueItem[];
+      meta?: ContentWorkflowQueueMeta;
+    }>("/api/v1/content-workflow/queue", params),
+
+  action: (
+    item: ContentWorkflowQueueItem,
+    action: ContentWorkflowAction,
+    payload: ContentWorkflowActionPayload = {},
+  ) =>
+    mainApi.post<{ data: ContentWorkflowActionResult }>(
+      item.workflow_action_path.replace("{action}", action),
+      payload,
+    ),
+
+  /**
+   * Runs a workflow transition for a record outside the review queue, where
+   * no queue item (and therefore no workflow_action_path) is available.
+   */
+  actionByType: (
+    contentType: string,
+    contentId: string,
+    action: ContentWorkflowAction,
+    payload: ContentWorkflowActionPayload = {},
+  ) =>
+    mainApi.post<{ data: ContentWorkflowActionResult }>(
+      `/api/v1/content-workflow/${contentType}/${contentId}/${action}`,
+      payload,
+    ),
+
+  logs: (
+    contentType: ContentWorkflowQueueItem["content_type"],
+    contentId: string,
+  ) =>
+    mainApi.get<{ data: ContentWorkflowLog[] }>(
+      `/api/v1/content-workflow/${contentType}/${contentId}/logs`,
+    ),
+
+  /**
+   * Applies one workflow action to many records (max 50). Authorization and
+   * transition failures never fail the whole request; each item reports its
+   * own `{content_id, ok, error}` result.
+   */
+  bulk: (
+    action: ContentWorkflowBulkAction,
+    items: ContentWorkflowBulkItem[],
+    comments?: string,
+  ) =>
+    mainApi.post<{ data: ContentWorkflowBulkItemResult[] }>(
+      "/api/v1/content-workflow/bulk",
+      { action, comments, items },
+    ),
+};
+
+// Record recovery (restore archived / soft-deleted records)
+export const recordRecoveryApi = {
+  restore: (contentType: string, recordId: string) =>
+    mainApi.post<{ data: Record<string, unknown> }>(
+      `/api/v1/records/${contentType}/${recordId}/restore`,
+    ),
+};
+
+// Per-resource CSV exports (GET /api/v1/exports/{resource}.csv)
+export const mainExportsApi = {
+  /**
+   * Downloads a resource's admin listing as CSV, honoring the caller's list
+   * filters. Fetched with credentials (not window.open) because access tokens
+   * live in sessionStorage, which a new tab cannot read.
+   */
+  downloadCsv: async (
+    resource: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ) => {
+    const token = getStoredAccessToken();
+    const url = new URL(`${getMainApiBaseUrl()}/api/v1/exports/${resource}.csv`);
+    Object.entries(params ?? {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        url.searchParams.append(key, String(value));
+      }
+    });
+    const response = await fetch(url.toString(), {
+      credentials: "include",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || error.message || "CSV export failed");
+    }
+    return response.blob();
+  },
+};
+
 // Sliders
 export const slidersApi = {
   listGroups: (
@@ -1215,6 +1962,24 @@ export const slidersApi = {
       is_main?: boolean;
     }>,
   ) => mainApi.get<{ data: SliderGroup[] }>("/api/v1/sliders/groups", params),
+
+  listAdminGroups: (
+    params?: ListParams<{
+      is_active?: boolean;
+      is_public?: boolean;
+      is_main?: boolean;
+      scope_type?: string;
+      scope_id?: string;
+      search?: string;
+    }>,
+  ) =>
+    mainApi.get<{
+      data: SliderGroup[];
+      meta?: { page: number; per_page: number; total?: number; pages?: number };
+    }>(
+      "/api/v1/sliders/groups/admin",
+      params,
+    ),
 
   getGroup: (id: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: SliderGroup }>(
@@ -1253,8 +2018,16 @@ export const slidersApi = {
       scope_id?: string;
       is_main?: boolean;
       status?: string;
+      workflow_status?: string;
+      is_active?: boolean;
+      search?: string;
+      record_state?: "active" | "archived" | "deleted";
     }>,
-  ) => mainApi.get<{ data: Slider[] }>("/api/v1/sliders/admin", params),
+  ) =>
+    mainApi.get<{
+      data: Slider[];
+      meta?: { page: number; per_page: number; total?: number; pages?: number };
+    }>("/api/v1/sliders/admin", params),
 
   listGroupSliders: (groupId: string, params?: FieldSelectionParams) =>
     mainApi.get<{ data: Slider[] }>("/api/v1/sliders/admin", {
@@ -1262,10 +2035,10 @@ export const slidersApi = {
       slider_group_id: groupId,
     }),
 
-  createSlider: (groupId: string, data: Partial<Slider>) =>
+  createSlider: (groupId: string | null | undefined, data: Partial<Slider>) =>
     mainApi.post<{ data: Slider }>("/api/v1/sliders", {
       ...data,
-      slider_group_id: groupId,
+      slider_group_id: groupId || data.slider_group_id || null,
     }),
 
   getSlider: (sliderId: string, params?: FieldSelectionParams) =>
@@ -1307,6 +2080,10 @@ export const mediaApi = {
       folder_id?: string;
       media_type?: string;
       uploaded_by_id?: string;
+      entity_type?: string;
+      entity_id?: string;
+      role?: string;
+      is_public?: boolean;
       search?: string;
     }>,
   ) => mainApi.get<PaginatedResponse<Media>>("/api/v1/media", params),
@@ -1328,15 +2105,12 @@ export const mediaApi = {
     if (options?.role) formData.append("role", options.role);
     const token = getStoredAccessToken();
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000"}/api/v1/media/upload`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        body: formData,
-      },
-    );
+    const response = await fetch(`${MAIN_API_BASE_URL}/api/v1/media/upload`, {
+      method: "POST",
+      credentials: "include",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: formData,
+    });
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
@@ -1346,8 +2120,13 @@ export const mediaApi = {
     return response.json() as Promise<{ data: Media }>;
   },
 
-  listFolders: (params?: FieldSelectionParams & { parent_id?: string }) =>
-    mainApi.get<{ data: MediaFolder[] }>("/api/v1/media/folders", params),
+  listFolders: (
+    params?: FieldSelectionParams & {
+      parent_id?: string;
+      scope_type?: string;
+      scope_id?: string;
+    },
+  ) => mainApi.get<{ data: MediaFolder[] }>("/api/v1/media/folders", params),
 
   createFolder: (data: MediaFolderCreatePayload) =>
     mainApi.post<{ data: MediaFolder }>("/api/v1/media/folders", data),
@@ -1363,8 +2142,10 @@ export const mediaApi = {
 
   listLinks: (
     params: FieldSelectionParams & {
-      entity_type: string;
-      entity_id: string;
+      entity_type?: string;
+      entity_id?: string;
+      /** Where-used lookup: list every entity link referencing this media. */
+      media_id?: string;
       role?: string;
     },
   ) => mainApi.get<{ data: MediaLink[] }>("/api/v1/media/links", params),
@@ -1398,6 +2179,7 @@ export const faqsApi = {
       scope_type?: string;
       scope_id?: string;
       is_main?: boolean;
+      search?: string;
     }>,
   ) => mainApi.get<PaginatedResponse<FAQ>>("/api/v1/faqs/admin", params),
 
@@ -1417,27 +2199,25 @@ export const faqsApi = {
 };
 
 export const contactsApi = {
-  list: (
-    params?: ListParams<{
-      scope_type?: string;
-      scope_id?: string;
-      is_main?: boolean;
-    }>,
-  ) =>
+  list: (params?: ListParams<ContactDirectoryListParams>) =>
     mainApi.get<PaginatedResponse<ContactDirectory>>(
       "/api/v1/contacts",
       params,
     ),
 
-  listAdmin: (
-    params?: ListParams<{
-      scope_type?: string;
-      scope_id?: string;
-      is_main?: boolean;
-    }>,
-  ) =>
+  listAdmin: (params?: ListParams<ContactDirectoryListParams>) =>
     mainApi.get<PaginatedResponse<ContactDirectory>>(
       "/api/v1/contacts/admin",
+      params,
+    ),
+
+  listOwners: (params: {
+    scope_type: ContactOwnerScopeType;
+    q?: string;
+    limit?: number;
+  }) =>
+    mainApi.get<{ data: ContactOwnerOption[] }>(
+      "/api/v1/contacts/owners",
       params,
     ),
 
@@ -1455,6 +2235,24 @@ export const contactsApi = {
 
   update: (id: string, data: Partial<ContactDirectory>) =>
     mainApi.patch<{ data: ContactDirectory }>(`/api/v1/contacts/${id}`, data),
+
+  archive: (id: string) =>
+    mainApi.post<{ data: ContactDirectory }>(
+      `/api/v1/contacts/admin/${id}/archive`,
+    ),
+
+  unarchive: (id: string) =>
+    mainApi.post<{ data: ContactDirectory }>(
+      `/api/v1/contacts/admin/${id}/unarchive`,
+    ),
+};
+
+export const contactDirectoryApi = {
+  get: (params?: PublicContactDirectoryParams) =>
+    mainApi.get<{ data: PublicContactDirectory }>(
+      "/api/v1/contact-directory",
+      params,
+    ),
 };
 
 export const searchApi = {
@@ -1488,6 +2286,7 @@ export const testimonialsApi = {
       department_id?: string;
       programme_id?: string;
       featured_only?: boolean;
+      search?: string;
     }>,
   ) =>
     mainApi.get<PaginatedResponse<Testimonial>>(
@@ -1505,6 +2304,72 @@ export const testimonialsApi = {
     mainApi.patch<{ data: Testimonial }>(`/api/v1/testimonials/${id}`, data),
 
   delete: (id: string) => mainApi.delete<void>(`/api/v1/testimonials/${id}`),
+};
+
+// Newsletters
+export const newslettersApi = {
+  list: (
+    params?: ListParams<{
+      q?: string;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<Newsletter>>("/api/v1/newsletters", params),
+
+  listAdmin: (
+    params?: ListParams<{
+      q?: string;
+      search?: string;
+      status?: string;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<Newsletter>>(
+      "/api/v1/newsletters/admin",
+      params,
+    ),
+
+  getAdmin: (id: string, params?: FieldSelectionParams) =>
+    mainApi.get<{ data: Newsletter }>(
+      `/api/v1/newsletters/admin/${id}`,
+      params,
+    ),
+
+  create: (data: Partial<Newsletter>) =>
+    mainApi.post<{ data: Newsletter }>("/api/v1/newsletters", data),
+
+  update: (id: string, data: Partial<Newsletter>) =>
+    mainApi.patch<{ data: Newsletter }>(`/api/v1/newsletters/${id}`, data),
+
+  delete: (id: string) => mainApi.delete<void>(`/api/v1/newsletters/${id}`),
+
+  /** Queue an immediate send to all active subscribers. */
+  sendNow: (id: string) =>
+    mainApi.post<{ data: Newsletter }>(`/api/v1/newsletters/${id}/send`),
+
+  /** Schedule a future send. `scheduled_send_at` must be in the future. */
+  scheduleSend: (id: string, data: { scheduled_send_at: string }) =>
+    mainApi.post<{ data: Newsletter }>(`/api/v1/newsletters/${id}/schedule`, data),
+
+  /** Cancel a scheduled send, returning the newsletter to draft. */
+  cancelSchedule: (id: string) =>
+    mainApi.post<{ data: Newsletter }>(`/api/v1/newsletters/${id}/cancel-schedule`),
+
+  listSubscribers: (
+    params?: ListParams<{
+      status?: string;
+      q?: string;
+      is_verified?: boolean | string;
+    }>,
+  ) =>
+    mainApi.get<PaginatedResponse<NewsletterSubscriber>>(
+      "/api/v1/newsletters/subscribers",
+      params,
+    ),
+
+  /** Admin-side unsubscribe honoring phone/email opt-out requests. */
+  unsubscribeSubscriber: (id: string) =>
+    mainApi.post<{ data: NewsletterSubscriber }>(
+      `/api/v1/newsletters/subscribers/${id}/unsubscribe`,
+    ),
 };
 
 // Roles
@@ -1546,10 +2411,13 @@ export const auditLogsApi = {
     params?: ListParams<{
       user_id?: string;
       service_name?: string;
+      /** Exact match, or a dotted prefix ("user" matches "user.login"). */
       action?: string;
       resource_type?: string;
       resource_id?: string;
       status?: string;
+      /** Restrict to requests under this path prefix (e.g. "/api/v1/news"). */
+      request_path_prefix?: string;
       date_from?: string;
       date_to?: string;
     }>,
@@ -1596,6 +2464,15 @@ export const importsApi = {
       `/api/v1/imports/${resource}/commit`,
       data,
     ),
+
+  commitAsync: (resource: string, data: ImportCommitRequest) =>
+    mainApi.post<{ data: ImportJob }>(
+      `/api/v1/imports/${resource}/commit-async`,
+      data,
+    ),
+
+  getJob: (jobId: string) =>
+    mainApi.get<{ data: ImportJob }>(`/api/v1/imports/jobs/${jobId}`),
 
   downloadTemplate: async (resource: string) => {
     const token = getStoredAccessToken();
@@ -1649,7 +2526,7 @@ export const adminReportsApi = {
     if (params?.days) query.set("days", String(params.days));
     if (params?.format) query.set("format", params.format);
     const suffix = query.toString();
-    return `${process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000"}/api/v1/admin/reports/exports/${reportName}${suffix ? `?${suffix}` : ""}`;
+    return `${MAIN_API_BASE_URL}/api/v1/admin/reports/exports/${reportName}${suffix ? `?${suffix}` : ""}`;
   },
 };
 
@@ -1762,5 +2639,184 @@ export const leadershipApi = {
     mainApi.get<PaginatedResponse<StaffAssignment>>(
       "/api/v1/public/leadership/list",
       params,
+    ),
+};
+
+const VC_BASE = "/api/v1/vice-chancellor";
+const VC_PUBLIC_BASE = "/api/v1/public/vice-chancellor";
+
+export const viceChancellorApi = {
+  publicHub: () => mainApi.get<{ data: VcPublicHub }>(VC_PUBLIC_BASE),
+  publicSpeech: (slug: string) =>
+    mainApi.get<{ data: VcPublicSpeech }>(`${VC_PUBLIC_BASE}/speeches/${slug}`),
+  publicGallery: (slug: string) =>
+    mainApi.get<{ data: VcPublicGallery }>(
+      `${VC_PUBLIC_BASE}/galleries/${slug}`,
+    ),
+  hub: () => mainApi.get<{ data: VcHub }>(`${VC_BASE}/hub`),
+  updateHub: (data: VcHubUpdatePayload) =>
+    mainApi.patch<{ data: VcHub }>(`${VC_BASE}/hub`, data),
+  transitionHub: (action: VcWorkflowAction, reason?: string) =>
+    mainApi.post<{ data: VcHub }>(`${VC_BASE}/hub/${action}`, { reason }),
+  listPortraits: () =>
+    mainApi.get<{ data: VcPortrait[] }>(`${VC_BASE}/hub/portraits`),
+  attachPortrait: (data: VcPortraitPayload) =>
+    mainApi.post<{ data: VcPortrait }>(`${VC_BASE}/hub/portraits`, data),
+  updatePortrait: (
+    id: string,
+    data: { alt_text?: string | null; display_order?: number },
+  ) =>
+    mainApi.patch<{ data: VcPortrait }>(`${VC_BASE}/hub/portraits/${id}`, data),
+  deletePortrait: (id: string) =>
+    mainApi.delete<void>(`${VC_BASE}/hub/portraits/${id}`),
+  reorderPortraits: (items: Array<{ id: string; display_order: number }>) =>
+    mainApi.post(`${VC_BASE}/hub/portraits/reorder`, { items }),
+  selectPortrait: (id: string) =>
+    mainApi.post<{ data: VcPortrait }>(`${VC_BASE}/hub/portraits/${id}/select`),
+  listVideos: (params?: QueryParams) =>
+    mainApi.get<VcListResponse<VcVideo>>(`${VC_BASE}/videos`, params),
+  createVideo: (data: VcVideoPayload) =>
+    mainApi.post<{
+      data: VcVideo;
+      meta?: { created?: boolean; metadata_warning?: string | null };
+    }>(`${VC_BASE}/videos`, data),
+  updateVideo: (id: string, data: Partial<VcVideoPayload>) =>
+    mainApi.patch<{ data: VcVideo }>(`${VC_BASE}/videos/${id}`, data),
+  deleteVideo: (id: string) => mainApi.delete<void>(`${VC_BASE}/videos/${id}`),
+  previewYoutube: (url: string) =>
+    mainApi.post<{
+      data: {
+        video_id: string;
+        canonical_url: string;
+        embed_url: string;
+        thumbnail_url: string;
+        title?: string;
+        author_name?: string;
+      };
+    }>(`${VC_BASE}/videos/youtube/preview`, { url }),
+  refreshVideo: (id: string) =>
+    mainApi.post<{ data: VcVideo }>(`${VC_BASE}/videos/${id}/refresh-metadata`),
+  listSpeeches: (params?: QueryParams) =>
+    mainApi.get<VcListResponse<VcSpeech>>(`${VC_BASE}/speeches`, params),
+  createSpeech: (data: VcSpeechPayload) =>
+    mainApi.post<{ data: VcSpeech }>(`${VC_BASE}/speeches`, data),
+  updateSpeech: (id: string, data: Partial<VcSpeechPayload>) =>
+    mainApi.patch<{ data: VcSpeech }>(`${VC_BASE}/speeches/${id}`, data),
+  deleteSpeech: (id: string) =>
+    mainApi.delete<void>(`${VC_BASE}/speeches/${id}`),
+  attachSpeechVideo: (
+    speechId: string,
+    data: {
+      video_id: string;
+      role: "primary" | "full_recording" | "excerpt" | "related";
+      display_order?: number;
+    },
+  ) => mainApi.post(`${VC_BASE}/speeches/${speechId}/videos`, data),
+  listSpeechVideos: (speechId: string) =>
+    mainApi.get<{ data: VcSpeechVideoLink[] }>(
+      `${VC_BASE}/speeches/${speechId}/videos`,
+    ),
+  detachSpeechVideo: (speechId: string, linkId: string) =>
+    mainApi.delete<void>(`${VC_BASE}/speeches/${speechId}/videos/${linkId}`),
+  listGalleries: (params?: QueryParams) =>
+    mainApi.get<VcListResponse<VcGalleryAlbum>>(`${VC_BASE}/galleries`, params),
+  createGallery: (data: VcGalleryPayload) =>
+    mainApi.post<{ data: VcGalleryAlbum }>(`${VC_BASE}/galleries`, data),
+  updateGallery: (id: string, data: Partial<VcGalleryPayload>) =>
+    mainApi.patch<{ data: VcGalleryAlbum }>(`${VC_BASE}/galleries/${id}`, data),
+  deleteGallery: (id: string) =>
+    mainApi.delete<void>(`${VC_BASE}/galleries/${id}`),
+  attachGalleryMedia: (
+    albumId: string,
+    data: {
+      media_id: string;
+      display_order?: number;
+      caption?: string | null;
+      alt_text?: string | null;
+    },
+  ) => mainApi.post(`${VC_BASE}/galleries/${albumId}/media`, data),
+  listGalleryMedia: (albumId: string) =>
+    mainApi.get<{ data: VcGalleryMediaLink[] }>(
+      `${VC_BASE}/galleries/${albumId}/media`,
+    ),
+  detachGalleryMedia: (albumId: string, linkId: string) =>
+    mainApi.delete<void>(`${VC_BASE}/galleries/${albumId}/media/${linkId}`),
+  reorderGalleryMedia: (
+    albumId: string,
+    items: Array<{ id: string; display_order: number }>,
+  ) => mainApi.post(`${VC_BASE}/galleries/${albumId}/media/reorder`, { items }),
+  listPlacements: () =>
+    mainApi.get<{ data: VcHubPlacement[] }>(`${VC_BASE}/placements`),
+  createPlacement: (data: VcPlacementPayload) =>
+    mainApi.post<{ data: VcHubPlacement }>(`${VC_BASE}/placements`, data),
+  updatePlacement: (id: string, data: Partial<VcPlacementPayload>) =>
+    mainApi.patch<{ data: VcHubPlacement }>(
+      `${VC_BASE}/placements/${id}`,
+      data,
+    ),
+  deletePlacement: (id: string) =>
+    mainApi.delete<void>(`${VC_BASE}/placements/${id}`),
+  reorderPlacements: (items: Array<{ id: string; display_order: number }>) =>
+    mainApi.post(`${VC_BASE}/placements/reorder`, { items }),
+  lookupNews: (q?: string) =>
+    mainApi.get<{ data: News[] }>(
+      `${VC_BASE}/lookups/news`,
+      q ? { q } : undefined,
+    ),
+  lookupEvents: (q?: string) =>
+    mainApi.get<{ data: Event[] }>(
+      `${VC_BASE}/lookups/events`,
+      q ? { q } : undefined,
+    ),
+  transition: <T extends VcVideo | VcSpeech | VcGalleryAlbum>(
+    resource: "videos" | "speeches" | "galleries",
+    id: string,
+    action: VcWorkflowAction,
+    reason?: string,
+  ) =>
+    mainApi.post<{ data: T }>(`${VC_BASE}/${resource}/${id}/${action}`, {
+      reason,
+    }),
+};
+
+// User Notifications (inbox)
+export const userNotificationsApi = {
+  list: (params?: {
+    page?: number;
+    per_page?: number;
+    unread_only?: boolean;
+  }) =>
+    mainApi.get<PaginatedResponse<UserNotification>>(
+      "/api/v1/notifications",
+      params,
+    ),
+
+  unreadCount: () =>
+    mainApi.get<{ data: { count: number } }>("/api/v1/notifications/unread-count"),
+
+  markRead: (id: string) =>
+    mainApi.patch<{ data: UserNotification }>(
+      `/api/v1/notifications/${id}/read`,
+    ),
+
+  markAllRead: () =>
+    mainApi.post<{ data: { updated: number } }>("/api/v1/notifications/read-all"),
+
+  archive: (id: string) =>
+    mainApi.post<{ data: UserNotification }>(
+      `/api/v1/notifications/${id}/archive`,
+    ),
+
+  remove: (id: string) => mainApi.delete<void>(`/api/v1/notifications/${id}`),
+
+  getPreferences: () =>
+    mainApi.get<{ data: UserNotificationPreferences }>(
+      "/api/v1/notifications/preferences",
+    ),
+
+  updatePreferences: (data: UserNotificationPreferences) =>
+    mainApi.put<{ data: UserNotificationPreferences }>(
+      "/api/v1/notifications/preferences",
+      data,
     ),
 };

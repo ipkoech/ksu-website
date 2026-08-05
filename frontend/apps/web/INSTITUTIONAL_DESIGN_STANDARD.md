@@ -375,14 +375,36 @@ Must read as official institutional publishing:
 
 Every phase must preserve these requirements:
 
+- Mount the shared `AccessibilityInitScript` in the root document and wrap the
+  application in `AccessibilityShell` with the page's real main-content ID.
+- Keep one functional "Skip to main content" link. The target must accept
+  programmatic focus so keyboard users are moved past repeated navigation.
+- Support the shared low-vision, reduced-motion, reading-support, and
+  motor-assistance preferences without replacing native browser or operating
+  system accessibility settings.
 - No horizontal overflow at mobile widths.
+- Content and controls must reflow without loss of information or function at
+  400% zoom; do not require two-dimensional scrolling for ordinary page content.
 - Long titles, names, emails, URLs, and metadata must wrap safely.
 - Interactive controls must have visible focus states.
-- Icon-only actions need accessible labels.
+- Icon-only actions need unique accessible labels and a minimum 44 by 44 CSS
+  pixel target where practical.
 - Images require meaningful alt text unless decorative.
 - Buttons and links must have clear action language.
+- Do not use color alone to communicate meaning, errors, selection, or status.
+- Respect `prefers-reduced-motion`, the shared reduced-motion preference, and
+  forced-colors mode. Automatically moving content must provide a pause control.
+- Dialogs and side panels must trap focus while open, close with Escape, name
+  their purpose, and return focus to their trigger.
+- Dynamic errors and success messages must be announced without unexpectedly
+  moving focus.
 - Cards and rows must remain readable at 390px viewport width.
 - Desktop layouts must not depend on content being short.
+- Run the shared Playwright accessibility suite and complete the applicable
+  manual-test matrix before considering a high-value journey verified.
+
+Automated axe checks are regression protection, not proof of WCAG conformance.
+Keyboard, zoom/reflow, forced-colors, and screen-reader checks remain required.
 
 ## Backend-Backed Content Rule
 

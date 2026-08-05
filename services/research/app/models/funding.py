@@ -48,6 +48,13 @@ center_partners = sa.Table(
     Base.metadata,
     sa.Column("center_id", sa.Uuid, sa.ForeignKey(f"{SCHEMA}.research_centers.id", ondelete="CASCADE"), primary_key=True),
     sa.Column("partner_id", sa.Uuid, sa.ForeignKey(f"{SCHEMA}.partners.id", ondelete="CASCADE"), primary_key=True),
+    sa.Column("partnership_type", sa.String(64), nullable=True),
+    sa.Column("partnership_level", sa.String(32), nullable=True),
+    sa.Column("mou_start_date", sa.Date, nullable=True),
+    sa.Column("mou_end_date", sa.Date, nullable=True),
+    sa.Column("status", sa.String(32), nullable=False, server_default="active"),
+    sa.Column("collaboration_areas", JSONB, nullable=True),
+    sa.Column("notes", sa.Text, nullable=True),
     schema=SCHEMA,
 )
 
@@ -81,6 +88,11 @@ class Grant(Base, SEOMixin, CoverImageRefMixin, LogoRefMixin, AttachmentRefsMixi
     )  # research | innovation | capacity_building | travel | equipment | publication
 
     # Funder info
+    funder_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey(f"{SCHEMA}.fundings.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     funder_name: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
     # Content
     summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
@@ -144,6 +156,7 @@ class Grant(Base, SEOMixin, CoverImageRefMixin, LogoRefMixin, AttachmentRefsMixi
         back_populates="grant",
         lazy="selectin",
     )
+    funder: Mapped[Optional["Funding"]] = relationship("Funding", back_populates="grants")
 
     @property
     def is_internal(self) -> bool:
@@ -411,6 +424,8 @@ class Funding(Base, LogoRefMixin):
     # Status
     is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
     display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+
+    grants: Mapped[list["Grant"]] = relationship("Grant", back_populates="funder", lazy="selectin")
 
     def __repr__(self) -> str:
         return f"<Funding {self.slug}: {self.name}>"

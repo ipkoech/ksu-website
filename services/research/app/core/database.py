@@ -2,34 +2,21 @@
 
 from __future__ import annotations
 
-from typing import AsyncGenerator
-
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from ksu_common.database import DatabaseConfig, create_database_runtime
 
 from .config import get_settings
 
 settings = get_settings()
 
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.APP_ENV == "development",
-    pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
+database = create_database_runtime(
+    DatabaseConfig(
+        url=settings.DATABASE_URL,
+        echo=settings.APP_ENV == "development",
+        pool_size=settings.DB_POOL_SIZE,
+        max_overflow=settings.DB_MAX_OVERFLOW,
+        connect_args={"server_settings": {"search_path": f"{settings.DB_SCHEMA},public"}},
+    )
 )
-
-AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    expire_on_commit=False,
-    autoflush=False,
-)
-
-
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
+engine = database.engine
+AsyncSessionLocal = database.session_factory
+get_db = database.session

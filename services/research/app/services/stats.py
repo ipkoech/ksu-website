@@ -19,15 +19,9 @@ from ..models import (
     MentorshipProgram,
     Partner,
     Publication,
-    ResearchArticle,
-    ResearchBoard,
     ResearchCenter,
-    ResearchEvent,
     ResearchFarm,
     ResearchGuideline,
-    ResearchNews,
-    ResearchOffice,
-    ResearchOfficeStaff,
     ResearchOutput,
     ResearchProgram,
     ResearchProject,
@@ -62,7 +56,7 @@ async def _sum(db: AsyncSession, column, model, *conditions) -> float:
 def _item(
     key: str,
     label: str,
-    value: int,
+    value: int | float,
     description: str,
     href: str | None = None,
     suffix: str = "",
@@ -78,132 +72,191 @@ def _item(
 
 
 async def public_research_stats(db: AsyncSession) -> PublicStatsResponse:
-    published_updates = sum(
-        [
-            await _count(
-                db,
-                ResearchNews,
-                ResearchNews.is_active.is_(True),
-                ResearchNews.status == "published",
-            ),
-            await _count(
-                db,
-                ResearchArticle,
-                ResearchArticle.is_active.is_(True),
-                ResearchArticle.status == "published",
-            ),
-            await _count(
-                db,
-                ResearchEvent,
-                ResearchEvent.is_active.is_(True),
-                ResearchEvent.status.in_(("upcoming", "ongoing", "completed")),
-            ),
-        ]
-    )
+    # Pre-compute all aggregates
+    centre_count = await _count(db, ResearchCenter, ResearchCenter.is_active.is_(True))
+    farm_hectares_val = await _sum(db, ResearchFarm.size_hectares, ResearchFarm, ResearchFarm.is_active.is_(True), ResearchFarm.is_public.is_(True))
+    project_count = await _count(db, ResearchProject, ResearchProject.is_active.is_(True), ResearchProject.is_public.is_(True), ResearchProject.status.in_(("approved", "ongoing", "completed")))
+    project_budget_total = await _sum(db, ResearchProject.budget, ResearchProject, ResearchProject.is_active.is_(True), ResearchProject.is_public.is_(True))
+    published_updates = await _count(db, Publication, Publication.is_active.is_(True), Publication.status == "published")
+    citation_total = await _sum(db, Publication.citation_count, Publication, Publication.is_active.is_(True), Publication.status == "published")
     outputs = sum(
         [
-            await _count(
-                db,
-                Innovation,
-                Innovation.is_active.is_(True),
-                Innovation.is_public.is_(True),
-                Innovation.status == "active",
-            ),
-            await _count(
-                db,
-                ResearchOutput,
-                ResearchOutput.is_active.is_(True),
-                ResearchOutput.status == "published",
-            ),
+            await _count(db, Innovation, Innovation.is_active.is_(True), Innovation.is_public.is_(True), Innovation.status == "active"),
+            await _count(db, ResearchOutput, ResearchOutput.is_active.is_(True), ResearchOutput.status == "published"),
         ]
     )
+    patent_count = await _count(db, Innovation, Innovation.is_active.is_(True), Innovation.is_public.is_(True), Innovation.ip_status.in_(("filed", "granted")))
+    commercialized_count = await _count(db, Innovation, Innovation.is_active.is_(True), Innovation.is_public.is_(True), Innovation.commercialization_status == "commercialized")
+    grant_total = await _sum(db, Grant.total_budget, Grant, Grant.is_active.is_(True))
+    open_grant_count = await _count(db, Grant, Grant.is_active.is_(True), Grant.status == "open")
+    scholarship_count = await _count(db, Scholarship, Scholarship.is_active.is_(True))
+    scholarship_value_total = await _sum(db, Scholarship.value, Scholarship, Scholarship.is_active.is_(True))
+    consultancy_income = await _sum(db, Consultancy.contract_value, Consultancy, Consultancy.is_active.is_(True), Consultancy.is_public.is_(True))
+    endowment_value_total = await _sum(db, EndowmentFund.current_value, EndowmentFund, EndowmentFund.is_active.is_(True))
+    donation_total = await _sum(db, Donation.amount, Donation, Donation.status == "completed", Donation.is_public.is_(True))
+    industry_partners = await _count(db, Partner, Partner.is_active.is_(True), Partner.partner_type == "industry")
+    academic_partners = await _count(db, Partner, Partner.is_active.is_(True), Partner.partner_type == "academic")
+    partner_count = await _count(db, Partner, Partner.is_active.is_(True))
+    training_participants = await _sum(db, TrainingProgram.current_registrations, TrainingProgram, TrainingProgram.is_active.is_(True))
+    impact_story_count = await _count(db, SuccessStory, SuccessStory.is_active.is_(True), SuccessStory.status == "published")
 
     return PublicStatsResponse(
         scope="research",
         title="Research at a glance",
         stats=[
             _item(
-                "research_centres",
-                "Research Centres",
-                await _count(db, ResearchCenter, ResearchCenter.is_active.is_(True)),
-                "Active research centres and institutes",
-                "/research/centres",
+                key="research_centres",
+                label="Research Centres",
+                value=centre_count,
+                description="Active research centres and institutes",
+                href="/research/centres",
             ),
             _item(
-                "research_projects",
-                "Research Projects",
-                await _count(
-                    db,
-                    ResearchProject,
-                    ResearchProject.is_active.is_(True),
-                    ResearchProject.is_public.is_(True),
-                    ResearchProject.status.in_(("approved", "ongoing", "completed")),
-                ),
-                "Active public research projects",
-                "/research/projects",
+                key="farm_hectares",
+                label="Research Land",
+                value=farm_hectares_val,
+                suffix="Ha",
+                description="Active public research farm acreage",
+                href="/research/farms",
             ),
             _item(
-                "publications",
-                "Publications",
-                await _count(
-                    db,
-                    Publication,
-                    Publication.is_active.is_(True),
-                    Publication.status == "published",
-                ),
-                "Published research publications",
-                "/research/publications",
+                key="research_projects",
+                label="Research Projects",
+                value=project_count,
+                description="Active public research projects",
+                href="/research/projects",
             ),
             _item(
-                "open_access_publications",
-                "Open Access",
-                await _count(
-                    db,
-                    Publication,
-                    Publication.is_active.is_(True),
-                    Publication.status == "published",
-                    Publication.is_open_access.is_(True),
-                ),
-                "Published open-access publications",
-                "/research/publications?access=open",
+                key="project_budget",
+                label="Project Funding",
+                value=int(project_budget_total),
+                suffix="KES",
+                description="Total budget of active public research projects",
+                href="/research/projects",
             ),
             _item(
-                "partners",
-                "Research Partners",
-                await _count(
-                    db,
-                    Partner,
-                    Partner.is_active.is_(True),
-                    Partner.status == "active",
-                ),
-                "Active research partners",
-                "/research/partners",
+                key="publications",
+                label="Publications",
+                value=published_updates,
+                description="Published research publications",
+                href="/research/publications",
             ),
             _item(
-                "funding_opportunities",
-                "Funding Opportunities",
-                await _count(
-                    db,
-                    Grant,
-                    Grant.is_active.is_(True),
-                    Grant.status == "open",
-                ),
-                "Active public grant and funding opportunities",
-                "/research/grants",
+                key="citations",
+                label="Citations",
+                value=citation_total,
+                description="Total citations of published research",
+                href="/research/publications",
             ),
             _item(
-                "research_outputs",
-                "Research Outputs",
-                outputs,
-                "Public innovations and published research outputs",
-                "/research/outputs",
+                key="outputs",
+                label="Outputs",
+                value=outputs,
+                description="Public innovations and published research outputs",
+                href="/research/innovations",
             ),
             _item(
-                "research_updates",
-                "Research Updates",
-                published_updates,
-                "Published research news, articles, and events",
-                "/research/news",
+                key="patents",
+                label="Patents & IP",
+                value=patent_count,
+                description="Innovations with filed or granted intellectual property rights",
+                href="/research/innovations",
+            ),
+            _item(
+                key="commercialized",
+                label="Commercialized",
+                value=commercialized_count,
+                description="Innovations that have reached market",
+                href="/research/innovations",
+            ),
+            _item(
+                key="grant_funding",
+                label="Grant Funding",
+                value=int(grant_total),
+                suffix="KES",
+                description="Total value of active research grants",
+                href="/research/grants",
+            ),
+            _item(
+                key="open_grants",
+                label="Open Grants",
+                value=open_grant_count,
+                description="Open grant opportunities accepting applications",
+                href="/research/grants",
+            ),
+            _item(
+                key="scholarships",
+                label="Scholarships",
+                value=scholarship_count,
+                description="Active research scholarships",
+                href="/research/scholarships",
+            ),
+            _item(
+                key="scholarship_value",
+                label="Scholarship Value",
+                value=int(scholarship_value_total),
+                suffix="KES",
+                description="Total value of active research scholarships",
+                href="/research/scholarships",
+            ),
+            _item(
+                key="consultancy_income",
+                label="Consultancy Income",
+                value=int(consultancy_income),
+                suffix="KES",
+                description="Contract value of active public consultancies",
+                href="/research/consultancies",
+            ),
+            _item(
+                key="endowment_value",
+                label="Endowment Assets",
+                value=int(endowment_value_total),
+                suffix="KES",
+                description="Current value of active endowment funds",
+                href="/research/endowments",
+            ),
+            _item(
+                key="donation_total",
+                label="Donations",
+                value=int(donation_total),
+                suffix="KES",
+                description="Total completed public donations",
+                href="/research/donations",
+            ),
+            _item(
+                key="industry_partners",
+                label="Industry Partners",
+                value=industry_partners,
+                description="Active industry and corporate partners",
+                href="/research/partners",
+            ),
+            _item(
+                key="academic_partners",
+                label="Academic Partners",
+                value=academic_partners,
+                description="Active academic and institutional partners",
+                href="/research/partners",
+            ),
+            _item(
+                key="partner_count",
+                label="Total Partners",
+                value=partner_count,
+                description="All active institutional and industry partners",
+                href="/research/partners",
+            ),
+            _item(
+                key="training_participants",
+                label="Trained",
+                value=training_participants,
+                description="Researchers registered in active training programs",
+                href="/research/training",
+            ),
+            _item(
+                key="impact_stories",
+                label="Impact Stories",
+                value=impact_story_count,
+                description="Published research impact and success stories",
+                href="/research/stories",
             ),
         ],
     )
@@ -219,13 +272,7 @@ async def admin_research_stats(db: AsyncSession) -> PublicStatsResponse:
             await _count(db, MentorshipApplication, MentorshipApplication.status.in_(("submitted", "under_review"))),
         ]
     )
-    published_updates = sum(
-        [
-            await _count(db, ResearchNews, ResearchNews.status == "published"),
-            await _count(db, ResearchArticle, ResearchArticle.status == "published"),
-            await _count(db, ResearchEvent, ResearchEvent.status.in_(("upcoming", "ongoing", "completed"))),
-        ]
-    )
+    published_updates = await _count(db, Publication, Publication.status == "published")
 
     stats = [
         _item("centres", "Research Centres", await _count(db, ResearchCenter), "Research centre records", "/research/centers"),
@@ -256,10 +303,7 @@ async def admin_research_stats(db: AsyncSession) -> PublicStatsResponse:
         _item("resources", "Resources", await _count(db, ResearchResource), "Research resource records", "/research/resources-tools"),
         _item("services", "Services", await _count(db, ResearchService), "Research service records", "/research/services"),
         _item("guidelines", "Guidelines", await _count(db, ResearchGuideline) + await _count(db, GrantGuideline), "Research and grant guideline records", "/research/guidelines"),
-        _item("offices", "Offices", await _count(db, ResearchOffice), "Research office records", "/research/offices"),
-        _item("office_staff", "Office Staff", await _count(db, ResearchOfficeStaff), "Research office staff records", "/research/team"),
-        _item("boards", "Boards", await _count(db, ResearchBoard), "Research governance board records", "/research/boards"),
-        _item("published_updates", "Published Updates", published_updates, "Published research news, articles, and events", "/research/news"),
+        _item("published_updates", "Published Updates", published_updates, "Published research records", "/research/publications"),
         _item("donation_impacts", "Donation Impacts", await _count(db, DonationImpact), "Donation impact records", "/research/donations/impacts"),
     ]
 

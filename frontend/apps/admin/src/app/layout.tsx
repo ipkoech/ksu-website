@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
+import { ksuSans, ksuDisplay } from "@ksu/ui/fonts";
 import { Providers } from "./providers";
-import { Toaster } from "@ksu/ui";
+import {
+  AccessibilityInitScript,
+  AccessibilityShell,
+  Toaster,
+} from "@ksu/ui";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -28,10 +33,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+      className={`${ksuSans.variable} ${ksuDisplay.variable}`}
+    >
       <body className="font-sans antialiased">
+        <AccessibilityInitScript />
         <Providers>
-          {children}
+          <AccessibilityShell mainContentId="admin-main">
+            {children}
+          </AccessibilityShell>
           <Toaster position="top-right" />
         </Providers>
       </body>

@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
-import { MiniHeader, PublicFooter } from "@ksu/ui/layout/public";
+import { ksuSans, ksuDisplay } from "@ksu/ui/fonts";
+import { AccessibilityInitScript, AccessibilityShell } from "@ksu/ui";
+import { MiniHeader } from "@ksu/ui/layout/public";
 import { LibraryHeader } from "../components/library-header";
+import { LibraryFooter } from "../components/library-footer";
+import { LibraryAssistantLauncher } from "../components/library-assistant-launcher";
+import { getLibraryTodayHours } from "../lib/library-public-data";
+import { publicFrontendUrl } from "../lib/service-urls";
 import "./globals.css";
 
 const socialLinks = {
@@ -20,7 +26,7 @@ const contactInfo = {
 const miniQuickLinks = [
   {
     label: "Main Site",
-    href: "https://kisiiuniversity.ac.ke",
+    href: publicFrontendUrl,
     external: true,
   },
   {
@@ -35,8 +41,8 @@ const miniQuickLinks = [
     label: "Branches",
     href: "/services#branches-heading",
   },
-  { label: "Hours", href: "/hours" },
-  { label: "Repository", href: "/repositories" },
+  { label: "Hours", href: "/contact#hours" },
+  { label: "Repository", href: "/electronic#external-links" },
   { label: "Ask", href: "/ask" },
 ];
 
@@ -59,31 +65,33 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const todayHours = await getLibraryTodayHours();
   return (
-    <html lang="en">
-      <body className="font-sans antialiased">
-        <div className="min-h-screen bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_38%,#f6f8fc_100%)] text-slate-950">
-          <a href="#library-main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-md focus:ring-2 focus:ring-ring">
-            Skip to library content
-          </a>
-          <MiniHeader
-            contactInfo={contactInfo}
-            quickLinks={miniQuickLinks}
-            socialLinks={socialLinks}
-          />
-          <LibraryHeader />
-          {children}
-          <PublicFooter
-            contactInfo={contactInfo}
-            libraryHref="/"
-            socialLinks={socialLinks}
-          />
-        </div>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${ksuSans.variable} ${ksuDisplay.variable}`}
+    >
+      <body className="font-sans antialiased" suppressHydrationWarning>
+        <AccessibilityInitScript />
+        <AccessibilityShell mainContentId="library-main">
+          <div className="min-h-screen bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_38%,hsl(var(--surface-muted))_100%)] text-foreground">
+            <MiniHeader
+              contactInfo={contactInfo}
+              quickLinks={miniQuickLinks}
+              socialLinks={socialLinks}
+            />
+            <LibraryHeader todayHours={todayHours.data[0] ?? null} />
+            {children}
+            <LibraryAssistantLauncher />
+            <LibraryFooter contactInfo={contactInfo} />
+          </div>
+        </AccessibilityShell>
       </body>
     </html>
   );

@@ -1,7 +1,10 @@
-import { PublicSectionPage } from "@/components/public/section-page";
-import { getCareersPageConfig } from "@/lib/utility-page-data";
+import { permanentRedirect } from "next/navigation";
 
-export default async function CareersPage() {
-  return <PublicSectionPage config={await getCareersPageConfig()} />;
+// Job adverts and applications are managed entirely on the official digital
+// job portal; this route exists so internal links and old bookmarks keep
+// working.
+export default function CareersPage() {
+  permanentRedirect(
+    "https://digital.kisiiuniversity.ac.ke/job_portal/open_adverts",
+  );
 }
-

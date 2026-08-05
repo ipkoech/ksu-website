@@ -6,6 +6,8 @@ usage() {
 Usage:
   scripts/deploy.sh local [options]
   scripts/deploy.sh vm --host HOST --env dev|staging|production [options]
+  scripts/deploy.sh vm-status --host HOST --env dev|staging|production [options]
+  scripts/deploy.sh vm-logs --host HOST --env dev|staging|production [options]
   scripts/deploy.sh vm-backup --host HOST --env dev|staging|production [options]
   scripts/deploy.sh cloud --env dev|staging|production --project PROJECT_ID [options]
 
@@ -24,9 +26,12 @@ VM options:
   --repo-url URL       Git repository URL. Defaults to the local origin URL.
   --path PATH          Repository path on the VM. Defaults to this local repo path.
   --project-name NAME  Docker Compose project name. Defaults to ksu-ENV.
+  --scope SCOPE        VM deployment scope: full or research. Defaults to full.
+                       research deploys all APIs but only research/admin frontends.
   --public-host HOST   Public website host or IP. Required for VM deploy.
   --api-host HOST      API host. Required for VM deploy.
   --research-host HOST Research frontend host. Required for VM deploy.
+  --edge-http-port PORT Host bind for the in-container edge. Defaults to 80, or 127.0.0.1:8080 with --https.
   --https             Install host Nginx/Certbot and issue HTTPS certificates.
   --cert-email EMAIL  Let's Encrypt email. Required with --https.
   --bootstrap          Install Docker packages on an Ubuntu/Debian VM before deploy.
@@ -36,6 +41,22 @@ VM options:
   --no-gateway         Skip the nginx gateway.
   --skip-frontend      Skip pnpm install/build.
   --skip-build         Skip Docker image rebuild.
+  --image-prefix PREFIX Image prefix for pushed/pulled Compose images, e.g. ghcr.io/org/ksu.
+  --image-tag TAG      Image tag for Compose images. Defaults to deployed git short SHA.
+  --push-images        Push built Compose images after a successful build.
+  --pull-images        Pull Compose images before deployment. Usually used with --skip-build.
+  --no-cleanup-images  Skip Docker image/build-cache cleanup after a successful deployment.
+  --run-migrations     Run Alembic migrations for deployed backend services before frontend builds.
+  --dry-run            Print the SSH command without executing it.
+
+VM status/log options:
+  --host HOST          SSH host, for example ubuntu@203.0.113.10. Required.
+  --env ENV            Deployment environment: dev, staging, or production. Required.
+  --path PATH          Repository path on the VM. Defaults to this local repo path.
+  --project-name NAME  Docker Compose project name. Defaults to ksu-ENV.
+  --service SERVICE    Service to inspect. Can be repeated. Defaults to core services.
+  --tail N             Number of log lines for vm-logs. Defaults to 200.
+  --follow             Follow logs for vm-logs.
   --dry-run            Print the SSH command without executing it.
 
 Cloud options:
@@ -57,8 +78,12 @@ Examples:
   scripts/deploy.sh local
   scripts/deploy.sh local --skip-frontend
   scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --branch dev --path /srv/ksu
+  scripts/deploy.sh vm-status --host ubuntu@VM_IP --env dev --path /srv/ksu
+  scripts/deploy.sh vm-logs --host ubuntu@VM_IP --env dev --path /srv/ksu --service main --tail 300
+  scripts/deploy.sh vm-logs --host ubuntu@VM_IP --env dev --path /srv/ksu --follow
   scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --path /srv/ksu --bootstrap
   scripts/deploy.sh vm --host ubuntu@VM_IP --env dev --path /srv/ksu --bootstrap --https --cert-email ops@example.edu --public-host public.example.edu --api-host api.example.edu --research-host research.example.edu
+  scripts/deploy.sh vm --host ubuntu@VM_IP --env staging --scope research --path /srv/ksu --project-name ksu-research-staging --research-host research.example.edu --edge-http-port 127.0.0.1:8081 --https --cert-email ops@example.edu
   scripts/deploy.sh vm-backup --host ubuntu@VM_IP --env production
   scripts/deploy.sh cloud --env dev --project my-gcp-project
   scripts/deploy.sh cloud --env staging --project my-gcp-project --image-tag abc1234 --skip-build
@@ -207,7 +232,13 @@ deploy_local() {
     (cd frontend && pnpm build)
   fi
 
-  local services=(postgres redis main research library celery-main celery-library)
+  if [[ -f scripts/validate_database_capacity.py ]]; then
+    capacity_args=()
+    [[ -f .env ]] && capacity_args+=(--file .env)
+    python3 scripts/validate_database_capacity.py "${capacity_args[@]}"
+  fi
+
+  local services=(postgres redis main research library heri celery-main celery-library celery-heri)
   if [[ "${with_gateway}" -eq 1 ]]; then
     services+=(gateway)
   fi
@@ -243,6 +274,17 @@ vm_remote_script() {
   local skip_build="${16}"
   local enable_https="${17}"
   local cert_email="${18}"
+  local run_migrations="${19:-0}"
+  local inspect_services="${20:-}"
+  local log_tail="${21:-200}"
+  local log_follow="${22:-0}"
+  local image_prefix="${23:-}"
+  local image_tag="${24:-}"
+  local push_images="${25:-0}"
+  local pull_images="${26:-0}"
+  local cleanup_images="${27:-1}"
+  local deploy_scope="${28:-full}"
+  local edge_http_port="${29:-}"
 
   cat <<REMOTE
 set -euo pipefail
@@ -264,16 +306,36 @@ SKIP_FRONTEND=$(shell_quote "${skip_frontend}")
 SKIP_BUILD=$(shell_quote "${skip_build}")
 ENABLE_HTTPS=$(shell_quote "${enable_https}")
 CERT_EMAIL=$(shell_quote "${cert_email}")
+RUN_MIGRATIONS=$(shell_quote "${run_migrations}")
 MODE=$(shell_quote "${mode}")
+INSPECT_SERVICES=$(shell_quote "${inspect_services}")
+LOG_TAIL=$(shell_quote "${log_tail}")
+LOG_FOLLOW=$(shell_quote "${log_follow}")
+IMAGE_PREFIX=$(shell_quote "${image_prefix}")
+REQUESTED_IMAGE_TAG=$(shell_quote "${image_tag}")
+PUSH_IMAGES=$(shell_quote "${push_images}")
+PULL_IMAGES=$(shell_quote "${pull_images}")
+CLEANUP_IMAGES=$(shell_quote "${cleanup_images}")
+DEPLOY_SCOPE=$(shell_quote "${deploy_scope}")
+REQUESTED_EDGE_HTTP_PORT=$(shell_quote "${edge_http_port}")
+
+section() {
+  printf '\n[%s] === %s ===\n' "\$(date -u +%Y-%m-%dT%H:%M:%SZ)" "\$*"
+}
+
+step() {
+  printf '[%s] %s\n' "\$(date -u +%Y-%m-%dT%H:%M:%SZ)" "\$*"
+}
 
 if [[ "\${BOOTSTRAP}" -eq 1 ]]; then
+  section "Bootstrap host packages"
   if ! command -v git >/dev/null 2>&1; then
-    echo "Installing Git..."
+    step "Installing Git"
     sudo apt-get update
     sudo apt-get install -y git
   fi
   if ! command -v docker >/dev/null 2>&1; then
-    echo "Installing Docker..."
+    step "Installing Docker"
     sudo apt-get update
     sudo apt-get install -y docker.io docker-compose-plugin
     sudo systemctl enable --now docker
@@ -300,12 +362,65 @@ if ! "\${DOCKER[@]}" compose version >/dev/null 2>&1; then
   exit 1
 fi
 
+section "Validate production configuration"
+if [[ -f "\${REPO_PATH}/scripts/validate_production_env.py" ]]; then
+  for service_env in services/main/.env services/research/.env services/library/.env; do
+    [[ -f "\${REPO_PATH}/\${service_env}" ]] || continue
+    service_name="\$(basename "\$(dirname "\${service_env}")")"
+    python3 "\${REPO_PATH}/scripts/validate_production_env.py" --env "\${ENV_NAME}" --service "\${service_name}" --file "\${REPO_PATH}/\${service_env}"
+  done
+else
+  step "No production validation script found; skipping static env validation"
+fi
+
+if [[ -f "\${REPO_PATH}/scripts/validate_database_capacity.py" ]]; then
+  capacity_args=()
+  [[ -f "\${REPO_PATH}/.env" ]] && capacity_args+=(--file "\${REPO_PATH}/.env")
+  python3 "\${REPO_PATH}/scripts/validate_database_capacity.py" "\${capacity_args[@]}"
+fi
+
+ensure_swap() {
+  local min_swap_mb=4096
+  local swap_file="/swapfile"
+  local current_swap_mb
+
+  current_swap_mb="\$(awk '/^SwapTotal:/ {print int(\$2 / 1024)}' /proc/meminfo)"
+  if (( current_swap_mb >= min_swap_mb )); then
+    echo "Swap is available: \${current_swap_mb} MB"
+    return 0
+  fi
+
+  if ! command -v sudo >/dev/null 2>&1; then
+    echo "warning: sudo is not available; skipping swap setup" >&2
+    return 0
+  fi
+
+  echo "Configuring \${min_swap_mb} MB swap at \${swap_file} for more tolerant Docker builds..."
+  sudo swapoff "\${swap_file}" >/dev/null 2>&1 || true
+  sudo rm -f "\${swap_file}"
+  if command -v fallocate >/dev/null 2>&1; then
+    sudo fallocate -l "\${min_swap_mb}M" "\${swap_file}"
+  else
+    sudo dd if=/dev/zero of="\${swap_file}" bs=1M count="\${min_swap_mb}" status=progress
+  fi
+  sudo chmod 600 "\${swap_file}"
+  sudo mkswap "\${swap_file}"
+  sudo swapon "\${swap_file}"
+
+  if ! grep -q "^\${swap_file}[[:space:]]" /etc/fstab; then
+    echo "\${swap_file} none swap sw 0 0" | sudo tee -a /etc/fstab >/dev/null
+  fi
+}
+
+ensure_swap
+
 if [[ ! -d "\${REPO_PATH}/.git" ]]; then
   if [[ -z "\${REPO_URL}" ]]; then
     echo "error: repository not found at \${REPO_PATH} and no --repo-url was provided" >&2
     exit 1
   fi
-  echo "Cloning \${REPO_URL} into \${REPO_PATH}..."
+  section "Clone repository"
+  step "Cloning \${REPO_URL} into \${REPO_PATH}"
   mkdir -p "\$(dirname "\${REPO_PATH}")"
   git clone --branch "\${BRANCH}" "\${REPO_URL}" "\${REPO_PATH}"
 fi
@@ -313,6 +428,7 @@ fi
 cd "\${REPO_PATH}"
 
 if [[ "\${PULL}" -eq 1 ]]; then
+  section "Update repository"
   if [[ -z "\${BRANCH}" ]]; then
     echo "error: branch is required when pulling" >&2
     exit 1
@@ -322,11 +438,118 @@ if [[ "\${PULL}" -eq 1 ]]; then
   git pull --ff-only origin "\${BRANCH}"
 fi
 
+DEPLOY_GIT_SHA="\$(git rev-parse --short=12 HEAD)"
+IMAGE_TAG="\${REQUESTED_IMAGE_TAG:-\${DEPLOY_GIT_SHA}}"
+BACKEND_IMAGE_PREFIX="\${IMAGE_PREFIX:-ksu-\${ENV_NAME}-backend}"
+FRONTEND_IMAGE_PREFIX="\${IMAGE_PREFIX:-ksu-\${ENV_NAME}-frontend}"
+
+if [[ "\${MODE}" = "status" || "\${MODE}" = "logs" ]]; then
+  COMPOSE_ENV_FILE=".deploy/\${ENV_NAME}.compose.env"
+  if [[ ! -f "\${COMPOSE_ENV_FILE}" ]]; then
+    echo "error: compose env file not found: \${REPO_PATH}/\${COMPOSE_ENV_FILE}" >&2
+    echo "Run a VM deployment first, or check --env, --path, and --project-name." >&2
+    exit 1
+  fi
+
+  compose_files=(-f docker-compose.yml -f docker-compose.vm.yml)
+  if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+    compose_files+=(-f docker-compose.research-vm.yml)
+  fi
+  external_data=0
+  if [[ -f .deploy/docker-compose.external-data.yml ]]; then
+    compose_files+=(-f .deploy/docker-compose.external-data.yml)
+    external_data=1
+  fi
+
+  if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+    default_services=(main research library celery-main celery-research celery-library admin-prod research-web-prod research-gateway research-edge)
+    if [[ "\${external_data}" -eq 0 ]]; then
+      default_services=(postgres redis "\${default_services[@]}")
+    fi
+  else
+    default_services=(main research library heri celery-main celery-research celery-library celery-heri web-prod admin-prod research-web-prod library-web-prod heri-web-prod gateway edge)
+    if [[ "\${external_data}" -eq 0 ]]; then
+      default_services+=(postgres redis)
+    fi
+  fi
+  if [[ -n "\${INSPECT_SERVICES}" ]]; then
+    read -r -a selected_services <<< "\${INSPECT_SERVICES}"
+  else
+    selected_services=("\${default_services[@]}")
+  fi
+
+  if [[ "\${MODE}" = "status" ]]; then
+    echo "Deployment status"
+    echo "  host:        \$(hostname)"
+    echo "  repo path:   \${REPO_PATH}"
+    echo "  environment: \${ENV_NAME}"
+    echo "  project:     \${PROJECT_NAME}"
+    echo "  git branch:  \$(git branch --show-current 2>/dev/null || true)"
+    echo "  git commit:  \$(git rev-parse --short=12 HEAD 2>/dev/null || true)"
+    echo
+
+    echo "Docker Compose services"
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps || true
+    echo
+
+    echo "Container health"
+    for service in "\${selected_services[@]}"; do
+      container_id="\$("\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps -q "\${service}" 2>/dev/null || true)"
+      if [[ -z "\${container_id}" ]]; then
+        printf '  %-24s %s\n' "\${service}" "missing"
+        continue
+      fi
+      status="\$("\${DOCKER[@]}" inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "\${container_id}" 2>/dev/null || true)"
+      restart_count="\$("\${DOCKER[@]}" inspect --format '{{.RestartCount}}' "\${container_id}" 2>/dev/null || true)"
+      image="\$("\${DOCKER[@]}" inspect --format '{{.Config.Image}}' "\${container_id}" 2>/dev/null || true)"
+      printf '  %-24s %-12s restarts=%-4s image=%s\n' "\${service}" "\${status:-unknown}" "\${restart_count:-?}" "\${image:-unknown}"
+    done
+    echo
+
+    echo "Project containers"
+    "\${DOCKER[@]}" ps -a \
+      --filter "name=\${PROJECT_NAME}" \
+      --format 'table {{.Names}}\t{{.Status}}\t{{.RunningFor}}' | sed -n '1,20p' || true
+    echo
+
+    echo "Docker disk usage"
+    "\${DOCKER[@]}" system df || true
+    echo
+
+    echo "Host disk usage"
+    df -h "\${REPO_PATH}" || true
+    echo
+
+    if command -v systemctl >/dev/null 2>&1; then
+      echo "Host nginx"
+      systemctl is-active nginx 2>/dev/null || true
+    fi
+    exit 0
+  fi
+
+  log_args=(logs "--tail=\${LOG_TAIL}" --timestamps)
+  if [[ "\${LOG_FOLLOW}" -eq 1 ]]; then
+    log_args+=(-f)
+  fi
+  log_args+=("\${selected_services[@]}")
+
+  echo "Showing logs for project \${PROJECT_NAME}: \${selected_services[*]}"
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" "\${log_args[@]}"
+  exit 0
+fi
+
 APP_SCHEME="http"
-EDGE_HTTP_PORT="80"
+EDGE_HTTP_PORT="\${REQUESTED_EDGE_HTTP_PORT:-80}"
 if [[ "\${ENABLE_HTTPS}" -eq 1 ]]; then
   APP_SCHEME="https"
-  EDGE_HTTP_PORT="127.0.0.1:8080"
+  EDGE_HTTP_PORT="\${REQUESTED_EDGE_HTTP_PORT:-127.0.0.1:8080}"
+fi
+EDGE_PROXY_TARGET="\${EDGE_HTTP_PORT}"
+if [[ "\${EDGE_PROXY_TARGET}" != *:* ]]; then
+  EDGE_PROXY_TARGET="127.0.0.1:\${EDGE_PROXY_TARGET}"
+fi
+if [[ "\${EDGE_PROXY_TARGET}" = 0.0.0.0:* ]]; then
+  EDGE_PROXY_TARGET="127.0.0.1:\${EDGE_PROXY_TARGET##*:}"
 fi
 PUBLIC_URL="\${APP_SCHEME}://\${PUBLIC_HOST}"
 API_SERVER_NAME="\${API_HOST}"
@@ -337,7 +560,7 @@ else
   API_URL="\${APP_SCHEME}://\${API_HOST}"
 fi
 RESEARCH_SERVER_NAME="\${RESEARCH_HOST}"
-if [[ "\${RESEARCH_HOST}" = "\${PUBLIC_HOST}" ]]; then
+if [[ "\${DEPLOY_SCOPE}" != "research" && "\${RESEARCH_HOST}" = "\${PUBLIC_HOST}" ]]; then
   RESEARCH_SERVER_NAME="research.invalid.local"
 fi
 RESEARCH_URL="\${APP_SCHEME}://\${RESEARCH_HOST}"
@@ -353,6 +576,12 @@ else
 fi
 cat >> "\${COMPOSE_ENV_FILE}" <<EOF
 APP_ENV=\${ENV_NAME}
+IMAGE_TAG=\${IMAGE_TAG}
+BACKEND_IMAGE_PREFIX=\${BACKEND_IMAGE_PREFIX}
+FRONTEND_IMAGE_PREFIX=\${FRONTEND_IMAGE_PREFIX}
+POSTGRES_DB=\${POSTGRES_DB:-ksu_services_db}
+POSTGRES_USER=\${POSTGRES_USER:-ksu_service_user}
+POSTGRES_PASSWORD=\${POSTGRES_PASSWORD:-compose-interpolation-only}
 EDGE_HTTP_PORT=\${EDGE_HTTP_PORT}
 PUBLIC_SERVER_NAME=\${PUBLIC_HOST}
 API_SERVER_NAME=\${API_SERVER_NAME}
@@ -365,10 +594,22 @@ NEXT_PUBLIC_PUBLIC_FRONTEND_URL=\${PUBLIC_URL}
 NEXT_PUBLIC_RESEARCH_FRONTEND_URL=\${RESEARCH_URL}
 NEXT_PUBLIC_LIBRARY_FRONTEND_URL=\${LIBRARY_URL}
 NEXT_PUBLIC_APP_URL=\${ADMIN_URL}
+VM_FRONTEND_BUILD_API_URL=http://\${EDGE_PROXY_TARGET}
+VM_FRONTEND_BUILD_MAIN_API_URL=http://127.0.0.1:\${MAIN_SERVICE_PORT:-8000}
+VM_FRONTEND_BUILD_RESEARCH_API_URL=http://127.0.0.1:\${RESEARCH_SERVICE_PORT:-8001}
+VM_FRONTEND_BUILD_LIBRARY_API_URL=http://127.0.0.1:\${LIBRARY_SERVICE_PORT:-8002}
+KSU_MAIN_API_URL=http://main:8000
+KSU_RESEARCH_API_URL=http://research:8001
+KSU_LIBRARY_API_URL=http://library:8002
 EOF
 
+required_env_files=(services/main/.env services/research/.env services/library/.env)
+if [[ -f services/heri_africa/Dockerfile ]]; then
+  required_env_files+=(services/heri_africa/.env)
+fi
+
 missing_env=()
-for env_file in services/main/.env services/research/.env services/library/.env; do
+for env_file in "\${required_env_files[@]}"; do
   if [[ ! -f "\${env_file}" ]]; then
     missing_env+=("\${env_file}")
   fi
@@ -380,6 +621,37 @@ if [[ "\${#missing_env[@]}" -gt 0 ]]; then
   exit 1
 fi
 
+read_env_value() {
+  local env_file="\$1"
+  local key="\$2"
+  awk -F= -v key="\${key}" '\$1 == key { sub(/^[^=]*=/, ""); print; exit }' "\${env_file}"
+}
+
+if [[ -f .deploy/docker-compose.external-data.yml ]]; then
+  {
+    printf 'MAIN_DATABASE_URL=%s\n' "\$(read_env_value services/main/.env DATABASE_URL)"
+    printf 'MAIN_REDIS_URL=%s\n' "\$(read_env_value services/main/.env REDIS_URL)"
+    printf 'RESEARCH_DATABASE_URL=%s\n' "\$(read_env_value services/research/.env DATABASE_URL)"
+    printf 'RESEARCH_REDIS_URL=%s\n' "\$(read_env_value services/research/.env REDIS_URL)"
+    printf 'LIBRARY_DATABASE_URL=%s\n' "\$(read_env_value services/library/.env DATABASE_URL)"
+    printf 'LIBRARY_REDIS_URL=%s\n' "\$(read_env_value services/library/.env REDIS_URL)"
+    if [[ -f services/heri_africa/.env ]]; then
+      printf 'HERI_DATABASE_URL=%s\n' "\$(read_env_value services/heri_africa/.env DATABASE_URL)"
+      printf 'HERI_REDIS_URL=%s\n' "\$(read_env_value services/heri_africa/.env REDIS_URL)"
+    fi
+  } >> "\${COMPOSE_ENV_FILE}"
+fi
+
+compose_files=(-f docker-compose.yml -f docker-compose.vm.yml)
+if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+  compose_files+=(-f docker-compose.research-vm.yml)
+fi
+external_data=0
+if [[ -f .deploy/docker-compose.external-data.yml ]]; then
+  compose_files+=(-f .deploy/docker-compose.external-data.yml)
+  external_data=1
+fi
+
 backup_database() {
   mkdir -p "\${BACKUP_DIR}"
   local stamp
@@ -387,13 +659,11 @@ backup_database() {
   local output="\${BACKUP_DIR}/ksu-\${ENV_NAME}-\${stamp}.sql.gz"
 
   echo "Creating database backup: \${output}"
-  if "\${DOCKER[@]}" compose -p "\${PROJECT_NAME}" ps --status running postgres --format '{{.Service}}' | grep -qx postgres; then
-    "\${DOCKER[@]}" compose -p "\${PROJECT_NAME}" exec -T postgres pg_dump -U ksu -d ksu | gzip -9 > "\${output}"
-  elif "\${DOCKER[@]}" compose ps --status running postgres --format '{{.Service}}' | grep -qx postgres; then
-    "\${DOCKER[@]}" compose exec -T postgres pg_dump -U ksu -d ksu | gzip -9 > "\${output}"
+  if "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps --status running postgres --format '{{.Service}}' | grep -qx postgres; then
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T postgres pg_dump -U ksu -d ksu | gzip -9 > "\${output}"
   else
-    echo "warning: postgres container is not running; skipping database backup" >&2
-    return 0
+    echo "error: postgres container is not running; refusing to deploy without a backup" >&2
+    return 1
   fi
 
   chmod 600 "\${output}"
@@ -413,24 +683,186 @@ if [[ "\${SKIP_FRONTEND}" -eq 0 && -f frontend/package.json ]]; then
   echo "Frontend apps will be built by Docker Compose."
 fi
 
-services=(postgres redis main research library celery-main celery-library)
+if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+  backend_services=(main research library)
+  worker_services=(celery-main celery-research celery-library)
+else
+  backend_services=(main research library heri)
+  worker_services=(celery-main celery-research celery-library celery-heri)
+fi
+core_services=("\${backend_services[@]}" "\${worker_services[@]}")
+if [[ "\${external_data}" -eq 0 ]]; then
+  core_services=(postgres redis "\${core_services[@]}")
+fi
+frontend_services=()
+proxy_services=()
 if [[ "\${WITH_GATEWAY}" -eq 1 ]]; then
-  services+=(gateway)
+  if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+    proxy_services+=(research-gateway)
+  else
+    proxy_services+=(gateway)
+  fi
 fi
 if [[ "\${SKIP_FRONTEND}" -eq 0 ]]; then
-  services+=(web-prod admin-prod research-web-prod library-web-prod edge)
+  if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+    frontend_services+=(admin-prod research-web-prod)
+    proxy_services+=(research-edge)
+  else
+    frontend_services+=(web-prod admin-prod research-web-prod library-web-prod heri-web-prod)
+    proxy_services+=(edge)
+  fi
 fi
 
-compose_args=(up -d --remove-orphans)
+pull_compose_images() {
+  local services=("\$@")
+  if [[ "\${#services[@]}" -eq 0 ]]; then
+    return 0
+  fi
+  section "Pull Docker images"
+  step "Pulling images for: \${services[*]}"
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" pull "\${services[@]}"
+}
+
+push_compose_images() {
+  local services=("\$@")
+  if [[ "\${PUSH_IMAGES}" -ne 1 || "\${SKIP_BUILD}" -eq 1 || "\${#services[@]}" -eq 0 ]]; then
+    return 0
+  fi
+  section "Push Docker images"
+  step "Pushing images for: \${services[*]}"
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" push "\${services[@]}"
+}
+
+cleanup_docker_images() {
+  if [[ "\${CLEANUP_IMAGES}" -ne 1 ]]; then
+    return 0
+  fi
+  section "Docker image cleanup"
+  "\${DOCKER[@]}" image prune -f || true
+  "\${DOCKER[@]}" builder prune -f --filter "until=72h" || true
+  "\${DOCKER[@]}" system df || true
+}
+
+if [[ "\${PULL_IMAGES}" -eq 1 ]]; then
+  pull_compose_images "\${core_services[@]}" "\${frontend_services[@]}" "\${proxy_services[@]}"
+fi
+
+section "Deploy core services"
+step "Project: \${PROJECT_NAME}"
+step "Git commit: \${DEPLOY_GIT_SHA}"
+step "Image tag: \${IMAGE_TAG}"
+step "Core services: \${core_services[*]}"
+
 if [[ "\${SKIP_BUILD}" -eq 0 ]]; then
-  compose_args+=(--build)
+  section "Build backend images"
+  step "Building backend images sequentially to avoid duplicate API/Celery image exports."
+  for backend_service in "\${backend_services[@]}"; do
+    step "Building backend image: \${backend_service}"
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" build "\${backend_service}"
+    push_compose_images "\${backend_service}"
+  done
 fi
-compose_args+=("\${services[@]}")
 
-echo "Deploying Docker Compose project \${PROJECT_NAME}: \${services[*]}"
-"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" -f docker-compose.yml -f docker-compose.vm.yml "\${compose_args[@]}"
+if [[ "\${external_data}" -eq 0 ]]; then
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" up -d --remove-orphans postgres redis
+fi
+
+"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" up -d --remove-orphans --no-build "\${backend_services[@]}" "\${worker_services[@]}"
 echo
-"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" -f docker-compose.yml -f docker-compose.vm.yml ps "\${services[@]}"
+"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${core_services[@]}"
+
+section "Run reviewed migrations"
+if [[ "\${ENV_NAME}" != "dev" || "\${RUN_MIGRATIONS}" -eq 1 ]]; then
+  for service in "\${backend_services[@]}"; do
+    step "Running committed migrations for \${service}"
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T "\${service}" alembic upgrade head
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T "\${service}" alembic current --check-heads
+  done
+else
+  step "Development deployment: migrations were not requested"
+fi
+
+wait_for_backend_health() {
+  local timeout_seconds="\${1:-420}"
+  local deadline=\$((SECONDS + timeout_seconds))
+  local pending=()
+
+  while (( SECONDS < deadline )); do
+    pending=()
+    for service in "\${backend_services[@]}"; do
+      local container_id
+      container_id="\$("\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps -q "\${service}")"
+      if [[ -z "\${container_id}" ]]; then
+        pending+=("\${service}:missing")
+        continue
+      fi
+
+      local status
+      status="\$("\${DOCKER[@]}" inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "\${container_id}")"
+      if [[ "\${status}" != "healthy" && "\${status}" != "running" ]]; then
+        pending+=("\${service}:\${status}")
+      fi
+    done
+
+    if [[ "\${#pending[@]}" -eq 0 ]]; then
+      step "Backend services are healthy: \${backend_services[*]}"
+      return 0
+    fi
+
+    sleep 5
+  done
+
+  echo "error: backend services did not become healthy within \${timeout_seconds}s: \${pending[*]}" >&2
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${backend_services[@]}" >&2 || true
+  return 1
+}
+
+wait_for_backend_health 420
+
+restart_existing_proxy_services() {
+  local services=(gateway research-gateway edge research-edge)
+  local existing=()
+
+  for service in "\${services[@]}"; do
+    if [[ -n "\$("\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps -q "\${service}" 2>/dev/null)" ]]; then
+      existing+=("\${service}")
+    fi
+  done
+
+  if [[ "\${#existing[@]}" -gt 0 ]]; then
+    section "Restart existing gateway/edge"
+    step "Restarting: \${existing[*]}"
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" restart "\${existing[@]}"
+  fi
+}
+
+restart_existing_proxy_services
+
+if [[ "\${#frontend_services[@]}" -gt 0 ]]; then
+  section "Deploy frontend services"
+  step "Sequential frontend builds avoid overloading low-vCPU VM hosts."
+  for frontend_service in "\${frontend_services[@]}"; do
+    frontend_compose_args=(up -d --remove-orphans)
+    if [[ "\${SKIP_BUILD}" -eq 0 ]]; then
+      frontend_compose_args+=(--build)
+    fi
+    frontend_compose_args+=("\${frontend_service}")
+
+    step "Deploying frontend service: \${frontend_service}"
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" "\${frontend_compose_args[@]}"
+    push_compose_images "\${frontend_service}"
+  done
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${frontend_services[@]}"
+fi
+
+if [[ "\${#proxy_services[@]}" -gt 0 ]]; then
+  section "Refresh proxy services"
+  step "Refreshing proxy services to resolve current upstream container IPs: \${proxy_services[*]}"
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" up -d --remove-orphans --force-recreate "\${proxy_services[@]}"
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${proxy_services[@]}"
+fi
+
+cleanup_docker_images
 
 configure_https() {
   if [[ "\${ENABLE_HTTPS}" -ne 1 ]]; then
@@ -452,15 +884,65 @@ configure_https() {
   local site_enabled="/etc/nginx/sites-enabled/\${site_name}.conf"
 
   echo "Writing host Nginx reverse proxy: \${site_available}"
-  sudo tee "\${site_available}" >/dev/null <<EOF
+  if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+    sudo tee "\${site_available}" >/dev/null <<EOF
+server {
+    listen 80;
+    server_name \${RESEARCH_HOST};
+
+    client_max_body_size 25M;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
+
+    location / {
+        proxy_pass http://\${EDGE_PROXY_TARGET};
+        proxy_http_version 1.1;
+        proxy_set_header Host \\\$host;
+        proxy_set_header X-Real-IP \\\$remote_addr;
+        proxy_set_header X-Forwarded-For \\\$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \\\$scheme;
+        proxy_set_header Upgrade \\\$http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+EOF
+    if [[ "\${API_HOST}" != "\${RESEARCH_HOST}" ]]; then
+      sudo tee -a "\${site_available}" >/dev/null <<EOF
+
+server {
+    listen 80;
+    server_name \${API_HOST};
+
+    client_max_body_size 25M;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
+
+    location / {
+        proxy_pass http://\${EDGE_PROXY_TARGET};
+        proxy_http_version 1.1;
+        proxy_set_header Host \\\$host;
+        proxy_set_header X-Real-IP \\\$remote_addr;
+        proxy_set_header X-Forwarded-For \\\$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \\\$scheme;
+    }
+}
+EOF
+    fi
+  else
+    sudo tee "\${site_available}" >/dev/null <<EOF
 server {
     listen 80;
     server_name \${PUBLIC_HOST};
 
     client_max_body_size 25M;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
 
     location / {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://\${EDGE_PROXY_TARGET};
         proxy_http_version 1.1;
         proxy_set_header Host \\\$host;
         proxy_set_header X-Real-IP \\\$remote_addr;
@@ -476,9 +958,12 @@ server {
     server_name \${API_HOST};
 
     client_max_body_size 25M;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
 
     location / {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://\${EDGE_PROXY_TARGET};
         proxy_http_version 1.1;
         proxy_set_header Host \\\$host;
         proxy_set_header X-Real-IP \\\$remote_addr;
@@ -492,9 +977,12 @@ server {
     server_name \${RESEARCH_HOST};
 
     client_max_body_size 25M;
+    proxy_buffer_size 32k;
+    proxy_buffers 16 32k;
+    proxy_busy_buffers_size 64k;
 
     location / {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://\${EDGE_PROXY_TARGET};
         proxy_http_version 1.1;
         proxy_set_header Host \\\$host;
         proxy_set_header X-Real-IP \\\$remote_addr;
@@ -505,6 +993,7 @@ server {
     }
 }
 EOF
+  fi
 
   sudo ln -sf "\${site_available}" "\${site_enabled}"
   if [[ -e /etc/nginx/sites-enabled/default ]]; then
@@ -514,18 +1003,46 @@ EOF
   sudo systemctl reload nginx
 
   echo "Requesting Let's Encrypt certificates..."
+  cert_domains=()
+  add_cert_domain() {
+    local domain="\$1"
+    local existing
+    [[ -z "\${domain}" || "\${domain}" = "_" || "\${domain}" = *.invalid.local ]] && return 0
+    for existing in "\${cert_domains[@]}"; do
+      [[ "\${existing}" = "\${domain}" ]] && return 0
+    done
+    cert_domains+=("\${domain}")
+  }
+
+  if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+    add_cert_domain "\${RESEARCH_HOST}"
+    add_cert_domain "\${API_HOST}"
+  else
+    add_cert_domain "\${PUBLIC_HOST}"
+    add_cert_domain "\${API_HOST}"
+    add_cert_domain "\${RESEARCH_HOST}"
+  fi
+
+  if [[ "\${#cert_domains[@]}" -eq 0 ]]; then
+    echo "error: no valid certificate domains were resolved" >&2
+    exit 1
+  fi
+
+  certbot_domain_args=()
+  for domain in "\${cert_domains[@]}"; do
+    certbot_domain_args+=(-d "\${domain}")
+  done
+
   sudo certbot --nginx \
     --non-interactive \
     --agree-tos \
     --email "\${CERT_EMAIL}" \
     --redirect \
     --keep-until-expiring \
-    -d "\${PUBLIC_HOST}" \
-    -d "\${API_HOST}" \
-    -d "\${RESEARCH_HOST}"
+    "\${certbot_domain_args[@]}"
 
   sudo systemctl reload nginx
-  echo "HTTPS configured for \${PUBLIC_HOST}, \${API_HOST}, and \${RESEARCH_HOST}."
+  echo "HTTPS configured for: \${cert_domains[*]}."
 }
 
 configure_https
@@ -543,9 +1060,11 @@ deploy_vm() {
   repo_url="$(git -C "${ROOT}" remote get-url origin 2>/dev/null || true)"
   local repo_path="${ROOT}"
   local project_name=""
+  local deploy_scope="full"
   local public_host=""
   local api_host=""
   local research_host=""
+  local edge_http_port=""
   local enable_https=0
   local cert_email=""
   local bootstrap=0
@@ -555,10 +1074,20 @@ deploy_vm() {
   local with_gateway=1
   local skip_frontend=0
   local skip_build=0
+  local run_migrations=0
+  local image_prefix=""
+  local image_tag=""
+  local push_images=0
+  local pull_images=0
+  local cleanup_images=1
+  local inspect_services=""
+  local log_tail=200
+  local log_follow=0
   DRY_RUN=0
 
-  if [[ "${mode}" = "backup" ]]; then
+  if [[ "${mode}" = "backup" || "${mode}" = "status" || "${mode}" = "logs" ]]; then
     pull=0
+    backup=0
   fi
 
   while [[ $# -gt 0 ]]; do
@@ -587,6 +1116,10 @@ deploy_vm() {
         project_name="${2:-}"
         shift 2
         ;;
+      --scope)
+        deploy_scope="${2:-}"
+        shift 2
+        ;;
       --public-host)
         public_host="${2:-}"
         shift 2
@@ -597,6 +1130,10 @@ deploy_vm() {
         ;;
       --research-host)
         research_host="${2:-}"
+        shift 2
+        ;;
+      --edge-http-port)
+        edge_http_port="${2:-}"
         shift 2
         ;;
       --https)
@@ -639,6 +1176,50 @@ deploy_vm() {
         skip_build=1
         shift
         ;;
+      --image-prefix)
+        image_prefix="${2:-}"
+        shift 2
+        ;;
+      --image-tag)
+        image_tag="${2:-}"
+        shift 2
+        ;;
+      --push-images)
+        push_images=1
+        shift
+        ;;
+      --pull-images)
+        pull_images=1
+        shift
+        ;;
+      --no-cleanup-images)
+        cleanup_images=0
+        shift
+        ;;
+      --run-migrations)
+        run_migrations=1
+        shift
+        ;;
+      --service)
+        if [[ -z "${2:-}" ]]; then
+          echo "error: --service requires a service name" >&2
+          exit 1
+        fi
+        inspect_services+="${inspect_services:+ }${2}"
+        shift 2
+        ;;
+      --tail)
+        log_tail="${2:-}"
+        if [[ ! "${log_tail}" =~ ^[0-9]+$ ]]; then
+          echo "error: --tail must be a positive integer" >&2
+          exit 1
+        fi
+        shift 2
+        ;;
+      --follow)
+        log_follow=1
+        shift
+        ;;
       --dry-run)
         DRY_RUN=1
         shift
@@ -664,6 +1245,13 @@ deploy_vm() {
     exit 1
   fi
   validate_env_name "${env_name}"
+  case "${deploy_scope}" in
+    full|research) ;;
+    *)
+      echo "error: --scope must be one of: full, research" >&2
+      exit 1
+      ;;
+  esac
 
   if [[ -z "${branch}" && "${pull}" -eq 1 ]]; then
     echo "error: cannot determine current branch; pass --branch or --no-pull" >&2
@@ -677,6 +1265,28 @@ deploy_vm() {
 
   if [[ -z "${project_name}" ]]; then
     project_name="ksu-${env_name}"
+  fi
+
+  if [[ "${mode}" = "logs" && -z "${inspect_services}" ]]; then
+    if [[ "${deploy_scope}" = "research" ]]; then
+      inspect_services="main research library celery-main celery-research celery-library admin-prod research-web-prod research-gateway research-edge"
+    else
+      inspect_services="main research library heri celery-main celery-research celery-library celery-heri web-prod admin-prod research-web-prod library-web-prod heri-web-prod edge gateway"
+    fi
+  fi
+
+  if [[ "${mode}" != "deploy" && "${mode}" != "backup" ]]; then
+    public_host="${public_host:-_}"
+    api_host="${api_host:-_}"
+    research_host="${research_host:-_}"
+  fi
+
+  if [[ "${deploy_scope}" = "research" && -z "${public_host}" ]]; then
+    public_host="${research_host}"
+  fi
+
+  if [[ "${deploy_scope}" = "research" && -z "${api_host}" ]]; then
+    api_host="${research_host}"
   fi
 
   if [[ -z "${public_host}" ]]; then
@@ -698,11 +1308,16 @@ deploy_vm() {
     backup_dir="${repo_path}/backups/${env_name}"
   fi
 
+  if [[ "${push_images}" -eq 1 && -z "${image_prefix}" ]]; then
+    echo "error: --push-images requires --image-prefix so Docker knows where to push" >&2
+    exit 1
+  fi
+
   local remote
   if [[ "${mode}" = "backup" ]]; then
     backup=1
   fi
-  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_url}" "${repo_path}" "${project_name}" "${public_host}" "${api_host}" "${research_host}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}" "${enable_https}" "${cert_email}")"
+  remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_url}" "${repo_path}" "${project_name}" "${public_host}" "${api_host}" "${research_host}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}" "${enable_https}" "${cert_email}" "${run_migrations}" "${inspect_services}" "${log_tail}" "${log_follow}" "${image_prefix}" "${image_tag}" "${push_images}" "${pull_images}" "${cleanup_images}" "${deploy_scope}" "${edge_http_port}")"
 
   if [[ "${DRY_RUN}" -eq 1 ]]; then
     printf '+ ssh %q %q\n' "${host}" "${remote}"
@@ -1072,6 +1687,14 @@ main() {
     vm)
       shift
       deploy_vm deploy "$@"
+      ;;
+    vm-status)
+      shift
+      deploy_vm status "$@"
+      ;;
+    vm-logs)
+      shift
+      deploy_vm logs "$@"
       ;;
     vm-backup)
       shift

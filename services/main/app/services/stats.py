@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import uuid
+from datetime import datetime, timezone
 
-import sqlalchemy as sa
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from ..models import (
     Announcement,
@@ -14,6 +14,7 @@ from ..models import (
     Blog,
     Campus,
     Club,
+    ClubActivity,
     ContactDirectory,
     Department,
     DepartmentService,
@@ -37,9 +38,71 @@ from ..models import (
     AlumniAssociation,
     ExchangeProgramme,
     Media,
+    MediaLink,
+    PageSection,
+    PartnershipSpotlight,
     Policy,
+    Slider,
 )
-from ..schemas.stats import PublicStatItem, PublicStatsResponse
+from ..schemas.stats import PortalStatsResponse, PublicStatItem, PublicStatsResponse
+
+
+# These names are the dashboard contract.  Main-service portals are calculated
+# below; service-owned portals use their matching research or library endpoint.
+PORTAL_STAT_CONTRACTS: dict[str, tuple[str, ...]] = {
+    "admin": (
+        "boards_count",
+        "divisions_count",
+        "offices_count",
+        "staff_assignments_count",
+        "documents_count",
+    ),
+    "cocms": (
+        "pending_review_count",
+        "published_count",
+        "draft_count",
+        "scheduled_count",
+        "media_count",
+        "in_review_count",
+        "changes_requested_count",
+        "approved_count",
+        "expired_count",
+        "validation_blocker_count",
+        "spotlight_count",
+    ),
+    "schools": ("schools_count", "programmes_count", "departments_count"),
+    "departments": (
+        "departments_count",
+        "programmes_count",
+        "unpublished_count",
+    ),
+    "student-clubs": ("active_clubs_count", "active_members_count"),
+    "research": (
+        "active_projects_count",
+        "grants_count",
+        "centres_count",
+        "outputs_count",
+    ),
+    "library": (
+        "active_branches_count",
+        "catalogue_resources_count",
+        "active_regulations_count",
+        "loans_count",
+    ),
+    "publications": (
+        "draft_count",
+        "submitted_count",
+        "school_approved_count",
+        "published_count",
+    ),
+}
+
+PORTAL_ALIASES = {
+    "cocms": "corporate-communication",
+    "publications": "research",
+    "governance": "admin",
+    "institutional-administration": "admin",
+}
 
 
 async def _count(db: AsyncSession, model, *conditions) -> int:
@@ -62,6 +125,159 @@ async def _sum_publications_for_people(
     return int(result.scalar_one() or 0)
 
 
+async def _sum(db: AsyncSession, field, model, *conditions) -> int:
+    result = await db.execute(
+        select(func.coalesce(func.sum(field), 0)).where(
+            model.deleted_at.is_(None),
+            *conditions,
+        )
+    )
+    return int(result.scalar_one() or 0)
+
+
+class _PageCmsStatsPreviewCapability:
+    """Authorize validation only within the section's own page scope."""
+
+    def __init__(self, scope_type: str, scope_id):
+        self.scope_type = scope_type
+        self.scope_id = scope_id
+
+    async def allows(
+        self,
+        *,
+        source_scope_type: str,
+        source_scope_id,
+        destination_scope_type: str,
+        destination_scope_id,
+    ) -> bool:
+        return (
+            source_scope_type == self.scope_type == destination_scope_type
+            and source_scope_id == self.scope_id == destination_scope_id
+        )
+
+
+def _page_cms_active_publication_start(model, now):
+    return (
+        or_(model.valid_from.is_(None), model.valid_from <= now),
+        or_(model.scheduled_publish_at.is_(None), model.scheduled_publish_at <= now),
+    )
+
+
+def _page_cms_active_publication_window(model, now):
+    return (
+        *_page_cms_active_publication_start(model, now),
+        or_(model.valid_to.is_(None), model.valid_to >= now),
+        or_(model.expires_at.is_(None), model.expires_at >= now),
+    )
+
+
+def _page_cms_public_composition_candidate(model):
+    return (
+        model.is_enabled.is_(True),
+        model.status == "published",
+        model.workflow_status == "published",
+    )
+
+
+async def _page_cms_workflow_stats(db: AsyncSession) -> dict[str, int]:
+    now = datetime.now(timezone.utc)
+    future_start = or_(
+        PageSection.valid_from > now,
+        PageSection.scheduled_publish_at > now,
+    )
+    scheduled = and_(
+        *_page_cms_public_composition_candidate(PageSection),
+        future_start,
+    )
+    expired = and_(
+        *_page_cms_public_composition_candidate(PageSection),
+        *_page_cms_active_publication_start(PageSection, now),
+        or_(
+            PageSection.valid_to < now,
+            PageSection.expires_at < now,
+        ),
+    )
+    result = await db.execute(
+        select(
+            func.count(PageSection.id)
+            .filter(PageSection.workflow_status == "draft")
+            .label("draft_count"),
+            func.count(PageSection.id)
+            .filter(PageSection.workflow_status == "in_review")
+            .label("in_review_count"),
+            func.count(PageSection.id)
+            .filter(PageSection.workflow_status == "changes_requested")
+            .label("changes_requested_count"),
+            func.count(PageSection.id)
+            .filter(PageSection.workflow_status == "approved")
+            .label("approved_count"),
+            func.count(PageSection.id).filter(scheduled).label("scheduled_count"),
+            func.count(PageSection.id)
+            .filter(
+                *_page_cms_public_composition_candidate(PageSection),
+                *_page_cms_active_publication_window(PageSection, now),
+            )
+            .label("published_count"),
+            func.count(PageSection.id).filter(expired).label("expired_count"),
+        ).where(PageSection.deleted_at.is_(None))
+    )
+    return {key: int(value or 0) for key, value in result.mappings().one().items()}
+
+
+async def _page_cms_validation_blocker_count(db: AsyncSession) -> int:
+    from .page_cms import PageSectionValidationService, group_preview_media_links_many
+    from .page_cms_sources import PageCmsSourceResolutionCache
+
+    result = await db.execute(
+        select(PageSection)
+        .options(selectinload(PageSection.items))
+        .where(
+            PageSection.deleted_at.is_(None),
+            PageSection.status != "archived",
+        )
+    )
+    sections = list(result.scalars().all())
+    if not sections:
+        return 0
+
+    media_by_section = await group_preview_media_links_many(
+        db,
+        "page_section",
+        [section.id for section in sections],
+    )
+    sections_by_scope = {}
+    for section in sections:
+        key = (section.page_key, section.scope_type, section.scope_id)
+        sections_by_scope.setdefault(key, []).append(section)
+
+    blocker_count = 0
+    resolution_cache = PageCmsSourceResolutionCache()
+    for (_, scope_type, scope_id), scoped_sections in sections_by_scope.items():
+        resolved_by_section = await PageSectionValidationService.resolve_items_for_sections(
+            db,
+            scoped_sections,
+            _PageCmsStatsPreviewCapability(scope_type, scope_id),
+            resolution_cache=resolution_cache,
+        )
+        for section in scoped_sections:
+            issues = PageSectionValidationService.validate(
+                section,
+                resolved_by_section.get(section.id, []),
+                media_by_section.get(section.id, {}),
+            )
+            blocker_count += int(any(issue.blocking for issue in issues))
+    return blocker_count
+
+
+async def _page_cms_spotlight_count(db: AsyncSession) -> int:
+    result = await db.execute(
+        select(func.count(PartnershipSpotlight.id).label("spotlight_count")).where(
+            PartnershipSpotlight.deleted_at.is_(None)
+        )
+    )
+    return int(result.mappings().one()["spotlight_count"] or 0)
+
+
 def _item(
     key: str,
     label: str,
@@ -81,15 +297,14 @@ def _item(
 
 
 async def homepage_stats(db: AsyncSession) -> PublicStatsResponse:
-    public_content = (
-        lambda model: (
+    def public_content(model):
+        return (
             model.is_public.is_(True),
             model.is_published.is_(True),
             model.status == "published",
             model.archived_at.is_(None),
             model.deleted_at.is_(None),
         )
-    )
 
     students_result = await db.execute(
         select(
@@ -205,14 +420,13 @@ async def homepage_stats(db: AsyncSession) -> PublicStatsResponse:
 async def university_stats(db: AsyncSession) -> PublicStatsResponse:
     """Comprehensive public-safe university-wide stats."""
 
-    public_content = (
-        lambda model: (
+    def public_content(model):
+        return (
             model.is_public.is_(True),
             model.is_published.is_(True),
             model.status == "published",
             model.archived_at.is_(None),
         )
-    )
 
     students_result = await db.execute(
         select(
@@ -593,6 +807,93 @@ async def public_stats(
     if scope == "department" and slug:
         return await department_stats(db, slug)
     return None
+
+
+async def portal_stats(
+    db: AsyncSession,
+    portal: str,
+) -> PortalStatsResponse | None:
+    """Return definite counters for Main-service admin portal dashboards."""
+
+    if portal == "admin":
+        stats = {
+            "boards_count": await _count(db, Board),
+            "divisions_count": await _count(db, Division),
+            "offices_count": await _count(db, Wing),
+            "staff_assignments_count": await _count(db, StaffAssignment),
+            "documents_count": await _count(db, Document),
+        }
+        title = "Admin operational counters"
+    elif portal == "cocms":
+        content_sources = (
+            (News, ()),
+            (Blog, ()),
+            (Event, ()),
+            (Announcement, ()),
+            (ClubActivity, ()),
+            (MediaLink, (MediaLink.owner_portal == "student-clubs",)),
+            (PageSection, ()),
+            (PartnershipSpotlight, ()),
+            (Slider, ()),
+        )
+        stats = {
+            "pending_review_count": sum(
+                [
+                    await _count(
+                        db,
+                        model,
+                        model.workflow_status.in_(("submitted", "in_review")),
+                        *extra_filters,
+                    )
+                    for model, extra_filters in content_sources
+                ]
+            ),
+            "media_count": await _count(db, Media),
+        }
+        stats.update(await _page_cms_workflow_stats(db))
+        stats["validation_blocker_count"] = await _page_cms_validation_blocker_count(db)
+        stats["spotlight_count"] = await _page_cms_spotlight_count(db)
+        title = "CoCMS publishing counters"
+    elif portal == "schools":
+        stats = {
+            "schools_count": await _count(db, School),
+            "programmes_count": await _count(db, Programme),
+            "departments_count": await _count(db, Department),
+        }
+        title = "School administration counters"
+    elif portal == "departments":
+        content_models = (News, Event, Announcement)
+        stats = {
+            "departments_count": await _count(db, Department),
+            "programmes_count": await _count(db, Programme),
+            "unpublished_count": sum(
+                [
+                    await _count(
+                        db,
+                        model,
+                        model.scope_type == "department",
+                        model.is_published.is_(False),
+                    )
+                    for model in content_models
+                ]
+            ),
+        }
+        title = "Department administration counters"
+    elif portal == "student-clubs":
+        stats = {
+            "active_clubs_count": await _count(db, Club, Club.is_active.is_(True)),
+            "active_members_count": await _sum(
+                db,
+                Club.membership_count,
+                Club,
+                Club.is_active.is_(True),
+            ),
+        }
+        title = "Student club counters"
+    else:
+        return None
+
+    return PortalStatsResponse(portal=portal, title=title, stats=stats)
 
 
 async def admin_stats(db: AsyncSession) -> PublicStatsResponse:

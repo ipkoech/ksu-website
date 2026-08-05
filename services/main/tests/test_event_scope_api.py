@@ -32,6 +32,42 @@ def _event(scope_type, scope_id):
 
 
 class EventScopeApiTests(unittest.IsolatedAsyncioTestCase):
+    async def test_admin_events_list_preserves_default_scope_shape(self):
+        scope_id = uuid.uuid4()
+        user = SimpleNamespace(id=uuid.uuid4())
+        page = _Page([_event("research-project", scope_id)])
+
+        with (
+            patch.object(events, "build_selector", return_value=_FakeSelector()),
+            patch.object(events.EventService, "list_admin", return_value=page),
+            patch("app.api.v1._scoped._can_access_scope", return_value=True),
+        ):
+            response = await events.list_admin_events(db=None, user=user)
+
+        self.assertEqual(page.items, response["data"])
+        self.assertFalse(hasattr(response["data"][0], "scope"))
+
+    async def test_admin_events_list_can_include_research_scope_summary(self):
+        scope_id = uuid.uuid4()
+        user = SimpleNamespace(id=uuid.uuid4())
+        page = _Page([_event("research-project", scope_id)])
+
+        with (
+            patch.object(events, "build_selector", return_value=_FakeSelector()),
+            patch.object(events.EventService, "list_admin", return_value=page),
+            patch("app.api.v1._scoped._can_access_scope", return_value=True),
+        ):
+            response = await events.list_admin_events(db=None, user=user, include_scope=True)
+
+        self.assertEqual(
+            {
+                "type": "research-project",
+                "id": str(scope_id),
+                "label": "Research project",
+            },
+            response["data"][0]["scope"],
+        )
+
     async def test_admin_events_list_filters_by_user_scope(self):
         own_department_id = uuid.uuid4()
         other_department_id = uuid.uuid4()

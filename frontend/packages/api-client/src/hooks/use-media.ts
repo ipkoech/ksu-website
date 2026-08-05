@@ -16,6 +16,9 @@ type MediaListParams = PaginationParams & {
   folder_id?: string;
   media_type?: string;
   uploaded_by_id?: string;
+  entity_type?: string;
+  entity_id?: string;
+  role?: string;
   search?: string;
   fields?: string;
   include?: string;

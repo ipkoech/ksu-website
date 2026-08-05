@@ -12,7 +12,21 @@ from sqlalchemy.orm import selectinload
 from ksu_common import PaginatedResult
 
 from ..helpers.slug import unique_slug
-from ..models import AcademicCalendar, AdmissionInfo, Department, Intake, Person, Programme, ProgrammeIntake, ProgrammeTutor, School
+from ..models import (
+    AdmissionDocument,
+    AdmissionFaq,
+    AdmissionInfo,
+    AdmissionPageSection,
+    AdmissionPathway,
+    AdmissionRequirement,
+    Department,
+    Intake,
+    Person,
+    Programme,
+    ProgrammeFeeStructure,
+    ProgrammeIntake,
+    ProgrammeTutor,
+)
 from ._base import apply_updates, ilike_any, paginate_query
 
 
@@ -25,6 +39,9 @@ class ProgrammeService:
                 selectinload(Programme.tutors).selectinload(ProgrammeTutor.person),
                 selectinload(Programme.intakes).selectinload(ProgrammeIntake.intake),
                 selectinload(Programme.department),
+                selectinload(Programme.admission_requirements),
+                selectinload(Programme.fee_structures),
+                selectinload(Programme.admission_documents),
             )
             .where(Programme.id == programme_id, Programme.is_active.is_(True))
         )
@@ -41,6 +58,9 @@ class ProgrammeService:
                 selectinload(Programme.tutors).selectinload(ProgrammeTutor.person),
                 selectinload(Programme.intakes).selectinload(ProgrammeIntake.intake),
                 selectinload(Programme.department),
+                selectinload(Programme.admission_requirements),
+                selectinload(Programme.fee_structures),
+                selectinload(Programme.admission_documents),
             )
             .where(Programme.slug == slug, Programme.is_active.is_(True))
         )
@@ -95,7 +115,14 @@ class ProgrammeService:
     ) -> PaginatedResult:
         query = (
             select(Programme)
-            .options(selectinload(Programme.tutors), selectinload(Programme.intakes), selectinload(Programme.department))
+            .options(
+                selectinload(Programme.tutors),
+                selectinload(Programme.intakes),
+                selectinload(Programme.department),
+                selectinload(Programme.admission_requirements),
+                selectinload(Programme.fee_structures),
+                selectinload(Programme.admission_documents),
+            )
             .order_by(Programme.display_order.asc(), Programme.name.asc())
         )
         if load_options:
@@ -338,4 +365,366 @@ class AdmissionInfoService:
         return await paginate_query(db, query, page=page, per_page=per_page)
 
 
-__all__ = ["ProgrammeService", "IntakeService", "AdmissionInfoService"]
+class AdmissionPathwayService:
+    @staticmethod
+    async def get_by_id(db: AsyncSession, item_id: uuid.UUID, *, load_options: Sequence = ()) -> AdmissionPathway | None:
+        query = select(AdmissionPathway).where(AdmissionPathway.id == item_id, AdmissionPathway.deleted_at.is_(None))
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_by_slug(db: AsyncSession, slug: str, *, published_only: bool = True, load_options: Sequence = ()) -> AdmissionPathway | None:
+        query = select(AdmissionPathway).where(AdmissionPathway.slug == slug, AdmissionPathway.deleted_at.is_(None))
+        if published_only:
+            query = query.where(AdmissionPathway.is_published.is_(True))
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def create(db: AsyncSession, **data) -> AdmissionPathway:
+        if not data.get("slug") and data.get("title"):
+            data["slug"] = await unique_slug(db, AdmissionPathway, data["title"])
+        item = AdmissionPathway(**data)
+        db.add(item)
+        await db.flush()
+        return item
+
+    @staticmethod
+    async def update(db: AsyncSession, item: AdmissionPathway, **data) -> AdmissionPathway:
+        if data.get("title") and not data.get("slug"):
+            data["slug"] = await unique_slug(db, AdmissionPathway, data["title"], exclude_id=item.id)
+        apply_updates(item, **data)
+        await db.flush()
+        return item
+
+    @staticmethod
+    async def delete(db: AsyncSession, item: AdmissionPathway) -> None:
+        item.soft_delete()
+        await db.flush()
+
+    @staticmethod
+    async def list(
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        applicant_type: str | None = None,
+        is_published: bool | None = True,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = select(AdmissionPathway).where(AdmissionPathway.deleted_at.is_(None)).order_by(AdmissionPathway.display_order.asc(), AdmissionPathway.title.asc())
+        if applicant_type:
+            query = query.where(AdmissionPathway.applicant_type == applicant_type)
+        if is_published is not None:
+            query = query.where(AdmissionPathway.is_published.is_(is_published))
+        if load_options:
+            query = query.options(*load_options)
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+
+class AdmissionRequirementService:
+    @staticmethod
+    async def get_by_id(db: AsyncSession, item_id: uuid.UUID, *, load_options: Sequence = ()) -> AdmissionRequirement | None:
+        query = select(AdmissionRequirement).where(AdmissionRequirement.id == item_id, AdmissionRequirement.deleted_at.is_(None))
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def create(db: AsyncSession, **data) -> AdmissionRequirement:
+        item = AdmissionRequirement(**data)
+        db.add(item)
+        await db.flush()
+        return item
+
+    @staticmethod
+    async def update(db: AsyncSession, item: AdmissionRequirement, **data) -> AdmissionRequirement:
+        apply_updates(item, **data)
+        await db.flush()
+        return item
+
+    @staticmethod
+    async def delete(db: AsyncSession, item: AdmissionRequirement) -> None:
+        item.soft_delete()
+        await db.flush()
+
+    @staticmethod
+    async def list(
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        programme_id: uuid.UUID | None = None,
+        school_id: uuid.UUID | None = None,
+        intake_id: uuid.UUID | None = None,
+        pathway_id: uuid.UUID | None = None,
+        applicant_type: str | None = None,
+        level: str | None = None,
+        is_active: bool | None = True,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = select(AdmissionRequirement).where(AdmissionRequirement.deleted_at.is_(None)).order_by(AdmissionRequirement.display_order.asc(), AdmissionRequirement.title.asc())
+        if programme_id:
+            query = query.where(AdmissionRequirement.programme_id == programme_id)
+        if school_id:
+            query = query.where(AdmissionRequirement.school_id == school_id)
+        if intake_id:
+            query = query.where(AdmissionRequirement.intake_id == intake_id)
+        if pathway_id:
+            query = query.where(AdmissionRequirement.pathway_id == pathway_id)
+        if applicant_type:
+            query = query.where(AdmissionRequirement.applicant_type == applicant_type)
+        if level:
+            query = query.where(AdmissionRequirement.level == level)
+        if is_active is not None:
+            query = query.where(AdmissionRequirement.is_active.is_(is_active))
+        if load_options:
+            query = query.options(*load_options)
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+
+class ProgrammeFeeStructureService:
+    @staticmethod
+    async def get_by_id(db: AsyncSession, item_id: uuid.UUID, *, load_options: Sequence = ()) -> ProgrammeFeeStructure | None:
+        query = select(ProgrammeFeeStructure).where(ProgrammeFeeStructure.id == item_id, ProgrammeFeeStructure.deleted_at.is_(None))
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def create(db: AsyncSession, **data) -> ProgrammeFeeStructure:
+        item = ProgrammeFeeStructure(**data)
+        db.add(item)
+        await db.flush()
+        return item
+
+    @staticmethod
+    async def update(db: AsyncSession, item: ProgrammeFeeStructure, **data) -> ProgrammeFeeStructure:
+        apply_updates(item, **data)
+        await db.flush()
+        return item
+
+    @staticmethod
+    async def delete(db: AsyncSession, item: ProgrammeFeeStructure) -> None:
+        item.soft_delete()
+        await db.flush()
+
+    @staticmethod
+    async def list(
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        programme_id: uuid.UUID | None = None,
+        intake_id: uuid.UUID | None = None,
+        applicant_type: str | None = None,
+        fee_category: str | None = None,
+        is_active: bool | None = True,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = select(ProgrammeFeeStructure).where(ProgrammeFeeStructure.deleted_at.is_(None)).order_by(ProgrammeFeeStructure.display_order.asc(), ProgrammeFeeStructure.title.asc())
+        if programme_id:
+            query = query.where(ProgrammeFeeStructure.programme_id == programme_id)
+        if intake_id:
+            query = query.where(ProgrammeFeeStructure.intake_id == intake_id)
+        if applicant_type:
+            query = query.where(ProgrammeFeeStructure.applicant_type == applicant_type)
+        if fee_category:
+            query = query.where(ProgrammeFeeStructure.fee_category == fee_category)
+        if is_active is not None:
+            query = query.where(ProgrammeFeeStructure.is_active.is_(is_active))
+        if load_options:
+            query = query.options(*load_options)
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+
+class AdmissionDocumentService:
+    @staticmethod
+    async def get_by_id(db: AsyncSession, item_id: uuid.UUID, *, load_options: Sequence = ()) -> AdmissionDocument | None:
+        query = select(AdmissionDocument).where(AdmissionDocument.id == item_id, AdmissionDocument.deleted_at.is_(None))
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_by_slug(db: AsyncSession, slug: str, *, published_only: bool = True, load_options: Sequence = ()) -> AdmissionDocument | None:
+        query = select(AdmissionDocument).where(AdmissionDocument.slug == slug, AdmissionDocument.deleted_at.is_(None))
+        if published_only:
+            query = query.where(AdmissionDocument.is_published.is_(True))
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def create(db: AsyncSession, **data) -> AdmissionDocument:
+        if not data.get("slug") and data.get("title"):
+            data["slug"] = await unique_slug(db, AdmissionDocument, data["title"])
+        item = AdmissionDocument(**data)
+        db.add(item)
+        await db.flush()
+        return item
+
+    @staticmethod
+    async def update(db: AsyncSession, item: AdmissionDocument, **data) -> AdmissionDocument:
+        if data.get("title") and not data.get("slug"):
+            data["slug"] = await unique_slug(db, AdmissionDocument, data["title"], exclude_id=item.id)
+        apply_updates(item, **data)
+        await db.flush()
+        return item
+
+    @staticmethod
+    async def delete(db: AsyncSession, item: AdmissionDocument) -> None:
+        item.soft_delete()
+        await db.flush()
+
+    @staticmethod
+    async def list(
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        document_type: str | None = None,
+        applicant_type: str | None = None,
+        pathway_id: uuid.UUID | None = None,
+        programme_id: uuid.UUID | None = None,
+        intake_id: uuid.UUID | None = None,
+        is_published: bool | None = True,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = select(AdmissionDocument).where(AdmissionDocument.deleted_at.is_(None)).order_by(AdmissionDocument.display_order.asc(), AdmissionDocument.title.asc())
+        if document_type:
+            query = query.where(AdmissionDocument.document_type == document_type)
+        if applicant_type:
+            query = query.where(AdmissionDocument.applicant_type == applicant_type)
+        if pathway_id:
+            query = query.where(AdmissionDocument.pathway_id == pathway_id)
+        if programme_id:
+            query = query.where(AdmissionDocument.programme_id == programme_id)
+        if intake_id:
+            query = query.where(AdmissionDocument.intake_id == intake_id)
+        if is_published is not None:
+            query = query.where(AdmissionDocument.is_published.is_(is_published))
+        if load_options:
+            query = query.options(*load_options)
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+
+class AdmissionFaqService:
+    @staticmethod
+    async def get_by_id(db: AsyncSession, item_id: uuid.UUID, *, load_options: Sequence = ()) -> AdmissionFaq | None:
+        query = select(AdmissionFaq).where(AdmissionFaq.id == item_id, AdmissionFaq.deleted_at.is_(None))
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def create(db: AsyncSession, **data) -> AdmissionFaq:
+        item = AdmissionFaq(**data)
+        db.add(item)
+        await db.flush()
+        return item
+
+    @staticmethod
+    async def update(db: AsyncSession, item: AdmissionFaq, **data) -> AdmissionFaq:
+        apply_updates(item, **data)
+        await db.flush()
+        return item
+
+    @staticmethod
+    async def delete(db: AsyncSession, item: AdmissionFaq) -> None:
+        item.soft_delete()
+        await db.flush()
+
+    @staticmethod
+    async def list(
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        category: str | None = None,
+        applicant_type: str | None = None,
+        pathway_id: uuid.UUID | None = None,
+        is_published: bool | None = True,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = select(AdmissionFaq).where(AdmissionFaq.deleted_at.is_(None)).order_by(AdmissionFaq.display_order.asc(), AdmissionFaq.question.asc())
+        if category:
+            query = query.where(AdmissionFaq.category == category)
+        if applicant_type:
+            query = query.where(AdmissionFaq.applicant_type == applicant_type)
+        if pathway_id:
+            query = query.where(AdmissionFaq.pathway_id == pathway_id)
+        if is_published is not None:
+            query = query.where(AdmissionFaq.is_published.is_(is_published))
+        if load_options:
+            query = query.options(*load_options)
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+
+class AdmissionPageSectionService:
+    @staticmethod
+    async def get_by_id(db: AsyncSession, item_id: uuid.UUID, *, load_options: Sequence = ()) -> AdmissionPageSection | None:
+        query = select(AdmissionPageSection).where(AdmissionPageSection.id == item_id, AdmissionPageSection.deleted_at.is_(None))
+        if load_options:
+            query = query.options(*load_options)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def create(db: AsyncSession, **data) -> AdmissionPageSection:
+        item = AdmissionPageSection(**data)
+        db.add(item)
+        await db.flush()
+        return item
+
+    @staticmethod
+    async def update(db: AsyncSession, item: AdmissionPageSection, **data) -> AdmissionPageSection:
+        apply_updates(item, **data)
+        await db.flush()
+        return item
+
+    @staticmethod
+    async def delete(db: AsyncSession, item: AdmissionPageSection) -> None:
+        item.soft_delete()
+        await db.flush()
+
+    @staticmethod
+    async def list(
+        db: AsyncSession,
+        *,
+        page: int = 1,
+        per_page: int = 20,
+        page_key: str | None = None,
+        is_enabled: bool | None = True,
+        load_options: Sequence = (),
+    ) -> PaginatedResult:
+        query = select(AdmissionPageSection).where(AdmissionPageSection.deleted_at.is_(None)).order_by(AdmissionPageSection.page_key.asc(), AdmissionPageSection.display_order.asc())
+        if page_key:
+            query = query.where(AdmissionPageSection.page_key == page_key)
+        if is_enabled is not None:
+            query = query.where(AdmissionPageSection.is_enabled.is_(is_enabled))
+        if load_options:
+            query = query.options(*load_options)
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+
+__all__ = [
+    "ProgrammeService",
+    "IntakeService",
+    "AdmissionInfoService",
+    "AdmissionPathwayService",
+    "AdmissionRequirementService",
+    "ProgrammeFeeStructureService",
+    "AdmissionDocumentService",
+    "AdmissionFaqService",
+    "AdmissionPageSectionService",
+]

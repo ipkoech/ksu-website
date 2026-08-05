@@ -1,0 +1,14 @@
+import type { Metadata } from "next";
+import { SiteShell } from "../../components/site-shell";
+import { Reveal, RevealItem } from "../../components/motion/reveal";
+import { getPartners, getSite } from "../../lib/api";
+import Image from "next/image";
+
+export const metadata: Metadata = {
+  title: "Our Partners",
+  description:
+    "The universities, funders and organisations working with the HERI Africa Language Education Research Chair.",
+};
+
+
+export default async function PartnersPage() { const site = await getSite().catch(() => null); const partners = await getPartners(undefined, site?.research_center_slug ?? undefined).catch(() => []); return <SiteShell><main className="mx-auto max-w-7xl px-6 py-20"><Reveal><p className="text-sm font-semibold uppercase tracking-[0.16em] text-heri-teal">Collaboration ecosystem</p><h1 className="mt-4 text-5xl font-semibold text-heri-blue">Who we work with</h1></Reveal><div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{partners.map((partner, index) => <RevealItem key={partner.id} index={index} className="h-full"><article className="h-full rounded-3xl bg-white p-7 ring-1 ring-heri-teal/10">{partner.logo_url && <Image alt={`${partner.name} logo`} className="h-16 w-full object-contain object-left" height={160} src={partner.logo_url} unoptimized width={320} />}<h2 className="mt-5 text-xl font-semibold text-heri-blue">{partner.name}</h2><p className="mt-3 text-sm leading-7 text-heri-ink/70">{partner.description}</p>{partner.country && <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-heri-teal">{partner.country}</p>}</article></RevealItem>)}</div></main></SiteShell>; }

@@ -3,17 +3,20 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ChevronDown, ExternalLink } from "lucide-react";
+import { useState, type ReactNode } from "react";
 import { PageHeader } from "@/components/layout";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@ksu/ui/components";
-import type { ResearchGenericRecord } from "@ksu/api-client";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, RichTextRenderer, Tabs, TabsContent, TabsList, TabsTrigger } from "@ksu/ui/components";
+import { auditLogsApi, type ResearchGenericRecord } from "@ksu/api-client";
 import {
   relationshipAdapters,
   type RelationshipAdapter,
   type RelationshipFilters,
 } from "@/components/relationships/relationship-adapters";
+import { ResearchDetailGuide } from "./research-guidance";
 
 type ResourceApi = {
+  get?: (id: string) => Promise<{ data?: ResearchGenericRecord }>;
   getBySlug?: (slug: string) => Promise<{ data?: ResearchGenericRecord }>;
   list?: (params?: Record<string, string | number | boolean | undefined>) => Promise<{ data?: ResearchGenericRecord[] }>;
 };
@@ -33,6 +36,13 @@ type FactField = {
   };
 };
 
+export type ResearchDetailRelationshipTab = {
+  value: string;
+  label: string;
+  count?: number;
+  content: ReactNode;
+};
+
 export function ResearchAdminDetailPage({
   title,
   description,
@@ -40,11 +50,18 @@ export function ResearchAdminDetailPage({
   backHref,
   editHref,
   publicHrefBase,
+  actionsSlot,
+  hideHeader = true,
+  showBackAction = false,
+  showDetailGuide = false,
   slugParam = "slug",
   lookup = "slug",
   labelFields = ["status"],
   factFields = [],
   sections = [],
+  renderAfter,
+  auditResourceTypes = [],
+  auditServiceName = "research",
 }: {
   title: string;
   description: string;
@@ -52,11 +69,18 @@ export function ResearchAdminDetailPage({
   backHref: string;
   editHref?: (record: ResearchGenericRecord) => string | null | undefined;
   publicHrefBase?: string;
+  actionsSlot?: (record: ResearchGenericRecord) => ReactNode;
+  hideHeader?: boolean;
+  showBackAction?: boolean;
+  showDetailGuide?: boolean;
   slugParam?: string;
   lookup?: "slug" | "id";
   labelFields?: string[];
   factFields?: FactField[];
   sections?: DetailSection[];
+  renderAfter?: (record: ResearchGenericRecord) => ReactNode;
+  auditResourceTypes?: string[];
+  auditServiceName?: string;
 }) {
   const params = useParams<Record<string, string>>();
   const value = params[slugParam];
@@ -66,6 +90,10 @@ export function ResearchAdminDetailPage({
       if (lookup === "slug") {
         if (!resource.getBySlug) throw new Error("This resource does not support slug lookup.");
         const response = await resource.getBySlug(value);
+        return response.data ?? null;
+      }
+      if (resource.get) {
+        const response = await resource.get(value);
         return response.data ?? null;
       }
       if (!resource.list) throw new Error("This resource does not support list lookup.");
@@ -81,23 +109,34 @@ export function ResearchAdminDetailPage({
     : [];
   const publicHref = record?.slug && publicHrefBase ? `${publicHrefBase}/${record.slug}` : null;
   const resolvedEditHref = record ? editHref?.(record) : null;
+  const actionGuide = record ? (
+    <ResearchDetailGuide
+      title={title}
+      status={record.status}
+      isPublic={record.is_public}
+      className="ml-auto"
+    />
+  ) : null;
 
   return (
     <div>
-      <PageHeader title={recordTitle} description={description} backHref={backHref} />
-      <div className="space-y-6 p-4 sm:p-6">
+      {!hideHeader ? <PageHeader title={recordTitle} description={description} backHref={backHref} /> : null}
+      <div className={`space-y-6 p-4 sm:p-6 ${hideHeader ? "pt-3" : ""}`}>
         <div className="flex flex-wrap gap-2">
+          {showBackAction ? (
           <Button asChild variant="outline">
             <Link href={backHref}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Link>
           </Button>
+          ) : null}
           {resolvedEditHref ? (
             <Button asChild variant="outline">
               <Link href={resolvedEditHref}>Edit</Link>
             </Button>
           ) : null}
+          {record ? (actionsSlot?.(record) ?? (!showDetailGuide ? actionGuide : null)) : null}
           {publicHref ? (
             <Button asChild variant="outline">
               <Link href={publicHref} target="_blank">
@@ -123,11 +162,19 @@ export function ResearchAdminDetailPage({
         ) : (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div className="space-y-6">
-              {sections.map((section) => (
-                <DetailSectionCard key={section.title} record={record} section={section} />
+              {sections.map((section, index) => (
+                <DetailSectionCard key={section.title} record={record} section={section} defaultOpen={index === 0} />
               ))}
+              {renderAfter?.(record)}
             </div>
             <aside className="space-y-6">
+              {showDetailGuide ? (
+                <ResearchDetailGuide
+                  title={title}
+                  status={record.status}
+                  isPublic={record.is_public}
+                />
+              ) : null}
               <Card>
                 <CardHeader>
                   <CardTitle>Record Details</CardTitle>
@@ -153,11 +200,112 @@ export function ResearchAdminDetailPage({
                   </dl>
                 </CardContent>
               </Card>
+              {auditResourceTypes.length > 0 ? (
+                <AuditHistoryCard
+                  recordId={String(record.id)}
+                  resourceTypes={auditResourceTypes}
+                  serviceName={auditServiceName}
+                />
+              ) : null}
             </aside>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+function AuditHistoryCard({
+  recordId,
+  resourceTypes,
+  serviceName,
+}: {
+  recordId: string;
+  resourceTypes: string[];
+  serviceName: string;
+}) {
+  const auditQuery = useQuery({
+    queryKey: ["research", "detail", "audit", recordId, resourceTypes],
+    queryFn: async () => {
+      const results = await Promise.all(
+        resourceTypes.map((resourceType) =>
+          auditLogsApi.list({
+            service_name: serviceName,
+            resource_type: resourceType,
+            resource_id: recordId,
+            per_page: 6,
+          }),
+        ),
+      );
+      return results.flatMap((result) => result.data ?? []);
+    },
+    enabled: Boolean(recordId) && resourceTypes.length > 0,
+  });
+  const logs = auditQuery.data ?? [];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Audit History</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {auditQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading audit history...</p>
+        ) : auditQuery.isError ? (
+          <p className="text-sm text-muted-foreground">Audit history is not available for this record.</p>
+        ) : logs.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No audit entries were returned for this record.</p>
+        ) : (
+          <div className="space-y-3">
+            {logs.map((log: any) => (
+              <div key={log.id} className="rounded-md border p-3">
+                <p className="text-sm font-medium">{formatLabel(log.action ?? "activity")}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {[formatValue(log.status, "label"), formatValue(log.happened_at ?? log.created_at, "datetime")]
+                    .filter(Boolean)
+                    .join(" - ")}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+export function ResearchDetailRelationshipTabs({
+  tabs,
+  defaultValue = "overview",
+}: {
+  tabs: ResearchDetailRelationshipTab[];
+  defaultValue?: string;
+}) {
+  if (tabs.length === 0) return null;
+  const resolvedDefault = tabs.some((tab) => tab.value === defaultValue) ? defaultValue : tabs[0].value;
+
+  return (
+    <Tabs defaultValue={resolvedDefault} className="space-y-4">
+      <div className="overflow-x-auto rounded-lg border bg-background p-1">
+        <TabsList className="h-auto min-w-max bg-transparent p-0">
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value} className="gap-2 rounded-md px-3 py-2">
+              {tab.label}
+              {typeof tab.count === "number" ? (
+                <Badge variant="secondary" className="rounded-sm px-1.5 py-0 text-[11px]">
+                  {tab.count}
+                </Badge>
+              ) : null}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </div>
+      {tabs.map((tab) => (
+        <TabsContent key={tab.value} value={tab.value} className="mt-0">
+          {tab.content}
+        </TabsContent>
+      ))}
+    </Tabs>
   );
 }
 
@@ -216,31 +364,51 @@ function RelationshipFact({
 function DetailSectionCard({
   record,
   section,
+  defaultOpen = false,
 }: {
   record: ResearchGenericRecord;
   section: DetailSection;
+  defaultOpen?: boolean;
 }) {
+  const [open, setOpen] = useState(defaultOpen);
   const entries = section.fields
-    .map((field) => ({ label: formatLabel(field), value: formatValue(record[field]) }))
+    .map((field) => ({ label: formatLabel(field), value: record[field] }))
     .filter((entry) => entry.value);
 
   if (entries.length === 0) return null;
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{section.title}</CardTitle>
+      <CardHeader className="border-b p-0">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-4 px-6 py-4 text-left"
+          aria-expanded={open}
+          onClick={() => setOpen((current) => !current)}
+        >
+          <CardTitle>{section.title}</CardTitle>
+          <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {entries.map((entry) => (
-          <div key={entry.label}>
-            <p className="text-xs font-semibold uppercase text-muted-foreground">{entry.label}</p>
-            <p className="mt-1 whitespace-pre-line text-sm leading-6">{entry.value}</p>
-          </div>
-        ))}
-      </CardContent>
+      {open ? (
+        <CardContent className="space-y-4 pt-4">
+          {entries.map((entry) => (
+            <div key={entry.label}>
+              <p className="text-xs font-semibold uppercase text-muted-foreground">{entry.label}</p>
+              <RichTextRenderer content={formatRichTextValue(entry.value)} className="mt-1 text-sm leading-6" />
+            </div>
+          ))}
+        </CardContent>
+      ) : null}
     </Card>
   );
+}
+
+function formatRichTextValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "";
+  if (Array.isArray(value)) return value.map((item) => formatValue(item)).filter(Boolean).join(", ");
+  if (typeof value === "object") return JSON.stringify(value, null, 2);
+  return String(value);
 }
 
 function Fact({ label, value }: { label: string; value: string }) {

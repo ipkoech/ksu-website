@@ -13,10 +13,14 @@ import type {
 import type { Leader } from "@ksu/ui/components";
 import { getDean } from "@/lib/get-leadership";
 import {
-  getScopedEntityMedia,
+  getEntityDownloads,
+  getEntityMediaRecords,
   type EntityMediaRecord,
 } from "@/lib/entity-media-data";
-import { getPublicTeam, type PublicTeamData } from "@/lib/public-team-data";
+import {
+  getPublicEntityTeam,
+  type PublicEntityTeam,
+} from "@/lib/public-team-data";
 
 type SchoolResponse = {
   data?: School;
@@ -183,22 +187,6 @@ const staffAssignmentPersonFields = [
   "publications_count",
 ].join(",");
 
-const documentFields = [
-  "id",
-  "title",
-  "slug",
-  "document_type",
-  "category",
-  "description",
-  "file_id",
-  "version",
-  "download_count",
-  "is_active",
-  "is_public",
-  "created_at",
-  "updated_at",
-].join(",");
-
 const newsFields = [
   "id",
   "title",
@@ -289,25 +277,20 @@ async function getSchoolRelatedRecords(
         fields: staffAssignmentFields,
         include: `person:${staffAssignmentPersonFields}`,
       }),
-      getPublicTeam("school", school.id),
+      getPublicEntityTeam("school", school.id),
       getList<Club>("/api/v1/clubs", {
         school_id: school.id,
         fields: clubFields,
         per_page: 40,
       }),
-      getList<Document>("/api/v1/documents", {
-        scope_type: "school",
-        scope_id: school.id,
-        fields: documentFields,
-        per_page: 40,
-      }),
+      getEntityDownloads("school", school.id).then((data) => ({ data })),
       getList<News>("/api/v1/news", {
         scope_type: "school",
         scope_id: school.id,
         fields: newsFields,
         per_page: 40,
       }),
-      getScopedEntityMedia("school", school.id, school.name),
+      getEntityMediaRecords("school", school.id),
     ]);
 
   const publicationCount =
@@ -370,7 +353,7 @@ export type SchoolDetailOverviewData = {
   programmes: Programme[];
   staff: Person[];
   staffAssignments: StaffAssignment[];
-  team: PublicTeamData | null;
+  team: PublicEntityTeam | null;
   clubs: Club[];
   documents: Document[];
   news: News[];

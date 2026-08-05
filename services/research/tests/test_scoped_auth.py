@@ -97,7 +97,12 @@ class ScopedAuthTests(unittest.TestCase):
         )
 
     def test_tokens_without_structured_grants_remain_flat_permission_compatible(self):
-        user = TokenPayload(sub=str(uuid.uuid4()), jti=str(uuid.uuid4()), roles=[], raw={})
+        user = TokenPayload(
+            sub=str(uuid.uuid4()),
+            jti=str(uuid.uuid4()),
+            roles=[],
+            raw={"permissions": ["research.manage_projects"]},
+        )
 
         self.assertTrue(
             can_access_scoped_record(

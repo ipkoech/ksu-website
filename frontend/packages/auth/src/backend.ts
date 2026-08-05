@@ -65,7 +65,8 @@ const LIBRARY_RESOURCES = new Set(["library"]);
 function getMainApiBaseUrl() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   const fallback = apiUrl?.replace(/\/api\/v1\/?$/, "");
-  return (process.env.NEXT_PUBLIC_MAIN_API_URL || fallback || "http://localhost:8000").replace(/\/$/, "");
+  const serverUrl = typeof window === "undefined" ? process.env.KSU_MAIN_API_URL : undefined;
+  return (serverUrl || process.env.NEXT_PUBLIC_MAIN_API_URL || fallback || "http://localhost:8000").replace(/\/$/, "");
 }
 
 function canUseSessionStorage() {
@@ -356,6 +357,51 @@ function inferServiceScopes(service: Service, roles: string[], permissions: stri
   if (service === "research" && roles.includes("research-admin")) {
     return ["research.*"];
   }
+  if (service === "research" && roles.includes("research-content")) {
+    return [
+      "research.view",
+      "content.view",
+      "content.view_drafts",
+      "content.manage_news",
+      "content.manage_blogs",
+      "content.manage_events",
+      "content.manage_announcements",
+      "content.publish",
+      "marketing.manage_sliders",
+      "media.upload",
+    ];
+  }
+  if (service === "research" && roles.includes("research-farm")) {
+    return [
+      "research.view",
+      "research.view_projects",
+      "research.manage_projects",
+      "research.manage_centers",
+      "research_theme.manage",
+      "research_program.manage",
+      "partnerships.manage_partners",
+      "sustainability.manage",
+      "content.manage_news",
+      "content.manage_events",
+      "media.upload",
+    ];
+  }
+  if (service === "research" && roles.includes("research-sustainability")) {
+    return [
+      "research.view",
+      "research.view_projects",
+      "research.manage_projects",
+      "research.manage_reports",
+      "sustainability.view",
+      "sustainability.manage",
+      "partnerships.manage_partners",
+      "content.manage_news",
+      "content.manage_events",
+      "content.manage_announcements",
+      "training_program.manage",
+      "media.upload",
+    ];
+  }
   if (service === "library" && roles.includes("library-admin")) {
     return ["library.*"];
   }
@@ -397,6 +443,7 @@ export async function refreshStoredAuthTokens() {
 
   const response = await fetch(`${getMainApiBaseUrl()}/api/v1/auth/refresh`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh_token: refreshToken }),
   });
@@ -419,6 +466,7 @@ export async function fetchCurrentUser(accessToken = getStoredAccessToken()) {
   if (!accessToken) return null;
 
   const response = await fetch(`${getMainApiBaseUrl()}/api/v1/auth/me?fields=id,email,full_name,avatar_url,roles,permissions`, {
+    credentials: "include",
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
@@ -433,6 +481,7 @@ export async function fetchCurrentUser(accessToken = getStoredAccessToken()) {
 export async function loginWithPassword(credentials: LoginCredentials): Promise<AuthResponse> {
   const response = await fetch(`${getMainApiBaseUrl()}/api/v1/auth/login`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(credentials),
   });
@@ -468,6 +517,7 @@ export async function logoutCurrentSession() {
   if (!accessToken) return;
   await fetch(`${getMainApiBaseUrl()}/api/v1/auth/logout`, {
     method: "POST",
+    credentials: "include",
     headers: { Authorization: `Bearer ${accessToken}` },
   }).catch(() => undefined);
 }

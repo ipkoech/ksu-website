@@ -1,4 +1,9 @@
 import { getStoredAccessToken, refreshStoredAccessToken } from "./auth-tokens";
+import {
+  getLibraryApiBaseUrl,
+  getMainApiBaseUrl,
+  getResearchApiBaseUrl,
+} from "./service-urls";
 
 export interface ApiConfig {
   baseUrl: string;
@@ -51,12 +56,27 @@ export interface FieldSelectionParams {
 
 export type QueryParams = PaginationParams & FieldSelectionParams;
 
+export interface FetchCacheOptions {
+  cache?: RequestCache;
+  next?: { revalidate?: number | false; tags?: string[] };
+}
+
+const DEFAULT_PUBLIC_REVALIDATE_SECONDS = 300;
+
+function resolvePublicRevalidateSeconds() {
+  const configured = Number(process.env.NEXT_PUBLIC_API_CACHE_SECONDS);
+  return Number.isFinite(configured) && configured >= 0
+    ? configured
+    : DEFAULT_PUBLIC_REVALIDATE_SECONDS;
+}
+
 export class ApiClient {
   private baseUrl: string;
   private credentials: RequestCredentials;
   private headers: Record<string, string>;
   private timeoutMs: number;
   private refreshPromise: Promise<void> | null = null;
+  private refreshFailed = false;
 
   constructor(config: ApiConfig) {
     this.baseUrl = config.baseUrl;
@@ -65,7 +85,7 @@ export class ApiClient {
       "Content-Type": "application/json",
       ...config.headers,
     };
-    this.timeoutMs = config.timeoutMs ?? 8000;
+    this.timeoutMs = config.timeoutMs ?? resolveApiTimeoutMs();
   }
 
   async request<T>(
@@ -75,7 +95,7 @@ export class ApiClient {
       body?: unknown;
       params?: Record<string, string | number | boolean | undefined>;
       headers?: Record<string, string>;
-    } = {}
+    } & FetchCacheOptions = {}
   ): Promise<T> {
     const url = new URL(`${this.baseUrl}${path}`);
 
@@ -94,28 +114,45 @@ export class ApiClient {
     );
     let response: Response;
 
+    const headers: Record<string, string> = {
+      ...this.headers,
+      ...(getStoredAccessToken() && !options.headers?.Authorization
+        ? { Authorization: `Bearer ${getStoredAccessToken()}` }
+        : {}),
+      ...options.headers,
+    };
+
+    // Server-side anonymous GETs opt into Next's data cache so public pages
+    // don't refetch on every request. Authenticated or cookie-bearing
+    // requests, and any request with explicit cache/next options, are left
+    // alone. The `next` property is ignored outside the Next.js runtime.
+    const isAnonymous = !headers.Authorization && !headers.Cookie && !headers.cookie;
+    const cacheOptions: FetchCacheOptions =
+      options.cache !== undefined || options.next !== undefined
+        ? { cache: options.cache, next: options.next }
+        : method === "GET" && typeof window === "undefined" && isAnonymous
+          ? { next: { revalidate: resolvePublicRevalidateSeconds() } }
+          : {};
+
     try {
       response = await fetch(url.toString(), {
         method,
         credentials: this.credentials,
-        headers: {
-          ...this.headers,
-          ...(getStoredAccessToken() && !options.headers?.Authorization
-            ? { Authorization: `Bearer ${getStoredAccessToken()}` }
-            : {}),
-          ...options.headers,
-        },
+        headers,
         body: options.body ? JSON.stringify(options.body) : undefined,
         signal: controller.signal,
+        ...cacheOptions,
       });
     } finally {
       globalThis.clearTimeout(timeout);
     }
 
     if (response.status === 401) {
-      const refreshed = await this.tryRefresh();
-      if (refreshed) {
-        return this.request(method, path, options);
+      if (!this.refreshFailed) {
+        const refreshed = await this.tryRefresh();
+        if (refreshed) {
+          return this.request(method, path, options);
+        }
       }
       throw new ApiClientError("Session expired", 401);
     }
@@ -139,9 +176,12 @@ export class ApiClient {
   }
 
   private async tryRefresh(): Promise<boolean> {
+    if (this.refreshFailed) {
+      return false;
+    }
     if (this.refreshPromise) {
       await this.refreshPromise;
-      return true;
+      return !this.refreshFailed;
     }
 
     this.refreshPromise = (async () => {
@@ -155,14 +195,22 @@ export class ApiClient {
       await this.refreshPromise;
       return true;
     } catch {
+      this.refreshFailed = true;
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("ksu:session-expired"));
+      }
       return false;
     } finally {
       this.refreshPromise = null;
     }
   }
 
-  get<T>(path: string, params?: Record<string, string | number | boolean | undefined>) {
-    return this.request<T>("GET", path, { params });
+  get<T>(
+    path: string,
+    params?: Record<string, string | number | boolean | undefined>,
+    cacheOptions?: FetchCacheOptions
+  ) {
+    return this.request<T>("GET", path, { params, ...cacheOptions });
   }
 
   post<T>(path: string, body?: unknown) {
@@ -173,8 +221,8 @@ export class ApiClient {
     return this.request<T>("PUT", path, { body });
   }
 
-  patch<T>(path: string, body?: unknown) {
-    return this.request<T>("PATCH", path, { body });
+  patch<T>(path: string, body?: unknown, params?: Record<string, string | number | boolean | undefined>) {
+    return this.request<T>("PATCH", path, { body, params });
   }
 
   delete<T>(path: string) {
@@ -254,15 +302,20 @@ function stringValue(value: unknown) {
   return typeof value === "string" && value.trim() ? value : undefined;
 }
 
+function resolveApiTimeoutMs() {
+  const configured = Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS);
+  return Number.isFinite(configured) && configured > 0 ? configured : 15000;
+}
+
 // Service-specific clients
 export const mainApi = new ApiClient({
-  baseUrl: process.env.NEXT_PUBLIC_MAIN_API_URL || "http://localhost:8000",
+  baseUrl: getMainApiBaseUrl(),
 });
 
 export const researchApi = new ApiClient({
-  baseUrl: process.env.NEXT_PUBLIC_RESEARCH_API_URL || "http://localhost:8001",
+  baseUrl: getResearchApiBaseUrl(),
 });
 
 export const libraryApi = new ApiClient({
-  baseUrl: process.env.NEXT_PUBLIC_LIBRARY_API_URL || "http://localhost:8002",
+  baseUrl: getLibraryApiBaseUrl(),
 });

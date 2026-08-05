@@ -132,6 +132,7 @@ class Donation(Base):
         server_default="one_time",
         index=True,
     )  # one_time | recurring | pledge | in_kind
+    recurring_frequency: Mapped[Optional[str]] = mapped_column(sa.String(32), nullable=True)
 
     # Designation
     designation: Mapped[str] = mapped_column(

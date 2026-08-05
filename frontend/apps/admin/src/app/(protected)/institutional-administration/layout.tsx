@@ -1,12 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { PortalShell } from "@/components/portals/portal-shell";
-
-export default function InstitutionalAdministrationLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return <PortalShell portalKey="institutional-administration">{children}</PortalShell>;
+export default function InstitutionalAdministrationLayout() {
+  redirect("/admin");
 }
-

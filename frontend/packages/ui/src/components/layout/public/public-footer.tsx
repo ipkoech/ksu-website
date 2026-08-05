@@ -41,6 +41,13 @@ interface PublicFooterProps {
   libraryHref?: string;
 }
 
+const defaultResearchHref =
+  process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL ||
+  "https://research.kisiiuniversity.ac.ke";
+const defaultLibraryHref =
+  process.env.NEXT_PUBLIC_LIBRARY_FRONTEND_URL ||
+  "https://library.kisiiuniversity.ac.ke";
+
 const defaultColumns: FooterColumn[] = [
   {
     title: "Quick Links",
@@ -131,8 +138,8 @@ export function PublicFooter({
   socialLinks = defaultSocialLinks,
   legalLinks = defaultLegalLinks,
   className,
-  researchHref,
-  libraryHref,
+  researchHref = defaultResearchHref,
+  libraryHref = defaultLibraryHref,
 }: PublicFooterProps) {
   const [expandedColumn, setExpandedColumn] = useState<string | null>(null);
   const resolvedColumns = columns.map((column) => ({
@@ -150,10 +157,6 @@ export function PublicFooter({
 
   const toggleColumn = (title: string) => {
     setExpandedColumn((prev) => (prev === title ? null : title));
-  };
-
-  const openAnalyticsPreferences = () => {
-    window.dispatchEvent(new Event("ksu-open-analytics-preferences"));
   };
 
   return (
@@ -318,13 +321,6 @@ export function PublicFooter({
                   {link.label}
                 </Link>
               ))}
-              <button
-                type="button"
-                onClick={openAnalyticsPreferences}
-                className="inline-flex min-h-11 items-center text-gray-400 transition-colors hover:text-white"
-              >
-                Analytics preferences
-              </button>
             </nav>
 
             {/* Social Links */}
@@ -342,7 +338,7 @@ export function PublicFooter({
                 <SocialIcon
                   href={socialLinks.twitter}
                   label="Twitter"
-                  className="text-slate-950 hover:bg-slate-950"
+                  className="text-foreground hover:bg-slate-950"
                 >
                   <TwitterIcon />
                 </SocialIcon>

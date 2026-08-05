@@ -92,7 +92,7 @@ class User(Base):
         return [
             assignment.role.name
             for assignment in self.role_assignments
-            if assignment.role and assignment.role.is_active
+            if assignment.is_active and assignment.role and assignment.role.is_active
         ]
 
     def has_role(self, role_name: str) -> bool:

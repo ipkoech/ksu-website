@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
-import httpx
+from ksu_common.internal_client import get_integration_pool
 
 from ..core.config import get_settings
 
@@ -35,14 +36,17 @@ class ResearchPartnersProxyService:
         if search:
             params["search"] = search
 
-        async with httpx.AsyncClient(
-            base_url=settings.RESEARCH_SERVICE_URL.rstrip("/"),
-            timeout=httpx.Timeout(20.0, connect=5.0),
+        response = await get_integration_pool().request_internal(
+            "research-partners",
+            settings.RESEARCH_SERVICE_URL.rstrip("/"),
+            "GET",
+            "/api/v1/internal/partners",
+            api_key=settings.RESEARCH_SERVICE_API_KEY,
             headers={"X-KSU-Proxy": "main-partners"},
-        ) as client:
-            response = await client.get("/api/v1/partners", params=params)
-            response.raise_for_status()
-            payload = response.json()
+            params=params,
+        )
+        response.raise_for_status()
+        payload = response.json()
 
         if not isinstance(payload, dict) or payload.get("status") != "success":
             raise ValueError("Research service returned an unexpected partners payload")
@@ -50,18 +54,89 @@ class ResearchPartnersProxyService:
 
     @staticmethod
     async def get_partner(slug: str) -> dict[str, Any]:
-        async with httpx.AsyncClient(
-            base_url=settings.RESEARCH_SERVICE_URL.rstrip("/"),
-            timeout=httpx.Timeout(20.0, connect=5.0),
+        response = await get_integration_pool().request_internal(
+            "research-partners",
+            settings.RESEARCH_SERVICE_URL.rstrip("/"),
+            "GET",
+            f"/api/v1/internal/partners/{slug}",
+            api_key=settings.RESEARCH_SERVICE_API_KEY,
             headers={"X-KSU-Proxy": "main-partners"},
-        ) as client:
-            response = await client.get(f"/api/v1/partners/{slug}")
-            response.raise_for_status()
-            payload = response.json()
+        )
+        response.raise_for_status()
+        payload = response.json()
 
         if not isinstance(payload, dict) or payload.get("status") != "success":
             raise ValueError("Research service returned an unexpected partner payload")
         return payload
+
+    @staticmethod
+    async def find_partners_by_ids(partner_ids: set[uuid.UUID]) -> dict[str, dict[str, Any]]:
+        """Resolve several Research partners with one bounded internal request."""
+        if not partner_ids:
+            return {}
+        response = await get_integration_pool().request_internal(
+            "research-partners-batch",
+            settings.RESEARCH_SERVICE_URL.rstrip("/"),
+            "GET",
+            "/api/v1/internal/partners",
+            api_key=settings.RESEARCH_SERVICE_API_KEY,
+            headers={"X-KSU-Proxy": "main-partners"},
+            params={
+                "partner_ids": [str(partner_id) for partner_id in sorted(partner_ids, key=str)],
+                "per_page": len(partner_ids),
+                "status": "active",
+                "is_active": True,
+            },
+        )
+        response.raise_for_status()
+        payload = response.json()
+        if not isinstance(payload, dict) or payload.get("status") != "success":
+            raise ValueError("Research service returned an unexpected partners payload")
+        partners = payload.get("data") or []
+        return {
+            str(partner.get("id")): partner
+            for partner in partners
+            if isinstance(partner, dict) and partner.get("id") is not None
+        }
+
+    @staticmethod
+    async def find_partner_by_id(
+        partner_id: uuid.UUID,
+        *,
+        per_page: int = 100,
+        max_pages: int = 10,
+    ) -> dict[str, Any] | None:
+        """Find a partner record by UUID via bounded pagination.
+
+        The Research service currently exposes partner detail by slug, not by UUID.
+        This helper follows pagination metadata instead of assuming the first page
+        contains every partner.
+        """
+
+        page = 1
+        partner_id_text = str(partner_id)
+
+        while page <= max_pages:
+            payload = await ResearchPartnersProxyService.list_partners(page=page, per_page=per_page)
+            partners = payload.get("data") or []
+            for partner in partners:
+                if not isinstance(partner, dict):
+                    continue
+                candidate_id = partner.get("id")
+                if candidate_id == partner_id or str(candidate_id) == partner_id_text:
+                    return partner
+
+            meta = payload.get("meta")
+            if not isinstance(meta, dict):
+                return None
+            total_pages = meta.get("pages")
+            if not isinstance(total_pages, int) or page >= total_pages:
+                return None
+            page += 1
+
+        raise ValueError(
+            f"Research partner lookup exceeded {max_pages} pages while searching for partner {partner_id_text}"
+        )
 
 
 __all__ = ["ResearchPartnersProxyService"]

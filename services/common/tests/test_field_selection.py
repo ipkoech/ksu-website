@@ -146,3 +146,48 @@ def test_apply_field_selection_expands_requested_nested_relationship_fields():
             "public_url": "https://example.test/cover.jpg",
         },
     }
+
+
+def test_sensitive_fields_are_dropped_when_no_selection_is_requested():
+    record = {"id": "user-1", "email": "user@example.test", "password_hash": "argon2-hash"}
+
+    assert apply_field_selection(record, parse_field_selection()) == {
+        "id": "user-1",
+        "email": "user@example.test",
+    }
+
+
+def test_sensitive_fields_cannot_be_requested_explicitly():
+    record = {"id": "user-1", "password_hash": "argon2-hash", "credentials": {"token": "x"}}
+
+    selection = parse_field_selection(fields="id,password_hash,credentials")
+
+    assert apply_field_selection(record, selection) == {"id": "user-1"}
+
+
+def test_sensitive_fields_are_dropped_from_lists_and_nested_records():
+    records = [
+        {"id": "user-1", "password_hash": "hash-1", "person": {"id": "p1", "secret": "s"}},
+        {"id": "user-2", "password_hash": "hash-2", "person": {"id": "p2", "secret": "s"}},
+    ]
+
+    result = apply_field_selection(records, parse_field_selection())
+
+    assert result == [
+        {"id": "user-1", "person": {"id": "p1"}},
+        {"id": "user-2", "person": {"id": "p2"}},
+    ]
+
+
+def test_fields_that_merely_resemble_secrets_are_preserved():
+    record = {
+        "id": "rec-1",
+        "secretary_general": "Jane Doe",
+        "keywords": ["research"],
+        "key_achievements": "Award",
+        "credits_required": 3,
+        "file_hash": "abc123",
+        "key": "site.title",
+    }
+
+    assert apply_field_selection(record, parse_field_selection()) == record

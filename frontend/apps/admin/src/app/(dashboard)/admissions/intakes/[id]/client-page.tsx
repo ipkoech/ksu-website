@@ -13,6 +13,7 @@ import { hasChangedPayload, pickChangedPayloadWithRecord, type PayloadFieldMap }
 import { Button, Card, CardContent, CardHeader, CardTitle, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, Switch } from "@ksu/ui/components";
 import { toast } from "@ksu/ui";
 import { useCreateIntake, useIntake, useUpdateIntake, type Intake } from "@ksu/api-client";
+import { HomepageAdmissionForm } from "./homepage-admission-form";
 
 const schema = z
   .object({
@@ -217,6 +218,7 @@ export default function IntakeEditorPage() {
           </div>
         </form>
       </Form>
+      {!isNew && intake ? <HomepageAdmissionForm intakeId={intake.id} /> : null}
     </motion.div>
   );
 }

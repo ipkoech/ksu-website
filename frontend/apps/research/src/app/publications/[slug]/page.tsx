@@ -1,24 +1,26 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ResearchGenericRecord, ResearchPublication } from "@ksu/api-client";
+import { researchServiceApi } from "@ksu/api-client";
 import {
   ResearchDetailHero,
-  ResearchFact,
-  ResearchRelationshipCard,
-  ResearchTextPanel,
+  ResearchDetailSidebar,
 } from "../../../components/research-detail";
-import {
-  Badge,
-  ResearchSection,
-  StatusMessage,
-} from "../../../components/research-ui";
+import { ResearchSection, StatusMessage } from "../../../components/research-ui";
+import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import {
   compactText,
   formatDate,
-  formatLabel,
+  generateSlugParams,
   getPublicationBySlug,
 } from "../../../lib/research-public-data";
+import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return generateSlugParams(researchServiceApi.publications.list);
+}
 
 export default async function PublicationDetailPage({
   params,
@@ -32,18 +34,26 @@ export default async function PublicationDetailPage({
   const publication = data as ResearchPublication & ResearchGenericRecord;
   const project = publication.project as ResearchGenericRecord | undefined;
   const center = publication.center as ResearchGenericRecord | undefined;
-  const accessLinks = [
-    ["Open publication", publication.url],
-    ["Download PDF", publication.pdf_url],
-    ["DOI", publication.doi ? `https://doi.org/${publication.doi}` : null],
-  ].filter(([, href]) => compactText(href));
+  const storySections = getNarrativeSections(publication, [
+    { title: "What this publication covers", fields: ["abstract", "summary", "description"] },
+    { title: "Research support", fields: ["funding_acknowledgment", "funding_acknowledgement"] },
+    { title: "Where it appeared", fields: ["journal_name", "publisher", "conference_name", "book_title"] },
+    { title: "How to access it", fields: ["access_type", "url", "pdf_url", "doi"] },
+  ]);
+  const accessLinks = (
+    [
+      ["Open publication", compactText(publication.url)],
+      ["Download PDF", compactText(publication.pdf_url)],
+      ["DOI", publication.doi ? `https://doi.org/${publication.doi}` : ""],
+    ] as Array<[string, string]>
+  ).filter(([, href]) => href);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
       <ResearchDetailHero
         eyebrow="Publication"
         title={publication.title}
-        body={compactText(publication.abstract) || "Publication detail and access information."}
+        body={compactText(publication.abstract)}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Publications", href: "/publications" },
@@ -62,17 +72,14 @@ export default async function PublicationDetailPage({
         ]}
         actions={[
           { label: "Back to publications", href: "/publications", variant: "secondary" },
-          ...accessLinks.slice(0, 2).map(([label, href]) => ({
-            label: compactText(label),
-            href: href ?? "#",
-          })),
+          ...accessLinks.slice(0, 2).map(([label, href]) => ({ label, href })),
         ]}
-        imageSrc="/images/research/research-hero-imagegen.png"
+        imageSrc="/images/research/research-home-hero.svg"
         imageAlt="Publication record and research evidence"
       />
 
       {error ? (
-        <section className="px-4 pt-4 sm:px-6 lg:px-8">
+        <section className="px-4 pt-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mx-auto max-w-[1680px]">
             <StatusMessage tone="error">{error}</StatusMessage>
           </div>
@@ -82,19 +89,13 @@ export default async function PublicationDetailPage({
       <ResearchSection
         eyebrow="About this publication"
         title="Publication record"
-        body="This page uses public language for bibliographic, access, and research-context relationships."
+        body="Bibliographic details, access paths, and research context are assembled from the published API record."
         tone="white"
       >
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
-            <ResearchTextPanel
-              title="About this publication"
-              fields={[
-                ["Abstract", publication.abstract],
-                ["Funding acknowledgement", publication.funding_acknowledgment],
-              ]}
-            />
-            <ResearchTextPanel
+          <div className="flex min-w-0 flex-col gap-5">
+            <PublicationStory sections={storySections} />
+            <InfoPanel
               title="Published in"
               fields={[
                 ["Journal", publication.journal_name],
@@ -106,54 +107,42 @@ export default async function PublicationDetailPage({
               ]}
             />
           </div>
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{formatLabel(publication.publication_type ?? "publication")}</Badge>
-              {publication.access_type ? <Badge>{formatLabel(publication.access_type)}</Badge> : null}
-              {publication.is_open_access ? <Badge>Open access</Badge> : null}
-            </div>
-            <dl className="mt-5 grid gap-3 text-sm">
-              <ResearchFact label="Year" value={compactText(publication.year)} />
-              <ResearchFact label="Published" value={formatDate(publication.publication_date)} />
-              <ResearchFact label="DOI" value={compactText(publication.doi)} />
-              <ResearchFact label="ISSN / ISBN" value={[publication.issn, publication.isbn].map(compactText).filter(Boolean).join(" / ")} />
-            </dl>
-            {accessLinks.length > 0 ? (
-              <div className="mt-5 grid gap-2">
-                {accessLinks.map(([label, href]) => (
-                  <a
-                    key={label}
-                    href={href ?? "#"}
-                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90"
-                  >
-                    {label}
-                  </a>
-                ))}
-              </div>
-            ) : null}
-          </aside>
+          <ResearchDetailSidebar
+            labels={[
+              publication.publication_type ?? "publication",
+              publication.access_type,
+              publication.is_open_access ? "open access" : null,
+            ]}
+            facts={[
+              { label: "Year", value: publication.year },
+              { label: "Published", value: formatDate(publication.publication_date) },
+              { label: "DOI", value: publication.doi },
+              { label: "ISSN / ISBN", value: [publication.issn, publication.isbn].map(compactText).filter(Boolean).join(" / ") },
+            ]}
+            actions={accessLinks.map(([label, href]) => ({ label, href }))}
+          />
         </div>
       </ResearchSection>
 
       <ResearchSection
         eyebrow="Research Context"
-        title="How this publication connects"
-        body="Relationships are displayed as project and center context where they are published by the API."
+        title="Project, center, citation, and access"
+        body="Linked context is shown only when the backend record exposes a public project, center, identifier, or access URL."
       >
         <div className="grid gap-5 lg:grid-cols-2">
-          <ResearchRelationshipCard
-            title="Related project"
+          <ContextCard
+            title="Project"
             record={project}
             hrefBase="/projects"
             empty="No public project is linked to this publication yet."
           />
-          <ResearchRelationshipCard
-            title="Related center"
+          <ContextCard
+            title="Center"
             record={center}
             hrefBase="/centers"
             empty="No public center is linked to this publication yet."
           />
-          <ResearchTextPanel
+          <InfoPanel
             title="Citation"
             fields={[
               ["DOI", publication.doi],
@@ -162,7 +151,7 @@ export default async function PublicationDetailPage({
               ["URL", publication.url],
             ]}
           />
-          <ResearchTextPanel
+          <InfoPanel
             title="Access"
             fields={[
               ["Access type", publication.access_type],
@@ -173,5 +162,56 @@ export default async function PublicationDetailPage({
         </div>
       </ResearchSection>
     </main>
+  );
+}
+
+function PublicationStory({ sections }: { sections: Array<{ title: string; body: string }> }) {
+  return (
+    <ResearchStoryAccordion
+      sections={sections}
+      empty="Publication story sections appear when abstract, support, venue, or access fields are published."
+    />
+  );
+}
+
+function InfoPanel({ title, fields }: { title: string; fields: Array<[string, unknown]> }) {
+  const entries = fields
+    .map(([label, value]) => [label, compactText(value as string | number | null | undefined)] as const)
+    .filter(([, value]) => value);
+
+  return (
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-display text-xl font-semibold text-foreground">{title}</h2>
+      {entries.length ? (
+        <dl className="mt-4 grid gap-3 text-sm">
+          {entries.map(([label, value]) => (
+            <div key={label} className="rounded-md bg-surface-subtle p-3">
+              <dt className="text-xs font-semibold uppercase text-muted-foreground">{label}</dt>
+              <dd className="mt-1 break-words font-semibold text-foreground">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : <p className="mt-3 text-sm leading-7 text-muted-foreground">No public details are published yet.</p>}
+    </section>
+  );
+}
+
+function ContextCard({ title, record, hrefBase, empty }: { title: string; record?: ResearchGenericRecord; hrefBase: string; empty: string }) {
+  return (
+    <section className="min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-display text-xl font-semibold text-foreground">{title}</h2>
+      {record ? (
+        <>
+          <h3 className="mt-4 text-base font-semibold text-foreground">
+            {record.slug ? (
+              <Link href={`${hrefBase}/${record.slug}`} className="transition hover:text-primary">
+                {getRecordTitle(record, title)}
+              </Link>
+            ) : getRecordTitle(record, title)}
+          </h3>
+          {getRecordSummary(record) ? <p className="mt-2 text-sm leading-7 text-muted-foreground">{getRecordSummary(record)}</p> : null}
+        </>
+      ) : <p className="mt-3 text-sm leading-7 text-muted-foreground">{empty}</p>}
+    </section>
   );
 }

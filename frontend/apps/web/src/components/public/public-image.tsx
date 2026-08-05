@@ -26,6 +26,7 @@ interface PublicImageProps {
   imageClassName?: string;
   sizes?: string;
   priority?: boolean;
+  unoptimized?: boolean;
   fallbackSrc?: string;
   fallbackContent?: ReactNode;
 }
@@ -38,6 +39,7 @@ export function PublicImage({
   imageClassName,
   sizes = "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw",
   priority = false,
+  unoptimized = false,
   fallbackSrc = defaultFallback,
   fallbackContent,
 }: PublicImageProps) {
@@ -50,7 +52,7 @@ export function PublicImage({
   return (
     <div
       className={cn(
-        "relative w-full overflow-hidden bg-blue-50 text-primary",
+        "relative w-full overflow-hidden bg-accent text-primary",
         ratioClasses[ratio],
         className,
       )}
@@ -62,6 +64,15 @@ export function PublicImage({
           fill
           sizes={sizes}
           priority={priority}
+          // API media is served by the local gateway. Skipping Next's server
+          // optimizer keeps Docker-internal rendering from trying to fetch a
+          // host-only localhost URL; the browser can request it directly.
+          unoptimized={
+            unoptimized ||
+            /^https?:\/\/(localhost|127\.0\.0\.1|gateway|main)(:\d+)?\//i.test(
+              currentSrc,
+            )
+          }
           loading={priority ? undefined : "lazy"}
           className={cn("object-cover", imageClassName)}
           onError={() => {
@@ -95,14 +106,14 @@ export function ProgressiveImageCard({
 }: ProgressiveImageCardProps) {
   return (
     <div
-      className={cn("group relative overflow-hidden bg-slate-950", className)}
+      className={cn("group relative overflow-hidden bg-brand-overlay", className)}
     >
       <PublicImage
         {...imageProps}
         ratio="fill"
         className="absolute inset-0 h-full w-full"
         imageClassName={cn(
-          "transition duration-500 group-hover:scale-[1.03]",
+          "transition-transform duration-500 motion-safe:group-hover:scale-[1.03]",
           imageClassName,
         )}
       />

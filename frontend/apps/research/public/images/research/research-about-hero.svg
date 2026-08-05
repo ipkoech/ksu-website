@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#0a1628"/><stop offset="100%" style="stop-color:#1e3050"/></linearGradient></defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <!-- Building silhouette -->
+  <rect x="300" y="400" width="1320" height="280" rx="6" fill="#162a4a" opacity="0.6"/>
+  <rect x="400" y="350" width="160" height="330" rx="4" fill="#1a3050" opacity="0.7"/>
+  <rect x="600" y="320" width="140" height="360" rx="4" fill="#1a3050" opacity="0.7"/>
+  <rect x="820" y="300" width="180" height="380" rx="4" fill="#1a3050" opacity="0.7"/>
+  <rect x="1060" y="340" width="160" height="340" rx="4" fill="#1a3050" opacity="0.7"/>
+  <rect x="1260" y="370" width="130" height="310" rx="4" fill="#1a3050" opacity="0.6"/>
+  <!-- Windows -->
+  <rect x="640" y="360" width="24" height="18" rx="2" fill="#c15106" opacity="0.3"/>
+  <rect x="680" y="360" width="24" height="18" rx="2" fill="#c15106" opacity="0.2"/>
+  <rect x="640" y="400" width="24" height="18" rx="2" fill="#c15106" opacity="0.2"/>
+  <rect x="680" y="400" width="24" height="18" rx="2" fill="#c15106" opacity="0.3"/>
+  <rect x="860" y="340" width="24" height="18" rx="2" fill="#c15106" opacity="0.3"/>
+  <rect x="900" y="340" width="24" height="18" rx="2" fill="#1043b1" opacity="0.3"/>
+  <rect x="940" y="340" width="24" height="18" rx="2" fill="#c15106" opacity="0.2"/>
+  <rect x="860" y="380" width="24" height="18" rx="2" fill="#1043b1" opacity="0.2"/>
+  <rect x="900" y="380" width="24" height="18" rx="2" fill="#c15106" opacity="0.3"/>
+  <rect x="940" y="380" width="24" height="18" rx="2" fill="#c15106" opacity="0.2"/>
+  <!-- Trees -->
+  <circle cx="250" cy="500" r="50" fill="#1e5a3f" opacity="0.2"/>
+  <circle cx="1670" cy="480" r="60" fill="#1e5a3f" opacity="0.2"/>
+  <circle cx="180" cy="520" r="40" fill="#1e5a3f" opacity="0.15"/>
+  <circle cx="1740" cy="500" r="45" fill="#1e5a3f" opacity="0.15"/>
+  <!-- BG circles -->
+  <circle cx="1600" cy="200" r="100" fill="#1043b1" opacity="0.05"/>
+  <circle cx="300" cy="250" r="80" fill="#c15106" opacity="0.04"/>
+</svg>

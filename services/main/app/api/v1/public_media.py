@@ -3,19 +3,39 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, Query
-from sqlalchemy import select
+from fastapi import APIRouter, HTTPException, Query, Request
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import selectinload
 
+from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ...deps import DbSession
 from ...models import Media, MediaLink
 from ...services import MediaService
 from ...services._base import ilike_any, paginate_query
+from ...core.config import public_media_rate_limit
 
 router = APIRouter()
+
+
+def _public_media_link_filter(now: datetime):
+    return (
+        MediaLink.is_public.is_(True),
+        or_(
+            MediaLink.owner_scope_type != "club",
+            MediaLink.owner_scope_type.is_(None),
+            and_(
+                MediaLink.is_published.is_(True),
+                MediaLink.workflow_status == "published",
+                MediaLink.archived_at.is_(None),
+                or_(MediaLink.scheduled_publish_at.is_(None), MediaLink.scheduled_publish_at <= now),
+                or_(MediaLink.expires_at.is_(None), MediaLink.expires_at >= now),
+            ),
+        ),
+    )
 
 
 def public_media_payload(media: Media) -> dict[str, object | None]:
@@ -61,7 +81,10 @@ def public_media_link_payload(link: MediaLink) -> dict[str, object | None]:
 
 
 @router.get("")
+@public_media_rate_limit
+@cached_public(timeout=300, vary_on=("page", "per_page", "media_type", "search"))
 async def list_public_media(
+    request: Request,
     db: DbSession,
     page: int = Query(1, ge=1),
     per_page: int = Query(24, ge=1, le=100),
@@ -96,20 +119,24 @@ async def list_public_media(
 
 
 @router.get("/links")
+@public_media_rate_limit
+@cached_public(timeout=300, vary_on=("entity_type", "entity_id", "role", "per_page"))
 async def list_public_media_links(
+    request: Request,
     db: DbSession,
     entity_type: str = Query(..., min_length=1, max_length=64),
     entity_id: uuid.UUID = Query(...),
     role: str | None = Query(default=None, max_length=64),
     per_page: int = Query(24, ge=1, le=100),
 ):
+    now = datetime.now(timezone.utc)
     query = (
         select(MediaLink)
         .options(selectinload(MediaLink.media))
         .join(Media, MediaLink.media_id == Media.id)
         .where(
             MediaLink.deleted_at.is_(None),
-            MediaLink.is_public.is_(True),
+            *_public_media_link_filter(now),
             Media.deleted_at.is_(None),
             Media.is_public.is_(True),
             MediaLink.entity_type == entity_type,
@@ -127,7 +154,9 @@ async def list_public_media_links(
 
 
 @router.get("/{media_id}")
-async def get_public_media(media_id: uuid.UUID, db: DbSession):
+@public_media_rate_limit
+@cached_public(timeout=300, vary_on=("media_id",))
+async def get_public_media(request: Request, media_id: uuid.UUID, db: DbSession):
     media = await MediaService.get_by_id(db, media_id)
     if media is None or not media.is_public:
         raise HTTPException(status_code=404, detail="Media not found")

@@ -75,7 +75,7 @@ export function PublicSearchForm({
       <div className="relative min-w-0 flex-1">
         <Search
           aria-hidden
-          className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
+          className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground"
         />
         <label htmlFor="public-search" className="sr-only">
           Search Kisii University
@@ -88,13 +88,13 @@ export function PublicSearchForm({
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Type to search Kisii University"
           autoComplete="off"
-          className="h-12 w-full rounded-full border border-slate-200 bg-white py-3 pl-12 pr-24 text-base text-slate-950 outline-none transition placeholder:text-slate-500 focus:border-primary focus:ring-4 focus:ring-primary/10"
+          className="h-12 w-full rounded-full border border-border bg-white py-3 pl-12 pr-24 text-base text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
         />
         {query ? (
           <button
             type="button"
             onClick={() => setQuery("")}
-            className="absolute right-12 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            className="absolute right-12 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition hover:bg-surface-muted hover:text-muted-foreground"
             aria-label="Clear search"
           >
             <X aria-hidden className="h-4 w-4" />

@@ -9,7 +9,8 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..deps import _has_permission
+from ksu_common.rbac import AuthorizationDecision, authorize_permission
+
 from ..models import Department, Programme, User, Wing
 
 
@@ -125,6 +126,70 @@ RESEARCH_ASSIGNMENT_PERMISSIONS = frozenset(
     }
 )
 
+CLUB_ASSIGNMENT_PERMISSIONS = frozenset(
+    {
+        "clubs.view",
+        "clubs.manage_own",
+        "clubs.content_submit",
+        "clubs.events_manage",
+        "clubs.stories_manage",
+        "media.upload",
+        "media.manage",
+        "media:upload",
+        "media:manage",
+    }
+)
+
+SCHOOL_PORTAL_PERMISSION_NAMES = (
+    "school.audit.view",
+    "school.content.bulk",
+    "school.content.manage",
+    "school.content.submit",
+    "school.content.view",
+    "school.dashboard.view",
+    "school.departments.bulk",
+    "school.departments.manage",
+    "school.departments.view",
+    "school.inquiries.manage",
+    "school.inquiries.reply",
+    "school.inquiries.view",
+    "school.media.bulk",
+    "school.media.manage",
+    "school.media.view",
+    "school.notifications.manage",
+    "school.notifications.view",
+    "school.profile.manage",
+    "school.profile.view",
+    "school.programmes.bulk",
+    "school.programmes.manage",
+    "school.programmes.view",
+    "school.publications.manage",
+    "school.publications.submit",
+    "school.publications.view",
+    "school.team.bulk",
+    "school.team.manage",
+    "school.team.roles",
+    "school.team.view",
+)
+
+SCHOOL_PORTAL_VIEW_PERMISSION_NAMES = tuple(
+    permission
+    for permission in SCHOOL_PORTAL_PERMISSION_NAMES
+    if permission.endswith(".view")
+)
+
+GOVERNANCE_PERMISSIONS = frozenset(
+    {
+        "governance.manage_roles",
+        "governance.manage_members",
+        "governance.manage_order",
+        "governance.review",
+        "governance.approve",
+        "governance.publish",
+        "governance.archive",
+    }
+)
+
 
 @dataclass(frozen=True)
 class ScopedGrant:
@@ -146,6 +211,8 @@ def normalize_assignment_role(value: str | None) -> str:
 
 
 def assignment_permissions(scope_type: str, role: str) -> frozenset[str]:
+    if scope_type == "club":
+        return CLUB_ASSIGNMENT_PERMISSIONS
     if scope_type == "library" and role in LIBRARY_LEADERSHIP_SCOPE_ROLES:
         return LIBRARY_ASSIGNMENT_PERMISSIONS
     if scope_type == "research" and role in RESEARCH_LEADERSHIP_SCOPE_ROLES:
@@ -213,7 +280,7 @@ def user_scoped_grants(user: User) -> list[ScopedGrant]:
 
 
 def grant_has_permission(grant: ScopedGrant, permission: str) -> bool:
-    return _has_permission(set(grant.permissions), permission)
+    return authorize_permission(grant.permissions, permission).allowed
 
 
 def has_global_permission(user: User, permission: str) -> bool:
@@ -278,10 +345,35 @@ async def can_access_scope(
     *,
     scope_contains: ScopeResolver = default_scope_contains,
 ) -> bool:
+    return (
+        await authorize_scope(
+            db,
+            user,
+            permission,
+            target_scope_type,
+            target_scope_id,
+            scope_contains=scope_contains,
+        )
+    ).allowed
+
+
+async def authorize_scope(
+    db: AsyncSession | None,
+    user: User,
+    permission: str,
+    target_scope_type: str,
+    target_scope_id: uuid.UUID | None,
+    *,
+    scope_contains: ScopeResolver = default_scope_contains,
+) -> AuthorizationDecision:
+    """Return the common decision for a portal record and its local scope tree."""
     target_scope_type = normalize_scope_type(target_scope_type)
+    permission_decision: AuthorizationDecision | None = None
     for grant in user_scoped_grants(user):
-        if not grant_has_permission(grant, permission):
+        decision = authorize_permission(grant.permissions, permission)
+        if not decision.allowed:
             continue
+        permission_decision = decision
         if await scope_contains(
             db,
             grant.scope_type,
@@ -289,8 +381,10 @@ async def can_access_scope(
             target_scope_type,
             target_scope_id,
         ):
-            return True
-    return False
+            return decision
+    if permission_decision is not None:
+        return AuthorizationDecision(False, "scope_mismatch")
+    return AuthorizationDecision(False, "missing_permission")
 
 
 async def filter_records_for_scope(

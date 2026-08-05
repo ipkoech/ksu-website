@@ -5,10 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, Search, X } from "lucide-react";
+import type { LibraryTodayHours } from "@ksu/api-client";
 
 const primaryNavItems = [
   { label: "Catalog", href: "/catalog" },
   { label: "E-resources", href: "/electronic" },
+  { label: "Guides", href: "/guides" },
   { label: "Services", href: "/services" },
   { label: "Ask", href: "/ask" },
   { label: "Repository", href: "/repositories" },
@@ -17,6 +19,11 @@ const primaryNavItems = [
 ];
 
 const secondaryNavItems = [
+  { label: "Specialists", href: "/specialists" },
+  { label: "Borrowing", href: "/borrowing" },
+  { label: "Remote Access", href: "/remote-access" },
+  { label: "Digital Scholarship", href: "/digital-scholarship" },
+  { label: "Policies", href: "/policies" },
   { label: "Downloads", href: "/downloads" },
   { label: "Staff", href: "/staff" },
   { label: "Leadership", href: "/leadership" },
@@ -27,7 +34,11 @@ const secondaryNavItems = [
 
 const libraryNavItems = [...primaryNavItems, ...secondaryNavItems];
 
-export function LibraryHeader() {
+export function LibraryHeader({
+  todayHours = null,
+}: {
+  todayHours?: LibraryTodayHours | null;
+}) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -111,6 +122,7 @@ export function LibraryHeader() {
             href="/search"
             className="inline-flex h-11 w-11 items-center justify-center rounded-full text-primary transition hover:bg-primary/10 hover:text-primary"
             aria-label="Search library"
+            title={todayHours?.is_open ? "Library open now" : "View library hours"}
           >
             <Search aria-hidden className="h-5 w-5" />
           </Link>

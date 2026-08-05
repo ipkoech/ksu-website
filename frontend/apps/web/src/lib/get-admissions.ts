@@ -1,5 +1,15 @@
-import { admissionsApi, intakesApi } from "@ksu/api-client";
-import type { AdmissionInfo, Intake } from "@ksu/api-client";
+import { admissionsApi, intakesApi, programmesApi } from "@ksu/api-client";
+import type {
+  AdmissionDocument,
+  AdmissionFaq,
+  AdmissionInfo,
+  AdmissionPageSection,
+  AdmissionPathway,
+  AdmissionRequirement,
+  Intake,
+  Programme,
+  ProgrammeFeeStructure,
+} from "@ksu/api-client";
 import { publicFileUrl } from "@/lib/public-media";
 
 export interface AdmissionsIntakeSummary {
@@ -28,6 +38,13 @@ export interface AdmissionsInfoSummary {
 export interface AdmissionsPageData {
   intakes: AdmissionsIntakeSummary[];
   admissionInfo: AdmissionsInfoSummary[];
+  pathways: AdmissionPathway[];
+  requirements: AdmissionRequirement[];
+  feeStructures: ProgrammeFeeStructure[];
+  documents: AdmissionDocument[];
+  faqs: AdmissionFaq[];
+  pageSections: AdmissionPageSection[];
+  programmes: Programme[];
 }
 
 function mapIntake(intake: Intake): AdmissionsIntakeSummary {
@@ -58,7 +75,17 @@ function mapAdmissionInfo(info: AdmissionInfo): AdmissionsInfoSummary {
 }
 
 export async function getAdmissionsPageData(): Promise<AdmissionsPageData> {
-  const [intakesResult, admissionInfoResult] = await Promise.allSettled([
+  const [
+    intakesResult,
+    admissionInfoResult,
+    pathwaysResult,
+    requirementsResult,
+    feeStructuresResult,
+    documentsResult,
+    faqsResult,
+    pageSectionsResult,
+    programmesResult,
+  ] = await Promise.allSettled([
     intakesApi.list({
       fields:
         "id,name,slug,application_start,application_end,late_application_end,is_open",
@@ -68,6 +95,37 @@ export async function getAdmissionsPageData(): Promise<AdmissionsPageData> {
       fields:
         "id,title,slug,content_type,audience_levels,summary,content,external_url,cover_image_id,attachment_media_id,display_order",
       per_page: 20,
+    }),
+    admissionsApi.listPathways({ per_page: 20 }),
+    admissionsApi.listRequirements({
+      fields:
+        "id,title,applicant_type,level,minimum_grade,subject_requirements,alternative_qualifications,documents_required,notes,programme_id,school_id,intake_id,pathway_id,is_active,display_order",
+      per_page: 100,
+    }),
+    admissionsApi.listFeeStructures({
+      fields:
+        "id,title,applicant_type,fee_category,currency,tuition_amount,statutory_amount,other_amount,total_amount,payment_schedule,notes,programme_id,intake_id,attachment_media_id,is_active,display_order",
+      per_page: 100,
+    }),
+    admissionsApi.listDocuments({
+      fields:
+        "id,title,slug,document_type,applicant_type,summary,external_url,media_id,pathway_id,programme_id,intake_id,is_published,published_at,expires_at,display_order",
+      per_page: 100,
+    }),
+    admissionsApi.listFaqs({
+      fields:
+        "id,question,answer,category,applicant_type,pathway_id,is_published,display_order",
+      per_page: 50,
+    }),
+    admissionsApi.listPageSections({
+      fields:
+        "id,page_key,section_key,title,subtitle,body,layout_variant,settings,items,media_id,is_enabled,display_order",
+      per_page: 100,
+    }),
+    programmesApi.list({
+      fields:
+        "id,name,slug,level,department_id,entry_requirements,cluster_subjects,intake_months,fees_structure",
+      per_page: 12,
     }),
   ]);
 
@@ -90,6 +148,32 @@ export async function getAdmissionsPageData(): Promise<AdmissionsPageData> {
     admissionInfo:
       admissionInfoResult.status === "fulfilled"
         ? (admissionInfoResult.value.data ?? []).map(mapAdmissionInfo)
+        : [],
+    pathways:
+      pathwaysResult.status === "fulfilled"
+        ? (pathwaysResult.value.data ?? [])
+        : [],
+    requirements:
+      requirementsResult.status === "fulfilled"
+        ? (requirementsResult.value.data ?? [])
+        : [],
+    feeStructures:
+      feeStructuresResult.status === "fulfilled"
+        ? (feeStructuresResult.value.data ?? [])
+        : [],
+    documents:
+      documentsResult.status === "fulfilled"
+        ? (documentsResult.value.data ?? [])
+        : [],
+    faqs:
+      faqsResult.status === "fulfilled" ? (faqsResult.value.data ?? []) : [],
+    pageSections:
+      pageSectionsResult.status === "fulfilled"
+        ? (pageSectionsResult.value.data ?? [])
+        : [],
+    programmes:
+      programmesResult.status === "fulfilled"
+        ? (programmesResult.value.data ?? [])
         : [],
   };
 }

@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { ArrowRight, type LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ksu/ui/components";
 import { PageHeader } from "@/components/layout";
+import { ResearchSectionGuide } from "./research-guidance";
 
 interface SectionLink {
   title: string;
@@ -16,15 +18,24 @@ export function ResearchSectionIndex({
   title,
   description,
   links,
+  summarySlot,
+  hideHeader = false,
 }: {
   title: string;
   description: string;
   links: SectionLink[];
+  summarySlot?: ReactNode;
+  hideHeader?: boolean;
 }) {
   return (
     <div>
-      <PageHeader title={title} description={description} />
-      <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-3">
+      {!hideHeader ? <PageHeader title={title} description={description} /> : null}
+      <div className="space-y-4 p-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <ResearchSectionGuide title={title} className="sm:ml-auto" />
+        </div>
+        {summarySlot}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {links.map((link) => {
           const Icon = link.icon;
           return (
@@ -47,6 +58,7 @@ export function ResearchSectionIndex({
             </Card>
           );
         })}
+        </div>
       </div>
     </div>
   );

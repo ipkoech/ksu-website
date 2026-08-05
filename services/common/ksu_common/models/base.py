@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Optional, TypeVar
+from typing import Optional, TypeVar
 
 import sqlalchemy as sa
 from sqlalchemy import select

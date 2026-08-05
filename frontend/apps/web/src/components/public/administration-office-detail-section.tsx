@@ -25,6 +25,12 @@ import { ScrollReveal } from "@ksu/ui/components";
 import { PageShell } from "@/components/site-shell";
 import { PublicImage } from "@/components/public/public-image";
 import { PublicTeamSection } from "@/components/public/public-team-section";
+import { EntityInquiryLauncher } from "@/components/public/entity-inquiry-launcher";
+import {
+  QuickLinksPanel,
+  buildMediaTypeLinks,
+  type EntityQuickLink,
+} from "./entity-quick-links";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import type {
   AdministrationOfficeDetailData,
@@ -63,13 +69,6 @@ export type AdministrationMediaType =
   | "blogs"
   | "announcements"
   | "gallery";
-
-type QuickLink = {
-  section: SectionKey;
-  label: string;
-  href: string;
-  icon: LucideIcon;
-};
 
 type ContactIconLink = {
   label: string;
@@ -369,7 +368,7 @@ function buildHeadContactLinks(
 function HeadContactIconLink({ item }: { item: ContactIconLink }) {
   const Icon = item.icon;
   const className =
-    "inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-primary shadow-sm transition hover:border-primary/40 hover:bg-primary hover:text-white";
+    "inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-white text-primary shadow-sm transition hover:border-primary/40 hover:bg-primary hover:text-white";
   const content = (
     <>
       <Icon aria-hidden className="h-4 w-4" />
@@ -421,7 +420,7 @@ function RichText({ value }: { value?: string | null }) {
     .filter(Boolean);
 
   return (
-    <div className="grid gap-3 text-sm leading-7 text-slate-700">
+    <div className="grid gap-3 text-sm leading-7 text-muted-foreground">
       {paragraphs.map((paragraph) => (
         <p key={paragraph}>{paragraph}</p>
       ))}
@@ -451,55 +450,15 @@ function SectionHeading({
   return (
     <div id={id} className="scroll-mt-28">
       <SectionKicker>{eyebrow}</SectionKicker>
-      <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
+      <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
         {title}
       </h2>
       {body ? (
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
           {body}
         </p>
       ) : null}
     </div>
-  );
-}
-
-function QuickLinksPanel({
-  links,
-  title = "Quick Links",
-  ariaLabel = "Administration page quick links",
-}: {
-  links: QuickLink[];
-  title?: string;
-  ariaLabel?: string;
-}) {
-  if (!links.length) return null;
-
-  return (
-    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
-      <SectionKicker>{title}</SectionKicker>
-      <nav aria-label={ariaLabel} className="mt-3">
-        <ul className="divide-y divide-slate-100">
-          {links.map((item) => {
-            const Icon = item.icon;
-            return (
-              <li key={item.section}>
-                <a
-                  href={item.href}
-                  className="group flex min-h-10 items-center gap-3 py-2 text-sm font-medium text-slate-700 transition hover:text-primary"
-                >
-                  <Icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
-                  <span className="min-w-0 flex-1">{item.label}</span>
-                  <ArrowRight
-                    aria-hidden
-                    className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
-                  />
-                </a>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-    </section>
   );
 }
 
@@ -514,12 +473,14 @@ function DivisionHeadProfile({ data }: { data: AdministrationOfficeDetailData })
   const profileHref = `/staff/${person.id}`;
   const message = headMessageText(data);
   const contactLinks = buildHeadContactLinks(person, data.headProfile, profileHref);
+  const isAcademicDivision =
+    data.entity.entityKind === "division" && data.entity.code === "ARSA";
 
   return (
     <section id="profile" className="scroll-mt-28">
-      <article className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
+      <article className="overflow-hidden rounded-[1.5rem] border border-border bg-white shadow-sm">
         <div className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[12rem_minmax(0,1fr)] lg:items-start">
-          <div className="flex flex-col items-center gap-3 rounded-2xl bg-slate-50 p-4 text-center">
+          <div className="flex flex-col items-center gap-3 rounded-2xl bg-surface-subtle p-4 text-center">
             <div className="h-32 w-32 overflow-hidden rounded-full bg-primary/[0.08] ring-4 ring-white shadow-sm sm:h-36 sm:w-36">
               {photoUrl ? (
                 <PublicImage
@@ -536,14 +497,18 @@ function DivisionHeadProfile({ data }: { data: AdministrationOfficeDetailData })
               )}
             </div>
             <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
-              {data.kind === "division" ? "Division Head" : "Directorate Head"}
+              {isAcademicDivision
+                ? "Academic leadership"
+                : data.kind === "division"
+                ? "Division Head"
+                : "Directorate Head"}
             </p>
           </div>
           <div className="grid min-w-0 content-start divide-y divide-slate-100">
             <div className="pb-4">
               {message ? (
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+                  <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
                     Head&apos;s Message
                   </p>
                   <div className="mt-2 flex gap-3">
@@ -551,7 +516,7 @@ function DivisionHeadProfile({ data }: { data: AdministrationOfficeDetailData })
                       aria-hidden
                       className="mt-1 h-5 w-5 shrink-0 text-secondary"
                     />
-                    <p className="max-w-3xl text-sm leading-6 text-slate-700">
+                    <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
                       {message}
                     </p>
                   </div>
@@ -560,15 +525,15 @@ function DivisionHeadProfile({ data }: { data: AdministrationOfficeDetailData })
             </div>
             <div className="grid gap-4 py-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+                <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
                   Name
                 </p>
-                <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-slate-950">
+                <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
                   {name}
                 </h2>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+                <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
                   Position
                 </p>
                 <p className="mt-1 text-sm font-bold leading-6 text-primary">
@@ -577,7 +542,7 @@ function DivisionHeadProfile({ data }: { data: AdministrationOfficeDetailData })
               </div>
             </div>
             <div className="pt-4">
-              <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
                 Contact
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -608,13 +573,13 @@ function StatementCard({
   if (!text(body)) return null;
 
   return (
-    <article className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="rounded-[1.25rem] border border-border bg-white p-4 shadow-sm">
       <div className="flex gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
           <Icon aria-hidden className="h-5 w-5" />
         </span>
         <div className="min-w-0">
-          <h3 className="text-base font-bold text-slate-950">{title}</h3>
+          <h3 className="text-base font-bold text-foreground">{title}</h3>
           <div className="mt-2">
             <RichText value={body} />
           </div>
@@ -633,11 +598,11 @@ function HeadMessage({ data }: { data: AdministrationOfficeDetailData }) {
   return (
     <section
       id="message"
-      className="scroll-mt-28 rounded-[1.5rem] bg-slate-950 p-5 text-white shadow-sm sm:p-6"
+      className="scroll-mt-28 rounded-[1.5rem] bg-brand-overlay p-5 text-white shadow-sm sm:p-6"
     >
       <SectionKicker>Leadership Message</SectionKicker>
       <Quote aria-hidden className="mt-3 h-7 w-7 text-secondary" />
-      <p className="mt-2 text-sm leading-7 text-white/82 sm:text-base">
+      <p className="mt-2 text-sm leading-7 text-white/80 sm:text-base">
         {message}
       </p>
     </section>
@@ -653,6 +618,7 @@ function AboutSection({ data }: { data: AdministrationOfficeDetailData }) {
   const values = isDivision ? entity.core_values : null;
   const mandate = isDivision ? null : entity.mandate;
   const serviceCharter = isDivision ? null : entity.service_charter;
+  const isAcademicDivision = isDivision && entity.code === "ARSA";
 
   if (
     !description &&
@@ -669,11 +635,23 @@ function AboutSection({ data }: { data: AdministrationOfficeDetailData }) {
     <section className="grid gap-4">
       <SectionHeading
         id="about"
-        eyebrow={isDivision ? "Division Profile" : "Directorate Profile"}
-        title={isDivision ? "About the division" : "About the directorate"}
+        eyebrow={
+          isAcademicDivision
+            ? "Academic, Research & Student Affairs"
+            : isDivision
+            ? "Division Profile"
+            : "Directorate Profile"
+        }
+        title={
+          isAcademicDivision
+            ? "Academic leadership and support"
+            : isDivision
+            ? "About the division"
+            : "About the directorate"
+        }
       />
       {description ? (
-        <article className="rounded-[1.25rem] border border-slate-200 bg-white p-5 shadow-sm">
+        <article className="rounded-[1.25rem] border border-border bg-white p-5 shadow-sm">
           <RichText value={description} />
         </article>
       ) : null}
@@ -708,7 +686,7 @@ function LinkedRecordCard({
   return (
     <Link
       href={href}
-      className="group rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
+      className="group rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition-colors hover:border-primary/30 hover:bg-primary/[0.03]"
     >
       <div className="flex gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
@@ -720,18 +698,18 @@ function LinkedRecordCard({
               {eyebrow}
             </p>
           ) : null}
-          <h3 className="mt-1 text-base font-bold text-slate-950 group-hover:text-primary">
+          <h3 className="mt-1 text-base font-bold text-foreground group-hover:text-primary">
             {title}
           </h3>
           {body ? (
-            <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+            <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
               {body}
             </p>
           ) : null}
         </div>
         <ArrowRight
           aria-hidden
-          className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
+          className="h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary"
         />
       </div>
     </Link>
@@ -744,14 +722,20 @@ function DirectoratesSection({
   data: AdministrationOfficeDetailData;
 }) {
   if (!data.childWings.length) return null;
+  const isAcademicDivision =
+    data.entity.entityKind === "division" && data.entity.code === "ARSA";
 
   return (
     <section className="grid gap-4">
       <SectionHeading
         id="directorates"
-        eyebrow="Administrative Units"
-        title="Units under this division"
-        body="These units coordinate broad portfolios and provide leadership for related administrative and academic-support functions."
+        eyebrow={isAcademicDivision ? "Academic support portfolios" : "Administrative Units"}
+        title={isAcademicDivision ? "Connect with the right office" : "Units under this division"}
+        body={
+          isAcademicDivision
+            ? "Find the office responsible for your academic journey, research support and student services."
+            : "These units coordinate broad portfolios and provide leadership for related administrative and academic-support functions."
+        }
       />
       <div className="grid gap-3 md:grid-cols-2">
         {data.childWings.map((wing) => (
@@ -891,32 +875,32 @@ function ServicesSection({
           return (
             <article
               key={service.id}
-              className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm"
+              className="rounded-[1.25rem] border border-border bg-white p-4 shadow-sm"
             >
               <div className="flex gap-3">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
                   <BriefcaseBusiness aria-hidden className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">
-                  <h3 className="text-base font-bold text-slate-950">
+                  <h3 className="text-base font-bold text-foreground">
                     {service.name}
                   </h3>
                   {text(service.description) ? (
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
                       {text(service.description)}
                     </p>
                   ) : null}
                   {text(service.requirements) ? (
-                    <p className="mt-3 text-sm leading-6 text-slate-700">
-                      <span className="font-bold text-slate-950">
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                      <span className="font-bold text-foreground">
                         Requirements:{" "}
                       </span>
                       {text(service.requirements)}
                     </p>
                   ) : null}
                   {text(service.process) ? (
-                    <p className="mt-2 text-sm leading-6 text-slate-700">
-                      <span className="font-bold text-slate-950">
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      <span className="font-bold text-foreground">
                         Process:{" "}
                       </span>
                       {text(service.process)}
@@ -1086,13 +1070,13 @@ function MediaSection({
         </div>
       ) : null}
       {fallbackCount > 0 && scopedCount === 0 && mediaType !== "gallery" ? (
-        <p className="rounded-[1.25rem] border border-dashed border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
+        <p className="rounded-[1.25rem] border border-dashed border-border bg-white p-4 text-sm leading-6 text-muted-foreground">
           No records are currently published for this office, so the latest
           university-wide {mediaTypeTitle(mediaType).toLowerCase()} are shown.
         </p>
       ) : null}
       {!updates.length ? (
-        <p className="rounded-[1.25rem] border border-dashed border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
+        <p className="rounded-[1.25rem] border border-dashed border-border bg-white p-4 text-sm leading-6 text-muted-foreground">
           No {mediaType ? mediaTypeTitle(mediaType).toLowerCase() : "media"} records
           are currently published for this office.
         </p>
@@ -1102,21 +1086,21 @@ function MediaSection({
           <Link
             key={`${item.recordType}-${item.id}`}
             href={mediaHref(item)}
-            className="group rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:bg-primary/[0.03]"
+            className="group rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition-colors hover:border-primary/30 hover:bg-primary/[0.03]"
           >
             <p className="text-xs font-bold uppercase tracking-[0.08em] text-primary">
               {mediaLabel(item) ?? "Media"}
             </p>
-            <h3 className="mt-2 text-base font-bold text-slate-950 group-hover:text-primary">
+            <h3 className="mt-2 text-base font-bold text-foreground group-hover:text-primary">
               {mediaTitle(item)}
             </h3>
             {mediaSummary(item) ? (
-              <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+              <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
                 {mediaSummary(item)}
               </p>
             ) : null}
             {mediaDate(item) ? (
-              <p className="mt-3 text-xs font-semibold text-slate-500">
+              <p className="mt-3 text-xs font-semibold text-muted-foreground">
                 {mediaDate(item)}
               </p>
             ) : null}
@@ -1150,23 +1134,23 @@ function DownloadsSection({ data }: { data: AdministrationOfficeDetailData }) {
           return (
             <article
               key={document.id}
-              className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm"
+              className="rounded-[1.25rem] border border-border bg-white p-4 shadow-sm"
             >
               <div className="flex gap-3">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
                   <FileText aria-hidden className="h-5 w-5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-base font-bold text-slate-950">
+                  <h3 className="text-base font-bold text-foreground">
                     {document.title}
                   </h3>
                   {meta ? (
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
                       {meta}
                     </p>
                   ) : null}
                   {text(document.description) ? (
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
                       {text(document.description)}
                     </p>
                   ) : null}
@@ -1174,7 +1158,7 @@ function DownloadsSection({ data }: { data: AdministrationOfficeDetailData }) {
                 {fileUrl ? (
                   <a
                     href={fileUrl}
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 text-primary transition hover:bg-primary hover:text-white"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 text-primary transition-colors hover:bg-primary hover:text-white"
                     aria-label={`Download ${document.title}`}
                   >
                     <Download aria-hidden className="h-4 w-4" />
@@ -1217,10 +1201,10 @@ function ContactRows({ data }: { data: AdministrationOfficeDetailData }) {
           <>
             <Icon aria-hidden className="h-5 w-5 text-primary" />
             <span>
-              <span className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+              <span className="block text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
                 {item.label}
               </span>
-              <span className="mt-1 block break-words text-sm font-semibold text-slate-950 [overflow-wrap:anywhere]">
+              <span className="mt-1 block break-words text-sm font-semibold text-foreground [overflow-wrap:anywhere]">
                 {item.value}
               </span>
             </span>
@@ -1231,14 +1215,14 @@ function ContactRows({ data }: { data: AdministrationOfficeDetailData }) {
           <a
             key={item.label}
             href={item.href}
-            className="flex gap-3 rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30"
+            className="flex gap-3 rounded-[1.25rem] border border-border bg-white p-4 shadow-sm transition-colors hover:border-primary/30"
           >
             {content}
           </a>
         ) : (
           <div
             key={item.label}
-            className="flex gap-3 rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm"
+            className="flex gap-3 rounded-[1.25rem] border border-border bg-white p-4 shadow-sm"
           >
             {content}
           </div>
@@ -1266,19 +1250,19 @@ function ContactSection({ data }: { data: AdministrationOfficeDetailData }) {
       />
       <ContactRows data={data} />
       {Object.keys(data.entity.operating_hours ?? {}).length ? (
-        <article className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm">
+        <article className="rounded-[1.25rem] border border-border bg-white p-4 shadow-sm">
           <SectionKicker>Operating Hours</SectionKicker>
           <dl className="mt-3 grid gap-2 sm:grid-cols-2">
             {Object.entries(data.entity.operating_hours ?? {}).map(
               ([key, value]) => (
                 <div
                   key={key}
-                  className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2"
+                  className="flex items-center justify-between gap-3 rounded-lg bg-surface-subtle px-3 py-2"
                 >
-                  <dt className="text-sm font-semibold capitalize text-slate-700">
+                  <dt className="text-sm font-semibold capitalize text-muted-foreground">
                     {key.replace(/_/g, " ")}
                   </dt>
-                  <dd className="text-sm font-bold text-slate-950">
+                  <dd className="text-sm font-bold text-foreground">
                     {String(value)}
                   </dd>
                 </div>
@@ -1324,7 +1308,7 @@ function InfoPanel({ data }: { data: AdministrationOfficeDetailData }) {
   if (!items.length) return null;
 
   return (
-    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-[1.5rem] border border-border bg-white p-4 shadow-sm">
       <SectionKicker>At a Glance</SectionKicker>
       <dl className="mt-3 grid gap-2">
         {items.map((item) => {
@@ -1339,7 +1323,7 @@ function InfoPanel({ data }: { data: AdministrationOfficeDetailData }) {
                 className="mt-0.5 h-5 w-5 shrink-0 text-primary"
               />
               <div className="min-w-0 flex-1">
-                <dt className="text-xs font-bold text-slate-950">
+                <dt className="text-xs font-bold text-foreground">
                   {item.label}
                 </dt>
                 <dd className="mt-0.5 break-words text-sm font-medium leading-5 text-primary [overflow-wrap:anywhere]">
@@ -1378,7 +1362,7 @@ function ContactPanel({ data }: { data: AdministrationOfficeDetailData }) {
   if (!rows.length) return null;
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="min-w-0 overflow-hidden rounded-[1.5rem] border border-border bg-white p-4 shadow-sm">
       <SectionKicker>Contact</SectionKicker>
       <div className="mt-3 grid min-w-0 gap-1.5">
         {rows.map((item) => {
@@ -1387,10 +1371,10 @@ function ContactPanel({ data }: { data: AdministrationOfficeDetailData }) {
             <>
               <Icon
                 aria-hidden
-                className="mt-0.5 h-5 w-5 shrink-0 text-slate-500"
+                className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground"
               />
               <span className="min-w-0 flex-1">
-                <span className="block text-xs font-bold text-slate-950">
+                <span className="block text-xs font-bold text-foreground">
                   {item.label}
                 </span>
                 <span className="mt-0.5 block break-words text-sm font-medium leading-5 text-primary [overflow-wrap:anywhere]">
@@ -1404,7 +1388,7 @@ function ContactPanel({ data }: { data: AdministrationOfficeDetailData }) {
             <a
               key={item.label}
               href={item.href}
-              className="flex w-full min-w-0 gap-3 rounded-xl p-2 transition hover:bg-primary/5"
+              className="flex w-full min-w-0 gap-3 rounded-xl p-2 transition-colors hover:bg-primary/5"
             >
               {content}
             </a>
@@ -1422,125 +1406,42 @@ function ContactPanel({ data }: { data: AdministrationOfficeDetailData }) {
   );
 }
 
-function buildQuickLinks(data: AdministrationOfficeDetailData): QuickLink[] {
-  const baseHref = data.baseHref;
-
-  return [
-    {
-      section: "overview",
-      label: "Overview",
-      href: baseHref,
-      icon: UserRound,
-    },
-    data.kind === "division" && (data.childWings.length || data.departments.length)
-      ? {
-        section: "units",
-        label: "Units",
-        href: `${baseHref}/units`,
-        icon: BriefcaseBusiness,
-      }
-      : null,
-    data.kind === "division" && data.schools.length
-      ? {
-        section: "schools",
-        label: "Schools",
-        href: `${baseHref}/schools`,
-        icon: Landmark,
-      }
-      : null,
-    data.counts.team > 0
-      ? {
-        section: "team",
-        label: "Team",
-        href: `${baseHref}/team`,
-        icon: Users,
-      }
-      : null,
-    data.services.length
-      ? {
-        section: "services",
-        label: "Services",
-        href: `${baseHref}/services`,
-        icon: BriefcaseBusiness,
-      }
-      : null,
-    {
-      section: "media",
-      label: "Media",
-      href: `${baseHref}/media`,
-      icon: Newspaper,
-    },
-    data.documents.length
-      ? {
-        section: "downloads",
-        label: "Downloads",
-        href: `${baseHref}/downloads`,
-        icon: Download,
-      }
-      : null,
-    present(data.entity.email) ||
-      present(data.entity.phone) ||
-      present(data.entity.office_location)
-      ? {
-        section: "contact",
-        label: "Contact",
-        href: `${baseHref}/contact`,
-        icon: Phone,
-      }
-      : null,
-  ].filter(Boolean) as QuickLink[];
-}
-
-function buildMediaTypeLinks(baseHref: string): QuickLink[] {
-  return [
-    {
-      section: "news",
-      label: "News",
-      href: `${baseHref}/media/news`,
-      icon: Newspaper,
-    },
-    {
-      section: "events",
-      label: "Events",
-      href: `${baseHref}/media/events`,
-      icon: CalendarDays,
-    },
-    {
-      section: "blogs",
-      label: "Blogs",
-      href: `${baseHref}/media/blogs`,
-      icon: FileText,
-    },
-    {
-      section: "announcements",
-      label: "Announcements",
-      href: `${baseHref}/media/announcements`,
-      icon: Quote,
-    },
-    {
-      section: "gallery",
-      label: "Gallery",
-      href: `${baseHref}/media/gallery`,
-      icon: Download,
-    },
+function quickLinksFor(data: AdministrationOfficeDetailData): EntityQuickLink[] {
+  const h = data.baseHref;
+  const links: EntityQuickLink[] = [
+    { label: "Overview", href: h, icon: UserRound, section: "overview" },
   ];
+  if (data.kind === "division" && (data.childWings.length || data.departments.length))
+    links.push({ label: "Units", href: `${h}/units`, icon: BriefcaseBusiness, section: "units" });
+  if (data.kind === "division" && data.schools.length)
+    links.push({ label: "Schools", href: `${h}/schools`, icon: Landmark, section: "schools" });
+  if (data.counts.team > 0)
+    links.push({ label: "Team", href: `${h}/team`, icon: Users, section: "team" });
+  if (data.services.length)
+    links.push({ label: "Services", href: `${h}/services`, icon: BriefcaseBusiness, section: "services" });
+  links.push({ label: "Media", href: `${h}/media`, icon: Newspaper, section: "media" });
+  if (data.documents.length)
+    links.push({ label: "Downloads", href: `${h}/downloads`, icon: Download, section: "downloads" });
+  if (present(data.entity.email) || present(data.entity.phone) || present(data.entity.office_location))
+    links.push({ label: "Contact", href: `${h}/contact`, icon: Phone, section: "contact" });
+  return links;
 }
 
 function ParentPanel({ data }: { data: AdministrationOfficeDetailData }) {
   if (!data.parent) return null;
 
   return (
-    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-[1.5rem] border border-border bg-white p-4 shadow-sm">
       <SectionKicker>Administration</SectionKicker>
       <Link
         href={data.parent.href}
-        className="group mt-3 flex min-h-10 items-center gap-3 text-sm font-medium text-slate-700 transition hover:text-primary"
+        className="group mt-3 flex min-h-10 items-center gap-3 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
         <Landmark aria-hidden className="h-4 w-4 shrink-0 text-primary" />
         <span className="min-w-0 flex-1">{data.parent.label}</span>
         <ArrowRight
           aria-hidden
-          className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
+          className="h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary"
         />
       </Link>
     </section>
@@ -1589,7 +1490,7 @@ export function AdministrationOfficeDetailSection({
   mediaType?: AdministrationMediaType;
 }) {
   const sidebarLinks =
-    section === "media" ? buildMediaTypeLinks(data.baseHref) : buildQuickLinks(data);
+    section === "media" ? buildMediaTypeLinks(data.baseHref) : quickLinksFor(data);
   const sidebarTitle = section === "media" ? "Content Types" : "Quick Links";
   const sidebarLabel =
     section === "media"
@@ -1601,7 +1502,7 @@ export function AdministrationOfficeDetailSection({
   return (
     <PageShell header={header}>
       <AboutPageLenis>
-        <section className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_68%,#f6f8fc_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+        <section className="w-full bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_68%,hsl(var(--surface-muted))_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="grid w-full gap-4 xl:grid-cols-[minmax(220px,0.2fr)_minmax(0,1fr)_minmax(260px,0.22fr)] 2xl:grid-cols-[minmax(240px,0.18fr)_minmax(0,1fr)_minmax(300px,0.22fr)] xl:items-start">
             <aside className="hidden min-w-0 space-y-4 xl:sticky xl:top-28 xl:block">
               <QuickLinksPanel
@@ -1629,6 +1530,13 @@ export function AdministrationOfficeDetailSection({
           </div>
         </section>
       </AboutPageLenis>
+      <EntityInquiryLauncher
+        target={{
+          type: "office",
+          slug: data.entity.slug,
+          name: data.entity.name,
+        }}
+      />
     </PageShell>
   );
 }

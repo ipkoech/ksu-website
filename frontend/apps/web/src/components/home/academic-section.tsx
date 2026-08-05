@@ -114,7 +114,7 @@ const programmeCategories = [
     name: "Masters",
     description: "Specialize and deepen your expertise",
     icon: Award,
-    color: "from-blue-600 to-blue-800",
+    color: "from-primary to-primary/80",
     href: "/academics/programmes?level=masters",
   },
   {
@@ -198,7 +198,7 @@ export function AcademicSection({
   }, [activeIntake?.endDate]);
 
   return (
-    <section className="py-16 lg:py-24 bg-gradient-to-b from-white to-slate-50">
+    <section className="py-16 lg:py-24 bg-gradient-to-b from-background to-surface-subtle">
       <div className="px-4 sm:px-6 lg:px-12">
         {/* Header with Stats */}
         <ScrollReveal>
@@ -206,7 +206,7 @@ export function AcademicSection({
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-secondary">
               Find Your Path
             </p>
-            <h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl text-slate-950 sm:text-5xl">
+            <h2 className="mt-4 font-[family-name:var(--font-display)] text-4xl text-foreground sm:text-5xl">
               Your Academic Journey Starts Here
             </h2>
           </div>
@@ -214,7 +214,7 @@ export function AcademicSection({
 
         {/* Stats Bar + Journey Steps - Compact on Mobile */}
         <ScrollReveal>
-          <div className="flex justify-center gap-6 sm:gap-8 lg:gap-16 mb-6 lg:mb-10 py-4 lg:py-6 border-y border-slate-200">
+          <div className="flex justify-center gap-6 sm:gap-8 lg:gap-16 mb-6 lg:mb-10 py-4 lg:py-6 border-y border-border">
             {stats.map((stat) => (
               <div
                 key={stat.label}
@@ -224,10 +224,10 @@ export function AcademicSection({
                   <stat.icon className="w-4 h-4 lg:w-6 lg:h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-lg lg:text-3xl font-bold text-slate-950">
+                  <p className="text-lg lg:text-3xl font-bold text-foreground">
                     {stat.value}
                   </p>
-                  <p className="text-xs lg:text-sm text-slate-600">
+                  <p className="text-xs lg:text-sm text-muted-foreground">
                     {stat.label}
                   </p>
                 </div>
@@ -241,16 +241,16 @@ export function AcademicSection({
           <div className="flex justify-center items-center gap-2 lg:gap-4 mb-8 lg:mb-12">
             {journeySteps.map((step, index) => (
               <div key={step.step} className="flex items-center">
-                <div className="flex items-center gap-1.5 lg:gap-3 bg-white rounded-full px-3 py-1.5 lg:px-5 lg:py-3 shadow-sm border border-slate-200">
+                <div className="flex items-center gap-1.5 lg:gap-3 bg-white rounded-full px-3 py-1.5 lg:px-5 lg:py-3 shadow-sm border border-border">
                   <span className="w-5 h-5 lg:w-8 lg:h-8 rounded-full bg-secondary text-white flex items-center justify-center text-xs lg:text-sm font-bold">
                     {step.step}
                   </span>
-                  <p className="text-xs lg:text-sm font-semibold text-slate-900">
+                  <p className="text-xs lg:text-sm font-semibold text-foreground">
                     {step.title}
                   </p>
                 </div>
                 {index < journeySteps.length - 1 && (
-                  <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5 text-slate-300 mx-1 lg:mx-2" />
+                  <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5 text-muted-foreground/60 mx-1 lg:mx-2" />
                 )}
               </div>
             ))}
@@ -267,7 +267,7 @@ export function AcademicSection({
                   <span className="w-8 h-8 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold">
                     1
                   </span>
-                  <h3 className="text-xl font-bold text-slate-950">
+                  <h3 className="text-xl font-bold text-foreground">
                     Explore Our Schools
                   </h3>
                 </div>
@@ -286,7 +286,7 @@ export function AcademicSection({
                   <ScrollReveal key={school.id} delay={index * 50}>
                     <Link
                       href={`/academics/schools/${school.slug}`}
-                      className="group block h-full overflow-hidden rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                      className="group block h-full overflow-hidden rounded-xl bg-white border border-border shadow-sm hover:shadow-lg transition-[transform,box-shadow] duration-200 hover:-translate-y-1 active:scale-[0.98]"
                     >
                       <PublicImage
                         src={imageUrl}
@@ -304,10 +304,10 @@ export function AcademicSection({
                         }
                         sizes="(min-width: 1024px) 18vw, (min-width: 640px) 25vw, 50vw"
                         className="h-28"
-                        imageClassName="transition-transform duration-300 group-hover:scale-105"
+                        imageClassName="transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
                       />
                       <div className="p-3 h-16 flex items-center">
-                        <h4 className="text-xs font-semibold text-slate-900 leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                        <h4 className="text-xs font-semibold text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
                           {school.name}
                         </h4>
                       </div>
@@ -326,7 +326,7 @@ export function AcademicSection({
                   <span className="w-8 h-8 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold">
                     2
                   </span>
-                  <h3 className="text-xl font-bold text-slate-950">
+                  <h3 className="text-xl font-bold text-foreground">
                     Choose Level
                   </h3>
                 </div>
@@ -343,7 +343,7 @@ export function AcademicSection({
                 <ScrollReveal key={category.level} delay={index * 75}>
                   <Link
                     href={category.href}
-                    className="group relative overflow-hidden rounded-xl p-4 h-full min-h-[120px] flex flex-col justify-between transition-transform duration-300 hover:-translate-y-1"
+                    className="group relative overflow-hidden rounded-xl p-4 h-full min-h-[120px] flex flex-col justify-between transition-transform duration-200 hover:-translate-y-1 active:scale-[0.98]"
                   >
                     <div
                       className={`absolute inset-0 bg-gradient-to-br ${category.color}`}

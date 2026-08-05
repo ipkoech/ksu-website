@@ -41,6 +41,7 @@ export interface NavDepartment {
   id: string;
   name: string;
   slug: string;
+  code?: string;
   school_id?: string;
   department_type?: string;
 }
@@ -49,6 +50,7 @@ export interface NavAdminUnit {
   id: string;
   name: string;
   slug: string;
+  code?: string;
 }
 
 export interface NavClub {
@@ -70,6 +72,7 @@ export interface MegaMenuData {
   schools?: NavSchool[];
   departments?: NavDepartment[];
   divisions?: NavAdminUnit[];
+  wings?: NavAdminUnit[];
   adminUnits?: NavAdminUnit[];
   clubs?: NavClub[];
 }
@@ -80,14 +83,31 @@ interface PublicHeaderProps {
   className?: string;
   researchHref?: string;
   libraryHref?: string;
+  heriHref?: string;
+  supportHref?: string;
 }
+
+const defaultResearchHref =
+  process.env.NEXT_PUBLIC_RESEARCH_FRONTEND_URL ||
+  "https://research.kisiiuniversity.ac.ke";
+const defaultLibraryHref =
+  process.env.NEXT_PUBLIC_LIBRARY_FRONTEND_URL ||
+  "https://library.kisiiuniversity.ac.ke";
+const defaultHeriHref =
+  process.env.NEXT_PUBLIC_HERI_AFRICA_FRONTEND_URL ||
+  "https://heri-africa.kisiiuniversity.ac.ke";
+const defaultSupportHref =
+  process.env.NEXT_PUBLIC_SUPPORT_KSU_URL ||
+  `${defaultResearchHref.replace(/\/$/, "")}/donate`;
 
 export function PublicHeader({
   megaMenuData,
   transparent = false,
   className,
-  researchHref,
-  libraryHref,
+  researchHref = defaultResearchHref,
+  libraryHref = defaultLibraryHref,
+  heriHref = defaultHeriHref,
+  supportHref = defaultSupportHref,
 }: PublicHeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -98,7 +118,11 @@ export function PublicHeader({
   const pathname = usePathname();
 
   // Build navigation with dynamic data
-  const navigation = buildNavigation(megaMenuData, { researchHref, libraryHref });
+  const navigation = buildNavigation(megaMenuData, {
+    researchHref,
+    libraryHref,
+    heriHref,
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -157,7 +181,7 @@ export function PublicHeader({
         )}
       >
         <nav className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="flex h-[89px] items-center justify-between lg:h-[82px]">
+          <div className="flex h-[128px] items-center justify-between lg:h-[118px]">
             {/* Logo */}
             <Link
               href="/"
@@ -169,13 +193,13 @@ export function PublicHeader({
                 alt="Kisii University"
                 width={56}
                 height={56}
-                className="h-12 w-auto sm:h-14 lg:h-12"
+                className="h-[58px] w-auto sm:h-[67px] lg:h-[58px]"
                 priority
               />
               <span className="min-w-0">
                 <span
                   className={cn(
-                    "block font-[family-name:var(--font-display)] text-lg font-bold uppercase leading-none text-primary transition-colors motion-reduce:transition-none sm:text-2xl lg:text-xl",
+                    "block font-[family-name:var(--font-display)] text-xl font-bold uppercase leading-none text-primary transition-colors motion-reduce:transition-none sm:text-3xl lg:text-2xl",
                     isTransparent ? "text-white" : "text-primary",
                   )}
                 >
@@ -183,8 +207,8 @@ export function PublicHeader({
                 </span>
                 <span
                   className={cn(
-                    "mt-1 block text-xs font-semibold leading-none transition-colors motion-reduce:transition-none sm:text-sm lg:text-xs",
-                    isTransparent ? "text-white/80" : "text-slate-600",
+                    "mt-1 block text-sm font-semibold leading-none transition-colors motion-reduce:transition-none sm:text-base lg:text-sm",
+                    isTransparent ? "text-white/80" : "text-muted-foreground",
                   )}
                 >
                   Inclusivity & Borderlessness
@@ -216,19 +240,6 @@ export function PublicHeader({
 
             {/* Actions */}
             <div className="flex items-center gap-2">
-              <Link
-                href="/search"
-                className={cn(
-                  "inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors motion-reduce:transition-none",
-                  isTransparent
-                    ? "text-white hover:bg-white/10"
-                    : "text-primary hover:bg-primary/10 hover:text-primary",
-                )}
-                aria-label="Search Kisii University"
-              >
-                <Search className="h-5 w-5" aria-hidden />
-              </Link>
-
               <Button
                 asChild
                 size="sm"
@@ -239,7 +250,25 @@ export function PublicHeader({
                     : "bg-primary text-white shadow-sm shadow-primary/20 hover:bg-primary/90",
                 )}
               >
-                <Link href="/admissions/how-to-apply">Apply Now</Link>
+                <Link href="/admissions/how-to-apply">APPLY NOW</Link>
+              </Button>
+
+              <Button
+                asChild
+                size="sm"
+                className={cn(
+                  "hidden h-11 rounded-full border border-secondary bg-secondary px-5 text-sm font-semibold text-white shadow-sm shadow-secondary/20 hover:bg-secondary/90 2xl:flex",
+                  isTransparent &&
+                    "border-white/80 bg-white/10 text-white hover:bg-white/20",
+                )}
+              >
+                <Link
+                  href={supportHref}
+                  target={supportHref.startsWith("http") ? "_blank" : undefined}
+                  rel={supportHref.startsWith("http") ? "noopener noreferrer" : undefined}
+                >
+                  SUPPORT KSU
+                </Link>
               </Button>
 
               {/* Mobile Menu Trigger */}
@@ -274,6 +303,7 @@ export function PublicHeader({
                   </SheetHeader>
                   <MobileNav
                     navigation={navigation}
+                    supportHref={supportHref}
                     onClose={() => setIsMobileOpen(false)}
                   />
                 </SheetContent>
@@ -286,240 +316,196 @@ export function PublicHeader({
   );
 }
 
-function buildNavigation(
+export function buildNavigation(
   megaMenuData?: MegaMenuData,
   serviceLinks: {
     researchHref?: string;
     libraryHref?: string;
+    heriHref?: string;
   } = {},
 ): NavItem[] {
   const schools = megaMenuData?.schools || [];
-  const departments = megaMenuData?.departments || [];
-  const divisions = megaMenuData?.divisions || [];
-  const adminUnits = megaMenuData?.adminUnits || [];
-  const clubs = megaMenuData?.clubs || [];
 
   // About menu
   const aboutItem: NavItem = {
-    label: "About",
+    label: "ABOUT US",
     href: "/about",
     children: [
-      // Overview group
       {
-        label: "Overview",
+        label: "ABOUT KSU",
         href: "/about",
-        description: "About Kisii University",
+        description: "Our identity, beliefs, mandate, and journey",
       },
       {
-        label: "History",
-        href: "/about/history",
-        description: "Our journey since establishment",
+        label: "UNIVERSITY COUNCIL",
+        href: "/about/university-council",
+        description: "The University’s supreme governing body",
       },
       {
-        label: "Mission & Vision",
-        href: "/about/mission-vision",
-        description: "What drives us forward",
-      },
-      // Governance & Leadership
-      {
-        label: "Governance",
-        href: "/about/governance",
-        description: "Council and Senate",
-      },
-      {
-        label: "University Management",
+        label: "UNIVERSITY MANAGEMENT",
         href: "/about/university-management",
-        description: "University management team",
-      },
-      // Quality
-      {
-        label: "Quality Assurance",
-        href: "/about/quality-assurance",
-        description: "Standards and accreditation",
-      },
-    ],
-  };
-
-  // Administration menu
-  const administrationItem: NavItem = {
-    label: "Administration",
-    href: "/administration",
-    children: [
-      {
-        label: "Organization",
-        href: "/administration/organization",
-        description: "University structure",
-      },
-      ...divisions.map((division) => ({
-        label: division.name,
-        href: `/administration/divisions/${division.slug}`,
-        group: "Divisions",
-      })),
-      ...(departments.length ? departments : adminUnits).map((unit) => ({
-        label: unit.name,
-        href: `/administration/units/${unit.slug}`,
-        group: "Departments",
-      })),
-    ],
-  };
-
-  // Admissions menu
-  const admissionsItem: NavItem = {
-    label: "Admissions",
-    href: "/admissions",
-    children: [
-      {
-        label: "Undergraduate",
-        href: "/admissions/undergraduate",
-        description: "Bachelor's programmes",
+        description: "Executive leadership and administration",
       },
       {
-        label: "Postgraduate",
-        href: "/admissions/postgraduate",
-        description: "Masters & PhD programmes",
+        label: "UNIVERSITY SERVICE CHARTER",
+        href: "/about/service-charter",
+        description: "Our public service commitments",
       },
       {
-        label: "International Students",
-        href: "/admissions/international",
-        description: "Study in Kenya",
+        label: "STRATEGIC PLAN",
+        href: "/about/strategic-plan",
+        description: "Priorities guiding the University’s future",
       },
       {
-        label: "Requirements",
-        href: "/admissions/requirements",
-        description: "Entry qualifications",
+        label: "KSU NUMBERS & FACTS",
+        href: "/about/numbers-and-facts",
+        description: "Verified institutional facts by reporting year",
       },
       {
-        label: "Fees & Scholarships",
-        href: "/admissions/fees",
-        description: "Tuition and financial aid",
+        label: "HERI AFRICA",
+        href: serviceLinks.heriHref || "https://heri-africa.kisiiuniversity.ac.ke",
+        external: true,
+        group: "QUICK LINKS",
       },
       {
-        label: "How to Apply",
-        href: "/admissions/how-to-apply",
-        description: "Application process",
+        label: "NYANGWETA FARM",
+        href: "#",
+        group: "QUICK LINKS",
       },
     ],
   };
 
-  // Academics with schools - restructured
-  const academicsItem: NavItem = {
-    label: "Academics",
-    href: "/academics",
+  const admissionsLinks: NavItem[] = [
+    {
+      label: "UNDERGRADUATE",
+      href: "/admissions/undergraduate",
+      group: "ADMISSIONS",
+    },
+    {
+      label: "POSTGRADUATE",
+      href: "/admissions/postgraduate",
+      group: "ADMISSIONS",
+    },
+    {
+      label: "INTERNATIONAL STUDENTS",
+      href: "/admissions/international",
+      group: "ADMISSIONS",
+    },
+    {
+      label: "REQUIREMENTS",
+      href: "/admissions/requirements",
+      group: "ADMISSIONS",
+    },
+    {
+      label: "FEES & SCHOLARSHIPS",
+      href: "/admissions/fees",
+      group: "ADMISSIONS",
+    },
+    {
+      label: "HOW TO APPLY",
+      href: "/admissions/how-to-apply",
+      group: "ADMISSIONS",
+    },
+  ];
+
+  const programmesItem: NavItem = {
+    label: "PROGRAMMES",
+    href: "/academics/programmes",
     children: [
-      // Quick links
       {
-        label: "All Schools",
-        href: "/academics/schools",
-        description: "Browse all schools",
-      },
-      {
-        label: "Programmes",
+        label: "ALL PROGRAMMES",
         href: "/academics/programmes",
-        description: "Find your programme",
+        description: "Browse academic programmes by level and school",
       },
       {
-        label: "Academic Calendar",
-        href: "/academics/calendar",
-        description: "Important dates",
+        label: "ADMISSIONS",
+        href: "/admissions",
+        children: admissionsLinks.map(({ group: _group, ...item }) => item),
       },
       {
-        label: "Examinations",
-        href: "/academics/examinations",
-        description: "Exam schedules & results",
+        label: "SCHOOLS",
+        href: "/academics/schools",
+        children: schools.map((school) => ({
+          label: school.name
+            .replace("School of ", "")
+            .replace("Faculty of ", "")
+            .toUpperCase(),
+          href: `/academics/schools/${school.slug}`,
+        })),
       },
-      // Dynamic schools
-      ...schools.map((school) => ({
-        label: school.name.replace("School of ", "").replace("Faculty of ", ""),
-        href: `/academics/schools/${school.slug}`,
-        group: "Schools",
-      })),
+      {
+        label: "ACADEMIC DIVISION",
+        href: "/academics",
+        children: [
+          { label: "ORGANIZATION", href: "/administration/organization" },
+          { label: "CALENDAR", href: "/academics/calendar" },
+          { label: "EXAMINATIONS", href: "/academics/examinations" },
+        ],
+      },
     ],
   };
 
   // Campus Life
   const campusLifeItem: NavItem = {
-    label: "Campus Life",
+    label: "CAMPUS LIFE",
     href: "/campus-life",
     children: [
       {
-        label: "Student Life",
+        label: "STUDENT LIFE",
         href: "/campus-life/student-life",
         description: "Experience university life",
       },
       {
-        label: "Clubs & Societies",
+        label: "CLUBS & SOCIETIES",
         href: "/campus-life/clubs",
         description: "Student organizations",
       },
       {
-        label: "Sports",
+        label: "SPORTS",
         href: "/campus-life/sports",
         description: "Athletics and recreation",
       },
       {
-        label: "Accommodation",
+        label: "ACCOMMODATION",
         href: "/campus-life/accommodation",
         description: "On-campus housing",
       },
       {
-        label: "Support Services",
+        label: "SUPPORT SERVICES",
         href: "/campus-life/support",
         description: "Student welfare",
       },
-      ...clubs.map((club) => ({
-        label: club.name,
-        href: `/campus-life/clubs/${club.slug}`,
-        group: "Clubs & Societies",
-      })),
     ],
   };
 
   const mediaDeskItem: NavItem = {
-    label: "Media Desk",
+    label: "NEWS & EVENTS",
     href: "/media",
-    children: [
-      {
-        label: "News",
-        href: "/media/news",
-        description: "Latest university news",
-      },
-      {
-        label: "Articles",
-        href: "/media/articles",
-        description: "Stories and feature articles",
-      },
-      {
-        label: "Events",
-        href: "/media/events",
-        description: "Upcoming and recent events",
-      },
-      {
-        label: "Gallery",
-        href: "/media/gallery",
-        description: "Published photos and media",
-      },
-    ],
   };
 
-  const serviceItems: NavItem[] = [
-    {
-      label: "Research",
-      href: serviceLinks.researchHref || "https://research.kisiiuniversity.ac.ke",
-    },
-    {
-      label: "Library",
-      href: serviceLinks.libraryHref || "https://library.kisiiuniversity.ac.ke",
-    },
-  ];
+  const contactItem: NavItem = {
+    label: "CONTACT",
+    href: "/contact",
+  };
+
+  const researchItem: NavItem = {
+    label: "RESEARCH",
+    href: serviceLinks.researchHref || "https://research.kisiiuniversity.ac.ke",
+  };
+
+  const libraryItem: NavItem = {
+    label: "LIBRARY",
+    href: serviceLinks.libraryHref || "https://library.kisiiuniversity.ac.ke",
+  };
 
   return [
     aboutItem,
-    administrationItem,
-    admissionsItem,
-    academicsItem,
+    programmesItem,
+    researchItem,
+    libraryItem,
     campusLifeItem,
     mediaDeskItem,
-    ...serviceItems,
+    contactItem,
   ];
 }
 
@@ -546,6 +532,7 @@ function MegaMenuDropdown({
     top: number;
     width: number;
   } | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const children = item.children || [];
   const hasChildren = children.length > 0;
 
@@ -563,10 +550,7 @@ function MegaMenuDropdown({
       ? [{ title: "More", items: looseDynamicItems }]
       : []),
   ];
-  const isStructuredMegaMenu =
-    item.label === "Academics" ||
-    item.label === "Administration" ||
-    item.label === "Campus Life";
+  const isStructuredMegaMenu = item.label === "ABOUT US";
   const isMegaMenu =
     isStructuredMegaMenu ||
     rightSections.length > 0 ||
@@ -589,11 +573,8 @@ function MegaMenuDropdown({
       ?.getBoundingClientRect();
     const gutter = 16;
     const availableWidth = Math.max(260, window.innerWidth - gutter * 2);
-    const targetWidth = isMegaMenu
-      ? item.label === "Administration"
-        ? 1700
-        : 1500
-      : 288;
+    const targetWidth =
+      item.label === "ABOUT US" || item.label === "PROGRAMMES" ? 520 : 288;
     const width = Math.min(targetWidth, availableWidth);
     const maxLeft = Math.max(gutter, window.innerWidth - width - gutter);
     const preferredLeft =
@@ -653,6 +634,7 @@ function MegaMenuDropdown({
   useEffect(() => {
     if (!isOpen || !hasChildren) {
       setDropdownFrame(null);
+      setActiveSubmenu(null);
       return;
     }
 
@@ -684,7 +666,7 @@ function MegaMenuDropdown({
           "flex min-h-11 items-center gap-1 rounded-full px-3.5 py-2 text-sm font-semibold transition-colors motion-reduce:transition-none",
           isTransparent
             ? "text-white/90 hover:bg-white/10 hover:text-white"
-            : "text-slate-700 hover:bg-primary/10 hover:text-primary",
+            : "text-foreground/85 hover:bg-primary/10 hover:text-primary",
         )}
       >
         {item.label}
@@ -705,7 +687,7 @@ function MegaMenuDropdown({
           "flex min-h-11 items-center overflow-hidden rounded-full text-sm font-semibold transition-colors motion-reduce:transition-none",
           isTransparent
             ? "text-white/90 hover:bg-white/10 hover:text-white"
-            : "text-slate-700 hover:bg-primary/10 hover:text-primary",
+            : "text-foreground/85 hover:bg-primary/10 hover:text-primary",
           isOpen &&
             (isTransparent
               ? "bg-white/10 text-white"
@@ -760,7 +742,7 @@ function MegaMenuDropdown({
               aria-label={`${item.label} navigation`}
               role="menu"
               className={cn(
-                "fixed z-50 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-lg border border-primary/10 bg-white shadow-[0_24px_80px_-48px_rgba(30,64,175,0.6)]",
+                "fixed z-50 rounded-lg border border-primary/10 bg-white shadow-[0_24px_80px_-48px_rgba(30,64,175,0.6)]",
                 isMegaMenu ? "p-4" : "py-2",
               )}
               onMouseEnter={onOpen}
@@ -781,7 +763,7 @@ function MegaMenuDropdown({
                 <div className="grid gap-5 lg:grid-cols-[minmax(13rem,16rem)_minmax(0,1fr)]">
                   <div>
                     {quickLinks.length ? (
-                      <MenuSection title="Quick Links">
+                      <MenuSection title="QUICK LINKS">
                         {quickLinks.map((child) => (
                           <MenuCardLink key={child.href} item={child} />
                         ))}
@@ -794,28 +776,14 @@ function MegaMenuDropdown({
                   </div>
                 </div>
               ) : (
-                <div className="space-y-1">
-                  {children.map((child) => (
-                    <Link
-                      key={child.href}
-                      href={child.href}
-                      role="menuitem"
-                      className="block min-h-12 px-4 py-2.5 transition-colors motion-reduce:transition-none hover:bg-primary/5 group"
-                    >
-                      <div className="font-medium text-gray-900 group-hover:text-primary transition-colors text-sm">
-                        {child.label}
-                      </div>
-                      {child.description && (
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          {child.description}
-                        </div>
-                      )}
-                    </Link>
-                  ))}
-                </div>
+                <CompactNestedMenu
+                  items={children}
+                  activeSubmenu={activeSubmenu}
+                  onActivate={setActiveSubmenu}
+                />
               )}
 
-              {isMegaMenu && (
+              {isMegaMenu && item.label !== "ABOUT US" && (
                 <div className="mt-4 shrink-0 border-t border-primary/10 pt-4">
                   <Link
                     href={item.href}
@@ -848,6 +816,71 @@ function MenuSection({
         {title}
       </h3>
       <div className="space-y-1">{children}</div>
+    </div>
+  );
+}
+
+function CompactNestedMenu({
+  items,
+  activeSubmenu,
+  onActivate,
+}: {
+  items: NavItem[];
+  activeSubmenu: string | null;
+  onActivate: (href: string | null) => void;
+}) {
+  const activeItem = items.find((item) => item.href === activeSubmenu);
+
+  return (
+    <div className="flex min-h-[12rem] w-full">
+      <div className="max-h-[calc(100vh-6rem)] w-[17rem] shrink-0 overflow-y-auto py-2">
+        {items.map((item) => {
+          const hasChildren = Boolean(item.children?.length);
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              target={item.external ? "_blank" : undefined}
+              rel={item.external ? "noopener noreferrer" : undefined}
+              role="menuitem"
+              aria-haspopup={hasChildren ? "menu" : undefined}
+              onMouseEnter={() => onActivate(hasChildren ? item.href : null)}
+              onFocus={() => onActivate(hasChildren ? item.href : null)}
+              className={cn(
+                "flex min-h-11 items-center justify-between gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                activeSubmenu === item.href
+                  ? "bg-primary/5 text-primary"
+                  : "text-gray-800 hover:bg-primary/5 hover:text-primary",
+              )}
+            >
+              <span>{item.label}</span>
+              {hasChildren ? (
+                <ChevronDown className="h-4 w-4 -rotate-90 text-gray-400" aria-hidden />
+              ) : item.external ? (
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              ) : null}
+            </Link>
+          );
+        })}
+      </div>
+
+      {activeItem?.children?.length ? (
+        <div className="max-h-[calc(100vh-6rem)] min-w-0 flex-1 overflow-y-auto border-l border-primary/10 py-2 pl-2">
+          {activeItem.children.map((child) => (
+            <Link
+              key={child.href}
+              href={child.href}
+              target={child.external ? "_blank" : undefined}
+              rel={child.external ? "noopener noreferrer" : undefined}
+              role="menuitem"
+              className="flex min-h-11 items-center rounded-md px-3 py-2.5 text-sm font-medium text-gray-800 transition-colors hover:bg-primary/5 hover:text-primary"
+            >
+              {child.label}
+            </Link>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -900,12 +933,63 @@ function getGroupedMenuSections(items: NavItem[]): GroupedMenuSection[] {
   }));
 }
 
-function GroupedMenuGrid({ sections }: { sections: GroupedMenuSection[] }) {
+function GroupedMenuGrid({
+  sections,
+  variant = "stacked",
+}: {
+  sections: GroupedMenuSection[];
+  variant?: "stacked" | "two-column" | "administration";
+}) {
   if (!sections.length) {
     return (
       <p className="rounded-lg border border-dashed border-gray-200 px-3 py-4 text-sm text-gray-500">
         No menu items available.
       </p>
+    );
+  }
+
+  if (variant === "two-column") {
+    return (
+      <div className="grid gap-6 md:grid-cols-2">
+        {sections.map((section) => (
+          <MenuLinkGrid
+            key={section.title}
+            title={section.title}
+            items={section.items}
+            headingStyle="bold"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (variant === "administration") {
+    const topSections = sections.filter((section) =>
+      ["Divisions", "Registrars"].includes(section.title),
+    );
+    const bottomSections = sections.filter(
+      (section) => !["Divisions", "Registrars"].includes(section.title),
+    );
+
+    return (
+      <div className="space-y-5">
+        <div className="grid gap-6 border-b border-gray-200 pb-5 md:grid-cols-2">
+          {topSections.map((section) => (
+            <MenuLinkGrid
+              key={section.title}
+              title={section.title}
+              items={section.items}
+            />
+          ))}
+        </div>
+        {bottomSections.map((section) => (
+          <MenuLinkGrid
+            key={section.title}
+            title={section.title}
+            items={section.items}
+          />
+        ))}
+      </div>
     );
   }
 
@@ -921,17 +1005,34 @@ function GroupedMenuGrid({ sections }: { sections: GroupedMenuSection[] }) {
   );
 }
 
-function MenuLinkGrid({ title, items }: { title: string; items: NavItem[] }) {
+function MenuLinkGrid({
+  title,
+  items,
+  headingStyle = "compact",
+}: {
+  title: string;
+  items: NavItem[];
+  headingStyle?: "compact" | "bold";
+}) {
+  const minColumnWidth =
+    title === "Departments" || items.length > 16 ? "8.5rem" : "10rem";
+
   return (
     <div>
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+      <h3
+        className={cn(
+          "mb-3",
+          headingStyle === "bold"
+            ? "text-base font-bold text-gray-950"
+            : "text-xs font-semibold uppercase tracking-wider text-gray-500",
+        )}
+      >
         {title}
       </h3>
       <div
         className="grid gap-1.5"
         style={{
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(min(10rem, 100%), 1fr))",
+          gridTemplateColumns: `repeat(auto-fit, minmax(min(${minColumnWidth}, 100%), 1fr))`,
         }}
       >
         {items.map((child) => (
@@ -953,9 +1054,11 @@ function MenuLinkGrid({ title, items }: { title: string; items: NavItem[] }) {
 
 function MobileNav({
   navigation,
+  supportHref,
   onClose,
 }: {
   navigation: NavItem[];
+  supportHref: string;
   onClose: () => void;
 }) {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
@@ -975,7 +1078,7 @@ function MobileNav({
         onSubmit={onClose}
       >
         <label htmlFor="mobile-site-search" className="sr-only">
-          Search Kisii University
+          SEARCH KISII UNIVERSITY
         </label>
         <div className="relative">
           <Search
@@ -986,7 +1089,7 @@ function MobileNav({
             id="mobile-site-search"
             name="q"
             type="search"
-            placeholder="Search Kisii University"
+            placeholder="SEARCH KISII UNIVERSITY"
             className="h-11 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
@@ -1027,40 +1130,86 @@ function MobileNav({
       {/* Quick Links */}
       <div className="border-t p-4 space-y-3">
         <p className="text-xs font-semibold text-gray-500 uppercase">
-          Quick Links
+          QUICK LINKS
         </p>
         <div className="space-y-2">
-          <Link
-            href="/m/staff"
+          <a
+            href={
+              process.env.NEXT_PUBLIC_HERI_AFRICA_FRONTEND_URL ||
+              "https://heri-africa.kisiiuniversity.ac.ke"
+            }
             className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
-            onClick={onClose}
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            Staff Portal
-          </Link>
+            HERI AFRICA
+          </a>
+          <a
+            href="https://digital.kisiiuniversity.ac.ke/"
+            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            HUDUMA BORA
+          </a>
           <a
             href="https://portal.kisiiuniversity.ac.ke"
             className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
             target="_blank"
             rel="noopener noreferrer"
           >
-            Student Portal
+            STUDENT PORTAL
           </a>
           <a
-            href="https://elearning.kisiiuniversity.ac.ke"
+            href="https://digital.kisiiuniversity.ac.ke/job_portal/open_adverts"
             className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
             target="_blank"
             rel="noopener noreferrer"
           >
-            E-Learning
+            CAREERS
+          </a>
+          <a
+            href="https://digital.kisiiuniversity.ac.ke/conferences"
+            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            CONFERENCES
+          </a>
+          <a
+            href="https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders"
+            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            TENDERS
+          </a>
+          <a
+            href="https://digital.kisiiuniversity.ac.ke/ksu_customer_care_centerr"
+            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            HELP DESK
           </a>
         </div>
       </div>
 
       {/* CTA */}
-      <div className="p-4 border-t">
+      <div className="space-y-3 border-t p-4">
         <Button asChild className="w-full">
           <Link href="/admissions/how-to-apply" onClick={onClose}>
-            Apply Now
+            APPLY NOW
+          </Link>
+        </Button>
+        <Button asChild variant="secondary" className="w-full">
+          <Link
+            href={supportHref}
+            target={supportHref.startsWith("http") ? "_blank" : undefined}
+            rel={supportHref.startsWith("http") ? "noopener noreferrer" : undefined}
+            onClick={onClose}
+          >
+            SUPPORT KSU
           </Link>
         </Button>
       </div>

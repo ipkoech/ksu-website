@@ -7,14 +7,25 @@ const researchFrontendUrl =
 const libraryFrontendUrl =
   process.env.NEXT_PUBLIC_LIBRARY_FRONTEND_URL ||
   "https://library.kisiiuniversity.ac.ke";
+const heriFrontendUrl =
+  process.env.KSU_HERI_FRONTEND_URL || "http://localhost:3004";
 const withPath = (baseUrl: string, path: string) =>
   `${baseUrl.replace(/\/$/, "")}${path}`;
+const withHeriPath = (path: string) =>
+  `${heriFrontendUrl.replace(/\/$/, "")}/heri-africa${path}`;
 
 const nextConfig: NextConfig = {
+  distDir: process.env.NEXT_DIST_DIR || ".next",
+  output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../.."),
   transpilePackages: ["@ksu/ui", "@ksu/api-client"],
   async redirects() {
     return [
+      {
+        source: "/landing",
+        destination: "/",
+        permanent: true,
+      },
       {
         source: "/about_us",
         destination: "/about",
@@ -161,6 +172,16 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/library",
+        destination: libraryFrontendUrl,
+        permanent: true,
+      },
+      {
+        source: "/library/:path*",
+        destination: withPath(libraryFrontendUrl, "/:path*"),
+        permanent: true,
+      },
+      {
         source: "/research",
         destination: researchFrontendUrl,
         permanent: true,
@@ -212,6 +233,18 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: "/heri-africa",
+        destination: withHeriPath(""),
+      },
+      {
+        source: "/heri-africa/:path*",
+        destination: withHeriPath("/:path*"),
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
@@ -233,6 +266,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "i.ytimg.com",
       },
     ],
   },

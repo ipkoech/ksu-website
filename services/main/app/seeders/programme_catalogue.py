@@ -50,17 +50,79 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
         fees_structure=_fees(400000, "Ksh. 400,000 per year"),
         intake_months=("September",),
     ),
-    *_expand_programmes(
-        programmes=(
-            ("Bachelor of Laws", "LAW"),
+    {
+        "name": "Bachelor of Laws",
+        "code": "LLB",
+        "department_code": "LAW",
+        "level": "undergraduate",
+        "mode_of_study": "full_time",
+        "duration": "4 years",
+        "about": (
+            "The Bachelor of Laws (LLB) at Kisii University provides a strong foundation "
+            "in legal theory, constitutionalism, statutory interpretation, legal ethics, "
+            "research, advocacy, and the relationship between law and society. The programme "
+            "develops students' ability to read legal materials critically, reason from "
+            "authority, write clearly, and apply legal principles to practical problems in "
+            "public, private, commercial, and community contexts. Graduates are prepared for "
+            "professional legal training, public service, private-sector legal work, policy "
+            "roles, research, and further academic study."
         ),
-        level="undergraduate",
-        mode_of_study="full_time",
-        duration="4 years",
-        entry_requirements="KCSE mean grade C+ with B (Plain) in English or Kiswahili, or at least 3 principal passes in KACE, or a bachelor's degree from a recognized university.",
-        fees_structure=_fees(160000, "Ksh. 160,000 per year"),
-        intake_months=("September",),
-    ),
+        "objectives": (
+            "The programme aims to build competence in legal research and writing, analytical "
+            "reasoning, ethical judgement, advocacy, dispute resolution, statutory and case-law "
+            "interpretation, and practical application of legal principles. It also prepares "
+            "students to understand Kenya's constitutional order, regional and international "
+            "legal obligations, and the professional responsibilities expected of legal "
+            "practitioners and public officers."
+        ),
+        "career_prospects": (
+            "Graduates may pursue careers as advocates after completing the required "
+            "postgraduate professional training and admission process, legal officers, "
+            "judicial officers, prosecutors, legal researchers, compliance officers, policy "
+            "analysts, corporate legal assistants, human rights officers, governance officers, "
+            "legal consultants, public administrators, or academics. Opportunities exist in "
+            "law firms, courts, government agencies, county governments, corporations, banks, "
+            "civil society organisations, international organisations, research institutions, "
+            "and further postgraduate study."
+        ),
+        "curriculum_overview": (
+            "Students study core foundations of law and legal method, including constitutional "
+            "law, criminal law, contract, tort, property, administrative law, commercial law, "
+            "family law, evidence, jurisprudence, legal research and writing, legal ethics, "
+            "and clinical or practice-oriented learning. The curriculum is designed to connect "
+            "doctrine with problem-solving, advocacy, research, and responsible service to "
+            "society."
+        ),
+        "entry_requirements": (
+            "Applicants must satisfy the University's general admission requirements. In "
+            "addition, applicants should have a KCSE mean grade of C+ (Plus) with at least "
+            "B (Plain) in English or Kiswahili, or at least three principal passes in KACE, "
+            "or hold a bachelor's degree from a recognised university. Equivalent and "
+            "alternative entry pathways are considered in accordance with University and "
+            "professional regulatory requirements."
+        ),
+        "fees_structure": {
+            "items": [
+                {
+                    "item": "Tuition",
+                    "amount": 160000,
+                    "currency": "KES",
+                    "display": "Ksh. 160,000 per year",
+                    "notes": "Subject to University review",
+                },
+                {
+                    "item": "Other statutory and administrative charges",
+                    "display": "To be confirmed",
+                    "notes": "Confirm current approved charges with admissions",
+                },
+            ]
+        },
+        "intake_months": ["September"],
+        "accreditation_status": "accredited",
+        "accrediting_body": (
+            "Council of Legal Education (https://cle.or.ke/downloads/)"
+        ),
+    },
     *_expand_programmes(
         programmes=(
             ("Diploma in Laws", "LAW"),
@@ -75,8 +137,8 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     *_expand_programmes(
         programmes=(
             ("PhD in Curriculum Studies", "CIM"),
-            ("PhD in Educational Management", "ECDESNEEPSC"),
-            ("PhD in Educational Foundations", "ECDESNEEPSC"),
+            ("PhD in Educational Management", "EFAPE"),
+            ("PhD in Educational Foundations", "EFAPE"),
             ("PhD in Educational Psychology", "ECDESNEEPSC"),
             ("PhD in Early Childhood Development Education", "ECDESNEEPSC"),
             ("PhD in Special Needs Education", "ECDESNEEPSC"),
@@ -91,12 +153,12 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     *_expand_programmes(
         programmes=(
             ("Master of Education in Curriculum and Instruction", "CIM"),
-            ("Master of Education in Administration", "ECDESNEEPSC"),
-            ("Master of Education in Planning and Economics", "ECDESNEEPSC"),
-            ("Master of Education in Sociology", "ECDESNEEPSC"),
-            ("Master of Education in Philosophy", "ECDESNEEPSC"),
-            ("Master of Education in Comparative Education", "ECDESNEEPSC"),
-            ("Master of Education in History of Education", "ECDESNEEPSC"),
+            ("Master of Education in Administration", "EFAPE"),
+            ("Master of Education in Planning and Economics", "EFAPE"),
+            ("Master of Education in Sociology", "EFAPE"),
+            ("Master of Education in Philosophy", "EFAPE"),
+            ("Master of Education in Comparative Education", "EFAPE"),
+            ("Master of Education in History of Education", "EFAPE"),
             ("Master of Education in Educational Psychology", "ECDESNEEPSC"),
             ("Master of Education in Guidance and Counseling", "ECDESNEEPSC"),
             ("Master of Education in Special Needs Education", "ECDESNEEPSC"),

@@ -18,6 +18,17 @@ branch_labels = None
 depends_on = None
 
 
+PUBLIC_TABLES = {
+    "library_specialists",
+    "library_guides",
+    "library_guide_sections",
+    "library_guide_specialists",
+    "library_workflows",
+    "library_workflow_steps",
+    "library_policy_pages",
+}
+
+
 def _base_columns() -> list[sa.Column]:
     return [
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
@@ -27,7 +38,58 @@ def _base_columns() -> list[sa.Column]:
     ]
 
 
+def _table_exists(table_name: str) -> bool:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    return table_name in inspector.get_table_names(schema="library")
+
+
+def _indexes(table_name: str) -> set[str]:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    return {index["name"] for index in inspector.get_indexes(table_name, schema="library")}
+
+
+def _create_index_if_missing(index_name: str, table_name: str, columns: list[str]) -> None:
+    if index_name in _indexes(table_name):
+        return
+    op.create_index(index_name, table_name, columns, schema="library")
+
+
 def upgrade() -> None:
+    if all(_table_exists(table_name) for table_name in PUBLIC_TABLES):
+        _create_index_if_missing(
+            "ix_library_specialists_library_public_active_sort",
+            "library_specialists",
+            ["library_id", "is_public", "is_active", "sort_order"],
+        )
+        _create_index_if_missing(
+            "ix_library_guides_library_public_active_type_sort",
+            "library_guides",
+            ["library_id", "is_public", "is_active", "guide_type", "sort_order"],
+        )
+        _create_index_if_missing(
+            "ix_library_guide_sections_guide_active_sort",
+            "library_guide_sections",
+            ["guide_id", "is_active", "sort_order"],
+        )
+        _create_index_if_missing(
+            "ix_library_workflows_library_public_active_type_sort",
+            "library_workflows",
+            ["library_id", "is_public", "is_active", "workflow_type", "sort_order"],
+        )
+        _create_index_if_missing(
+            "ix_library_workflow_steps_workflow_active_sort",
+            "library_workflow_steps",
+            ["workflow_id", "is_active", "sort_order"],
+        )
+        _create_index_if_missing(
+            "ix_library_policy_pages_library_public_status_type_sort",
+            "library_policy_pages",
+            ["library_id", "is_public", "status", "policy_type", "sort_order"],
+        )
+        return
+
     op.create_table(
         "library_specialists",
         *_base_columns(),

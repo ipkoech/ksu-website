@@ -68,7 +68,7 @@ export function LeaderMessage({
   return (
     <div
       className={cn(
-        "flex flex-col rounded-2xl bg-slate-950 p-5 sm:p-6 text-white shadow-lg h-full",
+        "flex flex-col rounded-2xl bg-brand-overlay p-5 sm:p-6 text-white shadow-lg h-full",
         className
       )}
     >
@@ -117,7 +117,7 @@ function CardLayout({
         )}
         <div>
           <p className="text-sm font-semibold">{leader.name}</p>
-          <p className="text-xs text-slate-400">{leader.title}</p>
+          <p className="text-xs text-muted-foreground/70">{leader.title}</p>
         </div>
       </div>
 
@@ -181,7 +181,7 @@ function FeaturedLayout({
 
         <div className="mt-8">
           <p className="text-lg font-semibold text-white">{leader.name}</p>
-          <p className="text-slate-400">{leader.title}</p>
+          <p className="text-muted-foreground/70">{leader.title}</p>
         </div>
 
         {linkHref && (
@@ -210,8 +210,8 @@ function InlineLayout({
     <>
       {showImage && <LeaderAvatar leader={leader} size="sm" />}
       <div>
-        <p className="font-semibold text-slate-950">{leader.name}</p>
-        <p className="text-sm text-slate-500">{leader.title}</p>
+        <p className="font-semibold text-foreground">{leader.name}</p>
+        <p className="text-sm text-muted-foreground">{leader.title}</p>
       </div>
     </>
   );

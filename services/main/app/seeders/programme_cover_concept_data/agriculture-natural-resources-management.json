@@ -1,0 +1,346 @@
+[
+  {
+    "programme_name": "PhD in Agricultural Education and Extension",
+    "department_code": "AGEDX",
+    "visual_family": "agricultural learning research",
+    "subject": "an advanced research network connecting a demonstration field, open teaching portfolio without writing, seedling specimen, and branching knowledge-transfer pathways",
+    "alt_text": "Illustration of a demonstration field, teaching portfolio, seedling, and branching agricultural learning network",
+    "distinctiveness": "Doctoral agricultural pedagogy represented by original research linking field evidence, curriculum design, and knowledge transfer"
+  },
+  {
+    "programme_name": "PhD in Agricultural Extension and Rural Development",
+    "department_code": "AGEDX",
+    "visual_family": "rural extension research",
+    "subject": "a central research lens examining layered rural livelihood networks, innovation-diffusion nodes, institutional bridges, and branching development scenarios",
+    "alt_text": "Illustration of a research lens examining rural livelihood networks, innovation nodes, institutions, and development scenarios",
+    "distinctiveness": "Doctoral rural-development inquiry represented by advanced analysis of institutions, innovation diffusion, and alternative livelihood pathways"
+  },
+  {
+    "programme_name": "PhD in Natural Resource Management",
+    "department_code": "NRES",
+    "visual_family": "natural resource systems research",
+    "subject": "an interconnected watershed landscape with forest canopy, grazing land, wetland, and soil layers organized around an adaptive-management cycle",
+    "alt_text": "Illustration of forest, grazing land, wetland, and soil connected through an adaptive watershed management cycle",
+    "distinctiveness": "Doctoral resource governance represented by feedback links across multiple ecosystems and land uses"
+  },
+  {
+    "programme_name": "PhD in Environmental Science",
+    "department_code": "NRES",
+    "visual_family": "environmental systems research",
+    "subject": "a multi-layer environmental research model combining atmosphere currents, water chemistry droplets, soil profile, biodiversity nodes, and a central analytical lens",
+    "alt_text": "Illustration of atmosphere, water, soil, biodiversity, and an analytical lens in an environmental research model",
+    "distinctiveness": "Doctoral environmental science represented by interacting physical, chemical, and biological processes rather than resource governance"
+  },
+  {
+    "programme_name": "PhD in Fisheries",
+    "department_code": "AAS",
+    "visual_family": "fisheries research",
+    "subject": "a fish population research network showing varied life stages, habitat zones, a stock-assessment curve without markings, and selective sampling gear",
+    "alt_text": "Illustration of fish life stages, habitat zones, stock assessment, and selective sampling gear",
+    "distinctiveness": "Doctoral fisheries research represented by population dynamics and evidence-based stock stewardship"
+  },
+  {
+    "programme_name": "PhD in Limnology",
+    "department_code": "AAS",
+    "visual_family": "inland water research",
+    "subject": "a deep lake cross-section with thermal layers, plankton forms, nutrient-flow arrows, sediment core, and a research buoy connected as one ecosystem model",
+    "alt_text": "Illustration of a layered lake with plankton, nutrient flows, sediment core, and research buoy",
+    "distinctiveness": "Doctoral limnology represented by whole-lake processes from surface mixing to bottom sediment"
+  },
+  {
+    "programme_name": "PhD in Agricultural and Applied Economics",
+    "department_code": "AGRSCI",
+    "visual_family": "agricultural economics research",
+    "subject": "a research model connecting crop plots, livestock, market baskets, supply-chain nodes, and balanced resource-allocation curves without labels",
+    "alt_text": "Illustration of farms, livestock, market baskets, supply chains, and resource-allocation curves",
+    "distinctiveness": "Doctoral agricultural economics represented by advanced modelling of production, markets, and resource decisions"
+  },
+  {
+    "programme_name": "PhD in Agronomy",
+    "department_code": "AGRSCI",
+    "visual_family": "crop systems research",
+    "subject": "a precision field-trial grid containing contrasting crop canopies, root profiles, soil-moisture probes, and branching experimental comparison paths",
+    "alt_text": "Illustration of a crop field trial with varied canopies, roots, soil probes, and experimental pathways",
+    "distinctiveness": "Doctoral agronomy represented by replicated field experimentation and plant-soil response analysis"
+  },
+  {
+    "programme_name": "PhD in Sustainable Agriculture",
+    "department_code": "AGRSCI",
+    "visual_family": "regenerative agriculture research",
+    "subject": "a circular farm research system linking crop rotation, livestock, compost, water harvesting, agroforestry, and renewable energy around a resilience hub",
+    "alt_text": "Illustration of crops, livestock, compost, water harvesting, trees, and renewable energy in a circular farm system",
+    "distinctiveness": "Doctoral sustainability represented by an advanced closed-loop system integrating ecological and productive resilience"
+  },
+  {
+    "programme_name": "MSc in Agricultural Education",
+    "department_code": "AGEDX",
+    "visual_family": "agricultural learning design",
+    "subject": "an open teaching portfolio without writing beside crop and livestock study models, a demonstration plot, and a branching curriculum-planning diagram",
+    "alt_text": "Illustration of a teaching portfolio, agricultural study models, demonstration plot, and curriculum diagram",
+    "distinctiveness": "Master's agricultural education represented by advanced curriculum design and field-based learning materials"
+  },
+  {
+    "programme_name": "MSc in Agricultural Extension",
+    "department_code": "AGEDX",
+    "visual_family": "extension programme analysis",
+    "subject": "a central extension toolkit connecting a demonstration crop row, mobile advisory device without symbols, farmer field group markers, and feedback loops",
+    "alt_text": "Illustration of an extension toolkit linking a crop demonstration, advisory device, field groups, and feedback loops",
+    "distinctiveness": "Master's extension represented by designing, delivering, and evaluating advisory programmes"
+  },
+  {
+    "programme_name": "MSc in Agricultural and Applied Economics",
+    "department_code": "AGRSCI",
+    "visual_family": "agricultural market analysis",
+    "subject": "an analytical balance linking farm inputs and harvested produce beside a supply-chain diagram, market basket, and trend chart without markings",
+    "alt_text": "Illustration of farm inputs and produce balanced beside supply-chain, market, and trend-analysis elements",
+    "distinctiveness": "Master's economics represented by applied analysis of farm decisions, value chains, and market outcomes"
+  },
+  {
+    "programme_name": "MSc in Natural Resource Management",
+    "department_code": "NRES",
+    "visual_family": "resource planning analysis",
+    "subject": "a landscape planning board without labels organizing forest blocks, river corridor, grazing zones, and restoration plots around monitoring indicators",
+    "alt_text": "Illustration of a planning board organizing forest, river, grazing, restoration, and monitoring elements",
+    "distinctiveness": "Master's natural resource management represented by spatial planning, restoration, and measurable stewardship"
+  },
+  {
+    "programme_name": "MSc in Environmental Science and Water Resource Management",
+    "department_code": "NRES",
+    "visual_family": "water environment analysis",
+    "subject": "a watershed flowing from forested uplands through a sampling station into a treatment wetland, with water-quality vessels and flow-analysis nodes",
+    "alt_text": "Illustration of a watershed, sampling station, treatment wetland, water-quality vessels, and flow-analysis nodes",
+    "distinctiveness": "Master's environmental study centered specifically on water quality, catchment flow, and treatment"
+  },
+  {
+    "programme_name": "MSc in Agronomy",
+    "department_code": "AGRSCI",
+    "visual_family": "advanced crop production",
+    "subject": "a crop canopy comparison above detailed root and soil profiles, flanked by seed selection trays and a precision irrigation gauge without markings",
+    "alt_text": "Illustration of crop canopies, roots, soil profiles, seed trays, and precision irrigation",
+    "distinctiveness": "Master's agronomy represented by analytical optimization of crop genetics, soil, and field management"
+  },
+  {
+    "programme_name": "MSc in Sustainable Agriculture",
+    "department_code": "AGRSCI",
+    "visual_family": "sustainable farm analysis",
+    "subject": "an integrated farm plan combining intercropped beds, compost cycle, rainwater storage, pollinator habitat, and soil-health indicators",
+    "alt_text": "Illustration of intercropping, compost, rainwater storage, pollinator habitat, and soil-health indicators",
+    "distinctiveness": "Master's sustainability represented by evaluating practical regenerative interventions within one farm plan"
+  },
+  {
+    "programme_name": "MSc in Limnology",
+    "department_code": "AAS",
+    "visual_family": "lake ecosystem analysis",
+    "subject": "a lake sampling transect with water-column bottles, plankton net, dissolved-oxygen profile without numbers, and sediment sample arranged around a research vessel",
+    "alt_text": "Illustration of a lake transect with water samples, plankton net, oxygen profile, sediment core, and research vessel",
+    "distinctiveness": "Master's limnology represented by a focused suite of lake sampling and ecosystem-analysis methods"
+  },
+  {
+    "programme_name": "MSc in Fisheries",
+    "department_code": "AAS",
+    "visual_family": "fisheries assessment",
+    "subject": "a fish stock assessment scene with measured silhouettes at varied sizes, habitat map, selective net panel, and population trend markers without labels",
+    "alt_text": "Illustration of fish size classes, habitat map, selective net, and population trend markers",
+    "distinctiveness": "Master's fisheries represented by practical stock assessment, gear selectivity, and habitat-informed management"
+  },
+  {
+    "programme_name": "MSc in Aquaculture",
+    "department_code": "AAS",
+    "visual_family": "aquaculture systems",
+    "subject": "a controlled pond and tank production system with fingerlings, aeration bubbles, feed pellets, water-quality sensors, and recirculating flow arrows",
+    "alt_text": "Illustration of aquaculture ponds and tanks with fingerlings, aeration, feed, sensors, and recirculating water",
+    "distinctiveness": "Master's aquaculture represented by engineered production, nutrition, water quality, and system control"
+  },
+  {
+    "programme_name": "MSc in Livestock Production Systems",
+    "department_code": "AGRSCI",
+    "visual_family": "livestock systems analysis",
+    "subject": "an integrated livestock production model connecting grazing paddocks, feed ration vessels, breeding lineage nodes, shelter, and manure nutrient cycling",
+    "alt_text": "Illustration of livestock linked to grazing, feed, breeding, shelter, and nutrient cycling",
+    "distinctiveness": "Master's livestock study represented by whole-system analysis across genetics, nutrition, housing, and resource reuse"
+  },
+  {
+    "programme_name": "Bachelor of Agribusiness Management",
+    "department_code": "AGRSCI",
+    "visual_family": "agribusiness enterprise",
+    "subject": "a farm-to-market enterprise chain connecting harvested produce, storage crate, processing gear, delivery route, and balanced business dashboard without text",
+    "alt_text": "Illustration of produce moving through storage, processing, delivery, and a business dashboard",
+    "distinctiveness": "Agribusiness management represented by coordinating operations and enterprise value from farm gate to customer"
+  },
+  {
+    "programme_name": "Bachelor of Science in Agricultural Economics",
+    "department_code": "AGRSCI",
+    "visual_family": "farm economic analysis",
+    "subject": "a field and livestock unit connected to input tokens, harvest baskets, a market scale, and clean cost-benefit curves without numbers",
+    "alt_text": "Illustration of a farm connected to inputs, harvest baskets, a market scale, and economic curves",
+    "distinctiveness": "Undergraduate agricultural economics represented by quantitative production, cost, and market analysis rather than enterprise operations"
+  },
+  {
+    "programme_name": "Bachelor of Science in Agricultural Education and Extension",
+    "department_code": "AGEDX",
+    "visual_family": "agricultural teaching and outreach",
+    "subject": "a demonstration plot beside an open lesson board without writing, crop specimen, livestock model, and pathways carrying practical knowledge toward farm clusters",
+    "alt_text": "Illustration of a demonstration plot, lesson board, agricultural models, and outreach pathways to farms",
+    "distinctiveness": "Combined undergraduate pathway represented equally through classroom preparation, field demonstration, and farmer outreach"
+  },
+  {
+    "programme_name": "Bachelor of Science in Agriculture",
+    "department_code": "AGRSCI",
+    "visual_family": "integrated agricultural science",
+    "subject": "a balanced farm scene uniting cereal crop rows, vegetable bed, fruit tree, grazing animal, soil profile, and irrigation channel",
+    "alt_text": "Illustration of crops, horticulture, livestock, soil, and irrigation in an integrated farm",
+    "distinctiveness": "Broad agriculture degree represented by a comprehensive foundation across crop, animal, soil, and water systems"
+  },
+  {
+    "programme_name": "Bachelor of Science in Environmental Sciences",
+    "department_code": "NRES",
+    "visual_family": "environmental measurement",
+    "subject": "an environmental monitoring station sampling air currents, stream water, soil layers, and leaf biodiversity around a clean field notebook without writing",
+    "alt_text": "Illustration of a monitoring station sampling air, water, soil, and biodiversity",
+    "distinctiveness": "Undergraduate environmental sciences represented by field measurement across the major environmental media"
+  },
+  {
+    "programme_name": "Bachelor of Science in Natural Resource Management",
+    "department_code": "NRES",
+    "visual_family": "landscape resource stewardship",
+    "subject": "a managed landscape mosaic of forest, river, pasture, wildlife corridor, and restoration nursery connected by stewardship paths",
+    "alt_text": "Illustration of forest, river, pasture, wildlife corridor, and nursery connected across a managed landscape",
+    "distinctiveness": "Undergraduate natural-resource management represented by practical stewardship and balanced use across a shared landscape"
+  },
+  {
+    "programme_name": "Bachelor of Science in Applied Aquatic Sciences",
+    "department_code": "AAS",
+    "visual_family": "applied aquatic technology",
+    "subject": "an aquatic field station combining a water sampler, microscope view of plankton, fish habitat module, sensor buoy, and clean analysis panel without symbols",
+    "alt_text": "Illustration of water sampling, plankton microscopy, fish habitat, sensor buoy, and aquatic analysis",
+    "distinctiveness": "Applied aquatic sciences represented by translating water and organism measurements into practical aquatic solutions"
+  },
+  {
+    "programme_name": "Bachelor of Science in Fisheries and Aquaculture",
+    "department_code": "AAS",
+    "visual_family": "capture and culture fisheries",
+    "subject": "a split aquatic system joining a natural fish habitat and selective capture net with a managed pond, fingerling shelter, and aeration flow",
+    "alt_text": "Illustration joining wild fish habitat and selective capture with a managed pond and aeration",
+    "distinctiveness": "Combined degree represented by equal emphasis on wild fisheries stewardship and cultured fish production"
+  },
+  {
+    "programme_name": "Bachelor of Science in Animal Science",
+    "department_code": "AGRSCI",
+    "visual_family": "animal production science",
+    "subject": "a healthy livestock silhouette surrounded by feed ingredients, digestive pathway forms, breeding lineage branches, pasture, and housing plan",
+    "alt_text": "Illustration of livestock with feed, digestion, breeding, pasture, and housing elements",
+    "distinctiveness": "Animal science represented by integrated nutrition, genetics, physiology, welfare, and production environments"
+  },
+  {
+    "programme_name": "Bachelor of Science in Agricultural Extension and Rural Development",
+    "department_code": "AGEDX",
+    "visual_family": "rural development practice",
+    "subject": "a village-centred network connecting farm demonstrations, water access, cooperative produce collection, small enterprise, and inclusive development pathways",
+    "alt_text": "Illustration of a village network connecting farms, water, produce collection, and rural enterprise",
+    "distinctiveness": "Undergraduate rural development represented by community organization and livelihood improvement beyond agricultural instruction alone"
+  },
+  {
+    "programme_name": "Bachelor of Science in Horticulture",
+    "department_code": "AGRSCI",
+    "visual_family": "horticultural production",
+    "subject": "a greenhouse arch framing vegetable seedlings, flowering crop, fruit branch, grafting tool, drip line, and harvest basket",
+    "alt_text": "Illustration of greenhouse vegetables, flowers, fruit, grafting tools, drip irrigation, and harvest basket",
+    "distinctiveness": "Horticulture represented through intensive production and care of vegetables, fruits, flowers, and nursery plants"
+  },
+  {
+    "programme_name": "Bachelor of Science in Soil Environment and Land Resource Management",
+    "department_code": "AGRSCI",
+    "visual_family": "soil and land management",
+    "subject": "a detailed soil profile with roots, texture layers, moisture movement, contour terraces, erosion barrier, and land-survey grid without labels",
+    "alt_text": "Illustration of soil layers, roots, water movement, terraces, erosion control, and a land survey grid",
+    "distinctiveness": "Land-resource degree represented by the below-ground soil system and terrain-scale conservation planning"
+  },
+  {
+    "programme_name": "Bachelor of Science in Aquatic Sciences",
+    "department_code": "AAS",
+    "visual_family": "aquatic ecosystem science",
+    "subject": "a freshwater ecosystem cross-section containing aquatic plants, plankton, invertebrates, fish, flowing water, and a simple food-web arrangement",
+    "alt_text": "Illustration of aquatic plants, plankton, invertebrates, fish, flowing water, and a freshwater food web",
+    "distinctiveness": "Aquatic sciences represented by organism diversity and ecological relationships rather than production technology"
+  },
+  {
+    "programme_name": "Diploma in Fisheries and Aquaculture",
+    "department_code": "AAS",
+    "visual_family": "practical fish production",
+    "subject": "a compact fisheries toolkit with pond enclosure, fingerling scoop net, feed measure, water test vessel, aerator, and fish handling tray",
+    "alt_text": "Illustration of a fish pond toolkit with fingerlings, feed, water testing, aeration, and handling equipment",
+    "distinctiveness": "Diploma pathway represented by practical daily skills for fish husbandry, water checks, and responsible handling"
+  },
+  {
+    "programme_name": "Diploma in Agricultural Economics",
+    "department_code": "AGEDX",
+    "visual_family": "practical farm economics",
+    "subject": "a farm record folder without writing beside input tokens, produce crates, market scale, calculator-like counting frame without numbers, and a simple value-chain path",
+    "alt_text": "Illustration of farm records, inputs, produce crates, market scale, counting frame, and value chain",
+    "distinctiveness": "Diploma agricultural economics represented by hands-on farm records, budgeting, pricing, and market coordination"
+  },
+  {
+    "programme_name": "Diploma in Animal Health and Production",
+    "department_code": "AGRSCI",
+    "visual_family": "animal health practice",
+    "subject": "a livestock care station with stethoscope, thermometer, medicine vial without markings, feed scoop, shelter, and pasture arranged around a healthy animal",
+    "alt_text": "Illustration of livestock with examination tools, medicine, feed, shelter, and pasture",
+    "distinctiveness": "Diploma programme represented by combined frontline animal care and practical production management"
+  },
+  {
+    "programme_name": "Diploma in Animal Science and Technology",
+    "department_code": "AGRSCI",
+    "visual_family": "animal production technology",
+    "subject": "a practical livestock technology bench with feed mixer, weighing platform without markings, breeding record cards without writing, milking vessel, and housing layout",
+    "alt_text": "Illustration of livestock technology tools for feed mixing, weighing, breeding records, milking, and housing",
+    "distinctiveness": "Diploma animal technology represented by production equipment and measurement rather than clinical health tools"
+  },
+  {
+    "programme_name": "Certificate in General Agriculture",
+    "department_code": "AGRSCI",
+    "visual_family": "agricultural foundations",
+    "subject": "a simple foundational farm toolkit containing a hand hoe, seed tray, watering can, crop row, soil clod, and small livestock shelter",
+    "alt_text": "Illustration of basic farming tools, seeds, watering, crops, soil, and livestock shelter",
+    "distinctiveness": "General certificate represented by an accessible introduction to the essential crop, soil, water, and livestock tasks"
+  },
+  {
+    "programme_name": "Certificate in Integrated Agriculture",
+    "department_code": "AGRSCI",
+    "visual_family": "integrated farm practice",
+    "subject": "a compact circular farm showing crop residues feeding livestock, manure returning to vegetable beds, rainwater reaching crops, and a fruit tree completing the cycle",
+    "alt_text": "Illustration of crops, livestock, manure, rainwater, and fruit trees connected in a circular farm",
+    "distinctiveness": "Integrated certificate represented specifically by visible resource flows between farm enterprises"
+  },
+  {
+    "programme_name": "Certificate in Animal Health and Production",
+    "department_code": "AGRSCI",
+    "visual_family": "foundational animal care",
+    "subject": "a basic animal-care case with thermometer, bandage roll, clean medicine dropper without markings, feed bowl, water trough, and livestock shelter",
+    "alt_text": "Illustration of a basic livestock care case with health tools, feed, water, and shelter",
+    "distinctiveness": "Certificate pathway represented by foundational observation, first-response care, feeding, and housing skills"
+  },
+  {
+    "programme_name": "Certificate in Animal Science and Technology",
+    "department_code": "AGRSCI",
+    "visual_family": "foundational livestock technology",
+    "subject": "a concise production toolkit with feed portions, simple weighing balance, milk collection vessel, grooming brush, and a clean pen layout",
+    "alt_text": "Illustration of basic livestock production tools for feeding, weighing, milk collection, grooming, and housing",
+    "distinctiveness": "Certificate animal technology represented by essential production routines and equipment without the health-care focus"
+  },
+  {
+    "programme_name": "Certificate Course in Environmental Impact Assessment",
+    "department_code": "NRES",
+    "visual_family": "environmental impact assessment",
+    "subject": "a project footprint viewed through an assessment lens, comparing a road and building site with adjacent river, trees, wildlife path, soil, and mitigation buffers",
+    "alt_text": "Illustration of a project site assessed beside a river, trees, wildlife path, soil, and mitigation buffers",
+    "distinctiveness": "Environmental impact assessment represented by identifying project effects and designing safeguards before development"
+  },
+  {
+    "programme_name": "Certificate in Fisheries and Aquaculture",
+    "department_code": "AAS",
+    "visual_family": "foundational fish husbandry",
+    "subject": "a simple pond-side kit with fingerlings, feed scoop, small dip net, water test cup, aeration bubbles, and a clean holding container",
+    "alt_text": "Illustration of a basic pond kit with fingerlings, feed, net, water test cup, aeration, and holding container",
+    "distinctiveness": "Certificate pathway represented by the core routine tasks of stocking, feeding, checking water, and handling fish"
+  }
+]

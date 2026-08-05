@@ -1,7 +1,34 @@
 # VM deployment overlay. Use with:
 # docker compose --env-file .deploy/dev.compose.env -f docker-compose.yml -f docker-compose.vm.yml up -d
 
+x-frontend-healthcheck: &frontend-healthcheck
+  test:
+    [
+      "CMD-SHELL",
+      "node -e \"const http=require('http');const path=process.env.FRONTEND_HEALTH_PATH||'/';const req=http.get({host:'127.0.0.1',port:Number(process.env.PORT||3000),path},res=>process.exit(res.statusCode<500?0:1));req.on('error',()=>process.exit(1));req.setTimeout(5000,()=>{req.destroy();process.exit(1);});\"",
+    ]
+  start_period: 30s
+  interval: 30s
+  timeout: 10s
+  retries: 3
+
 services:
+  main:
+    environment:
+      APP_ENV: production
+
+  research:
+    environment:
+      APP_ENV: production
+
+  library:
+    environment:
+      APP_ENV: production
+
+  heri:
+    environment:
+      APP_ENV: production
+
   edge:
     image: nginx:1.27-alpine
     ports:
@@ -16,20 +43,27 @@ services:
       gateway:
         condition: service_started
       web-prod:
-        condition: service_started
+        condition: service_healthy
+      heri-web-prod:
+        condition: service_healthy
       admin-prod:
-        condition: service_started
+        condition: service_healthy
       research-web-prod:
-        condition: service_started
+        condition: service_healthy
       library-web-prod:
-        condition: service_started
-    networks: [ksu]
+        condition: service_healthy
+    networks: [ksu, proxy]
     restart: unless-stopped
 
+  gateway:
+    ports: !reset []
+
   web-prod:
+    image: ${FRONTEND_IMAGE_PREFIX:-ksu-frontend}/web-prod:${IMAGE_TAG:-local}
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      network: host
       args:
         APP_DIR: web
         PACKAGE_NAME: "@ksu/web"
@@ -37,39 +71,71 @@ services:
         NEXT_PUBLIC_MAIN_API_URL: ${NEXT_PUBLIC_MAIN_API_URL}
         NEXT_PUBLIC_RESEARCH_API_URL: ${NEXT_PUBLIC_RESEARCH_API_URL}
         NEXT_PUBLIC_LIBRARY_API_URL: ${NEXT_PUBLIC_LIBRARY_API_URL}
+        KSU_MAIN_API_URL: ${VM_FRONTEND_BUILD_MAIN_API_URL:-http://127.0.0.1:8000}
+        KSU_RESEARCH_API_URL: ${VM_FRONTEND_BUILD_RESEARCH_API_URL:-http://127.0.0.1:8001}
+        KSU_LIBRARY_API_URL: ${VM_FRONTEND_BUILD_LIBRARY_API_URL:-http://127.0.0.1:8002}
+        KSU_HERI_FRONTEND_URL: ${VM_FRONTEND_BUILD_HERI_FRONTEND_URL:-http://heri-web-prod:3000}
+        NEXT_PUBLIC_HERI_API_URL: ${NEXT_PUBLIC_HERI_API_URL:-/api/v1/heri}
         NEXT_PUBLIC_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_PUBLIC_FRONTEND_URL}
         NEXT_PUBLIC_RESEARCH_FRONTEND_URL: ${NEXT_PUBLIC_RESEARCH_FRONTEND_URL}
         NEXT_PUBLIC_LIBRARY_FRONTEND_URL: ${NEXT_PUBLIC_LIBRARY_FRONTEND_URL}
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
     environment:
       PORT: 3000
+      FRONTEND_HEALTH_PATH: /
       NEXT_TELEMETRY_DISABLED: "1"
+      KSU_MAIN_API_URL: ${KSU_MAIN_API_URL}
+      KSU_RESEARCH_API_URL: ${KSU_RESEARCH_API_URL}
+      KSU_LIBRARY_API_URL: ${KSU_LIBRARY_API_URL}
+      KSU_HERI_FRONTEND_URL: ${KSU_HERI_FRONTEND_URL:-http://heri-web-prod:3000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks: [ksu]
     restart: unless-stopped
+    healthcheck: *frontend-healthcheck
 
   admin-prod:
+    image: ${FRONTEND_IMAGE_PREFIX:-ksu-frontend}/admin-prod:${IMAGE_TAG:-local}
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      network: host
       args:
         APP_DIR: admin
         PACKAGE_NAME: "@ksu/admin"
         NEXT_BASE_PATH: /admin
+        NEXT_OUTPUT_EXPORT: "0"
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         NEXT_PUBLIC_MAIN_API_URL: ${NEXT_PUBLIC_MAIN_API_URL}
         NEXT_PUBLIC_RESEARCH_API_URL: ${NEXT_PUBLIC_RESEARCH_API_URL}
         NEXT_PUBLIC_LIBRARY_API_URL: ${NEXT_PUBLIC_LIBRARY_API_URL}
+        KSU_MAIN_API_URL: ${VM_FRONTEND_BUILD_MAIN_API_URL:-http://127.0.0.1:8000}
+        KSU_RESEARCH_API_URL: ${VM_FRONTEND_BUILD_RESEARCH_API_URL:-http://127.0.0.1:8001}
+        KSU_LIBRARY_API_URL: ${VM_FRONTEND_BUILD_LIBRARY_API_URL:-http://127.0.0.1:8002}
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
     environment:
       PORT: 3000
+      FRONTEND_HEALTH_PATH: /admin/
       NEXT_TELEMETRY_DISABLED: "1"
+      KSU_MAIN_API_URL: ${KSU_MAIN_API_URL}
+      KSU_RESEARCH_API_URL: ${KSU_RESEARCH_API_URL}
+      KSU_LIBRARY_API_URL: ${KSU_LIBRARY_API_URL}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks: [ksu]
     restart: unless-stopped
+    healthcheck: *frontend-healthcheck
 
   research-web-prod:
+    image: ${FRONTEND_IMAGE_PREFIX:-ksu-frontend}/research-web-prod:${IMAGE_TAG:-local}
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      network: host
       args:
         APP_DIR: research
         PACKAGE_NAME: "@ksu/research"
@@ -77,19 +143,33 @@ services:
         NEXT_PUBLIC_MAIN_API_URL: ${NEXT_PUBLIC_MAIN_API_URL}
         NEXT_PUBLIC_RESEARCH_API_URL: ${NEXT_PUBLIC_RESEARCH_API_URL}
         NEXT_PUBLIC_LIBRARY_API_URL: ${NEXT_PUBLIC_LIBRARY_API_URL}
+        KSU_MAIN_API_URL: ${VM_FRONTEND_BUILD_MAIN_API_URL:-http://127.0.0.1:8000}
+        KSU_RESEARCH_API_URL: ${VM_FRONTEND_BUILD_RESEARCH_API_URL:-http://127.0.0.1:8001}
+        KSU_LIBRARY_API_URL: ${VM_FRONTEND_BUILD_LIBRARY_API_URL:-http://127.0.0.1:8002}
         NEXT_PUBLIC_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_PUBLIC_FRONTEND_URL}
         NEXT_PUBLIC_RESEARCH_FRONTEND_URL: ${NEXT_PUBLIC_RESEARCH_FRONTEND_URL}
         NEXT_PUBLIC_LIBRARY_FRONTEND_URL: ${NEXT_PUBLIC_LIBRARY_FRONTEND_URL}
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
     environment:
       PORT: 3000
+      FRONTEND_HEALTH_PATH: /
       NEXT_TELEMETRY_DISABLED: "1"
+      KSU_MAIN_API_URL: ${KSU_MAIN_API_URL}
+      KSU_RESEARCH_API_URL: ${KSU_RESEARCH_API_URL}
+      KSU_LIBRARY_API_URL: ${KSU_LIBRARY_API_URL}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks: [ksu]
     restart: unless-stopped
+    healthcheck: *frontend-healthcheck
 
   library-web-prod:
+    image: ${FRONTEND_IMAGE_PREFIX:-ksu-frontend}/library-web-prod:${IMAGE_TAG:-local}
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      network: host
       args:
         APP_DIR: library
         PACKAGE_NAME: "@ksu/library"
@@ -98,11 +178,50 @@ services:
         NEXT_PUBLIC_MAIN_API_URL: ${NEXT_PUBLIC_MAIN_API_URL}
         NEXT_PUBLIC_RESEARCH_API_URL: ${NEXT_PUBLIC_RESEARCH_API_URL}
         NEXT_PUBLIC_LIBRARY_API_URL: ${NEXT_PUBLIC_LIBRARY_API_URL}
+        KSU_MAIN_API_URL: ${VM_FRONTEND_BUILD_MAIN_API_URL:-http://127.0.0.1:8000}
+        KSU_RESEARCH_API_URL: ${VM_FRONTEND_BUILD_RESEARCH_API_URL:-http://127.0.0.1:8001}
+        KSU_LIBRARY_API_URL: ${VM_FRONTEND_BUILD_LIBRARY_API_URL:-http://127.0.0.1:8002}
         NEXT_PUBLIC_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_PUBLIC_FRONTEND_URL}
         NEXT_PUBLIC_RESEARCH_FRONTEND_URL: ${NEXT_PUBLIC_RESEARCH_FRONTEND_URL}
         NEXT_PUBLIC_LIBRARY_FRONTEND_URL: ${NEXT_PUBLIC_LIBRARY_FRONTEND_URL}
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
     environment:
       PORT: 3000
+      FRONTEND_HEALTH_PATH: /library/
       NEXT_TELEMETRY_DISABLED: "1"
+      KSU_MAIN_API_URL: ${KSU_MAIN_API_URL}
+      KSU_RESEARCH_API_URL: ${KSU_RESEARCH_API_URL}
+      KSU_LIBRARY_API_URL: ${KSU_LIBRARY_API_URL}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks: [ksu]
     restart: unless-stopped
+    healthcheck: *frontend-healthcheck
+
+  heri-web-prod:
+    image: ${FRONTEND_IMAGE_PREFIX:-ksu-frontend}/heri-web-prod:${IMAGE_TAG:-local}
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      network: host
+      args:
+        APP_DIR: heri-africa
+        PACKAGE_NAME: "@ksu/heri-africa"
+        NEXT_BASE_PATH: /heri-africa
+        KSU_HERI_API_URL: ${VM_FRONTEND_BUILD_HERI_API_URL:-http://127.0.0.1:8003/api/v1/heri}
+        NEXT_PUBLIC_HERI_API_URL: ${NEXT_PUBLIC_HERI_API_URL:-/api/v1/heri}
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+    environment:
+      PORT: 3000
+      FRONTEND_HEALTH_PATH: /heri-africa/
+      NEXT_BASE_PATH: /heri-africa
+      NEXT_TELEMETRY_DISABLED: "1"
+      KSU_HERI_API_URL: ${KSU_HERI_API_URL:-http://heri:8003/api/v1/heri}
+      NEXT_PUBLIC_HERI_API_URL: ${NEXT_PUBLIC_HERI_API_URL:-/api/v1/heri}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks: [ksu]
+    restart: unless-stopped
+    healthcheck: *frontend-healthcheck

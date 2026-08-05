@@ -1,26 +1,38 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpenCheck, Building2, FlaskConical, GraduationCap, Sprout } from "lucide-react";
-import { ResearchClusterHero } from "../../components/research-cluster";
-import { ResearchFilterForm } from "../../components/research-listing";
-import { ResearchFact } from "../../components/research-detail";
+import { LayoutGrid, Rows3 } from "lucide-react";
+import { pageFromSearchParams } from "@ksu/ui/components";
+import { ProgramTableControls } from "../programs/program-table-controls";
+import {
+  getListingHref,
+  ResearchListPagination,
+} from "../../components/research-list-pagination";
+import {
+  ResearchPortfolioHero,
+  ResearchPortfolioShell,
+} from "../../components/research-portfolio";
 import {
   Badge,
   FilledBadge,
-  ResearchSection,
   StatusMessage,
 } from "../../components/research-ui";
 import {
   compactText,
-  formatDate,
   formatLabel,
   getCenters,
+  getProjectFilterRecords,
   getPrograms,
   getProjects,
 } from "../../lib/research-public-data";
-import type { ResearchProject } from "@ksu/api-client";
+import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
+import {
+  filterProjectsByMonth,
+  getProjectMonths,
+  getProjectYears,
+} from "./project-page-model";
+import { getListPageSize } from "../../lib/research-page-model";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Research Projects",
@@ -31,52 +43,39 @@ type ProjectSearchParams = {
   q?: string;
   type?: string;
   status?: string;
+  active?: string;
   center?: string;
+  program?: string;
   year?: string;
+  month?: string;
   sort?: string;
+  page?: string;
+  view?: string;
 };
+
+type ProjectListView = "table" | "cards";
 
 const projectTypes = ["basic", "applied", "action", "collaborative", "commissioned"];
 const projectStatuses = ["proposal", "approved", "ongoing", "completed", "suspended", "cancelled"];
+const activeStates = [
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
+  { label: "Featured", value: "featured" },
+];
 const sortOptions = [
   { label: "Newest", value: "created_at" },
   { label: "Recently updated", value: "updated_at" },
   { label: "Start date", value: "start_date" },
+  { label: "End date", value: "end_date" },
   { label: "Progress", value: "progress_percentage" },
-  { label: "Title", value: "title" },
+  { label: "Title A-Z", value: "title" },
+  { label: "Title Z-A", value: "title_desc" },
 ];
-
-const discoveryLinks = [
-  {
-    label: "Projects",
-    href: "/projects",
-    description: "Browse funded, applied, action, and collaborative work.",
-    icon: FlaskConical,
-  },
-  {
-    label: "Programs",
-    href: "/programs",
-    description: "See long-term research pathways and related projects.",
-    icon: BookOpenCheck,
-  },
-  {
-    label: "Centers",
-    href: "/centers",
-    description: "Find the institutional homes for research activity.",
-    icon: Building2,
-  },
-  {
-    label: "Facilities",
-    href: "/facilities",
-    description: "Explore farms, labs, and practical research infrastructure.",
-    icon: Sprout,
-  },
-  {
-    label: "Capacity",
-    href: "/capacity",
-    description: "Training, mentorship, and scholarship support.",
-    icon: GraduationCap,
-  },
+const quickLinks = [
+  { label: "Programs", href: "/programs", body: "Strategic research umbrellas" },
+  { label: "Centers", href: "/centers", body: "Institutional research anchors" },
+  { label: "Publications", href: "/publications", body: "Scholarly evidence" },
+  { label: "Outputs", href: "/outputs", body: "Data, tools, and reports" },
 ];
 
 export default async function ProjectsPage({
@@ -85,58 +84,89 @@ export default async function ProjectsPage({
   searchParams?: Promise<ProjectSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
-  const [projects, allProjects, centers, programs] = await Promise.all([
-    getProjects({
-      search: params.q,
-      projectType: params.type,
-      status: params.status,
-      centerId: params.center,
-      year: params.year,
-      sort: params.sort || "created_at",
-      order: params.sort === "title" ? "asc" : "desc",
-    }),
-    getProjects(),
+  const page = pageFromSearchParams(params);
+  const perPage = getListPageSize(12);
+  const view = getProjectListView(params.view);
+  const sort = params.sort || "created_at";
+  const sortField = sort === "title_desc" ? "title" : sort;
+  const order = sort === "title" ? "asc" : "desc";
+  const activeFlags = getActiveFlags(params.active);
+  const [projects, projectFilterRecords, centers, programs] = await Promise.all([
+    getProjects(
+      {
+        search: params.q,
+        projectType: params.type,
+        status: params.status,
+        centerId: params.center,
+        programId: params.program,
+        year: params.year,
+        sort: sortField,
+        order,
+        perPage,
+        ...activeFlags,
+      },
+      page,
+    ),
+    getProjectFilterRecords(),
     getCenters(),
     getPrograms(),
   ]);
-  const years = getProjectYears(allProjects.data);
+  const years = getProjectYears(projectFilterRecords.data);
+  const months = getProjectMonths(projectFilterRecords.data, params.year);
+  const monthProjectIds = params.month
+    ? new Set(
+        filterProjectsByMonth(projectFilterRecords.data, params.year, params.month)
+          .map((project) => project.id)
+          .filter(Boolean),
+      )
+    : null;
+  const visibleProjects = monthProjectIds
+    ? projects.data.filter((project) => monthProjectIds.has(project.id))
+    : projects.data;
+  const totalPages = Math.ceil(
+    (params.month ? visibleProjects.length : projects.total) / projects.perPage,
+  );
 
   return (
-    <main id="research-main" className="min-h-screen bg-white">
-      <ResearchClusterHero
-        eyebrow="Discovery"
-        title="Research work across Kisii University."
-        body="Browse public research projects by year, type, status, center, and current progress."
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Discovery", href: "/projects" },
-          { label: "Projects" },
-        ]}
-        imageSrc="/images/research/research-hero-imagegen.png"
-        imageAlt="Researchers collaborating across laboratory, field, and data work"
-        links={discoveryLinks}
-        primaryAction={{ label: "Browse programs", href: "/programs" }}
-        stats={[
-          { label: "Project results", value: projects.data.length },
-          { label: "Published projects", value: allProjects.data.length },
-          { label: "Centers", value: centers.data.length },
-          { label: "Programs", value: programs.data.length },
-        ]}
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
+      <ResearchPortfolioHero
+        eyebrow="Published project portfolio"
+        title="Research Projects"
+        body="Active research workstreams delivering evidence, outputs, field activity, and public value across Kisii University priority areas."
+        primary={{ label: "Explore projects", href: "#project-portfolio" }}
+        secondary={{ label: "View programmes", href: "/programs" }}
+        illustration="projects"
       />
 
-      <ResearchSection
-        eyebrow="Project Registry"
-        title="Projects"
-        body="Use the filters to narrow the project catalogue by topic, status, year, and center."
-        tone="white"
+      <ResearchPortfolioShell
+        id="project-portfolio"
+        title="Project Portfolio"
+        body="Search, filter, sort, and open published research project stories."
+        quickLinks={quickLinks}
+        controls={
+          <ProjectFilters
+            params={params}
+            centers={centers.data}
+            programs={programs.data}
+            years={years}
+            months={months}
+            view={view}
+          />
+        }
+        footer={
+          visibleProjects.length > 0 ? (
+            <ResearchListPagination
+              page={page}
+              totalPages={totalPages}
+              total={params.month ? visibleProjects.length : projects.total}
+              perPage={projects.perPage}
+              path="/projects"
+              params={params}
+            />
+          ) : null
+        }
       >
-        <ProjectFilters
-          params={params}
-          centers={centers.data}
-          years={years}
-        />
-
-        {[projects.error, centers.error, programs.error]
+        {[projects.error, projectFilterRecords.error, centers.error, programs.error]
           .filter(Boolean)
           .map((error) => (
             <div key={error} className="mt-5">
@@ -144,12 +174,14 @@ export default async function ProjectsPage({
             </div>
           ))}
 
-        {projects.data.length > 0 ? (
-          <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {projects.data.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
+        {visibleProjects.length > 0 ? (
+          <>
+            {view === "cards" ? (
+              <ProjectCardGrid projects={visibleProjects} />
+            ) : (
+              <ProjectTable projects={visibleProjects} />
+            )}
+          </>
         ) : (
           <div className="mt-7">
             <StatusMessage>
@@ -157,28 +189,8 @@ export default async function ProjectsPage({
             </StatusMessage>
           </div>
         )}
-      </ResearchSection>
+      </ResearchPortfolioShell>
 
-      <ResearchSection
-        eyebrow="Research Pathways"
-        title="Programs and centers connected to project work"
-        body="Programs and centers provide the public architecture behind project discovery."
-      >
-        <div className="grid gap-5 lg:grid-cols-2">
-          <RelationshipPanel
-            title="Programs"
-            href="/programs"
-            records={programs.data}
-            empty="No research programs are currently published."
-          />
-          <RelationshipPanel
-            title="Centers"
-            href="/centers"
-            records={centers.data}
-            empty="No research centers are currently published."
-          />
-        </div>
-      </ResearchSection>
     </main>
   );
 }
@@ -186,129 +198,211 @@ export default async function ProjectsPage({
 function ProjectFilters({
   params,
   centers,
+  programs,
   years,
+  months,
+  view,
 }: {
   params: ProjectSearchParams;
-  centers: Array<Record<string, any>>;
+  centers: ResearchGenericRecord[];
+  programs: Array<Record<string, any>>;
   years: string[];
+  months: Array<{ value: string; label: string }>;
+  view: ProjectListView;
 }) {
   return (
-    <ResearchFilterForm
+    <ProgramTableControls
       action="/projects"
       resetHref="/projects"
       searchValue={params.q}
-      searchPlaceholder="Project title, summary, code"
-      selects={[
+      searchPlaceholder="Search projects by title, summary, code..."
+      filterTitle="Filter projects"
+      sortTitle="Sort projects"
+      filterSelects={[
         { name: "type", label: "Type", value: params.type, options: projectTypes },
+        { name: "active", label: "Active state", value: params.active, options: activeStates },
         { name: "status", label: "Status", value: params.status, options: projectStatuses },
         { name: "year", label: "Year", value: params.year, options: years },
+        { name: "month", label: "Month", value: params.month, options: months },
+        ...(programs.length > 0
+          ? [{
+              name: "program",
+              label: "Programme",
+              value: params.program,
+              options: programs.map((program) => ({
+                value: program.id ?? program.code ?? program.slug ?? program.name ?? program.title ?? "",
+                label: program.name ?? program.title ?? program.code ?? "Published programme",
+              })),
+            }]
+          : []),
       ]}
       centers={centers}
       centerValue={params.center}
       sortValue={params.sort}
       sortOptions={sortOptions}
+      viewControls={<ProjectViewSwitch params={params} view={view} />}
     />
   );
 }
 
-function ProjectCard({ project }: { project: ResearchProject }) {
-  const href = project.slug ? `/projects/${project.slug}` : undefined;
-  const dateRange = [formatDate(project.start_date), formatDate(project.end_date)]
-    .filter(Boolean)
-    .join(" - ");
+function ProjectViewSwitch({
+  params,
+  view,
+}: {
+  params: ProjectSearchParams;
+  view: ProjectListView;
+}) {
+  const options: Array<{ value: ProjectListView; label: string; icon: typeof Rows3 }> = [
+    { value: "table", label: "Rows", icon: Rows3 },
+    { value: "cards", label: "Cards", icon: LayoutGrid },
+  ];
 
-  const content = (
-    <>
-      <div className="flex flex-wrap gap-2">
-        <Badge>{formatLabel(project.project_type ?? "research")}</Badge>
+  return (
+    <div className="col-span-3 inline-flex rounded-md border border-border bg-white p-1 sm:col-span-1">
+        {options.map((option) => {
+          const Icon = option.icon;
+          const active = view === option.value;
+          return (
+            <Link
+              key={option.value}
+              href={getListingHref("/projects", params, { view: option.value, page: undefined })}
+              className={
+                active
+                  ? "inline-flex h-9 items-center gap-2 rounded bg-primary px-3 text-xs font-semibold text-white"
+                  : "inline-flex h-9 items-center gap-2 rounded px-3 text-xs font-semibold text-muted-foreground transition hover:bg-surface-subtle hover:text-primary"
+              }
+            >
+              <Icon aria-hidden className="h-4 w-4" />
+              {option.label}
+            </Link>
+          );
+        })}
+    </div>
+  );
+}
+
+function ProjectTable({ projects }: { projects: ResearchProject[] }) {
+  return (
+    <div className="mt-4 overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+      <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-border bg-surface-subtle px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:grid">
+        <span>Project</span>
+        <span>Type</span>
+        <span>Status</span>
+      </div>
+      <div className="divide-y divide-border">
+        {projects.map((project) => (
+          <ProjectRow key={project.id} project={project} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProjectRow({ project }: { project: ResearchProject }) {
+  const href = project.slug ? `/projects/${project.slug}` : "/projects";
+  return (
+    <Link
+      href={href}
+      className="group grid gap-2 px-4 py-3 transition hover:bg-surface-subtle/80 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
+    >
+      <div className="min-w-0">
+        <h2 className="truncate text-sm font-semibold leading-6 text-foreground transition group-hover:text-primary">
+          {project.title}
+        </h2>
+        {project.code ? (
+          <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">{project.code}</p>
+        ) : null}
+      </div>
+      <div className="text-xs font-medium text-muted-foreground md:text-sm">
+        {project.project_type ? formatLabel(project.project_type) : "Research"}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
         <Badge>{formatLabel(project.status ?? "ongoing")}</Badge>
         {project.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
       </div>
-      <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-        {project.title}
-      </h2>
-      {compactText(project.summary) ? (
-        <p className="mt-3 text-sm leading-7 text-slate-600">
-          {compactText(project.summary)}
-        </p>
-      ) : null}
-      <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
-        <ResearchFact label="Progress" value={`${project.progress_percentage ?? 0}%`} />
-        <ResearchFact label="Timeline" value={dateRange || formatDate(project.updated_at)} />
-      </dl>
-      <span className="mt-5 inline-flex text-sm font-semibold text-primary">
-        View project
-      </span>
-    </>
+    </Link>
   );
+}
 
-  return href ? (
+function ProjectCardGrid({ projects }: { projects: ResearchProject[] }) {
+  return (
+    <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
+      {projects.map((project) => (
+        <ProjectCard key={project.id} project={project} />
+      ))}
+    </div>
+  );
+}
+
+function ProjectCard({ project }: { project: ResearchProject }) {
+  const href = project.slug ? `/projects/${project.slug}` : "/projects";
+  const image = getProjectCoverImage(project);
+  return (
     <Link
       href={href}
-      className="group block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
+      className="group overflow-hidden rounded-lg border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
     >
-      {content}
-    </Link>
-  ) : (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      {content}
-    </article>
-  );
-}
-
-function RelationshipPanel({
-  title,
-  href,
-  records,
-  empty,
-}: {
-  title: string;
-  href: string;
-  records: Array<Record<string, any>>;
-  empty: string;
-}) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
-        <Link href={href} className="text-sm font-semibold text-primary">
-          View all
-        </Link>
-      </div>
-      <div className="mt-4 divide-y divide-slate-200">
-        {records.slice(0, 5).map((record) => (
-          <article key={record.id} className="py-4 first:pt-0 last:pb-0">
-            <h3 className="text-base font-semibold text-slate-950">
-              {record.slug ? (
-                <Link href={`${href}/${record.slug}`} className="transition hover:text-primary">
-                  {record.name ?? record.title}
-                </Link>
-              ) : (
-                record.name ?? record.title
-              )}
-            </h3>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              {compactText(record.summary) ||
-                compactText(record.about) ||
-                compactText(record.description) ||
-                "Relationship details are available when published by the research office."}
-            </p>
-          </article>
-        ))}
-        {records.length === 0 ? (
-          <p className="py-4 text-sm text-slate-600">{empty}</p>
+      {image ? (
+        <div
+          className="aspect-[4/3] bg-surface-muted bg-cover bg-center"
+          style={{ backgroundImage: `url('${image}')` }}
+        />
+      ) : (
+        <div className="relative aspect-[4/3] overflow-hidden bg-[hsl(var(--brand-overlay))]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_25%,hsl(var(--success)/0.42),transparent_28%),linear-gradient(135deg,hsl(var(--brand-overlay)),hsl(var(--success)))]" />
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.12)_1px,transparent_1px)] bg-[size:22px_22px] opacity-60" />
+          <div className="absolute bottom-3 left-3 right-3 h-10 rounded-md border border-white/20 bg-white/10" />
+        </div>
+      )}
+      <div className="p-3">
+        <div className="flex flex-wrap gap-1.5">
+          <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary">
+            {formatLabel(project.status ?? "ongoing")}
+          </span>
+          {project.is_featured ? (
+            <span className="rounded-md bg-secondary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-secondary">
+              Featured
+            </span>
+          ) : null}
+        </div>
+        <h2 className="mt-2 line-clamp-2 min-h-[2.5rem] text-xs font-semibold leading-5 text-foreground transition group-hover:text-primary sm:text-sm">
+          {project.title}
+        </h2>
+        {project.summary ? (
+          <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-muted-foreground">
+            {project.summary}
+          </p>
         ) : null}
       </div>
-    </section>
+    </Link>
   );
 }
 
-function getProjectYears(projects: ResearchProject[]) {
-  const years = projects
-    .flatMap((project) => [project.start_date, project.end_date, project.created_at])
-    .map((value) => (value ? new Date(value).getFullYear() : null))
-    .filter((year): year is number => Boolean(year) && !Number.isNaN(year));
-  return Array.from(new Set(years))
-    .sort((a, b) => b - a)
-    .map(String);
+function getActiveFlags(value?: string) {
+  if (value === "inactive") return { isActive: false };
+  if (value === "featured") return { isActive: true, isFeatured: true };
+  return { isActive: true };
+}
+
+function getProjectListView(value?: string): ProjectListView {
+  return value === "cards" ? "cards" : "table";
+}
+
+function getProjectCoverImage(project: ResearchProject) {
+  const cover = (project as ResearchProject & {
+    cover_image?: {
+      url?: string | null;
+      public_url?: string | null;
+      thumbnail_url?: string | null;
+      file_url?: string | null;
+    } | null;
+  }).cover_image;
+
+  return (
+    compactText(cover?.thumbnail_url) ||
+    compactText(cover?.public_url) ||
+    compactText(cover?.url) ||
+    compactText(cover?.file_url) ||
+    compactText(project.cover_image_url)
+  );
 }

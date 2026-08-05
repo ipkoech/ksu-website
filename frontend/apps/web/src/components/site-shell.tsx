@@ -3,23 +3,41 @@ import {
   MiniHeader,
   PublicHeader,
   PublicFooter,
-  Announcements,
   type MegaMenuData,
 } from "@ksu/ui/layout/public";
-import {
-  getLandingAnnouncements,
-  type LandingAnnouncement,
-} from "@/lib/landing-data";
+import { corporateCommSettingsApi } from "@ksu/api-client";
 import { getNavData } from "@/lib/nav-data";
-import { libraryFrontendUrl, researchFrontendUrl } from "@/lib/service-urls";
+import {
+  heriAfricaFrontendUrl,
+  libraryFrontendUrl,
+  researchFrontendUrl,
+} from "@/lib/service-urls";
 
-const socialLinks = {
+const fallbackSocialLinks = {
   facebook: "https://facebook.com/kisiiuniversity",
   twitter: "https://twitter.com/kisiiuniversity",
   instagram: "https://instagram.com/kisiiuniversity",
   youtube: "https://youtube.com/kisiiuniversity",
   linkedin: "https://linkedin.com/school/kisiiuniversity",
 };
+
+/**
+ * Social links are managed in the Corporate Communication portal settings
+ * (public setting corporate_communication.social_links); the hardcoded map
+ * is the fallback when the setting is unseeded or the API is unreachable.
+ */
+async function getSocialLinks(): Promise<typeof fallbackSocialLinks> {
+  try {
+    const managed = await corporateCommSettingsApi.publicSocialLinks();
+    if (!managed) return fallbackSocialLinks;
+    const entries = Object.entries(managed).filter(
+      ([, url]) => typeof url === "string" && url.trim() !== "",
+    );
+    return { ...fallbackSocialLinks, ...Object.fromEntries(entries) };
+  } catch {
+    return fallbackSocialLinks;
+  }
+}
 
 const contactInfo = {
   address: "Main Campus, Kisii",
@@ -29,36 +47,40 @@ const contactInfo = {
 
 const miniQuickLinks = [
   {
-    label: "Conferences",
-    href: "https://digital.kisiiuniversity.ac.ke/conferences",
+    label: "HERI AFRICA",
+    href: heriAfricaFrontendUrl,
     external: true,
   },
   {
-    label: "Tenders",
-    href: "https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders",
+    label: "HUDUMA BORA",
+    href: "https://digital.kisiiuniversity.ac.ke/",
     external: true,
   },
   {
-    label: "Careers",
+    label: "STUDENT PORTAL",
+    href: "https://portal.kisiiuniversity.ac.ke",
+    external: true,
+  },
+  {
+    label: "CAREERS",
     href: "https://digital.kisiiuniversity.ac.ke/job_portal/open_adverts",
     external: true,
   },
   {
-    label: "Help Desk",
-    href: "https://digital.kisiiuniversity.ac.ke/ksu_customer_care_center",
+    label: "CONFERENCES",
+    href: "https://digital.kisiiuniversity.ac.ke/conferences",
     external: true,
   },
   {
-    label: "Visitors",
-    href: "https://kisiiuniversity.ac.ke/visit_home",
+    label: "TENDERS",
+    href: "https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders",
     external: true,
   },
   {
-    label: "Downloads",
-    href: "https://kisiiuniversity.ac.ke/page_downloads",
+    label: "HELP DESK",
+    href: "https://digital.kisiiuniversity.ac.ke/ksu_customer_care_centerr",
     external: true,
   },
-  { label: "FAQ", href: "https://kisiiuniversity.ac.ke/faq", external: true },
 ];
 
 interface PageShellProps {
@@ -68,39 +90,19 @@ interface PageShellProps {
   header?: React.ReactNode;
 }
 
-export async function AnnouncementHeader({
-  announcements,
-}: {
-  announcements?: LandingAnnouncement[];
-}) {
-  const items = announcements ?? (await getLandingAnnouncements());
-
-  return (
-    <Announcements
-      announcements={items}
-      rotating={items.length > 1}
-      intervalMs={6500}
-      background="secondary"
-    />
-  );
-}
-
 export async function PageShell({
   children,
   transparent = false,
   megaMenuData,
   header,
 }: PageShellProps) {
-  const resolvedMegaMenuData = header
-    ? megaMenuData
-    : megaMenuData || (await getNavData());
+  const [resolvedMegaMenuData, socialLinks] = await Promise.all([
+    header ? Promise.resolve(megaMenuData) : megaMenuData ? Promise.resolve(megaMenuData) : getNavData(),
+    getSocialLinks(),
+  ]);
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_38%,#f6f8fc_100%)] text-slate-950">
-      <a href="#main-content" className="skip-link">
-        Skip to main content
-      </a>
-      <AnnouncementHeader />
+    <div className="min-h-screen bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_38%,hsl(var(--surface-muted))_100%)] text-foreground">
       <MiniHeader
         contactInfo={contactInfo}
         quickLinks={miniQuickLinks}
@@ -112,6 +114,7 @@ export async function PageShell({
           megaMenuData={resolvedMegaMenuData}
           researchHref={researchFrontendUrl}
           libraryHref={libraryFrontendUrl}
+          heriHref={heriAfricaFrontendUrl}
         />
       )}
       <main id="main-content" tabIndex={-1}>
@@ -144,10 +147,10 @@ export function PageHeading({
       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-secondary">
         {eyebrow}
       </p>
-      <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-slate-950 sm:text-5xl">
+      <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-foreground sm:text-5xl">
         {title}
       </h1>
-      <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">
+      <p className="mt-5 text-base leading-7 text-muted-foreground sm:text-lg">
         {body}
       </p>
     </div>
@@ -170,10 +173,10 @@ export function SectionHeading({
       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-secondary">
         {eyebrow}
       </p>
-      <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl text-slate-950 sm:text-4xl">
+      <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl text-foreground sm:text-4xl">
         {title}
       </h2>
-      <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
+      <p className="mt-4 text-base leading-7 text-muted-foreground sm:text-lg">
         {body}
       </p>
     </div>
@@ -186,7 +189,7 @@ export function BreadcrumbTrail({
   items: { label: string; href?: string }[];
 }) {
   return (
-    <nav aria-label="Breadcrumb" className="text-sm text-slate-500">
+    <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
       <ol className="flex flex-wrap items-center gap-2">
         {items.map((item, index) => (
           <li key={`${item.label}-${index}`} className="flex items-center gap-2">
@@ -198,7 +201,7 @@ export function BreadcrumbTrail({
                 {item.label}
               </Link>
             ) : (
-              <span className="text-slate-900">{item.label}</span>
+              <span className="text-foreground">{item.label}</span>
             )}
             {index < items.length - 1 ? <span>/</span> : null}
           </li>

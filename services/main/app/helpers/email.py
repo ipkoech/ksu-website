@@ -2,27 +2,38 @@
 
 from __future__ import annotations
 
-import asyncio
 import base64
 import re
-import smtplib
 from email.message import EmailMessage
 from html import escape
-from pathlib import Path
+
+from ksu_common.observability import current_correlation_id, current_request_id
+from ksu_common.smtp import SmtpConfig, SmtpTransport
 
 from ..core.config import FrontendService, get_settings
 
 settings = get_settings()
+_smtp_transport: SmtpTransport | None = None
+_smtp_transport_key: tuple[object, ...] | None = None
 _PLACEHOLDER_RE = re.compile(r"{{\s*([a-zA-Z0-9_]+)\s*}}")
 
 
-def _build_message(*, to_email: str, subject: str, text_body: str, html_body: str | None = None) -> EmailMessage:
+def _build_message(
+    *,
+    to_email: str,
+    subject: str,
+    text_body: str,
+    html_body: str | None = None,
+    reply_to_email: str | None = None,
+) -> EmailMessage:
     message = EmailMessage()
     from_email = settings.SMTP_FROM_EMAIL or settings.EMAIL_FROM or settings.SMTP_USERNAME or "no-reply@example.invalid"
     from_name = settings.SMTP_FROM_NAME
     message["From"] = f"{from_name} <{from_email}>" if from_name else from_email
     message["To"] = to_email
     message["Subject"] = subject
+    if reply_to_email:
+        message["Reply-To"] = reply_to_email
     message.set_content(text_body)
     if html_body:
         message.add_alternative(html_body, subtype="html")
@@ -121,27 +132,60 @@ def _render_transactional_email(
     return _wrap_email(title=title, preheader=preheader, body_content=body_content)
 
 
-def _send_message(message: EmailMessage) -> str:
-    if not settings.SMTP_USERNAME or not settings.SMTP_PASSWORD:
-        raise ValueError("SMTP credentials are not configured")
+def _get_smtp_transport() -> SmtpTransport:
+    global _smtp_transport, _smtp_transport_key
+    key = (
+        settings.SMTP_HOST,
+        settings.SMTP_PORT,
+        settings.SMTP_USERNAME,
+        settings.SMTP_PASSWORD,
+        settings.SMTP_USE_TLS,
+    )
+    if _smtp_transport is None or _smtp_transport_key != key:
+        _smtp_transport = SmtpTransport(
+            SmtpConfig(
+                host=settings.SMTP_HOST,
+                port=settings.SMTP_PORT,
+                username=settings.SMTP_USERNAME or "",
+                password=settings.SMTP_PASSWORD or "",
+                use_tls=settings.SMTP_USE_TLS,
+                timeout_seconds=30,
+            )
+        )
+        _smtp_transport_key = key
+    return _smtp_transport
 
-    with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=30) as server:
-        server.ehlo()
-        if settings.SMTP_USE_TLS:
-            server.starttls()
-            server.ehlo()
-        server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
-        response = server.send_message(message)
 
-    if response:
-        raise ValueError(f"SMTP rejected recipients: {response}")
-    return f"smtp:{settings.SMTP_HOST}:{message['To']}"
+async def close_email_transport() -> None:
+    global _smtp_transport, _smtp_transport_key
+    transport = _smtp_transport
+    _smtp_transport = None
+    _smtp_transport_key = None
+    if transport is not None:
+        await transport.close()
 
 
-async def send_email(*, to_email: str, subject: str, text_body: str, html_body: str | None = None) -> str:
+async def send_email(
+    *,
+    to_email: str,
+    subject: str,
+    text_body: str,
+    html_body: str | None = None,
+    reply_to_email: str | None = None,
+) -> str:
     """Send an email asynchronously via Google Workspace SMTP."""
-    message = _build_message(to_email=to_email, subject=subject, text_body=text_body, html_body=html_body)
-    return await asyncio.to_thread(_send_message, message)
+    message = _build_message(
+        to_email=to_email,
+        subject=subject,
+        text_body=text_body,
+        html_body=html_body,
+        reply_to_email=reply_to_email,
+    )
+    return await _get_smtp_transport().send(
+        message,
+        request_id=current_request_id(),
+        correlation_id=current_correlation_id(),
+    )
 
 
 async def send_verification_email(email: str, token: str) -> str:

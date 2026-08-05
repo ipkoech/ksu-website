@@ -1,0 +1,18 @@
+from __future__ import annotations
+
+from sqlalchemy import Boolean, String, Text
+from sqlalchemy.orm import Mapped, mapped_column
+
+from .content import UUIDMixin
+from .base import Base
+
+
+class TeamMember(UUIDMixin, Base):
+    __tablename__ = "team_members"
+    slug: Mapped[str] = mapped_column(String(180), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(255))
+    role: Mapped[str] = mapped_column(String(255))
+    biography: Mapped[str] = mapped_column(Text, default="")
+    photo_url: Mapped[str | None] = mapped_column(String(500))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    position: Mapped[int] = mapped_column(default=0)

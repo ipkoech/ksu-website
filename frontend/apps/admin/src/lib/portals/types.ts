@@ -8,14 +8,16 @@ import type {
 } from "@/components/dashboard/editable-service-resource-page";
 
 export type PortalKey =
-  | "institutional-administration"
-  | "governance"
+  | "super-admin"
+  | "admin"
+  | "staff-profile"
   | "schools"
   | "departments"
   | "corporate-communication"
+  | "story-contributor"
   | "research"
   | "library"
-  | "publications";
+  | "heri";
 
 export type PortalRecord = Record<string, any> & { id: string };
 export type PortalPayload = Record<string, any>;
@@ -25,6 +27,10 @@ export interface PortalNavItem {
   href: string;
   icon: LucideIcon;
   scope?: string | string[];
+  /** Stable key used by server-authorized portals to filter navigation. */
+  navKey?: string;
+  group?: string;
+  children?: PortalNavItem[];
 }
 
 export interface PortalDashboardStat {
@@ -34,7 +40,7 @@ export interface PortalDashboardStat {
   icon: LucideIcon;
   scopes?: string[];
   queryKey: readonly unknown[];
-  query: () => Promise<unknown>;
+  query: () => Promise<number>;
 }
 
 export interface PortalDashboardPanel {
@@ -50,6 +56,7 @@ export interface PortalResourceConfig<
   TPayload extends PortalPayload = PortalPayload,
 > {
   key: string;
+  href?: string;
   title: string;
   description: string;
   backHref: string;
@@ -60,6 +67,11 @@ export interface PortalResourceConfig<
   create: (payload: TPayload) => Promise<unknown>;
   update: (id: string, payload: Partial<TPayload>) => Promise<unknown>;
   delete?: (id: string) => Promise<unknown>;
+  /**
+   * Optional pre-delete lookup; the resolved message is shown in the delete
+   * confirm dialog (e.g. a where-used summary). See EditableServiceResourcePage.
+   */
+  beforeDelete?: (record: TRecord) => Promise<string | null | undefined | void>;
   getRecordTitle: (record: TRecord) => string;
   getRecordMeta?: (record: TRecord) => string;
   getRecordDetailHref?: (record: TRecord) => string | null | undefined;
@@ -76,6 +88,26 @@ export interface PortalResourceConfig<
   canCreate?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
+  /**
+   * Allows record workflow actions to run without edit rights, so read-only
+   * resources whose only mutations are workflow actions can keep canEdit
+   * false (hiding the no-op "Edit record" entry). Still gated by
+   * manageScopes at the page level.
+   */
+  allowActionsWithoutEdit?: boolean;
+  viewInEditor?: boolean;
+  /** Enables the "All | Archived | Recently deleted" browser with one-click restore. */
+  supportsRecovery?: boolean;
+  /** Which recovery views the backend supports. Defaults to both when supportsRecovery is set. */
+  recoveryStates?: Array<"archived" | "deleted">;
+  /** Shows the per-record workflow history timeline. */
+  hasWorkflowHistory?: boolean;
+  /** Backend content-type key for /api/v1/records/{type}/{id}/restore and workflow logs. */
+  recoveryContentType?: string;
+  /** Backend resource key for GET /api/v1/exports/{resource}.csv ("Download CSV" toolbar button). */
+  exportResource?: string;
+  /** Spreadsheet import page for this resource (e.g. /imports/faqs). */
+  importHref?: string;
   portalScope?: {
     typeField?: string;
     idField?: string;

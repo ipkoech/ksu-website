@@ -105,6 +105,29 @@ class AnalyticsService:
         return [{"date": str(row.day), "value": int(row.total or 0)} for row in rows]
 
     @staticmethod
+    async def school_page_views(
+        db: AsyncSession,
+        *,
+        school_id: uuid.UUID,
+        school_slug: str,
+        start: datetime,
+        end: datetime,
+    ) -> int:
+        """Count first-party views explicitly associated with one school."""
+        result = await db.execute(
+            select(func.count(AnalyticsEvent.id)).where(
+                *_event_filters(start, end, "web"),
+                AnalyticsEvent.event_type == "page_view",
+                (
+                    (AnalyticsEvent.entity_type == "school")
+                    & (AnalyticsEvent.entity_id == school_id)
+                )
+                | AnalyticsEvent.path.like(f"%/schools/{school_slug}%"),
+            )
+        )
+        return int(result.scalar() or 0)
+
+    @staticmethod
     async def top_dimension(
         db: AsyncSession,
         column,

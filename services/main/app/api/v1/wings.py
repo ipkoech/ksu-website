@@ -53,7 +53,7 @@ async def _require_wing_scope(
 
 
 @router.get("/division/{division_id}")
-@cached_public(timeout=300, vary_on=("is_active", "fields", "include"))
+@cached_public(timeout=300, vary_on=("division_id", "is_active", "fields", "include"))
 async def list_wings_by_division(division_id: uuid.UUID, db: DbSession, is_active: bool | None = True, fields: FieldSelection = FieldsDep):
     selector = build_selector(Wing, fields)
     items = await WingService.list_by_division(db, division_id, is_active=is_active, load_options=selector.load_options)
@@ -89,7 +89,7 @@ async def list_admin_wings(
 
 
 @router.get("/slug/{slug}")
-@cached_public(timeout=300, vary_on=("fields", "include"))
+@cached_public(timeout=300, vary_on=("slug", "fields", "include"))
 async def get_wing_by_slug(slug: str, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Wing, fields)
     wing = await WingService.get_by_slug(db, slug, load_options=selector.load_options)
@@ -99,7 +99,7 @@ async def get_wing_by_slug(slug: str, db: DbSession, fields: FieldSelection = Fi
 
 
 @router.get("/{wing_id}")
-@cached_public(timeout=300, vary_on=("fields", "include"))
+@cached_public(timeout=300, vary_on=("wing_id", "fields", "include"))
 async def get_wing(wing_id: uuid.UUID, db: DbSession, fields: FieldSelection = FieldsDep):
     selector = build_selector(Wing, fields)
     wing = await WingService.get_by_id(db, wing_id, load_options=selector.load_options)

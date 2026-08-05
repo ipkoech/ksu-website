@@ -14,7 +14,9 @@ import {
   compactText,
   formatLabel,
   getLibraryLinksData,
+  getLibraryWorkflowDetail,
   safeExternalUrl,
+  shortText,
 } from "../../lib/library-public-data";
 
 export const metadata = {
@@ -25,7 +27,13 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function LibraryRepositoriesPage() {
-  const { groupedLinks, errors } = await getLibraryLinksData();
+  const [{ groupedLinks, errors: linkErrors }, workflowData] = await Promise.all([
+    getLibraryLinksData(),
+    getLibraryWorkflowDetail("repository_deposit"),
+  ]);
+  const errors = Array.from(new Set([...linkErrors, ...workflowData.errors]));
+  const workflow = workflowData.workflow.data;
+  const workflowSteps = workflow?.steps.filter((step) => step.is_active) ?? [];
   const links = groupedLinks.flatMap(({ branch, links: branchLinks }) =>
     branchLinks.map((link) => ({ ...link, branch })),
   );
@@ -49,7 +57,7 @@ export default async function LibraryRepositoriesPage() {
         actions={
           <>
             <PrimaryLink href="/electronic">Browse e-resources</PrimaryLink>
-            <SecondaryLink href="/catalog">Search catalog</SecondaryLink>
+            <SecondaryLink href="#repository-workflow">Deposit workflow</SecondaryLink>
           </>
         }
       >
@@ -102,6 +110,55 @@ export default async function LibraryRepositoriesPage() {
             Search
           </button>
         </form>
+      </LibraryContentBand>
+
+      <LibraryContentBand tone="soft">
+        <div id="repository-workflow" className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div>
+            <LibrarySectionHeading
+              eyebrow="Repository Workflow"
+              title={workflow?.title ?? "Repository deposit guidance"}
+              body={
+                compactText(workflow?.summary) ||
+                "Published deposit steps will appear here when the library repository workflow is available."
+              }
+            />
+            {!workflow ? (
+              <StatusMessage>
+                Repository deposit workflow details are not available yet.
+              </StatusMessage>
+            ) : workflowSteps.length === 0 ? (
+              <StatusMessage>
+                No repository deposit steps have been published yet.
+              </StatusMessage>
+            ) : (
+              <div className="grid gap-4">
+                {workflowSteps.map((step, index) => (
+                  <CompactRecord
+                    key={step.id}
+                    icon="file"
+                    eyebrow={`Step ${index + 1}`}
+                    title={step.title}
+                    body={shortText(step.instructions, "Instructions are being updated.", 260)}
+                    meta={[
+                      safeExternalUrl(step.link_url) ? "External link" : null,
+                      step.file_id ? "File available" : null,
+                    ]}
+                    href={safeExternalUrl(step.link_url) ?? undefined}
+                    action="Open step link"
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+          <SidePanel title="Deposit support" eyebrow="Workflow">
+            <p className="text-sm leading-7 text-slate-600">
+              Repository deposit guidance is managed as a public library workflow.
+              Use the access links below for repository platforms and related
+              research systems.
+            </p>
+          </SidePanel>
+        </div>
       </LibraryContentBand>
 
       <LibraryContentBand tone="soft">

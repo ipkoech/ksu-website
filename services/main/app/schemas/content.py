@@ -6,21 +6,19 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import Field, model_validator
+from pydantic import ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from .base import BaseReadSchema, BaseSchema, SlugStr
 
 
 class ScopedContentCreate(BaseSchema):
+    model_config = ConfigDict(extra="forbid")
+
     scope_type: str | None = Field(default=None, max_length=32)
     scope_id: uuid.UUID | None = None
     is_main: bool = False
-    is_public: bool = True
-    is_published: bool = False
-    published_at: datetime | None = None
     valid_from: datetime | None = None
     valid_to: datetime | None = None
-    status: str = Field(default="draft", max_length=32)
     display_order: int = 100
 
     @model_validator(mode="after")
@@ -41,8 +39,35 @@ class ScopedContentRead(BaseReadSchema):
     valid_to: datetime | None = None
     archived_at: datetime | None = None
     status: str
+    workflow_status: str
+    owner_portal: str | None = None
+    owner_scope_type: str | None = None
+    owner_scope_id: uuid.UUID | None = None
+    submitted_by_id: uuid.UUID | None = None
+    submitted_at: datetime | None = None
+    reviewed_by_id: uuid.UUID | None = None
+    reviewed_at: datetime | None = None
+    approved_by_id: uuid.UUID | None = None
+    approved_at: datetime | None = None
+    published_by_id: uuid.UUID | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    unpublished_by_id: uuid.UUID | None = None
+    unpublished_at: datetime | None = None
+    rejection_reason: str | None = None
+    revision_notes: str | None = None
+    updated_by_id: uuid.UUID | None = None
+    updated_by: dict[str, Any] | None = None
     display_order: int
     deleted_at: datetime | None = None
+
+
+class ScopeSummary(BaseSchema):
+    type: str
+    id: uuid.UUID
+    label: str
+    status: str | None = None
+    slug: str | None = None
 
 
 class RichContentCreate(ScopedContentCreate):
@@ -54,13 +79,14 @@ class RichContentCreate(ScopedContentCreate):
     structured_content: dict[str, Any] | None = None
     related_links: list[dict[str, Any]] | None = None
     featured_media_id: uuid.UUID | None = None
-    author_user_id: uuid.UUID | None = None
     meta_title: str | None = Field(default=None, max_length=255)
     meta_description: str | None = Field(default=None, max_length=500)
     keywords: dict[str, Any] | None = None
 
 
 class RichContentUpdate(BaseSchema):
+    model_config = ConfigDict(extra="forbid")
+
     title: str | None = Field(default=None, min_length=1, max_length=255)
     slug: SlugStr | None = None
     summary: str | None = None
@@ -69,17 +95,11 @@ class RichContentUpdate(BaseSchema):
     structured_content: dict[str, Any] | None = None
     related_links: list[dict[str, Any]] | None = None
     featured_media_id: uuid.UUID | None = None
-    author_user_id: uuid.UUID | None = None
     scope_type: str | None = Field(default=None, max_length=32)
     scope_id: uuid.UUID | None = None
     is_main: bool | None = None
-    is_public: bool | None = None
-    is_published: bool | None = None
-    published_at: datetime | None = None
     valid_from: datetime | None = None
     valid_to: datetime | None = None
-    archived_at: datetime | None = None
-    status: str | None = Field(default=None, max_length=32)
     display_order: int | None = None
     meta_title: str | None = Field(default=None, max_length=255)
     meta_description: str | None = Field(default=None, max_length=500)
@@ -90,6 +110,7 @@ class RichContentUpdate(BaseSchema):
         if self.valid_from and self.valid_to and self.valid_to < self.valid_from:
             raise ValueError("valid_to must be greater than or equal to valid_from")
         return self
+
 
 
 class RichContentRead(ScopedContentRead):
@@ -140,16 +161,130 @@ class BlogRead(RichContentRead):
     is_featured: bool
 
 
+class StoryCreate(RichContentCreate):
+    story_type: str = Field(default="article", max_length=64)
+    category: str | None = Field(default=None, max_length=96)
+    source_type: str = Field(default="internal", max_length=64)
+    contributor_user_id: uuid.UUID | None = None
+    contributor_name_snapshot: str | None = Field(default=None, max_length=255)
+    contributor_email_snapshot: EmailStr | None = None
+    contributor_affiliation_snapshot: str | None = Field(default=None, max_length=255)
+    show_contributor_name: bool = True
+    consent_to_publish: bool = True
+    is_featured: bool = False
+    featured_until: datetime | None = None
+    homepage_priority: int = 100
+    reading_minutes: int | None = Field(default=None, ge=1, le=120)
+
+
+class StorySubmissionCreate(BaseSchema):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(min_length=1, max_length=255)
+    summary: str | None = None
+    plain_text: str | None = None
+    rich_text: str | None = None
+    structured_content: dict[str, Any] | None = None
+    related_links: list[dict[str, Any]] | None = None
+    featured_media_id: uuid.UUID | None = None
+    story_type: str = Field(default="article", max_length=64)
+    category: str | None = Field(default=None, max_length=96)
+    contributor_affiliation_snapshot: str | None = Field(default=None, max_length=255)
+    show_contributor_name: bool = True
+    consent_to_publish: bool
+
+    @model_validator(mode="after")
+    def validate_submission(self):
+        if not (self.plain_text or self.rich_text or self.structured_content):
+            raise ValueError("Story body is required")
+        if not self.consent_to_publish:
+            raise ValueError("Consent to publish is required")
+        return self
+
+
+class StoryUpdate(RichContentUpdate):
+    story_type: str | None = Field(default=None, max_length=64)
+    category: str | None = Field(default=None, max_length=96)
+    source_type: str | None = Field(default=None, max_length=64)
+    contributor_user_id: uuid.UUID | None = None
+    contributor_name_snapshot: str | None = Field(default=None, max_length=255)
+    contributor_email_snapshot: EmailStr | None = None
+    contributor_affiliation_snapshot: str | None = Field(default=None, max_length=255)
+    show_contributor_name: bool | None = None
+    consent_to_publish: bool | None = None
+    is_featured: bool | None = None
+    featured_until: datetime | None = None
+    homepage_priority: int | None = None
+    reading_minutes: int | None = Field(default=None, ge=1, le=120)
+
+
+class StoryRead(RichContentRead):
+    story_type: str
+    category: str | None = None
+    source_type: str
+    contributor_user_id: uuid.UUID | None = None
+    contributor: dict[str, Any] | None = None
+    contributor_name_snapshot: str | None = None
+    contributor_email_snapshot: str | None = None
+    contributor_affiliation_snapshot: str | None = None
+    show_contributor_name: bool
+    consent_to_publish: bool
+    is_featured: bool
+    featured_until: datetime | None = None
+    homepage_priority: int
+    reading_minutes: int | None = None
+    author: dict[str, Any] | None = None
+    featured_media: dict[str, Any] | None = None
+
+
+class StoryContributorAccountRequestCreate(BaseSchema):
+    full_name: str = Field(min_length=2, max_length=255)
+    email: EmailStr
+    phone: str | None = Field(default=None, max_length=32)
+    affiliation: str | None = Field(default=None, max_length=255)
+    contributor_type: str = Field(default="external", max_length=64)
+    reason_for_request: str | None = None
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return value.strip().lower()
+
+
+class StoryContributorAccountRequestReview(BaseSchema):
+    rejection_reason: str | None = None
+
+
+class StoryContributorAccountRequestRead(BaseReadSchema):
+    full_name: str
+    email: str
+    phone: str | None = None
+    affiliation: str | None = None
+    contributor_type: str
+    reason_for_request: str | None = None
+    status: str
+    reviewed_by_id: uuid.UUID | None = None
+    reviewed_at: datetime | None = None
+    approved_user_id: uuid.UUID | None = None
+    rejection_reason: str | None = None
+    verified_at: datetime | None = None
+    ip_address: str | None = None
+    user_agent: str | None = None
+    deleted_at: datetime | None = None
+
+
 class AnnouncementCreate(RichContentCreate):
     priority: str = Field(default="normal", max_length=32)
     category: str | None = Field(default=None, max_length=64)
     audience: str = Field(default="all", max_length=64)
+    youtube_url: str | None = Field(default=None, max_length=512)
 
 
 class AnnouncementUpdate(RichContentUpdate):
     priority: str | None = Field(default=None, max_length=32)
     category: str | None = Field(default=None, max_length=64)
     audience: str | None = Field(default=None, max_length=64)
+    youtube_url: str | None = Field(default=None, max_length=512)
 
 
 class AnnouncementRead(RichContentRead):
@@ -158,6 +293,7 @@ class AnnouncementRead(RichContentRead):
     author: dict[str, Any] | None = None
     featured_media: dict[str, Any] | None = None
     audience: str
+    youtube_url: str | None = None
 
 
 class EventCreate(ScopedContentCreate):
@@ -174,7 +310,6 @@ class EventCreate(ScopedContentCreate):
     meeting_link: str | None = Field(default=None, max_length=512)
     is_featured: bool = False
     featured_media_id: uuid.UUID | None = None
-    author_user_id: uuid.UUID | None = None
     related_links: list[dict[str, Any]] | None = None
     meta_title: str | None = Field(default=None, max_length=255)
     meta_description: str | None = Field(default=None, max_length=500)
@@ -182,6 +317,8 @@ class EventCreate(ScopedContentCreate):
 
 
 class EventUpdate(BaseSchema):
+    model_config = ConfigDict(extra="forbid")
+
     title: str | None = Field(default=None, min_length=1, max_length=255)
     slug: SlugStr | None = None
     summary: str | None = None
@@ -195,18 +332,12 @@ class EventUpdate(BaseSchema):
     meeting_link: str | None = Field(default=None, max_length=512)
     is_featured: bool | None = None
     featured_media_id: uuid.UUID | None = None
-    author_user_id: uuid.UUID | None = None
     related_links: list[dict[str, Any]] | None = None
     scope_type: str | None = Field(default=None, max_length=32)
     scope_id: uuid.UUID | None = None
     is_main: bool | None = None
-    is_public: bool | None = None
-    is_published: bool | None = None
-    published_at: datetime | None = None
     valid_from: datetime | None = None
     valid_to: datetime | None = None
-    archived_at: datetime | None = None
-    status: str | None = Field(default=None, max_length=32)
     display_order: int | None = None
     meta_title: str | None = Field(default=None, max_length=255)
     meta_description: str | None = Field(default=None, max_length=500)
@@ -217,6 +348,7 @@ class EventUpdate(BaseSchema):
         if self.valid_from and self.valid_to and self.valid_to < self.valid_from:
             raise ValueError("valid_to must be greater than or equal to valid_from")
         return self
+
 
 
 class EventRead(ScopedContentRead):
@@ -240,6 +372,7 @@ class EventRead(ScopedContentRead):
     meta_title: str | None = None
     meta_description: str | None = None
     keywords: dict[str, Any] | None = None
+    scope: ScopeSummary | None = None
 
 
 class SliderGroupCreate(BaseSchema):
@@ -296,6 +429,8 @@ class SliderGroupRead(BaseReadSchema):
 
 
 class SliderCreate(BaseSchema):
+    model_config = ConfigDict(extra="forbid")
+
     slider_group_id: uuid.UUID | None = None
     title: str = Field(min_length=1, max_length=255)
     subtitle: str | None = Field(default=None, max_length=255)
@@ -310,11 +445,9 @@ class SliderCreate(BaseSchema):
     scope_type: str | None = Field(default=None, max_length=32)
     scope_id: uuid.UUID | None = None
     is_main: bool = False
-    is_public: bool = True
     is_active: bool = True
     start_datetime: datetime | None = None
     end_datetime: datetime | None = None
-    archived_at: datetime | None = None
     display_order: int = 100
 
     @model_validator(mode="after")
@@ -325,6 +458,8 @@ class SliderCreate(BaseSchema):
 
 
 class SliderUpdate(BaseSchema):
+    model_config = ConfigDict(extra="forbid")
+
     slider_group_id: uuid.UUID | None = None
     title: str | None = Field(default=None, min_length=1, max_length=255)
     subtitle: str | None = Field(default=None, max_length=255)
@@ -339,11 +474,9 @@ class SliderUpdate(BaseSchema):
     scope_type: str | None = Field(default=None, max_length=32)
     scope_id: uuid.UUID | None = None
     is_main: bool | None = None
-    is_public: bool | None = None
     is_active: bool | None = None
     start_datetime: datetime | None = None
     end_datetime: datetime | None = None
-    archived_at: datetime | None = None
     display_order: int | None = None
 
     @model_validator(mode="after")
@@ -376,5 +509,25 @@ class SliderRead(BaseReadSchema):
     start_datetime: datetime | None = None
     end_datetime: datetime | None = None
     archived_at: datetime | None = None
+    workflow_status: str
+    owner_portal: str | None = None
+    owner_scope_type: str | None = None
+    owner_scope_id: uuid.UUID | None = None
+    submitted_by_id: uuid.UUID | None = None
+    submitted_at: datetime | None = None
+    reviewed_by_id: uuid.UUID | None = None
+    reviewed_at: datetime | None = None
+    approved_by_id: uuid.UUID | None = None
+    approved_at: datetime | None = None
+    published_by_id: uuid.UUID | None = None
+    published_at: datetime | None = None
+    scheduled_publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    unpublished_by_id: uuid.UUID | None = None
+    unpublished_at: datetime | None = None
+    rejection_reason: str | None = None
+    revision_notes: str | None = None
+    updated_by_id: uuid.UUID | None = None
+    updated_by: dict[str, Any] | None = None
     display_order: int
     deleted_at: datetime | None = None

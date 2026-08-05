@@ -136,7 +136,30 @@ class ResearchOutputCreate(ResearchOutputBase, StatusMixin):
 class ResearchOutputUpdate(BaseSchema):
     title: str | None = Field(None, max_length=500)
     slug: SlugStr | None = None
+    output_type: str | None = Field(None, max_length=32)
+    project_id: uuid.UUID | None = None
+    center_id: uuid.UUID | None = None
+    author_ids: list[uuid.UUID] | None = None
+    summary: str | None = None
+    description: str | None = None
+    methodology: str | None = None
+    usage_notes: str | None = None
+    citation: str | None = None
+    access_type: str | None = Field(None, max_length=32)
+    access_url: UrlStr | None = None
+    download_url: UrlStr | None = None
+    repository_url: UrlStr | None = None
+    doi: str | None = Field(None, max_length=128)
     version: str | None = None
+    license: str | None = Field(None, max_length=128)
+    license_url: UrlStr | None = None
+    format: str | None = Field(None, max_length=64)
+    size_bytes: int | None = None
+    technical_requirements: str | None = None
+    release_date: date | None = None
+    last_updated: date | None = None
+    keywords: list[str] | None = None
+    cover_image_url: UrlStr | None = None
     status: str | None = None
     is_active: bool | None = None
     is_featured: bool | None = None

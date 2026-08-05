@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import Mapping
+from collections.abc import Mapping
 
-import httpx
+from ksu_common.internal_client import get_integration_pool
 
 from ..core.config import get_settings
 
@@ -40,23 +40,83 @@ class MainReferenceValidator:
         if not references:
             return
 
-        async with httpx.AsyncClient(
-            base_url=settings.MAIN_SERVICE_URL.rstrip("/"),
-            headers={"X-Internal-Key": settings.INTERNAL_API_KEY},
-            timeout=httpx.Timeout(settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS),
-        ) as client:
-            for field, kind, value in references:
-                try:
-                    ref_id = value if isinstance(value, uuid.UUID) else uuid.UUID(str(value))
-                    response = await client.get(f"/api/v1/internal/references/{kind}/{ref_id}")
-                    if response.status_code == 404:
-                        raise ReferenceValidationError(f"{field} references missing main {kind} record")
-                    response.raise_for_status()
-                except ReferenceValidationError:
-                    if mode == "strict":
-                        raise
-                    logger.warning("Reference validation failed for %s=%s kind=%s", field, value, kind)
-                except Exception as exc:
-                    if mode == "strict":
-                        raise ReferenceValidationError(f"Could not validate {field} against main service") from exc
-                    logger.warning("Reference validation skipped for %s=%s kind=%s: %s", field, value, kind, exc)
+        if not settings.MAIN_SERVICE_API_KEY:
+            if mode == "strict":
+                raise ReferenceValidationError("Main-service authentication is not configured")
+            logger.warning("Reference validation skipped because Main-service authentication is not configured")
+            return
+
+        pool = get_integration_pool()
+        for field, kind, value in references:
+            try:
+                ref_id = value if isinstance(value, uuid.UUID) else uuid.UUID(str(value))
+                response = await pool.request_internal(
+                    "research-main-reference-validation",
+                    settings.MAIN_SERVICE_URL.rstrip("/"),
+                    "GET",
+                    f"/api/v1/internal/references/{kind}/{ref_id}",
+                    api_key=settings.MAIN_SERVICE_API_KEY,
+                    timeout=settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS,
+                )
+                if response.status_code == 404:
+                    raise ReferenceValidationError(f"{field} references missing main {kind} record")
+                response.raise_for_status()
+            except ReferenceValidationError:
+                if mode == "strict":
+                    raise
+                logger.warning("Reference validation failed for %s=%s kind=%s", field, value, kind)
+            except Exception as exc:
+                if mode == "strict":
+                    raise ReferenceValidationError(f"Could not validate {field} against main service") from exc
+                logger.warning("Reference validation skipped for %s=%s kind=%s: %s", field, value, kind, exc)
+
+    @staticmethod
+    async def validate_department_school(
+        school_id: uuid.UUID,
+        department_id: uuid.UUID | None,
+    ) -> None:
+        """Confirm a department is owned by the JWT-derived school."""
+        if department_id is None:
+            return
+        settings = get_settings()
+        mode = settings.REFERENCE_VALIDATION_MODE.lower()
+        if mode == "disabled":
+            return
+        if not settings.MAIN_SERVICE_API_KEY:
+            if mode == "strict":
+                raise ReferenceValidationError("Main-service authentication is not configured")
+            logger.warning("Department-school validation skipped because Main-service authentication is not configured")
+            return
+        try:
+            response = await get_integration_pool().request_internal(
+                "research-main-reference-validation",
+                settings.MAIN_SERVICE_URL.rstrip("/"),
+                "GET",
+                f"/api/v1/internal/schools/{school_id}/departments/{department_id}",
+                api_key=settings.MAIN_SERVICE_API_KEY,
+                timeout=settings.REFERENCE_VALIDATION_TIMEOUT_SECONDS,
+            )
+            if response.status_code == 404:
+                raise ReferenceValidationError(
+                    "department_id does not belong to the assigned school"
+                )
+            response.raise_for_status()
+        except ReferenceValidationError:
+            if mode == "strict":
+                raise
+            logger.warning(
+                "Department-school validation failed for school=%s department=%s",
+                school_id,
+                department_id,
+            )
+        except Exception as exc:
+            if mode == "strict":
+                raise ReferenceValidationError(
+                    "Could not validate department ownership against main service"
+                ) from exc
+            logger.warning(
+                "Department-school validation skipped for school=%s department=%s: %s",
+                school_id,
+                department_id,
+                exc,
+            )

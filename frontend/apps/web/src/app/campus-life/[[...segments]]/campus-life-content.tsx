@@ -22,9 +22,10 @@ import type {
   SportsFacility,
   StudentGovernance,
 } from "@ksu/api-client";
-import { ScrollReveal } from "@ksu/ui/components";
+import { ListPagination, ScrollReveal } from "@ksu/ui/components";
 import type { CampusLifePageData } from "@/lib/get-campus-life";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
+import { CampusLifeStoryLanding } from "@/components/campus-life/campus-life-story-landing";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { PublicImage } from "@/components/public/public-image";
 import {
@@ -255,98 +256,28 @@ function matchesType(value: string | null | undefined, selected?: string) {
   return !type || value === type;
 }
 
-function matchesActiveStatus(isActive: boolean, selected?: string) {
-  const status = filterValue(selected);
+function filterItems<T>(
+  items: T[],
+  filters: CampusLifeFilters | undefined,
+  config: {
+    typeField: (item: T) => string | null | undefined;
+    searchFields: (item: T) => Array<string | number | null | undefined>;
+    statusCheck: (item: T, status?: string) => boolean;
+  },
+) {
+  return items.filter(
+    (item) =>
+      matchesType(config.typeField(item), filters?.type) &&
+      config.statusCheck(item, filters?.status) &&
+      matchesQuery(config.searchFields(item), filters?.q),
+  );
+}
+
+function statusCheck(isActive: boolean, status?: string) {
   if (!status) return true;
   if (status === "active") return isActive;
   if (status === "inactive") return !isActive;
   return true;
-}
-
-function matchesAccommodationStatus(item: Accommodation, selected?: string) {
-  const status = filterValue(selected);
-  if (!status) return true;
-  if (status === "accepting") return item.is_accepting_applications;
-  if (status === "closed") return !item.is_accepting_applications;
-  return matchesActiveStatus(item.is_active, status);
-}
-
-function filterClubs(items: Club[], filters?: CampusLifeFilters) {
-  return items.filter(
-    (item) =>
-      matchesType(item.club_type, filters?.type) &&
-      matchesActiveStatus(item.is_active, filters?.status) &&
-      matchesQuery(
-        [
-          item.name,
-          item.club_type,
-          item.about,
-          item.mission,
-          item.objectives,
-          item.meeting_schedule,
-        ],
-        filters?.q,
-      ),
-  );
-}
-
-function filterSports(items: SportsFacility[], filters?: CampusLifeFilters) {
-  return items.filter(
-    (item) =>
-      matchesType(item.facility_type, filters?.type) &&
-      matchesActiveStatus(item.is_active, filters?.status) &&
-      matchesQuery(
-        [item.name, item.facility_type, item.location, item.about, ...(item.sport_types ?? [])],
-        filters?.q,
-      ),
-  );
-}
-
-function filterAccommodations(items: Accommodation[], filters?: CampusLifeFilters) {
-  return items.filter(
-    (item) =>
-      matchesType(item.accommodation_type, filters?.type) &&
-      matchesAccommodationStatus(item, filters?.status) &&
-      matchesQuery(
-        [
-          item.name,
-          item.accommodation_type,
-          item.gender,
-          item.about,
-          item.rules,
-          ...(item.amenities ?? []),
-        ],
-        filters?.q,
-      ),
-  );
-}
-
-function filterGovernance(items: StudentGovernance[], filters?: CampusLifeFilters) {
-  return items.filter(
-    (item) =>
-      matchesType(item.governance_type, filters?.type) &&
-      matchesActiveStatus(item.is_active, filters?.status) &&
-      matchesQuery(
-        [
-          item.name,
-          item.acronym,
-          item.governance_type,
-          item.about,
-          item.mandate,
-          item.office_location,
-        ],
-        filters?.q,
-      ),
-  );
-}
-
-function filterArts(items: ArtsCulture[], filters?: CampusLifeFilters) {
-  return items.filter(
-    (item) =>
-      matchesType(item.category, filters?.type) &&
-      matchesActiveStatus(item.is_active, filters?.status) &&
-      matchesQuery([item.title, item.category, item.about], filters?.q),
-  );
 }
 
 function ActionLink({
@@ -387,8 +318,7 @@ function CampusListFilters({
 }) {
   return (
     <PublicListFilterForm
-      className="mb-6 border border-slate-200 bg-white p-4 shadow-sm"
-      gridClassName="grid gap-3 md:grid-cols-2 2xl:grid-cols-[minmax(220px,1fr)_12rem_12rem_auto] 2xl:items-end"
+      className="mb-6 rounded-2xl ring-1 ring-primary/10 bg-white p-4 shadow-sm"
       searchValue={filters?.q}
       searchPlaceholder="Search records"
       selects={[
@@ -422,9 +352,9 @@ function SideNav({ currentHref }: { currentHref: string }) {
   return (
     <nav
       aria-label="Campus life navigation"
-      className="border border-slate-200 bg-white p-3 shadow-sm lg:sticky lg:top-28"
+      className="rounded-2xl ring-1 ring-primary/10 bg-white p-3 shadow-sm lg:sticky lg:top-28"
     >
-      <p className="px-3 py-2 text-xs font-semibold uppercase text-secondary">
+      <p className="px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
         Campus Life
       </p>
       <div className="mt-1 grid gap-1">
@@ -435,24 +365,24 @@ function SideNav({ currentHref }: { currentHref: string }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`group flex gap-3 border px-3 py-3 text-sm transition ${
+              className={`group flex gap-3 border px-3 py-3 text-sm transition-colors duration-200 ${
                 active
-                  ? "border-primary/30 bg-primary/5 text-slate-950"
-                  : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950"
+                  ? "border-primary/30 bg-primary/5 text-foreground"
+                  : "border-transparent text-muted-foreground hover:border-border hover:bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] hover:text-foreground"
               }`}
             >
               <span
                 className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center ${
                   active
                     ? "bg-primary text-white"
-                    : "bg-slate-100 text-primary group-hover:bg-primary group-hover:text-white"
+                    : "bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] text-primary group-hover:bg-primary group-hover:text-white"
                 }`}
               >
                 <Icon aria-hidden className="h-4 w-4" />
               </span>
               <span>
                 <span className="block font-semibold">{item.title}</span>
-                <span className="mt-1 block text-xs leading-5 text-slate-500">
+                <span className="mt-1 block text-xs leading-5 text-muted-foreground">
                   {item.description}
                 </span>
               </span>
@@ -476,7 +406,7 @@ function Hero({
   image: string;
 }) {
   return (
-    <section className="border-b border-slate-200 bg-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+    <section className="border-b border-primary/10 bg-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
       <div className="w-full">
         <BreadcrumbTrail
           items={[
@@ -487,13 +417,13 @@ function Hero({
         />
         <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.65fr)] lg:items-stretch">
           <div className="flex flex-col justify-end">
-            <p className="text-sm font-semibold uppercase text-secondary">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
               {eyebrow}
             </p>
-            <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-slate-950 sm:text-5xl lg:text-6xl">
+            <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-normal tracking-tight leading-[1.05] text-foreground sm:text-5xl lg:text-6xl">
               {title}
             </h1>
-            <p className="mt-6 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
+            <p className="mt-6 max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">
               {body}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -508,7 +438,7 @@ function Hero({
               </ActionLink>
             </div>
           </div>
-          <div className="relative min-h-[320px] overflow-hidden border border-slate-200 bg-slate-100">
+          <div className="relative min-h-[320px] overflow-hidden rounded-2xl ring-1 ring-primary/10 bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)]">
             <PublicImage
               src={image}
               alt=""
@@ -516,7 +446,7 @@ function Hero({
               sizes="(min-width: 1024px) 50vw, 100vw"
               className="absolute inset-0 h-full w-full"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-950/10 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-brand-overlay/65 via-brand-overlay/10 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
               <p className="text-sm font-semibold uppercase text-white/80">
                 Student experience
@@ -550,20 +480,20 @@ function Section({
       as="section"
       className={
         dark
-          ? "border-y border-slate-900 bg-slate-950 px-4 py-14 text-white sm:px-6 lg:px-8 lg:py-16"
-          : "border-b border-slate-200 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16"
+          ? "border-y border-primary/10 bg-brand-overlay px-4 py-14 text-white sm:px-6 lg:px-8 lg:py-16"
+          : "border-b border-primary/10 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16"
       }
     >
       <div className="grid w-full gap-9 xl:grid-cols-[340px_minmax(0,1fr)]">
         <div>
-          <p className="text-sm font-semibold uppercase text-secondary">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
             {eyebrow}
           </p>
           <h2
             className={
               dark
-                ? "mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-white sm:text-4xl"
-                : "mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl"
+                ? "mt-4 font-[family-name:var(--font-display)] text-3xl font-normal tracking-tight leading-tight text-white sm:text-4xl"
+                : "mt-4 font-[family-name:var(--font-display)] text-3xl font-normal tracking-tight leading-tight text-foreground sm:text-4xl"
             }
           >
             {title}
@@ -573,7 +503,7 @@ function Section({
               className={
                 dark
                   ? "mt-5 text-base leading-8 text-white/70"
-                  : "mt-5 text-base leading-8 text-slate-600"
+                  : "mt-5 text-base leading-8 text-muted-foreground"
               }
             >
               {body}
@@ -583,100 +513,6 @@ function Section({
         <div>{children}</div>
       </div>
     </ScrollReveal>
-  );
-}
-
-function StatStrip({ data }: { data: CampusLifePageData }) {
-  const capacity = data.accommodations.reduce(
-    (sum, item) => sum + (item.capacity ?? 0),
-    0,
-  );
-  const contacts = data.contacts.length + data.faqs.length;
-
-  return (
-    <div className="grid border border-slate-200 bg-white md:grid-cols-4">
-      {[
-        ["Clubs", data.clubs.length || "Published records"],
-        ["Sports facilities", data.sports.length || "Campus activities"],
-        ["Housing capacity", capacity || "Portal verified"],
-        ["Support records", contacts || "Service channels"],
-      ].map(([label, value]) => (
-        <div
-          key={label}
-          className="border-b border-slate-200 p-5 md:border-b-0 md:border-r last:md:border-r-0"
-        >
-          <p className="text-xs font-semibold uppercase text-slate-500">
-            {label}
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-slate-950">{value}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function FeatureGrid({
-  items,
-  dark = false,
-}: {
-  items: NavItem[];
-  dark?: boolean;
-}) {
-  return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {items.map((item) => {
-        const Icon = item.icon;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={
-              dark
-                ? "group border border-white/10 bg-white/[0.04] p-5 transition hover:bg-white/[0.08]"
-                : "group border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
-            }
-          >
-            <span
-              className={
-                dark
-                  ? "flex h-11 w-11 items-center justify-center bg-white/10 text-secondary"
-                  : "flex h-11 w-11 items-center justify-center bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white"
-              }
-            >
-              <Icon aria-hidden className="h-5 w-5" />
-            </span>
-            <h3
-              className={
-                dark
-                  ? "mt-5 text-lg font-semibold text-white"
-                  : "mt-5 text-lg font-semibold text-slate-950"
-              }
-            >
-              {item.title}
-            </h3>
-            <p
-              className={
-                dark
-                  ? "mt-2 text-sm leading-7 text-white/70"
-                  : "mt-2 text-sm leading-7 text-slate-600"
-              }
-            >
-              {item.description}
-            </p>
-            <span
-              className={
-                dark
-                  ? "mt-5 inline-flex items-center gap-2 text-sm font-semibold text-secondary"
-                  : "mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary"
-              }
-            >
-              Explore
-              <ArrowRight aria-hidden className="h-4 w-4" />
-            </span>
-          </Link>
-        );
-      })}
-    </div>
   );
 }
 
@@ -691,9 +527,9 @@ function RecordGrid<T>({
 }) {
   if (!items.length) {
     return (
-      <div className="border border-slate-200 bg-white p-6">
-        <h3 className="text-xl font-semibold text-slate-950">{emptyTitle}</h3>
-        <p className="mt-3 text-sm leading-7 text-slate-600">
+      <div className="rounded-2xl ring-1 ring-primary/10 bg-white p-6">
+        <h3 className="text-xl font-semibold text-foreground">{emptyTitle}</h3>
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">
           No public records were returned for this category. Use official
           university channels for current student-life guidance.
         </p>
@@ -717,28 +553,28 @@ function ClubCard({ club }: { club: Club }) {
   return (
     <Link
       href={`/campus-life/clubs/${club.slug}`}
-      className="group border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+      className="group rounded-2xl ring-1 ring-primary/10 bg-white p-5 transition-colors duration-200 hover:ring-primary/20 hover:bg-primary/5"
     >
-      <p className="text-xs font-semibold uppercase text-secondary">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
         {club.club_type || "Club"}
       </p>
-      <h3 className="mt-3 text-lg font-semibold text-slate-950">{club.name}</h3>
-      <p className="mt-2 text-sm leading-7 text-slate-600">
+      <h3 className="mt-3 text-lg font-semibold text-foreground">{club.name}</h3>
+      <p className="mt-2 text-sm leading-7 text-muted-foreground">
         {shortText(
           club.about ?? club.mission ?? club.objectives,
           "Student club or society.",
         )}
       </p>
-      <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-slate-200 pt-4 text-sm">
+      <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-primary/10 pt-4 text-sm">
         <div>
-          <dt className="text-xs uppercase text-slate-500">Members</dt>
-          <dd className="mt-1 font-semibold text-slate-950">
+          <dt className="text-xs uppercase text-muted-foreground">Members</dt>
+          <dd className="mt-1 font-semibold text-foreground">
             {club.membership_count || "Not published"}
           </dd>
         </div>
         <div>
-          <dt className="text-xs uppercase text-slate-500">Meeting</dt>
-          <dd className="mt-1 font-semibold text-slate-950">
+          <dt className="text-xs uppercase text-muted-foreground">Meeting</dt>
+          <dd className="mt-1 font-semibold text-foreground">
             {club.meeting_schedule || "Contact club"}
           </dd>
         </div>
@@ -755,9 +591,9 @@ function HousingCard({ item }: { item: Accommodation }) {
   return (
     <Link
       href={`/campus-life/accommodation/${item.slug}`}
-      className="grid gap-5 border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5 md:grid-cols-[160px_minmax(0,1fr)]"
+      className="grid gap-5 rounded-2xl ring-1 ring-primary/10 bg-white p-5 transition-colors duration-200 hover:ring-primary/20 hover:bg-primary/5 md:grid-cols-[160px_minmax(0,1fr)]"
     >
-      <div className="min-h-36 bg-slate-100">
+      <div className="min-h-36 bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)]">
         <PublicImage
           src={media.accommodation}
           alt=""
@@ -767,16 +603,16 @@ function HousingCard({ item }: { item: Accommodation }) {
         />
       </div>
       <div>
-        <p className="text-xs font-semibold uppercase text-secondary">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
           {item.accommodation_type} · {item.gender}
         </p>
-        <h3 className="mt-2 text-xl font-semibold text-slate-950">
+        <h3 className="mt-2 text-xl font-semibold text-foreground">
           {item.name}
         </h3>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
+        <p className="mt-2 text-sm leading-7 text-muted-foreground">
           {shortText(item.about ?? item.rules, "Accommodation record.")}
         </p>
-        <div className="mt-4 grid gap-2 text-sm text-slate-700 sm:grid-cols-3">
+        <div className="mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
           <span>Capacity: {item.capacity || "Not published"}</span>
           <span>Rooms: {item.total_rooms || "Not published"}</span>
           <span>Fee: {money(item.fee_per_semester)}</span>
@@ -790,19 +626,19 @@ function SportCard({ item }: { item: SportsFacility }) {
   return (
     <Link
       href={`/campus-life/sports/${item.slug}`}
-      className="border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+      className="rounded-2xl ring-1 ring-primary/10 bg-white p-5 transition-colors duration-200 hover:ring-primary/20 hover:bg-primary/5"
     >
       <span className="flex h-11 w-11 items-center justify-center bg-primary/10 text-primary">
         <Dumbbell aria-hidden className="h-5 w-5" />
       </span>
-      <h3 className="mt-5 text-lg font-semibold text-slate-950">{item.name}</h3>
-      <p className="mt-2 text-sm leading-7 text-slate-600">
+      <h3 className="mt-5 text-lg font-semibold text-foreground">{item.name}</h3>
+      <p className="mt-2 text-sm leading-7 text-muted-foreground">
         {shortText(
           item.about,
           listValue(item.sport_types, "Sports facility record."),
         )}
       </p>
-      <p className="mt-4 text-sm font-semibold text-slate-950">
+      <p className="mt-4 text-sm font-semibold text-foreground">
         {item.location || item.facility_type || "Main Campus"}
       </p>
     </Link>
@@ -813,26 +649,26 @@ function ArtCard({ item }: { item: ArtsCulture }) {
   return (
     <Link
       href={`/campus-life/gallery/${item.slug}`}
-      className="group overflow-hidden border border-slate-200 bg-white transition hover:border-primary/35"
+      className="group overflow-hidden rounded-2xl ring-1 ring-primary/10 bg-white transition-colors duration-200 hover:border-primary/35"
     >
-      <div className="h-44 bg-slate-100">
+      <div className="h-44 bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)]">
         <PublicImage
           src={media.gallery}
           alt=""
           ratio="news"
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
           className="h-full w-full"
-          imageClassName="transition group-hover:scale-[1.03]"
+          imageClassName="transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
         />
       </div>
       <div className="p-5">
-        <p className="text-xs font-semibold uppercase text-secondary">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
           {item.category || "Gallery"}
         </p>
-        <h3 className="mt-2 text-lg font-semibold text-slate-950">
+        <h3 className="mt-2 text-lg font-semibold text-foreground">
           {item.title}
         </h3>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
+        <p className="mt-2 text-sm leading-7 text-muted-foreground">
           {shortText(item.about, "Arts, culture, and campus-life record.")}
         </p>
       </div>
@@ -844,19 +680,19 @@ function GovernanceCard({ item }: { item: StudentGovernance }) {
   return (
     <Link
       href={`/campus-life/student-life/${item.slug}`}
-      className="border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5"
+      className="rounded-2xl ring-1 ring-primary/10 bg-white p-5 transition-colors duration-200 hover:ring-primary/20 hover:bg-primary/5"
     >
-      <p className="text-xs font-semibold uppercase text-secondary">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
         {item.acronym || item.governance_type || "Student body"}
       </p>
-      <h3 className="mt-3 text-lg font-semibold text-slate-950">{item.name}</h3>
-      <p className="mt-2 text-sm leading-7 text-slate-600">
+      <h3 className="mt-3 text-lg font-semibold text-foreground">{item.name}</h3>
+      <p className="mt-2 text-sm leading-7 text-muted-foreground">
         {shortText(
           item.about ?? item.mandate ?? item.constitution,
           "Student governance record.",
         )}
       </p>
-      <p className="mt-4 text-sm text-slate-600">
+      <p className="mt-4 text-sm text-muted-foreground">
         Term: {dateText(item.term_start)} to {dateText(item.term_end)}
       </p>
     </Link>
@@ -864,100 +700,63 @@ function GovernanceCard({ item }: { item: StudentGovernance }) {
 }
 
 function Landing({ data }: { data: CampusLifePageData }) {
+  const editorial = data.editorial;
+  const items = editorial?.section.items ?? [];
+  const featured = items.find((item) => item.is_featured) ?? items[0];
+  const supporting = items.filter((item) => item.id !== featured?.id).slice(0, 4);
+  const itemImage = (item: typeof featured) => {
+    const content = item?.content;
+    return content && typeof content.imageUrl === "string" ? content.imageUrl : "/images/Home/OurKSU-82.jpg";
+  };
+
   return (
-    <>
-      <Section
-        eyebrow="Campus Highlights"
-        title="The student experience at a glance"
-        body="Campus life brings together community, wellbeing, accommodation, sport, leadership, culture, and service pathways."
-      >
-        <StatStrip data={data} />
-      </Section>
-      <Section
-        eyebrow="Explore"
-        title="Choose what matters to your student experience"
-        body="Prospective and current students can move directly into the practical areas they need."
-        dark
-      >
-        <FeatureGrid dark items={navItems.slice(1)} />
-      </Section>
-      <Section
-        eyebrow="Clubs and Activities"
-        title="Find a community beyond the classroom"
-        body="Club records show student groups, membership context, meeting schedules, and public contact points when published."
-      >
-        <RecordGrid
-          items={data.clubs.slice(0, 6)}
-          emptyTitle="No clubs are currently published"
-          render={(club) => <ClubCard key={club.id} club={club} />}
-        />
-      </Section>
-      <Section
-        eyebrow="Living and Wellness"
-        title="Housing, sport, and support work together"
-        body="A good student experience depends on where students live, how they stay active, and how quickly they can find help."
-      >
-        <div className="grid gap-4 lg:grid-cols-3">
-          <ExperiencePanel
-            image={media.accommodation}
-            title="Accommodation"
-            body="Review housing options, capacity, amenities, rules, and application status."
-            href="/campus-life/accommodation"
-          />
-          <ExperiencePanel
-            image={media.sports}
-            title="Sports and recreation"
-            body="Find facilities, sports activities, operating context, and recreation opportunities."
-            href="/campus-life/sports"
-          />
-          <ExperiencePanel
-            image={media.support}
-            title="Student support"
-            body="Access wellbeing, health, accessibility, FAQs, and contact pathways."
-            href="/campus-life/support"
-          />
+    <div className="space-y-0">
+      <section className="relative overflow-hidden rounded-[2rem] bg-primary px-5 py-12 text-white shadow-xl shadow-primary/15 sm:px-8 lg:px-14 lg:py-16">
+        <div className="absolute -right-24 -top-24 size-72 rounded-full bg-secondary/20 blur-3xl" />
+        <div className="relative grid gap-10 lg:grid-cols-[1.05fr_.95fr] lg:items-end">
+          <ScrollReveal variant="fade-up">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">{editorial?.section.subtitle ?? "Life around studies"}</p>
+            <h1 className="mt-4 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] sm:text-5xl lg:text-7xl">{editorial?.section.title ?? "A student experience with room to become."}</h1>
+            <p className="mt-6 max-w-2xl text-base leading-8 text-white/75">{editorial?.section.description ?? "Discover the communities, spaces, support and opportunities that shape everyday life at Kisii University."}</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <ActionLink href="/campus-life/clubs" primary>Find your community</ActionLink>
+              <ActionLink href="/campus-life/support">Student support</ActionLink>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal variant="zoom-in" className="relative min-h-[280px] overflow-hidden rounded-[1.5rem] bg-white/10 sm:min-h-[360px]">
+            <PublicImage src={itemImage(featured)} alt={featured?.title ?? "Students at Kisii University"} ratio="fill" className="absolute inset-0 h-full rounded-[1.5rem]" imageClassName="h-full object-cover" sizes="(min-width: 1024px) 45vw, 100vw" />
+            <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent" />
+            {featured ? <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7"><p className="text-xs uppercase tracking-[0.18em] text-secondary">{featured.subtitle ?? "Student experience"}</p><p className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold">{featured.title}</p></div> : null}
+          </ScrollReveal>
         </div>
-      </Section>
-    </>
+      </section>
+
+      <section className="grid gap-5 py-12 sm:grid-cols-2 lg:grid-cols-4 lg:py-16">
+        {supporting.map((item, index) => (
+          <ScrollReveal key={item.id} variant="fade-up" delay={index * 70}>
+            <Link href={item.cta_url ?? "/campus-life"} className="group block overflow-hidden rounded-[1.35rem] bg-white shadow-sm ring-1 ring-black/5 transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl">
+              <div className="relative aspect-[4/3] overflow-hidden"><PublicImage src={itemImage(item)} alt={item.title ?? "Life around studies"} ratio="fill" className="absolute inset-0 h-full rounded-none" imageClassName="h-full object-cover transition-transform duration-500 motion-safe:group-hover:scale-105" sizes="(min-width: 1024px) 24vw, 50vw" /><div className="absolute inset-0 bg-gradient-to-t from-primary/55 to-transparent" /></div>
+              <div className="p-5"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">{item.audience === "prospective" ? "Before you arrive" : item.audience === "current_student" ? "For students" : "Campus life"}</p><h2 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{item.title}</h2><p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{item.body_text}</p><span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">{item.cta_label ?? "Explore"}<ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" /></span></div>
+            </Link>
+          </ScrollReveal>
+        ))}
+      </section>
+
+      <section className="rounded-[2rem] bg-[linear-gradient(135deg,hsl(var(--surface-subtle)),#fff)] px-5 py-10 sm:px-8 lg:px-12 lg:py-14">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">The KSU rhythm</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground sm:text-4xl">Make space for the things that make university yours.</h2></div><Link href="/campus-life" className="inline-flex items-center gap-2 text-sm font-semibold text-primary">Explore all student life <ArrowRight className="size-4" /></Link></div>
+        <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{navItems.slice(1, 5).map((item, index) => <Link key={item.href} href={item.href} className="group rounded-2xl bg-white/75 p-5 ring-1 ring-black/5 transition-colors duration-200 hover:bg-white"><span className="text-3xl font-semibold text-primary/20">0{index + 1}</span><h3 className="mt-5 font-semibold text-foreground">{item.title}</h3><span className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground group-hover:text-primary">Open page <ArrowRight className="size-4" /></span></Link>)}</div>
+      </section>
+    </div>
   );
 }
 
-function ExperiencePanel({
-  image,
-  title,
-  body,
-  href,
-}: {
-  image: string;
-  title: string;
-  body: string;
-  href: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group overflow-hidden border border-slate-200 bg-white"
-    >
-      <div className="h-48 bg-slate-100">
-        <PublicImage
-          src={image}
-          alt=""
-          ratio="news"
-          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-          className="h-full w-full"
-          imageClassName="transition group-hover:scale-[1.03]"
-        />
-      </div>
-      <div className="p-5">
-        <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
-        <p className="mt-2 text-sm leading-7 text-slate-600">{body}</p>
-        <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary">
-          Explore
-          <ArrowRight aria-hidden className="h-4 w-4" />
-        </span>
-      </div>
-    </Link>
-  );
+function listingBaseHref(path: string, filters?: CampusLifeFilters) {
+  const sp = new URLSearchParams();
+  if (filters?.q) sp.set("q", filters.q);
+  if (filters?.type) sp.set("type", filters.type);
+  if (filters?.status) sp.set("status", filters.status);
+  const search = sp.toString();
+  return `${path}${search ? `?${search}` : ""}`;
 }
 
 function ClubsPage({
@@ -967,8 +766,14 @@ function ClubsPage({
   data: CampusLifePageData;
   filters?: CampusLifeFilters;
 }) {
-  const records = filterClubs(data.clubs, filters);
+  const records = filterItems(data.clubs, filters, {
+    typeField: (c) => c.club_type,
+    searchFields: (c) => [c.name, c.club_type, c.about, c.mission, c.objectives, c.meeting_schedule],
+    statusCheck: (c, s) => statusCheck(c.is_active, s),
+  });
   const types = uniqueOptions(data.clubs.map((club) => club.club_type));
+  const total = data.totals?.clubs ?? data.clubs.length;
+  const perPage = 24;
   return (
     <>
       <Section
@@ -980,13 +785,20 @@ function ClubsPage({
           filters={filters}
           typeLabel="Type"
           typeOptions={types}
-          total={data.clubs.length}
+          total={total}
           visible={records.length}
         />
         <RecordGrid
           items={records}
           emptyTitle="No club records are currently published"
           render={(club) => <ClubCard key={club.id} club={club} />}
+        />
+        <ListPagination
+          page={data.page ?? 1}
+          totalPages={Math.ceil(total / perPage)}
+          total={total}
+          perPage={perPage}
+          baseHref={listingBaseHref("/campus-life/clubs", filters)}
         />
       </Section>
       <Section
@@ -1075,7 +887,13 @@ function SportsPage({
   data: CampusLifePageData;
   filters?: CampusLifeFilters;
 }) {
-  const records = filterSports(data.sports, filters);
+  const records = filterItems(data.sports, filters, {
+    typeField: (s) => s.facility_type,
+    searchFields: (s) => [s.name, s.facility_type, s.location, s.about, ...(s.sport_types ?? [])],
+    statusCheck: (s, st) => statusCheck(s.is_active, st),
+  });
+  const total = data.totals?.sports ?? data.sports.length;
+  const perPage = 16;
   return (
     <>
       <Section
@@ -1087,13 +905,20 @@ function SportsPage({
           filters={filters}
           typeLabel="Facility type"
           typeOptions={uniqueOptions(data.sports.map((item) => item.facility_type))}
-          total={data.sports.length}
+          total={total}
           visible={records.length}
         />
         <RecordGrid
           items={records}
           emptyTitle="No sports facilities are currently published"
           render={(item) => <SportCard key={item.id} item={item} />}
+        />
+        <ListPagination
+          page={data.page ?? 1}
+          totalPages={Math.ceil(total / perPage)}
+          total={total}
+          perPage={perPage}
+          baseHref={listingBaseHref("/campus-life/sports", filters)}
         />
       </Section>
       <Section
@@ -1141,7 +966,18 @@ function AccommodationPage({
   data: CampusLifePageData;
   filters?: CampusLifeFilters;
 }) {
-  const records = filterAccommodations(data.accommodations, filters);
+  const records = filterItems(data.accommodations, filters, {
+    typeField: (a) => a.accommodation_type,
+    searchFields: (a) => [a.name, a.accommodation_type, a.gender, a.about, a.rules, ...(a.amenities ?? [])],
+    statusCheck: (a, s) => {
+      if (!s) return true;
+      if (s === "accepting") return a.is_accepting_applications;
+      if (s === "closed") return !a.is_accepting_applications;
+      return statusCheck(a.is_active, s);
+    },
+  });
+  const total = data.totals?.accommodations ?? data.accommodations.length;
+  const perPage = 16;
   return (
     <>
       <Section
@@ -1161,13 +997,20 @@ function AccommodationPage({
             { value: "active", label: "Active" },
             { value: "inactive", label: "Inactive" },
           ]}
-          total={data.accommodations.length}
+          total={total}
           visible={records.length}
         />
         <RecordGrid
           items={records}
           emptyTitle="No accommodation records are currently published"
           render={(item) => <HousingCard key={item.id} item={item} />}
+        />
+        <ListPagination
+          page={data.page ?? 1}
+          totalPages={Math.ceil(total / perPage)}
+          total={total}
+          perPage={perPage}
+          baseHref={listingBaseHref("/campus-life/accommodation", filters)}
         />
       </Section>
       <Section
@@ -1255,7 +1098,13 @@ function StudentLifePage({
   data: CampusLifePageData;
   filters?: CampusLifeFilters;
 }) {
-  const records = filterGovernance(data.governance, filters);
+  const records = filterItems(data.governance, filters, {
+    typeField: (g) => g.governance_type,
+    searchFields: (g) => [g.name, g.acronym, g.governance_type, g.about, g.mandate, g.office_location],
+    statusCheck: (g, s) => statusCheck(g.is_active, s),
+  });
+  const total = data.totals?.governance ?? data.governance.length;
+  const perPage = 12;
   return (
     <>
       <Section
@@ -1269,13 +1118,20 @@ function StudentLifePage({
           typeOptions={uniqueOptions(
             data.governance.map((item) => item.governance_type),
           )}
-          total={data.governance.length}
+          total={total}
           visible={records.length}
         />
         <RecordGrid
           items={records}
           emptyTitle="No student governance records are currently published"
           render={(item) => <GovernanceCard key={item.id} item={item} />}
+        />
+        <ListPagination
+          page={data.page ?? 1}
+          totalPages={Math.ceil(total / perPage)}
+          total={total}
+          perPage={perPage}
+          baseHref={listingBaseHref("/campus-life/student-life", filters)}
         />
       </Section>
       <Section
@@ -1349,16 +1205,16 @@ function SupportPage({
             const Icon = service.icon;
             const external = service.href.startsWith("http");
             const className =
-              "border border-slate-200 bg-white p-5 transition hover:border-primary/35 hover:bg-primary/5";
+              "rounded-2xl ring-1 ring-primary/10 bg-white p-5 transition-colors duration-200 hover:ring-primary/20 hover:bg-primary/5";
             const inner = (
               <>
                 <span className="flex h-11 w-11 items-center justify-center bg-primary/10 text-primary">
                   <Icon aria-hidden className="h-5 w-5" />
                 </span>
-                <h3 className="mt-5 text-lg font-semibold text-slate-950">
+                <h3 className="mt-5 text-lg font-semibold text-foreground">
                   {service.title}
                 </h3>
-                <p className="mt-2 text-sm leading-7 text-slate-600">
+                <p className="mt-2 text-sm leading-7 text-muted-foreground">
                   {service.body}
                 </p>
               </>
@@ -1401,7 +1257,7 @@ function SupportRecords({
   const hasRecords = faqs.length || contacts.length;
   if (!hasRecords) {
     return (
-      <div className="border border-white/10 bg-white/[0.04] p-6">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
         <h3 className="text-xl font-semibold text-white">
           Use official support channels
         </h3>
@@ -1424,9 +1280,9 @@ function SupportRecords({
       {faqs.map((faq) => (
         <div
           key={faq.id}
-          className="border border-white/10 bg-white/[0.04] p-5"
+          className="rounded-2xl border border-white/10 bg-white/5 p-5"
         >
-          <p className="text-xs font-semibold uppercase text-secondary">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
             {faq.category || "FAQ"}
           </p>
           <h3 className="mt-3 text-lg font-semibold text-white">
@@ -1443,9 +1299,9 @@ function SupportRecords({
       {contacts.map((contact) => (
         <div
           key={contact.id}
-          className="border border-white/10 bg-white/[0.04] p-5"
+          className="rounded-2xl border border-white/10 bg-white/5 p-5"
         >
-          <p className="text-xs font-semibold uppercase text-secondary">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
             {contact.contact_type || "Contact"}
           </p>
           <h3 className="mt-3 text-lg font-semibold text-white">
@@ -1474,7 +1330,13 @@ function GalleryPage({
   data: CampusLifePageData;
   filters?: CampusLifeFilters;
 }) {
-  const records = filterArts(data.arts, filters);
+  const records = filterItems(data.arts, filters, {
+    typeField: (a) => a.category,
+    searchFields: (a) => [a.title, a.category, a.about],
+    statusCheck: (a, s) => statusCheck(a.is_active, s),
+  });
+  const total = data.totals?.arts ?? data.arts.length;
+  const perPage = 16;
   return (
     <>
       <Section
@@ -1486,13 +1348,20 @@ function GalleryPage({
           filters={filters}
           typeLabel="Category"
           typeOptions={uniqueOptions(data.arts.map((item) => item.category))}
-          total={data.arts.length}
+          total={total}
           visible={records.length}
         />
         <RecordGrid
           items={records}
           emptyTitle="No gallery records are currently published"
           render={(item) => <ArtCard key={item.id} item={item} />}
+        />
+        <ListPagination
+          page={data.page ?? 1}
+          totalPages={Math.ceil(total / perPage)}
+          total={total}
+          perPage={perPage}
+          baseHref={listingBaseHref("/campus-life/gallery", filters)}
         />
       </Section>
       <Section
@@ -1506,7 +1375,7 @@ function GalleryPage({
             (album) => (
               <div
                 key={album}
-                className="overflow-hidden border border-white/10 bg-white/[0.04]"
+                className="overflow-hidden rounded-2xl border border-white/10 bg-white/5"
               >
                 <div className="h-36 bg-white/10">
                   <PublicImage
@@ -1556,16 +1425,16 @@ function GalleryDetail({ item }: { item?: ArtsCulture | null }) {
 
 function DetailGrid({ rows }: { rows: [string, string][] }) {
   return (
-    <dl className="grid border border-slate-200 bg-white md:grid-cols-2">
+    <dl className="grid rounded-2xl ring-1 ring-primary/10 bg-white md:grid-cols-2">
       {rows.map(([label, value]) => (
         <div
           key={label}
-          className="border-b border-slate-200 p-5 odd:md:border-r"
+          className="border-b border-primary/10 p-5 odd:md:border-r"
         >
-          <dt className="text-xs font-semibold uppercase text-slate-500">
+          <dt className="text-xs font-semibold uppercase text-muted-foreground">
             {label}
           </dt>
-          <dd className="mt-2 text-sm font-semibold leading-7 text-slate-950">
+          <dd className="mt-2 text-sm font-semibold leading-7 text-foreground">
             {value}
           </dd>
         </div>
@@ -1588,15 +1457,15 @@ function TextBlocks({
           key={title}
           className={
             dark
-              ? "border border-white/10 bg-white/[0.04] p-5"
-              : "border border-slate-200 bg-white p-5"
+              ? "rounded-2xl border border-white/10 bg-white/5 p-5"
+              : "rounded-2xl ring-1 ring-primary/10 bg-white p-5"
           }
         >
           <h3
             className={
               dark
                 ? "text-lg font-semibold text-white"
-                : "text-lg font-semibold text-slate-950"
+                : "text-lg font-semibold text-foreground"
             }
           >
             {title}
@@ -1605,7 +1474,7 @@ function TextBlocks({
             className={
               dark
                 ? "mt-2 text-sm leading-7 text-white/70"
-                : "mt-2 text-sm leading-7 text-slate-600"
+                : "mt-2 text-sm leading-7 text-muted-foreground"
             }
           >
             {body}
@@ -1630,8 +1499,8 @@ function StepList({
           key={step}
           className={
             dark
-              ? "grid gap-4 border border-white/10 bg-white/[0.04] p-4 text-white sm:grid-cols-[48px_minmax(0,1fr)]"
-              : "grid gap-4 border border-slate-200 bg-white p-4 text-slate-950 sm:grid-cols-[48px_minmax(0,1fr)]"
+              ? "grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-white sm:grid-cols-[48px_minmax(0,1fr)]"
+              : "grid gap-4 rounded-2xl ring-1 ring-primary/10 bg-white p-4 text-foreground sm:grid-cols-[48px_minmax(0,1fr)]"
           }
         >
           <span className="flex h-10 w-10 items-center justify-center bg-primary text-sm font-semibold text-white">
@@ -1641,7 +1510,7 @@ function StepList({
             className={
               dark
                 ? "text-sm leading-7 text-white/75"
-                : "text-sm leading-7 text-slate-600"
+                : "text-sm leading-7 text-muted-foreground"
             }
           >
             {step}
@@ -1790,33 +1659,39 @@ export function CampusLifeContent({
   return (
     <PageShell>
       <AboutPageLenis>
-        <Hero
-          eyebrow={copy.eyebrow}
-          title={copy.title}
-          body={copy.body}
-          image={copy.image}
-        />
-        <div className="grid w-full gap-8 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-8">
-          <SideNav currentHref={currentHref} />
-          <div className="min-w-0">
-            <ContentByArea
-              area={area}
-              slug={slug}
-              data={data}
-              filters={filters}
+        {area === "landing" ? (
+          <CampusLifeStoryLanding testimonials={data.testimonials ?? []} />
+        ) : (
+          <>
+            <Hero
+              eyebrow={copy.eyebrow}
+              title={copy.title}
+              body={copy.body}
+              image={copy.image}
             />
-          </div>
-        </div>
-        <section className="border-y border-slate-200 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
+            <div className="grid w-full gap-8 bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-8">
+              <SideNav currentHref={currentHref} />
+              <div className="min-w-0">
+                <ContentByArea
+                  area={area}
+                  slug={slug}
+                  data={data}
+                  filters={filters}
+                />
+              </div>
+            </div>
+          </>
+        )}
+        <section className="border-y border-primary/10 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
           <div className="grid w-full gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
             <div>
-              <p className="text-sm font-semibold uppercase text-secondary">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
                 Student Services
               </p>
-              <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950 sm:text-4xl">
+              <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground sm:text-4xl">
                 Keep moving through campus life
               </h2>
-              <p className="mt-4 text-base leading-8 text-slate-600">
+              <p className="mt-4 text-base leading-8 text-muted-foreground">
                 Use official systems for service requests and student portals,
                 and use the campus-life pages to understand what support,
                 housing, activities, and student communities are available.

@@ -73,26 +73,26 @@ export default async function GovernanceBoardPage({
         className="container grid gap-6 pb-12 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]"
       >
         <div className="grid min-w-0 gap-6">
-          <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40">
+          <article className="rounded-[1.75rem] border border-border bg-white p-6 shadow-lg shadow-primary/40">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-secondary">
               Mandate
             </p>
-            <p className="mt-4 text-base leading-7 text-slate-600">
+            <p className="mt-4 text-base leading-7 text-muted-foreground">
               {board.mandate ||
                 "No public mandate details are currently published for this board."}
             </p>
           </article>
-          <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40">
+          <article className="rounded-[1.75rem] border border-border bg-white p-6 shadow-lg shadow-primary/40">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-secondary">
               Mission
             </p>
-            <p className="mt-4 text-base leading-7 text-slate-600">
+            <p className="mt-4 text-base leading-7 text-muted-foreground">
               {board.mission ||
                 "No public mission details are currently published for this board."}
             </p>
           </article>
         </div>
-        <aside className="rounded-[1.75rem] border border-slate-200 bg-slate-950 p-6 text-white shadow-lg shadow-slate-200/40 lg:self-start">
+        <aside className="rounded-[1.75rem] border border-border bg-brand-overlay p-6 text-white shadow-lg shadow-primary/40 lg:self-start">
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-secondary">
             Official Record
           </p>
@@ -116,10 +116,10 @@ export default async function GovernanceBoardPage({
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-secondary">
             Membership
           </p>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-slate-950">
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground">
             Published members
           </h2>
-          <p className="mt-3 text-base leading-7 text-slate-600">
+          <p className="mt-3 text-base leading-7 text-muted-foreground">
             The membership list is drawn from the current public governance
             record where board assignments are published.
           </p>
@@ -127,8 +127,8 @@ export default async function GovernanceBoardPage({
         {members.length ? (
           <BoardMemberGrid members={members} />
         ) : (
-          <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40">
-            <p className="text-sm font-semibold text-slate-950">
+          <article className="rounded-[1.75rem] border border-border bg-white p-6 shadow-lg shadow-primary/40">
+            <p className="text-sm font-semibold text-foreground">
               No public member records are currently published for this board.
             </p>
           </article>

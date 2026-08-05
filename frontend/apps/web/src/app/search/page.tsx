@@ -211,7 +211,7 @@ function ResultRow({ item }: { item: SearchResult }) {
   return (
     <Link
       href={item.href}
-      className="group grid gap-4 rounded-lg border border-slate-200 bg-white p-4 transition hover:border-primary/30 hover:shadow-[0_16px_45px_-34px_rgba(15,23,42,0.55)] sm:grid-cols-[48px_minmax(0,1fr)_24px]"
+      className="group grid gap-4 rounded-lg border border-border bg-white p-4 transition hover:border-primary/30 hover:shadow-[0_16px_45px_-34px_rgba(15,23,42,0.55)] sm:grid-cols-[48px_minmax(0,1fr)_24px]"
     >
       <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/10">
         <Icon aria-hidden className="h-5 w-5" />
@@ -220,14 +220,14 @@ function ResultRow({ item }: { item: SearchResult }) {
         <span className="text-xs font-semibold uppercase text-secondary">
           {item.label}
         </span>
-        <span className="mt-1 block text-lg font-semibold leading-6 text-slate-950">
+        <span className="mt-1 block text-lg font-semibold leading-6 text-foreground">
           {item.title}
         </span>
-        <span className="mt-2 block text-sm leading-6 text-slate-600">
+        <span className="mt-2 block text-sm leading-6 text-muted-foreground">
           {item.excerpt}
         </span>
       </span>
-      <span className="hidden items-center justify-center text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary sm:flex">
+      <span className="hidden items-center justify-center text-muted-foreground/70 transition group-hover:translate-x-0.5 group-hover:text-primary sm:flex">
         <ArrowRight aria-hidden className="h-5 w-5" />
       </span>
     </Link>
@@ -247,16 +247,16 @@ export default async function SearchPage({
 
   return (
     <PageShell>
-      <section className="border-b border-slate-200 bg-slate-50 px-4 py-5 sm:px-6 lg:px-8">
+      <section className="border-b border-border bg-surface-subtle px-4 py-5 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-5xl">
           <BreadcrumbTrail
             items={[{ label: "Home", href: "/" }, { label: "Search" }]}
           />
           <div className="mt-4">
-            <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">
+            <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
               Search Kisii University
             </h1>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Find news, programmes, schools, departments, events, people, and
               public notices.
             </p>
@@ -276,26 +276,26 @@ export default async function SearchPage({
               <p className="text-sm font-semibold uppercase text-secondary">
                 Search Results
               </p>
-              <h2 className="mt-1 text-2xl font-semibold text-slate-950">
+              <h2 className="mt-1 text-2xl font-semibold text-foreground">
                 {query ? `Results for "${query}"` : "Start with a search"}
               </h2>
             </div>
             {query.length >= 2 ? (
-              <p className="text-sm font-medium text-slate-500">
+              <p className="text-sm font-medium text-muted-foreground">
                 {resultCount} {resultCount === 1 ? "result" : "results"}
               </p>
             ) : null}
           </div>
 
           {query.length === 0 ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+            <div className="rounded-lg border border-border bg-surface-subtle p-5">
               <div className="flex gap-3">
                 <Search aria-hidden className="h-8 w-8 text-primary" />
                 <div>
-                  <p className="text-base font-semibold text-slate-950">
+                  <p className="text-base font-semibold text-foreground">
                     Start typing above to search.
                   </p>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
                     Try a school name, programme, department, person, event, or
                     public notice.
                   </p>
@@ -303,7 +303,7 @@ export default async function SearchPage({
               </div>
             </div>
           ) : query.length < 2 ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-5 text-sm font-medium text-slate-600">
+            <div className="rounded-lg border border-border bg-surface-subtle p-5 text-sm font-medium text-muted-foreground">
               Search terms must include at least two characters.
             </div>
           ) : searchState.status === "unavailable" ? (
@@ -343,11 +343,11 @@ export default async function SearchPage({
               ))}
             </div>
           ) : (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
-              <p className="text-base font-semibold text-slate-950">
+            <div className="rounded-lg border border-border bg-surface-subtle p-5">
+              <p className="text-base font-semibold text-foreground">
                 No results found.
               </p>
-              <p className="mt-1 text-sm leading-6 text-slate-600">
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 Check spelling or try a broader term such as admissions,
                 agriculture, school, news, or research.
               </p>

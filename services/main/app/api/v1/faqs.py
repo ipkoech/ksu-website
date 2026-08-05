@@ -51,6 +51,7 @@ async def list_admin_faqs(
     scope_type: str | None = None,
     scope_id: uuid.UUID | None = None,
     is_main: bool | None = None,
+    search: str | None = None,
     fields: FieldSelection = FieldsDep,
 ):
     selector = build_selector(FAQ, fields)
@@ -63,6 +64,7 @@ async def list_admin_faqs(
         is_main=is_main,
         is_public=None,
         status=None,
+        search=search,
         load_options=selector.load_options,
     )
     items = []

@@ -6,22 +6,27 @@ import csv
 import io
 import json
 import uuid
-from dataclasses import dataclass, field
+import xml.etree.ElementTree as ET
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from datetime import date
 from types import NoneType, UnionType
-from typing import Any, Awaitable, Callable, Union, get_args, get_origin
+from typing import Any, Union, get_args, get_origin
+from zipfile import BadZipFile, ZipFile
 
+from ksu_common.internal_client import get_integration_pool
 from pydantic import BaseModel, ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..core.config import get_settings
 from ..models import (
+    FAQ,
     AcademicCalendar,
     Board,
     Campus,
     Department,
     Division,
-    FAQ,
     Intake,
     Person,
     Programme,
@@ -58,7 +63,6 @@ from .organization import DivisionService, WingService
 from .person import PersonService
 from .staff import StaffService
 from .support import FAQService
-
 
 CreateFunc = Callable[[AsyncSession, dict[str, Any]], Awaitable[Any]]
 PrepareFunc = Callable[[AsyncSession, dict[str, Any], dict[str, Any], list[str]], Awaitable[dict[str, Any]]]
@@ -192,6 +196,70 @@ async def _create_staff_assignment(db: AsyncSession, payload: dict[str, Any]) ->
 
 async def _create_faq(db: AsyncSession, payload: dict[str, Any]) -> FAQ:
     return await FAQService.create(db, **payload)
+
+
+class ResearchImportSchema(BaseModel):
+    """Permissive schema that accepts any fields for research service imports."""
+
+    model_config = {"extra": "allow"}
+
+
+_settings = get_settings()
+
+SCHOOL_PORTAL_IMPORT_RESOURCES = {
+    "departments": {
+        "accepted_formats": ("csv", "xlsx"),
+        "columns": (
+            "name",
+            "code",
+            "slug",
+            "department_type",
+            "parent_department_id",
+            "head_id",
+            "postgraduate_coordinator_id",
+            "email",
+            "phone",
+            "office_location",
+            "is_public",
+            "display_order",
+        ),
+    },
+    "programmes": {
+        "accepted_formats": ("csv", "xlsx"),
+        "columns": (
+            "name",
+            "code",
+            "slug",
+            "level",
+            "mode_of_study",
+            "duration",
+            "department_id",
+            "entry_requirements",
+            "curriculum_overview",
+            "fees_structure",
+            "accreditation_status",
+            "display_order",
+        ),
+    },
+}
+
+
+def _make_research_create(api_path: str) -> CreateFunc:
+    """Factory that creates records by POSTing to the research service."""
+
+    async def _create(db: AsyncSession, payload: dict[str, Any]) -> None:
+        response = await get_integration_pool().request_internal(
+            "research-imports",
+            _settings.RESEARCH_SERVICE_URL.rstrip("/"),
+            "POST",
+            f"/api/v1/internal/imports/{api_path.rsplit('/', 1)[-1]}",
+            api_key=_settings.RESEARCH_SERVICE_API_KEY,
+            headers={"X-KSU-Proxy": "main-imports"},
+            json=payload,
+        )
+        response.raise_for_status()
+
+    return _create
 
 
 def _upper(value: Any) -> str:
@@ -600,6 +668,599 @@ RESOURCE_CONFIGS: dict[str, ImportResourceConfig] = {
             _column("display_order", sample=100),
         ),
     ),
+    "research-projects": ImportResourceConfig(
+        key="research-projects",
+        label="Research Projects",
+        description="Bulk create research project records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/projects"),
+        columns=(
+            _column("title", required=True, sample="Climate-Smart Agriculture for Smallholder Farmers"),
+            _column("slug", sample="climate-smart-agriculture-for-smallholder-farmers"),
+            _column("project_type", sample="applied"),
+            _column("status", sample="active"),
+            _column("summary", sample="Investigating climate adaptation strategies for smallholder farmers in Kisii and Nyamira counties."),
+            _column("abstract", sample="This project examines climate-smart agricultural practices..."),
+            _column("background", sample="Smallholder farmers in western Kenya face..."),
+            _column("methodology", sample="Mixed-methods: household surveys, field trials, and stakeholder workshops."),
+            _column("objectives", sample="1. Assess current adaptation practices; 2. Develop context-specific interventions."),
+            _column("expected_outcomes", sample="Improved crop resilience, reduced post-harvest losses."),
+            _column("impact", sample="Enhanced food security for 5,000+ farming households."),
+            _column("deliverables", sample="Technical report, policy brief, 2 journal publications."),
+            _column("start_date", sample="2026-01-15"),
+            _column("end_date", sample="2027-12-31"),
+            _column("budget", sample=15000000),
+            _column("funding_source", sample="National Research Fund"),
+            _column("progress_percentage", sample=35),
+            _column("is_featured", sample=False),
+            _column("is_public", sample=True),
+            _column("is_active", sample=True),
+        ),
+    ),
+    "research-publications": ImportResourceConfig(
+        key="research-publications",
+        label="Research Publications",
+        description="Bulk create publication records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/publications"),
+        columns=(
+            _column("title", required=True, sample="Climate Adaptation Practices Among Smallholder Maize Farmers"),
+            _column("slug", sample="climate-adaptation-practices-among-smallholder-maize-farmers"),
+            _column("publication_type", sample="journal_article"),
+            _column("status", sample="published"),
+            _column("abstract", sample="This study investigates the adoption of climate adaptation strategies..."),
+            _column("publication_date", sample="2026-03-15"),
+            _column("year", sample=2026),
+            _column("journal_name", sample="African Journal of Agricultural Research"),
+            _column("doi", sample="10.1234/ajar.2026.0123"),
+            _column("volume", sample="18"),
+            _column("issue", sample="2"),
+            _column("pages", sample="123-145"),
+            _column("publisher", sample="Academic Journals"),
+            _column("language", sample="en"),
+            _column("keywords", sample="climate adaptation; smallholder farmers; maize production"),
+            _column("citation_count", sample=5),
+            _column("is_peer_reviewed", sample=True),
+            _column("is_open_access", sample=True),
+            _column("is_featured", sample=False),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-grants": ImportResourceConfig(
+        key="research-grants",
+        label="Research Grants",
+        description="Bulk create grant/funding opportunity records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/grants"),
+        columns=(
+            _column("title", required=True, sample="2026/2027 National Research Fund Call"),
+            _column("slug", sample="2026-2027-national-research-fund-call"),
+            _column("grant_type", sample="research"),
+            _column("status", sample="open"),
+            _column("summary", sample="NRF is inviting proposals for multi-disciplinary research projects."),
+            _column("description", sample="The National Research Fund invites applications for..."),
+            _column("objectives", sample="Support high-impact research aligned to national development priorities."),
+            _column("eligibility", sample="Principal investigators must hold a PhD and be affiliated with a Kenyan university."),
+            _column("focus_areas", sample="Agriculture, health, ICT, energy, water, and climate change."),
+            _column("requirements", sample="Full proposal, budget, CV of PI, institutional approval letter."),
+            _column("award_ceiling", sample=5000000),
+            _column("award_floor", sample=500000),
+            _column("duration_months", sample=24),
+            _column("application_start", sample="2026-06-01"),
+            _column("application_deadline", sample="2026-08-31"),
+            _column("contact_email", sample="grants@nrf.go.ke"),
+            _column("is_featured", sample=True),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-innovations": ImportResourceConfig(
+        key="research-innovations",
+        label="Research Innovations",
+        description="Bulk create innovation/invention records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/innovations"),
+        columns=(
+            _column("title", required=True, sample="Solar-Powered Maize Dryer"),
+            _column("slug", sample="solar-powered-maize-dryer"),
+            _column("innovation_type", sample="product"),
+            _column("status", sample="prototype"),
+            _column("summary", sample="A low-cost solar dryer that reduces post-harvest losses for smallholder farmers."),
+            _column("description", sample="The Solar-Powered Maize Dryer is a portable..."),
+            _column("problem_addressed", sample="Post-harvest losses due to inadequate drying facilities."),
+            _column("solution", sample="Utilizes solar energy and a convection-based airflow design."),
+            _column("benefits", sample="Reduces drying time by 60%, preserves grain quality."),
+            _column("applications", sample="Smallholder maize farming, grain storage cooperatives."),
+            _column("target_users", sample="Smallholder farmers, agricultural cooperatives."),
+            _column("patent_number", sample="KE/P/2026/00123"),
+            _column("patent_status", sample="filed"),
+            _column("development_stage", sample="prototype"),
+            _column("is_featured", sample=False),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-startups": ImportResourceConfig(
+        key="research-startups",
+        label="Research Startup Ventures",
+        description="Bulk create startup, spinout, and venture records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/startups"),
+        columns=(
+            _column("name", required=True, sample="SoilSense Analytics"),
+            _column("slug", sample="soilsense-analytics"),
+            _column("code", sample="SSA-001"),
+            _column("innovation_id", required=True, sample="00000000-0000-0000-0000-000000000000"),
+            _column("partner_id", sample="00000000-0000-0000-0000-000000000000"),
+            _column("center_id", sample="00000000-0000-0000-0000-000000000000"),
+            _column("venture_stage", sample="incubating"),
+            _column("registration_status", sample="in_progress"),
+            _column("sector", sample="agriculture"),
+            _column("summary", sample="A venture commercializing smart soil monitoring tools."),
+            _column("business_model", sample="Device sales, support contracts, and advisory subscriptions."),
+            _column("funding_raised", sample=250000),
+            _column("currency", sample="KES"),
+            _column("status", sample="active"),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-incubation-records": ImportResourceConfig(
+        key="research-incubation-records",
+        label="Research Incubation Records",
+        description="Bulk create incubation, acceleration, and mentorship records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/incubation-records"),
+        columns=(
+            _column("title", required=True, sample="SoilSense Commercialization Incubation"),
+            _column("slug", sample="soilsense-commercialization-incubation"),
+            _column("innovation_id", required=True, sample="00000000-0000-0000-0000-000000000000"),
+            _column("startup_id", sample="00000000-0000-0000-0000-000000000000"),
+            _column("partner_id", sample="00000000-0000-0000-0000-000000000000"),
+            _column("program_name", sample="Kisii Innovation Incubation Programme"),
+            _column("cohort", sample="2026 Cohort"),
+            _column("incubation_type", sample="incubation"),
+            _column("stage", sample="active"),
+            _column("start_date", sample="2026-02-01"),
+            _column("end_date", sample="2026-08-31"),
+            _column("support_received", sample="Mentorship, market testing, and prototype refinement."),
+            _column("outcomes", sample="Pilot customers identified and support plan completed."),
+            _column("status", sample="active"),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-competition-entries": ImportResourceConfig(
+        key="research-competition-entries",
+        label="Research Competition Entries",
+        description="Bulk create innovation competition, showcase, hackathon, and pitch records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/competition-entries"),
+        columns=(
+            _column("title", required=True, sample="SoilSense Innovation Showcase Entry"),
+            _column("slug", sample="soilsense-innovation-showcase-entry"),
+            _column("innovation_id", required=True, sample="00000000-0000-0000-0000-000000000000"),
+            _column("startup_id", sample="00000000-0000-0000-0000-000000000000"),
+            _column("partner_id", sample="00000000-0000-0000-0000-000000000000"),
+            _column("entry_type", sample="showcase"),
+            _column("competition_name", sample="Kisii University Innovation Week"),
+            _column("organizer_name", sample="Research, Extension, Innovation and Resource Mobilization"),
+            _column("event_date", sample="2026-05-20"),
+            _column("entry_status", sample="finalist"),
+            _column("award", sample="Best Agriculture Innovation"),
+            _column("prize_value", sample=100000),
+            _column("currency", sample="KES"),
+            _column("status", sample="completed"),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-technology-transfer-cases": ImportResourceConfig(
+        key="research-technology-transfer-cases",
+        label="Technology Transfer Cases",
+        description="Bulk create disclosure, licensing, adoption, and commercialization records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/technology-transfer-cases"),
+        columns=(
+            _column("title", required=True, sample="SoilSense Field Deployment Transfer"),
+            _column("slug", sample="soilsense-field-deployment-transfer"),
+            _column("innovation_id", required=True, sample="00000000-0000-0000-0000-000000000000"),
+            _column("partner_id", sample="00000000-0000-0000-0000-000000000000"),
+            _column("case_type", sample="license"),
+            _column("transfer_status", sample="licensed"),
+            _column("disclosure_date", sample="2026-01-15"),
+            _column("agreement_date", sample="2026-04-01"),
+            _column("ip_reference", sample="KSU-IP-2026-001"),
+            _column("agreement_reference", sample="KSU-TT-2026-001"),
+            _column("license_type", sample="non-exclusive"),
+            _column("territory", sample="Kenya"),
+            _column("summary", sample="Transfer case for partner-supported field deployment."),
+            _column("public_benefit", sample="Improves water-use decisions for smallholder farms."),
+            _column("status", sample="active"),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-partners": ImportResourceConfig(
+        key="research-partners",
+        label="Research Partners",
+        description="Bulk create partner/collaborator records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/partners"),
+        columns=(
+            _column("name", required=True, sample="Kenya Agricultural and Livestock Research Organization"),
+            _column("slug", sample="kenya-agricultural-and-livestock-research-organization"),
+            _column("partner_type", sample="research_institute"),
+            _column("status", sample="active"),
+            _column("about", sample="KALRO is a premier research institution driving agricultural innovation in Kenya."),
+            _column("collaboration_areas", sample="Crop science research, extension services, farmer training."),
+            _column("key_achievements", sample="Joint publications, 3 collaborative research projects, farmer field schools."),
+            _column("website", sample="https://www.kalro.org"),
+            _column("email", sample="partnerships@kalro.org"),
+            _column("phone", sample="+254700000000"),
+            _column("country", sample="Kenya"),
+            _column("is_featured", sample=True),
+            _column("is_public", sample=True),
+            _column("is_active", sample=True),
+        ),
+    ),
+    "research-centers": ImportResourceConfig(
+        key="research-centers",
+        label="Research Centers",
+        description="Bulk create research center records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/centers"),
+        columns=(
+            _column("name", required=True, sample="Center for Climate Change and Sustainability"),
+            _column("slug", sample="center-for-climate-change-and-sustainability"),
+            _column("code", sample="CCCS"),
+            _column("center_type", sample="research"),
+            _column("about", sample="The center conducts interdisciplinary research on climate resilience."),
+            _column("mission", sample="To advance climate adaptation research and policy engagement."),
+            _column("vision", sample="To be a leading climate research center in East Africa."),
+            _column("email", sample="cccs@kisiiuniversity.ac.ke"),
+            _column("phone", sample="+254720000000"),
+            _column("website", sample="https://cccs.kisiiuniversity.ac.ke"),
+            _column("is_public", sample=True),
+            _column("is_active", sample=True),
+        ),
+    ),
+    "research-outputs": ImportResourceConfig(
+        key="research-outputs",
+        label="Research Outputs",
+        description="Bulk create research output records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/outputs"),
+        columns=(
+            _column("title", required=True, sample="Climate-Smart Agriculture Policy Brief"),
+            _column("slug", sample="climate-smart-agriculture-policy-brief"),
+            _column("output_type", sample="policy_brief"),
+            _column("summary", sample="Evidence-based policy recommendations for county governments."),
+            _column("description", sample="This policy brief synthesizes findings from..."),
+            _column("publication_date", sample="2026-04-01"),
+            _column("language", sample="en"),
+            _column("keywords", sample="climate policy; agriculture; county government"),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-training": ImportResourceConfig(
+        key="research-training",
+        label="Research Training",
+        description="Bulk create training program records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/training"),
+        columns=(
+            _column("title", required=True, sample="Advanced Research Methods Workshop"),
+            _column("slug", sample="advanced-research-methods-workshop"),
+            _column("program_type", sample="workshop"),
+            _column("summary", sample="A 5-day hands-on workshop on advanced quantitative and qualitative research methods."),
+            _column("description", sample="This workshop covers survey design, statistical analysis, and NVivo for qualitative data."),
+            _column("objectives", sample="Equip researchers with advanced data collection and analysis skills."),
+            _column("target_audience", sample="Postgraduate students and early-career researchers."),
+            _column("prerequisites", sample="Basic knowledge of research methodology."),
+            _column("duration", sample="5 days"),
+            _column("start_date", sample="2026-07-10"),
+            _column("end_date", sample="2026-07-14"),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-scholarships": ImportResourceConfig(
+        key="research-scholarships",
+        label="Research Scholarships",
+        description="Bulk create scholarship records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/scholarships"),
+        columns=(
+            _column("title", required=True, sample="PhD Research Fellowship in Climate Science"),
+            _column("slug", sample="phd-research-fellowship-in-climate-science"),
+            _column("scholarship_type", sample="doctoral"),
+            _column("summary", sample="Fully-funded 3-year PhD position in climate adaptation research."),
+            _column("description", sample="The fellowship supports doctoral research on..."),
+            _column("eligibility", sample="Master's degree in climate science, agriculture, or related field."),
+            _column("requirements", sample="Research proposal, academic transcripts, 2 reference letters."),
+            _column("benefits", sample="Tuition, stipend, research grant, conference travel."),
+            _column("application_deadline", sample="2026-09-30"),
+            _column("covers_tuition", sample=True),
+            _column("covers_stipend", sample=True),
+            _column("covers_research", sample=True),
+            _column("duration_months", sample=36),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-mentorship": ImportResourceConfig(
+        key="research-mentorship",
+        label="Research Mentorship",
+        description="Bulk create mentorship program records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/mentorship"),
+        columns=(
+            _column("title", required=True, sample="Early-Career Researcher Mentorship Program"),
+            _column("slug", sample="early-career-researcher-mentorship-program"),
+            _column("program_type", sample="one-on-one"),
+            _column("summary", sample="6-month mentorship pairing early-career researchers with senior faculty."),
+            _column("description", sample="This program connects early-career researchers..."),
+            _column("objectives", sample="Build research capacity, grant-writing skills, and publication readiness."),
+            _column("target_audience", sample="PhD students and lecturers within 3 years of appointment."),
+            _column("duration_months", sample=6),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-consultancies": ImportResourceConfig(
+        key="research-consultancies",
+        label="Research Consultancies",
+        description="Bulk create consultancy records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/consultancies"),
+        columns=(
+            _column("title", required=True, sample="Environmental Impact Assessment for Kisii Water Project"),
+            _column("slug", sample="environmental-impact-assessment-for-kisii-water-project"),
+            _column("consultancy_type", sample="environmental"),
+            _column("summary", sample="Conducting a comprehensive environmental impact assessment."),
+            _column("description", sample="The consultancy involves baseline studies, stakeholder engagement..."),
+            _column("client_name", sample="Kisii County Government"),
+            _column("start_date", sample="2026-04-01"),
+            _column("end_date", sample="2026-08-31"),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-endowments": ImportResourceConfig(
+        key="research-endowments",
+        label="Research Endowments",
+        description="Bulk create endowment fund records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/endowments"),
+        columns=(
+            _column("name", required=True, sample="Prof. John Okoth Research Excellence Fund"),
+            _column("slug", sample="prof-john-okoth-research-excellence-fund"),
+            _column("fund_type", sample="research_excellence"),
+            _column("summary", sample="Endowment fund supporting graduate research in agricultural sciences."),
+            _column("description", sample="Established in 2024 to promote research excellence..."),
+            _column("target_amount", sample=10000000),
+            _column("current_amount", sample=3500000),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-programs": ImportResourceConfig(
+        key="research-programs",
+        label="Research Programs",
+        description="Bulk create research program records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/programs"),
+        columns=(
+            _column("name", required=True, sample="Sustainable Agriculture Research Program"),
+            _column("slug", sample="sustainable-agriculture-research-program"),
+            _column("code", sample="SARP"),
+            _column("description", sample="A multi-year institutional program focused on sustainable agricultural systems."),
+            _column("objectives", sample="Advance food security research, build farmer resilience, influence policy."),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-farms": ImportResourceConfig(
+        key="research-farms",
+        label="Research Farms",
+        description="Bulk create research farm records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/farms"),
+        columns=(
+            _column("name", required=True, sample="Kisii University Demonstration Farm"),
+            _column("slug", sample="kisii-university-demonstration-farm"),
+            _column("code", sample="KUDF"),
+            _column("farm_type", sample="demonstration"),
+            _column("location", sample="Main Campus, Kisii"),
+            _column("description", sample="A 20-acre demonstration farm showcasing sustainable agricultural practices."),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-sustainability": ImportResourceConfig(
+        key="research-sustainability",
+        label="Sustainability Initiatives",
+        description="Bulk create sustainability initiative records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/sustainability"),
+        columns=(
+            _column("title", required=True, sample="Campus Zero-Waste Initiative"),
+            _column("slug", sample="campus-zero-waste-initiative"),
+            _column("initiative_type", sample="waste_management"),
+            _column("summary", sample="A campus-wide program to reduce, reuse, and recycle waste."),
+            _column("description", sample="The initiative includes waste segregation, composting, and recycling programs."),
+            _column("objectives", sample="Reduce landfill waste by 70%, establish composting facility."),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-donors": ImportResourceConfig(
+        key="research-donors",
+        label="Research Donors",
+        description="Bulk create donor records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/donors"),
+        columns=(
+            _column("name", required=True, sample="Mastercard Foundation"),
+            _column("donor_type", sample="foundation"),
+            _column("about", sample="The Mastercard Foundation supports education and youth employment in Africa."),
+            _column("email", sample="partnerships@mastercardfdn.org"),
+            _column("website", sample="https://mastercardfdn.org"),
+            _column("country", sample="Kenya"),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-funders": ImportResourceConfig(
+        key="research-funders",
+        label="Research Funders",
+        description="Bulk create funder records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/funders"),
+        columns=(
+            _column("name", required=True, sample="National Research Fund"),
+            _column("funder_type", sample="government"),
+            _column("about", sample="The NRF supports research aligned to Kenya's development priorities."),
+            _column("email", sample="info@nrf.go.ke"),
+            _column("website", sample="https://www.nrf.go.ke"),
+            _column("country", sample="Kenya"),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-impact-metrics": ImportResourceConfig(
+        key="research-impact-metrics",
+        label="Research Impact Metrics",
+        description="Bulk create impact metric records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/impact-metrics"),
+        columns=(
+            _column("title", required=True, sample="2026 Research Impact Report"),
+            _column("slug", sample="2026-research-impact-report"),
+            _column("metric_type", sample="annual_report"),
+            _column("category", sample="research_outputs"),
+            _column("summary", sample="Annual report tracking research outputs, citations, and community impact."),
+            _column("reporting_year", sample=2026),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-themes": ImportResourceConfig(
+        key="research-themes",
+        label="Research Themes",
+        description="Bulk create research theme records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/themes"),
+        columns=(
+            _column("name", required=True, sample="Food Security and Sustainable Agriculture"),
+            _column("slug", sample="food-security-and-sustainable-agriculture"),
+            _column("code", sample="FSSA"),
+            _column("description", sample="Research addressing food production, distribution, and sustainability."),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-focus-areas": ImportResourceConfig(
+        key="research-focus-areas",
+        label="Research Focus Areas",
+        description="Bulk create focus area records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/focus-areas"),
+        columns=(
+            _column("name", required=True, sample="Climate-Smart Agriculture"),
+            _column("slug", sample="climate-smart-agriculture"),
+            _column("code", sample="CSA"),
+            _column("description", sample="Research on agricultural practices that adapt to and mitigate climate change."),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-expertise-tags": ImportResourceConfig(
+        key="research-expertise-tags",
+        label="Research Expertise Tags",
+        description="Bulk create expertise tag records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/expertise-tags"),
+        columns=(
+            _column("name", required=True, sample="Climate Modelling"),
+            _column("slug", sample="climate-modelling"),
+            _column("category", sample="environmental_science"),
+            _column("description", sample="Expertise in regional and global climate modelling techniques."),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-journals": ImportResourceConfig(
+        key="research-journals",
+        label="Research Journals",
+        description="Bulk create journal records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/journals"),
+        columns=(
+            _column("name", required=True, sample="East African Journal of Science and Technology"),
+            _column("slug", sample="east-african-journal-of-science-and-technology"),
+            _column("publisher", sample="Kisii University Press"),
+            _column("issn", sample="2958-1234"),
+            _column("description", sample="A peer-reviewed journal publishing research across scientific disciplines."),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-grant-guidelines": ImportResourceConfig(
+        key="research-grant-guidelines",
+        label="Research Grant Guidelines",
+        description="Bulk create grant guideline records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/grant-guidelines"),
+        columns=(
+            _column("title", required=True, sample="NRF Proposal Writing Guidelines"),
+            _column("slug", sample="nrf-proposal-writing-guidelines"),
+            _column("guideline_type", sample="proposal_writing"),
+            _column("summary", sample="Step-by-step guide for preparing competitive research proposals."),
+            _column("description", sample="Guidelines cover proposal structure, budget preparation..."),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-donations": ImportResourceConfig(
+        key="research-donations",
+        label="Research Donations",
+        description="Bulk create donation records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/donations"),
+        columns=(
+            _column("donation_number", required=True, sample="DON2026-001"),
+            _column("donation_type", sample="monetary"),
+            _column("amount", sample=1500000),
+            _column("currency", sample="KES"),
+            _column("description", sample="Equipment donation for the chemistry laboratory."),
+            _column("donation_date", sample="2026-02-14"),
+            _column("is_public", sample=True),
+        ),
+    ),
+    "research-stories": ImportResourceConfig(
+        key="research-stories",
+        label="Research Success Stories",
+        description="Bulk create success story records via the research service.",
+        scope="research:write",
+        schema=ResearchImportSchema,
+        create=_make_research_create("/api/v1/stories"),
+        columns=(
+            _column("title", required=True, sample="How Solar Dryers Transformed Maize Farming in Kisii"),
+            _column("slug", sample="how-solar-dryers-transformed-maize-farming-in-kisii"),
+            _column("story_type", sample="impact"),
+            _column("summary", sample="A story of how university research reduced post-harvest losses for 200+ farmers."),
+            _column("description", sample="In 2025, researchers from Kisii University deployed solar dryers..."),
+            _column("is_public", sample=True),
+        ),
+    ),
 }
 
 
@@ -625,6 +1286,8 @@ class ImportService:
     @staticmethod
     async def parse_upload(filename: str, content: bytes) -> list[dict[str, Any]]:
         suffix = filename.rsplit(".", 1)[-1].lower() if "." in filename else "csv"
+        if suffix == "xlsx":
+            return _parse_xlsx(content)
         text = content.decode("utf-8-sig")
         if suffix == "json":
             payload = json.loads(text)
@@ -723,6 +1386,66 @@ def _normalize_row(row: dict[str, Any]) -> dict[str, Any]:
         else:
             normalized[cleaned_key] = value
     return normalized
+
+
+def _parse_xlsx(content: bytes) -> list[dict[str, Any]]:
+    """Read the first worksheet from a standard XLSX archive."""
+    namespace = {"x": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+    try:
+        with ZipFile(io.BytesIO(content)) as workbook:
+            shared_strings: list[str] = []
+            if "xl/sharedStrings.xml" in workbook.namelist():
+                root = ET.fromstring(workbook.read("xl/sharedStrings.xml"))
+                shared_strings = [
+                    "".join(node.itertext())
+                    for node in root.findall("x:si", namespace)
+                ]
+            sheet_paths = sorted(
+                name
+                for name in workbook.namelist()
+                if name.startswith("xl/worksheets/sheet") and name.endswith(".xml")
+            )
+            if not sheet_paths:
+                raise ValueError("XLSX file does not contain a worksheet")
+            sheet = ET.fromstring(workbook.read(sheet_paths[0]))
+    except (BadZipFile, ET.ParseError, KeyError) as exc:
+        raise ValueError("Invalid XLSX file") from exc
+
+    values: list[list[Any]] = []
+    for row in sheet.findall(".//x:sheetData/x:row", namespace):
+        cells: dict[int, Any] = {}
+        for cell in row.findall("x:c", namespace):
+            reference = cell.attrib.get("r", "A1")
+            letters = "".join(char for char in reference if char.isalpha())
+            column = 0
+            for letter in letters.upper():
+                column = column * 26 + ord(letter) - 64
+            value_node = cell.find("x:v", namespace)
+            inline_node = cell.find("x:is", namespace)
+            value: Any = None
+            if inline_node is not None:
+                value = "".join(inline_node.itertext())
+            elif value_node is not None:
+                value = value_node.text
+                if cell.attrib.get("t") == "s" and value is not None:
+                    value = shared_strings[int(value)]
+            cells[max(column - 1, 0)] = value
+        if cells:
+            values.append([cells.get(index) for index in range(max(cells) + 1)])
+    if not values:
+        return []
+    headers = [str(value or "").strip() for value in values[0]]
+    return [
+        _normalize_row(
+            {
+                header: row[index] if index < len(row) else None
+                for index, header in enumerate(headers)
+                if header
+            }
+        )
+        for row in values[1:]
+        if any(value not in (None, "") for value in row)
+    ]
 
 
 async def _validate_row(

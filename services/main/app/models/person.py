@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime
+from datetime import date
 from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa
@@ -97,6 +97,8 @@ class Person(Base):
     research_interests: Mapped[Optional[list[str]]] = mapped_column(JSONB, nullable=True)
     teaching_areas: Mapped[Optional[list[str]]] = mapped_column(JSONB, nullable=True)
     publications_count: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("0"))
+    publication_records: Mapped[Optional[list[dict]]] = mapped_column(JSONB, nullable=True)
+    research_grants_won: Mapped[Optional[list[dict]]] = mapped_column(JSONB, nullable=True)
     h_index: Mapped[Optional[int]] = mapped_column(sa.Integer, nullable=True)
 
     # Office

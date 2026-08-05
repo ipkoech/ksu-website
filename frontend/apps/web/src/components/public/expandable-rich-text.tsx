@@ -27,7 +27,7 @@ export function ExpandableRichText({
     <div>
       <div
         className={[
-          "relative space-y-3 overflow-hidden text-sm leading-7 text-slate-700 transition-[max-height] duration-300",
+          "relative space-y-3 overflow-hidden text-sm leading-7 text-muted-foreground transition-[max-height] duration-300",
           isLong && !expanded ? "after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-12 after:bg-gradient-to-t after:from-white after:to-transparent" : "",
         ].join(" ")}
         style={
@@ -49,7 +49,7 @@ export function ExpandableRichText({
           {expanded ? "Show less" : "Read full biography"}
           <ChevronDown
             aria-hidden
-            className={`h-4 w-4 transition ${expanded ? "rotate-180" : ""}`}
+            className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
           />
         </button>
       ) : null}

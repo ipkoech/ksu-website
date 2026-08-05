@@ -7,22 +7,106 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from ksu_common.internal_client import internal_key_guard
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from ...api.v1._fields import FieldsDep, FieldSelection, build_selector
 from ...core.config import get_settings
 from ...core.database import get_db
-from ...models import Department, Media, Person, StaffAssignment
-from ...services import DepartmentService, PersonService, StaffService
+from ...helpers.email import send_email
+from ...models import Event, Media, Person, StaffAssignment
+from ...services import (
+    DepartmentService,
+    EventService,
+    NotificationService,
+    PersonService,
+    StaffService,
+)
 
 router = APIRouter(tags=["Internal"])
 settings = get_settings()
 
 
-def verify_internal_key(x_internal_key: str = Header(...)) -> None:
-    if x_internal_key != settings.INTERNAL_API_KEY:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid internal key")
+verify_internal_key = internal_key_guard(
+    lambda: get_settings().INTERNAL_API_KEY,
+    allow_legacy_header=False,
+)
+
+
+class InternalEmailPayload(BaseModel):
+    to_email: str = Field(..., max_length=320)
+    subject: str = Field(..., max_length=255)
+    text_body: str
+    html_body: str | None = None
+
+
+class InternalNotificationBroadcastPayload(BaseModel):
+    role_names: list[str] = Field(default_factory=list)
+    title: str = Field(..., max_length=255)
+    message: str
+    subject: str | None = Field(default=None, max_length=255)
+    notification_type: str = Field(default="info", max_length=50)
+    priority: str = Field(default="normal", max_length=32)
+    action_url: str | None = Field(default=None, max_length=500)
+    channels: list[str] = Field(default_factory=lambda: ["in_app"])
+    payload: dict | None = None
+
+
+@router.get("/events", dependencies=[Depends(verify_internal_key)])
+async def list_internal_events(
+    scope_type: str | None = Query(default=None, max_length=64),
+    scope_id: uuid.UUID | None = None,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    fields: FieldSelection = FieldsDep,
+    db: AsyncSession = Depends(get_db),
+):
+    """Return public scoped events to authenticated sibling services."""
+    selector = build_selector(Event, fields)
+    result = await EventService.list(
+        db,
+        page=page,
+        per_page=per_page,
+        scope_type=scope_type,
+        scope_id=scope_id,
+        is_public=True,
+        load_options=selector.load_options,
+    )
+    return {"status": "success", "message": "ok", "data": selector.apply(result.items), "meta": result.meta}
+
+
+@router.post("/email/send", dependencies=[Depends(verify_internal_key)])
+async def send_internal_email(payload: InternalEmailPayload):
+    provider_id = await send_email(
+        to_email=payload.to_email,
+        subject=payload.subject,
+        text_body=payload.text_body,
+        html_body=payload.html_body,
+    )
+    return {"provider_id": provider_id}
+
+
+@router.post("/notifications/broadcast", dependencies=[Depends(verify_internal_key)])
+async def broadcast_internal_notification(
+    payload: InternalNotificationBroadcastPayload,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await NotificationService.send_broadcast(
+        db,
+        role_names=payload.role_names,
+        title=payload.title,
+        subject=payload.subject,
+        message=payload.message,
+        notification_type=payload.notification_type,
+        priority=payload.priority,
+        action_url=payload.action_url,
+        channels=payload.channels,
+        payload=payload.payload,
+    )
+    return result
 
 
 @router.get("/persons/{person_id}", dependencies=[Depends(verify_internal_key)])
@@ -85,6 +169,29 @@ async def get_department_snapshot(department_id: uuid.UUID, db: AsyncSession = D
         "department_type": department.department_type,
         "school_id": str(department.school_id) if department.school_id else None,
         "is_active": department.is_active,
+    }
+
+
+@router.get(
+    "/schools/{school_id}/departments/{department_id}",
+    dependencies=[Depends(verify_internal_key)],
+)
+async def check_department_school(
+    school_id: uuid.UUID,
+    department_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Validate the cross-service school/department ownership pair."""
+    department = await DepartmentService.get_by_id(db, department_id, is_active=None)
+    if department is None or department.school_id != school_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Department does not belong to school",
+        )
+    return {
+        "school_id": str(school_id),
+        "department_id": str(department_id),
+        "exists": True,
     }
 
 

@@ -1,7 +1,9 @@
-import { PublicSectionPage } from "@/components/public/section-page";
-import { getTendersPageConfig } from "@/lib/utility-page-data";
+import { permanentRedirect } from "next/navigation";
 
-export default async function TendersPage() {
-  return <PublicSectionPage config={await getTendersPageConfig()} />;
+// Tenders are managed entirely on the official procurement portal; this
+// route exists so internal links and old bookmarks keep working.
+export default function TendersPage() {
+  permanentRedirect(
+    "https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders",
+  );
 }
-

@@ -15,12 +15,34 @@ from ksu_common import PaginatedResult
 
 from ..core.config import get_settings
 from ..helpers.slug import unique_slug
-from ..models import User
+from ..models import (
+    Announcement,
+    Blog,
+    Board,
+    ClubActivity,
+    Event,
+    News,
+    PageSection,
+    PartnershipSpotlight,
+    Person,
+    School,
+    Slider,
+    SliderGroup,
+    User,
+)
 from ..helpers.storage import delete_file, upload_file
 from ..models import Media, MediaFolder, MediaLink
 from ._base import apply_updates, ilike_any, paginate_query
 
 settings = get_settings()
+
+CV_MIME_TYPES = frozenset(
+    {
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    }
+)
 
 
 ENTITY_FOLDER_ALIASES = {
@@ -56,6 +78,29 @@ ENTITY_FOLDER_ALIASES = {
     "slider-groups": "slider-groups",
 }
 
+DIRECT_ATTACHMENT_SCOPE_TYPES = frozenset(
+    {
+        "campus",
+        "school",
+        "department",
+        "programme",
+        "division",
+        "wing",
+    }
+)
+
+CONTENT_ATTACHMENT_MODELS = {
+    "announcement": Announcement,
+    "blog": Blog,
+    "club_activity": ClubActivity,
+    "event": Event,
+    "news": News,
+    "slider": Slider,
+    "slider_group": SliderGroup,
+    "page_section": PageSection,
+    "partnership_spotlight": PartnershipSpotlight,
+}
+
 
 def _safe_folder_segment(value: str) -> str:
     segment = re.sub(r"[^a-zA-Z0-9_-]+", "-", value.strip().replace("_", "-")).strip("-").lower()
@@ -76,6 +121,59 @@ class MediaService:
     """Media upload and management."""
 
     @staticmethod
+    def validate_cv_mime_type(mime_type: str | None) -> None:
+        if mime_type not in CV_MIME_TYPES:
+            raise ValueError("CV file must be a PDF or Word document.")
+
+    @staticmethod
+    def validate_cv_media(media: Media) -> None:
+        if media.media_type != "document":
+            raise ValueError("CV file must be a document.")
+        mime_type = getattr(media, "mime_type", None)
+        if mime_type is not None:
+            MediaService.validate_cv_mime_type(mime_type)
+
+    @staticmethod
+    async def ensure_school_media_folder(
+        db: AsyncSession,
+        school_id: uuid.UUID,
+    ) -> MediaFolder:
+        """Return the deterministic private media folder for one school."""
+        slug = build_entity_upload_folder("school", school_id)
+        result = await db.execute(
+            MediaFolder.active_query().where(
+                MediaFolder.parent_id.is_(None),
+                MediaFolder.slug == slug,
+                MediaFolder.scope_type == "school",
+                MediaFolder.scope_id == school_id,
+            )
+        )
+        folder = result.scalar_one_or_none()
+        if folder is not None:
+            return folder
+
+        school_result = await db.execute(
+            select(School.name, School.code).where(
+                School.id == school_id,
+                School.deleted_at.is_(None),
+            ).with_for_update()
+        )
+        school = school_result.one_or_none()
+        if school is None:
+            raise ValueError("School not found")
+        folder = MediaFolder(
+            name=f"{school.code or school.name} Media",
+            slug=slug,
+            description="Media owned and managed by this school.",
+            is_public=False,
+            scope_type="school",
+            scope_id=school_id,
+        )
+        db.add(folder)
+        await db.flush()
+        return folder
+
+    @staticmethod
     async def upload(
         db: AsyncSession,
         *,
@@ -91,31 +189,218 @@ class MediaService:
         _validate_upload_mime_type(file.content_type)
 
         resolved_folder_path = folder_path or ""
+        folder: MediaFolder | None = None
+        attachment_scope: tuple[str, uuid.UUID | None] | None = None
         if entity_type or entity_id:
             if not entity_type or entity_id is None:
                 raise ValueError("Both entity_type and entity_id are required for entity uploads")
             resolved_folder_path = build_entity_upload_folder(entity_type, entity_id, role)
+            attachment_scope = await MediaService.get_attachment_scope(
+                db,
+                entity_type=entity_type,
+                entity_id=entity_id,
+            )
+            if (
+                folder_id is None
+                and attachment_scope[0] == "school"
+                and attachment_scope[1] is not None
+            ):
+                folder = await MediaService.ensure_school_media_folder(db, attachment_scope[1])
+                folder_id = folder.id
 
         if folder_id:
-            folder = await MediaFolder.get_by_id(db, folder_id)
+            folder = folder or await MediaFolder.get_by_id(db, folder_id)
             if folder is None:
                 raise ValueError("Media folder not found")
             if not resolved_folder_path:
                 resolved_folder_path = folder.slug
 
         metadata = await upload_file(file, resolved_folder_path)
-        _validate_upload_size(metadata["file_size"])
-        media = Media(
-            folder_id=folder_id,
-            uploaded_by_id=uploaded_by_id,
-            is_public=is_public,
-            is_processed=True,
-            media_type=_infer_media_type(metadata["mime_type"]),
-            **metadata,
-        )
-        db.add(media)
-        await db.flush()
-        return media
+        try:
+            _validate_upload_size(metadata["file_size"])
+            media = Media(
+                folder_id=folder_id,
+                uploaded_by_id=uploaded_by_id,
+                is_public=is_public,
+                is_processed=True,
+                media_type=_infer_media_type(metadata["mime_type"]),
+                **metadata,
+            )
+            db.add(media)
+            await db.flush()
+            if entity_type and entity_id is not None:
+                scope_type, scope_id = attachment_scope or await MediaService.get_attachment_scope(
+                    db, entity_type=entity_type, entity_id=entity_id
+                )
+            if scope_type == "club":
+                media.is_public = False
+            link_metadata = {"is_public": is_public}
+            if folder_id is not None:
+                link_metadata["folder_id"] = folder_id
+            if scope_type == "school":
+                link_metadata.update(
+                    status="draft",
+                    workflow_status="draft",
+                    owner_portal="schools",
+                    owner_scope_type="school",
+                    owner_scope_id=scope_id,
+                    author_user_id=uploaded_by_id,
+                )
+            if scope_type == "club":
+                link_metadata = {
+                    "is_public": False,
+                    "status": "draft",
+                    "workflow_status": "draft",
+                    "owner_portal": "student-clubs",
+                    "owner_scope_type": "club",
+                    "owner_scope_id": scope_id,
+                    "author_user_id": uploaded_by_id,
+                }
+            await MediaService.link_media(
+                db,
+                media_id=media.id,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                role=role or "attachment",
+                **link_metadata,
+            )
+            return media
+        except Exception:
+            await db.rollback()
+            try:
+                await delete_file(metadata["storage_path"])
+            except Exception:
+                pass
+            raise
+
+    @staticmethod
+    async def get_attachment_scope(
+        db: AsyncSession,
+        *,
+        entity_type: str,
+        entity_id: uuid.UUID,
+    ) -> tuple[str, uuid.UUID | None]:
+        """Resolve an attachment target to the scope used for authorization."""
+        normalized_type = _safe_folder_segment(entity_type).replace("-", "_")
+        normalized_type = {
+            "campuses": "campus",
+            "schools": "school",
+            "departments": "department",
+            "programmes": "programme",
+            "programs": "programme",
+            "divisions": "division",
+            "wings": "wing",
+            "persons": "person",
+            "blogs": "blog",
+            "events": "event",
+            "announcements": "announcement",
+            "sliders": "slider",
+            "slider_groups": "slider_group",
+            "page_sections": "page_section",
+            "partnership_spotlights": "partnership_spotlight",
+        }.get(normalized_type, normalized_type)
+        if normalized_type in DIRECT_ATTACHMENT_SCOPE_TYPES:
+            return normalized_type, entity_id
+
+        if normalized_type == "club_activity":
+            result = await db.execute(
+                select(ClubActivity.owner_scope_type, ClubActivity.owner_scope_id, ClubActivity.club_id).where(
+                    ClubActivity.id == entity_id,
+                    ClubActivity.deleted_at.is_(None),
+                )
+            )
+            scope = result.one_or_none()
+            if scope is not None:
+                return scope[0] or "club", scope[1] or scope[2]
+
+        if normalized_type == "person":
+            result = await db.execute(
+                select(Person.department_id).where(Person.id == entity_id, Person.deleted_at.is_(None))
+            )
+            department_id = result.scalar_one_or_none()
+            return ("department", department_id) if department_id else ("person", entity_id)
+
+        content_model = CONTENT_ATTACHMENT_MODELS.get(normalized_type)
+        if content_model is not None:
+            if normalized_type == "partnership_spotlight":
+                result = await db.execute(
+                    select(
+                        PartnershipSpotlight.owner_scope_type,
+                        PartnershipSpotlight.owner_scope_id,
+                    ).where(
+                        PartnershipSpotlight.id == entity_id,
+                        PartnershipSpotlight.deleted_at.is_(None),
+                    )
+                )
+                scope = result.one_or_none()
+                if scope is not None:
+                    return scope[0] or "global", scope[1]
+            result = await db.execute(
+                select(content_model.scope_type, content_model.scope_id).where(
+                    content_model.id == entity_id,
+                    content_model.deleted_at.is_(None),
+                )
+            )
+            scope = result.one_or_none()
+            if scope is not None:
+                return scope[0] or "global", scope[1]
+
+        if normalized_type == "board":
+            result = await db.execute(
+                select(Board.parent_entity_type, Board.parent_entity_id, Board.division_id).where(
+                    Board.id == entity_id,
+                    Board.deleted_at.is_(None),
+                )
+            )
+            scope = result.one_or_none()
+            if scope is not None:
+                if scope[0] and scope[1]:
+                    return scope[0], scope[1]
+                if scope[2]:
+                    return "division", scope[2]
+                return "university", None
+
+        return normalized_type, entity_id
+
+    @staticmethod
+    def serialize_link(link: MediaLink) -> dict:
+        """Return the display-ready attachment contract shared by media link endpoints."""
+        media = link.media
+        return {
+            "id": link.id,
+            "media_id": link.media_id,
+            "entity_type": link.entity_type,
+            "entity_id": link.entity_id,
+            "role": link.role,
+            "folder_id": link.folder_id,
+            "display_order": link.display_order,
+            "is_public": link.is_public,
+            "is_published": getattr(link, "is_published", False),
+            "status": getattr(link, "status", "draft"),
+            "workflow_status": getattr(link, "workflow_status", "draft"),
+            "owner_portal": getattr(link, "owner_portal", None),
+            "owner_scope_type": getattr(link, "owner_scope_type", None),
+            "owner_scope_id": getattr(link, "owner_scope_id", None),
+            "submitted_at": getattr(link, "submitted_at", None),
+            "approved_at": getattr(link, "approved_at", None),
+            "published_at": getattr(link, "published_at", None),
+            "media": (
+                {
+                    "id": media.id,
+                    "title": media.title,
+                    "filename": media.filename,
+                    "original_filename": media.original_filename,
+                    "mime_type": media.mime_type,
+                    "media_type": media.media_type,
+                    "file_size": media.file_size,
+                    "thumbnail_url": media.thumbnail_url,
+                    "is_public": media.is_public,
+                    "url": media.url,
+                }
+                if media is not None
+                else None
+            ),
+        }
 
     @staticmethod
     async def get_by_id(db: AsyncSession, media_id: uuid.UUID, *, load_options: Sequence = ()) -> Media | None:
@@ -174,6 +459,9 @@ class MediaService:
         folder_id: uuid.UUID | None = None,
         media_type: str | None = None,
         uploaded_by_id: uuid.UUID | None = None,
+        entity_type: str | None = None,
+        entity_id: uuid.UUID | None = None,
+        role: str | None = None,
         search: str | None = None,
         load_options: Sequence = (),
     ) -> PaginatedResult:
@@ -187,6 +475,14 @@ class MediaService:
             query = query.where(Media.media_type == media_type)
         if uploaded_by_id:
             query = query.where(Media.uploaded_by_id == uploaded_by_id)
+        if entity_type or entity_id or role:
+            query = query.join(MediaLink, MediaLink.media_id == Media.id).where(MediaLink.deleted_at.is_(None))
+            if entity_type:
+                query = query.where(MediaLink.entity_type == entity_type)
+            if entity_id:
+                query = query.where(MediaLink.entity_id == entity_id)
+            if role:
+                query = query.where(MediaLink.role == role)
         if search:
             query = query.where(ilike_any(search, Media.title, Media.original_filename, Media.filename, Media.alt_text, Media.description))
         return await paginate_query(db, query, page=page, per_page=per_page)
@@ -219,12 +515,18 @@ class MediaService:
         *,
         user: User,
         parent_id: uuid.UUID | None = None,
+        scope_type: str | None = None,
+        scope_id: uuid.UUID | None = None,
         load_options: Sequence = (),
     ) -> list[MediaFolder]:
         query = MediaFolder.active_query().order_by(MediaFolder.name.asc())
         query = query.where(await MediaService._folder_visibility_filter(user))
         if load_options:
             query = query.options(*load_options)
+        if scope_type is not None:
+            query = query.where(MediaFolder.scope_type == scope_type)
+        if scope_id is not None:
+            query = query.where(MediaFolder.scope_id == scope_id)
         if parent_id is None:
             query = query.where(MediaFolder.parent_id.is_(None))
         else:
@@ -243,6 +545,7 @@ class MediaService:
         folder_id: uuid.UUID | None = None,
         display_order: int = 100,
         is_public: bool = True,
+        **metadata,
     ) -> MediaLink:
         link = MediaLink(
             media_id=media_id,
@@ -252,6 +555,7 @@ class MediaService:
             folder_id=folder_id,
             display_order=display_order,
             is_public=is_public,
+            **metadata,
         )
         db.add(link)
         await db.flush()
@@ -267,6 +571,55 @@ class MediaService:
         if load_options:
             query = query.options(*load_options)
         result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_link_parent_snapshot(
+        db: AsyncSession,
+        link_id: uuid.UUID,
+    ) -> tuple[str, uuid.UUID] | None:
+        result = await db.execute(
+            select(MediaLink.entity_type, MediaLink.entity_id).where(
+                MediaLink.id == link_id,
+                MediaLink.deleted_at.is_(None),
+            )
+        )
+        row = result.one_or_none()
+        if row is None:
+            return None
+        return row.entity_type, row.entity_id
+
+    @staticmethod
+    async def get_link_for_update(db: AsyncSession, link_id: uuid.UUID) -> MediaLink | None:
+        """Lock and refresh a link before authorizing or mutating it."""
+        result = await db.execute(
+            MediaLink.active_query()
+            .options(selectinload(MediaLink.media), selectinload(MediaLink.folder))
+            .where(MediaLink.id == link_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_link_for_media(
+        db: AsyncSession,
+        *,
+        media_id: uuid.UUID,
+        entity_type: str,
+        entity_id: uuid.UUID,
+        role: str,
+    ) -> MediaLink | None:
+        result = await db.execute(
+            MediaLink.active_query()
+            .options(selectinload(MediaLink.media), selectinload(MediaLink.folder))
+            .where(
+                MediaLink.media_id == media_id,
+                MediaLink.entity_type == entity_type,
+                MediaLink.entity_id == entity_id,
+                MediaLink.role == role,
+            )
+        )
         return result.scalar_one_or_none()
 
     @staticmethod
@@ -339,6 +692,14 @@ class MediaService:
             return False
         for assignment in user.role_assignments:
             if assignment.is_active and assignment.scope_type == scope_type and assignment.scope_id == scope_id:
+                return True
+        person = getattr(user, "person", None)
+        for assignment in getattr(person, "assignments", []) or []:
+            if (
+                assignment.status == "active"
+                and assignment.entity_type == scope_type
+                and assignment.entity_id == scope_id
+            ):
                 return True
         return False
 

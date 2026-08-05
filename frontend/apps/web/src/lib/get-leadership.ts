@@ -6,13 +6,24 @@ import { publicFileUrl, publicMediaUrl, resolvePublicMediaUrl } from "@/lib/publ
 const leaderInclude =
   "person(id,slug,title,first_name,middle_name,last_name,full_name,bio,leadership_message,photo_id,photo_url,photo(id,url,public_url,cdn_url,thumbnail_url,alt_text,title))";
 
+const viceChancellorInclude =
+  "person(full_name,title,photo(id,url,public_url,cdn_url,thumbnail_url))";
+
 type PersonWithMedia = Person & {
   photo?: Partial<Media> | null;
 };
 
 function personName(person: Person, fallback: string) {
   const fullName = person.full_name?.trim();
-  if (fullName) return fullName;
+  if (fullName) {
+    const honorific = person.title?.trim();
+    // full_name from the API omits the honorific (Prof., Dr., …) — prepend it
+    // unless it is already part of the stored name.
+    if (honorific && !fullName.toLowerCase().startsWith(honorific.toLowerCase())) {
+      return `${honorific} ${fullName}`;
+    }
+    return fullName;
+  }
 
   const name = [
     person.title,
@@ -52,15 +63,15 @@ function toLeader(
     title: assignment.title || (assignment.is_acting ? `Acting ${fallbackTitle}` : fallbackTitle),
     image: personImage(person),
     message: person.leadership_message || person.bio || null,
-    slug: person.slug,
+    slug: person.slug || person.id,
   } satisfies Leader;
 }
 
 export async function getViceChancellor(): Promise<Leader | null> {
   try {
     const response = await leadershipApi.getViceChancellor({
-      fields: "id,person_id,role,title,is_acting",
-      include: leaderInclude,
+      fields: "id,person_id,title,is_acting",
+      include: viceChancellorInclude,
     });
 
     return toLeader(response.data, "Vice Chancellor", "Vice Chancellor");

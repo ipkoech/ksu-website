@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@ksu/auth";
+import { RealtimeProvider } from "@/components/realtime/realtime-provider";
 import { isStaffProfileOnlyUser, staffProfileHref } from "@/lib/auth-routing";
 
 export default function ProtectedLayout({
@@ -54,5 +55,5 @@ export default function ProtectedLayout({
     );
   }
 
-  return <>{children}</>;
+  return <RealtimeProvider enabled={isAuthenticated}>{children}</RealtimeProvider>;
 }

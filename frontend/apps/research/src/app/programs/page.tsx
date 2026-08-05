@@ -1,73 +1,65 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpenCheck, Building2, FlaskConical, GraduationCap, Sprout } from "lucide-react";
-import { ResearchClusterHero } from "../../components/research-cluster";
-import { ResearchFilterForm } from "../../components/research-listing";
-import {
-  Badge,
-  FilledBadge,
-  ResearchSection,
-  StatusMessage,
-} from "../../components/research-ui";
+import { ArrowRight } from "lucide-react";
+import { pageFromSearchParams } from "@ksu/ui/components";
+import { ResearchListPagination } from "../../components/research-list-pagination";
+import { Badge, FilledBadge, StatusMessage } from "../../components/research-ui";
+import { ResearchPortfolioHero } from "../../components/research-portfolio";
 import {
   compactText,
-  formatDate,
   formatLabel,
   getCenters,
   getPrograms,
   getProgramsFiltered,
-  getThemes,
 } from "../../lib/research-public-data";
+import {
+  filterRecordsByMonth,
+  getListPageSize,
+  getRecordMonths,
+  getRecordTitle,
+  getRecordYears,
+} from "../../lib/research-page-model";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { ProgramTableControls } from "./program-table-controls";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Research Programs",
-  description: "Institutional research programs and themes at Kisii University.",
+  description: "Institutional research programs and initiatives at Kisii University.",
 };
 
 type ProgramSearchParams = {
   q?: string;
   status?: string;
+  active?: string;
   center?: string;
   year?: string;
+  month?: string;
   sort?: string;
+  page?: string;
 };
 
 const programStatuses = ["planning", "active", "completed", "suspended", "cancelled"];
+const activeStates = [
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
+  { label: "Featured", value: "featured" },
+];
+const sortOptions = [
+  { label: "Latest", value: "created_at" },
+  { label: "Recently updated", value: "updated_at" },
+  { label: "Start date", value: "start_date" },
+  { label: "End date", value: "end_date" },
+  { label: "Name A-Z", value: "name" },
+  { label: "Name Z-A", value: "name_desc" },
+];
 
-const discoveryLinks = [
-  {
-    label: "Projects",
-    href: "/projects",
-    description: "Browse funded, applied, action, and collaborative work.",
-    icon: FlaskConical,
-  },
-  {
-    label: "Programs",
-    href: "/programs",
-    description: "See long-term research pathways and related projects.",
-    icon: BookOpenCheck,
-  },
-  {
-    label: "Centers",
-    href: "/centers",
-    description: "Find the institutional homes for research activity.",
-    icon: Building2,
-  },
-  {
-    label: "Facilities",
-    href: "/facilities",
-    description: "Explore farms, labs, and practical research infrastructure.",
-    icon: Sprout,
-  },
-  {
-    label: "Capacity",
-    href: "/capacity",
-    description: "Training, mentorship, and scholarship support.",
-    icon: GraduationCap,
-  },
+const quickLinks = [
+  { label: "Projects", href: "/projects", body: "Active research workstreams" },
+  { label: "Publications", href: "/publications", body: "Evidence and scholarly output" },
+  { label: "Funding", href: "/funding", body: "Grants and opportunities" },
+  { label: "Centers", href: "/centers", body: "Institutional research anchors" },
 ];
 
 export default async function ProgramsPage({
@@ -76,105 +68,105 @@ export default async function ProgramsPage({
   searchParams?: Promise<ProgramSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
-  const [programs, allPrograms, centers, themes] = await Promise.all([
+  const page = pageFromSearchParams(params);
+  const perPage = getListPageSize(12);
+  const sort = params.sort || "created_at";
+  const sortField = sort === "name_desc" ? "name" : sort;
+  const order = sort === "name" ? "asc" : "desc";
+  const activeFlags = getActiveFlags(params.active);
+  const [programs, allPrograms, centers] = await Promise.all([
     getProgramsFiltered({
       search: params.q,
       status: params.status,
       centerId: params.center,
       year: params.year,
-      sort: params.sort || "created_at",
-      order: params.sort === "name" ? "asc" : "desc",
+      sort: sortField,
+      order,
+      page,
+      perPage,
+      ...activeFlags,
     }),
     getPrograms(),
     getCenters(),
-    getThemes(),
   ]);
+  const years = getRecordYears(allPrograms.data);
+  const months = getRecordMonths(allPrograms.data, params.year);
+  const visiblePrograms = filterRecordsByMonth(programs.data, params.year, params.month);
+  const totalPages = Math.ceil(
+    (params.month ? visiblePrograms.length : programs.total) / programs.perPage,
+  );
+  const errors = [programs.error, centers.error].filter(Boolean);
 
   return (
-    <main id="research-main" className="min-h-screen bg-white">
-      <ResearchClusterHero
-        eyebrow="Discovery"
-        title="Research programs and long-term inquiry pathways."
-        body="Programs organize related projects, centers, themes, and outputs into public research pathways."
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Discovery", href: "/projects" },
-          { label: "Programs" },
-        ]}
-        imageSrc="/images/research/research-demo-imagegen.png"
-        imageAlt="Research teams reviewing long-term programmes and project pathways"
-        links={discoveryLinks}
-        primaryAction={{ label: "Browse projects", href: "/projects" }}
-        stats={[
-          { label: "Program results", value: programs.data.length },
-          { label: "Published programs", value: allPrograms.data.length },
-          { label: "Centers", value: centers.data.length },
-          { label: "Themes", value: themes.data.length },
-        ]}
+    <main id="research-main" className="min-h-screen bg-white text-foreground">
+      <ResearchPortfolioHero
+        eyebrow="Published program portfolio"
+        title="Research Programs"
+        body="Strategic research umbrellas coordinating projects, expertise, funding, and outputs around Kisii University priority areas."
+        primary={{ label: "Explore programs", href: "#program-portfolio" }}
+        secondary={{ label: "View projects", href: "/projects" }}
+        illustration="programs"
       />
 
-      <ResearchSection
-        eyebrow="Programs"
-        title="Program catalogue"
-        body="Browse programmes by status, center, year, and keyword."
-        tone="white"
+      <section
+        id="program-portfolio"
+        className="bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
       >
-        <ProgramFilters
-          params={params}
-          centers={centers.data}
-          years={getProgramYears(allPrograms.data)}
-        />
-
-        {[programs.error, centers.error]
-          .filter(Boolean)
-          .map((error) => (
-            <div key={error} className="mt-5">
-              <StatusMessage tone="error">{error}</StatusMessage>
-            </div>
-          ))}
-
-        {programs.data.length > 0 ? (
-          <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {programs.data.map((program) => (
-              <ProgramCard key={program.id} program={program} />
-            ))}
-          </div>
-        ) : (
-          <div className="mt-7">
-            <StatusMessage>No research programs match the current filters.</StatusMessage>
-          </div>
-        )}
-      </ResearchSection>
-
-      <ResearchSection
-        eyebrow="Focus"
-        title="Themes supporting discovery"
-        body="Theme records provide the public focus-area language that helps visitors understand the research portfolio."
-      >
-        {themes.error ? <StatusMessage tone="error">{themes.error}</StatusMessage> : null}
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {themes.data.map((theme) => (
-            <article key={theme.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex flex-wrap gap-2">
-                {[theme.theme_type, theme.category, theme.status].map(compactText).filter(Boolean).slice(0, 2).map((label) => (
-                  <Badge key={label}>{formatLabel(label)}</Badge>
-                ))}
+        <div className="mx-auto grid max-w-[1680px] gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+          <div className="min-w-0">
+            <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
+              <div className="pt-1">
+                <h1 className="font-display text-3xl font-semibold leading-tight text-foreground lg:whitespace-nowrap">
+                  Program Portfolio
+                </h1>
+                <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+                  Search, filter, sort, and open published research programs.
+                </p>
               </div>
-              <h2 className="mt-4 text-xl font-semibold text-slate-950">
-                {theme.name ?? theme.title}
-              </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                {compactText(theme.summary) ||
-                  compactText(theme.description) ||
-                  "Additional theme detail will appear when published."}
-              </p>
-            </article>
-          ))}
-          {themes.data.length === 0 ? (
-            <StatusMessage>No research themes are currently published.</StatusMessage>
+              <div className="w-full">
+                <ProgramFilters
+                  params={params}
+                  centers={centers.data}
+                  years={years}
+                  months={months}
+                />
+              </div>
+            </div>
+
+            {errors.map((error) => (
+              <div key={error} className="mt-5">
+                <StatusMessage tone="error">{error}</StatusMessage>
+              </div>
+            ))}
+
+            {visiblePrograms.length > 0 ? (
+              <div className="mt-5">
+                <ProgramsTable programs={visiblePrograms} />
+              </div>
+            ) : (
+              <div className="mt-5">
+                <StatusMessage>
+                  No published research programs match the current filters.
+                </StatusMessage>
+              </div>
+            )}
+          </div>
+
+          <ProgramQuickLinks />
+          {visiblePrograms.length > 0 ? (
+            <div className="xl:col-span-2">
+              <ResearchListPagination
+                page={page}
+                totalPages={totalPages}
+                total={params.month ? visiblePrograms.length : programs.total}
+                perPage={programs.perPage}
+                path="/programs"
+                params={params}
+              />
+            </div>
           ) : null}
         </div>
-      </ResearchSection>
+      </section>
     </main>
   );
 }
@@ -183,66 +175,109 @@ function ProgramFilters({
   params,
   centers,
   years,
+  months,
 }: {
   params: ProgramSearchParams;
   centers: ResearchGenericRecord[];
   years: string[];
+  months: Array<{ value: string; label: string }>;
 }) {
   return (
-    <ResearchFilterForm
+    <ProgramTableControls
       action="/programs"
       resetHref="/programs"
       searchValue={params.q}
-      searchPlaceholder="Program name, summary, code"
-      selects={[
+      filterSelects={[
+        { name: "active", label: "Active state", value: params.active, options: activeStates },
         { name: "status", label: "Status", value: params.status, options: programStatuses },
         { name: "year", label: "Year", value: params.year, options: years },
+        { name: "month", label: "Month", value: params.month, options: months },
       ]}
       centers={centers}
       centerValue={params.center}
       sortValue={params.sort}
-      sortOptions={[
-        { value: "created_at", label: "Newest" },
-        { value: "start_date", label: "Start date" },
-        { value: "name", label: "Name" },
-      ]}
+      sortOptions={sortOptions}
     />
   );
 }
 
-function ProgramCard({ program }: { program: ResearchGenericRecord }) {
+function ProgramsTable({ programs }: { programs: ResearchGenericRecord[] }) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+      <div className="hidden grid-cols-[minmax(320px,1fr)_150px_150px] gap-4 border-b border-border bg-surface-subtle px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:grid">
+        <span>Program</span>
+        <span>Type</span>
+        <span>Status</span>
+      </div>
+      <div className="divide-y divide-border">
+        {programs.map((program) => (
+          <ProgramTableRow key={program.id} program={program} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProgramTableRow({ program }: { program: ResearchGenericRecord }) {
+  const href = program.slug ? `/programs/${program.slug}` : "/programs";
+  const title = getRecordTitle(program, "Research program");
+
   return (
     <Link
-      href={program.slug ? `/programs/${program.slug}` : "/programs"}
-      className="group block rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
+      href={href}
+      className="group grid gap-2 px-4 py-3 transition hover:bg-surface-subtle/80 md:grid-cols-[minmax(320px,1fr)_150px_150px] md:items-center"
     >
-      <div className="flex flex-wrap gap-2">
-        <Badge>{formatLabel(program.status ?? "active")}</Badge>
+      <div className="min-w-0">
+        <h2 className="truncate text-sm font-semibold leading-6 text-foreground transition group-hover:text-primary">
+          {title}
+        </h2>
+        {program.code ? (
+          <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">{compactText(program.code)}</p>
+        ) : null}
+      </div>
+      <div className="text-xs font-medium text-muted-foreground md:text-sm">
+        {program.program_type ? formatLabel(program.program_type) : "Program"}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge>{formatLabel(program.status ?? (program.is_active === false ? "inactive" : "active"))}</Badge>
         {program.is_featured ? <FilledBadge>Featured</FilledBadge> : null}
       </div>
-      <h2 className="mt-4 text-xl font-semibold leading-7 text-slate-950">
-        {program.name ?? program.title}
-      </h2>
-      <p className="mt-3 text-sm leading-7 text-slate-600">
-        {compactText(program.summary) ||
-          compactText(program.description) ||
-          "Program overview will appear when published by the research office."}
-      </p>
-      <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-700">
-        {[formatDate(program.start_date), formatDate(program.end_date)]
-          .filter(Boolean)
-          .join(" - ") || "Timeline not published"}
-      </p>
     </Link>
   );
 }
 
-function getProgramYears(programs: ResearchGenericRecord[]) {
-  const years = programs
-    .flatMap((program) => [program.start_date, program.end_date, program.created_at])
-    .map((value) => (value ? new Date(value).getFullYear() : null))
-    .filter((year): year is number => Boolean(year) && !Number.isNaN(year));
-  return Array.from(new Set(years))
-    .sort((a, b) => b - a)
-    .map(String);
+function ProgramQuickLinks() {
+  return (
+    <aside className="rounded-lg border border-border bg-card p-4 shadow-sm xl:sticky xl:top-24">
+      <p className="text-sm font-semibold uppercase tracking-eyebrow text-secondary">
+        Quick links
+      </p>
+      <div className="mt-3 divide-y divide-border">
+        {quickLinks.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="group flex items-start justify-between gap-4 py-3 text-sm transition first:pt-0 last:pb-0"
+          >
+            <span>
+              <span className="block font-semibold text-foreground group-hover:text-primary">
+                {link.label}
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-muted-foreground">{link.body}</span>
+            </span>
+            <ArrowRight
+              aria-hidden
+              className="mt-1 h-4 w-4 shrink-0 text-muted-foreground/70 transition group-hover:translate-x-1 group-hover:text-primary"
+            />
+          </Link>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+function getActiveFlags(value?: string) {
+  if (value === "inactive") return { isActive: false };
+  if (value === "featured") return { isActive: true, isFeatured: true };
+  return { isActive: true };
 }

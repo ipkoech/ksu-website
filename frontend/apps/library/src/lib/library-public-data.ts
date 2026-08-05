@@ -9,19 +9,29 @@ import {
   type LibraryElectronicResource,
   type LibraryExternalLink,
   type LibraryFile,
+  type LibraryGuide,
+  type LibraryGuideType,
   type LibraryHours,
+  type LibraryAssistantContext,
+  type LibraryPolicyPage,
+  type LibraryPolicyType,
   type LibraryRegulation,
   type LibraryResource,
   type LibraryServiceRecord,
   type LibraryStaff,
   type LibrarySearchResponse,
   type LibraryTodayHours,
+  type LibrarySpecialist,
+  type LibraryWorkflow,
+  type LibraryWorkflowType,
+  type LibrarySearchResult,
   type News,
 } from "@ksu/api-client";
 import type { PublicStatsResponse } from "@ksu/api-client";
 
 export type PublicLibraryData<T> = {
   data: T[];
+  meta: { total: number; page: number; per_page: number; pages: number } | null;
   error: string | null;
 };
 
@@ -115,8 +125,58 @@ export type LibrarySearchData = {
   catalog: PublicLibraryData<LibraryResource>;
   electronic: PublicLibraryData<LibraryElectronicResource>;
   unified: LibrarySearchResponse | null;
+  editorial: PublicLibraryData<LibrarySearchResult>;
   selectedLibraryId: string;
   query: string;
+  errors: string[];
+};
+
+export type LibraryGuidesData = {
+  branches: PublicLibraryData<LibraryBranch>;
+  guides: PublicLibraryData<LibraryGuide>;
+  specialists: PublicLibraryData<LibrarySpecialist>;
+  query: string;
+  guideType: string;
+  subject: string;
+  courseCode: string;
+  audience: string;
+  errors: string[];
+};
+
+export type LibraryGuideDetailData = {
+  branches: PublicLibraryData<LibraryBranch>;
+  guide: { data: LibraryGuide | null; error: string | null };
+  specialists: PublicLibraryData<LibrarySpecialist>;
+  errors: string[];
+};
+
+export type LibrarySpecialistsData = {
+  branches: PublicLibraryData<LibraryBranch>;
+  specialists: PublicLibraryData<LibrarySpecialist>;
+  query: string;
+  subject: string;
+  school: string;
+  department: string;
+  supportArea: string;
+  errors: string[];
+};
+
+export type LibraryWorkflowDetailData = {
+  branches: PublicLibraryData<LibraryBranch>;
+  workflow: { data: LibraryWorkflow | null; error: string | null };
+  errors: string[];
+};
+
+export type LibraryPoliciesData = {
+  branches: PublicLibraryData<LibraryBranch>;
+  policies: PublicLibraryData<LibraryPolicyPage>;
+  policyType: string;
+  errors: string[];
+};
+
+export type LibraryPolicyDetailData = {
+  branches: PublicLibraryData<LibraryBranch>;
+  policy: { data: LibraryPolicyPage | null; error: string | null };
   errors: string[];
 };
 
@@ -143,6 +203,16 @@ const regulationFields =
   "id,library_id,title,slug,category,content,effective_date,status,is_public,sort_order";
 const staffFields =
   "id,library_id,person_id,job_title,department,department_section,role,is_public,is_active,bio,specialization,sort_order";
+const specialistFields =
+  "id,library_id,staff_id,subjects,schools,departments,support_areas,booking_url,is_public,is_active,sort_order";
+const guideFields =
+  "id,library_id,title,slug,summary,guide_type,subject,course_code,audience,school_id,department_id,owner_staff_id,is_public,is_active,sort_order,created_at,updated_at";
+const guideDetailFields =
+  "id,library_id,title,slug,summary,guide_type,subject,course_code,audience,school_id,department_id,owner_staff_id,is_public,is_active,sort_order,created_at,updated_at,sections(id,guide_id,heading,content,section_type,resource_links,file_ids,sort_order,is_active)";
+const workflowDetailFields =
+  "id,library_id,workflow_type,title,slug,summary,audience,is_public,is_active,sort_order,created_at,updated_at,steps(id,workflow_id,title,instructions,link_url,file_id,sort_order,is_active)";
+const policyFields =
+  "id,library_id,policy_type,title,slug,content,related_regulation_id,file_id,is_public,status,sort_order,created_at,updated_at";
 const branchFileFields =
   "id,library_id,media_id,title,description,file_category,access_level,is_public,sort_order,related_entity_type,related_entity_id,file_url,thumbnail_url";
 const branchLinkFields =
@@ -153,15 +223,19 @@ const editorialFields =
 type OpeningHoursMap = Record<string, string>;
 
 async function safeList<T>(
-  load: () => Promise<{ data?: T[] }>,
+  load: () => Promise<{ data?: T[]; meta?: unknown }>,
 ): Promise<PublicLibraryData<T>> {
   const request = load()
-    .then((response) => ({ data: response.data ?? [], error: null }))
-    .catch(() => ({ data: [], error: unavailableMessage }));
+    .then((response) => ({
+      data: response.data ?? [],
+      meta: (response.meta as PublicLibraryData<T>["meta"]) ?? null,
+      error: null,
+    }))
+    .catch(() => ({ data: [], meta: null, error: unavailableMessage }));
 
   const timeout = new Promise<PublicLibraryData<T>>((resolve) => {
     setTimeout(
-      () => resolve({ data: [], error: unavailableMessage }),
+      () => resolve({ data: [], meta: null, error: unavailableMessage }),
       PUBLIC_LIBRARY_TIMEOUT_MS,
     );
   });
@@ -300,6 +374,51 @@ function normalizeStaff(member: LibraryStaff): LibraryStaff {
   };
 }
 
+function normalizeSpecialist(specialist: LibrarySpecialist): LibrarySpecialist {
+  return {
+    ...specialist,
+    subjects: specialist.subjects ?? [],
+    schools: specialist.schools ?? [],
+    departments: specialist.departments ?? [],
+    support_areas: specialist.support_areas ?? [],
+  };
+}
+
+function normalizeGuide(guide: LibraryGuide): LibraryGuide {
+  return {
+    ...guide,
+    sections: guide.sections ?? [],
+    specialists: (guide.specialists ?? []).map(normalizeSpecialist),
+  };
+}
+
+function normalizeWorkflow(workflow: LibraryWorkflow): LibraryWorkflow {
+  return {
+    ...workflow,
+    steps: workflow.steps ?? [],
+  };
+}
+
+function selectPublishedWorkflow(workflows: LibraryWorkflow[]) {
+  return (
+    workflows
+      .filter((workflow) => workflow.is_public && workflow.is_active)
+      .sort((left, right) => left.sort_order - right.sort_order)[0] ?? null
+  );
+}
+
+function matchesText(
+  values: Array<string | string[] | null | undefined>,
+  query: string,
+) {
+  if (!query) return true;
+  const normalizedQuery = query.toLowerCase();
+  return values.some((value) => {
+    const text = Array.isArray(value) ? value.join(" ") : value;
+    return text?.toLowerCase().includes(normalizedQuery) ?? false;
+  });
+}
+
 function openingHoursToRows(branch: LibraryBranch): LibraryHours[] {
   if (!isOpeningHoursMap(branch.opening_hours)) return [];
 
@@ -331,17 +450,25 @@ export function getPublicBranches() {
   ).then((result) => normalizeList(result, normalizeBranch));
 }
 
+export function getPublicAssistantContexts() {
+  return safeList<LibraryAssistantContext>(() =>
+    libraryServiceApi.assistantContexts.publicList(),
+  );
+}
+
 export async function getCatalogSearchData(
   options: {
     libraryId?: string;
     query?: string;
     resourceType?: string;
     status?: string;
+    page?: number;
   } = {},
 ): Promise<CatalogSearchData> {
   const query = options.query?.trim() ?? "";
   const resourceType = options.resourceType?.trim() ?? "";
   const status = options.status?.trim() ?? "";
+  const page = options.page ?? 1;
   const branches = await getPublicBranches();
   const selectedLibraryId =
     branches.data.find((branch) => branch.id === options.libraryId)?.id ??
@@ -351,7 +478,7 @@ export async function getCatalogSearchData(
   if (!selectedLibraryId) {
     return {
       branches,
-      resources: { data: [], error: branches.error },
+      resources: { data: [], meta: null, error: branches.error },
       selectedLibraryId,
       query,
       resourceType,
@@ -367,7 +494,7 @@ export async function getCatalogSearchData(
         q: query || undefined,
         resource_type: resourceType || undefined,
         status: status || undefined,
-        page: 1,
+        page,
         per_page: 100,
       }),
     ),
@@ -390,6 +517,8 @@ export function getElectronicResources(
     resourceType?: string;
     accessLevel?: string;
     featured?: boolean;
+    page?: number;
+    perPage?: number;
   } = {},
 ) {
   return safeList<LibraryElectronicResource>(() =>
@@ -399,8 +528,8 @@ export function getElectronicResources(
       resource_type: options.resourceType?.trim() || undefined,
       access_level: options.accessLevel?.trim() || undefined,
       featured: options.featured,
-      page: 1,
-      per_page: 100,
+      page: options.page ?? 1,
+      per_page: options.perPage ?? 100,
     }),
   ).then((result) => normalizeList(result, normalizeElectronicResource));
 }
@@ -432,7 +561,7 @@ async function getBranchHours(branches: LibraryBranch[]) {
     ).then((result) =>
       result.data.length > 0
         ? result
-        : { data: openingHoursToRows(branch), error: result.error },
+        : { data: openingHoursToRows(branch), meta: null, error: result.error },
     ),
   );
   return results.map((item) => ({ branch: item.branch, hours: item.result }));
@@ -478,7 +607,7 @@ async function getBranchStaff(branches: LibraryBranch[]) {
 export async function getLibraryServices() {
   const branches = await getPublicBranches();
   if (branches.data.length === 0) {
-    return { data: [], error: branches.error };
+    return { data: [], meta: null, error: branches.error };
   }
 
   const grouped = await getBranchServices(branches.data);
@@ -490,6 +619,7 @@ export async function getLibraryServices() {
 
   return {
     data,
+    meta: null,
     error: errors[0] ?? null,
   };
 }
@@ -547,7 +677,7 @@ export async function getLibraryOverviewData(): Promise<LibraryOverviewData> {
             per_page: 6,
           }),
         ).then((result) => normalizeList(result, normalizeResource))
-      : Promise.resolve({ data: [], error: branches.error }),
+      : Promise.resolve({ data: [], meta: null, error: branches.error }),
     getElectronicResources(),
     getLibraryServices(),
     safeList<LibraryRegulation>(() =>
@@ -597,6 +727,10 @@ export async function getLibraryAboutData(): Promise<LibraryAboutData> {
     primaryBranch: branches.data[0] ?? null,
     errors: uniqueErrors(branches.error),
   };
+}
+
+export function getLibraryTodayHours() {
+  return safeList<LibraryTodayHours>(() => libraryServiceApi.todayHours());
 }
 
 export async function getLibraryHoursData(): Promise<LibraryHoursData> {
@@ -673,6 +807,250 @@ export async function getLibraryLeadershipData(): Promise<
       per_page: 100,
     }),
   ).then((result) => normalizeList(result, normalizeStaff));
+}
+
+export async function getLibraryGuidesData({
+  libraryId,
+  query,
+  guideType,
+  subject,
+  courseCode,
+  audience,
+  perPage = 100,
+}: {
+  libraryId?: string;
+  query?: string;
+  guideType?: LibraryGuideType | string;
+  subject?: string;
+  courseCode?: string;
+  audience?: string;
+  perPage?: number;
+} = {}): Promise<LibraryGuidesData> {
+  const trimmedQuery = query?.trim() ?? "";
+  const trimmedGuideType = guideType?.trim() ?? "";
+  const trimmedSubject = subject?.trim() ?? "";
+  const trimmedCourseCode = courseCode?.trim() ?? "";
+  const trimmedAudience = audience?.trim() ?? "";
+  const branches = await getPublicBranches();
+  const selectedLibraryId =
+    branches.data.find((branch) => branch.id === libraryId)?.id ?? libraryId;
+
+  const [guidesResult, specialists] = await Promise.all([
+    safeList<LibraryGuide>(() =>
+      libraryServiceApi.guides.list({
+        fields: guideFields,
+        library_id: selectedLibraryId || undefined,
+        guide_type: (trimmedGuideType as LibraryGuideType) || undefined,
+        subject: trimmedSubject || undefined,
+        course_code: trimmedCourseCode || undefined,
+        audience: trimmedAudience || undefined,
+        page: 1,
+        per_page: perPage,
+        include_total: false,
+      }),
+    ).then((result) => normalizeList(result, normalizeGuide)),
+    safeList<LibrarySpecialist>(() =>
+      libraryServiceApi.specialists.list({
+        fields: specialistFields,
+        library_id: selectedLibraryId || undefined,
+        subject: trimmedSubject || undefined,
+      }),
+    ).then((result) => normalizeList(result, normalizeSpecialist)),
+  ]);
+
+  const guides = {
+    ...guidesResult,
+    data: guidesResult.data.filter((guide) =>
+      matchesText(
+        [
+          guide.title,
+          guide.summary,
+          guide.subject,
+          guide.course_code,
+          guide.audience,
+        ],
+        trimmedQuery,
+      ),
+    ),
+  };
+
+  return {
+    branches,
+    guides,
+    specialists,
+    query: trimmedQuery,
+    guideType: trimmedGuideType,
+    subject: trimmedSubject,
+    courseCode: trimmedCourseCode,
+    audience: trimmedAudience,
+    errors: uniqueErrors(branches.error, guides.error, specialists.error),
+  };
+}
+
+export async function getLibraryGuideDetail(
+  slug: string,
+): Promise<LibraryGuideDetailData> {
+  const branches = await getPublicBranches();
+  const guide = await safeRecord<LibraryGuide>(() =>
+    libraryServiceApi.guides.getBySlug(slug, { fields: guideDetailFields }),
+  );
+  const normalizedGuide = guide.data ? normalizeGuide(guide.data) : null;
+  const specialists = normalizedGuide
+    ? await safeList<LibrarySpecialist>(() =>
+        libraryServiceApi.specialists.list({
+          fields: specialistFields,
+          library_id: normalizedGuide.library_id ?? undefined,
+          subject: normalizedGuide.subject ?? undefined,
+        }),
+      ).then((result) => normalizeList(result, normalizeSpecialist))
+    : { data: [], meta: null, error: null };
+
+  return {
+    branches,
+    guide: { ...guide, data: normalizedGuide },
+    specialists,
+    errors: uniqueErrors(branches.error, guide.error, specialists.error),
+  };
+}
+
+export async function getLibrarySpecialistsData({
+  libraryId,
+  query,
+  subject,
+  school,
+  department,
+  supportArea,
+}: {
+  libraryId?: string;
+  query?: string;
+  subject?: string;
+  school?: string;
+  department?: string;
+  supportArea?: string;
+} = {}): Promise<LibrarySpecialistsData> {
+  const trimmedQuery = query?.trim() ?? "";
+  const trimmedSubject = subject?.trim() ?? "";
+  const trimmedSchool = school?.trim() ?? "";
+  const trimmedDepartment = department?.trim() ?? "";
+  const trimmedSupportArea = supportArea?.trim() ?? "";
+  const branches = await getPublicBranches();
+  const selectedLibraryId =
+    branches.data.find((branch) => branch.id === libraryId)?.id ?? libraryId;
+  const specialistsResult = normalizeList(
+    await safeList<LibrarySpecialist>(() =>
+      libraryServiceApi.specialists.list({
+        fields: specialistFields,
+        library_id: selectedLibraryId || undefined,
+        subject: trimmedSubject || undefined,
+        school: trimmedSchool || undefined,
+        department: trimmedDepartment || undefined,
+      }),
+    ),
+    normalizeSpecialist,
+  );
+  const specialists = {
+    ...specialistsResult,
+    data: specialistsResult.data.filter(
+      (specialist) =>
+        matchesText(
+          [
+            specialist.subjects,
+            specialist.schools,
+            specialist.departments,
+            specialist.support_areas,
+            specialist.booking_url,
+          ],
+          trimmedQuery,
+        ) && matchesText([specialist.support_areas], trimmedSupportArea),
+    ),
+  };
+
+  return {
+    branches,
+    specialists,
+    query: trimmedQuery,
+    subject: trimmedSubject,
+    school: trimmedSchool,
+    department: trimmedDepartment,
+    supportArea: trimmedSupportArea,
+    errors: uniqueErrors(branches.error, specialists.error),
+  };
+}
+
+export async function getLibraryWorkflowDetail(
+  workflowType: LibraryWorkflowType,
+): Promise<LibraryWorkflowDetailData> {
+  const [branches, workflows] = await Promise.all([
+    getPublicBranches(),
+    safeList<LibraryWorkflow>(() =>
+      libraryServiceApi.workflows.list({
+        fields: workflowDetailFields,
+        workflow_type: workflowType,
+        page: 1,
+        per_page: 25,
+      }),
+    ).then((result) => normalizeList(result, normalizeWorkflow)),
+  ]);
+  const workflow = selectPublishedWorkflow(workflows.data);
+
+  return {
+    branches,
+    workflow: {
+      data: workflow,
+      error: workflows.error,
+    },
+    errors: uniqueErrors(branches.error, workflows.error),
+  };
+}
+
+export async function getLibraryPoliciesData({
+  libraryId,
+  policyType,
+  perPage = 100,
+}: {
+  libraryId?: string;
+  policyType?: LibraryPolicyType | string;
+  perPage?: number;
+} = {}): Promise<LibraryPoliciesData> {
+  const trimmedPolicyType = policyType?.trim() ?? "";
+  const branches = await getPublicBranches();
+  const selectedLibraryId =
+    branches.data.find((branch) => branch.id === libraryId)?.id ?? libraryId;
+  const policies = await safeList<LibraryPolicyPage>(() =>
+    libraryServiceApi.policies.list({
+      fields: policyFields,
+      library_id: selectedLibraryId || undefined,
+      policy_type: (trimmedPolicyType as LibraryPolicyType) || undefined,
+      status: "active",
+      page: 1,
+      per_page: perPage,
+      include_total: false,
+    }),
+  );
+
+  return {
+    branches,
+    policies,
+    policyType: trimmedPolicyType,
+    errors: uniqueErrors(branches.error, policies.error),
+  };
+}
+
+export async function getLibraryPolicyDetail(
+  slug: string,
+): Promise<LibraryPolicyDetailData> {
+  const [branches, policy] = await Promise.all([
+    getPublicBranches(),
+    safeRecord<LibraryPolicyPage>(() =>
+      libraryServiceApi.policies.getBySlug(slug, { fields: policyFields }),
+    ),
+  ]);
+
+  return {
+    branches,
+    policy,
+    errors: uniqueErrors(branches.error, policy.error),
+  };
 }
 
 export async function getLibraryNewsData({
@@ -780,35 +1158,89 @@ export async function getLibraryArticlesData({
   };
 }
 
+export const LIBRARY_UPDATE_TYPES = ["news", "events", "articles"] as const;
+export type LibraryUpdateType = (typeof LIBRARY_UPDATE_TYPES)[number];
+
+export function isLibraryUpdateType(value: string): value is LibraryUpdateType {
+  return (LIBRARY_UPDATE_TYPES as readonly string[]).includes(value);
+}
+
+const updateDetailFields = `${editorialFields},is_featured,scope_type`;
+
+export async function getLibraryUpdateDetail(
+  type: LibraryUpdateType,
+  slug: string,
+): Promise<{ data: News | Event | Blog | null; error: string | null }> {
+  if (type === "news") {
+    return safeRecord<News>(() =>
+      newsApi.getBySlug(slug, { fields: updateDetailFields }),
+    );
+  }
+  if (type === "events") {
+    return safeRecord<Event>(() =>
+      eventsApi.getBySlug(slug, { fields: updateDetailFields }),
+    );
+  }
+  return safeRecord<Blog>(() =>
+    blogsApi.getBySlug(slug, { fields: updateDetailFields }),
+  );
+}
+
 export async function getLibrarySearchData(
   options: { libraryId?: string; query?: string } = {},
 ): Promise<LibrarySearchData> {
   const query = options.query?.trim() ?? "";
   const branches = await getPublicBranches();
-  const selectedLibraryId =
-    branches.data.find((branch) => branch.id === options.libraryId)?.id ??
-    branches.data[0]?.id ??
-    "";
+  const selectedLibraryId = options.libraryId
+    ? branches.data.find((branch) => branch.id === options.libraryId)?.id ?? ""
+    : "";
+  const catalogLibraryId = selectedLibraryId || branches.data[0]?.id || "";
 
-  const [catalog, electronic] = await Promise.all([
-    selectedLibraryId
+  const [catalog, electronic, news, events, articles] = await Promise.all([
+    catalogLibraryId
       ? safeList<LibraryResource>(() =>
           libraryServiceApi.resources.list({
             fields: catalogFields,
-            library_id: selectedLibraryId,
+            library_id: catalogLibraryId,
             q: query || undefined,
             search: query || undefined,
             page: 1,
             per_page: 10,
           }),
         ).then((result) => normalizeList(result, normalizeResource))
-      : Promise.resolve({ data: [], error: branches.error }),
+      : Promise.resolve({ data: [], meta: null, error: branches.error }),
     getElectronicResources(query),
+    query
+      ? getLibraryNewsData({ query, perPage: 4 })
+      : Promise.resolve({ records: { data: [], meta: null, error: null }, query, errors: [] }),
+    query
+      ? getLibraryEventsData({ query, perPage: 4 })
+      : Promise.resolve({ records: { data: [], meta: null, error: null }, query, errors: [] }),
+    query
+      ? getLibraryArticlesData({ query, perPage: 4 })
+      : Promise.resolve({ records: { data: [], meta: null, error: null }, query, errors: [] }),
   ]);
+  const editorial: PublicLibraryData<LibrarySearchResult> = {
+    data: [
+      ...news.records.data.map((item) => editorialSearchResult(item, "news")),
+      ...events.records.data.map((item) => editorialSearchResult(item, "event")),
+      ...articles.records.data.map((item) =>
+        editorialSearchResult(item, "article"),
+      ),
+    ],
+    meta: null,
+    error: uniqueErrors(
+      news.records.error,
+      events.records.error,
+      articles.records.error,
+    )[0] ?? null,
+  };
   const unified = query
     ? await safeRecord<LibrarySearchResponse>(() =>
         libraryServiceApi.search({
           q: query,
+          types:
+            "branch,catalog,database,download,external_link,regulation,service,staff,guide,specialist,workflow,policy",
           library_id: selectedLibraryId || undefined,
           limit: 40,
         }),
@@ -820,6 +1252,7 @@ export async function getLibrarySearchData(
     catalog,
     electronic,
     unified: unified.data,
+    editorial,
     selectedLibraryId,
     query,
     errors: uniqueErrors(
@@ -827,7 +1260,34 @@ export async function getLibrarySearchData(
       catalog.error,
       electronic.error,
       unified.error,
+      editorial.error,
     ),
+  };
+}
+
+function editorialSearchResult(
+  item: News | Event | Blog,
+  type: "news" | "event" | "article",
+): LibrarySearchResult {
+  const urlPrefix =
+    type === "article" ? "articles" : type === "event" ? "events" : "news";
+  return {
+    id: item.id,
+    type,
+    title: item.title,
+    description: compactText(
+      ("excerpt" in item ? item.excerpt : null) ??
+        item.summary ??
+        item.plain_text,
+    ),
+    url: `/${urlPrefix}/${item.slug}`,
+    metadata: {
+      slug: item.slug,
+      category: "category" in item ? item.category : undefined,
+      event_type: "event_type" in item ? item.event_type : undefined,
+      start_date: "start_date" in item ? item.start_date : undefined,
+      published_at: "published_at" in item ? item.published_at : undefined,
+    },
   };
 }
 

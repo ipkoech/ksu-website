@@ -1,12 +1,15 @@
 import unittest
 import uuid
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from fastapi import HTTPException
 
 from app.api.v1 import announcements
+from app.models import Announcement
 from app.schemas import AnnouncementCreate, AnnouncementUpdate
+from app.services.change_tracking import begin_audit_context, reset_audit_context
+from app.services.content import AnnouncementService
 
 
 class _FakeSelector:
@@ -100,6 +103,20 @@ class AnnouncementScopeApiTests(unittest.IsolatedAsyncioTestCase):
                 await announcements.update_announcement(item.id, payload, db=None, user=user)
 
         self.assertEqual(403, context.exception.status_code)
+
+    async def test_update_stamps_updated_by_from_request_actor(self):
+        actor_id = uuid.uuid4()
+        item = Announcement(title="Old notice", slug="old-notice", summary="Old")
+        db = SimpleNamespace(flush=AsyncMock())
+
+        token = begin_audit_context(actor_id=actor_id)
+        try:
+            await AnnouncementService.update(db, item, title="New notice", slug="new-notice")
+        finally:
+            reset_audit_context(token)
+
+        self.assertEqual("New notice", item.title)
+        self.assertEqual(actor_id, item.updated_by_id)
 
 
 if __name__ == "__main__":

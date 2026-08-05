@@ -1,0 +1,66 @@
+# Optional developer-only host ports. Never use this overlay for VM or production deployments.
+services:
+  gateway:
+    ports:
+      - "${GATEWAY_PORT:-8080}:80"
+  main:
+    ports:
+      - "127.0.0.1:${MAIN_SERVICE_PORT:-8000}:8000"
+    environment:
+      APP_ENV: development
+      JWT_SECRET_KEY: change-me-local
+      INTERNAL_API_KEY: change-me-internal
+      RESEARCH_SERVICE_API_KEY: change-me-internal
+      LIBRARY_SERVICE_API_KEY: change-me-internal
+      CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003"]'
+  research:
+    ports:
+      - "127.0.0.1:${RESEARCH_SERVICE_PORT:-8001}:8001"
+    environment:
+      APP_ENV: development
+      JWT_SECRET_KEY: change-me-local
+      MAIN_SERVICE_API_KEY: change-me-internal
+      INTERNAL_API_KEY: change-me-internal
+      REFERENCE_VALIDATION_MODE: warn
+      CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003"]'
+  library:
+    ports:
+      - "127.0.0.1:${LIBRARY_SERVICE_PORT:-8002}:8002"
+    environment:
+      APP_ENV: development
+      JWT_SECRET_KEY: change-me-local
+      MAIN_SERVICE_API_KEY: change-me-internal
+      INTERNAL_API_KEY: change-me-internal
+      CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003"]'
+  heri:
+    environment:
+      APP_ENV: development
+      JWT_SECRET_KEY: change-me-local
+      RESEARCH_SERVICE_API_KEY: change-me-internal
+      CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3004"]'
+  celery-main:
+    environment:
+      APP_ENV: development
+      JWT_SECRET_KEY: change-me-local
+      INTERNAL_API_KEY: change-me-internal
+      CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003"]'
+  celery-library:
+    environment:
+      APP_ENV: development
+      JWT_SECRET_KEY: change-me-local
+      INTERNAL_API_KEY: change-me-internal
+      CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003"]'
+  celery-research:
+    environment:
+      APP_ENV: development
+      JWT_SECRET_KEY: change-me-local
+      MAIN_SERVICE_API_KEY: change-me-internal
+      INTERNAL_API_KEY: change-me-internal
+      REFERENCE_VALIDATION_MODE: warn
+      CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003"]'
+  celery-heri:
+    environment:
+      APP_ENV: development
+      JWT_SECRET_KEY: change-me-local
+      RESEARCH_SERVICE_API_KEY: change-me-internal
+      CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3004"]'

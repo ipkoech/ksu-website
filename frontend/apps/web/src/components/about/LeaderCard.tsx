@@ -73,7 +73,7 @@ function LeaderPortrait({
   }
 
   return (
-    <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-[linear-gradient(135deg,#dbeafe,#bfdbfe_55%,#f8fafc)] font-[family-name:var(--font-display)] text-3xl text-primary">
+    <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] font-[family-name:var(--font-display)] text-3xl text-primary">
       {initialsFromName(name)}
     </div>
   );
@@ -90,7 +90,7 @@ export function LeaderCard({
 }) {
   return (
     <article
-      className={`rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/50 ${
+      className={`rounded-2xl ring-1 ring-primary/10 bg-white p-6 ${
         featured ? "md:p-8" : ""
       }`}
     >
@@ -102,17 +102,17 @@ export function LeaderCard({
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-secondary">
             {leader.role}
           </p>
-          <h3 className="mt-3 text-2xl font-semibold text-slate-950">
+          <h3 className="mt-3 text-2xl font-semibold text-foreground">
             {leader.name}
           </h3>
           {leader.credentials ? (
-            <p className="mt-2 text-sm text-slate-500">{leader.credentials}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{leader.credentials}</p>
           ) : null}
-          <p className="mt-4 text-base leading-7 text-slate-600">
+          <p className="mt-4 text-base leading-7 text-muted-foreground">
             {leader.summary}
           </p>
           {(leader.email || leader.phone) && featured ? (
-            <div className="mt-5 flex flex-col gap-2 text-sm text-slate-500">
+            <div className="mt-5 flex flex-col gap-2 text-sm text-muted-foreground">
               {leader.email ? <span>{leader.email}</span> : null}
               {leader.phone ? <span>{leader.phone}</span> : null}
             </div>
@@ -120,7 +120,7 @@ export function LeaderCard({
           {href ? (
             <Link
               href={href}
-              className="mt-6 inline-flex min-h-8 items-center text-sm font-semibold text-primary transition hover:translate-x-1"
+              className="mt-6 inline-flex min-h-8 items-center text-sm font-semibold text-primary transition-transform duration-200 hover:translate-x-1"
             >
               View profile
             </Link>

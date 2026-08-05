@@ -51,8 +51,22 @@ These guardrails keep the library public pages aligned with the current Kisii Un
 ## Accessibility And Responsiveness
 
 - Every page must keep `main id="library-main"` for the skip link.
+- Keep `AccessibilityInitScript` before interactive content and wrap the
+  application in `AccessibilityShell` with `mainContentId="library-main"`.
+- The shared skip link must move keyboard focus to `library-main`, not merely
+  change the URL fragment.
 - Form controls need visible labels connected with `htmlFor`.
-- Interactive icon-only controls need `aria-label`.
+- Interactive icon-only controls need a unique `aria-label` and a minimum 44 by
+  44 CSS pixel target where practical.
+- Dialogs and side panels must be named, close with Escape, contain focus while
+  open, and restore focus to their trigger.
+- Errors and success states must be announced through an appropriate live
+  region; do not rely on color alone.
+- Respect system and shared reduced-motion preferences. Moving content must have
+  a pause control.
+- Preserve usable colors and visible controls in forced-colors mode.
+- Content and controls must reflow without lost information or function at 400%
+  zoom.
 - Maintain stable responsive grids with explicit breakpoints.
 - Avoid text that can overflow compact cards; prefer wrapping and smaller headings inside cards.
 - Do not use viewport-width font sizing.
@@ -73,6 +87,15 @@ Before committing library design changes, run the relevant targeted checks:
 pnpm --filter @ksu/library lint
 pnpm --filter @ksu/library typecheck
 ```
+
+For changes to a user journey or the shared shell, also run:
+
+```bash
+pnpm test:e2e:accessibility -- --project=library
+```
+
+Automated results do not replace the keyboard, zoom/reflow, forced-colors, and
+screen-reader checks recorded in `docs/accessibility/manual-test-matrix.md`.
 
 If API-client library types or endpoints changed, also run:
 

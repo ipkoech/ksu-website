@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 
 from pydantic import Field
@@ -152,9 +152,25 @@ class SustainabilityCreate(SustainabilityBase, StatusMixin):
 class SustainabilityUpdate(BaseSchema):
     name: str | None = Field(None, max_length=255)
     slug: SlugStr | None = None
+    code: str | None = Field(None, max_length=32)
+    initiative_type: str | None = Field(None, max_length=32)
+    summary: str | None = None
+    description: str | None = None
+    objectives: str | None = None
+    approach: str | None = None
+    activities: str | None = None
+    impact: str | None = None
+    sdg_goals: list[int] | None = None
+    lead_id: uuid.UUID | None = None
+    center_id: uuid.UUID | None = None
     status: str | None = None
     start_date: date | None = None
     end_date: date | None = None
+    contact_email: EmailField | None = None
+    website: UrlStr | None = None
+    video_url: UrlStr | None = None
+    cover_image_url: UrlStr | None = None
+    documents: list[dict] | None = None
     is_active: bool | None = None
     is_featured: bool | None = None
     display_order: int | None = None
@@ -174,4 +190,3 @@ class SustainabilityList(BaseReadSchema):
     status: str
     is_active: bool
     is_featured: bool
-
