@@ -4,15 +4,24 @@ from __future__ import annotations
 
 import base64
 import hashlib
+from urllib.parse import urlsplit
 
-from ksu_common.internal_client import outbound_client
+from ksu_common.internal_client import get_integration_pool
 
 from ..core.config import get_settings
 
 
 def _development_reference(phone_number: str, message: str) -> str:
-    digest = hashlib.sha256(f"{phone_number}:{message}".encode("utf-8")).hexdigest()[:16]
+    digest = hashlib.sha256(f"{phone_number}:{message}".encode()).hexdigest()[:16]
     return f"dev-sms:{digest}"
+
+
+def _webhook_target(url: str) -> tuple[str, str]:
+    parsed = urlsplit(url)
+    target = parsed.path or "/"
+    if parsed.query:
+        target = f"{target}?{parsed.query}"
+    return f"{parsed.scheme}://{parsed.netloc}", target
 
 
 async def _send_webhook_sms(phone_number: str, message: str) -> str:
@@ -24,15 +33,34 @@ async def _send_webhook_sms(phone_number: str, message: str) -> str:
     if settings.SMS_WEBHOOK_TOKEN:
         headers["Authorization"] = f"Bearer {settings.SMS_WEBHOOK_TOKEN}"
 
-    async with outbound_client(timeout=20.0, connect_timeout=5.0) as client:
-        response = await client.post(
-            settings.SMS_WEBHOOK_URL,
+    base_url, target = _webhook_target(settings.SMS_WEBHOOK_URL)
+    pool = get_integration_pool()
+    if headers:
+        response = await pool.request_authenticated(
+            "sms-webhook",
+            base_url,
+            "POST",
+            target,
+            auth_headers=headers,
             json={"to": phone_number, "message": message},
-            headers=headers,
         )
-        response.raise_for_status()
-        payload = response.json() if response.content else {}
-        return str(payload.get("id") or payload.get("message_id") or payload.get("reference") or response.headers.get("x-request-id") or "webhook-sms:sent")
+    else:
+        response = await pool.request(
+            "sms-webhook",
+            base_url,
+            "POST",
+            target,
+            json={"to": phone_number, "message": message},
+        )
+    response.raise_for_status()
+    payload = response.json() if response.content else {}
+    return str(
+        payload.get("id")
+        or payload.get("message_id")
+        or payload.get("reference")
+        or response.headers.get("x-request-id")
+        or "webhook-sms:sent"
+    )
 
 
 async def _send_twilio_sms(phone_number: str, message: str) -> str:
@@ -49,16 +77,20 @@ async def _send_twilio_sms(phone_number: str, message: str) -> str:
     if missing:
         raise RuntimeError(f"Missing Twilio SMS settings: {', '.join(missing)}")
 
-    auth = base64.b64encode(f"{settings.TWILIO_ACCOUNT_SID}:{settings.TWILIO_AUTH_TOKEN}".encode("utf-8")).decode("ascii")
-    async with outbound_client(timeout=20.0, connect_timeout=5.0) as client:
-        response = await client.post(
-            f"https://api.twilio.com/2010-04-01/Accounts/{settings.TWILIO_ACCOUNT_SID}/Messages.json",
-            data={"To": phone_number, "From": settings.TWILIO_FROM_NUMBER, "Body": message},
-            headers={"Authorization": f"Basic {auth}"},
-        )
-        response.raise_for_status()
-        payload = response.json()
-        return str(payload.get("sid") or "twilio-sms:sent")
+    auth = base64.b64encode(
+        f"{settings.TWILIO_ACCOUNT_SID}:{settings.TWILIO_AUTH_TOKEN}".encode()
+    ).decode("ascii")
+    response = await get_integration_pool().request_authenticated(
+        "twilio-sms",
+        "https://api.twilio.com",
+        "POST",
+        f"/2010-04-01/Accounts/{settings.TWILIO_ACCOUNT_SID}/Messages.json",
+        auth_headers={"Authorization": f"Basic {auth}"},
+        data={"To": phone_number, "From": settings.TWILIO_FROM_NUMBER, "Body": message},
+    )
+    response.raise_for_status()
+    payload = response.json()
+    return str(payload.get("sid") or "twilio-sms:sent")
 
 
 async def send_sms(phone_number: str, message: str) -> str:
@@ -70,4 +102,6 @@ async def send_sms(phone_number: str, message: str) -> str:
         return await _send_twilio_sms(phone_number, message)
     if settings.APP_ENV != "production":
         return _development_reference(phone_number, message)
-    raise RuntimeError("SMS delivery is disabled. Configure SMS_PROVIDER for production use.")
+    raise RuntimeError(
+        "SMS delivery is disabled. Configure SMS_PROVIDER for production use."
+    )

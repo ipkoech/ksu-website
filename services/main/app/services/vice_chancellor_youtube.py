@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from urllib.parse import parse_qs, urlparse
 
 import httpx
-from ksu_common.internal_client import create_outbound_client
+from ksu_common.internal_client import get_integration_pool
 
 YOUTUBE_OEMBED_URL = "https://www.youtube.com/oembed"
 _YOUTUBE_HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"}
@@ -78,14 +78,20 @@ async def fetch_youtube_oembed(
     client: httpx.AsyncClient | None = None,
 ) -> YouTubeMetadata:
     """Fetch optional metadata from YouTube's fixed oEmbed endpoint."""
-    owns_client = client is None
-    if client is None:
-        client = create_outbound_client(timeout=5.0, follow_redirects=False)
     try:
-        response = await client.get(
-            YOUTUBE_OEMBED_URL,
-            params={"url": reference.canonical_url, "format": "json"},
-        )
+        if client is None:
+            response = await get_integration_pool().request(
+                "youtube-oembed",
+                "https://www.youtube.com",
+                "GET",
+                "/oembed",
+                params={"url": reference.canonical_url, "format": "json"},
+            )
+        else:
+            response = await client.get(
+                YOUTUBE_OEMBED_URL,
+                params={"url": reference.canonical_url, "format": "json"},
+            )
         response.raise_for_status()
         payload = response.json()
         title = payload.get("title")
@@ -93,11 +99,14 @@ async def fetch_youtube_oembed(
             raise ValueError("missing title")
         return YouTubeMetadata(
             title=title.strip(),
-            author_name=payload.get("author_name") if isinstance(payload.get("author_name"), str) else None,
-            thumbnail_url=payload.get("thumbnail_url") if isinstance(payload.get("thumbnail_url"), str) else None,
+            author_name=payload.get("author_name")
+            if isinstance(payload.get("author_name"), str)
+            else None,
+            thumbnail_url=payload.get("thumbnail_url")
+            if isinstance(payload.get("thumbnail_url"), str)
+            else None,
         )
     except (httpx.HTTPError, ValueError, TypeError) as exc:
-        raise YouTubeMetadataUnavailable("YouTube metadata is temporarily unavailable") from exc
-    finally:
-        if owns_client:
-            await client.aclose()
+        raise YouTubeMetadataUnavailable(
+            "YouTube metadata is temporarily unavailable"
+        ) from exc

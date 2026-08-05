@@ -6,10 +6,10 @@ import json
 from base64 import b64encode
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, Protocol
+from typing import Any, Protocol, Self
 
 import httpx
-from ksu_common.internal_client import create_outbound_client
+from ksu_common.internal_client import get_integration_pool
 
 from ..core.config import get_settings
 from ..models import Media, SocialPlatformAccount
@@ -17,6 +17,15 @@ from ..models import Media, SocialPlatformAccount
 settings = get_settings()
 
 SUPPORTED_SOCIAL_PLATFORMS = {"x", "facebook", "instagram", "linkedin"}
+_AUTHENTICATION_HEADERS = {
+    "authorization",
+    "proxy-authorization",
+    "x-api-key",
+    "api-key",
+    "x-auth-token",
+    "x-access-token",
+    "x-client-secret",
+}
 
 PLATFORM_CONSTRAINTS = {
     "x": {
@@ -68,7 +77,9 @@ class PublishResult:
 class SocialProviderAdapter(Protocol):
     provider: str
 
-    async def validate_credentials(self, account: SocialPlatformAccount) -> tuple[bool, str | None]: ...
+    async def validate_credentials(
+        self, account: SocialPlatformAccount
+    ) -> tuple[bool, str | None]: ...
 
     async def publish(
         self,
@@ -91,6 +102,58 @@ class SocialAdapterError(Exception):
         self.payload = payload
 
 
+class _PooledProviderClient:
+    """Preserve provider adapter request semantics over the shared pool."""
+
+    def __init__(
+        self, *, integration: str, base_url: str, headers: dict[str, str] | None
+    ) -> None:
+        self.integration = integration
+        self.base_url = base_url
+        self.headers = dict(headers or {})
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, *_args: object) -> None:
+        return None
+
+    async def request(
+        self, method: str, url: str, **request_options: Any
+    ) -> httpx.Response:
+        request_headers = dict(self.headers)
+        request_headers.update(request_options.pop("headers", {}) or {})
+        auth_headers = {
+            key: value
+            for key, value in request_headers.items()
+            if key.lower() in _AUTHENTICATION_HEADERS and value.strip()
+        }
+        pool = get_integration_pool()
+        if auth_headers:
+            non_auth_headers = {
+                key: value
+                for key, value in request_headers.items()
+                if key not in auth_headers
+            }
+            return await pool.request_authenticated(
+                self.integration,
+                self.base_url,
+                method,
+                url,
+                auth_headers=auth_headers,
+                headers=non_auth_headers or None,
+                **request_options,
+            )
+        return await pool.request(
+            self.integration,
+            self.base_url,
+            method,
+            url,
+            headers=request_headers or None,
+            **request_options,
+        )
+
+
 class BaseSocialAdapter:
     provider = "unknown"
 
@@ -101,7 +164,9 @@ class BaseSocialAdapter:
         return dict(account.settings or {})
 
     def _token(self, account: SocialPlatformAccount) -> str:
-        token = self._credentials(account).get("access_token") or self._credentials(account).get("token")
+        token = self._credentials(account).get("access_token") or self._credentials(
+            account
+        ).get("token")
         if not token:
             raise SocialAdapterError("missing_token", "Missing access token")
         return token
@@ -110,7 +175,9 @@ class BaseSocialAdapter:
         credentials = self._credentials(account)
         raw = credentials.get("scopes") or credentials.get("scope") or []
         if isinstance(raw, str):
-            return {item.strip() for item in raw.replace(",", " ").split() if item.strip()}
+            return {
+                item.strip() for item in raw.replace(",", " ").split() if item.strip()
+            }
         return {str(item).strip() for item in raw if str(item).strip()}
 
     def _require_scopes(self, account: SocialPlatformAccount, *scopes: str) -> None:
@@ -139,19 +206,27 @@ class BaseSocialAdapter:
             return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
         return None
 
-    def _is_expired(self, account: SocialPlatformAccount, *, skew_seconds: int = 60) -> bool:
+    def _is_expired(
+        self, account: SocialPlatformAccount, *, skew_seconds: int = 60
+    ) -> bool:
         expires_at = self._expires_at(account)
         if expires_at is None:
             return False
-        return expires_at <= datetime.now(timezone.utc) + timedelta(seconds=skew_seconds)
+        return expires_at <= datetime.now(timezone.utc) + timedelta(
+            seconds=skew_seconds
+        )
 
-    def _update_credentials(self, account: SocialPlatformAccount, **updates: Any) -> None:
+    def _update_credentials(
+        self, account: SocialPlatformAccount, **updates: Any
+    ) -> None:
         credentials = self._credentials(account)
-        credentials.update({key: value for key, value in updates.items() if value is not None})
+        credentials.update(
+            {key: value for key, value in updates.items() if value is not None}
+        )
         account.credentials = credentials
 
     def _client_auth(self, client_id: str, client_secret: str) -> str:
-        token = b64encode(f"{client_id}:{client_secret}".encode("utf-8")).decode("ascii")
+        token = b64encode(f"{client_id}:{client_secret}".encode()).decode("ascii")
         return f"Basic {token}"
 
     def _public_url(self, media: Media) -> str:
@@ -163,17 +238,25 @@ class BaseSocialAdapter:
             )
         return url
 
-    def _client(self, *, headers: dict[str, str] | None = None, base_url: str | None = None) -> httpx.AsyncClient:
-        return create_outbound_client(
-            headers=headers,
+    def _client(
+        self,
+        *,
+        headers: dict[str, str] | None = None,
+        base_url: str | None = None,
+    ) -> _PooledProviderClient:
+        if not base_url:
+            raise SocialAdapterError(
+                "missing_provider_url", f"Missing API base URL for {self.provider}"
+            )
+        return _PooledProviderClient(
+            integration=f"social-{self.provider}",
             base_url=base_url,
-            timeout=60.0,
-            connect_timeout=20.0,
+            headers=headers,
         )
 
     async def _request_json(
         self,
-        client: httpx.AsyncClient,
+        client: _PooledProviderClient,
         method: str,
         url: str,
         *,
@@ -193,7 +276,7 @@ class BaseSocialAdapter:
         if response.status_code >= 400:
             try:
                 payload = response.json()
-            except Exception:
+            except ValueError:
                 payload = {"body": response.text}
             raise SocialAdapterError(
                 "provider_request_failed",
@@ -204,7 +287,9 @@ class BaseSocialAdapter:
             return {}
         return response.json()
 
-    async def validate_credentials(self, account: SocialPlatformAccount) -> tuple[bool, str | None]:
+    async def validate_credentials(
+        self, account: SocialPlatformAccount
+    ) -> tuple[bool, str | None]:
         self._token(account)
         return True, None
 
@@ -227,7 +312,9 @@ class BaseSocialAdapter:
                 posted_at=datetime.now(timezone.utc),
                 raw_response={"mode": "dry_run"},
             )
-        raise SocialAdapterError("provider_not_implemented", f"{self.provider} adapter is not implemented")
+        raise SocialAdapterError(
+            "provider_not_implemented", f"{self.provider} adapter is not implemented"
+        )
 
     async def _safe_publish(
         self,
@@ -253,7 +340,7 @@ class BaseSocialAdapter:
                 error_message=exc.message,
                 raw_response=exc.payload,
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - provider failures are returned as publish results.
             return PublishResult(
                 success=False,
                 error_code="unexpected_error",
@@ -268,10 +355,18 @@ class XAdapter(BaseSocialAdapter):
         if not self._is_expired(account):
             return self._token(account)
         refresh_token = self._credentials(account).get("refresh_token")
-        client_id = self._credentials(account).get("client_id") or settings.TWITTER_CLIENT_ID
-        client_secret = self._credentials(account).get("client_secret") or settings.TWITTER_CLIENT_SECRET
+        client_id = (
+            self._credentials(account).get("client_id") or settings.TWITTER_CLIENT_ID
+        )
+        client_secret = (
+            self._credentials(account).get("client_secret")
+            or settings.TWITTER_CLIENT_SECRET
+        )
         if not refresh_token or not client_id:
-            raise SocialAdapterError("token_expired", "X access token expired and no refresh token/client_id is available")
+            raise SocialAdapterError(
+                "token_expired",
+                "X access token expired and no refresh token/client_id is available",
+            )
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         data = {
@@ -282,7 +377,9 @@ class XAdapter(BaseSocialAdapter):
         auth_header: dict[str, str] | None = None
         if client_secret:
             auth_header = {"Authorization": self._client_auth(client_id, client_secret)}
-        async with self._client(headers=headers, base_url=settings.X_API_BASE_URL) as client:
+        async with self._client(
+            headers=headers, base_url=settings.X_API_BASE_URL
+        ) as client:
             payload = await self._request_json(
                 client,
                 "POST",
@@ -298,18 +395,24 @@ class XAdapter(BaseSocialAdapter):
             token_type=payload.get("token_type"),
             scope=payload.get("scope"),
             scopes=payload.get("scope", "").split(),
-            expires_at=(datetime.now(timezone.utc) + timedelta(seconds=expires_in)) if expires_in else None,
+            expires_at=(datetime.now(timezone.utc) + timedelta(seconds=expires_in))
+            if expires_in
+            else None,
         )
         return self._token(account)
 
-    async def validate_credentials(self, account: SocialPlatformAccount) -> tuple[bool, str | None]:
+    async def validate_credentials(
+        self, account: SocialPlatformAccount
+    ) -> tuple[bool, str | None]:
         try:
             self._require_scopes(account, "tweet.write", "users.read")
             token = await self.ensure_access_token(account)
         except SocialAdapterError as exc:
             return False, exc.message
         headers = {"Authorization": f"Bearer {token}"}
-        async with self._client(headers=headers, base_url=settings.X_API_BASE_URL) as client:
+        async with self._client(
+            headers=headers, base_url=settings.X_API_BASE_URL
+        ) as client:
             try:
                 await self._request_json(client, "GET", "/2/users/me")
             except SocialAdapterError as exc:
@@ -326,7 +429,13 @@ class XAdapter(BaseSocialAdapter):
         dry_run: bool = False,
     ) -> PublishResult:
         if dry_run:
-            return await super().publish(account=account, content=content, title=title, media=media, dry_run=dry_run)
+            return await super().publish(
+                account=account,
+                content=content,
+                title=title,
+                media=media,
+                dry_run=dry_run,
+            )
         if media:
             raise SocialAdapterError(
                 "media_not_supported",
@@ -335,10 +444,14 @@ class XAdapter(BaseSocialAdapter):
         self._require_scopes(account, "tweet.write")
         token = await self.ensure_access_token(account)
         headers = {"Authorization": f"Bearer {token}"}
-        async with self._client(headers=headers, base_url=settings.X_API_BASE_URL) as client:
+        async with self._client(
+            headers=headers, base_url=settings.X_API_BASE_URL
+        ) as client:
             payload = {"text": content}
-            data = await self._request_json(client, "POST", "/2/tweets", json_data=payload)
-        post_id = ((data.get("data") or {}).get("id"))
+            data = await self._request_json(
+                client, "POST", "/2/tweets", json_data=payload
+            )
+        post_id = (data.get("data") or {}).get("id")
         return PublishResult(
             success=True,
             provider_post_id=post_id,
@@ -358,18 +471,31 @@ class FacebookAdapter(BaseSocialAdapter):
         app_id = credentials.get("app_id") or settings.FACEBOOK_APP_ID
         app_secret = credentials.get("app_secret") or settings.FACEBOOK_APP_SECRET
         if not app_id or not app_secret:
-            raise SocialAdapterError("missing_app_credentials", "Facebook app id/secret is required for token verification")
+            raise SocialAdapterError(
+                "missing_app_credentials",
+                "Facebook app id/secret is required for token verification",
+            )
         return f"{app_id}|{app_secret}"
 
-    async def _debug_token(self, client: httpx.AsyncClient, account: SocialPlatformAccount, input_token: str) -> dict:
+    async def _debug_token(
+        self,
+        client: _PooledProviderClient,
+        account: SocialPlatformAccount,
+        input_token: str,
+    ) -> dict:
         return await self._request_json(
             client,
             "GET",
             self._graph_path("debug_token"),
-            params={"input_token": input_token, "access_token": self._app_access_token(account)},
+            params={
+                "input_token": input_token,
+                "access_token": self._app_access_token(account),
+            },
         )
 
-    async def _resolve_page_token(self, client: httpx.AsyncClient, account: SocialPlatformAccount) -> str:
+    async def _resolve_page_token(
+        self, client: _PooledProviderClient, account: SocialPlatformAccount
+    ) -> str:
         credentials = self._credentials(account)
         page_token = credentials.get("page_access_token")
         if page_token:
@@ -389,11 +515,18 @@ class FacebookAdapter(BaseSocialAdapter):
                 if token:
                     self._update_credentials(account, page_access_token=token)
                     return token
-        raise SocialAdapterError("page_not_accessible", f"Configured Facebook page {account.account_ref} was not returned by /me/accounts")
+        raise SocialAdapterError(
+            "page_not_accessible",
+            f"Configured Facebook page {account.account_ref} was not returned by /me/accounts",
+        )
 
-    async def validate_credentials(self, account: SocialPlatformAccount) -> tuple[bool, str | None]:
+    async def validate_credentials(
+        self, account: SocialPlatformAccount
+    ) -> tuple[bool, str | None]:
         token = self._token(account)
-        async with self._client(base_url=settings.FACEBOOK_GRAPH_API_BASE_URL) as client:
+        async with self._client(
+            base_url=settings.FACEBOOK_GRAPH_API_BASE_URL
+        ) as client:
             try:
                 debug = await self._debug_token(client, account, token)
                 token_data = debug.get("data") or {}
@@ -410,7 +543,14 @@ class FacebookAdapter(BaseSocialAdapter):
                 return False, exc.message
         return True, None
 
-    async def _publish_images(self, client: httpx.AsyncClient, page_id: str, token: str, message: str, media: list[Media]) -> dict:
+    async def _publish_images(
+        self,
+        client: _PooledProviderClient,
+        page_id: str,
+        token: str,
+        message: str,
+        media: list[Media],
+    ) -> dict:
         attachments: list[dict[str, str]] = []
         for item in media:
             if not item.is_image:
@@ -452,13 +592,23 @@ class FacebookAdapter(BaseSocialAdapter):
         dry_run: bool = False,
     ) -> PublishResult:
         if dry_run:
-            return await super().publish(account=account, content=content, title=title, media=media, dry_run=dry_run)
+            return await super().publish(
+                account=account,
+                content=content,
+                title=title,
+                media=media,
+                dry_run=dry_run,
+            )
         page_id = account.account_ref
         message = f"{title}\n\n{content}".strip() if title else content
-        async with self._client(base_url=settings.FACEBOOK_GRAPH_API_BASE_URL) as client:
+        async with self._client(
+            base_url=settings.FACEBOOK_GRAPH_API_BASE_URL
+        ) as client:
             token = await self._resolve_page_token(client, account)
             if media:
-                data = await self._publish_images(client, page_id, token, message, media)
+                data = await self._publish_images(
+                    client, page_id, token, message, media
+                )
             else:
                 data = await self._request_json(
                     client,
@@ -481,21 +631,38 @@ class InstagramAdapter(BaseSocialAdapter):
     def _graph_path(self, resource: str) -> str:
         return f"/{settings.INSTAGRAM_GRAPH_API_VERSION}/{resource}"
 
-    async def _debug_token(self, client: httpx.AsyncClient, account: SocialPlatformAccount, input_token: str) -> dict:
+    async def _debug_token(
+        self,
+        client: _PooledProviderClient,
+        account: SocialPlatformAccount,
+        input_token: str,
+    ) -> dict:
         app_id = self._credentials(account).get("app_id") or settings.FACEBOOK_APP_ID
-        app_secret = self._credentials(account).get("app_secret") or settings.FACEBOOK_APP_SECRET
+        app_secret = (
+            self._credentials(account).get("app_secret") or settings.FACEBOOK_APP_SECRET
+        )
         if not app_id or not app_secret:
-            raise SocialAdapterError("missing_app_credentials", "Meta app id/secret is required for Instagram token verification")
+            raise SocialAdapterError(
+                "missing_app_credentials",
+                "Meta app id/secret is required for Instagram token verification",
+            )
         return await self._request_json(
             client,
             "GET",
             self._graph_path("debug_token"),
-            params={"input_token": input_token, "access_token": f"{app_id}|{app_secret}"},
+            params={
+                "input_token": input_token,
+                "access_token": f"{app_id}|{app_secret}",
+            },
         )
 
-    async def validate_credentials(self, account: SocialPlatformAccount) -> tuple[bool, str | None]:
+    async def validate_credentials(
+        self, account: SocialPlatformAccount
+    ) -> tuple[bool, str | None]:
         token = self._token(account)
-        async with self._client(base_url=settings.FACEBOOK_GRAPH_API_BASE_URL) as client:
+        async with self._client(
+            base_url=settings.FACEBOOK_GRAPH_API_BASE_URL
+        ) as client:
             try:
                 debug = await self._debug_token(client, account, token)
                 token_data = debug.get("data") or {}
@@ -513,11 +680,17 @@ class InstagramAdapter(BaseSocialAdapter):
                         client,
                         "GET",
                         self._graph_path(page_id),
-                        params={"fields": "instagram_business_account{id}", "access_token": token},
+                        params={
+                            "fields": "instagram_business_account{id}",
+                            "access_token": token,
+                        },
                     )
-                    ig_id = (((page.get("instagram_business_account") or {}).get("id")))
+                    ig_id = (page.get("instagram_business_account") or {}).get("id")
                     if ig_id and str(ig_id) != str(account.account_ref):
-                        return False, "Configured Instagram user does not match the linked Facebook page"
+                        return (
+                            False,
+                            "Configured Instagram user does not match the linked Facebook page",
+                        )
             except SocialAdapterError as exc:
                 return False, exc.message
         return True, None
@@ -532,9 +705,18 @@ class InstagramAdapter(BaseSocialAdapter):
         dry_run: bool = False,
     ) -> PublishResult:
         if dry_run:
-            return await super().publish(account=account, content=content, title=title, media=media, dry_run=dry_run)
+            return await super().publish(
+                account=account,
+                content=content,
+                title=title,
+                media=media,
+                dry_run=dry_run,
+            )
         if not media:
-            raise SocialAdapterError("media_required", "Instagram publishing requires at least one media item")
+            raise SocialAdapterError(
+                "media_required",
+                "Instagram publishing requires at least one media item",
+            )
         if len(media) != 1:
             raise SocialAdapterError(
                 "single_media_only",
@@ -557,8 +739,12 @@ class InstagramAdapter(BaseSocialAdapter):
             container_payload["image_url"] = self._public_url(item)
         else:
             container_payload["video_url"] = self._public_url(item)
-            container_payload["media_type"] = "REELS" if item.duration and item.duration <= 900 else "VIDEO"
-        async with self._client(base_url=settings.FACEBOOK_GRAPH_API_BASE_URL) as client:
+            container_payload["media_type"] = (
+                "REELS" if item.duration and item.duration <= 900 else "VIDEO"
+            )
+        async with self._client(
+            base_url=settings.FACEBOOK_GRAPH_API_BASE_URL
+        ) as client:
             container = await self._request_json(
                 client,
                 "POST",
@@ -567,7 +753,11 @@ class InstagramAdapter(BaseSocialAdapter):
             )
             creation_id = container.get("id")
             if not creation_id:
-                raise SocialAdapterError("missing_creation_id", "Instagram did not return a media creation id", payload=container)
+                raise SocialAdapterError(
+                    "missing_creation_id",
+                    "Instagram did not return a media creation id",
+                    payload=container,
+                )
             data = await self._request_json(
                 client,
                 "POST",
@@ -589,10 +779,18 @@ class LinkedInAdapter(BaseSocialAdapter):
         if not self._is_expired(account):
             return self._token(account)
         refresh_token = self._credentials(account).get("refresh_token")
-        client_id = self._credentials(account).get("client_id") or settings.LINKEDIN_CLIENT_ID
-        client_secret = self._credentials(account).get("client_secret") or settings.LINKEDIN_CLIENT_SECRET
+        client_id = (
+            self._credentials(account).get("client_id") or settings.LINKEDIN_CLIENT_ID
+        )
+        client_secret = (
+            self._credentials(account).get("client_secret")
+            or settings.LINKEDIN_CLIENT_SECRET
+        )
         if not refresh_token or not client_id or not client_secret:
-            raise SocialAdapterError("token_expired", "LinkedIn access token expired and refresh credentials are incomplete")
+            raise SocialAdapterError(
+                "token_expired",
+                "LinkedIn access token expired and refresh credentials are incomplete",
+            )
         async with self._client(base_url=settings.LINKEDIN_API_BASE_URL) as client:
             payload = await self._request_json(
                 client,
@@ -610,7 +808,9 @@ class LinkedInAdapter(BaseSocialAdapter):
         self._update_credentials(
             account,
             access_token=payload.get("access_token"),
-            expires_at=(datetime.now(timezone.utc) + timedelta(seconds=expires_in)) if expires_in else None,
+            expires_at=(datetime.now(timezone.utc) + timedelta(seconds=expires_in))
+            if expires_in
+            else None,
         )
         return self._token(account)
 
@@ -622,17 +822,26 @@ class LinkedInAdapter(BaseSocialAdapter):
         }
 
     def _author_urn(self, account: SocialPlatformAccount) -> str:
-        return str((self._settings(account).get("author_urn") or account.account_ref)).strip()
+        return str(
+            self._settings(account).get("author_urn") or account.account_ref
+        ).strip()
 
-    def _validate_author_scope(self, account: SocialPlatformAccount, author_urn: str) -> None:
+    def _validate_author_scope(
+        self, account: SocialPlatformAccount, author_urn: str
+    ) -> None:
         if author_urn.startswith("urn:li:organization:"):
             self._require_scopes(account, "w_organization_social")
-        elif author_urn.startswith("urn:li:person:") or author_urn.startswith("urn:li:member:"):
+        elif author_urn.startswith(("urn:li:person:", "urn:li:member:")):
             self._require_scopes(account, "w_member_social")
         else:
-            raise SocialAdapterError("invalid_author", "LinkedIn author_urn must be a member or organization URN")
+            raise SocialAdapterError(
+                "invalid_author",
+                "LinkedIn author_urn must be a member or organization URN",
+            )
 
-    async def validate_credentials(self, account: SocialPlatformAccount) -> tuple[bool, str | None]:
+    async def validate_credentials(
+        self, account: SocialPlatformAccount
+    ) -> tuple[bool, str | None]:
         try:
             token = await self.ensure_access_token(account)
             author_urn = self._author_urn(account)
@@ -640,11 +849,15 @@ class LinkedInAdapter(BaseSocialAdapter):
         except SocialAdapterError as exc:
             return False, exc.message
         headers = self._linkedin_headers(token)
-        async with self._client(headers=headers, base_url=settings.LINKEDIN_API_BASE_URL) as client:
+        async with self._client(
+            headers=headers, base_url=settings.LINKEDIN_API_BASE_URL
+        ) as client:
             try:
                 if author_urn.startswith("urn:li:organization:"):
                     org_id = author_urn.split(":")[-1]
-                    await self._request_json(client, "GET", f"/rest/organizations/{org_id}")
+                    await self._request_json(
+                        client, "GET", f"/rest/organizations/{org_id}"
+                    )
                 else:
                     await self._request_json(client, "GET", "/v2/me")
             except SocialAdapterError as exc:
@@ -661,7 +874,13 @@ class LinkedInAdapter(BaseSocialAdapter):
         dry_run: bool = False,
     ) -> PublishResult:
         if dry_run:
-            return await super().publish(account=account, content=content, title=title, media=media, dry_run=dry_run)
+            return await super().publish(
+                account=account,
+                content=content,
+                title=title,
+                media=media,
+                dry_run=dry_run,
+            )
         if media:
             raise SocialAdapterError(
                 "media_not_supported",
@@ -683,12 +902,14 @@ class LinkedInAdapter(BaseSocialAdapter):
             "lifecycleState": "PUBLISHED",
             "isReshareDisabledByAuthor": False,
         }
-        async with self._client(headers=headers, base_url=settings.LINKEDIN_API_BASE_URL) as client:
+        async with self._client(
+            headers=headers, base_url=settings.LINKEDIN_API_BASE_URL
+        ) as client:
             response = await client.request("POST", "/rest/posts", json=payload)
             if response.status_code >= 400:
                 try:
                     payload_data = response.json()
-                except Exception:
+                except ValueError:
                     payload_data = {"body": response.text}
                 raise SocialAdapterError(
                     "provider_request_failed",
@@ -696,7 +917,11 @@ class LinkedInAdapter(BaseSocialAdapter):
                     payload=payload_data,
                 )
             data = response.json() if response.content else {}
-            post_id = response.headers.get("x-restli-id") or data.get("id") or data.get("entity")
+            post_id = (
+                response.headers.get("x-restli-id")
+                or data.get("id")
+                or data.get("entity")
+            )
         return PublishResult(
             success=True,
             provider_post_id=post_id,
@@ -749,7 +974,9 @@ def media_platform_type(media: Media) -> str:
     return media.media_type or "file"
 
 
-def validate_social_payload(platform: str, *, content: str, media: list[Media]) -> list[ValidationIssue]:
+def validate_social_payload(
+    platform: str, *, content: str, media: list[Media]
+) -> list[ValidationIssue]:
     rules = PLATFORM_CONSTRAINTS[platform]
     issues: list[ValidationIssue] = []
     if len(content) > rules["max_text_length"]:
@@ -785,16 +1012,21 @@ def validate_social_payload(platform: str, *, content: str, media: list[Media]) 
     return issues
 
 
-def build_validation_summary(platforms: list[str], *, content: str, media: list[Media]) -> dict:
+def build_validation_summary(
+    platforms: list[str], *, content: str, media: list[Media]
+) -> dict:
     summary: dict[str, list[dict]] = {}
     for platform in platforms:
-        summary[platform] = [issue.as_dict() for issue in validate_social_payload(platform, content=content, media=media)]
+        summary[platform] = [
+            issue.as_dict()
+            for issue in validate_social_payload(platform, content=content, media=media)
+        ]
     return summary
 
 
 __all__ = [
-    "SUPPORTED_SOCIAL_PLATFORMS",
     "PLATFORM_CONSTRAINTS",
+    "SUPPORTED_SOCIAL_PLATFORMS",
     "PublishResult",
     "ValidationIssue",
     "build_validation_summary",

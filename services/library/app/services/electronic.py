@@ -5,29 +5,29 @@ from __future__ import annotations
 import asyncio
 import uuid
 from collections import defaultdict
-from datetime import datetime, timezone
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
-from ksu_common.internal_client import outbound_client
+from ksu_common.internal_client import get_integration_pool
+from ksu_common.pagination import PaginatedResult, paginate
 from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ksu_common.pagination import PaginatedResult, paginate
-
-from ..models import ElectronicResource, ElectronicResourceGuide, Library, SavedPublication
+from ..models import (
+    ElectronicResource,
+    ElectronicResourceGuide,
+    Library,
+    SavedPublication,
+)
 from ..schemas import (
     CitationOut,
     ElectronicResourceCreate,
     ElectronicResourceGuideCreate,
-    ElectronicResourceGuideOut,
     ElectronicResourceGuideUpdate,
-    ElectronicResourceOut,
     ElectronicResourceUpdate,
     PublicationResult,
     PublicationSearchQuery,
     SavedPublicationCreate,
-    SavedPublicationOut,
     SavedPublicationUpdate,
 )
 
@@ -54,12 +54,12 @@ def public_resource_parent_filter():
 async def list_resources(
     db: AsyncSession,
     *,
-    library_id: Optional[uuid.UUID] = None,
-    section_letter: Optional[str] = None,
-    resource_type: Optional[str] = None,
-    access_level: Optional[str] = None,
+    library_id: uuid.UUID | None = None,
+    section_letter: str | None = None,
+    resource_type: str | None = None,
+    access_level: str | None = None,
     featured_only: bool = False,
-    q: Optional[str] = None,
+    q: str | None = None,
     page: int = 1,
     per_page: int = 20,
     include_total: bool = True,
@@ -219,7 +219,9 @@ async def list_guides(
     return list(result.scalars().all())
 
 
-async def get_guide_library_id(db: AsyncSession, guide_id: uuid.UUID) -> uuid.UUID | None:
+async def get_guide_library_id(
+    db: AsyncSession, guide_id: uuid.UUID
+) -> uuid.UUID | None:
     result = await db.execute(
         select(ElectronicResource.library_id)
         .join(
@@ -296,8 +298,8 @@ async def delete_guide(db: AsyncSession, guide_id: uuid.UUID) -> None:
 
 async def _search_internal(
     q: str,
-    author: Optional[str],
-    year: Optional[int],
+    author: str | None,
+    year: int | None,
     page: int,
     per_page: int,
 ) -> list[PublicationResult]:
@@ -306,8 +308,8 @@ async def _search_internal(
 
 async def _search_crossref(
     q: str,
-    author: Optional[str],
-    year: Optional[int],
+    author: str | None,
+    year: int | None,
     page: int,
     per_page: int,
 ) -> list[PublicationResult]:
@@ -316,10 +318,11 @@ async def _search_crossref(
         params["query.author"] = author
     if year:
         params["filter"] = f"from-pub-date:{year},until-pub-date:{year}"
-    async with outbound_client(timeout=_HTTPX_TIMEOUT) as client:
-        resp = await client.get("https://api.crossref.org/works", params=params)
-        resp.raise_for_status()
-        items = resp.json().get("message", {}).get("items", [])
+    resp = await get_integration_pool().request(
+        "crossref", "https://api.crossref.org", "GET", "/works", params=params
+    )
+    resp.raise_for_status()
+    items = resp.json().get("message", {}).get("items", [])
     results = []
     for item in items:
         authors = []
@@ -347,18 +350,19 @@ async def _search_crossref(
 
 async def _search_openalex(
     q: str,
-    author: Optional[str],
-    year: Optional[int],
+    author: str | None,
+    year: int | None,
     page: int,
     per_page: int,
 ) -> list[PublicationResult]:
     params: dict = {"search": q, "per-page": per_page, "page": page}
     if year:
         params["filter"] = f"publication_year:{year}"
-    async with outbound_client(timeout=_HTTPX_TIMEOUT) as client:
-        resp = await client.get("https://api.openalex.org/works", params=params)
-        resp.raise_for_status()
-        items = resp.json().get("results", [])
+    resp = await get_integration_pool().request(
+        "openalex", "https://api.openalex.org", "GET", "/works", params=params
+    )
+    resp.raise_for_status()
+    items = resp.json().get("results", [])
     results = []
     for item in items:
         authors = [
@@ -387,8 +391,8 @@ async def _search_openalex(
 
 async def _search_pubmed(
     q: str,
-    author: Optional[str],
-    year: Optional[int],
+    author: str | None,
+    year: int | None,
     page: int,
     per_page: int,
 ) -> list[PublicationResult]:
@@ -404,21 +408,27 @@ async def _search_pubmed(
         "retstart": (page - 1) * per_page,
         "retmode": "json",
     }
-    async with outbound_client(timeout=_HTTPX_TIMEOUT) as client:
-        esearch = await client.get(
-            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
-            params=esearch_params,
-        )
-        esearch.raise_for_status()
-        ids = esearch.json().get("esearchresult", {}).get("idlist", [])
-        if not ids:
-            return []
-        efetch = await client.get(
-            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi",
-            params={"db": "pubmed", "id": ",".join(ids), "retmode": "json"},
-        )
-        efetch.raise_for_status()
-        result_map = efetch.json().get("result", {})
+    pool = get_integration_pool()
+    esearch = await pool.request(
+        "pubmed",
+        "https://eutils.ncbi.nlm.nih.gov",
+        "GET",
+        "/entrez/eutils/esearch.fcgi",
+        params=esearch_params,
+    )
+    esearch.raise_for_status()
+    ids = esearch.json().get("esearchresult", {}).get("idlist", [])
+    if not ids:
+        return []
+    efetch = await pool.request(
+        "pubmed",
+        "https://eutils.ncbi.nlm.nih.gov",
+        "GET",
+        "/entrez/eutils/esummary.fcgi",
+        params={"db": "pubmed", "id": ",".join(ids), "retmode": "json"},
+    )
+    efetch.raise_for_status()
+    result_map = efetch.json().get("result", {})
     results = []
     for pmid in ids:
         item = result_map.get(pmid, {})
@@ -444,19 +454,20 @@ async def _search_pubmed(
 
 async def _search_doaj(
     q: str,
-    author: Optional[str],
-    year: Optional[int],
+    author: str | None,
+    year: int | None,
     page: int,
     per_page: int,
 ) -> list[PublicationResult]:
-    params: dict = {"q": q, "pageSize": per_page, "page": page}
-    async with outbound_client(timeout=_HTTPX_TIMEOUT) as client:
-        resp = await client.get(
-            "https://doaj.org/api/search/articles/" + q,
-            params={"pageSize": per_page, "page": page},
-        )
-        resp.raise_for_status()
-        items = resp.json().get("results", [])
+    resp = await get_integration_pool().request(
+        "doaj",
+        "https://doaj.org",
+        "GET",
+        "/api/search/articles/" + q,
+        params={"pageSize": per_page, "page": page},
+    )
+    resp.raise_for_status()
+    items = resp.json().get("results", [])
     results = []
     for item in items:
         bib = item.get("bibjson", {})
