@@ -29,7 +29,6 @@ from .rate_limit import (
     rate_limit,
     reset_rate_limit,
 )
-from .repository import BaseRepository
 from .logging import configure_service_logging
 from .authorization import (
     AuthorizationDecision,
@@ -141,8 +140,6 @@ __all__ = [
     "install_request_body_limit_middleware",
     "rate_limit",
     "reset_rate_limit",
-    # Repository
-    "BaseRepository",
     # Logging
     "configure_service_logging",
     # Canonical platform interfaces

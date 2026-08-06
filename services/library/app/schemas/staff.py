@@ -9,23 +9,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
-try:
-    from ksu_common.leadership import LIBRARY_LEADERSHIP_ROLES
-except ModuleNotFoundError:  # Local venvs may have an older installed common package.
-    LIBRARY_LEADERSHIP_ROLES = frozenset(
-        {
-            "university_librarian",
-            "chief_librarian",
-            "deputy_librarian",
-            "head_librarian",
-            "senior_librarian",
-            "branch_librarian",
-            "head",
-            "manager",
-            "coordinator",
-        }
-    )
-
+from ..domain.leadership import LIBRARY_LEADERSHIP_ROLES
 
 # ── LibraryStaff ──────────────────────────────────────────────────────────────
 

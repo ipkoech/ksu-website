@@ -60,24 +60,6 @@ def _split_permission(permission: str) -> tuple[str, str]:
 
 
 KNOWN_PERMISSIONS = frozenset(_normalize_value(permission) for permission in ALL_PERMISSIONS)
-KNOWN_RESOURCES = frozenset(_split_permission(permission)[0] for permission in KNOWN_PERMISSIONS)
-KNOWN_ACTIONS = frozenset(_split_permission(permission)[1] for permission in KNOWN_PERMISSIONS) | {
-    "*",
-    "read",
-    "view",
-    "list",
-    "write",
-    "create",
-    "update",
-    "edit",
-    "manage",
-    "delete",
-    "remove",
-    "publish",
-    "unpublish",
-    "upload",
-    "send",
-}
 
 
 def _resource_aliases(resource: str) -> frozenset[str]:

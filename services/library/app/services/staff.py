@@ -7,23 +7,7 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-try:
-    from ksu_common.leadership import LIBRARY_LEADERSHIP_ROLES
-except ModuleNotFoundError:  # Local venvs may have an older installed common package.
-    LIBRARY_LEADERSHIP_ROLES = frozenset(
-        {
-            "university_librarian",
-            "chief_librarian",
-            "deputy_librarian",
-            "head_librarian",
-            "senior_librarian",
-            "branch_librarian",
-            "head",
-            "manager",
-            "coordinator",
-        }
-    )
-
+from ..domain.leadership import LIBRARY_LEADERSHIP_ROLES
 from ..models import Library, LibraryService, LibraryStaff, LibraryStatistics
 from ..schemas import (
     LibraryServiceCreate,
