@@ -20,6 +20,7 @@ def base_settings(**overrides):
         "REDIS_URL": "redis://redis:6379/2",
         "MAIN_SERVICE_URL": "http://main:8000",
         "MAIN_SERVICE_API_KEY": "m" * 32,
+        "INTERNAL_API_KEY": "i" * 32,
         "CORS_ORIGINS": ["https://research.example.edu"],
         **overrides,
     }
