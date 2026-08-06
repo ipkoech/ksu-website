@@ -23,6 +23,28 @@ settings = get_settings()
 BOOTSTRAP_MARKER_TABLE = "_ksu_fresh_schema_bootstrap"
 
 
+# Sibling services own these schemas in the same database. They are provisioned
+# by scripts/init-database-ownership.sh and main must never emit DDL for them.
+SIBLING_SCHEMAS = frozenset({"research", "library", "heri"})
+
+
+def _include_name(name: str | None, type_: str, parent_names: dict[str, str | None]) -> bool:
+    """Keep autogenerate away from the other services' schemas.
+
+    Deliberately a denylist rather than an allowlist. Main's models declare no
+    schema and rely on search_path, so whether reflection reports them as the
+    default schema (name None) or as "main" depends on the connection. An
+    allowlist that guessed wrong would exclude main's own tables from
+    target_metadata and autogenerate would propose dropping all of them. A
+    denylist cannot make that mistake and still closes the cross-service hole.
+    """
+    if type_ == "schema":
+        return name not in SIBLING_SCHEMAS
+    if type_ == "table":
+        return parent_names.get("schema_name") not in SIBLING_SCHEMAS
+    return True
+
+
 def _include_object(
     object_: Any,
     name: str | None,
@@ -73,6 +95,7 @@ def run_migrations_offline() -> None:
         compare_type=True,
         compare_server_default=True,
         include_object=_include_object,
+        include_name=_include_name,
         process_revision_directives=_process_revision_directives,
         version_table_schema=_version_table_schema(),
     )
@@ -168,6 +191,7 @@ async def run_migrations_online() -> None:
                         compare_type=True,
                         compare_server_default=True,
                         include_object=_include_object,
+                        include_name=_include_name,
                         process_revision_directives=_process_revision_directives,
                         version_table_schema=version_schema,
                     )

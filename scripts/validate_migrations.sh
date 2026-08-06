@@ -17,8 +17,18 @@ for service in "${services[@]}"; do
   [[ -d "${migration_dir}" ]] || { echo "error: missing ${migration_dir}" >&2; exit 1; }
   "${PYTHON_BIN}" -m compileall -q "${migration_dir}"
   heads="$(cd "services/${service}" && "${PYTHON_BIN}" -m alembic heads)"
-  head_count="$(printf '%s\n' "${heads}" | rg -c '\(head\)' || true)"
-  if [[ "${head_count}" -ne 1 ]]; then
+  # Delegates to ksu_common.migration_check.require_single_head so the shared
+  # rule is enforced here rather than reimplemented. It also rejects diagnostic
+  # output on stdout, which a bare marker count would silently accept.
+  if ! printf '%s\n' "${heads}" | "${PYTHON_BIN}" -c '
+import sys
+from ksu_common.migration_check import MigrationCheckError, require_single_head
+
+try:
+    require_single_head(sys.stdin.read())
+except MigrationCheckError as error:
+    sys.exit(str(error))
+'; then
     echo "error: ${service} migration history must have exactly one head" >&2
     printf '%s\n' "${heads}" >&2
     exit 1
@@ -65,7 +75,9 @@ for service in "${services[@]}"; do
     [[ -f "${migration}" ]] || continue
     awk '/^def upgrade/{in_upgrade=1} /^def downgrade/{in_upgrade=0} in_upgrade' "${migration}" >> "${upgrade_source}"
   done
-  if rg -n -i 'drop_table|drop_column|op\.execute\s*\(.*\b(drop|truncate)\b' "${upgrade_source}"; then
+  # grep, not rg: ripgrep is not installed on the CI runner, and its absence
+  # exits 127 which reads here as "no destructive statements found".
+  if grep -n -iE 'drop_table|drop_column|op\.execute[[:space:]]*\(.*\b(drop|truncate)\b' "${upgrade_source}"; then
     if [[ "${MIGRATION_DESTRUCTIVE_REVIEW:-}" != approved ]]; then
       echo "error: destructive migration detected in ${service}; set MIGRATION_DESTRUCTIVE_REVIEW=approved only after review" >&2
       exit 1
