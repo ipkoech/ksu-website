@@ -256,6 +256,17 @@ class LibraryGuide(Base):
             "guide_type",
             "sort_order",
         ),
+        # Public list path filters a branch's visible guides and orders by
+        # sort_order without narrowing guide_type, which the composite above
+        # cannot serve because guide_type sits between the filter and the sort.
+        sa.Index(
+            "ix_library_guides_library_public_active_sort",
+            "library_id",
+            "is_public",
+            "is_active",
+            "sort_order",
+        ),
+        sa.Index("ix_library_guides_type_subject", "guide_type", "subject"),
         {"schema": "library"},
     )
 
@@ -271,19 +282,20 @@ class LibraryGuide(Base):
     guide_type: Mapped[str] = mapped_column(
         sa.String(32), nullable=False, default="subject", index=True
     )
-    subject: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
-    course_code: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True)
-    audience: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    subject: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True, index=True)
+    course_code: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True, index=True)
+    audience: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True, index=True)
     school_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        PGUUID(as_uuid=True), nullable=True
+        PGUUID(as_uuid=True), nullable=True, index=True
     )
     department_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        PGUUID(as_uuid=True), nullable=True
+        PGUUID(as_uuid=True), nullable=True, index=True
     )
     owner_staff_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         PGUUID(as_uuid=True),
         sa.ForeignKey("library.library_staff.id", ondelete="SET NULL"),
         nullable=True,
+        index=True,
     )
     is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=True)
     is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=True)
@@ -374,6 +386,15 @@ class LibraryWorkflow(Base):
             "workflow_type",
             "sort_order",
         ),
+        # Same reason as library_guides: the public list does not narrow
+        # workflow_type before ordering by sort_order.
+        sa.Index(
+            "ix_library_workflows_library_public_active_sort",
+            "library_id",
+            "is_public",
+            "is_active",
+            "sort_order",
+        ),
         {"schema": "library"},
     )
 
@@ -389,7 +410,7 @@ class LibraryWorkflow(Base):
     title: Mapped[str] = mapped_column(sa.String(255), nullable=False)
     slug: Mapped[str] = mapped_column(sa.String(160), nullable=False, index=True)
     summary: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
-    audience: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True)
+    audience: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True, index=True)
     is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=True)
     is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=True)
     sort_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)
@@ -445,6 +466,15 @@ class LibraryPolicyPage(Base):
             "policy_type",
             "sort_order",
         ),
+        # Same reason as library_guides: the public list does not narrow
+        # policy_type before ordering by sort_order.
+        sa.Index(
+            "ix_library_policy_pages_library_public_status_sort",
+            "library_id",
+            "is_public",
+            "status",
+            "sort_order",
+        ),
         {"schema": "library"},
     )
 
@@ -464,6 +494,7 @@ class LibraryPolicyPage(Base):
         PGUUID(as_uuid=True),
         sa.ForeignKey("library.library_regulations.id", ondelete="SET NULL"),
         nullable=True,
+        index=True,
     )
     file_id: Mapped[Optional[uuid.UUID]] = mapped_column(PGUUID(as_uuid=True), nullable=True)
     is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=True)

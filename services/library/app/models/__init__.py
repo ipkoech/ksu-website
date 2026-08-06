@@ -13,19 +13,27 @@ from .resources import (
 from .staff import LibraryStaff
 from .electronic import ElectronicResource, ElectronicResourceGuide
 from .services import LibraryService, LibraryStatistics
-from .engagement import (
-    LibraryInquiry,
-    LibraryRegulation,
-    SavedPublication,
-    SupportTicket,
+from .assistant import (
+    LibraryAssistantContext,
+    LibraryAssistantContextSource,
+    LibraryConversation,
+    LibraryConversationMessage,
+    LibraryConversationRecovery,
+    LibraryEmailVerification,
+    LibraryGuestSession,
 )
-from .guides import (
+from .engagement import (
     LibraryGuide,
     LibraryGuideSection,
+    LibraryGuideSpecialist,
+    LibraryInquiry,
     LibraryPolicyPage,
+    LibraryRegulation,
     LibrarySpecialist,
     LibraryWorkflow,
     LibraryWorkflowStep,
+    SavedPublication,
+    SupportTicket,
 )
 
 __all__ = [
@@ -54,11 +62,21 @@ __all__ = [
     "SupportTicket",
     "SavedPublication",
     "LibraryRegulation",
-    # guides
+    # guides — merged into engagement.py, which owns the canonical shape
     "LibraryGuide",
     "LibraryGuideSection",
+    "LibraryGuideSpecialist",
     "LibrarySpecialist",
     "LibraryWorkflow",
     "LibraryWorkflowStep",
     "LibraryPolicyPage",
+    # assistant — these 7 tables were never registered on Base.metadata, so
+    # create_all and autogenerate both silently skipped them.
+    "LibraryAssistantContext",
+    "LibraryAssistantContextSource",
+    "LibraryConversation",
+    "LibraryConversationMessage",
+    "LibraryGuestSession",
+    "LibraryEmailVerification",
+    "LibraryConversationRecovery",
 ]
