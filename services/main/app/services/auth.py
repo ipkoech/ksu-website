@@ -86,9 +86,21 @@ class AuthService:
     """Authentication operations."""
 
     @staticmethod
-    async def login(db: AsyncSession, email: str, password: str) -> tuple[User, str, str]:
+    async def login(
+        db: AsyncSession,
+        email: str,
+        password: str,
+        *,
+        ip_address: str | None = None,
+    ) -> tuple[User, str, str]:
         await _LOGIN_GLOBAL_RATE_LIMITER.check("all", "POST:/auth/login/global")
         await _LOGIN_RATE_LIMITER.check(email.strip().lower(), "POST:/auth/login")
+        # Keyed per address as well as per email, so one attacker cannot burn a
+        # known account's budget and lock its owner out. Mirrors the password
+        # reset limiter. Only meaningful once the proxy chain stops collapsing
+        # every client to the edge address — see --forwarded-allow-ips.
+        if ip_address:
+            await _LOGIN_RATE_LIMITER.check(f"ip:{ip_address}", "POST:/auth/login/ip")
         user = await UserService.get_by_email(db, email)
         if user is None:
             raise PermissionError("Invalid credentials")
