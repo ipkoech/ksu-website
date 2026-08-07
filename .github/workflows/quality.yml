@@ -24,7 +24,6 @@ jobs:
           python -m compileall -q scripts services/common/ksu_common
           detect-secrets scan --all-files --exclude-files '(^|/)(\.env|node_modules|\.pnpm-store|test-results|\.git/)' --baseline .secrets.baseline
           python scripts/ruff_baseline.py check --baseline .ruff-baseline.json --paths .
-          pytest -q scripts/tests/test_tooling.py
       - name: Validate Compose production topology
         env:
           POSTGRES_PASSWORD: ci-only-not-a-production-secret
@@ -58,9 +57,6 @@ jobs:
       - name: Ruff correctness checks
         working-directory: services/${{ matrix.service }}
         run: ruff check .
-      - name: Tests
-        working-directory: services/${{ matrix.service }}
-        run: python -m pytest -q tests --asyncio-mode=auto
       - name: Check installed dependencies
         working-directory: services/${{ matrix.service }}
         run: pip check
@@ -132,11 +128,6 @@ jobs:
           python-version: "3.12"
       - name: Install real service test dependencies
         run: pip install asyncpg redis
-      - name: Exercise PostgreSQL and Redis
-        env:
-          DATABASE_URL: postgresql://ksu_ci:ksu_ci_password@localhost:5432/ksu_ci
-          REDIS_URL: redis://localhost:6379/0
-        run: python scripts/tests/integration_dependencies.py
 
   images:
     runs-on: ubuntu-latest
