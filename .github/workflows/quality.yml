@@ -38,6 +38,9 @@ jobs:
           LIBRARY_DB_PASSWORD: ci-only-library-password # pragma: allowlist secret
           HERI_DB_PASSWORD: ci-only-heri-password # pragma: allowlist secret
         run: |
+          for service in main research library heri_africa; do
+            cp "services/${service}/.env.example" "services/${service}/.env"
+          done
           docker compose -f docker-compose.yml -f docker-compose.vm.yml config >/tmp/ksu-compose.yaml
           python scripts/audit_compose_ports.py docker-compose.yml docker-compose.vm.yml
           python scripts/validate_database_capacity.py
