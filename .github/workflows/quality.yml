@@ -24,7 +24,7 @@ jobs:
           python -m compileall -q scripts services/common/ksu_common
       - name: Scan committed files for secrets
         run: |
-          detect-secrets scan --all-files --exclude-files '(^|/)(\.env|node_modules|\.pnpm-store|test-results|\.git/)' --baseline .secrets.baseline
+          git ls-files -z | xargs -0 detect-secrets-hook --baseline .secrets.baseline
       - name: Enforce Ruff baseline
         run: |
           python scripts/ruff_baseline.py check --baseline .ruff-baseline.json --paths .
