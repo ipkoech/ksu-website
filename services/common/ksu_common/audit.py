@@ -15,13 +15,15 @@ Usage:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
 import uuid
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timezone
 from functools import wraps
-from typing import Any, Callable
+from typing import Any
 
 import jwt
 from fastapi import Request
@@ -38,19 +40,19 @@ class AuditEntry:
     """Represents an audit log entry."""
 
     __slots__ = (
-        "id",
-        "timestamp",
         "action",
+        "details",
+        "id",
+        "ip_address",
+        "request_method",
+        "request_path",
+        "service",
+        "target_id",
+        "target_type",
+        "timestamp",
+        "user_agent",
         "user_id",
         "user_roles",
-        "target_type",
-        "target_id",
-        "ip_address",
-        "user_agent",
-        "request_path",
-        "request_method",
-        "details",
-        "service",
     )
 
     def __init__(
@@ -472,3 +474,45 @@ def is_anonymous_read(request: Request) -> bool:
     if request.headers.get("x-api-key"):
         return False
     return not any(name in request.cookies for name in AUTH_COOKIE_NAMES)
+
+
+def build_audit_tasks(
+    celery_app: Any,
+    session_factory: async_sessionmaker[AsyncSession],
+    *,
+    task_name: str,
+) -> tuple[Any, Callable[[dict[str, Any]], Awaitable[None]]]:
+    """Build a service's audit persistence task and its request-side dispatcher.
+
+    Every service needs the same pair and they differed only in the Celery task
+    name, so the four copies were identical by construction and drifted only in
+    their docstrings.
+
+    ``task_name`` stays service-owned because it is routed per service in each
+    Celery config and already-queued messages carry it; changing one would
+    strand its queue.
+
+    Returns ``(persist_task, dispatch)``. Register the task by importing the
+    module that calls this at Celery start-up, and pass ``dispatch`` to
+    ``AuditOptions(dispatch=...)``.
+    """
+
+    @celery_app.task(name=task_name, ignore_result=True)
+    def persist_audit(payload: dict[str, Any]) -> None:
+        asyncio.run(persist_audit_payload(session_factory, payload))
+
+    async def dispatch_audit(payload: dict[str, Any]) -> None:
+        """Hand the entry to a worker instead of writing it in the request.
+
+        ``delay`` publishes to the broker over a blocking socket, so it runs in
+        a worker thread to keep the event loop free. A broker outage falls back
+        to an inline write — accepting the original cost rather than losing the
+        row.
+        """
+        try:
+            await asyncio.to_thread(persist_audit.delay, payload)
+        except Exception:
+            logger.exception("failed to queue audit entry; writing inline")
+            await persist_audit_payload(session_factory, payload)
+
+    return persist_audit, dispatch_audit
