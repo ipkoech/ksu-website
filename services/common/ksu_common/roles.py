@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Mapping, Sequence
 
 
 @dataclass(frozen=True)
@@ -756,9 +756,9 @@ def normalize_role_name(role_name: str) -> str:
 
 
 __all__ = [
-    "RoleDefinition",
-    "ROLE_DEFINITIONS",
-    "ROLE_ALIASES",
     "ALL_PERMISSIONS",
+    "ROLE_ALIASES",
+    "ROLE_DEFINITIONS",
+    "RoleDefinition",
     "normalize_role_name",
 ]

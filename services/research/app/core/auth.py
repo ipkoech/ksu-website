@@ -7,7 +7,7 @@ import uuid
 from fastapi import Cookie, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from ksu_common.auth import TokenPayload
-from ksu_common.authorization import (
+from ksu_common.rbac import (
     AuthorizationDecision,
     AuthorizationScope,
     authorize_permission,

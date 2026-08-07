@@ -12,7 +12,6 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
-
 _DESTRUCTIVE_ALEMBIC_OPERATIONS = frozenset({"drop_table", "drop_column"})
 _DESTRUCTIVE_SQL = re.compile(r"\b(?:drop|truncate)\b", re.IGNORECASE)
 _ALEMBIC_HEAD_MARKER = re.compile(r"\(head\)")

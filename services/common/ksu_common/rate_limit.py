@@ -29,9 +29,9 @@ import logging
 import secrets
 import time
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from functools import wraps
-from typing import Any, Awaitable, Callable
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse

@@ -208,7 +208,7 @@ class DatabaseBudgetRegistry:
         return self.default
 
     @classmethod
-    def from_environment(cls) -> "DatabaseBudgetRegistry":
+    def from_environment(cls) -> DatabaseBudgetRegistry:
         """Build route budgets from bounded JSON deployment configuration."""
         import os
 

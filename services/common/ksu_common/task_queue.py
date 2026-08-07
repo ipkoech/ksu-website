@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
-from dataclasses import dataclass, field
 import asyncio
 import threading
 import uuid
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Iterable, Mapping
+from dataclasses import dataclass, field
 from time import perf_counter
 from typing import Any
 
@@ -283,8 +282,8 @@ def create_celery_app(
         task_prerun,
         task_rejected,
         task_retry,
-        worker_ready,
         worker_process_shutdown,
+        worker_ready,
         worker_shutdown,
     )
 

@@ -108,8 +108,7 @@ def _prometheus_base_name(name: str) -> str:
     normalized = _METRIC_NAME.sub("_", str(name).strip()).strip("_").lower()
     if not normalized or not (normalized[0].isalpha() or normalized[0] == "_"):
         normalized = f"metric_{normalized}"
-    if normalized.endswith("_total"):
-        normalized = normalized[:-6]
+    normalized = normalized.removesuffix("_total")
     return f"ksu_{normalized}"
 
 

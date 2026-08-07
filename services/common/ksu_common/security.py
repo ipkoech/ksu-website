@@ -9,7 +9,8 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import SplitResult, urlsplit
 
 import jwt
-from argon2 import PasswordHasher, exceptions as argon2_exceptions
+from argon2 import PasswordHasher
+from argon2 import exceptions as argon2_exceptions
 
 _ph = PasswordHasher(time_cost=2, memory_cost=102400, parallelism=8, hash_len=32)
 

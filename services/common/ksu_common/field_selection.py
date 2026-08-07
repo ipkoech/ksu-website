@@ -28,9 +28,10 @@ Usage in routes:
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import Any, Mapping, Sequence, Type, TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseModel
 from sqlalchemy import inspect as sa_inspect
@@ -105,7 +106,7 @@ class _ModelMetadata:
 
 
 @lru_cache(maxsize=256)
-def _get_model_metadata(model_class: Type) -> _ModelMetadata | None:
+def _get_model_metadata(model_class: type) -> _ModelMetadata | None:
     """Cache SQLAlchemy mapper metadata per model class."""
     try:
         mapper = sa_inspect(model_class)
@@ -125,7 +126,7 @@ class FieldSelection:
     """Represents requested fields and nested relationship selections."""
 
     fields: tuple[str, ...]
-    nested: Mapping[str, "FieldSelection"] = field(default_factory=dict)
+    nested: Mapping[str, FieldSelection] = field(default_factory=dict)
 
     @property
     def is_empty(self) -> bool:
@@ -138,7 +139,7 @@ class FieldSelection:
         result.update(self.nested.keys())
         return result
 
-    def get_nested(self, key: str) -> "FieldSelection":
+    def get_nested(self, key: str) -> FieldSelection:
         """Get nested selection for a relationship, or empty selection."""
         return self.nested.get(key, FieldSelection(fields=()))
 
@@ -151,7 +152,7 @@ class FieldSelection:
 
 
 class _SelectionNode:
-    __slots__ = ("fields", "children")
+    __slots__ = ("children", "fields")
 
     def __init__(self):
         self.fields: list[str] = []
@@ -461,7 +462,7 @@ def _serialize_object_fields(
 
 
 def _get_load_only_attributes(
-    model_class: Type,
+    model_class: type,
     selection: FieldSelection,
     *,
     always_include: set[str] | None = None,
@@ -545,7 +546,7 @@ def apply_field_selection(
 
 
 def build_load_options(
-    model_class: Type,
+    model_class: type,
     selection: FieldSelection,
     *,
     use_selectin: bool = True,
@@ -693,7 +694,7 @@ class FieldSelector:
 
     def __init__(
         self,
-        model_class: Type,
+        model_class: type,
         selection: FieldSelection,
         *,
         always_include: set[str] | None = None,

@@ -1,41 +1,22 @@
 """KSU shared utilities — imported by all microservices."""
 
-from .auth import TokenPayload, get_current_user, get_optional_user
-from .rbac import has_scope, requires_scope, get_role_scopes
-from .pagination import PaginatedResult, paginate, parse_pagination_params
-from .field_selection import (
-    FieldSelection,
-    FieldSelector,
-    FieldsQuery,
-    apply_field_selection,
-    build_load_options,
-    get_requested_relationships,
-    parse_field_selection,
+from .audit import (
+    AuditEntry,
+    AuditLogger,
+    audit_action,
+    get_audit_logger,
+    persist_audit_log,
+    request_actor_id,
+    should_skip_audit,
 )
+from .auth import TokenPayload, get_current_user, get_optional_user
 from .cache import (
-    cached_public,
     cache_response,
-    get_redis,
+    cached_public,
     close_redis,
+    get_redis,
     invalidate_cache,
     invalidate_prefix,
-)
-from .audit import AuditEntry, AuditLogger, audit_action, get_audit_logger, persist_audit_log, request_actor_id, should_skip_audit
-from .rate_limit import (
-    RateLimiter,
-    RateLimitExceeded,
-    RateLimitUnavailable,
-    install_request_body_limit_middleware,
-    rate_limit,
-    reset_rate_limit,
-)
-from .logging import configure_service_logging
-from .authorization import (
-    AuthorizationDecision,
-    AuthorizationScope,
-    authorize,
-    authorize_exact_scope,
-    authorize_permission,
 )
 from .config import (
     is_production_environment,
@@ -44,11 +25,6 @@ from .config import (
     validate_explicit_production_settings,
     validate_secret,
     validate_service_url,
-)
-from .internal_client import (
-    PooledIntegrationClient,
-    close_integration_pool,
-    get_integration_pool,
 )
 from .database import (
     DatabaseBudgetRegistry,
@@ -60,7 +36,22 @@ from .database import (
     query_budget_context,
     query_count_context,
 )
+from .field_selection import (
+    FieldSelection,
+    FieldSelector,
+    FieldsQuery,
+    apply_field_selection,
+    build_load_options,
+    get_requested_relationships,
+    parse_field_selection,
+)
 from .gemini import GeminiTransport, close_gemini_transports, get_gemini_transport
+from .internal_client import (
+    PooledIntegrationClient,
+    close_integration_pool,
+    get_integration_pool,
+)
+from .logging import configure_service_logging
 from .observability import (
     AuditEvent,
     CompositeMetricsSink,
@@ -69,17 +60,33 @@ from .observability import (
     Span,
     Tracer,
     audit_event,
-    request_context,
     get_prometheus_registry,
+    request_context,
+)
+from .pagination import PaginatedResult, paginate
+from .rate_limit import (
+    RateLimiter,
+    RateLimitExceeded,
+    RateLimitUnavailable,
+    install_request_body_limit_middleware,
+    rate_limit,
+    reset_rate_limit,
+)
+from .rbac import (
+    AuthorizationDecision,
+    AuthorizationScope,
+    authorize,
+    authorize_permission,
+    get_role_scopes,
+    has_scope,
+    requires_scope,
 )
 from .reliability import (
     CircuitBreaker,
-    IdempotencyStore,
     RetryPolicy,
     TimeoutConfig,
-    retry_async,
 )
-from .responses import ErrorResponse, SuccessResponse, error, success
+from .schemas.responses import ErrorResponse, SuccessResponse, error, success
 from .smtp import SmtpConfig, SmtpTransport
 from .task_queue import (
     TaskQueueConfig,
@@ -109,7 +116,6 @@ __all__ = [
     # Pagination
     "PaginatedResult",
     "paginate",
-    "parse_pagination_params",
     # Field selection
     "FieldSelection",
     "FieldSelector",
@@ -146,7 +152,6 @@ __all__ = [
     "AuthorizationDecision",
     "AuthorizationScope",
     "authorize",
-    "authorize_exact_scope",
     "authorize_permission",
     "is_production_environment",
     "validate_cors_origins",
@@ -178,10 +183,8 @@ __all__ = [
     "audit_event",
     "request_context",
     "CircuitBreaker",
-    "IdempotencyStore",
     "RetryPolicy",
     "TimeoutConfig",
-    "retry_async",
     "SuccessResponse",
     "ErrorResponse",
     "success",

@@ -22,9 +22,10 @@ import inspect
 import json
 import os
 import secrets
+from collections.abc import Callable, Sequence
 from contextvars import ContextVar, Token
 from functools import wraps
-from typing import Any, Callable, Sequence
+from typing import Any
 
 import redis.asyncio as redis
 from fastapi import HTTPException, Request, Response

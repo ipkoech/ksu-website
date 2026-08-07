@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Optional
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
@@ -21,20 +20,20 @@ class AuditLog(Base):
 
     service_name: Mapped[str] = mapped_column(sa.String(64), nullable=False, index=True)
     action: Mapped[str] = mapped_column(sa.String(128), nullable=False, index=True)
-    resource_type: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True, index=True)
-    resource_id: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True, index=True)
+    resource_type: Mapped[str | None] = mapped_column(sa.String(64), nullable=True, index=True)
+    resource_id: Mapped[str | None] = mapped_column(sa.String(64), nullable=True, index=True)
     request_method: Mapped[str] = mapped_column(sa.String(16), nullable=False, index=True)
     request_path: Mapped[str] = mapped_column(sa.String(512), nullable=False)
-    route_name: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    route_name: Mapped[str | None] = mapped_column(sa.String(255), nullable=True)
     status_code: Mapped[int] = mapped_column(sa.Integer, nullable=False, index=True)
     status: Mapped[str] = mapped_column(sa.String(20), nullable=False, server_default="success", index=True)
-    user_id: Mapped[Optional[uuid.UUID]] = mapped_column(sa.Uuid, nullable=True, index=True)
-    session_jti: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True, index=True)
-    ip_address: Mapped[Optional[str]] = mapped_column(sa.String(45), nullable=True)
-    user_agent: Mapped[Optional[str]] = mapped_column(sa.String(512), nullable=True)
-    error_message: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
-    details: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
-    changes: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(sa.Uuid, nullable=True, index=True)
+    session_jti: Mapped[str | None] = mapped_column(sa.String(64), nullable=True, index=True)
+    ip_address: Mapped[str | None] = mapped_column(sa.String(45), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(sa.String(512), nullable=True)
+    error_message: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    details: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    changes: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     happened_at: Mapped[datetime] = mapped_column(
         sa.DateTime(timezone=True),
         nullable=False,

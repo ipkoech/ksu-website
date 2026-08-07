@@ -9,7 +9,6 @@ from __future__ import annotations
 import asyncio
 import copy
 import math
-import random
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -70,30 +69,6 @@ class RetryPolicy:
         return min(self.max_delay, max(0.0, base + jitter))
 
 
-async def retry_async(
-    operation: Callable[[], Awaitable[T]],
-    *,
-    policy: RetryPolicy | None = None,
-    status_getter: Callable[[T], int | None] | None = None,
-    sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
-    random_value: Callable[[], float] = random.random,
-) -> T:
-    """Run an async operation with bounded retries for configured transient failures."""
-    policy = policy or RetryPolicy()
-    for attempt in range(1, policy.attempts + 1):
-        try:
-            result = await operation()
-        except policy.retry_exceptions:
-            if attempt == policy.attempts:
-                raise
-        else:
-            status = status_getter(result) if status_getter else None
-            if status not in policy.retry_statuses or attempt == policy.attempts:
-                return result
-
-        await sleep(policy.delay_for(attempt, random_value()))
-
-    raise RuntimeError("unreachable retry state")
 
 
 class CircuitOpenError(RuntimeError):

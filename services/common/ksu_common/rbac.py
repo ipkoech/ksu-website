@@ -253,14 +253,12 @@ def has_scope(user_roles: Iterable[str], scope: str) -> bool:
     return authorize({"roles": list(user_roles)}, *_split_permission(scope)[::-1]).allowed
 
 
-def has_payload_scope(payload: "TokenPayload", scope: str) -> bool:
-    """Return whether a token's roles, permissions, or scopes grant a permission."""
-    return authorize_permission(payload, scope).allowed
 
 
 # ── FastAPI dependency ────────────────────────────────────────────────────────
 
 from fastapi import Depends, HTTPException, status
+
 from .auth import TokenPayload, get_current_user
 
 
@@ -279,14 +277,13 @@ def requires_scope(scope: str):
 
 
 __all__ = [
-    "AuthorizationDecision",
-    "AuthorizationScope",
     "KNOWN_PERMISSIONS",
     "KNOWN_SCOPE_TYPES",
+    "AuthorizationDecision",
+    "AuthorizationScope",
     "authorize",
     "authorize_permission",
     "get_role_scopes",
-    "has_payload_scope",
     "has_scope",
     "requires_scope",
 ]

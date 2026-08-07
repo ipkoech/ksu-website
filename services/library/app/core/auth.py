@@ -5,9 +5,12 @@ from __future__ import annotations
 import uuid
 
 from fastapi import HTTPException, status
-
 from ksu_common.auth import TokenPayload
-from ksu_common.authorization import AuthorizationDecision, AuthorizationScope, authorize_permission
+from ksu_common.rbac import (
+    AuthorizationDecision,
+    AuthorizationScope,
+    authorize_permission,
+)
 
 
 def authorize_library_scope(

@@ -64,12 +64,3 @@ async def paginate(
     )
 
 
-def parse_pagination_params(
-    page: int = 1,
-    per_page: int = 20,
-    *,
-    default_per_page: int = 20,
-    max_per_page: int = 100,
-) -> tuple[int, int]:
-    """Normalise page/per_page query params — use as FastAPI query dependencies."""
-    return max(1, page), max(1, min(max_per_page, per_page or default_per_page))

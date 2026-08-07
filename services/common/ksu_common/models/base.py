@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Optional, TypeVar
+from typing import TypeVar
 
 import sqlalchemy as sa
 from sqlalchemy import select
@@ -12,6 +12,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.sql import Select
+from typing_extensions import Self
 
 T = TypeVar("T", bound="Base")
 
@@ -36,7 +37,7 @@ class TimestampMixin:
 class SoftDeleteMixin:
     """Soft-delete helpers — never hard-delete rows."""
 
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(
+    deleted_at: Mapped[datetime | None] = mapped_column(
         sa.DateTime(timezone=True), nullable=True, default=None
     )
 
@@ -52,16 +53,16 @@ class SoftDeleteMixin:
 
 
 class SEOMixin:
-    meta_title: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
-    meta_description: Mapped[Optional[str]] = mapped_column(sa.String(500), nullable=True)
-    keywords: Mapped[Optional[dict]] = mapped_column(sa.JSON, nullable=True)
+    meta_title: Mapped[str | None] = mapped_column(sa.String(255), nullable=True)
+    meta_description: Mapped[str | None] = mapped_column(sa.String(500), nullable=True)
+    keywords: Mapped[dict | None] = mapped_column(sa.JSON, nullable=True)
 
 
 class PolymorphicMixin:
-    related_entity_type: Mapped[Optional[str]] = mapped_column(
+    related_entity_type: Mapped[str | None] = mapped_column(
         sa.String(64), nullable=True, index=True
     )
-    related_entity_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    related_entity_id: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True), nullable=True, index=True
     )
 
@@ -69,7 +70,7 @@ class PolymorphicMixin:
 class CoverImageRefMixin:
     """Reference a shared media record used as a cover image."""
 
-    cover_image_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    cover_image_id: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True),
         nullable=True,
         index=True,
@@ -79,7 +80,7 @@ class CoverImageRefMixin:
 class LogoRefMixin:
     """Reference a shared media record used as a logo."""
 
-    logo_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    logo_id: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True),
         nullable=True,
         index=True,
@@ -89,7 +90,7 @@ class LogoRefMixin:
 class PhotoRefMixin:
     """Reference a shared media record used as a profile photo."""
 
-    photo_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    photo_id: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True),
         nullable=True,
         index=True,
@@ -99,7 +100,7 @@ class PhotoRefMixin:
 class ThumbnailRefMixin:
     """Reference a shared media record used as a thumbnail/alternate image."""
 
-    thumbnail_image_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    thumbnail_image_id: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True),
         nullable=True,
         index=True,
@@ -109,7 +110,7 @@ class ThumbnailRefMixin:
 class DocumentRefMixin:
     """Reference a shared media record used as a primary document."""
 
-    document_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    document_id: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True),
         nullable=True,
         index=True,
@@ -119,9 +120,9 @@ class DocumentRefMixin:
 class AttachmentRefsMixin:
     """Reference shared media records for multi-file attachments."""
 
-    gallery_media_ids: Mapped[Optional[list[uuid.UUID]]] = mapped_column(sa.JSON, nullable=True)
-    attachment_media_ids: Mapped[Optional[list[uuid.UUID]]] = mapped_column(sa.JSON, nullable=True)
-    document_media_ids: Mapped[Optional[list[uuid.UUID]]] = mapped_column(sa.JSON, nullable=True)
+    gallery_media_ids: Mapped[list[uuid.UUID] | None] = mapped_column(sa.JSON, nullable=True)
+    attachment_media_ids: Mapped[list[uuid.UUID] | None] = mapped_column(sa.JSON, nullable=True)
+    document_media_ids: Mapped[list[uuid.UUID] | None] = mapped_column(sa.JSON, nullable=True)
 
 
 class Base(TimestampMixin, SoftDeleteMixin, DeclarativeBase):
@@ -135,18 +136,18 @@ class Base(TimestampMixin, SoftDeleteMixin, DeclarativeBase):
     """
 
     @classmethod
-    def active_query(cls: type[T]) -> Select:
+    def active_query(cls) -> Select:
         """Return a select() that filters out soft-deleted rows."""
         return select(cls).where(cls.deleted_at.is_(None))
 
     @classmethod
     async def get_by_id(
-        cls: type[T],
+        cls,
         db: AsyncSession,
         id: uuid.UUID,
         *,
         include_deleted: bool = False,
-    ) -> T | None:
+    ) -> Self | None:
         """Fetch a single row by primary key, optionally filtering deleted."""
         query = select(cls).where(cls.id == id)
         if not include_deleted:
@@ -156,12 +157,12 @@ class Base(TimestampMixin, SoftDeleteMixin, DeclarativeBase):
 
     @classmethod
     async def get_or_raise(
-        cls: type[T],
+        cls,
         db: AsyncSession,
         id: uuid.UUID,
         *,
         error_message: str | None = None,
-    ) -> T:
+    ) -> Self:
         """Fetch by ID or raise ValueError if not found."""
         instance = await cls.get_by_id(db, id)
         if instance is None:
@@ -171,7 +172,7 @@ class Base(TimestampMixin, SoftDeleteMixin, DeclarativeBase):
 
     @classmethod
     async def exists(
-        cls: type[T],
+        cls,
         db: AsyncSession,
         id: uuid.UUID,
     ) -> bool:
