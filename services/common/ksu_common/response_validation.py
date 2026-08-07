@@ -307,6 +307,14 @@ class StrictResponseValidationRoute(APIRoute):
                     self._reject_raw_response_bypass(value)
                     return value
 
+            # Included routers may rebuild their dependency graph from
+            # ``route.endpoint`` after this guard is installed.  Resolve the
+            # endpoint's postponed annotations while its defining module is
+            # still available; otherwise FastAPI sees the guard's copied
+            # string annotations in this module and adopts body/dependency
+            # parameters as ordinary query parameters.
+            guarded_endpoint.__signature__ = inspect.signature(endpoint, eval_str=True)
+
             # ``wraps`` normally exposes ``__wrapped__`` so introspection can
             # follow decorator chains.  A bare endpoint would therefore look
             # decorated after the response guard is installed, which makes
@@ -315,7 +323,6 @@ class StrictResponseValidationRoute(APIRoute):
             # when the endpoint already had a decorator chain of its own.
             if not hasattr(endpoint, "__wrapped__"):
                 guarded_endpoint.__dict__.pop("__wrapped__", None)
-                guarded_endpoint.__signature__ = inspect.signature(endpoint)
 
             self._response_bypass_original_endpoint = endpoint
             self._response_bypass_guard = guarded_endpoint

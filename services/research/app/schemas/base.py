@@ -10,7 +10,7 @@ from typing import Annotated, Generic, Literal, TypeVar
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 T = TypeVar("T")
-JsonScalar = str | int | float | bool | None
+JsonScalar = str | int | float | bool | uuid.UUID | datetime | None
 JsonValue = JsonScalar | list[JsonScalar] | dict[str, JsonScalar]
 JsonObject = dict[str, JsonValue]
 

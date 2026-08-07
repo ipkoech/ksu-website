@@ -9,7 +9,7 @@ from .audit import (
     request_actor_id,
     should_skip_audit,
 )
-from .auth import TokenPayload, get_current_user, get_optional_user
+from .auth import TokenPayload, UserDependencies, build_user_dependencies
 from .cache import (
     cache_response,
     cached_public,
@@ -77,9 +77,9 @@ from .rbac import (
     AuthorizationScope,
     authorize,
     authorize_permission,
+    build_scope_dependency,
     get_role_scopes,
     has_scope,
-    requires_scope,
 )
 from .reliability import (
     CircuitBreaker,
@@ -107,11 +107,11 @@ from .worker_metrics import (
 __all__ = [
     # Auth
     "TokenPayload",
-    "get_current_user",
-    "get_optional_user",
+    "UserDependencies",
+    "build_user_dependencies",
     # RBAC
     "has_scope",
-    "requires_scope",
+    "build_scope_dependency",
     "get_role_scopes",
     # Pagination
     "PaginatedResult",

@@ -259,21 +259,24 @@ def has_scope(user_roles: Iterable[str], scope: str) -> bool:
 
 from fastapi import Depends, HTTPException, status
 
-from .auth import TokenPayload, get_current_user
+from .auth import TokenPayload, UserDependency
 
 
-def requires_scope(scope: str):
-    """FastAPI dependency factory that enforces a required RBAC permission."""
+def build_scope_dependency(user_dependency: UserDependency):
+    """Bind permission enforcement to a service-owned user dependency."""
 
-    def _check(payload: TokenPayload = Depends(get_current_user)) -> TokenPayload:
-        if not authorize_permission(payload, scope).allowed:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient privileges",
-            )
-        return payload
+    def requires_scope(scope: str):
+        def _check(payload: TokenPayload = Depends(user_dependency)) -> TokenPayload:
+            if not authorize_permission(payload, scope).allowed:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Insufficient privileges",
+                )
+            return payload
 
-    return _check
+        return _check
+
+    return requires_scope
 
 
 __all__ = [
@@ -285,5 +288,5 @@ __all__ = [
     "authorize_permission",
     "get_role_scopes",
     "has_scope",
-    "requires_scope",
+    "build_scope_dependency",
 ]

@@ -13,7 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ksu_common import TokenPayload, get_current_user as get_current_token
+from ksu_common import TokenPayload, build_user_dependencies
 from ksu_common.cache import get_redis
 
 from .core.config import get_settings
@@ -22,6 +22,11 @@ from .models import ApiKey, Person, Role, RolePermission, User, UserRole
 
 security = HTTPBearer(auto_error=False)
 settings = get_settings()
+get_current_token = build_user_dependencies(
+    secret=settings.JWT_SECRET_KEY,
+    algorithm=settings.JWT_ALGORITHM,
+    app_env=settings.APP_ENV,
+).current_user
 
 
 async def get_db():

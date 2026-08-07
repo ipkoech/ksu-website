@@ -7,9 +7,6 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
 from ksu_common.config import (
     validate_cors_origins,
     validate_read_replica_settings,
@@ -17,6 +14,8 @@ from ksu_common.config import (
     validate_service_url,
 )
 from ksu_common.rate_limit import rate_limit
+from pydantic import Field, field_validator, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 FrontendService = Literal["web", "admin", "research", "library"]
 SERVICE_DIR = Path(__file__).resolve().parents[2]
@@ -219,7 +218,9 @@ class Settings(BaseSettings):
         return v
 
     @model_validator(mode="after")
-    def reject_insecure_production_defaults(self) -> "Settings":
+    def reject_insecure_production_defaults(self) -> Settings:
+        if self.APP_ENV.strip().lower() == "production" and self.DEBUG:
+            raise ValueError("DEBUG must be false in production")
         validate_secret(self.JWT_SECRET_KEY, field_name="JWT_SECRET_KEY", app_env=self.APP_ENV)
         validate_secret(self.INTERNAL_API_KEY, field_name="INTERNAL_API_KEY", app_env=self.APP_ENV)
         validate_service_url(self.DATABASE_URL, field_name="DATABASE_URL", app_env=self.APP_ENV)

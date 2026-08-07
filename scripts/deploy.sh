@@ -660,7 +660,7 @@ backup_database() {
 
   echo "Creating database backup: \${output}"
   if "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps --status running postgres --format '{{.Service}}' | grep -qx postgres; then
-    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T postgres pg_dump -U ksu -d ksu | gzip -9 > "\${output}"
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T postgres pg_dump -U "\${POSTGRES_USER:-ksu_service_user}" -d "\${POSTGRES_DB:-ksu_services_db}" | gzip -9 > "\${output}"
   else
     echo "error: postgres container is not running; refusing to deploy without a backup" >&2
     return 1

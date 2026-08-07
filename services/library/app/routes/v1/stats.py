@@ -8,7 +8,7 @@ from ksu_common.auth import TokenPayload
 
 from ksu_common.cache import cached_public
 from ksu_common.internal_client import internal_key_guard
-from ksu_common.rbac import requires_scope
+from ...core.auth import requires_scope
 from ksu_common.schemas.responses import success
 
 from ...core.database import get_db

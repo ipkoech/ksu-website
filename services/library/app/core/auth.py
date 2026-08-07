@@ -5,12 +5,25 @@ from __future__ import annotations
 import uuid
 
 from fastapi import HTTPException, status
-from ksu_common.auth import TokenPayload
+from ksu_common.auth import TokenPayload, build_user_dependencies
 from ksu_common.rbac import (
     AuthorizationDecision,
     AuthorizationScope,
     authorize_permission,
+    build_scope_dependency,
 )
+
+from .config import get_settings
+
+settings = get_settings()
+_user_dependencies = build_user_dependencies(
+    secret=settings.JWT_SECRET_KEY,
+    algorithm=settings.JWT_ALGORITHM,
+    app_env=settings.APP_ENV,
+)
+get_current_user = _user_dependencies.current_user
+get_optional_user = _user_dependencies.optional_user
+requires_scope = build_scope_dependency(get_current_user)
 
 
 def authorize_library_scope(

@@ -164,6 +164,7 @@ services:
     environment:
       <<: *backend-database-capacity
       APP_ENV: production
+      DEBUG: "false"
       DATABASE_URL: postgresql+asyncpg://${MAIN_DB_USER:-ksu_main}:${MAIN_DB_PASSWORD:?MAIN_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: main
       INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
@@ -346,7 +347,7 @@ services:
       retries: 3
 
   # ── Celery workers ────────────────────────────────────────────────────────────
-  celery-main:
+  celery-main: &celery-main-service
     image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/main:${IMAGE_TAG:-local}
     build:
       context: ./services
@@ -356,6 +357,7 @@ services:
     environment:
       <<: *backend-database-capacity
       APP_ENV: production
+      DEBUG: "false"
       CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${MAIN_DB_USER:-ksu_main}:${MAIN_DB_PASSWORD:?MAIN_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: main
@@ -386,7 +388,12 @@ services:
     networks: [ksu]
     restart: unless-stopped
 
-  celery-library:
+  beat-main:
+    <<: *celery-main-service
+    command: celery -A app.tasks.celery_app.celery_app beat --loglevel=${CELERY_LOG_LEVEL:-INFO}
+    expose: []
+
+  celery-library: &celery-library-service
     image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/library:${IMAGE_TAG:-local}
     build:
       context: ./services
@@ -422,6 +429,11 @@ services:
         condition: service_healthy
     networks: [ksu]
     restart: unless-stopped
+
+  beat-library:
+    <<: *celery-library-service
+    command: celery -A app.tasks.celery_app.celery_app beat --loglevel=${CELERY_LOG_LEVEL:-INFO}
+    expose: []
 
   celery-research:
     image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/research:${IMAGE_TAG:-local}

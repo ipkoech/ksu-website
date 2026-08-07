@@ -11,10 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ksu_common.audit import audit_action
 from ksu_common.auth import TokenPayload
 from ksu_common.cache import cached_public, invalidate_prefix
-from ksu_common.rbac import requires_scope
 from ksu_common.schemas.responses import success
 
-from ...core.auth import require_library_scope
+from ...core.auth import require_library_scope, requires_scope
 from ...core.database import get_db
 from ...schemas import (
     LibraryAssistantContextCreate,

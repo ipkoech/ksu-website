@@ -8,14 +8,19 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ksu_common.auth import TokenPayload, get_optional_user
-from ksu_common.rbac import has_scope, requires_scope
+from ksu_common.auth import TokenPayload
+from ksu_common.rbac import has_scope
 from ksu_common.schemas.responses import success
 from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelector
 from ksu_common.cache import cached_public, invalidate_prefix
 from ksu_common.audit import audit_action
 
-from ...core.auth import allowed_library_scope_ids, require_library_scope
+from ...core.auth import (
+    allowed_library_scope_ids,
+    get_optional_user,
+    require_library_scope,
+    requires_scope,
+)
 from ...core.database import get_db
 from ...models import Library, LibraryExternalLink, LibraryFile
 from ...schemas import (

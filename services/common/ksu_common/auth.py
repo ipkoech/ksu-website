@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import os
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
+from typing import Any
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -12,6 +13,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from .security import decode_token, validate_secret
 
 _bearer = HTTPBearer(auto_error=False)
+_bearer_dependency = Depends(_bearer)
 
 
 @dataclass
@@ -22,59 +24,65 @@ class TokenPayload:
     raw: dict = field(default_factory=dict)
 
 
-def _get_jwt_secret() -> str:
-    secret = os.getenv("JWT_SECRET_KEY")
-    if not secret:
-        raise RuntimeError("JWT_SECRET_KEY env var is not set")
-    return validate_secret(
+UserDependency = Callable[
+    [HTTPAuthorizationCredentials | None], Coroutine[Any, Any, TokenPayload]
+]
+OptionalUserDependency = Callable[
+    [HTTPAuthorizationCredentials | None], Coroutine[Any, Any, TokenPayload | None]
+]
+
+
+@dataclass(frozen=True)
+class UserDependencies:
+    current_user: UserDependency
+    optional_user: OptionalUserDependency
+
+
+def build_user_dependencies(
+    *, secret: str, algorithm: str, app_env: str
+) -> UserDependencies:
+    """Bind JWT verification dependencies to explicit service configuration."""
+
+    verified_secret = validate_secret(
         secret,
         field_name="JWT_SECRET_KEY",
-        app_env=os.getenv("APP_ENV", "development"),
+        app_env=app_env,
     ) or secret
 
-
-def _get_jwt_algorithm() -> str:
-    return os.getenv("JWT_ALGORITHM", "HS256")
-
-
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
-) -> TokenPayload:
-    """Validate Bearer JWT and return the token payload."""
-    exc = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid or missing token",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    if not credentials:
-        raise exc
-
-    try:
-        payload = decode_token(
-            credentials.credentials,
-            secret=_get_jwt_secret(),
-            algorithm=_get_jwt_algorithm(),
-            expected_type="access",
+    async def get_current_user(
+        credentials: HTTPAuthorizationCredentials | None = _bearer_dependency,
+    ) -> TokenPayload:
+        exc = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing token",
+            headers={"WWW-Authenticate": "Bearer"},
         )
-    except jwt.PyJWTError:
-        raise exc
+        if not credentials:
+            raise exc
+        try:
+            payload = decode_token(
+                credentials.credentials,
+                secret=verified_secret,
+                algorithm=algorithm,
+                expected_type="access",
+            )
+        except jwt.PyJWTError as error:
+            raise exc from error
+        return TokenPayload(
+            sub=payload["sub"],
+            jti=payload["jti"],
+            roles=payload.get("roles", []),
+            raw=payload,
+        )
 
-    return TokenPayload(
-        sub=payload["sub"],
-        jti=payload["jti"],
-        roles=payload.get("roles", []),
-        raw=payload,
-    )
+    async def get_optional_user(
+        credentials: HTTPAuthorizationCredentials | None = _bearer_dependency,
+    ) -> TokenPayload | None:
+        if not credentials:
+            return None
+        try:
+            return await get_current_user(credentials)
+        except HTTPException:
+            return None
 
-
-async def get_optional_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
-) -> TokenPayload | None:
-    """Like get_current_user but returns None instead of raising on missing token."""
-    if not credentials:
-        return None
-    try:
-        return await get_current_user(credentials)
-    except HTTPException:
-        return None
+    return UserDependencies(get_current_user, get_optional_user)
