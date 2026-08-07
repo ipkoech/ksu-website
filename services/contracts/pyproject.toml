@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ksu-contracts"
+version = "1.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "ksu-common",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["ksu_contracts"]

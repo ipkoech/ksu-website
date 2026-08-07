@@ -6,7 +6,7 @@ import uuid
 
 from fastapi import HTTPException, status
 from ksu_common.auth import TokenPayload, build_user_dependencies
-from ksu_common.rbac import (
+from ksu_contracts.rbac import (
     AuthorizationDecision,
     AuthorizationScope,
     authorize_permission,

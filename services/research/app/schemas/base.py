@@ -71,32 +71,6 @@ class SEOFieldsMixin(BaseModel):
     keywords: JsonObject | None = None
 
 
-class PaginatedResponse(BaseModel, Generic[T]):
-    """Paginated response wrapper."""
-
-    items: list[T]
-    total: int
-    page: int
-    per_page: int
-    pages: int
-
-    @property
-    def has_next(self) -> bool:
-        return self.page < self.pages
-
-    @property
-    def has_prev(self) -> bool:
-        return self.page > 1
-
-
-class APIResponse(BaseModel, Generic[T]):
-    """Standard API response envelope."""
-
-    data: T | None = None
-    error: str | None = None
-    meta: JsonObject | None = None
-
-
 # Common field types
 SlugStr = Annotated[
     str,

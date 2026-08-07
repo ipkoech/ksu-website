@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ksu_common.rbac import AuthorizationDecision, authorize_permission
+from ksu_contracts.rbac import AuthorizationDecision, authorize_permission
 
 from ..models import Department, Programme, User, Wing
 

@@ -3,8 +3,8 @@ from __future__ import annotations
 from fastapi import Cookie, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from ksu_common.auth import TokenPayload
-from ksu_common.rbac import AuthorizationDecision
-from ksu_common.rbac import authorize_permission as evaluate_permission
+from ksu_contracts.rbac import AuthorizationDecision
+from ksu_contracts.rbac import authorize_permission as evaluate_permission
 from ksu_common.security import decode_token
 
 from .config import get_settings

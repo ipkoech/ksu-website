@@ -2,16 +2,16 @@
 
 Supports:
     ?fields=id,name                           # Select specific fields
-    ?fields=campus:id,name                    # Select nested relationship fields (colon notation)
+    ?fields=author:id,name                    # Select nested relationship fields (colon notation)
     ?fields=staff(id,name,role)               # Select nested fields (parenthesis notation)
-    ?fields=campus(id,name,schools:id,name)   # Deep nesting
-    ?include=campus;staff:id,name             # Include relationships with field selection
+    ?fields=author(id,name,books:id,title)   # Deep nesting
+    ?include=author;editor:id,name             # Include relationships with field selection
 
 Usage in routes:
     from ksu_common.field_selection import FieldsQuery, apply_field_selection, build_load_options
 
-    @router.get("/libraries")
-    async def list_libraries(
+    @router.get("/catalogue")
+    async def list_catalogue(
         db: AsyncSession = Depends(get_db),
         fields: FieldSelection = Depends(FieldsQuery()),
     ):
@@ -258,9 +258,9 @@ def parse_field_selection(
     """Parse ?fields= and ?include= query params into a FieldSelection tree.
 
     Examples:
-        parse_field_selection(fields="id,name,campus:id,name")
-        parse_field_selection(fields="id,name", include="campus:id;staff")
-        parse_field_selection(fields="id,name,campus(id,name,schools:id)")
+        parse_field_selection(fields="id,title,author:id,name")
+        parse_field_selection(fields="id,title", include="author:id;editor")
+        parse_field_selection(fields="id,title,author(id,name,books:id)")
     """
     root = _SelectionNode()
 
@@ -498,10 +498,10 @@ def apply_field_selection(
 
     Examples:
         # Filter single model
-        library_dict = apply_field_selection(library, selection)
+        item_dict = apply_field_selection(item, selection)
 
         # Filter list of models
-        libraries_list = apply_field_selection(libraries, selection)
+        item_list = apply_field_selection(items, selection)
 
         # Always include 'id' field
         result = apply_field_selection(data, selection, always_include={"id"})
@@ -640,16 +640,16 @@ class FieldsQuery:
             options = build_load_options(Library, fields)
             query = Library.active_query().options(*options)
             result = await db.execute(query)
-            libraries = result.scalars().all()
+            items = result.scalars().all()
 
             # Filter output
-            return success(data=apply_field_selection(libraries, fields))
+            return success(data=apply_field_selection(items, fields))
 
         # Requests:
-        # GET /libraries?fields=id,name
-        # GET /libraries?fields=id,name,campus:id,name
-        # GET /libraries?fields=id,name&include=campus:id,name;staff
-        # GET /libraries?fields=id,name,campus(id,name,schools:id,name)
+        # GET /catalogue?fields=id,title
+        # GET /catalogue?fields=id,title,author:id,name
+        # GET /catalogue?fields=id,title&include=author:id,name;editor
+        # GET /catalogues?fields=id,title,author(id,name,books:id,title)
     """
 
     def __init__(self, always_include: set[str] | None = None):

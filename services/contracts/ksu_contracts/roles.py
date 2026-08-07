@@ -1,4 +1,4 @@
-"""RBAC role definitions — ported directly from Flask monolith."""
+"""Versioned KSU permission and role contract."""
 
 from __future__ import annotations
 

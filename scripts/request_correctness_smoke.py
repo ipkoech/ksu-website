@@ -37,6 +37,10 @@ def _main_probe() -> None:
     from starlette.requests import Request
 
     from ksu_common.audit import build_audit_payload
+    from ksu_common.response_validation import (
+        ResponseModelCoverageError,
+        enforce_response_model_coverage,
+    )
     from ksu_common.security import generate_access_token
     from app.api.v1._idempotency import install_main_idempotency
     from app.deps import get_db
@@ -110,6 +114,29 @@ def _main_probe() -> None:
         )
     )
     assert audit_payload["user_id"] == str(actor_id)
+
+    coverage_app = FastAPI()
+
+    @coverage_app.get("/legacy")
+    async def legacy_response():
+        return {"legacy": True}
+
+    coverage = enforce_response_model_coverage(
+        coverage_app.routes,
+        production=True,
+        baseline_missing=1,
+    )
+    assert coverage.baseline_delta == 0
+    try:
+        enforce_response_model_coverage(
+            coverage_app.routes,
+            production=True,
+            baseline_missing=0,
+        )
+    except ResponseModelCoverageError:
+        pass
+    else:
+        raise AssertionError("response-model coverage regression did not fail closed")
 
     print("main request correctness: ok")
 

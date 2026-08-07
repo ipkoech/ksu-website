@@ -5,8 +5,9 @@ WORKDIR /build
 RUN apt-get update && apt-get install -y --no-install-recommends gcc libpq-dev && rm -rf /var/lib/apt/lists/*
 
 COPY common /common
+COPY contracts /contracts
 COPY main /build/main
-RUN pip wheel --no-cache-dir --wheel-dir /wheels /common /build/main
+RUN pip wheel --no-cache-dir --wheel-dir /wheels /common /contracts /build/main
 
 FROM python@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
 

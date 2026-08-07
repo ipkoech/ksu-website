@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import ipaddress
 import math
 import uuid
 from datetime import date
 from typing import Any
-from urllib.parse import urlparse
 
 import httpx
+from ksu_common.security import is_safe_public_url
 
 from ..core.config import get_settings
 from .page_cms_source_errors import PageCmsSourceProviderError
@@ -158,7 +157,7 @@ class ResearchContentSourcesProxyService:
             raise PageCmsSourceProviderError("Research content provider returned an invalid source summary")
         if item["published_at"] is not None and not _is_iso_date(item["published_at"]):
             raise PageCmsSourceProviderError("Research content provider returned an invalid source summary")
-        if item["thumbnail_url"] is not None and not _is_safe_public_url(item["thumbnail_url"]):
+        if item["thumbnail_url"] is not None and not is_safe_public_url(item["thumbnail_url"]):
             raise PageCmsSourceProviderError("Research content provider returned an invalid source summary")
         if not isinstance(item["selectable"], bool):
             raise PageCmsSourceProviderError("Research content provider returned an invalid source summary")
@@ -182,73 +181,6 @@ def _is_iso_date(value: Any) -> bool:
         return date.fromisoformat(value).isoformat() == value
     except ValueError:
         return False
-
-
-def _is_numeric_hostname_candidate(hostname: str) -> bool:
-    return all(
-        component.isdecimal()
-        or (
-            component.startswith("0x")
-            and len(component) > 2
-            and all(character in "0123456789abcdef" for character in component[2:])
-        )
-        for component in hostname.split(".")
-    )
-
-
-def _has_unsafe_authority(value: str) -> bool:
-    scheme, separator, remainder = value.partition(":")
-    if not separator or scheme.lower() not in {"http", "https"} or not remainder.startswith("//"):
-        return False
-    authority = remainder[2:]
-    for delimiter in "/?#":
-        authority = authority.split(delimiter, 1)[0]
-    return any(
-        character in {"%", "\\"}
-        or ord(character) < 32
-        or 127 <= ord(character) <= 159
-        or ord(character) > 127
-        for character in authority
-    )
-
-
-def _is_safe_public_url(value: Any) -> bool:
-    if not isinstance(value, str) or not value or value != value.strip() or _has_unsafe_authority(value):
-        return False
-    try:
-        parsed = urlparse(value)
-    except ValueError:
-        return False
-    if parsed.scheme in {"http", "https"}:
-        if not parsed.netloc or parsed.username is not None or parsed.password is not None:
-            return False
-        try:
-            hostname = parsed.hostname
-            parsed.port
-        except ValueError:
-            return False
-        if hostname is None:
-            return False
-        hostname = hostname.rstrip(".").lower()
-        if hostname == "localhost" or hostname.endswith((".localhost", ".local", ".internal")):
-            return False
-        try:
-            address = ipaddress.ip_address(hostname)
-        except ValueError:
-            if _is_numeric_hostname_candidate(hostname):
-                return False
-            return True
-        return address.is_global and not any(
-            (
-                address.is_loopback,
-                address.is_private,
-                address.is_link_local,
-                address.is_multicast,
-                address.is_reserved,
-                address.is_unspecified,
-            )
-        )
-    return value.startswith("/") and not value.startswith("//") and not parsed.scheme and not parsed.netloc
 
 
 def _is_safe_metadata_value(value: Any) -> bool:

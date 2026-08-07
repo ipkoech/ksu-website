@@ -17,7 +17,6 @@ from starlette.routing import request_response
 
 ResponseModelExemption = Literal["file", "health", "internal", "metrics", "stream"]
 
-PUBLIC_RESPONSE_MODEL_MISSING_BASELINE = 907
 _EXEMPTION_ATTRIBUTE = "__response_model_exemption__"
 _ALLOWED_EXEMPTIONS = frozenset({"file", "health", "internal", "metrics", "stream"})
 _logger = logging.getLogger(__name__)
@@ -41,7 +40,7 @@ class ResponseModelCoverage:
     missing: tuple[str, ...]
     nonconcrete: tuple[str, ...]
     invalid_exemptions: tuple[str, ...]
-    baseline_missing: int = PUBLIC_RESPONSE_MODEL_MISSING_BASELINE
+    baseline_missing: int = 0
 
     @property
     def uncovered_count(self) -> int:
@@ -182,7 +181,11 @@ def _is_response_class(value: object, expected: type[Response]) -> bool:
     return isinstance(value, type) and issubclass(value, expected)
 
 
-def collect_response_model_coverage(routes: Iterable[object]) -> ResponseModelCoverage:
+def collect_response_model_coverage(
+    routes: Iterable[object],
+    *,
+    baseline_missing: int = 0,
+) -> ResponseModelCoverage:
     """Collect all missing, permissive, and invalid public response schemas."""
 
     missing: list[str] = []
@@ -210,6 +213,7 @@ def collect_response_model_coverage(routes: Iterable[object]) -> ResponseModelCo
         missing=tuple(missing),
         nonconcrete=tuple(nonconcrete),
         invalid_exemptions=tuple(invalid_exemptions),
+        baseline_missing=baseline_missing,
     )
 
 
@@ -217,10 +221,14 @@ def enforce_response_model_coverage(
     routes: Iterable[object],
     *,
     production: bool,
+    baseline_missing: int,
 ) -> ResponseModelCoverage:
-    """Validate response-model coverage, failing closed in production."""
+    """Fail production startup when coverage regresses beyond its service baseline."""
 
-    coverage = collect_response_model_coverage(routes)
+    coverage = collect_response_model_coverage(
+        routes,
+        baseline_missing=baseline_missing,
+    )
     if coverage.missing or coverage.nonconcrete or coverage.invalid_exemptions:
         level = logging.ERROR if production else logging.WARNING
         _logger.log(
@@ -231,12 +239,13 @@ def enforce_response_model_coverage(
             len(coverage.invalid_exemptions),
             coverage.baseline_missing,
         )
-        if production:
+        if production and (coverage.baseline_delta > 0 or coverage.invalid_exemptions):
             raise ResponseModelCoverageError(
-                "production response-model coverage is incomplete: "
+                "production response-model coverage regressed: "
                 f"missing={len(coverage.missing)} "
                 f"nonconcrete={len(coverage.nonconcrete)} "
-                f"invalid_exemptions={len(coverage.invalid_exemptions)}"
+                f"invalid_exemptions={len(coverage.invalid_exemptions)} "
+                f"baseline={coverage.baseline_missing}"
             )
     return coverage
 
@@ -366,7 +375,6 @@ class StrictResponseValidationRoute(APIRoute):
 
 
 __all__ = [
-    "PUBLIC_RESPONSE_MODEL_MISSING_BASELINE",
     "ResponseModelCoverage",
     "ResponseModelCoverageError",
     "StrictResponseValidationRoute",

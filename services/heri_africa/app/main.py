@@ -34,6 +34,7 @@ def create_app() -> FastAPI:
             version=settings.APP_VERSION,
             docs_url="/api/docs" if settings.APP_ENV != "production" else None,
             redoc_url="/api/redoc" if settings.APP_ENV != "production" else None,
+            response_model_missing_baseline=21,
             lifespan=lifespan,
         ),
         cors=CorsConfig(origins=settings.CORS_ORIGINS),

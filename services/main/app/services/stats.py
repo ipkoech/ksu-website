@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from ksu_common.stats import count_active as _count
 
 from ..models import (
     Announcement,
@@ -103,13 +104,6 @@ PORTAL_ALIASES = {
     "governance": "admin",
     "institutional-administration": "admin",
 }
-
-
-async def _count(db: AsyncSession, model, *conditions) -> int:
-    result = await db.execute(
-        select(func.count(model.id)).where(model.deleted_at.is_(None), *conditions)
-    )
-    return int(result.scalar_one() or 0)
 
 
 async def _sum_publications_for_people(

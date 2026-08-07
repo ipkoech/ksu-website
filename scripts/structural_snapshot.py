@@ -105,6 +105,20 @@ kline = [output_line for output_line in K.stdout.splitlines() if output_line.sta
 snap["_kernel"] = json.loads(kline[-1]) if kline else {"error": K.stderr[-300:]}
 snap["_kernel"]["modules"] = len(list((REPO / "services/common/ksu_common").rglob("*.py")))
 
+CONTRACT_PROBE = (
+    "import json; import ksu_contracts as c; "
+    "print(json.dumps({'exports': len(c.__all__), "
+    "'permissions': len(c.ALL_PERMISSIONS), 'roles': len(c.ROLE_DEFINITIONS)}))"
+)
+C = subprocess.run(
+    [PYTHON_BIN, "-c", CONTRACT_PROBE], cwd=REPO, capture_output=True, text=True, check=False
+)
+cline = [output_line for output_line in C.stdout.splitlines() if output_line.startswith("{")]
+snap["_contracts"] = json.loads(cline[-1]) if cline else {"error": C.stderr[-300:]}
+snap["_contracts"]["modules"] = len(
+    list((REPO / "services/contracts/ksu_contracts").rglob("*.py"))
+)
+
 if len(sys.argv) not in (2, 4) or (len(sys.argv) == 4 and sys.argv[2] != "--expect"):
     raise SystemExit("usage: structural_snapshot.py OUTPUT [--expect BASELINE]")
 
@@ -116,10 +130,13 @@ for svc in SERVICES:
           f"tables={s.get('table_count','-'):>4} foreign={s.get('foreign_schema_tables')!r} heads={s.get('alembic_heads')!r}")
 k = snap["_kernel"]
 print(f"{'ksu_common':12s} modules={k.get('modules')} exports={k.get('exports')} Base.metadata={k.get('base_metadata')}")
+c = snap["_contracts"]
+print(f"{'ksu_contracts':12s} modules={c.get('modules')} exports={c.get('exports')} permissions={c.get('permissions')} roles={c.get('roles')}")
 
 failed = any(not snap[svc].get("constructs") for svc in SERVICES)
 failed = failed or any(snap[svc].get("alembic_heads") == ["<error>"] for svc in SERVICES)
 failed = failed or "error" in snap["_kernel"]
+failed = failed or "error" in snap["_contracts"]
 
 if len(sys.argv) == 4:
     expected_path = pathlib.Path(sys.argv[3])

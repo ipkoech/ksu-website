@@ -180,7 +180,7 @@ def audit_action(
     """Decorator to automatically audit endpoint calls.
 
     Args:
-        action: Action name (e.g., "library.create", "loan.return")
+        action: Action name (e.g., "item.create", "order.complete")
         target_type: Type of target entity (e.g., "Library", "Loan")
         target_id_param: Name of path/query param containing target ID
         include_body: Whether to include request body in audit details

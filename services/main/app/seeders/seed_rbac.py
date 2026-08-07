@@ -12,7 +12,7 @@ from app.security.scopes import (
     SCHOOL_PORTAL_PERMISSION_NAMES,
     SCHOOL_PORTAL_VIEW_PERMISSION_NAMES,
 )
-from ksu_common.roles import ALL_PERMISSIONS, ROLE_DEFINITIONS
+from ksu_contracts.roles import ALL_PERMISSIONS, ROLE_DEFINITIONS
 
 from ._shared import SeedContext, upsert_permission, upsert_role, upsert_role_permission
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from ksu_common.stats import count_active as _count
 
 from ..models import (
     Consultancy,
@@ -34,13 +35,6 @@ from ..models import (
     TrainingProgram,
 )
 from ..schemas.stats import PublicStatItem, PublicStatsResponse
-
-
-async def _count(db: AsyncSession, model, *conditions) -> int:
-    result = await db.execute(
-        select(func.count(model.id)).where(model.deleted_at.is_(None), *conditions)
-    )
-    return int(result.scalar_one() or 0)
 
 
 async def _sum(db: AsyncSession, column, model, *conditions) -> float:

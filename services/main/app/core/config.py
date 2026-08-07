@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Literal
 
 from ksu_common.config import (
+    validate_celery_url,
     validate_cors_origins,
     validate_read_replica_settings,
     validate_secret,
@@ -200,12 +201,7 @@ class Settings(BaseSettings):
     @field_validator("CELERY_BROKER_URL", "CELERY_RESULT_BACKEND")
     @classmethod
     def validate_celery_urls(cls, v: str | None) -> str | None:
-        if v is None:
-            return v
-        valid_prefixes = ("redis://", "rediss://", "amqp://", "rpc://")
-        if not v.startswith(valid_prefixes):
-            raise ValueError("Celery broker/backend must use redis, rediss, amqp, or rpc URL")
-        return v
+        return validate_celery_url(v)
 
     @field_validator("SMS_WEBHOOK_URL", "PUSH_WEBHOOK_URL")
     @classmethod

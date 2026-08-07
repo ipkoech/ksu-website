@@ -79,6 +79,7 @@ class ServiceAppConfig:
     metrics_path: str | None = "/metrics"
     environment: str | None = None
     strict_response_model_validation: bool | None = None
+    response_model_missing_baseline: int = 0
 
 
 @dataclass(frozen=True)
@@ -198,6 +199,7 @@ def create_service_app(
     app.state.response_model_coverage = enforce_response_model_coverage(
         app.routes,
         production=strict_response_model_validation,
+        baseline_missing=config.response_model_missing_baseline,
     )
     coverage = app.state.response_model_coverage
     coverage_tags = {"service": config.service_name}

@@ -12,7 +12,7 @@ from ksu_common.audit import audit_action
 from ksu_common.auth import TokenPayload
 from ksu_common.cache import invalidate_prefix
 from ksu_common.field_selection import FieldSelection, FieldSelector, FieldsQuery
-from ksu_common.rbac import has_scope
+from ksu_contracts.rbac import has_scope
 from ksu_common.schemas.responses import success
 
 from ...core.auth import get_optional_user, requires_scope

@@ -1,10 +1,13 @@
-"""Shared RBAC policy evaluation and FastAPI authorization dependencies."""
+"""Authorization policy bound to the versioned KSU permission contract."""
 
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
+
+from fastapi import Depends, HTTPException, status
+from ksu_common.auth import TokenPayload, UserDependency
 
 from .roles import ALL_PERMISSIONS, ROLE_DEFINITIONS, normalize_role_name
 
@@ -256,10 +259,6 @@ def has_scope(user_roles: Iterable[str], scope: str) -> bool:
 
 
 # ── FastAPI dependency ────────────────────────────────────────────────────────
-
-from fastapi import Depends, HTTPException, status
-
-from .auth import TokenPayload, UserDependency
 
 
 def build_scope_dependency(user_dependency: UserDependency):

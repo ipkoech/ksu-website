@@ -52,6 +52,7 @@ def create_app() -> FastAPI:
             docs_url="/api/docs" if settings.APP_ENV != "production" else None,
             redoc_url="/api/redoc" if settings.APP_ENV != "production" else None,
             openapi_url="/api/openapi.json" if settings.APP_ENV != "production" else None,
+            response_model_missing_baseline=133,
             lifespan=lifespan,
             default_response_class=ORJSONResponse,
         ),

@@ -6,7 +6,8 @@ import ipaddress
 import uuid
 from collections.abc import Collection
 from datetime import datetime, timedelta, timezone
-from urllib.parse import SplitResult, urlsplit
+from typing import Any
+from urllib.parse import SplitResult, urlparse, urlsplit
 
 import jwt
 from argon2 import PasswordHasher
@@ -180,3 +181,74 @@ def generate_access_token(
         "roles": roles or [],
     }
     return jwt.encode(payload, secret, algorithm=algorithm)
+
+
+def _is_numeric_hostname_candidate(hostname: str) -> bool:
+    return all(
+        component.isdecimal()
+        or (
+            component.startswith("0x")
+            and len(component) > 2
+            and all(character in "0123456789abcdef" for character in component[2:])
+        )
+        for component in hostname.split(".")
+    )
+
+
+def _has_unsafe_authority(value: str) -> bool:
+    scheme, separator, remainder = value.partition(":")
+    if not separator or scheme.lower() not in {"http", "https"} or not remainder.startswith("//"):
+        return False
+    authority = remainder[2:]
+    for delimiter in "/?#":
+        authority = authority.split(delimiter, 1)[0]
+    return any(
+        character in {"%", "\\"}
+        or ord(character) < 32
+        or 127 <= ord(character) <= 159
+        or ord(character) > 127
+        for character in authority
+    )
+
+
+def _is_safe_public_url(value: Any) -> bool:
+    """Accept public HTTP(S) and local-path URLs while rejecting SSRF targets."""
+    if not isinstance(value, str) or not value or value != value.strip() or _has_unsafe_authority(value):
+        return False
+    try:
+        parsed = urlparse(value)
+    except ValueError:
+        return False
+    if parsed.scheme in {"http", "https"}:
+        if not parsed.netloc or parsed.username is not None or parsed.password is not None:
+            return False
+        try:
+            hostname = parsed.hostname
+            parsed.port
+        except ValueError:
+            return False
+        if hostname is None:
+            return False
+        hostname = hostname.rstrip(".").lower()
+        if hostname == "localhost" or hostname.endswith((".localhost", ".local", ".internal")):
+            return False
+        try:
+            address = ipaddress.ip_address(hostname)
+        except ValueError:
+            if _is_numeric_hostname_candidate(hostname):
+                return False
+            return True
+        return address.is_global and not any(
+            (
+                address.is_loopback,
+                address.is_private,
+                address.is_link_local,
+                address.is_multicast,
+                address.is_reserved,
+                address.is_unspecified,
+            )
+        )
+    return value.startswith("/") and not value.startswith("//") and not parsed.scheme and not parsed.netloc
+
+
+is_safe_public_url = _is_safe_public_url

@@ -78,6 +78,16 @@ def validate_service_url(
     )
 
 
+def validate_celery_url(value: str | None) -> str | None:
+    """Validate a Celery broker or result-backend URL."""
+    if value is None:
+        return value
+    valid_prefixes = ("redis://", "rediss://", "amqp://", "rpc://")
+    if not value.startswith(valid_prefixes):
+        raise ValueError("Celery broker/backend must use redis, rediss, amqp, or rpc URL")
+    return value
+
+
 def validate_read_replica_settings(
     *,
     enabled: bool,
@@ -136,6 +146,7 @@ __all__ = [
     "EnvironmentSettings",
     "is_production_environment",
     "validate_cors_origins",
+    "validate_celery_url",
     "validate_environment",
     "validate_explicit_production_settings",
     "validate_read_replica_settings",

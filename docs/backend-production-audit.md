@@ -88,6 +88,19 @@ process pool will exhaust PostgreSQL.
 7. Load-test cached reads, uncached reads, login, writes, WebSockets, and worker
    backlog. Scale workers and pools from measured saturation, not request counts.
 
+## Phase 3 implementation status
+
+- KSU permissions, roles, scope vocabulary, and RBAC policy now live in the
+  versioned `ksu-contracts` package rather than the infrastructure kernel.
+- The kernel owns the reusable SQL count helper, public-URL/SSRF validation,
+  and Celery URL validation. The promoted implementations were checked against
+  their service copies before those copies were removed.
+- Response-model coverage is a per-service production ratchet: Main 742,
+  Research 2, Library 133, and HERI Africa 21. Existing debt can deploy, while
+  an added uncovered route or invalid exemption fails production startup.
+- Cross-schema ORM metadata remains deliberately unchanged until a live
+  database can prove an empty Alembic autogenerate diff and validate role grants.
+
 ## Release gates
 
 - All four applications construct with unchanged route/table surfaces.

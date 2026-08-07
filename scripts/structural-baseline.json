@@ -1,10 +1,16 @@
 {
+ "_contracts": {
+  "exports": 11,
+  "modules": 3,
+  "permissions": 268,
+  "roles": 37
+ },
  "_kernel": {
   "base_metadata": [
    "main.audit_logs"
   ],
-  "exports": 88,
-  "modules": 29
+    "exports": 83,
+    "modules": 28
  },
  "heri_africa": {
   "alembic_heads": [

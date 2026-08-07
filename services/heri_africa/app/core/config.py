@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Literal
 
 from ksu_common.config import (
+    validate_celery_url,
     validate_explicit_production_settings,
     validate_cors_origins,
     validate_read_replica_settings,
@@ -54,6 +55,11 @@ class HeriSettings(BaseSettings):
         if not value.startswith("postgresql+asyncpg"):
             raise ValueError("DATABASE_URL must use postgresql+asyncpg driver")
         return value
+
+    @field_validator("CELERY_BROKER_URL", "CELERY_RESULT_BACKEND")
+    @classmethod
+    def validate_celery_urls(cls, value: str | None) -> str | None:
+        return validate_celery_url(value)
 
     @model_validator(mode="after")
     def reject_insecure_production_defaults(self) -> "HeriSettings":

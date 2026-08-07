@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from ksu_common.auth import TokenPayload
-from ksu_common.rbac import authorize_permission
+from ksu_contracts.rbac import authorize_permission
 
 from ...core.auth import get_current_user, require_permission
 from ...core.database import get_db

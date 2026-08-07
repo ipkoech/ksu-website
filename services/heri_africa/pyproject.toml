@@ -19,6 +19,7 @@ dependencies = [
   "celery>=5.4.0",
   "python-dotenv>=1.0.0",
   "ksu-common",
+  "ksu-contracts",
 ]
 
 [project.optional-dependencies]

@@ -146,7 +146,7 @@ from .vice_chancellor import (
     VcWorkflowAction,
     YouTubePreviewRequest,
 )
-from .base import APIResponse, BaseReadSchema, BaseSchema, PaginatedResponse
+from .base import BaseReadSchema, BaseSchema
 from .school_portal import (
     SchoolPortalCapabilitiesResponse,
     SchoolPortalContextResponse,
@@ -378,10 +378,8 @@ from .about_content import (
 )
 
 __all__ = [
-    "APIResponse",
     "BaseSchema",
     "BaseReadSchema",
-    "PaginatedResponse",
     "AuditLogRead",
     "AnalyticsEventCreate",
     "AnalyticsEventBatchCreate",

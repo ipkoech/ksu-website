@@ -20,6 +20,7 @@ from .cache import (
 )
 from .config import (
     is_production_environment,
+    validate_celery_url,
     validate_cors_origins,
     validate_environment,
     validate_explicit_production_settings,
@@ -72,15 +73,6 @@ from .rate_limit import (
     rate_limit,
     reset_rate_limit,
 )
-from .rbac import (
-    AuthorizationDecision,
-    AuthorizationScope,
-    authorize,
-    authorize_permission,
-    build_scope_dependency,
-    get_role_scopes,
-    has_scope,
-)
 from .reliability import (
     CircuitBreaker,
     RetryPolicy,
@@ -88,6 +80,7 @@ from .reliability import (
 )
 from .schemas.responses import ErrorResponse, SuccessResponse, error, success
 from .smtp import SmtpConfig, SmtpTransport
+from .stats import count_active
 from .task_queue import (
     TaskQueueConfig,
     close_worker_async_runtime,
@@ -109,10 +102,7 @@ __all__ = [
     "TokenPayload",
     "UserDependencies",
     "build_user_dependencies",
-    # RBAC
-    "has_scope",
-    "build_scope_dependency",
-    "get_role_scopes",
+    "count_active",
     # Pagination
     "PaginatedResult",
     "paginate",
@@ -149,11 +139,8 @@ __all__ = [
     # Logging
     "configure_service_logging",
     # Canonical platform interfaces
-    "AuthorizationDecision",
-    "AuthorizationScope",
-    "authorize",
-    "authorize_permission",
     "is_production_environment",
+    "validate_celery_url",
     "validate_cors_origins",
     "validate_environment",
     "validate_explicit_production_settings",

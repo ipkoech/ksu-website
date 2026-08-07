@@ -8,6 +8,7 @@ from typing import Any
 
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from ksu_common.stats import count_active as _count
 
 from ..core.config import get_settings
 from ..models import (
@@ -157,11 +158,6 @@ class ResearchAnalyticsService:
                 await _audit_status_chart(db, settings.SERVICE_NAME, now),
             ],
         )
-
-
-async def _count(db: AsyncSession, model, *conditions) -> int:
-    result = await db.execute(select(func.count(model.id)).where(model.deleted_at.is_(None), *conditions))
-    return int(result.scalar_one() or 0)
 
 
 async def _sum(db: AsyncSession, column, model, *conditions) -> float:

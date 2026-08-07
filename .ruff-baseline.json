@@ -8,12 +8,6 @@
       "message": "Multiple statements on one line (semicolon)"
     },
     {
-      "code": "E402",
-      "count": 2,
-      "filename": "services/common/ksu_common/rbac.py",
-      "message": "Module level import not at top of file"
-    },
-    {
       "code": "F821",
       "count": 1,
       "filename": "services/library/app/models/electronic.py",
@@ -717,5 +711,5 @@
     }
   ],
   "schema_version": 1,
-  "total_findings": 142
+  "total_findings": 140
 }
