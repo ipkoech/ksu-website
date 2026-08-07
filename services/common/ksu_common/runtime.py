@@ -96,8 +96,11 @@ class AuditOptions:
 
     session_factory: Any
     service_name: str
-    token_secret: str
+    token_key: str | bytes
     token_algorithm: str
+    token_issuer: str
+    token_audience: str
+    token_key_id: str
     skip_path: Callable[[str], bool] = should_skip_audit
     begin_request: Callable[[Request], object] | None = None
     collect_changes: Callable[[], dict[str, Any] | None] | None = None
@@ -232,8 +235,11 @@ def create_service_app(
                 service_name=options.service_name,
                 request=request,
                 status_code=status_code,
-                token_secret=options.token_secret,
+                token_key=options.token_key,
                 token_algorithm=options.token_algorithm,
+                token_issuer=options.token_issuer,
+                token_audience=options.token_audience,
+                token_key_id=options.token_key_id,
                 error_message=error_message,
                 changes=changes,
             )
@@ -245,8 +251,11 @@ def create_service_app(
             service_name=options.service_name,
             request=request,
             status_code=status_code,
-            token_secret=options.token_secret,
+            token_key=options.token_key,
             token_algorithm=options.token_algorithm,
+            token_issuer=options.token_issuer,
+            token_audience=options.token_audience,
+            token_key_id=options.token_key_id,
             error_message=error_message,
             changes=changes,
         )

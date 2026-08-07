@@ -165,6 +165,13 @@ services:
       <<: *backend-database-capacity
       APP_ENV: production
       DEBUG: "false"
+      JWT_SIGNING_ENABLED: "true"
+      JWT_PRIVATE_KEY_B64: ${JWT_PRIVATE_KEY_B64:?JWT_PRIVATE_KEY_B64 is required}
+      JWT_PUBLIC_KEY_B64: ${JWT_PUBLIC_KEY_B64:?JWT_PUBLIC_KEY_B64 is required}
+      JWT_KEY_ID: ${JWT_KEY_ID:?JWT_KEY_ID is required}
+      JWT_ALGORITHM: RS256
+      JWT_ISSUER: ${JWT_ISSUER:-ksu-auth}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-ksu-platform}
       DATABASE_URL: postgresql+asyncpg://${MAIN_DB_USER:-ksu_main}:${MAIN_DB_PASSWORD:?MAIN_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: main
       INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
@@ -222,6 +229,11 @@ services:
     environment:
       <<: *backend-database-capacity
       APP_ENV: production
+      JWT_PUBLIC_KEY_B64: ${JWT_PUBLIC_KEY_B64:?JWT_PUBLIC_KEY_B64 is required}
+      JWT_ALGORITHM: RS256
+      JWT_KEY_ID: ${JWT_KEY_ID:?JWT_KEY_ID is required}
+      JWT_ISSUER: ${JWT_ISSUER:-ksu-auth}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-ksu-platform}
       DATABASE_URL: postgresql+asyncpg://${RESEARCH_DB_USER:-ksu_research}:${RESEARCH_DB_PASSWORD:?RESEARCH_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: research
       REDIS_URL: redis://redis:6379/2
@@ -269,6 +281,11 @@ services:
     environment:
       <<: *backend-database-capacity
       APP_ENV: production
+      JWT_PUBLIC_KEY_B64: ${JWT_PUBLIC_KEY_B64:?JWT_PUBLIC_KEY_B64 is required}
+      JWT_ALGORITHM: RS256
+      JWT_KEY_ID: ${JWT_KEY_ID:?JWT_KEY_ID is required}
+      JWT_ISSUER: ${JWT_ISSUER:-ksu-auth}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-ksu-platform}
       DATABASE_URL: postgresql+asyncpg://${HERI_DB_USER:-ksu_heri}:${HERI_DB_PASSWORD:?HERI_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: heri
       REDIS_URL: redis://redis:6379/3
@@ -313,6 +330,11 @@ services:
     environment:
       <<: *backend-database-capacity
       APP_ENV: production
+      JWT_PUBLIC_KEY_B64: ${JWT_PUBLIC_KEY_B64:?JWT_PUBLIC_KEY_B64 is required}
+      JWT_ALGORITHM: RS256
+      JWT_KEY_ID: ${JWT_KEY_ID:?JWT_KEY_ID is required}
+      JWT_ISSUER: ${JWT_ISSUER:-ksu-auth}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-ksu-platform}
       DATABASE_URL: postgresql+asyncpg://${LIBRARY_DB_USER:-ksu_library}:${LIBRARY_DB_PASSWORD:?LIBRARY_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: library
       REDIS_URL: redis://redis:6379/1
@@ -357,6 +379,13 @@ services:
     environment:
       <<: *backend-database-capacity
       APP_ENV: production
+      JWT_SIGNING_ENABLED: "false"
+      JWT_PRIVATE_KEY_B64: ""
+      JWT_PUBLIC_KEY_B64: ${JWT_PUBLIC_KEY_B64:?JWT_PUBLIC_KEY_B64 is required}
+      JWT_ALGORITHM: RS256
+      JWT_KEY_ID: ${JWT_KEY_ID:?JWT_KEY_ID is required}
+      JWT_ISSUER: ${JWT_ISSUER:-ksu-auth}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-ksu-platform}
       DEBUG: "false"
       CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${MAIN_DB_USER:-ksu_main}:${MAIN_DB_PASSWORD:?MAIN_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}

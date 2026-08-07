@@ -14,6 +14,7 @@ from ksu_common.config import (
     validate_secret,
     validate_service_url,
 )
+from ksu_common.security import validate_rsa_public_key
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -35,8 +36,11 @@ class Settings(BaseSettings):
     READ_REPLICA_ENABLED: bool = False
     READ_REPLICA_APPROVED: bool = False
 
-    JWT_SECRET_KEY: str
-    JWT_ALGORITHM: str = "HS256"
+    JWT_PUBLIC_KEY_B64: str
+    JWT_KEY_ID: str = Field(min_length=1, max_length=128)
+    JWT_ALGORITHM: Literal["RS256"] = "RS256"
+    JWT_ISSUER: str = Field(min_length=1, max_length=255)
+    JWT_AUDIENCE: str = Field(min_length=1, max_length=255)
 
     REDIS_URL: str = "redis://localhost:6379/2"
     CELERY_BROKER_URL: str | None = None
@@ -96,7 +100,7 @@ class Settings(BaseSettings):
             required_fields=("APP_ENV", "MAIN_SERVICE_URL", "CORS_ORIGINS"),
             app_env=self.APP_ENV,
         )
-        validate_secret(self.JWT_SECRET_KEY, field_name="JWT_SECRET_KEY", app_env=self.APP_ENV)
+        validate_rsa_public_key(self.JWT_PUBLIC_KEY_B64)
         validate_secret(
             self.MAIN_SERVICE_API_KEY,
             field_name="MAIN_SERVICE_API_KEY",

@@ -4,12 +4,36 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import os
 import subprocess
+from functools import lru_cache
 from pathlib import Path
+
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 REPO = Path(__file__).resolve().parents[1]
 SCHEMA_OF = {"main": "main", "research": "research", "library": "library", "heri_africa": "heri"}
+
+
+@lru_cache(maxsize=1)
+def ci_jwt_key_pair() -> tuple[str, str]:
+    """Return one ephemeral RSA pair shared by deterministic child environments."""
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    private_pem = private_key.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption(),
+    )
+    public_pem = private_key.public_key().public_bytes(
+        serialization.Encoding.PEM,
+        serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    return (
+        base64.b64encode(private_pem).decode("ascii"),
+        base64.b64encode(public_pem).decode("ascii"),
+    )
 
 
 def service_environment(service: str) -> dict[str, str]:
@@ -36,7 +60,7 @@ def placeholder_setting(key: str, service: str) -> str:
     if key == "DB_SCHEMA":
         return SCHEMA_OF[service]
     if key in {"DATABASE_URL", "READ_DATABASE_URL"}:
-        return "postgresql+asyncpg://ci:ci@127.0.0.1:5432/ci"
+        return "postgresql+asyncpg://ci:ci@127.0.0.1:5432/ci"  # pragma: allowlist secret
     if "REDIS" in key or key in {"CELERY_BROKER_URL", "CELERY_RESULT_BACKEND"}:
         return "redis://127.0.0.1:6379/0"
     if key.endswith("_URL"):
@@ -52,7 +76,17 @@ def placeholder_setting(key: str, service: str) -> str:
     if key in {"DB_MAX_OVERFLOW", "DB_POOL_SIZE", "CELERY_CONCURRENCY"}:
         return "1"
     if key == "JWT_ALGORITHM":
-        return "HS256"
+        return "RS256"
+    if key == "JWT_PRIVATE_KEY_B64":
+        return ci_jwt_key_pair()[0]
+    if key == "JWT_PUBLIC_KEY_B64":
+        return ci_jwt_key_pair()[1]
+    if key == "JWT_KEY_ID":
+        return "ci-active-key"
+    if key == "JWT_ISSUER":
+        return "ksu-auth-ci"
+    if key == "JWT_AUDIENCE":
+        return "ksu-platform-ci"
     if key == "LOG_FORMAT":
         return "json"
     if key == "LOG_LEVEL":

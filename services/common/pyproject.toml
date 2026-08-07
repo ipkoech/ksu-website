@@ -9,6 +9,7 @@ description = "Shared utilities for KSU microservices"
 requires-python = ">=3.12"
 dependencies = [
     "PyJWT>=2.8.0",
+    "cryptography>=44.0.0",
     "argon2-cffi>=23.1.0",
     "fastapi>=0.115.0",
     "httpx>=0.27.0",

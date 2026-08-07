@@ -10,7 +10,7 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from .security import decode_token, validate_secret
+from .security import decode_key_material, decode_token
 
 _bearer = HTTPBearer(auto_error=False)
 _bearer_dependency = Depends(_bearer)
@@ -39,15 +39,16 @@ class UserDependencies:
 
 
 def build_user_dependencies(
-    *, secret: str, algorithm: str, app_env: str
+    *,
+    public_key_b64: str,
+    issuer: str,
+    audience: str,
+    key_id: str,
+    algorithm: str = "RS256",
 ) -> UserDependencies:
     """Bind JWT verification dependencies to explicit service configuration."""
 
-    verified_secret = validate_secret(
-        secret,
-        field_name="JWT_SECRET_KEY",
-        app_env=app_env,
-    ) or secret
+    public_key = decode_key_material(public_key_b64, field_name="JWT_PUBLIC_KEY_B64")
 
     async def get_current_user(
         credentials: HTTPAuthorizationCredentials | None = _bearer_dependency,
@@ -62,8 +63,11 @@ def build_user_dependencies(
         try:
             payload = decode_token(
                 credentials.credentials,
-                secret=verified_secret,
+                key=public_key,
                 algorithm=algorithm,
+                issuer=issuer,
+                audience=audience,
+                key_id=key_id,
                 expected_type="access",
             )
         except jwt.PyJWTError as error:

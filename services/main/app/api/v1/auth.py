@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request, Response
 
 from ksu_common.schemas.responses import success
+from ksu_common.security import decode_key_material, public_jwk
 
 from ...core.config import get_settings
 from ...deps import CurrentToken, CurrentUser, DbSession
@@ -25,6 +26,24 @@ router = APIRouter()
 settings = get_settings()
 ACCESS_COOKIE_NAME = "ksu_access"
 REFRESH_COOKIE_NAME = "ksu_refresh"
+
+
+@router.get("/jwks", response_model=dict[str, list[dict[str, str | list[str]]]])
+async def jwks():
+    """Publish verifier-only key material for external and internal consumers."""
+    public_key = decode_key_material(
+        settings.JWT_PUBLIC_KEY_B64,
+        field_name="JWT_PUBLIC_KEY_B64",
+    )
+    return {
+        "keys": [
+            public_jwk(
+                public_key,
+                key_id=settings.JWT_KEY_ID,
+                algorithm=settings.JWT_ALGORITHM,
+            )
+        ]
+    }
 
 
 def _cookie_secure() -> bool:

@@ -37,6 +37,9 @@ jobs:
           RESEARCH_DB_PASSWORD: ci-only-research-password # pragma: allowlist secret
           LIBRARY_DB_PASSWORD: ci-only-library-password # pragma: allowlist secret
           HERI_DB_PASSWORD: ci-only-heri-password # pragma: allowlist secret
+          JWT_PRIVATE_KEY_B64: ci-private-key-material # pragma: allowlist secret
+          JWT_PUBLIC_KEY_B64: ci-public-key-material
+          JWT_KEY_ID: ci-active-key
         run: |
           for service in main research library heri_africa; do
             cp "services/${service}/.env.example" "services/${service}/.env"
@@ -48,7 +51,12 @@ jobs:
         env:
           DATABASE_URL: postgresql+asyncpg://ci:ci@postgres:5432/ci # pragma: allowlist secret
           REDIS_URL: rediss://redis:6379/0
-          JWT_SECRET_KEY: ci-jwt-secret-at-least-thirty-two-characters # pragma: allowlist secret
+          JWT_PRIVATE_KEY_B64: ci-private-key-material # pragma: allowlist secret
+          JWT_PUBLIC_KEY_B64: ci-public-key-material
+          JWT_KEY_ID: ci-active-key
+          JWT_ALGORITHM: RS256
+          JWT_ISSUER: ksu-auth-ci
+          JWT_AUDIENCE: ksu-platform-ci
           INTERNAL_API_KEY: ci-internal-key-at-least-thirty-two-characters # pragma: allowlist secret
           CORS_ORIGINS: '["https://www.example.edu"]'
           SMTP_HOST: smtp.example.edu

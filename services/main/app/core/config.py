@@ -14,6 +14,7 @@ from ksu_common.config import (
     validate_service_url,
 )
 from ksu_common.rate_limit import rate_limit
+from ksu_common.security import validate_rsa_key_pair, validate_rsa_public_key
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -36,8 +37,13 @@ class Settings(BaseSettings):
     READ_REPLICA_ENABLED: bool = False
     READ_REPLICA_APPROVED: bool = False
 
-    JWT_SECRET_KEY: str
-    JWT_ALGORITHM: str
+    JWT_PRIVATE_KEY_B64: str | None = None
+    JWT_PUBLIC_KEY_B64: str
+    JWT_SIGNING_ENABLED: bool = False
+    JWT_KEY_ID: str = Field(min_length=1, max_length=128)
+    JWT_ALGORITHM: Literal["RS256"] = "RS256"
+    JWT_ISSUER: str = Field(min_length=1, max_length=255)
+    JWT_AUDIENCE: str = Field(min_length=1, max_length=255)
     JWT_ACCESS_TTL_MINUTES: int
     JWT_REFRESH_TTL_DAYS: int
     PASSWORD_RESET_TOKEN_TTL_HOURS: int
@@ -216,7 +222,12 @@ class Settings(BaseSettings):
     def reject_insecure_production_defaults(self) -> Settings:
         if self.APP_ENV.strip().lower() == "production" and self.DEBUG:
             raise ValueError("DEBUG must be false in production")
-        validate_secret(self.JWT_SECRET_KEY, field_name="JWT_SECRET_KEY", app_env=self.APP_ENV)
+        if self.JWT_SIGNING_ENABLED:
+            if not self.JWT_PRIVATE_KEY_B64:
+                raise ValueError("JWT_PRIVATE_KEY_B64 is required when JWT_SIGNING_ENABLED=true")
+            validate_rsa_key_pair(self.JWT_PRIVATE_KEY_B64, self.JWT_PUBLIC_KEY_B64)
+        else:
+            validate_rsa_public_key(self.JWT_PUBLIC_KEY_B64)
         validate_secret(self.INTERNAL_API_KEY, field_name="INTERNAL_API_KEY", app_env=self.APP_ENV)
         validate_service_url(self.DATABASE_URL, field_name="DATABASE_URL", app_env=self.APP_ENV)
         validate_service_url(self.REDIS_URL, field_name="REDIS_URL", app_env=self.APP_ENV)

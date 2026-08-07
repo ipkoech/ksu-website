@@ -43,11 +43,11 @@ process pool will exhaust PostgreSQL.
 
 ### Security
 
-- All services share an HS256 secret. Any compromised service can mint platform
-  tokens. Extracting authentication to an RS256 signer and publishing JWKS is the
-  required trust-boundary fix; services should receive verification keys only.
-- The kernel authentication dependency read secrets from process-global
-  environment state. Services must pass verification configuration explicitly.
+- The shared HS256 minting capability has been removed. Main API is the temporary
+  RS256 signing boundary; workers and the other services receive verification
+  keys only, and Main publishes JWKS for external verifiers.
+- Kernel authentication now receives verifier configuration explicitly and pins
+  algorithm, issuer, audience, key id, and token type.
 - Production Main inherited `DEBUG=true` from its env file. This exposed API docs
   and enabled SQL echo. Production configuration must reject DEBUG, not merely
   rely on operator convention.
@@ -100,6 +100,20 @@ process pool will exhaust PostgreSQL.
   an added uncovered route or invalid exemption fails production startup.
 - Cross-schema ORM metadata remains deliberately unchanged until a live
   database can prove an empty Alembic autogenerate diff and validate role grants.
+
+## Phase 4 implementation status
+
+- RS256 replaces the fleet-wide symmetric secret. Only the Main API receives the
+  private key; all workers and sibling APIs are configured as verifiers only.
+- Access, refresh, and socket tokens carry a `kid`, issuer, audience, and explicit
+  token type. Verification fails closed on mismatches.
+- Main publishes a public JWKS endpoint, and the versioned token contract records
+  claims, process capabilities, and the current coordinated rotation procedure.
+- Main remains the temporary identity owner. Moving its user/session storage to a
+  dedicated auth deployable is deferred until database-backed migration proof is
+  available; the token wire contract will not need to change for that move.
+- Zero-logout key rotation is not yet claimed. It requires a public-key ring and
+  overlapping JWKS publication and remains explicit follow-up work.
 
 ## Release gates
 

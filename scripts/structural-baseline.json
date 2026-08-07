@@ -69,7 +69,7 @@
    "POST /newsletter/subscribe",
    "POST /partnership-applications"
   ],
-  "settings_fields": 27,
+    "settings_fields": 30,
   "table_count": 22,
   "tables": [
    "heri.analytics_events",
@@ -227,7 +227,7 @@
    "POST /library/workflows/",
    "PUT /library/branches/{library_id}/hours/"
   ],
-  "settings_fields": 37,
+    "settings_fields": 40,
   "table_count": 32,
   "tables": [
    "library.electronic_resource_guides",
@@ -270,7 +270,7 @@
   ],
   "constructs": true,
   "foreign_schema_tables": [],
-  "route_count": 744,
+    "route_count": 745,
   "routes": [
    "DELETE /about-content/history-milestones/{item_id}",
    "DELETE /about-content/{item_id}",
@@ -444,8 +444,9 @@
    "GET /institutional-pages/{page_id}/sections",
    "GET /institutional-sections/{section_id}/documents",
    "GET /institutional-sections/{section_id}/items",
-   "GET /jobs/{job_id}",
-   "GET /links",
+      "GET /jobs/{job_id}",
+      "GET /jwks",
+      "GET /links",
    "GET /links/{link_id}",
    "GET /list",
    "GET /managed",
@@ -837,7 +838,7 @@
    "PUT /{user_id}",
    "PUT /{user_id}/roles"
   ],
-  "settings_fields": 106,
+    "settings_fields": 111,
   "table_count": 100,
   "tables": [
    "about_page_content",
@@ -1307,7 +1308,7 @@
    "PUT /themes/id/{theme_id}/projects/{project_id}",
    "PUT /themes/id/{theme_id}/publications/{publication_id}"
   ],
-  "settings_fields": 30,
+    "settings_fields": 33,
   "table_count": 66,
   "tables": [
    "main.media",

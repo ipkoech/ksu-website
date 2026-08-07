@@ -12,6 +12,7 @@ from ksu_common.config import (
     validate_secret,
     validate_service_url,
 )
+from ksu_common.security import validate_rsa_public_key
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -31,8 +32,11 @@ class HeriSettings(BaseSettings):
     READ_DATABASE_URL: str | None = None
     READ_REPLICA_ENABLED: bool = False
     READ_REPLICA_APPROVED: bool = False
-    JWT_SECRET_KEY: str = "change-me-local"
-    JWT_ALGORITHM: str = "HS256"
+    JWT_PUBLIC_KEY_B64: str
+    JWT_KEY_ID: str = Field(min_length=1, max_length=128)
+    JWT_ALGORITHM: Literal["RS256"] = "RS256"
+    JWT_ISSUER: str = Field(min_length=1, max_length=255)
+    JWT_AUDIENCE: str = Field(min_length=1, max_length=255)
     REDIS_URL: str = "redis://localhost:6379/3"
     CELERY_BROKER_URL: str | None = None
     CELERY_RESULT_BACKEND: str | None = None
@@ -68,7 +72,7 @@ class HeriSettings(BaseSettings):
             required_fields=("APP_ENV", "RESEARCH_SERVICE_URL", "CORS_ORIGINS"),
             app_env=self.APP_ENV,
         )
-        validate_secret(self.JWT_SECRET_KEY, field_name="JWT_SECRET_KEY", app_env=self.APP_ENV)
+        validate_rsa_public_key(self.JWT_PUBLIC_KEY_B64)
         validate_secret(
             self.RESEARCH_SERVICE_API_KEY,
             field_name="RESEARCH_SERVICE_API_KEY",

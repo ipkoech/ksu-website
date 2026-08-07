@@ -16,8 +16,16 @@ PLACEHOLDERS = {
     "replace_smtp_host", "replace_smtp_username", "replace_smtp_app_password",
     "replace_from_email",
 }
-REQUIRED = ("APP_ENV", "DATABASE_URL", "REDIS_URL", "JWT_SECRET_KEY", "INTERNAL_API_KEY", "CORS_ORIGINS")
-SERVICE_REQUIRED = {"main": ("SMTP_HOST", "SMTP_PASSWORD", "EMAIL_FROM"), "research": (), "library": ()}
+REQUIRED = (
+    "APP_ENV", "DATABASE_URL", "REDIS_URL", "JWT_PUBLIC_KEY_B64",
+    "JWT_KEY_ID", "JWT_ALGORITHM", "JWT_ISSUER", "JWT_AUDIENCE", "INTERNAL_API_KEY", "CORS_ORIGINS",
+)
+SERVICE_REQUIRED = {
+    "main": ("JWT_PRIVATE_KEY_B64", "SMTP_HOST", "SMTP_PASSWORD", "EMAIL_FROM"),
+    "research": (),
+    "library": (),
+    "heri_africa": (),
+}
 
 
 def read_env_file(path: Path) -> dict[str, str]:
@@ -53,7 +61,7 @@ def validate(values: dict[str, str], environment: str, service: str | None) -> l
             errors.append(f"{key} is required")
         elif is_placeholder(value):
             errors.append(f"{key} contains a placeholder value")
-    for key in ("JWT_SECRET_KEY", "INTERNAL_API_KEY"):
+    for key in ("INTERNAL_API_KEY",):
         if values.get(key) and len(values[key]) < 32:
             errors.append(f"{key} must be at least 32 characters")
     database_url = values.get("DATABASE_URL", "")
@@ -67,6 +75,8 @@ def validate(values: dict[str, str], environment: str, service: str | None) -> l
         errors.append("CORS_ORIGINS must not contain '*' outside development")
     if values.get("DEBUG", "").lower() in {"1", "true", "yes", "on"}:
         errors.append("DEBUG must be disabled outside development")
+    if values.get("JWT_ALGORITHM") != "RS256":
+        errors.append("JWT_ALGORITHM must be RS256 outside development")
     return errors
 
 

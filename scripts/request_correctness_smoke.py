@@ -13,6 +13,8 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 from uuid import UUID
 
+import jwt
+
 REPO = Path(__file__).resolve().parents[1]
 
 
@@ -20,6 +22,8 @@ def _run_probe(service: str) -> None:
     from ci_environment import service_environment
 
     environment = service_environment(service)
+    if service == "main":
+        environment["JWT_SIGNING_ENABLED"] = "true"
     environment["PYTHONPATH"] = os.pathsep.join(
         (str(REPO / "services" / service), str(REPO / "services" / "common"))
     )
@@ -41,9 +45,11 @@ def _main_probe() -> None:
         ResponseModelCoverageError,
         enforce_response_model_coverage,
     )
-    from ksu_common.security import generate_access_token
+    from ksu_common.security import decode_key_material, decode_token
     from app.api.v1._idempotency import install_main_idempotency
+    from app.core.config import get_settings
     from app.deps import get_db
+    from app.helpers.jwt import create_access_token
     from app.main import create_app
 
     async def fake_db():
@@ -87,8 +93,41 @@ def _main_probe() -> None:
     assert "Idempotency-Key" in command_response.json()["detail"]
 
     actor_id = UUID("018f18a0-7b54-7d8c-8a13-0d8f7f190002")
-    audit_secret = "phase-two-audit-verification-secret-value"  # pragma: allowlist secret
-    token = generate_access_token(str(actor_id), secret=audit_secret)
+    settings = get_settings()
+    token, _ = create_access_token(str(actor_id), [])
+    public_key = decode_key_material(
+        settings.JWT_PUBLIC_KEY_B64,
+        field_name="JWT_PUBLIC_KEY_B64",
+    )
+    assert jwt.get_unverified_header(token) == {
+        "alg": "RS256",
+        "kid": settings.JWT_KEY_ID,
+        "typ": "JWT",
+    }
+    verified = decode_token(
+        token,
+        key=public_key,
+        algorithm=settings.JWT_ALGORITHM,
+        issuer=settings.JWT_ISSUER,
+        audience=settings.JWT_AUDIENCE,
+        key_id=settings.JWT_KEY_ID,
+        expected_type="access",
+    )
+    assert verified["sub"] == str(actor_id)
+    try:
+        decode_token(
+            token,
+            key=public_key,
+            algorithm=settings.JWT_ALGORITHM,
+            issuer=settings.JWT_ISSUER,
+            audience="wrong-audience",
+            key_id=settings.JWT_KEY_ID,
+            expected_type="access",
+        )
+    except jwt.InvalidTokenError:
+        pass
+    else:
+        raise AssertionError("token with the wrong audience was accepted")
     os.environ["JWT_SECRET_KEY"] = "deliberately-wrong-process-global-secret"  # pragma: allowlist secret
     audit_request = Request(
         {
@@ -109,11 +148,20 @@ def _main_probe() -> None:
             service_name="main",
             request=audit_request,
             status_code=200,
-            token_secret=audit_secret,
-            token_algorithm="HS256",
+            token_key=public_key,
+            token_algorithm=settings.JWT_ALGORITHM,
+            token_issuer=settings.JWT_ISSUER,
+            token_audience=settings.JWT_AUDIENCE,
+            token_key_id=settings.JWT_KEY_ID,
         )
     )
     assert audit_payload["user_id"] == str(actor_id)
+
+    jwks_response = client.get("/api/v1/auth/jwks")
+    assert jwks_response.status_code == 200, jwks_response.text
+    jwk = jwks_response.json()["keys"][0]
+    assert jwk["kid"] == settings.JWT_KEY_ID and jwk["alg"] == "RS256"
+    assert not ({"d", "p", "q", "dp", "dq", "qi"} & set(jwk))
 
     coverage_app = FastAPI()
 

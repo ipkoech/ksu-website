@@ -5,11 +5,13 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from ksu_common.auth import TokenPayload
 from ksu_contracts.rbac import AuthorizationDecision
 from ksu_contracts.rbac import authorize_permission as evaluate_permission
-from ksu_common.security import decode_token
+from ksu_common.security import decode_key_material, decode_token
 
 from .config import get_settings
 
 _bearer = HTTPBearer(auto_error=False)
+settings = get_settings()
+public_key = decode_key_material(settings.JWT_PUBLIC_KEY_B64, field_name="JWT_PUBLIC_KEY_B64")
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
@@ -19,7 +21,15 @@ async def get_current_user(
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or missing token", headers={"WWW-Authenticate": "Bearer"})
     try:
-        payload = decode_token(token, secret=get_settings().JWT_SECRET_KEY, algorithm=get_settings().JWT_ALGORITHM, expected_type="access")
+        payload = decode_token(
+            token,
+            key=public_key,
+            algorithm=settings.JWT_ALGORITHM,
+            issuer=settings.JWT_ISSUER,
+            audience=settings.JWT_AUDIENCE,
+            key_id=settings.JWT_KEY_ID,
+            expected_type="access",
+        )
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or missing token", headers={"WWW-Authenticate": "Bearer"}) from exc
     return TokenPayload(sub=payload["sub"], jti=payload["jti"], roles=payload.get("roles", []), raw=payload)

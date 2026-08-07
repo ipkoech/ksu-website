@@ -12,12 +12,13 @@ from ksu_contracts.rbac import (
     AuthorizationScope,
     authorize_permission,
 )
-from ksu_common.security import decode_token
+from ksu_common.security import decode_key_material, decode_token
 
 from .config import get_settings
 from .idempotency_context import set_authenticated_scope
 
 settings = get_settings()
+public_key = decode_key_material(settings.JWT_PUBLIC_KEY_B64, field_name="JWT_PUBLIC_KEY_B64")
 _bearer = HTTPBearer(auto_error=False)
 
 
@@ -35,8 +36,11 @@ async def get_current_user(
     try:
         payload = decode_token(
             token,
-            secret=settings.JWT_SECRET_KEY,
+            key=public_key,
             algorithm=settings.JWT_ALGORITHM,
+            issuer=settings.JWT_ISSUER,
+            audience=settings.JWT_AUDIENCE,
+            key_id=settings.JWT_KEY_ID,
             expected_type="access",
         )
     except Exception as exc:  # pragma: no cover - fast fail around shared jwt lib
@@ -67,8 +71,11 @@ async def get_optional_user(
     try:
         payload = decode_token(
             token,
-            secret=settings.JWT_SECRET_KEY,
+            key=public_key,
             algorithm=settings.JWT_ALGORITHM,
+            issuer=settings.JWT_ISSUER,
+            audience=settings.JWT_AUDIENCE,
+            key_id=settings.JWT_KEY_ID,
             expected_type="access",
         )
     except Exception:

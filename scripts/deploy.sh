@@ -1521,10 +1521,16 @@ deploy_cloud() {
   fi
 
   while IFS=: read -r service _dockerfile port config_group; do
-    local image service_name env_prefix
+    local image service_name env_prefix jwt_secrets jwt_signing
     image="$(image_uri "${project}" "${region}" "${repo}" "${env_name}" "${service}" "${tag}")"
     service_name="${prefix}-${env_name}-${service}"
     env_prefix="$(printf '%s' "${env_name}" | tr '[:lower:]' '[:upper:]')"
+    jwt_secrets="JWT_PUBLIC_KEY_B64=${env_prefix}_JWT_PUBLIC_KEY_B64:latest" # pragma: allowlist secret
+    jwt_signing=false
+    if [[ "${config_group}" == main ]]; then
+      jwt_secrets+=",JWT_PRIVATE_KEY_B64=${env_prefix}_JWT_PRIVATE_KEY_B64:latest"
+      jwt_signing=true
+    fi
 
     echo "Deploying Cloud Run service ${service_name}"
     run_cmd gcloud run deploy "${service_name}" \
@@ -1540,8 +1546,8 @@ deploy_cloud() {
       --max-instances 2 \
       --concurrency 80 \
       --timeout 300 \
-      --set-env-vars "APP_ENV=${env_name},SERVICE_NAME=${config_group},LOG_FORMAT=json,LOG_DIR=/tmp/logs" \
-      --set-secrets "DATABASE_URL=${env_prefix}_${config_group^^}_DATABASE_URL:latest,REDIS_URL=${env_prefix}_${config_group^^}_REDIS_URL:latest,JWT_SECRET_KEY=${env_prefix}_JWT_SECRET_KEY:latest,INTERNAL_API_KEY=${env_prefix}_INTERNAL_API_KEY:latest"
+      --set-env-vars "APP_ENV=${env_name},SERVICE_NAME=${config_group},LOG_FORMAT=json,LOG_DIR=/tmp/logs,JWT_ALGORITHM=RS256,JWT_ISSUER=ksu-auth,JWT_AUDIENCE=ksu-platform,JWT_KEY_ID=active,JWT_SIGNING_ENABLED=${jwt_signing}" \
+      --set-secrets "DATABASE_URL=${env_prefix}_${config_group^^}_DATABASE_URL:latest,REDIS_URL=${env_prefix}_${config_group^^}_REDIS_URL:latest,${jwt_secrets},INTERNAL_API_KEY=${env_prefix}_INTERNAL_API_KEY:latest"
   done < <(cloud_services)
 
   local main_url=""
@@ -1636,8 +1642,8 @@ deploy_cloud() {
         --max-instances 1 \
         --concurrency 1 \
         --timeout 3600 \
-        --set-env-vars "APP_ENV=${env_name},SERVICE_NAME=${config_group},LOG_FORMAT=json,LOG_DIR=/tmp/logs" \
-        --set-secrets "DATABASE_URL=${env_prefix}_${config_group^^}_DATABASE_URL:latest,REDIS_URL=${env_prefix}_${config_group^^}_REDIS_URL:latest,CELERY_BROKER_URL=${env_prefix}_${config_group^^}_REDIS_URL:latest,CELERY_RESULT_BACKEND=${env_prefix}_${config_group^^}_REDIS_URL:latest,JWT_SECRET_KEY=${env_prefix}_JWT_SECRET_KEY:latest,INTERNAL_API_KEY=${env_prefix}_INTERNAL_API_KEY:latest"
+        --set-env-vars "APP_ENV=${env_name},SERVICE_NAME=${config_group},LOG_FORMAT=json,LOG_DIR=/tmp/logs,JWT_ALGORITHM=RS256,JWT_KEY_ID=active,JWT_ISSUER=ksu-auth,JWT_AUDIENCE=ksu-platform,JWT_SIGNING_ENABLED=false" \
+        --set-secrets "DATABASE_URL=${env_prefix}_${config_group^^}_DATABASE_URL:latest,REDIS_URL=${env_prefix}_${config_group^^}_REDIS_URL:latest,CELERY_BROKER_URL=${env_prefix}_${config_group^^}_REDIS_URL:latest,CELERY_RESULT_BACKEND=${env_prefix}_${config_group^^}_REDIS_URL:latest,JWT_PUBLIC_KEY_B64=${env_prefix}_JWT_PUBLIC_KEY_B64:latest,INTERNAL_API_KEY=${env_prefix}_INTERNAL_API_KEY:latest"
     done < <(cloud_worker_services)
   fi
 

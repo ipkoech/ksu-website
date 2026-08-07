@@ -6,11 +6,29 @@ from collections.abc import Iterable, Mapping
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-import jwt
+from ksu_common.security import decode_key_material, decode_token as verify_token, encode_token
 
 from ..core.config import get_settings
 
 settings = get_settings()
+public_key = decode_key_material(settings.JWT_PUBLIC_KEY_B64, field_name="JWT_PUBLIC_KEY_B64")
+
+
+def _encode(payload: dict) -> str:
+    if not settings.JWT_SIGNING_ENABLED or not settings.JWT_PRIVATE_KEY_B64:
+        raise RuntimeError("JWT signing is disabled in this process")
+    private_key = decode_key_material(
+        settings.JWT_PRIVATE_KEY_B64,
+        field_name="JWT_PRIVATE_KEY_B64",
+    )
+    return encode_token(
+        payload,
+        private_key=private_key,
+        key_id=settings.JWT_KEY_ID,
+        issuer=settings.JWT_ISSUER,
+        audience=settings.JWT_AUDIENCE,
+        algorithm=settings.JWT_ALGORITHM,
+    )
 
 
 def _claim_values(values: Iterable[str] | None) -> list[str]:
@@ -55,7 +73,7 @@ def create_access_token(
         payload["scopes"] = scope_claims
     if scope_grants:
         payload["scope_grants"] = list(scope_grants)
-    token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    token = _encode(payload)
     return token, jti
 
 
@@ -70,7 +88,22 @@ def create_refresh_token(user_id: str, jti: str) -> str:
         "nbf": now,
         "exp": now + timedelta(days=settings.JWT_REFRESH_TTL_DAYS),
     }
-    return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    return _encode(payload)
+
+
+def create_socket_token(user_id: str, *, ttl_seconds: int) -> str:
+    """Create a short-lived token restricted to WebSocket admission."""
+    now = datetime.now(timezone.utc)
+    return _encode(
+        {
+            "sub": user_id,
+            "jti": str(uuid4()),
+            "type": "socket",
+            "iat": now,
+            "nbf": now,
+            "exp": now + timedelta(seconds=ttl_seconds),
+        }
+    )
 
 
 def create_token(
@@ -95,7 +128,14 @@ def create_token(
 
 def decode_token(token: str) -> dict:
     """Decode and validate a JWT token."""
-    return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+    return verify_token(
+        token,
+        key=public_key,
+        algorithm=settings.JWT_ALGORITHM,
+        issuer=settings.JWT_ISSUER,
+        audience=settings.JWT_AUDIENCE,
+        key_id=settings.JWT_KEY_ID,
+    )
 
 
 def refresh_token(
@@ -135,6 +175,6 @@ def refresh_token(
         "exp": now + timedelta(days=settings.JWT_REFRESH_TTL_DAYS),
     }
     return (
-        jwt.encode(access_payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM),
-        jwt.encode(refresh_payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM),
+        _encode(access_payload),
+        _encode(refresh_payload),
     )

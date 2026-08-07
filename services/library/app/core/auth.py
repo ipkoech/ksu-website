@@ -17,9 +17,11 @@ from .config import get_settings
 
 settings = get_settings()
 _user_dependencies = build_user_dependencies(
-    secret=settings.JWT_SECRET_KEY,
+    public_key_b64=settings.JWT_PUBLIC_KEY_B64,
     algorithm=settings.JWT_ALGORITHM,
-    app_env=settings.APP_ENV,
+    issuer=settings.JWT_ISSUER,
+    audience=settings.JWT_AUDIENCE,
+    key_id=settings.JWT_KEY_ID,
 )
 get_current_user = _user_dependencies.current_user
 get_optional_user = _user_dependencies.optional_user

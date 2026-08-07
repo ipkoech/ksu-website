@@ -10,9 +10,18 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from ci_environment import ci_jwt_key_pair
+
 ROOT = Path(__file__).resolve().parents[1]
 COMMON_DIR = ROOT / "services" / "common"
 OUTPUT_DIR = ROOT / "contracts"
+JWT_PRIVATE_KEY_B64, JWT_PUBLIC_KEY_B64 = ci_jwt_key_pair()
+JWT_VERIFY_ENV = {
+    "JWT_PUBLIC_KEY_B64": JWT_PUBLIC_KEY_B64,
+    "JWT_ALGORITHM": "RS256",
+    "JWT_ISSUER": "ksu-auth-docs",
+    "JWT_AUDIENCE": "ksu-platform-docs",
+}
 
 
 SERVICE_SPECS = {
@@ -22,14 +31,17 @@ SERVICE_SPECS = {
         "app_factory": "create_app",
         "env": {
             "APP_ENV": "development",
-            "DATABASE_URL": "postgresql+asyncpg://docs:docs@localhost:5432/docs",
-            "JWT_SECRET_KEY": "docs-secret",
+            "DATABASE_URL": "postgresql+asyncpg://docs:docs@localhost:5432/docs",  # pragma: allowlist secret
+            **JWT_VERIFY_ENV,
+            "JWT_PRIVATE_KEY_B64": JWT_PRIVATE_KEY_B64,
+            "JWT_KEY_ID": "docs-active-key",
+            "JWT_SIGNING_ENABLED": "true",
             "REDIS_URL": "redis://localhost:6379/0",
             "CELERY_BROKER_URL": "redis://localhost:6379/0",
             "CELERY_RESULT_BACKEND": "redis://localhost:6379/0",
             "UPLOAD_DIR": str(ROOT / ".tmp" / "docs" / "main" / "uploads"),
             "LOG_DIR": str(ROOT / ".tmp" / "docs" / "main" / "logs"),
-            "INTERNAL_API_KEY": "docs-internal",
+            "INTERNAL_API_KEY": "docs-internal",  # pragma: allowlist secret
         },
     },
     "library": {
@@ -38,13 +50,13 @@ SERVICE_SPECS = {
         "app_factory": "create_app",
         "env": {
             "APP_ENV": "development",
-            "DATABASE_URL": "postgresql+asyncpg://docs:docs@localhost:5432/docs",
-            "JWT_SECRET_KEY": "docs-secret",
+            "DATABASE_URL": "postgresql+asyncpg://docs:docs@localhost:5432/docs",  # pragma: allowlist secret
+            **JWT_VERIFY_ENV,
             "REDIS_URL": "redis://localhost:6379/1",
             "CELERY_BROKER_URL": "redis://localhost:6379/1",
             "CELERY_RESULT_BACKEND": "redis://localhost:6379/1",
             "MAIN_SERVICE_URL": "http://main:8000",
-            "INTERNAL_API_KEY": "docs-internal",
+            "INTERNAL_API_KEY": "docs-internal",  # pragma: allowlist secret
             "LOG_DIR": str(ROOT / ".tmp" / "docs" / "library" / "logs"),
         },
     },
@@ -54,13 +66,13 @@ SERVICE_SPECS = {
         "app_factory": "create_app",
         "env": {
             "APP_ENV": "development",
-            "DATABASE_URL": "postgresql+asyncpg://docs:docs@localhost:5432/docs",
-            "JWT_SECRET_KEY": "docs-secret",
+            "DATABASE_URL": "postgresql+asyncpg://docs:docs@localhost:5432/docs",  # pragma: allowlist secret
+            **JWT_VERIFY_ENV,
             "REDIS_URL": "redis://localhost:6379/2",
             "CELERY_BROKER_URL": "redis://localhost:6379/2",
             "CELERY_RESULT_BACKEND": "redis://localhost:6379/2",
             "MAIN_SERVICE_URL": "http://main:8000",
-            "INTERNAL_API_KEY": "docs-internal",
+            "INTERNAL_API_KEY": "docs-internal",  # pragma: allowlist secret
             "REFERENCE_VALIDATION_MODE": "strict",
             "LOG_DIR": str(ROOT / ".tmp" / "docs" / "research" / "logs"),
             "EXPORT_DIR": str(ROOT / ".tmp" / "docs" / "research" / "exports"),

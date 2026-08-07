@@ -5,10 +5,9 @@ from __future__ import annotations
 import asyncio
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any
 
-import jwt
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import select
@@ -19,7 +18,7 @@ from ksu_common import cached_public
 from ...core.config import get_settings
 from ...core.database import AsyncSessionLocal
 from ...deps import CurrentUser
-from ...helpers.jwt import decode_token
+from ...helpers.jwt import create_socket_token, decode_token
 from ...models import Notification, Person, Role, RolePermission, User, UserRole
 from ...realtime.connection_manager import manager
 from ...realtime.events import rooms_for_user
@@ -74,18 +73,9 @@ async def get_research_realtime_config():
 
 @router.post("/realtime/ticket")
 async def create_realtime_ticket(user: CurrentUser):
-    now = datetime.now(timezone.utc)
-    token = jwt.encode(
-        {
-            "sub": str(user.id),
-            "jti": str(uuid.uuid4()),
-            "type": "socket",
-            "iat": now,
-            "nbf": now,
-            "exp": now + timedelta(seconds=settings.REALTIME_TICKET_TTL_SECONDS),
-        },
-        settings.JWT_SECRET_KEY,
-        algorithm=settings.JWT_ALGORITHM,
+    token = create_socket_token(
+        str(user.id),
+        ttl_seconds=settings.REALTIME_TICKET_TTL_SECONDS,
     )
     return {"data": {"ticket": token, "expires_in": settings.REALTIME_TICKET_TTL_SECONDS}}
 

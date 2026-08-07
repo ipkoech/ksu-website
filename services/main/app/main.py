@@ -19,6 +19,7 @@ from ksu_common.runtime import (
     ServiceAppConfig,
     create_service_app,
 )
+from ksu_common.security import decode_key_material
 from sqlalchemy import select
 
 from .api.v1 import register_routes
@@ -38,6 +39,7 @@ from .services.change_tracking import (
 from .tasks.audit import dispatch_audit
 
 settings = get_settings()
+token_public_key = decode_key_material(settings.JWT_PUBLIC_KEY_B64, field_name="JWT_PUBLIC_KEY_B64")
 
 configure_service_logging(
     service_name=settings.SERVICE_NAME,
@@ -78,8 +80,11 @@ def create_app() -> FastAPI:
         audit=AuditOptions(
             session_factory=AsyncSessionLocal,
             service_name=settings.SERVICE_NAME,
-            token_secret=settings.JWT_SECRET_KEY,
+            token_key=token_public_key,
             token_algorithm=settings.JWT_ALGORITHM,
+            token_issuer=settings.JWT_ISSUER,
+            token_audience=settings.JWT_AUDIENCE,
+            token_key_id=settings.JWT_KEY_ID,
             begin_request=_begin_request_audit,
             collect_changes=collected_audit_changes,
             finish_request=reset_audit_context,
@@ -94,8 +99,11 @@ def _begin_request_audit(request: Request) -> object:
     return begin_audit_context(
         actor_id=request_actor_id(
             request,
-            token_secret=settings.JWT_SECRET_KEY,
+            token_key=token_public_key,
             token_algorithm=settings.JWT_ALGORITHM,
+            token_issuer=settings.JWT_ISSUER,
+            token_audience=settings.JWT_AUDIENCE,
+            token_key_id=settings.JWT_KEY_ID,
         )
     )
 

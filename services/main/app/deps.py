@@ -23,9 +23,11 @@ from .models import ApiKey, Person, Role, RolePermission, User, UserRole
 security = HTTPBearer(auto_error=False)
 settings = get_settings()
 get_current_token = build_user_dependencies(
-    secret=settings.JWT_SECRET_KEY,
+    public_key_b64=settings.JWT_PUBLIC_KEY_B64,
     algorithm=settings.JWT_ALGORITHM,
-    app_env=settings.APP_ENV,
+    issuer=settings.JWT_ISSUER,
+    audience=settings.JWT_AUDIENCE,
+    key_id=settings.JWT_KEY_ID,
 ).current_user
 
 

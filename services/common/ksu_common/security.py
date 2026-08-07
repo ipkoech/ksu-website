@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
+import base64
 import ipaddress
-import uuid
+import json
 from collections.abc import Collection
-from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import SplitResult, urlparse, urlsplit
 
 import jwt
 from argon2 import PasswordHasher
 from argon2 import exceptions as argon2_exceptions
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 _ph = PasswordHasher(time_cost=2, memory_cost=102400, parallelism=8, hash_len=32)
 
@@ -137,19 +139,26 @@ def verify_password(password_hash: str, candidate: str) -> bool:
 def decode_token(
     token: str,
     *,
-    secret: str,
-    algorithm: str = "HS256",
+    key: str | bytes,
+    algorithm: str = "RS256",
+    issuer: str | None = None,
+    audience: str | None = None,
+    key_id: str | None = None,
     expected_type: str | None = None,
 ) -> dict:
     """Decode and validate a JWT. Raises jwt.PyJWTError on failure.
 
-    Access, refresh and socket-ticket tokens are all signed with the same secret,
-    so callers must pass expected_type to stop one kind being replayed as another.
+    Access, refresh and socket-ticket tokens share a signing authority, so callers
+    must pass expected_type to stop one kind being replayed as another.
     """
+    if key_id is not None and jwt.get_unverified_header(token).get("kid") != key_id:
+        raise jwt.InvalidTokenError("token key id is not active")
     payload = jwt.decode(
         token,
-        secret,
+        key,
         algorithms=[algorithm],
+        issuer=issuer,
+        audience=audience,
         options={"require": ["exp", "iat", "nbf", "jti", "sub"]},
     )
 
@@ -161,26 +170,76 @@ def decode_token(
     return payload
 
 
-def generate_access_token(
-    subject: str,
+def decode_key_material(encoded: str, *, field_name: str) -> bytes:
+    """Decode base64 PEM key material without accepting malformed input."""
+    try:
+        value = base64.b64decode(encoded, validate=True)
+    except (ValueError, TypeError) as exc:
+        raise ValueError(f"{field_name} must be valid base64") from exc
+    if not value.startswith(b"-----BEGIN "):
+        raise ValueError(f"{field_name} must contain a PEM key")
+    return value
+
+
+def validate_rsa_public_key(encoded: str, *, field_name: str = "JWT_PUBLIC_KEY_B64") -> bytes:
+    value = decode_key_material(encoded, field_name=field_name)
+    try:
+        key = serialization.load_pem_public_key(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{field_name} must contain a valid PEM public key") from exc
+    if not isinstance(key, rsa.RSAPublicKey) or key.key_size < 2048:
+        raise ValueError(f"{field_name} must contain an RSA key of at least 2048 bits")
+    return value
+
+
+def validate_rsa_key_pair(private_encoded: str, public_encoded: str) -> tuple[bytes, bytes]:
+    private_value = decode_key_material(private_encoded, field_name="JWT_PRIVATE_KEY_B64")
+    public_value = validate_rsa_public_key(public_encoded)
+    try:
+        private_key = serialization.load_pem_private_key(private_value, password=None)
+        public_key = serialization.load_pem_public_key(public_value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("JWT_PRIVATE_KEY_B64 must contain an unencrypted PEM private key") from exc
+    if not isinstance(private_key, rsa.RSAPrivateKey) or private_key.key_size < 2048:
+        raise ValueError("JWT_PRIVATE_KEY_B64 must contain an RSA key of at least 2048 bits")
+    if private_key.public_key().public_numbers() != public_key.public_numbers():
+        raise ValueError("JWT private and public keys do not match")
+    return private_value, public_value
+
+
+def encode_token(
+    payload: dict,
     *,
-    secret: str,
-    algorithm: str = "HS256",
-    expires_minutes: int = 15,
-    roles: list[str] | None = None,
-    token_id: str | None = None,
+    private_key: str | bytes,
+    key_id: str,
+    issuer: str,
+    audience: str,
+    algorithm: str = "RS256",
 ) -> str:
-    now = datetime.now(timezone.utc)
-    payload = {
-        "sub": subject,
-        "iat": now,
-        "nbf": now,
-        "exp": now + timedelta(minutes=expires_minutes),
-        "jti": token_id or str(uuid.uuid4()),
-        "type": "access",
-        "roles": roles or [],
-    }
-    return jwt.encode(payload, secret, algorithm=algorithm)
+    """Sign a JWT at the identity boundary with explicit trust claims."""
+    claims = {**payload, "iss": issuer, "aud": audience}
+    return jwt.encode(
+        claims,
+        private_key,
+        algorithm=algorithm,
+        headers={"kid": key_id, "typ": "JWT"},
+    )
+
+
+def public_jwk(
+    public_key: str | bytes,
+    *,
+    key_id: str,
+    algorithm: str = "RS256",
+) -> dict[str, str]:
+    """Return the active RSA verification key in JWKS-compatible form."""
+    if isinstance(public_key, bytes):
+        public_key = serialization.load_pem_public_key(public_key)
+    elif isinstance(public_key, str):
+        public_key = serialization.load_pem_public_key(public_key.encode())
+    value = json.loads(jwt.algorithms.RSAAlgorithm.to_jwk(public_key))
+    value.update({"kid": key_id, "use": "sig", "alg": algorithm})
+    return value
 
 
 def _is_numeric_hostname_candidate(hostname: str) -> bool:

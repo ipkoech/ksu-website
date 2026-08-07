@@ -10,6 +10,7 @@ from ksu_common.runtime import (
     ServiceAppConfig,
     create_service_app,
 )
+from ksu_common.security import decode_key_material
 
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal
@@ -27,6 +28,10 @@ async def lifespan(_: FastAPI):
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    token_public_key = decode_key_material(
+        settings.JWT_PUBLIC_KEY_B64,
+        field_name="JWT_PUBLIC_KEY_B64",
+    )
     return create_service_app(
         ServiceAppConfig(
             service_name=settings.SERVICE_NAME,
@@ -42,8 +47,11 @@ def create_app() -> FastAPI:
         audit=AuditOptions(
             session_factory=AsyncSessionLocal,
             service_name=settings.SERVICE_NAME,
-            token_secret=settings.JWT_SECRET_KEY,
+            token_key=token_public_key,
             token_algorithm=settings.JWT_ALGORITHM,
+            token_issuer=settings.JWT_ISSUER,
+            token_audience=settings.JWT_AUDIENCE,
+            token_key_id=settings.JWT_KEY_ID,
             dispatch=dispatch_audit,
             skip_anonymous_reads=True,
         ),
