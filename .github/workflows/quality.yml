@@ -17,19 +17,44 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install validation tools
-        run: python -m pip install --disable-pip-version-check pyyaml detect-secrets ruff pytest
-      - name: Validate repository files
+        run: python -m pip install --disable-pip-version-check -r requirements/ci.txt
+      - name: Validate repository syntax
         run: |
           git diff --check
           python -m compileall -q scripts services/common/ksu_common
+      - name: Scan committed files for secrets
+        run: |
           detect-secrets scan --all-files --exclude-files '(^|/)(\.env|node_modules|\.pnpm-store|test-results|\.git/)' --baseline .secrets.baseline
+      - name: Enforce Ruff baseline
+        run: |
           python scripts/ruff_baseline.py check --baseline .ruff-baseline.json --paths .
       - name: Validate Compose production topology
         env:
           POSTGRES_PASSWORD: ci-only-not-a-production-secret
+          MAIN_DB_PASSWORD: ci-only-main-password
+          RESEARCH_DB_PASSWORD: ci-only-research-password
+          LIBRARY_DB_PASSWORD: ci-only-library-password
+          HERI_DB_PASSWORD: ci-only-heri-password
         run: |
           docker compose -f docker-compose.yml -f docker-compose.vm.yml config >/tmp/ksu-compose.yaml
           python scripts/audit_compose_ports.py docker-compose.yml docker-compose.vm.yml
+          python scripts/validate_database_capacity.py
+      - name: Validate production settings fail closed
+        env:
+          DATABASE_URL: postgresql+asyncpg://ci:ci@postgres:5432/ci
+          REDIS_URL: rediss://redis:6379/0
+          JWT_SECRET_KEY: ci-jwt-secret-at-least-thirty-two-characters
+          INTERNAL_API_KEY: ci-internal-key-at-least-thirty-two-characters
+          CORS_ORIGINS: '["https://www.example.edu"]'
+          SMTP_HOST: smtp.example.edu
+          SMTP_PASSWORD: ci-smtp-password-at-least-thirty-two-characters
+          EMAIL_FROM: noreply@example.edu
+        run: |
+          python scripts/validate_production_env.py --env production --service main
+          if DEBUG=true python scripts/validate_production_env.py --env production --service main; then
+            echo "production DEBUG validation unexpectedly passed" >&2
+            exit 1
+          fi
       - name: Inspect Dockerfiles for root runtime
         run: |
           ! rg -n '^USER root$|^USER 0$' services/*/Dockerfile frontend/Dockerfile
@@ -50,19 +75,33 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ "${{ matrix.service }}" != common ]; then pip install -e ../common; fi
-          pip install -e ".[test]" ruff pip-audit
+          pip install -e ".[test]" -r ../../requirements/ci.txt
       - name: Compile
         working-directory: services/${{ matrix.service }}
         run: python -m compileall -q .
-      - name: Ruff correctness checks
-        working-directory: services/${{ matrix.service }}
-        run: ruff check .
+      - name: Ruff regression check
+        run: python scripts/ruff_baseline.py check --baseline .ruff-baseline.json --paths services/${{ matrix.service }}
       - name: Check installed dependencies
         working-directory: services/${{ matrix.service }}
         run: pip check
       - name: Audit dependencies
         working-directory: services/${{ matrix.service }}
         run: pip-audit
+
+  structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install all backend services
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e services/common
+          pip install -e services/main -e services/research -e services/library -e services/heri_africa
+      - name: Verify applications and structural baseline
+        run: python scripts/structural_snapshot.py /tmp/ksu-structure.json --expect scripts/structural-baseline.json
 
   migrations:
     runs-on: ubuntu-latest
@@ -128,6 +167,31 @@ jobs:
           python-version: "3.12"
       - name: Install real service test dependencies
         run: pip install asyncpg redis
+      - name: Verify PostgreSQL and Redis connectivity
+        env:
+          DATABASE_URL: postgresql://ksu_ci:ksu_ci_password@127.0.0.1:5432/ksu_ci
+          REDIS_URL: redis://127.0.0.1:6379/0
+        run: |
+          python - <<'PY'
+          import asyncio
+          import os
+          import asyncpg
+          import redis.asyncio as redis
+
+          async def main():
+              connection = await asyncpg.connect(os.environ["DATABASE_URL"])
+              try:
+                  assert await connection.fetchval("SELECT 1") == 1
+              finally:
+                  await connection.close()
+              client = redis.from_url(os.environ["REDIS_URL"])
+              try:
+                  assert await client.ping()
+              finally:
+                  await client.aclose()
+
+          asyncio.run(main())
+          PY
 
   images:
     runs-on: ubuntu-latest
@@ -137,11 +201,36 @@ jobs:
       - name: Build production backend images
         env:
           POSTGRES_PASSWORD: ci-only-not-a-production-secret
-        run: docker compose -f docker-compose.yml -f docker-compose.vm.yml build main research library
-      - name: Scan images when Trivy is available
+          MAIN_DB_PASSWORD: ci-only-main-password
+          RESEARCH_DB_PASSWORD: ci-only-research-password
+          LIBRARY_DB_PASSWORD: ci-only-library-password
+          HERI_DB_PASSWORD: ci-only-heri-password
+        run: docker compose -f docker-compose.yml -f docker-compose.vm.yml build main research library heri
+      - name: Scan Main image
         uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: ksu-backend/main:local
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: 1
+      - name: Scan Research image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ksu-backend/research:local
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: 1
+      - name: Scan Library image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ksu-backend/library:local
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: 1
+      - name: Scan HERI Africa image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ksu-backend/heri-africa:local
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: 1

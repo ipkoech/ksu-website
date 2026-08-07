@@ -2,6 +2,12 @@
   "description": "Legacy Ruff findings. New occurrences fail the baseline check.",
   "finding_counts": [
     {
+      "code": "E702",
+      "count": 1,
+      "filename": "scripts/ast_identical.py",
+      "message": "Multiple statements on one line (semicolon)"
+    },
+    {
       "code": "E402",
       "count": 2,
       "filename": "services/common/ksu_common/rbac.py",
@@ -102,12 +108,6 @@
       "count": 4,
       "filename": "services/library/app/services/resources.py",
       "message": "Undefined name `LibraryResourceOut`"
-    },
-    {
-      "code": "E712",
-      "count": 2,
-      "filename": "services/main/app/api/v1/public_leadership.py",
-      "message": "Avoid equality comparisons to `True`; use `StaffAssignment.is_public:` for truth checks"
     },
     {
       "code": "F401",
@@ -398,6 +398,24 @@
       "message": "`.school_portal.SchoolPortalUserSummary` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
     },
     {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/page_cms.py",
+      "message": "`app.models.LIFE_AROUND_STUDIES_AUDIENCES` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/page_cms.py",
+      "message": "`app.models.LIFE_AROUND_STUDIES_SOURCE_TYPES` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/main/app/schemas/page_cms.py",
+      "message": "`app.models.SECTION_ITEM_STATUSES` imported but unused"
+    },
+    {
       "code": "F841",
       "count": 1,
       "filename": "services/main/app/seeders/seed_staff_assignments.py",
@@ -416,6 +434,12 @@
       "message": "Local variable `registrar_admin_assignment` is assigned to but never used"
     },
     {
+      "code": "E731",
+      "count": 2,
+      "filename": "services/main/app/services/page_cms_sources.py",
+      "message": "Do not assign a `lambda` expression, use a `def`"
+    },
+    {
       "code": "F401",
       "count": 1,
       "filename": "services/main/migrations/versions/ed2320d646d1_merge_youtube_url_and_date_heads.py",
@@ -426,6 +450,12 @@
       "count": 1,
       "filename": "services/main/migrations/versions/ed2320d646d1_merge_youtube_url_and_date_heads.py",
       "message": "`sqlalchemy` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/research/app/models/__init__.py",
+      "message": "`.idempotency.CommandIdempotency` imported but unused; consider removing, adding to `__all__`, or using a redundant alias"
     },
     {
       "code": "F401",
@@ -486,6 +516,36 @@
       "count": 1,
       "filename": "services/research/app/models/core.py",
       "message": "`.publication.Publication` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/research/app/routes/v1/_crud.py",
+      "message": "`fastapi.Response` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/research/app/routes/v1/content.py",
+      "message": "`ksu_common.response_validation.allow_response_model_exemption` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/research/app/routes/v1/exports.py",
+      "message": "`fastapi.Response` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/research/app/routes/v1/grants.py",
+      "message": "`fastapi.status` imported but unused"
+    },
+    {
+      "code": "F401",
+      "count": 1,
+      "filename": "services/research/app/routes/v1/stories.py",
+      "message": "`fastapi.status` imported but unused"
     },
     {
       "code": "F403",
@@ -552,6 +612,12 @@
       "count": 1,
       "filename": "services/research/app/schemas/__init__.py",
       "message": "`from .innovation_partnership import *` used; unable to detect undefined names"
+    },
+    {
+      "code": "F403",
+      "count": 1,
+      "filename": "services/research/app/schemas/__init__.py",
+      "message": "`from .page_cms_source_contract import *` used; unable to detect undefined names"
     },
     {
       "code": "F403",
@@ -651,5 +717,5 @@
     }
   ],
   "schema_version": 1,
-  "total_findings": 131
+  "total_findings": 142
 }
