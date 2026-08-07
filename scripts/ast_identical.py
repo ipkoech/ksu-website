@@ -9,7 +9,12 @@ comments, docstrings and service-name tokens) and reports whether they are the s
   drifted   -> the differences are printed; a human must choose, because promoting
                silently picks one service's behaviour for all four.
 
-usage: astsame.py <symbol> <file1> <file2> ...
+Symbol names may differ between copies — the same logic often gets renamed. Pass
+`symbol@path` to override the name for one file:
+
+    ast_identical.py must_be_asyncpg a/config.py must_use_asyncpg@b/config.py
+
+usage: ast_identical.py <symbol> <file-or-symbol@file> ...
 """
 import ast
 import difflib
@@ -35,14 +40,18 @@ def extract(path, symbol):
             return ast.dump(ast.parse(ast.unparse(node)), indent=1), ast.unparse(node)
     return None, None
 
-symbol, paths = sys.argv[1], sys.argv[2:]
+symbol, args = sys.argv[1], sys.argv[2:]
 dumps = {}
-for p in paths:
-    d, srccode = extract(p, symbol)
+for arg in args:
+    name, _, path = arg.rpartition("@")
+    path = path or arg
+    name = name or symbol
+    d, srccode = extract(path, name)
+    label = path if name == symbol else f"{path} [{name}]"
     if d is None:
-        print(f"  ABSENT   {p}")
+        print(f"  ABSENT   {label}  (looked for '{name}')")
     else:
-        dumps[p] = (d, srccode)
+        dumps[label] = (d, srccode)
 
 if not dumps:
     print(f"'{symbol}' not found in any file"); sys.exit(1)
@@ -51,7 +60,7 @@ first = next(iter(dumps))
 same = [p for p, (d, _) in dumps.items() if d == dumps[first][0]]
 diff = [p for p in dumps if p not in same]
 
-print(f"symbol: {symbol}   copies found: {len(dumps)}/{len(paths)}")
+print(f"symbol: {symbol}   copies found: {len(dumps)}/{len(args)}")
 print(f"  IDENTICAL ({len(same)}): " + ", ".join(p.split('/services/')[-1] for p in same))
 if diff:
     print(f"  DRIFTED   ({len(diff)}): " + ", ".join(p.split('/services/')[-1] for p in diff))
