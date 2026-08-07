@@ -30,24 +30,24 @@ jobs:
           python scripts/ruff_baseline.py check --baseline .ruff-baseline.json --paths .
       - name: Validate Compose production topology
         env:
-          POSTGRES_PASSWORD: ci-only-not-a-production-secret
-          MAIN_DB_PASSWORD: ci-only-main-password
-          RESEARCH_DB_PASSWORD: ci-only-research-password
-          LIBRARY_DB_PASSWORD: ci-only-library-password
-          HERI_DB_PASSWORD: ci-only-heri-password
+          POSTGRES_PASSWORD: ci-only-not-a-production-secret # pragma: allowlist secret
+          MAIN_DB_PASSWORD: ci-only-main-password # pragma: allowlist secret
+          RESEARCH_DB_PASSWORD: ci-only-research-password # pragma: allowlist secret
+          LIBRARY_DB_PASSWORD: ci-only-library-password # pragma: allowlist secret
+          HERI_DB_PASSWORD: ci-only-heri-password # pragma: allowlist secret
         run: |
           docker compose -f docker-compose.yml -f docker-compose.vm.yml config >/tmp/ksu-compose.yaml
           python scripts/audit_compose_ports.py docker-compose.yml docker-compose.vm.yml
           python scripts/validate_database_capacity.py
       - name: Validate production settings fail closed
         env:
-          DATABASE_URL: postgresql+asyncpg://ci:ci@postgres:5432/ci
+          DATABASE_URL: postgresql+asyncpg://ci:ci@postgres:5432/ci # pragma: allowlist secret
           REDIS_URL: rediss://redis:6379/0
-          JWT_SECRET_KEY: ci-jwt-secret-at-least-thirty-two-characters
-          INTERNAL_API_KEY: ci-internal-key-at-least-thirty-two-characters
+          JWT_SECRET_KEY: ci-jwt-secret-at-least-thirty-two-characters # pragma: allowlist secret
+          INTERNAL_API_KEY: ci-internal-key-at-least-thirty-two-characters # pragma: allowlist secret
           CORS_ORIGINS: '["https://www.example.edu"]'
           SMTP_HOST: smtp.example.edu
-          SMTP_PASSWORD: ci-smtp-password-at-least-thirty-two-characters
+          SMTP_PASSWORD: ci-smtp-password-at-least-thirty-two-characters # pragma: allowlist secret
           EMAIL_FROM: noreply@example.edu
         run: |
           python scripts/validate_production_env.py --env production --service main
@@ -149,7 +149,7 @@ jobs:
         env:
           POSTGRES_DB: ksu_ci
           POSTGRES_USER: ksu_ci
-          POSTGRES_PASSWORD: ksu_ci_password
+          POSTGRES_PASSWORD: ksu_ci_password # pragma: allowlist secret
         ports: [5432:5432]
         options: >-
           --health-cmd "pg_isready -U ksu_ci -d ksu_ci"
@@ -169,7 +169,7 @@ jobs:
         run: pip install asyncpg redis
       - name: Verify PostgreSQL and Redis connectivity
         env:
-          DATABASE_URL: postgresql://ksu_ci:ksu_ci_password@127.0.0.1:5432/ksu_ci
+          DATABASE_URL: postgresql://ksu_ci:ksu_ci_password@127.0.0.1:5432/ksu_ci # pragma: allowlist secret
           REDIS_URL: redis://127.0.0.1:6379/0
         run: |
           python - <<'PY'
@@ -200,11 +200,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build production backend images
         env:
-          POSTGRES_PASSWORD: ci-only-not-a-production-secret
-          MAIN_DB_PASSWORD: ci-only-main-password
-          RESEARCH_DB_PASSWORD: ci-only-research-password
-          LIBRARY_DB_PASSWORD: ci-only-library-password
-          HERI_DB_PASSWORD: ci-only-heri-password
+          POSTGRES_PASSWORD: ci-only-not-a-production-secret # pragma: allowlist secret
+          MAIN_DB_PASSWORD: ci-only-main-password # pragma: allowlist secret
+          RESEARCH_DB_PASSWORD: ci-only-research-password # pragma: allowlist secret
+          LIBRARY_DB_PASSWORD: ci-only-library-password # pragma: allowlist secret
+          HERI_DB_PASSWORD: ci-only-heri-password # pragma: allowlist secret
         run: docker compose -f docker-compose.yml -f docker-compose.vm.yml build main research library heri
       - name: Scan Main image
         uses: aquasecurity/trivy-action@0.28.0
