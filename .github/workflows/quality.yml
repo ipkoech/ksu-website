@@ -123,7 +123,7 @@ jobs:
           pip install -e ../common
           pip install -e .
       - name: Validate migration history and source
-        run: scripts/validate_migrations.sh "${{ matrix.service }}"
+        run: python scripts/ci_environment.py "${{ matrix.service }}" -- scripts/validate_migrations.sh "${{ matrix.service }}"
 
   frontend:
     runs-on: ubuntu-latest

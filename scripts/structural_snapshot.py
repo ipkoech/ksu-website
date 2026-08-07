@@ -25,6 +25,8 @@ import subprocess
 import sys
 from difflib import unified_diff
 
+from ci_environment import SCHEMA_OF, service_environment
+
 REPO = pathlib.Path(__file__).resolve().parents[1]
 PYTHON_BIN = os.getenv("PYTHON_BIN", sys.executable)
 SERVICES = ["main", "research", "library", "heri_africa"]
@@ -65,66 +67,10 @@ out["settings_fields"] = len(type(s).model_fields)
 print(json.dumps(out))
 '''
 
-SCHEMA_OF = {"main": "main", "research": "research", "library": "library", "heri_africa": "heri"}
-
-
-def probe_environment(service: str) -> dict[str, str]:
-    """Build deterministic development settings from the complete env template."""
-
-    values = dict(os.environ)
-    template = REPO / "services" / service / ".env.example"
-    for raw in template.read_text(encoding="utf-8").splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        if key.endswith("_DIR") or key in {"UPLOAD_DIR", "LOG_DIR"}:
-            value = f"/tmp/ksu-structural/{service}/{key.lower()}"
-        values[key] = value or placeholder_setting(key, service)
-    return values
-
-
-def placeholder_setting(key: str, service: str) -> str:
-    if key == "APP_ENV":
-        return "development"
-    if key == "APP_VERSION":
-        return "0.0.0-ci"
-    if key == "SERVICE_NAME":
-        return service
-    if key == "DB_SCHEMA":
-        return SCHEMA_OF[service]
-    if key == "DATABASE_URL" or key == "READ_DATABASE_URL":
-        return "postgresql+asyncpg://ci:ci@127.0.0.1:5432/ci"
-    if "REDIS" in key or key in {"CELERY_BROKER_URL", "CELERY_RESULT_BACKEND"}:
-        return "redis://127.0.0.1:6379/0"
-    if key.endswith("_URL"):
-        return "http://localhost"
-    if key in {"CORS_ORIGINS", "ALLOWED_DOCUMENT_TYPES", "ALLOWED_IMAGE_TYPES"}:
-        return "[]"
-    if key == "DB_ROUTE_BUDGETS":
-        return "[]"
-    if key in {"SMS_PROVIDER", "PUSH_PROVIDER"}:
-        return "disabled"
-    if key in {"DEBUG", "SMTP_USE_TLS"} or key.endswith("_ENABLED"):
-        return "false"
-    if key.endswith(("_COUNT", "_DAYS", "_HOURS", "_MB", "_MINUTES", "_PORT", "_SECONDS", "_SIZE")):
-        return "1"
-    if key in {"DB_MAX_OVERFLOW", "DB_POOL_SIZE", "CELERY_CONCURRENCY"}:
-        return "1"
-    if key == "JWT_ALGORITHM":
-        return "HS256"
-    if key == "LOG_FORMAT":
-        return "json"
-    if key == "LOG_LEVEL":
-        return "INFO"
-    if key.endswith(("_SECRET_KEY", "_API_KEY", "_PASSWORD", "_TOKEN")):
-        return "ci-only-placeholder-value-at-least-32-characters"
-    return "ci-placeholder"
-
 snap = {}
 for svc in SERVICES:
     d = REPO / "services" / svc
-    environment = probe_environment(svc)
+    environment = service_environment(svc)
     p = subprocess.run(
         [PYTHON_BIN, "-c", PROBE, SCHEMA_OF[svc]],
         cwd=d,
