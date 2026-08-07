@@ -240,21 +240,22 @@ async def get_audit_logger(redis_client=None) -> AuditLogger:
     return AuditLogger(redis_client=redis_client)
 
 
-def _extract_optional_token(request: Request) -> dict[str, Any] | None:
+def _extract_optional_token(
+    request: Request,
+    *,
+    token_secret: str,
+    token_algorithm: str,
+) -> dict[str, Any] | None:
     auth_header = request.headers.get("authorization")
     if not auth_header or not auth_header.lower().startswith("bearer "):
         return None
 
     token = auth_header.split(" ", 1)[1].strip()
-    secret = os.getenv("JWT_SECRET_KEY")
-    if not secret:
-        return None
-
     try:
         return decode_token(
             token,
-            secret=secret,
-            algorithm=os.getenv("JWT_ALGORITHM", "HS256"),
+            secret=token_secret,
+            algorithm=token_algorithm,
         )
     except jwt.PyJWTError:
         return None
@@ -302,9 +303,18 @@ async def _extract_request_details(request: Request) -> dict[str, Any] | None:
     return details or None
 
 
-def request_actor_id(request: Request) -> uuid.UUID | None:
+def request_actor_id(
+    request: Request,
+    *,
+    token_secret: str,
+    token_algorithm: str,
+) -> uuid.UUID | None:
     """Best-effort actor UUID extracted from the request's bearer token."""
-    payload = _extract_optional_token(request) or {}
+    payload = _extract_optional_token(
+        request,
+        token_secret=token_secret,
+        token_algorithm=token_algorithm,
+    ) or {}
     sub = payload.get("sub")
     if not sub:
         return None
@@ -319,6 +329,8 @@ async def build_audit_payload(
     service_name: str,
     request: Request,
     status_code: int,
+    token_secret: str,
+    token_algorithm: str,
     error_message: str | None = None,
     details: dict[str, Any] | None = None,
     changes: dict[str, Any] | None = None,
@@ -330,7 +342,11 @@ async def build_audit_payload(
     so the actual write can be handed to a background worker — see
     :func:`persist_audit_payload`.
     """
-    payload = _extract_optional_token(request) or {}
+    payload = _extract_optional_token(
+        request,
+        token_secret=token_secret,
+        token_algorithm=token_algorithm,
+    ) or {}
     resource_type, resource_id = _resource_from_path(request.url.path)
     route = request.scope.get("route")
     route_name = getattr(route, "name", None)
@@ -418,6 +434,8 @@ async def persist_audit_log(
     service_name: str,
     request: Request,
     status_code: int,
+    token_secret: str,
+    token_algorithm: str,
     error_message: str | None = None,
     details: dict[str, Any] | None = None,
     changes: dict[str, Any] | None = None,
@@ -430,6 +448,8 @@ async def persist_audit_log(
         service_name=service_name,
         request=request,
         status_code=status_code,
+        token_secret=token_secret,
+        token_algorithm=token_algorithm,
         error_message=error_message,
         details=details,
         changes=changes,

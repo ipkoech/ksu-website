@@ -18,6 +18,7 @@ from ksu_common.audit import request_actor_id
 from ksu_common.response_validation import _iter_route_inspections
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...core.config import get_settings
 from ...core.database import AsyncSessionLocal
 from ...services.idempotency import (
     IdempotencyKeyReuseError,
@@ -25,6 +26,8 @@ from ...services.idempotency import (
     complete_command,
     fail_command,
 )
+
+settings = get_settings()
 
 _request_context: ContextVar[Request | None] = ContextVar(
     "main_idempotency_request",
@@ -296,7 +299,11 @@ async def _payload_value(value: Any) -> Any:
 
 
 def _command_scope(request: Request, path: str) -> str:
-    actor = request_actor_id(request)
+    actor = request_actor_id(
+        request,
+        token_secret=settings.JWT_SECRET_KEY,
+        token_algorithm=settings.JWT_ALGORITHM,
+    )
     if actor is not None:
         principal = f"actor:{actor}"
     elif internal_key := request.headers.get("X-Internal-Key"):

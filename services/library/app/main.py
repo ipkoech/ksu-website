@@ -60,6 +60,8 @@ def create_app() -> FastAPI:
         audit=AuditOptions(
             session_factory=AsyncSessionLocal,
             service_name=settings.SERVICE_NAME,
+            token_secret=settings.JWT_SECRET_KEY,
+            token_algorithm=settings.JWT_ALGORITHM,
             dispatch=dispatch_audit,
             skip_anonymous_reads=True,
         ),

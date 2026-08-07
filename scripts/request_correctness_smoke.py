@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import os
 import subprocess
 import sys
@@ -33,7 +34,10 @@ def _run_probe(service: str) -> None:
 def _main_probe() -> None:
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
+    from starlette.requests import Request
 
+    from ksu_common.audit import build_audit_payload
+    from ksu_common.security import generate_access_token
     from app.api.v1._idempotency import install_main_idempotency
     from app.deps import get_db
     from app.main import create_app
@@ -77,6 +81,35 @@ def _main_probe() -> None:
     command_response = TestClient(command_app).post("/commands", json={"action": "publish"})
     assert command_response.status_code == 400, command_response.text
     assert "Idempotency-Key" in command_response.json()["detail"]
+
+    actor_id = UUID("018f18a0-7b54-7d8c-8a13-0d8f7f190002")
+    audit_secret = "phase-two-audit-verification-secret-value"  # pragma: allowlist secret
+    token = generate_access_token(str(actor_id), secret=audit_secret)
+    os.environ["JWT_SECRET_KEY"] = "deliberately-wrong-process-global-secret"  # pragma: allowlist secret
+    audit_request = Request(
+        {
+            "type": "http",
+            "http_version": "1.1",
+            "method": "GET",
+            "scheme": "https",
+            "path": "/api/v1/profile",
+            "raw_path": b"/api/v1/profile",
+            "query_string": b"",
+            "headers": [(b"authorization", f"Bearer {token}".encode())],
+            "client": ("203.0.113.10", 443),
+            "server": ("testserver", 443),
+        }
+    )
+    audit_payload = asyncio.run(
+        build_audit_payload(
+            service_name="main",
+            request=audit_request,
+            status_code=200,
+            token_secret=audit_secret,
+            token_algorithm="HS256",
+        )
+    )
+    assert audit_payload["user_id"] == str(actor_id)
 
     print("main request correctness: ok")
 

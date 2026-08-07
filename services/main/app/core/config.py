@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -254,8 +253,6 @@ def _parse_csv_list(value: str) -> list[str]:
 @lru_cache
 def get_settings() -> Settings:
     settings = Settings()
-    os.environ.setdefault("JWT_SECRET_KEY", settings.JWT_SECRET_KEY)
-    os.environ.setdefault("JWT_ALGORITHM", settings.JWT_ALGORITHM)
     return settings
 
 

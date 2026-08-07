@@ -77,6 +77,8 @@ def create_app() -> FastAPI:
         audit=AuditOptions(
             session_factory=AsyncSessionLocal,
             service_name=settings.SERVICE_NAME,
+            token_secret=settings.JWT_SECRET_KEY,
+            token_algorithm=settings.JWT_ALGORITHM,
             begin_request=_begin_request_audit,
             collect_changes=collected_audit_changes,
             finish_request=reset_audit_context,
@@ -88,7 +90,13 @@ def create_app() -> FastAPI:
 
 
 def _begin_request_audit(request: Request) -> object:
-    return begin_audit_context(actor_id=request_actor_id(request))
+    return begin_audit_context(
+        actor_id=request_actor_id(
+            request,
+            token_secret=settings.JWT_SECRET_KEY,
+            token_algorithm=settings.JWT_ALGORITHM,
+        )
+    )
 
 
 async def _after_response(request: Request, response: Response) -> None:
