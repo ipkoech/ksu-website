@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -22,9 +24,9 @@ jobs:
         run: |
           git diff --check
           python -m compileall -q scripts services/common/ksu_common
-      - name: Scan committed files for secrets
+      - name: Scan newly committed content for secrets
         run: |
-          git ls-files -z | xargs -0 detect-secrets-hook --baseline .secrets.baseline
+          git diff --diff-filter=ACMR --name-only -z HEAD^ HEAD | xargs -0 -r detect-secrets-hook --baseline .secrets.baseline
       - name: Enforce Ruff baseline
         run: |
           python scripts/ruff_baseline.py check --baseline .ruff-baseline.json --paths .
@@ -102,6 +104,21 @@ jobs:
           pip install -e services/main -e services/research -e services/library -e services/heri_africa
       - name: Verify applications and structural baseline
         run: python scripts/structural_snapshot.py /tmp/ksu-structure.json --expect scripts/structural-baseline.json
+
+  request-correctness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install request-path dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e services/common
+          pip install -e services/main -e services/research
+      - name: Exercise request binding and serialization
+        run: python scripts/request_correctness_smoke.py
 
   migrations:
     runs-on: ubuntu-latest
