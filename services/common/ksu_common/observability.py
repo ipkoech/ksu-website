@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import math
+import os
 import re
 import uuid
 from collections.abc import Iterator, Mapping
@@ -618,4 +619,8 @@ def end_request_observation(observation: RequestObservation) -> None:
 def health_status(service_name: str) -> dict[str, str]:
     """Return the stable health payload used by all service-owned routes."""
 
-    return {"service": service_name, "status": "ok"}
+    return {
+        "service": service_name,
+        "status": "ok",
+        "release": os.getenv("KSU_RELEASE", "unknown"),
+    }

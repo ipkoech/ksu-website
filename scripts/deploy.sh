@@ -462,12 +462,12 @@ if [[ "\${MODE}" = "status" || "\${MODE}" = "logs" ]]; then
   fi
 
   if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
-    default_services=(main research library celery-main celery-research celery-library admin-prod research-web-prod research-gateway research-edge)
+    default_services=(main research library celery-main celery-main-integrations beat-main celery-research celery-library beat-library admin-prod research-web-prod research-gateway research-edge)
     if [[ "\${external_data}" -eq 0 ]]; then
       default_services=(postgres redis "\${default_services[@]}")
     fi
   else
-    default_services=(main research library heri celery-main celery-research celery-library celery-heri web-prod admin-prod research-web-prod library-web-prod heri-web-prod gateway edge)
+    default_services=(main research library heri celery-main celery-main-integrations beat-main celery-research celery-library beat-library celery-heri web-prod admin-prod research-web-prod library-web-prod heri-web-prod gateway edge)
     if [[ "\${external_data}" -eq 0 ]]; then
       default_services+=(postgres redis)
     fi
@@ -577,6 +577,7 @@ fi
 cat >> "\${COMPOSE_ENV_FILE}" <<EOF
 APP_ENV=\${ENV_NAME}
 IMAGE_TAG=\${IMAGE_TAG}
+KSU_RELEASE=\${DEPLOY_GIT_SHA}
 BACKEND_IMAGE_PREFIX=\${BACKEND_IMAGE_PREFIX}
 FRONTEND_IMAGE_PREFIX=\${FRONTEND_IMAGE_PREFIX}
 POSTGRES_DB=\${POSTGRES_DB:-ksu_services_db}
@@ -603,6 +604,10 @@ KSU_RESEARCH_API_URL=http://research:8001
 KSU_LIBRARY_API_URL=http://library:8002
 EOF
 
+if [[ "\${ENV_NAME}" != "dev" ]]; then
+  echo "COMPOSE_PROFILES=observability" >> "\${COMPOSE_ENV_FILE}"
+fi
+
 required_env_files=(services/main/.env services/research/.env services/library/.env)
 if [[ -f services/heri_africa/Dockerfile ]]; then
   required_env_files+=(services/heri_africa/.env)
@@ -626,6 +631,19 @@ read_env_value() {
   local key="\$2"
   awk -F= -v key="\${key}" '\$1 == key { sub(/^[^=]*=/, ""); print; exit }' "\${env_file}"
 }
+
+if [[ "\${ENV_NAME}" = "production" ]]; then
+  alertmanager_config="\$(read_env_value "\${COMPOSE_ENV_FILE}" ALERTMANAGER_CONFIG_FILE)"
+  if [[ -z "\${alertmanager_config}" || "\${alertmanager_config}" = "./monitoring/alertmanager.yml" ]]; then
+    echo "error: production requires ALERTMANAGER_CONFIG_FILE pointing to an owned notification receiver" >&2
+    exit 1
+  fi
+  if [[ ! -f "\${alertmanager_config}" ]]; then
+    echo "error: Alertmanager configuration does not exist: \${alertmanager_config}" >&2
+    exit 1
+  fi
+  python3 scripts/validate_alertmanager_config.py "\${alertmanager_config}"
+fi
 
 if [[ -f .deploy/docker-compose.external-data.yml ]]; then
   {
@@ -687,12 +705,17 @@ fi
 
 if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
   backend_services=(main research library)
-  worker_services=(celery-main celery-research celery-library)
+  worker_services=(celery-main celery-main-integrations beat-main celery-research celery-library beat-library)
 else
   backend_services=(main research library heri)
-  worker_services=(celery-main celery-research celery-library celery-heri)
+  worker_services=(celery-main celery-main-integrations beat-main celery-research celery-library beat-library celery-heri)
 fi
 core_services=("\${backend_services[@]}" "\${worker_services[@]}")
+observability_services=()
+if [[ "\${ENV_NAME}" != "dev" ]]; then
+  observability_services=(prometheus alertmanager postgres-exporter redis-exporter)
+  core_services+=("\${observability_services[@]}")
+fi
 if [[ "\${external_data}" -eq 0 ]]; then
   core_services=(postgres redis "\${core_services[@]}")
 fi
@@ -769,20 +792,23 @@ if [[ "\${external_data}" -eq 0 ]]; then
   "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" up -d --remove-orphans postgres redis
 fi
 
-"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" up -d --remove-orphans --no-build "\${backend_services[@]}" "\${worker_services[@]}"
-echo
-"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${core_services[@]}"
-
 section "Run reviewed migrations"
 if [[ "\${ENV_NAME}" != "dev" || "\${RUN_MIGRATIONS}" -eq 1 ]]; then
   for service in "\${backend_services[@]}"; do
     step "Running committed migrations for \${service}"
-    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T "\${service}" alembic upgrade head
-    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T "\${service}" alembic current --check-heads
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" run --rm --no-deps "\${service}" alembic upgrade head
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" run --rm --no-deps "\${service}" alembic current --check-heads
   done
 else
   step "Development deployment: migrations were not requested"
 fi
+
+"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" up -d --remove-orphans --no-build "\${backend_services[@]}" "\${worker_services[@]}"
+if [[ "\${#observability_services[@]}" -gt 0 ]]; then
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" up -d --remove-orphans "\${observability_services[@]}"
+fi
+echo
+"\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${core_services[@]}"
 
 wait_for_backend_health() {
   local timeout_seconds="\${1:-420}"
@@ -801,7 +827,7 @@ wait_for_backend_health() {
 
       local status
       status="\$("\${DOCKER[@]}" inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "\${container_id}")"
-      if [[ "\${status}" != "healthy" && "\${status}" != "running" ]]; then
+      if [[ "\${status}" != "healthy" ]]; then
         pending+=("\${service}:\${status}")
       fi
     done
@@ -816,6 +842,7 @@ wait_for_backend_health() {
 
   echo "error: backend services did not become healthy within \${timeout_seconds}s: \${pending[*]}" >&2
   "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${backend_services[@]}" >&2 || true
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" logs --tail=100 --timestamps "\${backend_services[@]}" >&2 || true
   return 1
 }
 
@@ -862,6 +889,22 @@ if [[ "\${#proxy_services[@]}" -gt 0 ]]; then
   step "Refreshing proxy services to resolve current upstream container IPs: \${proxy_services[*]}"
   "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" up -d --remove-orphans --force-recreate "\${proxy_services[@]}"
   "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps "\${proxy_services[@]}"
+fi
+
+if [[ "\${WITH_GATEWAY}" -eq 1 ]]; then
+  section "Post-deploy API smoke"
+  gateway_service=gateway
+  gateway_probe_paths=(/ /api/v1/health /api/v1/projects /api/v1/library/branches)
+  if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
+    gateway_service=research-gateway
+  else
+    gateway_probe_paths+=(/api/v1/heri/health)
+  fi
+  for path in "\${gateway_probe_paths[@]}"; do
+    step "Gateway probe: \${path}"
+    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" \
+      exec -T "\${gateway_service}" wget --quiet --tries=1 --timeout=10 --output-document=/dev/null "http://127.0.0.1\${path}"
+  done
 fi
 
 cleanup_docker_images
@@ -1048,6 +1091,20 @@ EOF
 }
 
 configure_https
+
+release_file=".deploy/\${ENV_NAME}.release"
+release_tmp="\${release_file}.tmp"
+if [[ -f "\${release_file}" ]]; then
+  cp "\${release_file}" "\${release_file}.previous"
+fi
+{
+  printf 'git_sha=%s\n' "\${DEPLOY_GIT_SHA}"
+  printf 'image_tag=%s\n' "\${IMAGE_TAG}"
+  printf 'deployed_at_utc=%s\n' "\$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  printf 'scope=%s\n' "\${DEPLOY_SCOPE}"
+} > "\${release_tmp}"
+mv "\${release_tmp}" "\${release_file}"
+step "Recorded verified release: \${release_file}"
 REMOTE
 }
 

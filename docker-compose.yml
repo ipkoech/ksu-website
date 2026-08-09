@@ -66,6 +66,17 @@ x-backend-database-capacity: &backend-database-capacity
   DB_ROUTE_BUDGETS: ${DB_ROUTE_BUDGETS:-}
   KSU_CACHE_REDIS_FAILURE_MODE: ${KSU_CACHE_REDIS_FAILURE_MODE:-fallback}
 
+# Bound shutdown and Docker's own log storage for every long-running backend
+# process. Application files rotate independently in ksu_common.logging.
+x-backend-operations: &backend-operations
+  init: true
+  stop_grace_period: 30s
+  logging:
+    driver: local
+    options:
+      max-size: ${DOCKER_LOG_MAX_SIZE:-10m}
+      max-file: ${DOCKER_LOG_MAX_FILES:-5}
+
 services:
 
   # ── API Gateway ──────────────────────────────────────────────────────────────
@@ -155,6 +166,7 @@ services:
 
   # ── Main Site Service (FastAPI) ────────────────────────────────────────────────
   main:
+    <<: *backend-operations
     image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/main:${IMAGE_TAG:-local}
     build:
       context: ./services
@@ -166,6 +178,7 @@ services:
     environment:
       <<: *backend-database-capacity
       APP_ENV: production
+      KSU_RELEASE: ${KSU_RELEASE:-unknown}
       DEBUG: "false"
       JWT_SIGNING_ENABLED: "true"
       JWT_PRIVATE_KEY_B64: ${JWT_PRIVATE_KEY_B64:?JWT_PRIVATE_KEY_B64 is required}
@@ -225,6 +238,7 @@ services:
 
   # ── Research Service (FastAPI) ─────────────────────────────────────────────────
   research:
+    <<: *backend-operations
     image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/research:${IMAGE_TAG:-local}
     build:
       context: ./services
@@ -236,6 +250,7 @@ services:
     environment:
       <<: *backend-database-capacity
       APP_ENV: production
+      KSU_RELEASE: ${KSU_RELEASE:-unknown}
       JWT_PUBLIC_KEY_B64: ${JWT_PUBLIC_KEY_B64:?JWT_PUBLIC_KEY_B64 is required}
       JWT_ALGORITHM: RS256
       JWT_KEY_ID: ${JWT_KEY_ID:?JWT_KEY_ID is required}
@@ -280,6 +295,7 @@ services:
 
   # ── HERI Africa Service (FastAPI) ─────────────────────────────────────────
   heri:
+    <<: *backend-operations
     image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/heri-africa:${IMAGE_TAG:-local}
     build:
       context: ./services
@@ -291,6 +307,7 @@ services:
     environment:
       <<: *backend-database-capacity
       APP_ENV: production
+      KSU_RELEASE: ${KSU_RELEASE:-unknown}
       JWT_PUBLIC_KEY_B64: ${JWT_PUBLIC_KEY_B64:?JWT_PUBLIC_KEY_B64 is required}
       JWT_ALGORITHM: RS256
       JWT_KEY_ID: ${JWT_KEY_ID:?JWT_KEY_ID is required}
@@ -332,6 +349,7 @@ services:
 
   # ── Library Service (FastAPI) ──────────────────────────────────────────────────
   library:
+    <<: *backend-operations
     image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/library:${IMAGE_TAG:-local}
     build:
       context: ./services
@@ -343,6 +361,7 @@ services:
     environment:
       <<: *backend-database-capacity
       APP_ENV: production
+      KSU_RELEASE: ${KSU_RELEASE:-unknown}
       JWT_PUBLIC_KEY_B64: ${JWT_PUBLIC_KEY_B64:?JWT_PUBLIC_KEY_B64 is required}
       JWT_ALGORITHM: RS256
       JWT_KEY_ID: ${JWT_KEY_ID:?JWT_KEY_ID is required}
@@ -384,6 +403,7 @@ services:
 
   # ── Celery workers ────────────────────────────────────────────────────────────
   celery-main: &celery-main-service
+    <<: *backend-operations
     image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/main:${IMAGE_TAG:-local}
     build:
       context: ./services
@@ -446,6 +466,7 @@ services:
     expose: []
 
   celery-library: &celery-library-service
+    <<: *backend-operations
     image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/library:${IMAGE_TAG:-local}
     build:
       context: ./services
@@ -488,6 +509,7 @@ services:
     expose: []
 
   celery-research:
+    <<: *backend-operations
     image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/research:${IMAGE_TAG:-local}
     build:
       context: ./services
@@ -530,6 +552,7 @@ services:
     restart: unless-stopped
 
   celery-heri:
+    <<: *backend-operations
     image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/heri-africa:${IMAGE_TAG:-local}
     build:
       context: ./services
@@ -603,7 +626,7 @@ services:
     ports:
       - "127.0.0.1:${ALERTMANAGER_PORT:-9093}:9093"
     volumes:
-      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ${ALERTMANAGER_CONFIG_FILE:-./monitoring/alertmanager.yml}:/etc/alertmanager/alertmanager.yml:ro
       - alertmanager_data:/alertmanager
     networks: [ksu]
     restart: unless-stopped

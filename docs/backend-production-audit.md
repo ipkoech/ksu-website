@@ -184,6 +184,20 @@ process pool will exhaust PostgreSQL.
   invariants. A representative 15-minute staging test remains an operational
   release gate because local CI cannot establish infrastructure capacity.
 
+## Phase 9 implementation status
+
+- Staging and production VM deployments start Prometheus, Alertmanager, and the
+  database/Redis exporters. Production refuses the dashboard-only receiver and
+  requires an owned external notification configuration.
+- APIs and workers have configurable VM CPU, memory, and PID ceilings, bounded
+  Docker log retention, an init process, and a graceful shutdown window.
+- Deployments include the integration worker and both beat schedulers, probe the
+  routed API surface after replacement, expose the release id in health payloads,
+  and atomically record the verified and previous release identifiers.
+- CI guards these operational invariants. The incident runbook defines alert
+  ownership, evidence-preserving triage, migration-aware application rollback,
+  daily/monthly/quarterly checks, and the limits of Compose-only monitoring.
+
 ## Release gates
 
 - All four applications construct with unchanged route/table surfaces.

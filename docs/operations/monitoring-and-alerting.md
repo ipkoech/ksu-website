@@ -22,7 +22,12 @@ Set `POSTGRES_EXPORTER_USER` and `POSTGRES_EXPORTER_PASSWORD` to a dedicated dat
 
 Set `REDIS_MAXMEMORY` to a positive deployment-appropriate capacity and choose `REDIS_MAXMEMORY_POLICY` deliberately (the current safe default is `noeviction`). A Redis instance without a memory limit triggers a configuration alert after thirty minutes and cannot produce a meaningful memory-utilization percentage.
 
-Before production cutover, replace the no-credential dashboard receiver in `monitoring/alertmanager.yml` with an owned, authenticated notification receiver (for example a secret-backed webhook, SMTP relay, or PagerDuty integration). Do not commit notification URLs, passwords, API keys, or routing tokens. Test both firing and resolved notifications after deployment.
+Production deployment enables this profile automatically and requires
+`ALERTMANAGER_CONFIG_FILE` to point to an operator-owned configuration outside
+the repository. The deployment validates that it contains an external receiver;
+the no-credential dashboard example is rejected. Do not commit notification
+URLs, passwords, API keys, or routing tokens. Test both firing and resolved
+notifications after deployment.
 
 Included alerts cover unavailable APIs/workers/exporters, PostgreSQL and Redis availability, HTTP 5xx rate and p95 latency, Celery queue backlog/failures, PostgreSQL connection utilization, long-running queries, lock waits, and Redis memory utilization. The thresholds are intentionally conservative starting points and should be tuned after the first representative load test.
 
@@ -31,3 +36,9 @@ The PostgreSQL custom collector reports server connection utilization, active-qu
 The shared JSON logger emits service, timestamp, level, message, and exception context; request IDs and deployment commit/version should be supplied by the gateway/runtime environment. Logs must go to stdout/stderr or approved mounted paths and must not include tokens, passwords, cookies, or full sensitive bodies.
 
 Retain logs according to the VM/provider policy and record the policy with the deployment owner. Add infrastructure-provider alerts for backup/migration failure, disk exhaustion, certificate expiry, and host CPU/memory saturation; they cannot be measured from this Compose-only stack.
+
+The VM overlay applies configurable CPU, memory, and PID ceilings to APIs and
+workers. Docker log storage is also rotated independently of application files.
+Tune these ceilings from measured staging usage; an OOM-killed container is a
+capacity incident, not an automatic reason to remove the bound. See
+`incident-response.md` for triage, rollback constraints, and drill cadence.

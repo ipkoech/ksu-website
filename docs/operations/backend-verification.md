@@ -15,6 +15,9 @@ python scripts/structural_snapshot.py /tmp/ksu-structure.json \
 python scripts/ruff_baseline.py check --baseline .ruff-baseline.json --paths .
 scripts/validate_migrations.sh main research library heri_africa
 python scripts/validate_database_capacity.py
+python scripts/validate_traffic_scaling.py
+python scripts/validate_operational_readiness.py
+python scripts/validate_alertmanager_config.py monitoring/alertmanager.yml --allow-dashboard-only
 docker compose -f docker-compose.yml -f docker-compose.vm.yml config >/tmp/ksu-compose.yaml
 python scripts/audit_compose_ports.py docker-compose.yml docker-compose.vm.yml
 git diff --check

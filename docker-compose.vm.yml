@@ -12,22 +12,57 @@ x-frontend-healthcheck: &frontend-healthcheck
   timeout: 10s
   retries: 3
 
+x-api-runtime-limits: &api-runtime-limits
+  cpus: ${API_CPU_LIMIT:-1.0}
+  mem_limit: ${API_MEMORY_LIMIT:-768m}
+  pids_limit: ${API_PIDS_LIMIT:-256}
+
+x-worker-runtime-limits: &worker-runtime-limits
+  cpus: ${WORKER_CPU_LIMIT:-0.75}
+  mem_limit: ${WORKER_MEMORY_LIMIT:-512m}
+  pids_limit: ${WORKER_PIDS_LIMIT:-192}
+
 services:
   main:
+    <<: *api-runtime-limits
     environment:
       APP_ENV: production
 
   research:
+    <<: *api-runtime-limits
     environment:
       APP_ENV: production
 
   library:
+    <<: *api-runtime-limits
     environment:
       APP_ENV: production
 
   heri:
+    <<: *api-runtime-limits
     environment:
       APP_ENV: production
+
+  celery-main:
+    <<: *worker-runtime-limits
+
+  celery-main-integrations:
+    <<: *worker-runtime-limits
+
+  beat-main:
+    <<: *worker-runtime-limits
+
+  beat-library:
+    <<: *worker-runtime-limits
+
+  celery-research:
+    <<: *worker-runtime-limits
+
+  celery-library:
+    <<: *worker-runtime-limits
+
+  celery-heri:
+    <<: *worker-runtime-limits
 
   edge:
     image: nginx:1.27-alpine
