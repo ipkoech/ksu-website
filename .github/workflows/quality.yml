@@ -47,6 +47,7 @@ jobs:
           docker compose -f docker-compose.yml -f docker-compose.vm.yml config >/tmp/ksu-compose.yaml
           python scripts/audit_compose_ports.py docker-compose.yml docker-compose.vm.yml
           python scripts/validate_database_capacity.py
+          python scripts/validate_traffic_scaling.py
       - name: Validate production settings fail closed
         env:
           DATABASE_URL: postgresql+asyncpg://ci:ci@postgres:5432/ci # pragma: allowlist secret

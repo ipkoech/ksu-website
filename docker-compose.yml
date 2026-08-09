@@ -64,6 +64,7 @@ x-backend-database-capacity: &backend-database-capacity
   DB_DEFAULT_CONCURRENCY: ${DB_DEFAULT_CONCURRENCY:-8}
   DB_DEFAULT_QUERY_BUDGET: ${DB_DEFAULT_QUERY_BUDGET:-40}
   DB_ROUTE_BUDGETS: ${DB_ROUTE_BUDGETS:-}
+  KSU_CACHE_REDIS_FAILURE_MODE: ${KSU_CACHE_REDIS_FAILURE_MODE:-fallback}
 
 services:
 
@@ -76,6 +77,7 @@ services:
       - "80"
     volumes:
       - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./gateway/public-api-cache.inc:/etc/nginx/snippets/public-api-cache.inc:ro
       # Serves upload bytes after main authorizes them via X-Accel-Redirect.
       - uploads_data:/var/www/uploads:ro
     depends_on:
@@ -182,9 +184,10 @@ services:
       ANALYTICS_RETENTION_DAYS: ${ANALYTICS_RETENTION_DAYS:-395}
       IDEMPOTENCY_RETENTION_DAYS: ${IDEMPOTENCY_RETENTION_DAYS:-30}
       OUTBOX_RETENTION_DAYS: ${OUTBOX_RETENTION_DAYS:-7}
-      REDIS_URL: redis://redis:6379/0
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      REDIS_URL: ${MAIN_REDIS_URL:-redis://redis:6379/0}
+      CACHE_REDIS_URL: ${MAIN_CACHE_REDIS_URL:-redis://redis:6379/0}
+      CELERY_BROKER_URL: ${MAIN_CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${MAIN_CELERY_RESULT_BACKEND:-redis://redis:6379/0}
       RESEARCH_SERVICE_URL: http://research:8001
       LIBRARY_SERVICE_URL: http://library:8002
       RESEARCH_SERVICE_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
@@ -240,7 +243,10 @@ services:
       JWT_AUDIENCE: ${JWT_AUDIENCE:-ksu-platform}
       DATABASE_URL: postgresql+asyncpg://${RESEARCH_DB_USER:-ksu_research}:${RESEARCH_DB_PASSWORD:?RESEARCH_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: research
-      REDIS_URL: redis://redis:6379/2
+      REDIS_URL: ${RESEARCH_REDIS_URL:-redis://redis:6379/2}
+      CACHE_REDIS_URL: ${RESEARCH_CACHE_REDIS_URL:-redis://redis:6379/2}
+      CELERY_BROKER_URL: ${RESEARCH_CELERY_BROKER_URL:-redis://redis:6379/2}
+      CELERY_RESULT_BACKEND: ${RESEARCH_CELERY_RESULT_BACKEND:-redis://redis:6379/2}
       MAIN_SERVICE_URL: http://main:8000
       MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       INTERNAL_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
@@ -292,9 +298,10 @@ services:
       JWT_AUDIENCE: ${JWT_AUDIENCE:-ksu-platform}
       DATABASE_URL: postgresql+asyncpg://${HERI_DB_USER:-ksu_heri}:${HERI_DB_PASSWORD:?HERI_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: heri
-      REDIS_URL: redis://redis:6379/3
-      CELERY_BROKER_URL: redis://redis:6379/3
-      CELERY_RESULT_BACKEND: redis://redis:6379/3
+      REDIS_URL: ${HERI_REDIS_URL:-redis://redis:6379/3}
+      CACHE_REDIS_URL: ${HERI_CACHE_REDIS_URL:-redis://redis:6379/3}
+      CELERY_BROKER_URL: ${HERI_CELERY_BROKER_URL:-redis://redis:6379/3}
+      CELERY_RESULT_BACKEND: ${HERI_CELERY_RESULT_BACKEND:-redis://redis:6379/3}
       RESEARCH_SERVICE_URL: ${HERI_RESEARCH_SERVICE_URL:-http://research:8001}
       RESEARCH_SERVICE_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
       MAIN_SERVICE_URL: http://main:8000
@@ -343,9 +350,10 @@ services:
       JWT_AUDIENCE: ${JWT_AUDIENCE:-ksu-platform}
       DATABASE_URL: postgresql+asyncpg://${LIBRARY_DB_USER:-ksu_library}:${LIBRARY_DB_PASSWORD:?LIBRARY_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: library
-      REDIS_URL: redis://redis:6379/1
-      CELERY_BROKER_URL: redis://redis:6379/1
-      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      REDIS_URL: ${LIBRARY_REDIS_URL:-redis://redis:6379/1}
+      CACHE_REDIS_URL: ${LIBRARY_CACHE_REDIS_URL:-redis://redis:6379/1}
+      CELERY_BROKER_URL: ${LIBRARY_CELERY_BROKER_URL:-redis://redis:6379/1}
+      CELERY_RESULT_BACKEND: ${LIBRARY_CELERY_RESULT_BACKEND:-redis://redis:6379/1}
       MAIN_SERVICE_URL: http://main:8000
       MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       INTERNAL_API_KEY: ${LIBRARY_INTERNAL_API_KEY:-}
@@ -396,9 +404,9 @@ services:
       CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${MAIN_DB_USER:-ksu_main}:${MAIN_DB_PASSWORD:?MAIN_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: main
-      REDIS_URL: redis://redis:6379/0
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      REDIS_URL: ${MAIN_REDIS_URL:-redis://redis:6379/0}
+      CELERY_BROKER_URL: ${MAIN_CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${MAIN_CELERY_RESULT_BACKEND:-redis://redis:6379/0}
       INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       RESEARCH_SERVICE_URL: http://research:8001
       LIBRARY_SERVICE_URL: http://library:8002
@@ -450,9 +458,9 @@ services:
       CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${LIBRARY_DB_USER:-ksu_library}:${LIBRARY_DB_PASSWORD:?LIBRARY_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: library
-      REDIS_URL: redis://redis:6379/1
-      CELERY_BROKER_URL: redis://redis:6379/1
-      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      REDIS_URL: ${LIBRARY_REDIS_URL:-redis://redis:6379/1}
+      CELERY_BROKER_URL: ${LIBRARY_CELERY_BROKER_URL:-redis://redis:6379/1}
+      CELERY_RESULT_BACKEND: ${LIBRARY_CELERY_RESULT_BACKEND:-redis://redis:6379/1}
       MAIN_SERVICE_URL: http://main:8000
       MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
@@ -492,9 +500,9 @@ services:
       CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${RESEARCH_DB_USER:-ksu_research}:${RESEARCH_DB_PASSWORD:?RESEARCH_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: research
-      REDIS_URL: redis://redis:6379/2
-      CELERY_BROKER_URL: redis://redis:6379/2
-      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      REDIS_URL: ${RESEARCH_REDIS_URL:-redis://redis:6379/2}
+      CELERY_BROKER_URL: ${RESEARCH_CELERY_BROKER_URL:-redis://redis:6379/2}
+      CELERY_RESULT_BACKEND: ${RESEARCH_CELERY_RESULT_BACKEND:-redis://redis:6379/2}
       MAIN_SERVICE_URL: http://main:8000
       MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       INTERNAL_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
@@ -540,9 +548,9 @@ services:
       CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${HERI_DB_USER:-ksu_heri}:${HERI_DB_PASSWORD:?HERI_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: heri
-      REDIS_URL: redis://redis:6379/3
-      CELERY_BROKER_URL: redis://redis:6379/3
-      CELERY_RESULT_BACKEND: redis://redis:6379/3
+      REDIS_URL: ${HERI_REDIS_URL:-redis://redis:6379/3}
+      CELERY_BROKER_URL: ${HERI_CELERY_BROKER_URL:-redis://redis:6379/3}
+      CELERY_RESULT_BACKEND: ${HERI_CELERY_RESULT_BACKEND:-redis://redis:6379/3}
       RESEARCH_SERVICE_URL: http://research:8001
       RESEARCH_SERVICE_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
       MAIN_SERVICE_URL: http://main:8000

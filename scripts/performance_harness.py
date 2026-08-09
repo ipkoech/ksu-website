@@ -48,6 +48,9 @@ class Scenario:
     label: str
     path: str
     expected_statuses: frozenset[int]
+    max_p95_ms: float | None = None
+    max_error_rate: float | None = None
+    min_cache_hit_ratio: float | None = None
 
 
 def percentile(values: list[float], percentile_value: float) -> float | None:
@@ -113,8 +116,32 @@ def load_scenarios(paths: list[str], scenario_file: str | None) -> list[Scenario
             raise ValueError("the harness only permits GET scenarios")
         path = validate_path(str(entry["path"]))
         label = str(entry.get("label", path))
-        scenarios.append(Scenario(label, path, parse_statuses(entry.get("expected_status"))))
+        scenarios.append(
+            Scenario(
+                label,
+                path,
+                parse_statuses(entry.get("expected_status")),
+                _optional_ratio_or_number(entry, "max_p95_ms", minimum=0),
+                _optional_ratio_or_number(entry, "max_error_rate", minimum=0, maximum=1),
+                _optional_ratio_or_number(entry, "min_cache_hit_ratio", minimum=0, maximum=1),
+            )
+        )
     return scenarios
+
+
+def _optional_ratio_or_number(
+    entry: dict[str, Any],
+    key: str,
+    *,
+    minimum: float,
+    maximum: float | None = None,
+) -> float | None:
+    if entry.get(key) is None:
+        return None
+    value = float(entry[key])
+    if value < minimum or (maximum is not None and value > maximum):
+        raise ValueError(f"{key} must be between {minimum} and {maximum}")
+    return value
 
 
 def headers_from_args(values: list[str]) -> dict[str, str]:
@@ -133,9 +160,11 @@ def request_once(base_url: str, scenario: Scenario, headers: dict[str, str], tim
     started = time.perf_counter()
     status: int | None = None
     error: str | None = None
+    edge_cache: str | None = None
     try:
         with urlopen(request, timeout=timeout) as response:
             status = response.status
+            edge_cache = response.headers.get("X-Edge-Cache")
             response.read()
     except HTTPError as exc:
         status = exc.code
@@ -150,6 +179,7 @@ def request_once(base_url: str, scenario: Scenario, headers: dict[str, str], tim
         "ok": status in scenario.expected_statuses,
         "error": error,
         "latency_ms": round(elapsed_ms, 3),
+        "edge_cache": edge_cache,
     }
 
 
@@ -187,6 +217,8 @@ def run_http(
         latencies = [item["latency_ms"] for item in endpoint_results]
         endpoint_reports[label] = summarize_results(endpoint_results, latencies, elapsed_seconds)
 
+    violations = evaluate_budgets(scenarios, endpoint_reports)
+
     all_latencies = [item["latency_ms"] for item in results]
     return {
         "base_url": f"{parsed.scheme}://{parsed.netloc}",
@@ -197,11 +229,15 @@ def run_http(
         "throughput_rps": round(requests / elapsed_seconds, 3),
         "summary": summarize_results(results, all_latencies, elapsed_seconds),
         "endpoints": endpoint_reports,
+        "violations": violations,
+        "passed": not violations,
     }
 
 
 def summarize_results(results: list[dict[str, Any]], latencies: list[float], elapsed_seconds: float) -> dict[str, Any]:
     successes = sum(1 for item in results if item["ok"])
+    cache_observations = [str(item["edge_cache"]).upper() for item in results if item.get("edge_cache")]
+    cache_hits = sum(1 for value in cache_observations if value in {"HIT", "STALE", "UPDATING"})
     return {
         "count": len(results),
         "successes": successes,
@@ -215,7 +251,32 @@ def summarize_results(results: list[dict[str, Any]], latencies: list[float], ela
             "p99": percentile(latencies, 99),
             "max": round(max(latencies), 3) if latencies else None,
         },
+        "edge_cache": {
+            "observations": len(cache_observations),
+            "hits": cache_hits,
+            "hit_ratio": round(cache_hits / len(cache_observations), 6) if cache_observations else None,
+        },
     }
+
+
+def evaluate_budgets(scenarios: list[Scenario], reports: dict[str, dict[str, Any]]) -> list[str]:
+    violations: list[str] = []
+    for scenario in scenarios:
+        report = reports[scenario.label]
+        p95 = report["latency_ms"]["p95"]
+        error_rate = report["error_rate"]
+        hit_ratio = report["edge_cache"]["hit_ratio"]
+        if scenario.max_p95_ms is not None and (p95 is None or p95 > scenario.max_p95_ms):
+            violations.append(f"{scenario.label}: p95 {p95}ms exceeds {scenario.max_p95_ms}ms")
+        if scenario.max_error_rate is not None and error_rate > scenario.max_error_rate:
+            violations.append(f"{scenario.label}: error rate {error_rate} exceeds {scenario.max_error_rate}")
+        if scenario.min_cache_hit_ratio is not None and (
+            hit_ratio is None or hit_ratio < scenario.min_cache_hit_ratio
+        ):
+            violations.append(
+                f"{scenario.label}: edge-cache hit ratio {hit_ratio} is below {scenario.min_cache_hit_ratio}"
+            )
+    return violations
 
 
 def normalise_database_url(value: str) -> str:
@@ -368,7 +429,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"wrote performance report: {args.output}")
     else:
         print(serialized)
-    return 0
+    return 0 if report["http"]["passed"] else 1
 
 
 if __name__ == "__main__":

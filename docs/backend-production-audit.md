@@ -165,6 +165,25 @@ process pool will exhaust PostgreSQL.
   not claim point-in-time recovery until independent WAL storage and a PITR drill
   exist.
 
+## Phase 8 implementation status
+
+- The gateway re-resolves API replicas and pools upstream connections, so adding
+  API capacity is a deployment setting rather than an nginx rewrite.
+- Anonymous successful reads receive a short edge-cache TTL with collapsed
+  concurrent misses and stale-on-upstream-failure behavior. Authentication,
+  cookies, integration credentials, Set-Cookie responses, mutations, and errors
+  cannot enter that cache.
+- Request caching and Celery brokers are independently configurable per service.
+  Redis cache loss falls back to the database behind the existing per-process
+  query-concurrency budgets instead of making every public read unavailable.
+- The performance harness now enforces p95 latency, error-rate, and cache-hit
+  budgets. Its versioned scenarios cover the gateway and all four services, and
+  the runbook defines staged load, saturation stop conditions, and the evidence
+  required before making a production capacity claim.
+- CI statically guards the scale-out, cache-safety, isolation, and benchmark
+  invariants. A representative 15-minute staging test remains an operational
+  release gate because local CI cannot establish infrastructure capacity.
+
 ## Release gates
 
 - All four applications construct with unchanged route/table surfaces.

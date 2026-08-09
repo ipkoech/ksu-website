@@ -1,6 +1,9 @@
 {
   "endpoints": [
-    {"label": "main-health", "path": "/health", "expected_status": [200]},
-    {"label": "main-readiness", "path": "/ready", "expected_status": [200, 503]}
+    {"label": "gateway-health", "path": "/health", "expected_status": [200], "max_p95_ms": 100, "max_error_rate": 0.01},
+    {"label": "main-news", "path": "/api/v1/news?page=1&per_page=12", "expected_status": [200], "max_p95_ms": 500, "max_error_rate": 0.01, "min_cache_hit_ratio": 0.8},
+    {"label": "research-projects", "path": "/api/v1/projects?page=1&per_page=12", "expected_status": [200], "max_p95_ms": 500, "max_error_rate": 0.01, "min_cache_hit_ratio": 0.8},
+    {"label": "library-branches", "path": "/api/v1/library/branches?page=1&per_page=12", "expected_status": [200], "max_p95_ms": 500, "max_error_rate": 0.01, "min_cache_hit_ratio": 0.8},
+    {"label": "heri-site", "path": "/api/v1/heri/site", "expected_status": [200], "max_p95_ms": 500, "max_error_rate": 0.01, "min_cache_hit_ratio": 0.8}
   ]
 }

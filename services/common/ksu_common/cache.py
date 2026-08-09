@@ -98,18 +98,18 @@ def _cache_result(value: Any, status: str) -> Any:
 
 
 def _cache_redis_failure_mode() -> str:
-    try:
-        if is_production_environment(os.getenv("APP_ENV", "development")):
-            return _CACHE_REDIS_FAILURE_MODE_FAIL_CLOSED
-    except ValueError:
-        pass
-
     configured_mode = os.getenv(_CACHE_REDIS_FAILURE_MODE_ENV, "").strip().lower()
     if configured_mode in {
         _CACHE_REDIS_FAILURE_MODE_FAIL_CLOSED,
         _CACHE_REDIS_FAILURE_MODE_FALLBACK,
     }:
         return configured_mode
+
+    try:
+        if is_production_environment(os.getenv("APP_ENV", "development")):
+            return _CACHE_REDIS_FAILURE_MODE_FAIL_CLOSED
+    except ValueError:
+        pass
 
     return _CACHE_REDIS_FAILURE_MODE_FALLBACK
 
@@ -124,7 +124,7 @@ async def get_redis() -> redis.Redis:
     """Get or create Redis client singleton."""
     global _redis_client
     if _redis_client is None:
-        url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        url = os.getenv("CACHE_REDIS_URL") or os.getenv("REDIS_URL", "redis://localhost:6379/0")
         _redis_client = redis.from_url(url, decode_responses=True)
     return _redis_client
 
