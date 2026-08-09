@@ -654,20 +654,22 @@ fi
 
 backup_database() {
   mkdir -p "\${BACKUP_DIR}"
-  local stamp
-  stamp="\$(date -u +%Y%m%dT%H%M%SZ)"
-  local output="\${BACKUP_DIR}/ksu-\${ENV_NAME}-\${stamp}.sql.gz"
-
-  echo "Creating database backup: \${output}"
+  local postgres_container
   if "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps --status running postgres --format '{{.Service}}' | grep -qx postgres; then
-    "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" exec -T postgres pg_dump -U "\${POSTGRES_USER:-ksu_service_user}" -d "\${POSTGRES_DB:-ksu_services_db}" | gzip -9 > "\${output}"
+    postgres_container="\$("\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" ps -q postgres)"
   else
     echo "error: postgres container is not running; refusing to deploy without a backup" >&2
     return 1
   fi
-
-  chmod 600 "\${output}"
-  echo "Backup complete: \${output}"
+  BACKUP_DIR="\${BACKUP_DIR}" \
+  BACKUP_RETENTION_DAYS="\${BACKUP_RETENTION_DAYS:-14}" \
+  BACKUP_OFFSITE_DIR="\${BACKUP_OFFSITE_DIR:-}" \
+  REQUIRE_OFFSITE_BACKUP="\${REQUIRE_OFFSITE_BACKUP:-false}" \
+  APP_ENV="\${ENV_NAME}" \
+  POSTGRES_CONTAINER="\${postgres_container}" \
+  POSTGRES_USER="\${POSTGRES_USER:-ksu_service_user}" \
+  POSTGRES_DB="\${POSTGRES_DB:-ksu_services_db}" \
+  scripts/backup_database.sh
 }
 
 if [[ "\${MODE}" = "backup" ]]; then

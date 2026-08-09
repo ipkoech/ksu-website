@@ -170,6 +170,11 @@ Compose services. If the VM has `.deploy/docker-compose.external-data.yml`, the
 deploy script includes it automatically so external database, Redis, and upload
 storage wiring is preserved.
 
+Database backups are PostgreSQL custom-format archives with SHA-256 metadata.
+Production should set `BACKUP_OFFSITE_DIR` to an independently managed mounted
+destination and `REQUIRE_OFFSITE_BACKUP=true`. Restore drills verify all four
+schema owners and migration heads; see `docs/operations/database-recovery.md`.
+
 ## Repository Hygiene
 
 The repository should not track:

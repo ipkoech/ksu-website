@@ -191,13 +191,42 @@ jobs:
           scripts/init-database-ownership.sh
           for pair in "ksu_main main" "ksu_research research" "ksu_library library" "ksu_heri heri"; do
             read -r role schema <<<"$pair"
-            PGPASSWORD="$DATABASE_ADMIN_PASSWORD" psql -X -h "$DATABASE_HOST" -U "$role" -d "$POSTGRES_DB" \
-              -v ON_ERROR_STOP=1 -c "CREATE TABLE ${schema}.ownership_probe (id bigint PRIMARY KEY)"
+            PGPASSWORD="$DATABASE_ADMIN_PASSWORD" psql -X -h "$DATABASE_HOST" -U "$DATABASE_ADMIN_USER" -d "$POSTGRES_DB" \
+              -v ON_ERROR_STOP=1 -c "SET ROLE ${role}; CREATE TABLE ${schema}.ownership_probe (id bigint PRIMARY KEY); INSERT INTO ${schema}.ownership_probe VALUES (1)"
           done
+          PGPASSWORD="$DATABASE_ADMIN_PASSWORD" psql -X -h "$DATABASE_HOST" -U "$DATABASE_ADMIN_USER" -d "$POSTGRES_DB" -c \
+            "SET ROLE ksu_main; CREATE TABLE main.alembic_version (version_num varchar(32) PRIMARY KEY); INSERT INTO main.alembic_version VALUES ('20260809_0800')"
+          PGPASSWORD="$DATABASE_ADMIN_PASSWORD" psql -X -h "$DATABASE_HOST" -U "$DATABASE_ADMIN_USER" -d "$POSTGRES_DB" -c \
+            "SET ROLE ksu_research; CREATE TABLE research.alembic_version (version_num varchar(32) PRIMARY KEY); INSERT INTO research.alembic_version VALUES ('20260805_0012')"
+          PGPASSWORD="$DATABASE_ADMIN_PASSWORD" psql -X -h "$DATABASE_HOST" -U "$DATABASE_ADMIN_USER" -d "$POSTGRES_DB" -c \
+            "SET ROLE ksu_library; CREATE TABLE library.alembic_version (version_num varchar(32) PRIMARY KEY); INSERT INTO library.alembic_version VALUES ('20260807_0010')"
+          PGPASSWORD="$DATABASE_ADMIN_PASSWORD" psql -X -h "$DATABASE_HOST" -U "$DATABASE_ADMIN_USER" -d "$POSTGRES_DB" -c \
+            "SET ROLE ksu_heri; CREATE TABLE heri.alembic_version (version_num varchar(32) PRIMARY KEY); INSERT INTO heri.alembic_version VALUES ('0006_command_idempotency')"
       - name: Prove ownership and deny cross-schema access
         env:
           DATABASE_ADMIN_URL: postgresql://ksu_admin:ci-admin-password@127.0.0.1:5432/ksu_ownership_ci # pragma: allowlist secret
         run: python scripts/verify_database_ownership.py
+      - name: Create and restore a checksummed backup
+        env:
+          POSTGRES_HOST: 127.0.0.1
+          POSTGRES_DB: ksu_ownership_ci
+          POSTGRES_USER: ksu_admin
+          POSTGRES_PASSWORD: ci-admin-password # pragma: allowlist secret
+          BACKUP_DIR: /tmp/ksu-backups
+          APP_ENV: ci
+          RECOVERY_DB: ksu_recovery_ci
+          RECOVERY_USER: ksu_admin
+          RECOVERY_PASSWORD: ci-admin-password # pragma: allowlist secret
+          RECOVERY_HOST: 127.0.0.1
+          RECOVERY_ADMIN_URL: postgresql://ksu_admin:ci-admin-password@127.0.0.1:5432/ksu_recovery_ci # pragma: allowlist secret
+          MAIN_DB_PASSWORD: ci-main-password # pragma: allowlist secret
+          RESEARCH_DB_PASSWORD: ci-research-password # pragma: allowlist secret
+          LIBRARY_DB_PASSWORD: ci-library-password # pragma: allowlist secret
+          HERI_DB_PASSWORD: ci-heri-password # pragma: allowlist secret
+        run: |
+          scripts/backup_database.sh
+          PGPASSWORD="$POSTGRES_PASSWORD" createdb -h "$POSTGRES_HOST" -U "$POSTGRES_USER" "$RECOVERY_DB"
+          BACKUP_FILE="$(find "$BACKUP_DIR" -maxdepth 1 -name '*.dump' -print -quit)" scripts/test_database_restore.sh
 
   frontend:
     runs-on: ubuntu-latest

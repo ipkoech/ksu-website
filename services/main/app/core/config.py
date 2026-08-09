@@ -80,6 +80,8 @@ class Settings(BaseSettings):
     # Set either to 0 to disable pruning and keep rows indefinitely.
     AUDIT_LOG_RETENTION_DAYS: int = Field(default=180, ge=0)
     OUTBOX_RETENTION_DAYS: int = Field(default=7, ge=0)
+    ANALYTICS_RETENTION_DAYS: int = Field(default=395, ge=0)
+    IDEMPOTENCY_RETENTION_DAYS: int = Field(default=30, ge=0)
 
     # When set, /uploads/ answers with an X-Accel-Redirect into this internal
     # nginx location instead of streaming the file through Python. Leave unset

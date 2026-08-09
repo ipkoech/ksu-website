@@ -26,6 +26,7 @@ class CommandIdempotency(Base):
             name="ck_command_idempotency_response_shape",
         ),
         sa.Index("ix_command_idempotency_state", "state"),
+        sa.Index("ix_command_idempotency_state_updated", "state", "updated_at"),
     )
 
     command_name: Mapped[str] = mapped_column(sa.String(128), nullable=False)

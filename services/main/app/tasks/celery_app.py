@@ -48,6 +48,8 @@ celery_app = create_celery_app(
             "main.audit.persist": {"queue": "main.audit"},
             "main.audit.prune": {"queue": "main.maintenance"},
             "main.outbox.prune": {"queue": "main.maintenance"},
+            "main.analytics.prune": {"queue": "main.maintenance"},
+            "main.idempotency.prune": {"queue": "main.maintenance"},
         },
         beat_schedule={
             "expire-notifications-every-15-minutes": {
@@ -89,6 +91,14 @@ celery_app = create_celery_app(
             "prune-published-outbox-events-daily": {
                 "task": "main.outbox.prune",
                 "schedule": crontab(hour=3, minute=40),
+            },
+            "prune-analytics-events-daily": {
+                "task": "main.analytics.prune",
+                "schedule": crontab(hour=4, minute=0),
+            },
+            "prune-command-idempotency-daily": {
+                "task": "main.idempotency.prune",
+                "schedule": crontab(hour=4, minute=20),
             },
         },
         imports=(

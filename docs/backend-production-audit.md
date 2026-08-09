@@ -149,6 +149,22 @@ process pool will exhaust PostgreSQL.
 - Research seeders no longer create Main media rows. External logo source URLs
   remain Research data; creation of a canonical media asset belongs to Main.
 
+## Phase 7 implementation status
+
+- Backups use PostgreSQL custom format, are written atomically, catalog-checked,
+  checksummed, accompanied by recovery metadata, and optionally copied to a
+  required independently mounted off-host destination.
+- Restore is an explicitly destructive operation with checksum verification.
+  The drill reconstructs service ownership and proves all schema owners,
+  privileges, migration heads, and representative tables before success.
+- CI performs the backup and restore drill against disposable databases, so a
+  syntactically valid but unusable backup cannot satisfy the release gate.
+- Local backup retention is bounded. Main now also reaps analytics and terminal
+  idempotency rows in bounded batches alongside audit and delivered outbox data.
+- The recovery runbook states the 24-hour RPO and two-hour RTO targets and does
+  not claim point-in-time recovery until independent WAL storage and a PITR drill
+  exist.
+
 ## Release gates
 
 - All four applications construct with unchanged route/table surfaces.

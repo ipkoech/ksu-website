@@ -19,7 +19,7 @@ from sqlalchemy import delete, select
 
 from ..core.config import get_settings
 from ..core.database import AsyncSessionLocal
-from ..models import AuditLog, OutboxEvent
+from ..models import AnalyticsEvent, AuditLog, CommandIdempotency, OutboxEvent
 from .celery_app import celery_app
 
 logger = logging.getLogger(__name__)
@@ -100,4 +100,51 @@ async def _prune_outbox_events() -> int:
 
     if removed:
         logger.info("pruned %d published outbox_events older than %s", removed, cutoff.isoformat())
+    return removed
+
+
+@celery_app.task(name="main.analytics.prune")
+def prune_analytics_events() -> int:
+    return run_worker_async(
+        _prune_by_timestamp(
+            AnalyticsEvent,
+            AnalyticsEvent.occurred_at,
+            settings.ANALYTICS_RETENTION_DAYS,
+            "analytics_events",
+        )
+    )
+
+
+@celery_app.task(name="main.idempotency.prune")
+def prune_command_idempotency() -> int:
+    return run_worker_async(
+        _prune_by_timestamp(
+            CommandIdempotency,
+            CommandIdempotency.updated_at,
+            settings.IDEMPOTENCY_RETENTION_DAYS,
+            "command_idempotency",
+            CommandIdempotency.state.in_(("completed", "failed")),
+        )
+    )
+
+
+async def _prune_by_timestamp(model, timestamp_column, retention_days: int, label: str, *conditions) -> int:
+    if retention_days <= 0:
+        return 0
+    cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
+    removed = 0
+    async with AsyncSessionLocal() as db:
+        for _ in range(MAX_BATCHES_PER_RUN):
+            ids = (
+                await db.execute(
+                    select(model.id).where(timestamp_column < cutoff, *conditions).limit(DELETE_BATCH_SIZE)
+                )
+            ).scalars().all()
+            if not ids:
+                break
+            await db.execute(delete(model).where(model.id.in_(ids)))
+            await db.commit()
+            removed += len(ids)
+    if removed:
+        logger.info("pruned %d %s rows older than %s", removed, label, cutoff.isoformat())
     return removed
