@@ -50,6 +50,10 @@ class _TimeoutBudgetExceeded(httpx.TimeoutException):
     """Raised when retries or backoff would exceed an integration deadline."""
 
 
+class IntegrationResponseTooLargeError(RuntimeError):
+    """Raised after stopping an integration response at its configured byte limit."""
+
+
 def _client_timeout(
     timeout: float | httpx.Timeout,
     connect_timeout: float | None,
@@ -407,6 +411,7 @@ class PooledIntegrationClient:
         request_id: str | None = None,
         correlation_id: str | None = None,
         retry_policy: RetryPolicy | None = None,
+        max_response_bytes: int | None = None,
         **request_options: Any,
     ) -> httpx.Response:
         """Send one outbound request with safe retry and circuit-breaker policy."""
@@ -422,6 +427,7 @@ class PooledIntegrationClient:
                 request_id=request_id,
                 correlation_id=correlation_id,
                 retry_policy=retry_policy,
+                max_response_bytes=max_response_bytes,
                 **request_options,
             )
         finally:
@@ -438,6 +444,7 @@ class PooledIntegrationClient:
         request_id: str | None,
         correlation_id: str | None,
         retry_policy: RetryPolicy | None,
+        max_response_bytes: int | None,
         **request_options: Any,
     ) -> httpx.Response:
         normalized_method = method.upper()
@@ -453,13 +460,31 @@ class PooledIntegrationClient:
         supplied_timeout = request_options.pop("timeout", None)
 
         async def send(remaining: float) -> httpx.Response:
-            return await client.request(
-                normalized_method,
-                url,
-                headers=resolved_headers,
-                timeout=_bounded_timeout(remaining, supplied_timeout),
-                **request_options,
+            timeout = _bounded_timeout(remaining, supplied_timeout)
+            if max_response_bytes is None:
+                return await client.request(
+                    normalized_method, url, headers=resolved_headers,
+                    timeout=timeout, **request_options,
+                )
+            if max_response_bytes < 1:
+                raise ValueError("max_response_bytes must be positive")
+            request = client.build_request(
+                normalized_method, url, headers=resolved_headers,
+                timeout=timeout, **request_options,
             )
+            response = await client.send(request, stream=True)
+            content = bytearray()
+            try:
+                async for chunk in response.aiter_bytes():
+                    content.extend(chunk)
+                    if len(content) > max_response_bytes:
+                        raise IntegrationResponseTooLargeError(
+                            f"integration response exceeded {max_response_bytes} bytes"
+                        )
+            finally:
+                await response.aclose()
+            response._content = bytes(content)
+            return response
 
         try:
             response = await breaker.call(

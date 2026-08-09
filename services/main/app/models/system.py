@@ -14,6 +14,7 @@ from ksu_common.models.base import Base
 
 if TYPE_CHECKING:
     from .auth import User
+    from .outbox_event import OutboxEvent
 
 
 class Setting(Base):
@@ -98,6 +99,47 @@ class Webhook(Base):
     )
 
     created_by: Mapped["User"] = relationship("User", foreign_keys=[created_by_id])
+    deliveries: Mapped[list["WebhookDelivery"]] = relationship(
+        "WebhookDelivery", back_populates="webhook", cascade="all, delete-orphan"
+    )
 
 
-__all__ = ["Setting", "UserPreference", "ApiKey", "Webhook"]
+class WebhookDelivery(Base):
+    """Immutable outcome of one bounded webhook delivery attempt."""
+
+    __tablename__ = "webhook_deliveries"
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "webhook_id", "event_id", "attempt_number",
+            name="uq_webhook_deliveries_webhook_event_attempt",
+        ),
+        sa.CheckConstraint("attempt_number > 0", name="ck_webhook_deliveries_positive_attempt"),
+        sa.CheckConstraint(
+            "status IN ('delivered', 'retrying', 'dead_letter')",
+            name="ck_webhook_deliveries_status",
+        ),
+        sa.Index("ix_webhook_deliveries_webhook_attempted", "webhook_id", "attempted_at"),
+        sa.Index("ix_webhook_deliveries_event", "event_id", "attempt_number"),
+    )
+
+    webhook_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("webhooks.id", ondelete="CASCADE"), nullable=False
+    )
+    event_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("outbox_events.id", ondelete="CASCADE"), nullable=False
+    )
+    attempt_number: Mapped[int] = mapped_column(sa.Integer, nullable=False)
+    status: Mapped[str] = mapped_column(sa.String(24), nullable=False)
+    status_code: Mapped[Optional[int]] = mapped_column(sa.Integer, nullable=True)
+    duration_ms: Mapped[Optional[float]] = mapped_column(sa.Float, nullable=True)
+    error: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    attempted_at: Mapped[datetime] = mapped_column(
+        sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+    )
+    next_attempt_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True))
+
+    webhook: Mapped["Webhook"] = relationship("Webhook", back_populates="deliveries")
+    event: Mapped["OutboxEvent"] = relationship("OutboxEvent")
+
+
+__all__ = ["Setting", "UserPreference", "ApiKey", "Webhook", "WebhookDelivery"]

@@ -114,6 +114,10 @@ class Settings(BaseSettings):
     FCM_SERVER_KEY: str | None
 
     INTERNAL_API_KEY: str
+    WEBHOOK_DELIVERY_TIMEOUT_SECONDS: float = Field(default=10.0, gt=0, le=60)
+    WEBHOOK_MAX_RESPONSE_BYTES: int = Field(default=65_536, ge=1024, le=1_048_576)
+    WEBHOOK_MAX_ATTEMPTS: int = Field(default=8, ge=1, le=20)
+    WEBHOOK_REPLAY_WINDOW_SECONDS: int = Field(default=300, ge=30, le=3600)
 
     CORS_ORIGINS: list[str]
 

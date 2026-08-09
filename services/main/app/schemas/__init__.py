@@ -356,6 +356,7 @@ from .system import (
     UserPreferencesRead,
     UserPreferencesUpdate,
     WebhookCreate,
+    WebhookDeliveryRead,
     WebhookRead,
     WebhookUpdate,
 )
@@ -626,6 +627,7 @@ __all__ = [
     "WebhookCreate",
     "WebhookUpdate",
     "WebhookRead",
+    "WebhookDeliveryRead",
     "HeadMessageItem",
     "UniversityInfoCreate",
     "UniversityInfoUpdate",

@@ -135,7 +135,9 @@ jobs:
           pip install -e services/contracts
           pip install -e services/main -e services/research
       - name: Exercise request binding and serialization
-        run: python scripts/request_correctness_smoke.py
+        run: |
+          python scripts/request_correctness_smoke.py
+          python scripts/integration_infrastructure_smoke.py
 
   migrations:
     runs-on: ubuntu-latest

@@ -266,11 +266,11 @@
  },
  "main": {
   "alembic_heads": [
-   "20260805_0710"
+      "20260807_0720"
   ],
   "constructs": true,
   "foreign_schema_tables": [],
-    "route_count": 745,
+    "route_count": 747,
   "routes": [
    "DELETE /about-content/history-milestones/{item_id}",
    "DELETE /about-content/{item_id}",
@@ -535,7 +535,8 @@
    "GET /vice-chancellor/speeches/{speech_id}/videos",
    "GET /vice-chancellor/videos",
    "GET /webhooks",
-   "GET /webhooks/{item_id}",
+      "GET /webhooks/{item_id}",
+      "GET /webhooks/{item_id}/deliveries",
    "GET /{audit_id}",
    "GET /{contact_id}",
    "GET /{content_type}/{content_id}/logs",
@@ -800,7 +801,8 @@
    "POST /vice-chancellor/videos/youtube/preview",
    "POST /vice-chancellor/videos/{record_id}/refresh-metadata",
    "POST /vice-chancellor/{resource}/{record_id}/{action}",
-   "POST /webhooks",
+      "POST /webhooks",
+      "POST /webhooks/{item_id}/deliveries/{event_id}/retry",
    "POST /{announcement_id}/publish",
    "POST /{announcement_id}/unpublish",
    "POST /{association_id}/members",
@@ -838,8 +840,8 @@
    "PUT /{user_id}",
    "PUT /{user_id}/roles"
   ],
-    "settings_fields": 111,
-  "table_count": 100,
+    "settings_fields": 115,
+    "table_count": 101,
   "tables": [
    "about_page_content",
    "academic_calendars",
@@ -938,8 +940,9 @@
    "vc_portraits",
    "vc_speech_videos",
    "vc_speeches",
-   "vc_videos",
-   "webhooks",
+      "vc_videos",
+      "webhook_deliveries",
+      "webhooks",
    "wings"
   ]
  },

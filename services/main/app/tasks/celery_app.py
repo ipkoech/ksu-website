@@ -39,6 +39,9 @@ celery_app = create_celery_app(
             "main.inquiries.send_reply": {"queue": "main.email"},
             "main.outbox.publish_one": {"queue": "main.events"},
             "main.outbox.publish_pending": {"queue": "main.events"},
+            "main.webhooks.dispatch_event": {"queue": "main.integrations"},
+            "main.webhooks.deliver": {"queue": "main.integrations"},
+            "main.webhooks.dispatch_pending": {"queue": "main.integrations"},
             "main.notifications.consume_event": {"queue": "main.notifications"},
             "main.content.publish_due": {"queue": "main.maintenance"},
             "main.content.expire_due": {"queue": "main.maintenance"},
@@ -75,6 +78,10 @@ celery_app = create_celery_app(
                 "task": "main.outbox.publish_pending",
                 "schedule": 10.0,
             },
+            "dispatch-pending-webhooks": {
+                "task": "main.webhooks.dispatch_pending",
+                "schedule": 10.0,
+            },
             "prune-audit-logs-daily": {
                 "task": "main.audit.prune",
                 "schedule": crontab(hour=3, minute=20),
@@ -95,6 +102,7 @@ celery_app = create_celery_app(
             "app.tasks.media",
             "app.tasks.inquiries",
             "app.tasks.outbox",
+            "app.tasks.webhooks",
             "app.tasks.retention",
         ),
         shutdown_hooks=(_shutdown_main_resources,),

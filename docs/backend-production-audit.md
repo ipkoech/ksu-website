@@ -115,6 +115,23 @@ process pool will exhaust PostgreSQL.
 - Zero-logout key rotation is not yet claimed. It requires a public-key ring and
   overlapping JWKS publication and remains explicit follow-up work.
 
+## Phase 5 implementation status
+
+- Published outbox events now fan out to active webhook subscriptions by exact
+  event name or wildcard without placing third-party calls on request paths.
+- Webhook requests use the versioned domain-event envelope, an event idempotency
+  key, timestamped HMAC-SHA256 signatures, fixed deadlines, disabled redirects,
+  bounded response bodies, transport retries, and circuit breaking.
+- Every attempt is recorded in `webhook_deliveries` with response status,
+  duration, error, retry time, and terminal state. Administrators can inspect and
+  explicitly replay deliveries.
+- The `main.integrations` queue has its own worker and concurrency setting so a
+  failing third party cannot consume Main's email, event, notification, or
+  maintenance worker capacity.
+- Webhook configuration rejects obvious SSRF targets and never returns stored
+  secrets. The signing secret is generated when omitted and shown once at
+  creation.
+
 ## Release gates
 
 - All four applications construct with unchanged route/table surfaces.

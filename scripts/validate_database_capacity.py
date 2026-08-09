@@ -40,19 +40,23 @@ def validate(values: dict[str, str]) -> tuple[int, int, int]:
     celery_concurrency = _integer(values, "CELERY_CONCURRENCY", 1)
     api_replicas = _integer(values, "API_REPLICAS", 1)
     celery_replicas = _integer(values, "CELERY_REPLICAS", 1)
+    integration_concurrency = _integer(values, "CELERY_INTEGRATION_CONCURRENCY", 2)
+    integration_replicas = _integer(values, "INTEGRATION_WORKER_REPLICAS", 1)
 
     if pool_size < 1:
         raise ValueError("DB_POOL_SIZE must be at least 1")
-    if api_workers < 1 or celery_concurrency < 1:
-        raise ValueError("API_WORKERS and CELERY_CONCURRENCY must be at least 1")
-    if api_replicas < 1 or celery_replicas < 1:
-        raise ValueError("API_REPLICAS and CELERY_REPLICAS must be at least 1")
+    if api_workers < 1 or celery_concurrency < 1 or integration_concurrency < 1:
+        raise ValueError("worker concurrency values must be at least 1")
+    if api_replicas < 1 or celery_replicas < 1 or integration_replicas < 1:
+        raise ValueError("replica values must be at least 1")
     if reserve >= postgres_max:
         raise ValueError("POSTGRES_CONNECTION_RESERVE must be below POSTGRES_MAX_CONNECTIONS")
 
     pool_capacity = pool_size + max_overflow
     possible = (
-        (4 * api_replicas * api_workers) + (4 * celery_replicas * celery_concurrency)
+        (4 * api_replicas * api_workers)
+        + (4 * celery_replicas * celery_concurrency)
+        + (integration_replicas * integration_concurrency)
     ) * pool_capacity
     budget = postgres_max - reserve
     if possible > budget:

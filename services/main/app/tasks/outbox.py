@@ -114,6 +114,7 @@ async def _publish_one(event_id: uuid.UUID) -> str:
             mark_published(current)
             await db.commit()
     celery_app.send_task("main.notifications.consume_event", args=[str(event.id)])
+    celery_app.send_task("main.webhooks.dispatch_event", args=[str(event.id)])
     return "published"
 
 

@@ -12,8 +12,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common import PaginatedResult
+from ksu_common.security import is_safe_public_url
 
-from ..models import ApiKey, Setting, Webhook
+from ..models import ApiKey, Setting, Webhook, WebhookDelivery
 from ._base import apply_updates, paginate_query
 
 
@@ -144,6 +145,13 @@ class WebhookService:
 
     @staticmethod
     async def create(db: AsyncSession, *, created_by_id: uuid.UUID, **data) -> Webhook:
+        url = str(data.get("url", ""))
+        if not is_safe_public_url(url) or url.startswith("/"):
+            raise ValueError("webhook URL must be a public HTTP(S) endpoint")
+        data["secret"] = data.get("secret") or secrets.token_urlsafe(32)
+        data["events"] = sorted({str(event).strip() for event in data.get("events", []) if str(event).strip()})
+        if not data["events"]:
+            raise ValueError("at least one webhook event is required")
         item = Webhook(created_by_id=created_by_id, **data)
         db.add(item)
         await db.flush()
@@ -151,6 +159,14 @@ class WebhookService:
 
     @staticmethod
     async def update(db: AsyncSession, item: Webhook, **data) -> Webhook:
+        if "url" in data:
+            url = str(data["url"])
+            if not is_safe_public_url(url) or url.startswith("/"):
+                raise ValueError("webhook URL must be a public HTTP(S) endpoint")
+        if "events" in data:
+            data["events"] = sorted({str(event).strip() for event in data["events"] if str(event).strip()})
+            if not data["events"]:
+                raise ValueError("at least one webhook event is required")
         apply_updates(item, **data)
         await db.flush()
         return item
@@ -175,6 +191,21 @@ class WebhookService:
             query = query.options(*load_options)
         if is_active is not None:
             query = query.where(Webhook.is_active.is_(is_active))
+        return await paginate_query(db, query, page=page, per_page=per_page)
+
+    @staticmethod
+    async def list_deliveries(
+        db: AsyncSession,
+        webhook_id: uuid.UUID,
+        *,
+        page: int = 1,
+        per_page: int = 50,
+    ) -> PaginatedResult:
+        query = (
+            select(WebhookDelivery)
+            .where(WebhookDelivery.webhook_id == webhook_id)
+            .order_by(WebhookDelivery.attempted_at.desc())
+        )
         return await paginate_query(db, query, page=page, per_page=per_page)
 
 

@@ -91,7 +91,7 @@ from .about_content import (
 )
 
 # System
-from .system import ApiKey, Setting, UserPreference, Webhook
+from .system import ApiKey, Setting, UserPreference, Webhook, WebhookDelivery
 from .analytics import AnalyticsEvent
 from .idempotency import COMMAND_IDEMPOTENCY_STATES, CommandIdempotency
 from .outbox_event import OutboxEvent
@@ -218,6 +218,7 @@ __all__ = [
     "UserPreference",
     "ApiKey",
     "Webhook",
+    "WebhookDelivery",
     "AnalyticsEvent",
     "CommandIdempotency",
     "COMMAND_IDEMPOTENCY_STATES",

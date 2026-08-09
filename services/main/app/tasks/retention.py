@@ -87,6 +87,7 @@ async def _prune_outbox_events() -> int:
                     select(OutboxEvent.id)
                     .where(
                         OutboxEvent.published_at.is_not(None),
+                        OutboxEvent.webhooks_dispatched_at.is_not(None),
                         OutboxEvent.published_at < cutoff,
                     )
                     .limit(DELETE_BATCH_SIZE)

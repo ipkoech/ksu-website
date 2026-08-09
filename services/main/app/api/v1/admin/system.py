@@ -8,7 +8,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
-from ksu_common.schemas.responses import success
+from ksu_common.schemas.responses import SuccessResponse, success
 
 from ....deps import CurrentUser, DbSession, require_scope
 from ....models import ApiKey, Setting, Webhook
@@ -18,12 +18,31 @@ from ....schemas import (
     SettingCreate,
     SettingUpdate,
     WebhookCreate,
+    WebhookDeliveryRead,
     WebhookUpdate,
 )
 from ....services import ApiKeyService, SettingService, WebhookService
+from ....services.domain_events import enqueue_celery_after_commit
 from .._fields import FieldSelection, FieldsDep, build_selector
 
 router = APIRouter()
+
+
+def _webhook_payload(item: Webhook) -> dict[str, Any]:
+    """Serialize webhook configuration without ever returning its signing secret."""
+    return {
+        "id": str(item.id),
+        "name": item.name,
+        "url": item.url,
+        "events": item.events,
+        "is_active": item.is_active,
+        "last_triggered_at": item.last_triggered_at,
+        "last_status": item.last_status,
+        "failure_count": item.failure_count,
+        "created_by_id": str(item.created_by_id),
+        "created_at": item.created_at,
+        "updated_at": item.updated_at,
+    }
 
 
 class BulkSettingUpdateItem(BaseModel):
@@ -142,8 +161,14 @@ async def list_webhooks(db: DbSession, _: CurrentUser, page: int = 1, per_page: 
 
 @router.post("/webhooks", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("webhooks:write"))])
 async def create_webhook(data: WebhookCreate, db: DbSession, user: CurrentUser):
-    item = await WebhookService.create(db, created_by_id=user.id, **data.model_dump())
-    return success(data=item, message="Webhook created")
+    try:
+        item = await WebhookService.create(db, created_by_id=user.id, **data.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return success(
+        data={"record": _webhook_payload(item), "signing_secret": item.secret},
+        message="Webhook created; store the signing secret because it will not be shown again",
+    )
 
 
 @router.get("/webhooks/{item_id}", dependencies=[Depends(require_scope("webhooks:read"))])
@@ -161,8 +186,51 @@ async def update_webhook(item_id: uuid.UUID, data: WebhookUpdate, db: DbSession,
     item = await WebhookService.get_by_id(db, item_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Webhook not found")
-    item = await WebhookService.update(db, item, **data.model_dump(exclude_unset=True))
-    return success(data=item, message="Webhook updated")
+    try:
+        item = await WebhookService.update(db, item, **data.model_dump(exclude_unset=True))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return success(data=_webhook_payload(item), message="Webhook updated")
+
+
+@router.get(
+    "/webhooks/{item_id}/deliveries",
+    dependencies=[Depends(require_scope("webhooks:read"))],
+    response_model=SuccessResponse[list[WebhookDeliveryRead]],
+)
+async def list_webhook_deliveries(
+    item_id: uuid.UUID,
+    db: DbSession,
+    _: CurrentUser,
+    page: int = 1,
+    per_page: int = 50,
+):
+    if await WebhookService.get_by_id(db, item_id) is None:
+        raise HTTPException(status_code=404, detail="Webhook not found")
+    result = await WebhookService.list_deliveries(db, item_id, page=page, per_page=per_page)
+    return success(data=result.items, meta=result.meta)
+
+
+@router.post(
+    "/webhooks/{item_id}/deliveries/{event_id}/retry",
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(require_scope("webhooks:write"))],
+    response_model=SuccessResponse[dict[str, str]],
+)
+async def retry_webhook_delivery(
+    item_id: uuid.UUID,
+    event_id: uuid.UUID,
+    db: DbSession,
+    _: CurrentUser,
+):
+    if await WebhookService.get_by_id(db, item_id) is None:
+        raise HTTPException(status_code=404, detail="Webhook not found")
+    enqueue_celery_after_commit(
+        db,
+        "main.webhooks.deliver",
+        args=[str(item_id), str(event_id), True],
+    )
+    return success(data={"status": "queued"}, message="Webhook retry queued")
 
 
 @router.delete("/webhooks/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("webhooks:delete"))])

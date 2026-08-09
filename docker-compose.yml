@@ -422,6 +422,15 @@ services:
     command: celery -A app.tasks.celery_app.celery_app beat --loglevel=${CELERY_LOG_LEVEL:-INFO}
     expose: []
 
+  celery-main-integrations:
+    <<: *celery-main-service
+    command: >-
+      celery -A app.tasks.celery_app.celery_app worker
+      --loglevel=${CELERY_LOG_LEVEL:-INFO}
+      --concurrency=${CELERY_INTEGRATION_CONCURRENCY:-2}
+      --queues=main.integrations
+    expose: []
+
   celery-library: &celery-library-service
     image: ${BACKEND_IMAGE_PREFIX:-ksu-backend}/library:${IMAGE_TAG:-local}
     build:

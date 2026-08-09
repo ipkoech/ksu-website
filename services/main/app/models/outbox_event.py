@@ -45,6 +45,13 @@ class OutboxEvent(Base):
             "event_type",
             "occurred_at",
         ),
+        sa.Index(
+            "ix_outbox_events_webhook_dispatch",
+            "published_at",
+            postgresql_where=sa.text(
+                "published_at IS NOT NULL AND webhooks_dispatched_at IS NULL AND deleted_at IS NULL"
+            ),
+        ),
     )
 
     event_type: Mapped[str] = mapped_column(
@@ -109,6 +116,9 @@ class OutboxEvent(Base):
     published_at: Mapped[Optional[datetime]] = mapped_column(
         sa.DateTime(timezone=True),
         nullable=True,
+    )
+    webhooks_dispatched_at: Mapped[Optional[datetime]] = mapped_column(
+        sa.DateTime(timezone=True), nullable=True
     )
     last_error: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
     dead_lettered_at: Mapped[Optional[datetime]] = mapped_column(

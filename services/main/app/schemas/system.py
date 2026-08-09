@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from .base import BaseReadSchema, BaseSchema, UrlStr
 
@@ -97,25 +97,29 @@ class ApiKeyCreateResponse(BaseSchema):
 class WebhookCreate(BaseSchema):
     name: str = Field(min_length=1, max_length=255)
     url: UrlStr
-    secret: str | None = Field(default=None, max_length=255)
-    events: list[str]
+    secret: str | None = Field(default=None, min_length=32, max_length=255)
+    events: list[str] = Field(min_length=1)
     is_active: bool = True
 
 
 class WebhookUpdate(BaseSchema):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     url: UrlStr | None = None
-    secret: str | None = Field(default=None, max_length=255)
-    events: list[str] | None = None
+    secret: str | None = Field(default=None, min_length=32, max_length=255)
+    events: list[str] | None = Field(default=None, min_length=1)
     is_active: bool | None = None
-    last_status: int | None = None
-    failure_count: int | None = Field(default=None, ge=0)
+
+    @field_validator("secret")
+    @classmethod
+    def secret_cannot_be_cleared(cls, value: str | None) -> str | None:
+        if value is None:
+            raise ValueError("webhook secret cannot be cleared")
+        return value
 
 
 class WebhookRead(BaseReadSchema):
     name: str
     url: str
-    secret: str | None = None
     events: list[str]
     is_active: bool
     last_triggered_at: datetime | None = None
@@ -123,6 +127,18 @@ class WebhookRead(BaseReadSchema):
     failure_count: int
     created_by: dict[str, Any] | None = None
     created_by_id: uuid.UUID
+
+
+class WebhookDeliveryRead(BaseReadSchema):
+    webhook_id: uuid.UUID
+    event_id: uuid.UUID
+    attempt_number: int
+    status: str
+    status_code: int | None = None
+    duration_ms: float | None = None
+    error: str | None = None
+    attempted_at: datetime
+    next_attempt_at: datetime | None = None
 
 
 __all__ = [
@@ -140,4 +156,5 @@ __all__ = [
     "WebhookCreate",
     "WebhookUpdate",
     "WebhookRead",
+    "WebhookDeliveryRead",
 ]

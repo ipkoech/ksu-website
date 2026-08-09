@@ -1337,6 +1337,7 @@ SERVICES
 cloud_worker_services() {
   cat <<'SERVICES'
 main-worker:services/main/Dockerfile:./scripts/start-celery-worker.sh:main
+main-integrations-worker:services/main/Dockerfile:./scripts/start-celery-worker.sh:main
 library-worker:services/library/Dockerfile:./scripts/start-celery-worker.sh:library
 SERVICES
 }
@@ -1623,10 +1624,14 @@ deploy_cloud() {
 
   if [[ "${include_workers}" -eq 1 ]]; then
     while IFS=: read -r service _dockerfile command config_group; do
-      local image service_name env_prefix
+      local image service_name env_prefix worker_env
       image="$(image_uri "${project}" "${region}" "${repo}" "${env_name}" "${service}" "${tag}")"
       service_name="${prefix}-${env_name}-${service}"
       env_prefix="$(printf '%s' "${env_name}" | tr '[:lower:]' '[:upper:]')"
+      worker_env="APP_ENV=${env_name},SERVICE_NAME=${config_group},LOG_FORMAT=json,LOG_DIR=/tmp/logs,JWT_ALGORITHM=RS256,JWT_KEY_ID=active,JWT_ISSUER=ksu-auth,JWT_AUDIENCE=ksu-platform,JWT_SIGNING_ENABLED=false"
+      if [[ "${service}" == main-integrations-worker ]]; then
+        worker_env+=",CELERY_QUEUES=main.integrations,CELERY_CONCURRENCY=2"
+      fi
 
       echo "Deploying worker ${service_name}"
       run_cmd gcloud run deploy "${service_name}" \
@@ -1642,7 +1647,7 @@ deploy_cloud() {
         --max-instances 1 \
         --concurrency 1 \
         --timeout 3600 \
-        --set-env-vars "APP_ENV=${env_name},SERVICE_NAME=${config_group},LOG_FORMAT=json,LOG_DIR=/tmp/logs,JWT_ALGORITHM=RS256,JWT_KEY_ID=active,JWT_ISSUER=ksu-auth,JWT_AUDIENCE=ksu-platform,JWT_SIGNING_ENABLED=false" \
+        --set-env-vars "${worker_env}" \
         --set-secrets "DATABASE_URL=${env_prefix}_${config_group^^}_DATABASE_URL:latest,REDIS_URL=${env_prefix}_${config_group^^}_REDIS_URL:latest,CELERY_BROKER_URL=${env_prefix}_${config_group^^}_REDIS_URL:latest,CELERY_RESULT_BACKEND=${env_prefix}_${config_group^^}_REDIS_URL:latest,JWT_PUBLIC_KEY_B64=${env_prefix}_JWT_PUBLIC_KEY_B64:latest,INTERNAL_API_KEY=${env_prefix}_INTERNAL_API_KEY:latest"
     done < <(cloud_worker_services)
   fi
