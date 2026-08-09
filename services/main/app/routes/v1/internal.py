@@ -6,10 +6,14 @@ Protected by INTERNAL_API_KEY header — not exposed through the public gateway.
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from ksu_common.internal_client import internal_key_guard
 from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -17,7 +21,8 @@ from ...api.v1._fields import FieldsDep, FieldSelection, build_selector
 from ...core.config import get_settings
 from ...core.database import get_db
 from ...helpers.email import send_email
-from ...models import Event, Media, Person, StaffAssignment
+from ...models import AuditLog, Event, Media, Person, StaffAssignment
+from ...schemas.audit import AuditLogRead
 from ...services import (
     DepartmentService,
     EventService,
@@ -53,6 +58,74 @@ class InternalNotificationBroadcastPayload(BaseModel):
     action_url: str | None = Field(default=None, max_length=500)
     channels: list[str] = Field(default_factory=lambda: ["in_app"])
     payload: dict | None = None
+
+
+class InternalMediaResolvePayload(BaseModel):
+    ids: list[uuid.UUID] = Field(min_length=1, max_length=100)
+
+
+class InternalAuditPayload(BaseModel):
+    id: uuid.UUID
+    service_name: str = Field(max_length=64)
+    action: str = Field(max_length=128)
+    resource_type: str | None = Field(default=None, max_length=64)
+    resource_id: str | None = Field(default=None, max_length=64)
+    request_method: str = Field(max_length=16)
+    request_path: str = Field(max_length=512)
+    route_name: str | None = Field(default=None, max_length=255)
+    status_code: int
+    status: str = Field(max_length=20)
+    user_id: uuid.UUID | None = None
+    session_jti: str | None = Field(default=None, max_length=64)
+    ip_address: str | None = Field(default=None, max_length=45)
+    user_agent: str | None = Field(default=None, max_length=512)
+    error_message: str | None = None
+    details: dict | None = None
+    changes: dict | None = None
+    happened_at: datetime
+
+
+@router.post("/audit", dependencies=[Depends(verify_internal_key)], status_code=status.HTTP_202_ACCEPTED, response_model=dict[str, str])
+async def ingest_internal_audit(payload: InternalAuditPayload, db: AsyncSession = Depends(get_db)):
+    """Idempotently persist a sibling service's audit event in Main's schema."""
+    values = payload.model_dump()
+    statement = insert(AuditLog).values(**values).on_conflict_do_nothing(index_elements=[AuditLog.id])
+    await db.execute(statement)
+    await db.commit()
+    return {"status": "accepted", "id": str(payload.id)}
+
+
+@router.get("/audit", dependencies=[Depends(verify_internal_key)], response_model=dict[str, Any])
+async def list_internal_audit(
+    service_name: str = Query(..., max_length=64),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    user_id: uuid.UUID | None = None,
+    resource_type: str | None = Query(default=None, max_length=64),
+    resource_id: str | None = Query(default=None, max_length=64),
+    status_filter: str | None = Query(default=None, alias="status", max_length=20),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return only the requested service's audit stream to authenticated callers."""
+    query = select(AuditLog).where(AuditLog.deleted_at.is_(None), AuditLog.service_name == service_name)
+    if user_id is not None:
+        query = query.where(AuditLog.user_id == user_id)
+    if resource_type is not None:
+        query = query.where(AuditLog.resource_type == resource_type)
+    if resource_id is not None:
+        query = query.where(AuditLog.resource_id == resource_id)
+    if status_filter is not None:
+        query = query.where(AuditLog.status == status_filter)
+    query = query.order_by(AuditLog.happened_at.desc()).offset((page - 1) * per_page).limit(per_page + 1)
+    items = list((await db.execute(query)).scalars().all())
+    has_next = len(items) > per_page
+    data = [AuditLogRead.model_validate(item).model_dump(mode="json") for item in items[:per_page]]
+    return {
+        "status": "success",
+        "message": "ok",
+        "data": data,
+        "meta": {"page": page, "per_page": per_page, "has_next": has_next},
+    }
 
 
 @router.get("/events", dependencies=[Depends(verify_internal_key)])
@@ -216,6 +289,40 @@ async def get_public_media_snapshot(media_id: uuid.UUID, db: AsyncSession = Depe
         "url": media.url,
         "is_public": media.is_public,
     }
+
+
+@router.post("/media/resolve", dependencies=[Depends(verify_internal_key)], response_model=dict[str, Any])
+async def resolve_public_media(
+    payload: InternalMediaResolvePayload,
+    db: AsyncSession = Depends(get_db),
+):
+    """Resolve browser-safe media snapshots without exposing Main's tables."""
+    result = await db.execute(
+        select(Media).where(
+            Media.id.in_(set(payload.ids)),
+            Media.deleted_at.is_(None),
+            Media.is_public.is_(True),
+        )
+    )
+    by_id = {item.id: item for item in result.scalars().all()}
+    data = []
+    for identifier in payload.ids:
+        media = by_id.get(identifier)
+        if media is not None:
+            data.append(
+                {
+                    "id": str(media.id),
+                    "title": media.title,
+                    "alt_text": media.alt_text,
+                    "description": media.description,
+                    "caption": media.caption,
+                    "media_type": media.media_type,
+                    "thumbnail_url": media.thumbnail_url,
+                    "url": media.url,
+                    "is_public": True,
+                }
+            )
+    return {"status": "success", "data": data}
 
 
 @router.get("/references/{kind}/{item_id}", dependencies=[Depends(verify_internal_key)])

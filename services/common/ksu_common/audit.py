@@ -30,7 +30,6 @@ from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from .field_selection import scrub_sensitive
-from .models import AuditLog
 from .security import decode_token
 
 logger = logging.getLogger("audit")
@@ -384,6 +383,7 @@ async def build_audit_payload(
 
     status_value = "success" if status_code < 400 else "failure"
     return {
+        "id": str(uuid.uuid4()),
         "service_name": service_name,
         "action": _semantic_action(request),
         "resource_type": resource_type,
@@ -404,8 +404,9 @@ async def build_audit_payload(
     }
 
 
-def _audit_log_from_payload(payload: dict[str, Any]) -> AuditLog:
+def _audit_log_from_payload(payload: dict[str, Any], audit_model: type[Any]) -> Any:
     data = dict(payload)
+    raw_id = data.pop("id", None)
     raw_user_id = data.pop("user_id", None)
     raw_happened_at = data.pop("happened_at", None)
 
@@ -425,18 +426,20 @@ def _audit_log_from_payload(payload: dict[str, Any]) -> AuditLog:
         except ValueError:
             pass
 
-    return AuditLog(**data, user_id=user_id, happened_at=happened_at)
+    entry_id = uuid.UUID(str(raw_id)) if raw_id else uuid.uuid4()
+    return audit_model(id=entry_id, **data, user_id=user_id, happened_at=happened_at)
 
 
 async def persist_audit_payload(
     session_factory: async_sessionmaker[AsyncSession],
     payload: dict[str, Any],
+    audit_model: type[Any],
 ) -> None:
     """Write a payload built by :func:`build_audit_payload`.
 
     Safe to run outside the request — in a Celery task or any background worker.
     """
-    entry = _audit_log_from_payload(payload)
+    entry = _audit_log_from_payload(payload, audit_model)
     async with session_factory() as session:
         try:
             session.add(entry)
@@ -457,6 +460,7 @@ async def persist_audit_log(
     token_issuer: str,
     token_audience: str,
     token_key_id: str,
+    audit_model: type[Any],
     error_message: str | None = None,
     details: dict[str, Any] | None = None,
     changes: dict[str, Any] | None = None,
@@ -478,7 +482,7 @@ async def persist_audit_log(
         details=details,
         changes=changes,
     )
-    await persist_audit_payload(session_factory, payload)
+    await persist_audit_payload(session_factory, payload, audit_model)
 
 
 def should_skip_audit(path: str) -> bool:
@@ -522,9 +526,11 @@ def is_anonymous_read(request: Request) -> bool:
 
 def build_audit_tasks(
     celery_app: Any,
-    session_factory: async_sessionmaker[AsyncSession],
+    session_factory: async_sessionmaker[AsyncSession] | None,
     *,
     task_name: str,
+    audit_model: type[Any] | None = None,
+    persist_payload: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
 ) -> tuple[Any, Callable[[dict[str, Any]], Awaitable[None]]]:
     """Build a service's audit persistence task and its request-side dispatcher.
 
@@ -541,9 +547,17 @@ def build_audit_tasks(
     ``AuditOptions(dispatch=...)``.
     """
 
+    async def _persist(payload: dict[str, Any]) -> None:
+        if persist_payload is not None:
+            await persist_payload(payload)
+            return
+        if session_factory is None or audit_model is None:
+            raise RuntimeError("audit persistence is not configured")
+        await persist_audit_payload(session_factory, payload, audit_model)
+
     @celery_app.task(name=task_name, ignore_result=True)
     def persist_audit(payload: dict[str, Any]) -> None:
-        asyncio.run(persist_audit_payload(session_factory, payload))
+        asyncio.run(_persist(payload))
 
     async def dispatch_audit(payload: dict[str, Any]) -> None:
         """Hand the entry to a worker instead of writing it in the request.
@@ -557,6 +571,6 @@ def build_audit_tasks(
             await asyncio.to_thread(persist_audit.delay, payload)
         except Exception:
             logger.exception("failed to queue audit entry; writing inline")
-            await persist_audit_payload(session_factory, payload)
+            await _persist(payload)
 
     return persist_audit, dispatch_audit

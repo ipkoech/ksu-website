@@ -14,10 +14,12 @@ from __future__ import annotations
 from ksu_common.audit import build_audit_tasks
 
 from ..core.database import AsyncSessionLocal
+from ..models import AuditLog
 from .celery_app import celery_app
 
 persist_audit, dispatch_audit = build_audit_tasks(
     celery_app,
     AsyncSessionLocal,
     task_name="main.audit.persist",
+    audit_model=AuditLog,
 )

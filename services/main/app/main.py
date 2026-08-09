@@ -28,7 +28,7 @@ from .core.config import get_settings
 from .core.database import AsyncSessionLocal
 from .helpers.storage import normalize_storage_path
 from .helpers.email import close_email_transport
-from .models import Media
+from .models import AuditLog, Media
 from .realtime.connection_manager import manager
 from .realtime.redis_subscriber import subscriber
 from .services.change_tracking import (
@@ -85,6 +85,7 @@ def create_app() -> FastAPI:
             token_issuer=settings.JWT_ISSUER,
             token_audience=settings.JWT_AUDIENCE,
             token_key_id=settings.JWT_KEY_ID,
+            audit_model=AuditLog,
             begin_request=_begin_request_audit,
             collect_changes=collected_audit_changes,
             finish_request=reset_audit_context,

@@ -137,6 +137,8 @@ failed = any(not snap[svc].get("constructs") for svc in SERVICES)
 failed = failed or any(snap[svc].get("alembic_heads") == ["<error>"] for svc in SERVICES)
 failed = failed or "error" in snap["_kernel"]
 failed = failed or "error" in snap["_contracts"]
+failed = failed or any(snap[svc].get("foreign_schema_tables") for svc in SERVICES)
+failed = failed or bool(snap["_kernel"].get("base_metadata"))
 
 if len(sys.argv) == 4:
     expected_path = pathlib.Path(sys.argv[3])

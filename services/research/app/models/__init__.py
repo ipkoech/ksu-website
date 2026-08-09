@@ -1,6 +1,5 @@
 """Research service ORM models."""
 
-from ksu_common.models import AuditLog
 from ksu_common.models.base import SEOMixin, PolymorphicMixin
 
 from .base import Base
@@ -119,7 +118,6 @@ __all__ = [
     "Base",
     "ResearchAIConversation",
     "ResearchAIMessage",
-    "AuditLog",
     "SEOMixin",
     "PolymorphicMixin",
     "PublicMedia",

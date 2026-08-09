@@ -10,9 +10,9 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common import PaginatedResult
-from ksu_common.models import AuditLog
 
 from ..schemas.school_portal_audit import SchoolPortalAuditCreate
+from ..models import AuditLog
 from ._base import paginate_query
 
 

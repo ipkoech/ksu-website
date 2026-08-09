@@ -14,13 +14,12 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone
 
-from ksu_common.models import AuditLog
 from ksu_common.task_queue import run_worker_async
 from sqlalchemy import delete, select
 
 from ..core.config import get_settings
 from ..core.database import AsyncSessionLocal
-from ..models import OutboxEvent
+from ..models import AuditLog, OutboxEvent
 from .celery_app import celery_app
 
 logger = logging.getLogger(__name__)

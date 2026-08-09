@@ -8,7 +8,7 @@ from pathlib import Path
 from sqlalchemy import delete, select
 
 from app.core.database import AsyncSessionLocal
-from app.models import Partner, PublicMedia
+from app.models import Partner
 from app.schemas.base import slugify
 
 ASSET_ROOT = Path(__file__).resolve().parent / "assets" / "partners"
@@ -44,54 +44,21 @@ def partner_logo_url(spec: dict) -> str | None:
     return f"https://www.google.com/s2/favicons?domain={domain}&sz=256"
 
 
-async def upsert_partner_logo(db, spec: dict, slug: str) -> PublicMedia | None:
-    logo_url = partner_logo_url(spec)
-    if not logo_url:
-        return None
-
-    result = await db.execute(select(PublicMedia).where(PublicMedia.public_url == logo_url))
-    media = result.scalar_one_or_none()
-    filename = f"{slug}-logo.png"
-    payload = {
-        "filename": filename,
-        "original_filename": filename,
-        "mime_type": "image/png",
-        "file_size": 1,
-        "storage_provider": "external",
-        "storage_path": logo_url,
-        "public_url": logo_url,
-        "cdn_url": logo_url,
-        "title": f"{spec['name']} logo",
-        "alt_text": f"{spec['name']} logo",
-        "description": f"Public logo image for {spec['name']}.",
-        "caption": f"{spec['name']} logo",
-        "media_type": "image",
-        "thumbnail_url": logo_url,
-        "is_public": True,
-        "is_processed": True,
-    }
-
-    if media is None:
-        media = PublicMedia(**payload)
-        db.add(media)
-    else:
-        for field_name, value in payload.items():
-            setattr(media, field_name, value)
-
-    await db.flush()
-    return media
+async def upsert_partner_logo(db, spec: dict, slug: str) -> None:
+    """Research seeders do not create records in Main's media schema."""
+    return None
 
 
 async def upsert_partner(db, spec: dict, display_order: int) -> None:
     slug = slugify(spec["name"])
     result = await db.execute(select(Partner).where(Partner.slug == slug))
     partner = result.scalar_one_or_none()
-    logo = await upsert_partner_logo(db, spec, slug)
+    await upsert_partner_logo(db, spec, slug)
 
     payload = {
         **{key: value for key, value in spec.items() if key != "logo_domain"},
         "slug": slug,
-        "logo_id": logo.id if logo else None,
+        "logo_id": None,
         "status": "active",
         "is_active": True,
         "is_featured": display_order <= 60,

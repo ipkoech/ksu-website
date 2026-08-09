@@ -1,6 +1,5 @@
 """Library ORM models."""
 
-from ksu_common.models import AuditLog
 from ksu_common.models.base import Base  # noqa: F401
 
 from .library import Library, LibraryExternalLink, LibraryFile, LibraryHours
@@ -38,7 +37,6 @@ from .engagement import (
 
 __all__ = [
     "Base",
-    "AuditLog",
     # library
     "Library",
     "LibraryHours",

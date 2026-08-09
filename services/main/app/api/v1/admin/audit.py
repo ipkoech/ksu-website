@@ -8,9 +8,9 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ksu_common.schemas.responses import success
-from ksu_common.models import AuditLog
 
 from ....deps import CurrentUser, DbSession, require_scope, user_has_scope
+from ....models import AuditLog
 from ....services import AuditService
 from .._fields import FieldSelection, FieldsDep, build_selector
 

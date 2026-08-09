@@ -15,7 +15,8 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.execute("CREATE SCHEMA IF NOT EXISTS heri")
+    # The privileged ownership bootstrap creates and assigns the schema. The
+    # HERI role intentionally lacks database-wide CREATE privileges.
     tables = [
         table
         for table_name, table in Base.metadata.tables.items()
@@ -31,4 +32,3 @@ def downgrade() -> None:
         if table_name != "heri.command_idempotency"
     ]
     Base.metadata.drop_all(bind=op.get_bind(), tables=tables)
-    op.execute("DROP SCHEMA IF EXISTS heri CASCADE")

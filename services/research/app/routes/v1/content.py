@@ -6,11 +6,9 @@ from typing import Annotated, Any
 from fastapi import APIRouter
 from fastapi import Depends, HTTPException
 from fastapi.responses import RedirectResponse
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.database import get_db
-from ...models import PublicMedia
 from ...schemas import (
     ResearchGuidelineCreate,
     ResearchGuidelineUpdate,
@@ -20,6 +18,7 @@ from ...schemas import (
     ResearchServiceUpdate,
 )
 from ...services import GuidelineService, ResourceService, SupportService
+from ...services.media_snapshots import public_media_by_id
 from ...schemas.base import JsonObject, SuccessEnvelope
 from ksu_common.response_validation import allow_response_model_exemption
 from ._crud import build_crud_router
@@ -52,14 +51,7 @@ def _media_ids(value: Any) -> list[uuid.UUID]:
 async def _public_media_url(db: AsyncSession, media_ids: list[uuid.UUID]) -> str:
     if not media_ids:
         return ""
-    result = await db.execute(
-        select(PublicMedia).where(
-            PublicMedia.id.in_(media_ids),
-            PublicMedia.deleted_at.is_(None),
-            PublicMedia.is_public.is_(True),
-        )
-    )
-    media_by_id = {item.id: item for item in result.scalars().all()}
+    media_by_id = await public_media_by_id(media_ids)
     for media_id in media_ids:
         media = media_by_id.get(media_id)
         if media is not None:

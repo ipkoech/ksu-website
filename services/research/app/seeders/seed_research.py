@@ -21,7 +21,6 @@ from app.models import (
     Partner,
     Publication,
     PublicationAuthor,
-    PublicMedia,
     ResearchCenter,
     ResearchOutput,
     ResearchProgram,
@@ -78,37 +77,9 @@ async def upsert_public_media(
     public_url: str,
     title: str,
     alt_text: str,
-) -> PublicMedia:
-    storage_path = public_url.removeprefix("/uploads/").removeprefix("/")
-    result = await db.execute(select(PublicMedia).where(PublicMedia.public_url == public_url))
-    media = result.scalar_one_or_none()
-    payload = {
-        "filename": storage_path.rsplit("/", 1)[-1],
-        "original_filename": storage_path.rsplit("/", 1)[-1],
-        "mime_type": "image/webp",
-        "file_size": 1,
-        "storage_provider": "local",
-        "storage_path": storage_path,
-        "public_url": public_url,
-        "title": title,
-        "alt_text": alt_text,
-        "description": title,
-        "caption": title,
-        "media_type": "image",
-        "thumbnail_url": public_url,
-        "is_public": True,
-        "is_processed": True,
-    }
-
-    if media is None:
-        media = PublicMedia(**payload)
-        db.add(media)
-    else:
-        for field_name, value in payload.items():
-            setattr(media, field_name, value)
-
-    await db.flush()
-    return media
+) -> None:
+    """Media is Main-owned; seeders may record URLs but never create Main rows."""
+    return None
 
 
 def partner_logo_url(spec: dict[str, Any]) -> str | None:
@@ -118,42 +89,9 @@ def partner_logo_url(spec: dict[str, Any]) -> str | None:
     return f"https://www.google.com/s2/favicons?domain={domain}&sz=256"
 
 
-async def upsert_partner_logo(db: AsyncSession, spec: dict[str, Any], slug: str) -> PublicMedia | None:
-    logo_url = partner_logo_url(spec)
-    if not logo_url:
-        return None
-
-    result = await db.execute(select(PublicMedia).where(PublicMedia.public_url == logo_url))
-    media = result.scalar_one_or_none()
-    filename = f"{slug}-logo.png"
-    payload = {
-        "filename": filename,
-        "original_filename": filename,
-        "mime_type": "image/png",
-        "file_size": 1,
-        "storage_provider": "external",
-        "storage_path": logo_url,
-        "public_url": logo_url,
-        "cdn_url": logo_url,
-        "title": f"{spec['name']} logo",
-        "alt_text": f"{spec['name']} logo",
-        "description": f"Public logo image for {spec['name']}.",
-        "caption": f"{spec['name']} logo",
-        "media_type": "image",
-        "thumbnail_url": logo_url,
-        "is_public": True,
-        "is_processed": True,
-    }
-
-    if media is None:
-        media = PublicMedia(**payload)
-        db.add(media)
-    else:
-        for field_name, value in payload.items():
-            setattr(media, field_name, value)
-
-    await db.flush()
-    return media
+async def upsert_partner_logo(db: AsyncSession, spec: dict[str, Any], slug: str) -> None:
+    """Keep the source URL in Partner.social_links; Main owns media creation."""
+    return None
 
 
 async def seed_centers(db: AsyncSession) -> dict[str, ResearchCenter]:
@@ -224,7 +162,7 @@ async def seed_programs(
     research_center = centers["research-extension-innovation-and-resource-mobilization"]
     sist_center = centers["school-of-information-science-and-technology-research"]
     agriculture_center = centers["centre-for-sustainable-agriculture-extension"]
-    crasp_cover = await upsert_public_media(
+    await upsert_public_media(
         db,
         public_url="/images/research/research-projects-hero.webp",
         title="Climate-resilient agrifood systems program cover image",
@@ -235,7 +173,7 @@ async def seed_programs(
             "name": "Climate-Resilient Agrifood Systems Program",
             "code": "CRASP/2024/01",
             "center_id": agriculture_center.id,
-            "cover_image_id": crasp_cover.id,
+            "cover_image_id": None,
             "start_date": date(2024, 1, 1),
             "end_date": date(2028, 12, 31),
             "summary": (
@@ -1108,10 +1046,10 @@ async def seed_partners(db: AsyncSession) -> None:
     official_slugs: list[str] = []
     for order, spec in enumerate(specs, start=1):
         slug = slugify(spec["name"])
-        logo = await upsert_partner_logo(db, spec, slug)
+        await upsert_partner_logo(db, spec, slug)
         payload = {
             **{key: value for key, value in spec.items() if key != "logo_domain"},
-            "logo_id": logo.id if logo else None,
+            "logo_id": None,
             "about": f"Active memorandum of understanding between Kisii University and {spec['name']}.",
             "collaboration_areas": "Research, academic collaboration, extension, innovation, and institutional partnership.",
             "key_achievements": "Published by Kisii University as an active memorandum of understanding.",

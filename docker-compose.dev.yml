@@ -55,6 +55,8 @@ services:
       JWT_ISSUER: ${JWT_ISSUER:-ksu-auth}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-ksu-platform}
       RESEARCH_SERVICE_API_KEY: change-me-internal # pragma: allowlist secret
+      MAIN_SERVICE_URL: http://main:8000
+      MAIN_SERVICE_API_KEY: change-me-internal # pragma: allowlist secret
       CORS_ORIGINS: '["http://localhost:3000", "http://localhost:3001", "http://localhost:3004"]'
   celery-main:
     environment:

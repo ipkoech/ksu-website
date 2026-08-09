@@ -15,7 +15,7 @@ from typing import Any
 from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
-from app.models import Partner, PublicMedia
+from app.models import Partner
 
 
 PUBLIC_ROOT = "/images/research/partners"
@@ -84,22 +84,6 @@ def _media_payload(slug: str, spec: dict[str, str]) -> dict[str, Any]:
     }
 
 
-async def upsert_logo_media(db, slug: str, spec: dict[str, str]) -> PublicMedia:
-    payload = _media_payload(slug, spec)
-    result = await db.execute(select(PublicMedia).where(PublicMedia.public_url == payload["public_url"]))
-    media = result.scalar_one_or_none()
-
-    if media is None:
-        media = PublicMedia(**payload)
-        db.add(media)
-    else:
-        for field_name, value in payload.items():
-            setattr(media, field_name, value)
-
-    await db.flush()
-    return media
-
-
 async def attach_partner_logos() -> list[str]:
     attached: list[str] = []
     async with AsyncSessionLocal() as db:
@@ -109,8 +93,7 @@ async def attach_partner_logos() -> list[str]:
                 if partner is None:
                     continue
 
-                media = await upsert_logo_media(db, slug, spec)
-                logo_url = media.public_url or media.cdn_url or media.storage_path
+                logo_url = _media_payload(slug, spec)["public_url"]
                 social_links = dict(partner.social_links or {})
                 social_links.update(
                     {
@@ -123,7 +106,7 @@ async def attach_partner_logos() -> list[str]:
                     social_links["logo_source_url"] = source_url
                 else:
                     social_links.pop("logo_source_url", None)
-                partner.logo_id = media.id
+                partner.logo_id = None
                 partner.social_links = social_links
                 attached.append(slug)
 

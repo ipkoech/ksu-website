@@ -12,7 +12,6 @@ from ksu_common.stats import count_active as _count
 
 from ..core.config import get_settings
 from ..models import (
-    AuditLog,
     Donation,
     Grant,
     GrantApplication,
@@ -34,6 +33,7 @@ from ..schemas.analytics import (
     ResearchAnalyticsPoint,
     ResearchDashboardAnalytics,
 )
+from .audit_snapshots import list_audit_snapshots
 
 
 class ResearchAnalyticsService:
@@ -231,17 +231,14 @@ async def _pending_application_count(db: AsyncSession) -> int:
 
 
 async def _audit_chart(db: AsyncSession, service_name: str, now: datetime) -> ResearchAnalyticsChart:
-    result = await db.execute(
-        select(AuditLog.action, func.count(AuditLog.id))
-        .where(
-            AuditLog.deleted_at.is_(None),
-            AuditLog.service_name == service_name,
-            AuditLog.happened_at >= now - timedelta(days=30),
-        )
-        .group_by(AuditLog.action)
-        .order_by(func.count(AuditLog.id).desc())
-        .limit(8)
-    )
+    records = (await list_audit_snapshots(page=1, per_page=100)).get("data", [])
+    counts: dict[str, int] = {}
+    cutoff = now - timedelta(days=30)
+    for record in records:
+        happened_at = datetime.fromisoformat(str(record["happened_at"]).replace("Z", "+00:00"))
+        if happened_at >= cutoff:
+            action = str(record.get("action") or "unknown")
+            counts[action] = counts.get(action, 0) + 1
     return ResearchAnalyticsChart(
         key="audit_actions",
         title="Admin actions",
@@ -249,22 +246,20 @@ async def _audit_chart(db: AsyncSession, service_name: str, now: datetime) -> Re
         description="Research service audit actions in the last 30 days.",
         data=[
             ResearchAnalyticsPoint(key=str(action), label=_label(action), value=int(value or 0), href="/research/reports")
-            for action, value in result.all()
+            for action, value in sorted(counts.items(), key=lambda item: item[1], reverse=True)[:8]
         ],
     )
 
 
 async def _audit_status_chart(db: AsyncSession, service_name: str, now: datetime) -> ResearchAnalyticsChart:
-    result = await db.execute(
-        select(AuditLog.status, func.count(AuditLog.id))
-        .where(
-            AuditLog.deleted_at.is_(None),
-            AuditLog.service_name == service_name,
-            AuditLog.happened_at >= now - timedelta(days=30),
-        )
-        .group_by(AuditLog.status)
-        .order_by(func.count(AuditLog.id).desc())
-    )
+    records = (await list_audit_snapshots(page=1, per_page=100)).get("data", [])
+    counts: dict[str, int] = {}
+    cutoff = now - timedelta(days=30)
+    for record in records:
+        happened_at = datetime.fromisoformat(str(record["happened_at"]).replace("Z", "+00:00"))
+        if happened_at >= cutoff:
+            audit_status = str(record.get("status") or "unknown")
+            counts[audit_status] = counts.get(audit_status, 0) + 1
     return ResearchAnalyticsChart(
         key="audit_status",
         title="Audit health",
@@ -272,7 +267,7 @@ async def _audit_status_chart(db: AsyncSession, service_name: str, now: datetime
         description="Successful and failed research admin actions in the last 30 days.",
         data=[
             ResearchAnalyticsPoint(key=str(status), label=_label(status), value=int(value or 0), href="/research/reports")
-            for status, value in result.all()
+            for status, value in sorted(counts.items(), key=lambda item: item[1], reverse=True)
         ],
     )
 

@@ -162,6 +162,43 @@ jobs:
       - name: Validate migration history and source
         run: python scripts/ci_environment.py "${{ matrix.service }}" -- scripts/validate_migrations.sh "${{ matrix.service }}"
 
+  database-ownership:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ksu_ownership_ci
+          POSTGRES_USER: ksu_admin
+          POSTGRES_PASSWORD: ci-admin-password # pragma: allowlist secret
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U ksu_admin -d ksu_ownership_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Provision isolated service roles
+        env:
+          POSTGRES_DB: ksu_ownership_ci
+          DATABASE_ADMIN_USER: ksu_admin
+          DATABASE_ADMIN_PASSWORD: ci-admin-password # pragma: allowlist secret
+          DATABASE_HOST: 127.0.0.1
+          MAIN_DB_PASSWORD: ci-main-password # pragma: allowlist secret
+          RESEARCH_DB_PASSWORD: ci-research-password # pragma: allowlist secret
+          LIBRARY_DB_PASSWORD: ci-library-password # pragma: allowlist secret
+          HERI_DB_PASSWORD: ci-heri-password # pragma: allowlist secret
+        run: |
+          scripts/init-database-ownership.sh
+          for pair in "ksu_main main" "ksu_research research" "ksu_library library" "ksu_heri heri"; do
+            read -r role schema <<<"$pair"
+            PGPASSWORD="$DATABASE_ADMIN_PASSWORD" psql -X -h "$DATABASE_HOST" -U "$role" -d "$POSTGRES_DB" \
+              -v ON_ERROR_STOP=1 -c "CREATE TABLE ${schema}.ownership_probe (id bigint PRIMARY KEY)"
+          done
+      - name: Prove ownership and deny cross-schema access
+        env:
+          DATABASE_ADMIN_URL: postgresql://ksu_admin:ci-admin-password@127.0.0.1:5432/ksu_ownership_ci # pragma: allowlist secret
+        run: python scripts/verify_database_ownership.py
+
   frontend:
     runs-on: ubuntu-latest
     steps:

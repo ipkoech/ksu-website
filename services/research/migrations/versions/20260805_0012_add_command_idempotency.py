@@ -43,16 +43,18 @@ def upgrade() -> None:
             "command_name", "scope", "idempotency_key",
             name="uq_research_command_idempotency_scope_key",
         ),
+        schema="research",
     )
     op.create_index(
         "ix_research_command_idempotency_state",
         "command_idempotency",
         ["state"],
         unique=False,
+        schema="research",
     )
     op.execute(
         """
-        CREATE FUNCTION research_command_idempotency_reject_terminal_update()
+        CREATE FUNCTION research.research_command_idempotency_reject_terminal_update()
         RETURNS trigger AS $$
         BEGIN
             IF OLD.state IN ('completed', 'failed') THEN
@@ -66,8 +68,8 @@ def upgrade() -> None:
     op.execute(
         """
         CREATE TRIGGER research_command_idempotency_terminal_immutable
-        BEFORE UPDATE ON command_idempotency
-        FOR EACH ROW EXECUTE FUNCTION research_command_idempotency_reject_terminal_update()
+        BEFORE UPDATE ON research.command_idempotency
+        FOR EACH ROW EXECUTE FUNCTION research.research_command_idempotency_reject_terminal_update()
         """
     )
 
@@ -75,7 +77,8 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.execute(
         "DROP TRIGGER IF EXISTS research_command_idempotency_terminal_immutable "
-        "ON command_idempotency"
+        "ON research.command_idempotency"
     )
-    op.execute("DROP FUNCTION IF EXISTS research_command_idempotency_reject_terminal_update()")
-    op.drop_table("command_idempotency")
+    op.execute("DROP FUNCTION IF EXISTS research.research_command_idempotency_reject_terminal_update()")
+    op.drop_index("ix_research_command_idempotency_state", table_name="command_idempotency", schema="research")
+    op.drop_table("command_idempotency", schema="research")

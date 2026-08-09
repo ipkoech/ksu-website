@@ -9,10 +9,10 @@ from typing import Any
 import sqlalchemy as sa
 from ksu_common.pagination import PaginatedResult, paginate
 from ksu_common.security import is_safe_public_url
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models import PublicMedia, Publication, ResearchProject
+from .media_snapshots import public_media_by_id
 from ..schemas.page_cms_source_contract import PageCmsResearchSourceSummary
 
 SUPPORTED_PAGE_CMS_RESEARCH_SOURCE_TYPES = frozenset({"research_project", "publication"})
@@ -152,14 +152,7 @@ class PageCmsResearchSourceService:
     async def _public_media_by_id(db: AsyncSession, media_ids: list[uuid.UUID]) -> dict[uuid.UUID, PublicMedia]:
         if not media_ids:
             return {}
-        result = await db.execute(
-            select(PublicMedia).where(
-                PublicMedia.id.in_(set(media_ids)),
-                PublicMedia.deleted_at.is_(None),
-                PublicMedia.is_public.is_(True),
-            )
-        )
-        return {media.id: media for media in result.scalars().all()}
+        return await public_media_by_id(media_ids)
 
     @staticmethod
     def _summary(

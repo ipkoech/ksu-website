@@ -8,7 +8,6 @@ from typing import Any
 
 from fastapi import HTTPException, status
 from ksu_common.internal_client import get_integration_pool
-from ksu_common.models import AuditLog
 from sqlalchemy import delete, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -38,6 +37,7 @@ from ..models import (
     sustainability_projects,
 )
 from ._crud import build_simple_service
+from .audit_snapshots import list_audit_snapshots
 
 CenterService = build_simple_service(
     ResearchCenter,
@@ -202,17 +202,7 @@ class ProjectDetailService:
                     .order_by(Sustainability.display_order.asc(), Sustainability.created_at.desc()),
                     "initiative_type",
                 ),
-                "audit": await _related_many(
-                    db,
-                    AuditLog.active_query()
-                    .where(AuditLog.resource_type.in_(("research_project", "projects", "project")))
-                    .where(AuditLog.resource_id == str(project.id))
-                    .order_by(AuditLog.happened_at.desc())
-                    .limit(20),
-                    "action",
-                    "status",
-                    "happened_at",
-                ),
+                "audit": (await list_audit_snapshots(page=1, per_page=20, resource_id=str(project.id))).get("data", []),
             },
         }
 
@@ -596,17 +586,7 @@ class FarmDetailService:
                 "activities": await FarmRelationshipService.list_activities(db, farm.id),
                 "impact": await FarmRelationshipService.list_impact_stories(db, farm.id),
                 "metrics": await FarmRelationshipService.list_impact_metrics(db, farm.id),
-                "audit": await _related_many(
-                    db,
-                    AuditLog.active_query()
-                    .where(AuditLog.resource_type.in_(("research_farm", "farms", "farm")))
-                    .where(AuditLog.resource_id == str(farm.id))
-                    .order_by(AuditLog.happened_at.desc())
-                    .limit(20),
-                    "action",
-                    "status",
-                    "happened_at",
-                ),
+                "audit": (await list_audit_snapshots(page=1, per_page=20, resource_id=str(farm.id))).get("data", []),
             },
         }
 

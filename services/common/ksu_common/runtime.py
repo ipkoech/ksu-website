@@ -101,6 +101,7 @@ class AuditOptions:
     token_issuer: str
     token_audience: str
     token_key_id: str
+    audit_model: type[Any] | None = None
     skip_path: Callable[[str], bool] = should_skip_audit
     begin_request: Callable[[Request], object] | None = None
     collect_changes: Callable[[], dict[str, Any] | None] | None = None
@@ -230,6 +231,8 @@ def create_service_app(
 
         changes = options.collect_changes() if options.collect_changes else None
         if options.dispatch is None:
+            if options.audit_model is None:
+                raise RuntimeError("inline audit persistence requires audit_model")
             await persist_audit_log(
                 options.session_factory,
                 service_name=options.service_name,
@@ -240,6 +243,7 @@ def create_service_app(
                 token_issuer=options.token_issuer,
                 token_audience=options.token_audience,
                 token_key_id=options.token_key_id,
+                audit_model=options.audit_model,
                 error_message=error_message,
                 changes=changes,
             )
@@ -266,7 +270,10 @@ def create_service_app(
                 "failed to dispatch audit entry for %s; falling back to inline write",
                 payload.get("request_path"),
             )
-            await persist_audit_payload(options.session_factory, payload)
+            if options.audit_model is None:
+                logger.error("audit dispatch failed and no inline audit model is configured")
+            else:
+                await persist_audit_payload(options.session_factory, payload, options.audit_model)
 
     # Register this last so body-limit middleware installed by route registrars
     # is inside the shared observation boundary. Header-only rejections still

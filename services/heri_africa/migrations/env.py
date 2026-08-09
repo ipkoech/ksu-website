@@ -5,6 +5,8 @@ from logging.config import fileConfig
 from typing import Any
 
 from alembic import context
+from alembic.script import ScriptDirectory
+from sqlalchemy import inspect, text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.core.config import get_settings
@@ -72,6 +74,28 @@ async def run_migrations_online() -> None:
     engine = create_async_engine(settings.DATABASE_URL)
     async with engine.connect() as connection:
         async with connection.begin():
+            # PostgreSQL enum DDL follows search_path even when tables carry an
+            # explicit schema. Keep every generated type inside HERI ownership.
+            await connection.execute(text('SET LOCAL search_path TO "heri", public'))
+            is_empty = await connection.run_sync(
+                lambda sync: not inspect(sync).get_table_names(schema=target_schema)
+            )
+            if is_empty:
+                await connection.run_sync(lambda sync: target_metadata.create_all(bind=sync))
+                head = ScriptDirectory.from_config(config).get_current_head()
+                if head is None:
+                    raise RuntimeError("HERI migration history has no head revision")
+                await connection.execute(
+                    text(
+                        'CREATE TABLE heri.alembic_version '
+                        '(version_num VARCHAR(32) NOT NULL PRIMARY KEY)'
+                    )
+                )
+                await connection.execute(
+                    text('INSERT INTO heri.alembic_version (version_num) VALUES (:head)'),
+                    {"head": head},
+                )
+                return
             await connection.run_sync(
                 lambda sync: context.configure(
                     connection=sync,

@@ -132,6 +132,23 @@ process pool will exhaust PostgreSQL.
   secrets. The signing secret is generated when omitted and shown once at
   creation.
 
+## Phase 6 implementation status
+
+- Main, Research, Library, and HERI Africa now expose only tables in their owned
+  schemas. The shared kernel registers no tables, and CI fails immediately if a
+  foreign-schema ORM mapping or kernel table is introduced.
+- Provisioning creates one non-elevated login role per schema, removes access to
+  every foreign service schema and its tables/sequences, and removes public
+  schema creation rights.
+- A live ownership verifier checks schema, table, and sequence owners; rejects
+  elevated role capabilities; and rejects every foreign schema or DML grant.
+  CI provisions PostgreSQL and runs this proof on every change.
+- Request audit storage remains Main-owned and is reached through an authenticated,
+  idempotent internal contract. Research media references resolve through an
+  authenticated batch snapshot contract instead of mapping `main.media`.
+- Research seeders no longer create Main media rows. External logo source URLs
+  remain Research data; creation of a canonical media asset belongs to Main.
+
 ## Release gates
 
 - All four applications construct with unchanged route/table surfaces.

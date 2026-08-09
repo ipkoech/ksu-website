@@ -48,6 +48,8 @@ class HeriSettings(BaseSettings):
     CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:3001", "http://localhost:3004"]
     RESEARCH_SERVICE_URL: str = "http://research:8001"
     RESEARCH_SERVICE_API_KEY: str | None = None
+    MAIN_SERVICE_URL: str = "http://main:8000"
+    MAIN_SERVICE_API_KEY: str | None = None
     PUBLIC_CONTENT_RATE_LIMIT_COUNT: int = Field(default=120, ge=1)
     PUBLIC_CONTENT_RATE_LIMIT_WINDOW_SECONDS: int = Field(default=60, ge=1)
     HEALTH_RATE_LIMIT_COUNT: int = Field(default=30, ge=1)
@@ -69,7 +71,7 @@ class HeriSettings(BaseSettings):
     def reject_insecure_production_defaults(self) -> "HeriSettings":
         validate_explicit_production_settings(
             configured_fields=self.model_fields_set,
-            required_fields=("APP_ENV", "RESEARCH_SERVICE_URL", "CORS_ORIGINS"),
+            required_fields=("APP_ENV", "RESEARCH_SERVICE_URL", "MAIN_SERVICE_URL", "CORS_ORIGINS"),
             app_env=self.APP_ENV,
         )
         validate_rsa_public_key(self.JWT_PUBLIC_KEY_B64)
@@ -78,9 +80,11 @@ class HeriSettings(BaseSettings):
             field_name="RESEARCH_SERVICE_API_KEY",
             app_env=self.APP_ENV,
         )
+        validate_secret(self.MAIN_SERVICE_API_KEY, field_name="MAIN_SERVICE_API_KEY", app_env=self.APP_ENV)
         validate_service_url(self.DATABASE_URL, field_name="DATABASE_URL", app_env=self.APP_ENV)
         validate_service_url(self.REDIS_URL, field_name="REDIS_URL", app_env=self.APP_ENV)
         validate_service_url(self.RESEARCH_SERVICE_URL, field_name="RESEARCH_SERVICE_URL", app_env=self.APP_ENV)
+        validate_service_url(self.MAIN_SERVICE_URL, field_name="MAIN_SERVICE_URL", app_env=self.APP_ENV)
         validate_read_replica_settings(
             enabled=self.READ_REPLICA_ENABLED,
             approved=self.READ_REPLICA_APPROVED,

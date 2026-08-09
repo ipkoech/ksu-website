@@ -1,7 +1,8 @@
 """Main service ORM models."""
 
-from ksu_common.models import AuditLog
 from ksu_common.models.base import Base  # noqa: F401
+
+from .audit_log import AuditLog
 
 # Auth
 from .auth import Session, User

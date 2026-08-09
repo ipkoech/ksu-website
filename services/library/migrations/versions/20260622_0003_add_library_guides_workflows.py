@@ -16,6 +16,15 @@ down_revision = "20260622_0002"
 branch_labels = None
 depends_on = None
 
+LEGACY_TABLES = {
+    "library_guides",
+    "library_guide_sections",
+    "library_specialists",
+    "library_workflows",
+    "library_workflow_steps",
+    "library_policy_pages",
+}
+
 
 def _audit_columns() -> list[sa.Column]:
     return [
@@ -37,6 +46,12 @@ def _audit_columns() -> list[sa.Column]:
 
 
 def upgrade() -> None:
+    # The canonical 20260623 branch creates the same domain surface and is
+    # applied first on a fresh database. Keep this legacy branch stampable
+    # without attempting duplicate DDL when those tables already exist.
+    existing = set(sa.inspect(op.get_bind()).get_table_names(schema="library"))
+    if LEGACY_TABLES <= existing:
+        return
     op.create_table(
         "library_guides",
         sa.Column("library_id", sa.Uuid(), nullable=True),

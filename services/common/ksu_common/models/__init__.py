@@ -1,4 +1,3 @@
-from .audit import AuditLog
 from .base import (
     AttachmentRefsMixin,
     Base,
@@ -15,7 +14,6 @@ from .base import (
 
 __all__ = [
     "AttachmentRefsMixin",
-    "AuditLog",
     "Base",
     "CoverImageRefMixin",
     "DocumentRefMixin",
