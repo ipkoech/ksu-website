@@ -54,13 +54,13 @@ async def get_exchange_programme(slug: str, db: DbSession, fields: FieldSelectio
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("exchange_programmes.manage"))])
 async def create_exchange_programme(data: ExchangeProgrammeCreate, db: DbSession, _: CurrentUser):
     item = await ExchangeProgrammeService.create(db, **data.model_dump())
     return success(data=item, message="Exchange programme created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.patch("/{item_id}", dependencies=[Depends(require_scope("exchange_programmes.manage"))])
 async def update_exchange_programme(item_id: uuid.UUID, data: ExchangeProgrammeUpdate, db: DbSession, _: CurrentUser):
     item = await ExchangeProgrammeService.get_by_id(db, item_id)
     if item is None:
@@ -69,7 +69,7 @@ async def update_exchange_programme(item_id: uuid.UUID, data: ExchangeProgrammeU
     return success(data=item, message="Exchange programme updated")
 
 
-@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("exchange_programmes.manage"))])
 async def delete_exchange_programme(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await ExchangeProgrammeService.get_by_id(db, item_id)
     if item is None:

@@ -159,8 +159,14 @@ export function PublicFooter({
     setExpandedColumn((prev) => (prev === title ? null : title));
   };
 
+  // The footer is the brand blue. `--primary-deep` rather than `--primary`
+  // itself: at 36% lightness the pure primary only gives white text 4.9:1 and
+  // muted text 2.8:1, so the deep shade is what makes the surface readable
+  // while still being unmistakably the primary colour.
   return (
-    <footer className={cn("bg-gray-900 text-white", className)}>
+    <footer
+      className={cn("bg-[hsl(var(--primary-deep))] text-white", className)}
+    >
       {/* Main Footer */}
       <div className="max-w-7xl mx-auto px-4 py-12 lg:py-16">
         <div className="grid lg:grid-cols-6 gap-8 lg:gap-12">
@@ -180,27 +186,27 @@ export function PublicFooter({
                 Kisii University
               </span>
             </Link>
-            <p className="text-gray-400 mb-6 max-w-sm">
+            <p className="text-[hsl(var(--ink-muted))] mb-6 max-w-sm">
               Transforming Lives Through Education, Research, and Community
               Service.
             </p>
 
             {/* Contact Info - Desktop */}
             <div className="hidden lg:block space-y-3">
-              <div className="flex items-start gap-3 text-gray-400">
+              <div className="flex items-start gap-3 text-[hsl(var(--ink-muted))]">
                 <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0 text-secondary" />
                 <span>{contactInfo.address}</span>
               </div>
               <a
                 href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
-                className="flex min-h-11 items-center gap-3 text-gray-400 hover:text-white transition-colors"
+                className="flex min-h-11 items-center gap-3 text-[hsl(var(--ink-muted))] hover:text-white transition-colors"
               >
                 <Phone className="w-5 h-5 text-secondary" />
                 <span>{contactInfo.phone}</span>
               </a>
               <a
                 href={`mailto:${contactInfo.email}`}
-                className="flex min-h-11 items-center gap-3 text-gray-400 hover:text-white transition-colors"
+                className="flex min-h-11 items-center gap-3 text-[hsl(var(--ink-muted))] hover:text-white transition-colors"
               >
                 <Mail className="w-5 h-5 text-secondary" />
                 <span>{contactInfo.email}</span>
@@ -219,7 +225,7 @@ export function PublicFooter({
                       href={link.href}
                       target={link.external ? "_blank" : undefined}
                       rel={link.external ? "noopener noreferrer" : undefined}
-                      className="inline-flex min-h-11 items-center text-gray-400 transition-colors hover:text-white"
+                      className="inline-flex min-h-11 items-center text-[hsl(var(--ink-muted))] transition-colors hover:text-white"
                     >
                       {link.label}
                     </Link>
@@ -230,9 +236,9 @@ export function PublicFooter({
           ))}
 
           {/* Link Columns - Mobile Accordion */}
-          <div className="lg:hidden col-span-full space-y-0 border-t border-gray-800">
+          <div className="lg:hidden col-span-full space-y-0 border-t border-[hsl(var(--ink-border))]">
             {resolvedColumns.map((column) => (
-              <div key={column.title} className="border-b border-gray-800">
+              <div key={column.title} className="border-b border-[hsl(var(--ink-border))]">
                 <button
                   type="button"
                   onClick={() => toggleColumn(column.title)}
@@ -261,7 +267,7 @@ export function PublicFooter({
                           rel={
                             link.external ? "noopener noreferrer" : undefined
                           }
-                          className="inline-flex min-h-11 items-center text-gray-400 transition-colors hover:text-white"
+                          className="inline-flex min-h-11 items-center text-[hsl(var(--ink-muted))] transition-colors hover:text-white"
                         >
                           {link.label}
                         </Link>
@@ -277,20 +283,20 @@ export function PublicFooter({
           <div className="lg:hidden col-span-full pt-4">
             <h3 className="font-semibold text-lg mb-4">Contact Us</h3>
             <div className="space-y-3">
-              <div className="flex items-start gap-3 text-gray-400">
+              <div className="flex items-start gap-3 text-[hsl(var(--ink-muted))]">
                 <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0 text-secondary" />
                 <span>{contactInfo.address}</span>
               </div>
               <a
                 href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
-                className="flex min-h-11 items-center gap-3 text-gray-400 hover:text-white"
+                className="flex min-h-11 items-center gap-3 text-[hsl(var(--ink-muted))] hover:text-white"
               >
                 <Phone className="w-5 h-5 text-secondary" />
                 <span>{contactInfo.phone}</span>
               </a>
               <a
                 href={`mailto:${contactInfo.email}`}
-                className="flex min-h-11 items-center gap-3 text-gray-400 hover:text-white"
+                className="flex min-h-11 items-center gap-3 text-[hsl(var(--ink-muted))] hover:text-white"
               >
                 <Mail className="w-5 h-5 text-secondary" />
                 <span>{contactInfo.email}</span>
@@ -301,11 +307,11 @@ export function PublicFooter({
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-gray-800">
+      <div className="border-t border-[hsl(var(--ink-border))]">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Copyright */}
-            <p className="text-gray-400 text-sm text-center md:text-left">
+            <p className="text-[hsl(var(--ink-muted))] text-sm text-center md:text-left">
               © {new Date().getFullYear()} Kisii University. All rights
               reserved.
             </p>
@@ -316,7 +322,7 @@ export function PublicFooter({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="inline-flex min-h-11 items-center text-gray-400 transition-colors hover:text-white"
+                  className="inline-flex min-h-11 items-center text-[hsl(var(--ink-muted))] transition-colors hover:text-white"
                 >
                   {link.label}
                 </Link>
@@ -338,7 +344,7 @@ export function PublicFooter({
                 <SocialIcon
                   href={socialLinks.twitter}
                   label="Twitter"
-                  className="text-foreground hover:bg-slate-950"
+                  className="text-foreground hover:bg-foreground"
                 >
                   <TwitterIcon />
                 </SocialIcon>

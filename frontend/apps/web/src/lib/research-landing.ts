@@ -1,4 +1,4 @@
-import { researchServiceApi } from "@ksu/api-client";
+import { getResearchApiBaseUrl, researchServiceApi } from "@ksu/api-client";
 
 export type ResearchLandingTheme = {
   id: string;
@@ -14,10 +14,17 @@ export type ResearchLandingProject = {
   summary?: string | null;
   status?: string | null;
   expectedOutcomes?: string | null;
+  /** The project's own photography, when the record carries a cover. */
+  imageUrl?: string | null;
+  /** The published impact statement, as written by the research office. */
+  impact?: string | null;
 };
 
 export type ResearchLandingData = {
   themes: ResearchLandingTheme[];
+  /** Every featured project the research office publishes, in its own order. */
+  featuredProjects: ResearchLandingProject[];
+  /** The first of those, kept for callers that show a single project. */
   featuredProject: ResearchLandingProject | null;
 };
 
@@ -42,6 +49,18 @@ function plainExcerpt(value: unknown, max = 200) {
   return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
 }
 
+/** Research media is stored relative to the research service, which is a
+ *  different origin from the main gateway the page is served through. */
+function researchAssetUrl(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const path = value.trim();
+  if (/^(https?:|data:|blob:)/i.test(path)) return path;
+  return new URL(
+    path.startsWith("/") ? path : `/${path}`,
+    getResearchApiBaseUrl(),
+  ).toString();
+}
+
 /** Research themes and the featured project, straight from the research service. */
 export async function getResearchLanding(): Promise<ResearchLandingData> {
   const [themesResult, projectsResult] = await Promise.allSettled([
@@ -50,8 +69,10 @@ export async function getResearchLanding(): Promise<ResearchLandingData> {
       is_active: true,
       sort: "display_order",
     }),
+    // Every featured project, not just the first: the homepage band shows the
+    // research office's whole featured set and it decides how many that is.
     researchServiceApi.projects.list({
-      per_page: 1,
+      per_page: 6,
       is_featured: true,
       is_public: true,
     }),
@@ -70,15 +91,9 @@ export async function getResearchLanding(): Promise<ResearchLandingData> {
           }))
       : [];
 
-  const project =
+  const featuredProjects =
     projectsResult.status === "fulfilled"
-      ? (projectsResult.value.data ?? [])[0]
-      : undefined;
-
-  return {
-    themes,
-    featuredProject: project
-      ? {
+      ? (projectsResult.value.data ?? []).map((project) => ({
           id: project.id,
           title: project.title ?? "Featured research project",
           slug: project.slug ?? project.id,
@@ -87,7 +102,14 @@ export async function getResearchLanding(): Promise<ResearchLandingData> {
             plainExcerpt(project.expected_outcomes, 220),
           status: typeof project.status === "string" ? project.status : null,
           expectedOutcomes: plainExcerpt(project.expected_outcomes, 180),
-        }
-      : null,
+          imageUrl: researchAssetUrl(project.cover_image_url),
+          impact: plainExcerpt(project.impact, 200),
+        }))
+      : [];
+
+  return {
+    themes,
+    featuredProjects,
+    featuredProject: featuredProjects[0] ?? null,
   };
 }

@@ -78,6 +78,13 @@ export function LoginForm() {
     try {
       const { user, services } = await login(values);
 
+      if (user.mustChangePassword) {
+        startTransition(() => {
+          router.push("/change-password");
+        });
+        return;
+      }
+
       if (services.length === 0) {
         setError("You do not have access to any admin services.");
         return;

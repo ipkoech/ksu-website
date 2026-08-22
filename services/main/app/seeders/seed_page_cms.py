@@ -397,27 +397,37 @@ def _section_identity(section: PageSection) -> tuple[str, str, uuid.UUID | None,
 
 
 def _replace_section_items(section: PageSection, item_specs: tuple[dict[str, Any], ...]) -> None:
-    section.items = [
-        SectionItem(
+    items: list[SectionItem] = []
+    for spec in item_specs:
+        content = dict(spec.get("content") or {})
+        for source_key, content_key in (
+            ("audience", "audience"),
+            ("is_featured", "isFeatured"),
+            ("poster_media_id", "posterMediaId"),
+            ("transcript", "transcript"),
+        ):
+            if spec.get(source_key) is not None:
+                content[content_key] = spec[source_key]
+        if spec["item_type"] != "reference" and spec.get("source_type") is not None:
+            content["sourceType"] = spec["source_type"]
+
+        items.append(
+            SectionItem(
             item_type=spec["item_type"],
             title=spec.get("title"),
             subtitle=spec.get("subtitle"),
             body_text=spec.get("body_text"),
-            content=spec.get("content"),
+            content=content or None,
             cta_label=spec.get("cta_label"),
             cta_url=spec.get("cta_url"),
             cta_description=spec.get("cta_description"),
-            audience=spec.get("audience", "all"),
-            source_type=spec.get("source_type"),
-            source_id=spec.get("source_id"),
-            is_featured=spec.get("is_featured", False),
-            poster_media_id=spec.get("poster_media_id"),
-            transcript=spec.get("transcript"),
+            source_type=spec.get("source_type") if spec["item_type"] == "reference" else None,
+            source_id=spec.get("source_id") if spec["item_type"] == "reference" else None,
             display_order=spec["display_order"],
             is_enabled=True,
         )
-        for spec in item_specs
-    ]
+        )
+    section.items = items
 
 
 async def _seed_leadership_activity_news(db: AsyncSession) -> dict[str, uuid.UUID]:

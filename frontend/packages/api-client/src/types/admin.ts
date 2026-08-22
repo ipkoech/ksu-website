@@ -72,7 +72,8 @@ export interface User extends BaseRead {
   push_tokens: string[] | null;
   is_active: boolean;
   is_verified: boolean;
-  mfa_enabled: boolean;
+  service_memberships: Array<"main" | "research" | "library" | "heri" | "system">;
+  must_change_password: boolean;
   last_login_at: string | null;
   failed_login_attempts: number;
   locked_until: string | null;
@@ -91,7 +92,8 @@ export interface UserCreatePayload {
   push_tokens?: string[] | null;
   is_active?: boolean;
   is_verified?: boolean;
-  mfa_enabled?: boolean;
+  service_memberships?: Array<"main" | "research" | "library" | "heri" | "system">;
+  must_change_password?: boolean;
 }
 
 export interface UserUpdatePayload {
@@ -103,7 +105,8 @@ export interface UserUpdatePayload {
   push_tokens?: string[] | null;
   is_active?: boolean | null;
   is_verified?: boolean | null;
-  mfa_enabled?: boolean | null;
+  service_memberships?: Array<"main" | "research" | "library" | "heri" | "system"> | null;
+  must_change_password?: boolean | null;
 }
 
 export interface Permission extends BaseRead {

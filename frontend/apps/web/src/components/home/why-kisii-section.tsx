@@ -101,7 +101,7 @@ function WhyChapter({
       {/* The scene — symmetric image, curtain sweeps toward the words */}
       <div className={imageLeft ? "" : "lg:order-2"}>
         <ImageCurtainReveal
-          className="aspect-[16/9] rounded-2xl"
+          className="aspect-[16/9] rounded-3xl"
           direction={imageLeft ? "right" : "left"}
         >
           <PublicImage

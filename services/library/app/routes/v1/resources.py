@@ -12,7 +12,8 @@ from ksu_common.auth import TokenPayload
 from ksu_contracts.rbac import has_scope
 from ksu_common.schemas.responses import success
 from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelector
-from ksu_common.cache import cache_response, invalidate_prefix
+from ksu_common.cache import cache_response
+from ...services.cache import invalidate_library_caches
 from ksu_common.audit import audit_action
 from ksu_common.rate_limit import rate_limit
 
@@ -37,7 +38,7 @@ resources_router = APIRouter(prefix="/library/resources", tags=["Library Resourc
 
 
 async def invalidate_public_library_cache() -> None:
-    await invalidate_prefix("public")
+    await invalidate_library_caches()
 
 
 @resources_router.get("/")
@@ -54,9 +55,9 @@ async def list_resources(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     if is_writer:
-        require_library_scope(user, "library:read", library_id)
+        require_library_scope(user, "library.read", library_id)
     selector = FieldSelector(LibraryResource, fields, always_include={"id"})
     result = await svc.list_resources(
         db,
@@ -81,7 +82,7 @@ async def get_resource(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     selector = FieldSelector(LibraryResource, fields, always_include={"id"})
     resource = await svc.get_resource(
         db,
@@ -90,7 +91,7 @@ async def get_resource(
         public_only=not is_writer,
     )
     if is_writer:
-        require_library_scope(user, "library:read", resource.library_id)
+        require_library_scope(user, "library.read", resource.library_id)
     return success(data=selector.apply(resource))
 
 
@@ -100,9 +101,9 @@ async def create_resource(
     request: Request,
     data: LibraryResourceCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
-    require_library_scope(user, "library:write", data.library_id)
+    require_library_scope(user, "library.write", data.library_id)
     resource = await svc.create_resource(db, data)
     await invalidate_public_library_cache()
     return success(data=resource, message="Resource created")
@@ -117,10 +118,10 @@ async def update_resource(
     resource_id: uuid.UUID,
     data: LibraryResourceUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     library_id = await svc.get_resource_library_id(db, resource_id)
-    require_library_scope(user, "library:write", library_id)
+    require_library_scope(user, "library.write", library_id)
     resource = await svc.update_resource(db, resource_id, data)
     await invalidate_public_library_cache()
     return success(data=resource)
@@ -134,10 +135,10 @@ async def delete_resource(
     request: Request,
     resource_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     library_id = await svc.get_resource_library_id(db, resource_id)
-    require_library_scope(user, "library:admin", library_id)
+    require_library_scope(user, "library.admin", library_id)
     await svc.delete_resource(db, resource_id)
     await invalidate_public_library_cache()
 
@@ -155,7 +156,7 @@ loans_router = APIRouter(prefix="/library/loans", tags=["Library Loans"])
 async def list_loans(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
     library_id: Optional[uuid.UUID] = Query(None),
     resource_id: Optional[uuid.UUID] = Query(None),
     status: Optional[str] = Query(None),
@@ -164,14 +165,14 @@ async def list_loans(
     include_total: bool = Query(True),
 ):
     if library_id is not None:
-        require_library_scope(user, "library:read", library_id)
+        require_library_scope(user, "library.read", library_id)
     elif resource_id is not None:
         library_id = await svc.get_resource_library_id(db, resource_id)
-        require_library_scope(user, "library:read", library_id)
-    elif has_scope(user.roles, "library:write"):
-        require_library_scope(user, "library:read", None)
+        require_library_scope(user, "library.read", library_id)
+    elif has_scope(user.roles, "library.write"):
+        require_library_scope(user, "library.read", None)
     person_id: Optional[uuid.UUID] = None
-    if not has_scope(user.roles, "library:write"):
+    if not has_scope(user.roles, "library.write"):
         person_id = uuid.UUID(user.sub)
     result = await svc.list_loans(
         db,
@@ -192,11 +193,11 @@ async def get_loan(
     request: Request,
     loan_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
 ):
     loan = await svc.get_loan(db, loan_id)
-    if has_scope(user.roles, "library:write") and loan.resource is not None:
-        require_library_scope(user, "library:read", loan.resource.library_id)
+    if has_scope(user.roles, "library.write") and loan.resource is not None:
+        require_library_scope(user, "library.read", loan.resource.library_id)
     return success(data=loan)
 
 
@@ -206,10 +207,10 @@ async def issue_loan(
     request: Request,
     data: LibraryLoanCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     library_id = await svc.get_resource_library_id(db, data.resource_id)
-    require_library_scope(user, "library:write", library_id)
+    require_library_scope(user, "library.write", library_id)
     loan = await svc.issue_loan(db, data)
     await invalidate_public_library_cache()
     return success(data=loan, message="Loan issued")
@@ -222,10 +223,10 @@ async def return_loan(
     loan_id: uuid.UUID,
     data: LibraryLoanUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     library_id = await svc.get_loan_library_id(db, loan_id)
-    require_library_scope(user, "library:write", library_id)
+    require_library_scope(user, "library.write", library_id)
     loan = await svc.return_loan(db, loan_id, data)
     await invalidate_public_library_cache()
     return success(data=loan)
@@ -238,12 +239,12 @@ async def renew_loan(
     request: Request,
     loan_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
 ):
     loan = await svc.get_loan(db, loan_id)
-    if has_scope(user.roles, "library:write") and loan.resource is not None:
-        require_library_scope(user, "library:read", loan.resource.library_id)
-    if not has_scope(user.roles, "library:write"):
+    if has_scope(user.roles, "library.write") and loan.resource is not None:
+        require_library_scope(user, "library.read", loan.resource.library_id)
+    if not has_scope(user.roles, "library.write"):
         if str(loan.borrower_person_id) != user.sub:
             from fastapi import HTTPException, status
 
@@ -271,7 +272,7 @@ reservations_router = APIRouter(
 async def list_reservations(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
     library_id: Optional[uuid.UUID] = Query(None),
     resource_id: Optional[uuid.UUID] = Query(None),
     status: Optional[str] = Query(None),
@@ -280,14 +281,14 @@ async def list_reservations(
     include_total: bool = Query(True),
 ):
     if library_id is not None:
-        require_library_scope(user, "library:read", library_id)
+        require_library_scope(user, "library.read", library_id)
     elif resource_id is not None:
         library_id = await svc.get_resource_library_id(db, resource_id)
-        require_library_scope(user, "library:read", library_id)
-    elif has_scope(user.roles, "library:write"):
-        require_library_scope(user, "library:read", None)
+        require_library_scope(user, "library.read", library_id)
+    elif has_scope(user.roles, "library.write"):
+        require_library_scope(user, "library.read", None)
     person_id: Optional[uuid.UUID] = None
-    if not has_scope(user.roles, "library:write"):
+    if not has_scope(user.roles, "library.write"):
         person_id = uuid.UUID(user.sub)
     result = await svc.list_reservations(
         db,
@@ -311,12 +312,12 @@ async def create_reservation(
     request: Request,
     data: LibraryReservationCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
 ):
     library_id = await svc.get_resource_library_id(db, data.resource_id)
-    if has_scope(user.roles, "library:write"):
-        require_library_scope(user, "library:write", library_id)
-    if not has_scope(user.roles, "library:write"):
+    if has_scope(user.roles, "library.write"):
+        require_library_scope(user, "library.write", library_id)
+    if not has_scope(user.roles, "library.write"):
         data = data.model_copy(update={"requester_person_id": uuid.UUID(user.sub)})
     reservation = await svc.create_reservation(db, data)
     await invalidate_public_library_cache()
@@ -334,10 +335,10 @@ async def update_reservation(
     reservation_id: uuid.UUID,
     data: LibraryReservationUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     library_id = await svc.get_reservation_library_id(db, reservation_id)
-    require_library_scope(user, "library:write", library_id)
+    require_library_scope(user, "library.write", library_id)
     reservation = await svc.update_reservation(db, reservation_id, data)
     await invalidate_public_library_cache()
     return success(data=reservation)
@@ -353,16 +354,16 @@ async def cancel_reservation(
     request: Request,
     reservation_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
 ):
-    if has_scope(user.roles, "library:write"):
+    if has_scope(user.roles, "library.write"):
         library_id = await svc.get_reservation_library_id(db, reservation_id)
-        require_library_scope(user, "library:write", library_id)
+        require_library_scope(user, "library.write", library_id)
     await svc.cancel_reservation(
         db,
         reservation_id,
         uuid.UUID(user.sub),
-        require_owner=not has_scope(user.roles, "library:write"),
+        require_owner=not has_scope(user.roles, "library.write"),
     )
     await invalidate_public_library_cache()
 
@@ -380,9 +381,9 @@ async def list_charges(
     library_id: uuid.UUID = Query(...),
     active_only: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     if is_writer:
-        require_library_scope(user, "library:read", library_id)
+        require_library_scope(user, "library.read", library_id)
     charges = await svc.list_charges(
         db,
         library_id,
@@ -398,9 +399,9 @@ async def create_charge(
     request: Request,
     data: LibraryChargeCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
-    require_library_scope(user, "library:admin", data.library_id)
+    require_library_scope(user, "library.admin", data.library_id)
     charge = await svc.create_charge(db, data)
     await invalidate_public_library_cache()
     return success(data=charge, message="Charge created")
@@ -413,10 +414,10 @@ async def update_charge(
     charge_id: uuid.UUID,
     data: LibraryChargeUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     library_id = await svc.get_charge_library_id(db, charge_id)
-    require_library_scope(user, "library:admin", library_id)
+    require_library_scope(user, "library.admin", library_id)
     charge = await svc.update_charge(db, charge_id, data)
     await invalidate_public_library_cache()
     return success(data=charge)
@@ -428,10 +429,10 @@ async def delete_charge(
     request: Request,
     charge_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     library_id = await svc.get_charge_library_id(db, charge_id)
-    require_library_scope(user, "library:admin", library_id)
+    require_library_scope(user, "library.admin", library_id)
     await svc.delete_charge(db, charge_id)
     await invalidate_public_library_cache()
 

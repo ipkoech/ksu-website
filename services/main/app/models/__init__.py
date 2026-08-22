@@ -23,11 +23,14 @@ from .organization import Division, Wing
 # Academic
 from .academic import (
     AcademicCalendar,
+    AcademicCalendarDocument,
+    AcademicCalendarEvent,
     Campus,
     Department,
     DepartmentService,
     School,
 )
+from .timetable import AcademicTimetable, TimetableSitting, TimetableSittingProgramme, TimetableVenue
 
 # Admissions
 from .admissions import (
@@ -168,6 +171,12 @@ __all__ = [
     "Department",
     "DepartmentService",
     "AcademicCalendar",
+    "AcademicCalendarEvent",
+    "AcademicCalendarDocument",
+    "AcademicTimetable",
+    "TimetableSitting",
+    "TimetableSittingProgramme",
+    "TimetableVenue",
     # Admissions
     "Programme",
     "ProgrammeTutor",

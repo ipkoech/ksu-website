@@ -19,7 +19,7 @@ class Permission(Base):
     """
     Individual permission representing an action on a resource.
 
-    Format: "resource:action" e.g., "academic:write", "library:delete", "admin:manage"
+    Format: ``resource.action``; for example, ``academic.manage_programmes``.
     """
 
     __tablename__ = "permissions"

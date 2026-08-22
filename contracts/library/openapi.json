@@ -1047,6 +1047,19 @@
         "title": "LibraryExternalLinkCreate",
         "type": "object"
       },
+      "LibraryExternalLinkToggle": {
+        "properties": {
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "is_active"
+        ],
+        "title": "LibraryExternalLinkToggle",
+        "type": "object"
+      },
       "LibraryExternalLinkUpdate": {
         "properties": {
           "description": {
@@ -1212,6 +1225,476 @@
           "title"
         ],
         "title": "LibraryFileCreate",
+        "type": "object"
+      },
+      "LibraryGuideCreate": {
+        "properties": {
+          "audience": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audience"
+          },
+          "course_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Code"
+          },
+          "department_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Id"
+          },
+          "guide_type": {
+            "title": "Guide Type",
+            "type": "string"
+          },
+          "is_active": {
+            "default": true,
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "is_public": {
+            "default": true,
+            "title": "Is Public",
+            "type": "boolean"
+          },
+          "library_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Library Id"
+          },
+          "owner_staff_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Staff Id"
+          },
+          "school_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "School Id"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "sort_order": {
+            "default": 0,
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "slug",
+          "guide_type"
+        ],
+        "title": "LibraryGuideCreate",
+        "type": "object"
+      },
+      "LibraryGuideSectionCreate": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "file_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Ids"
+          },
+          "guide_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guide Id"
+          },
+          "heading": {
+            "title": "Heading",
+            "type": "string"
+          },
+          "is_active": {
+            "default": true,
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "resource_links": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Links"
+          },
+          "section_type": {
+            "default": "text",
+            "title": "Section Type",
+            "type": "string"
+          },
+          "sort_order": {
+            "default": 0,
+            "title": "Sort Order",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "heading",
+          "content"
+        ],
+        "title": "LibraryGuideSectionCreate",
+        "type": "object"
+      },
+      "LibraryGuideSectionUpdate": {
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "file_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Ids"
+          },
+          "guide_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guide Id"
+          },
+          "heading": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heading"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          },
+          "resource_links": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Links"
+          },
+          "section_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section Type"
+          },
+          "sort_order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort Order"
+          }
+        },
+        "title": "LibraryGuideSectionUpdate",
+        "type": "object"
+      },
+      "LibraryGuideUpdate": {
+        "properties": {
+          "audience": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audience"
+          },
+          "course_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Code"
+          },
+          "department_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Id"
+          },
+          "guide_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guide Type"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          },
+          "is_public": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Public"
+          },
+          "library_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Library Id"
+          },
+          "owner_staff_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Staff Id"
+          },
+          "school_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "School Id"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          },
+          "sort_order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort Order"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "LibraryGuideUpdate",
         "type": "object"
       },
       "LibraryHoursCreate": {
@@ -1497,6 +1980,204 @@
         "title": "LibraryLoanUpdate",
         "type": "object"
       },
+      "LibraryPolicyPageCreate": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "file_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Id"
+          },
+          "is_public": {
+            "default": true,
+            "title": "Is Public",
+            "type": "boolean"
+          },
+          "library_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Library Id"
+          },
+          "policy_type": {
+            "title": "Policy Type",
+            "type": "string"
+          },
+          "related_regulation_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Regulation Id"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "sort_order": {
+            "default": 0,
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "status": {
+            "default": "active",
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "policy_type",
+          "title",
+          "slug",
+          "content"
+        ],
+        "title": "LibraryPolicyPageCreate",
+        "type": "object"
+      },
+      "LibraryPolicyPageUpdate": {
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "file_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Id"
+          },
+          "is_public": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Public"
+          },
+          "library_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Library Id"
+          },
+          "policy_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Type"
+          },
+          "related_regulation_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Regulation Id"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          },
+          "sort_order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort Order"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "LibraryPolicyPageUpdate",
+        "type": "object"
+      },
       "LibraryRegulationCreate": {
         "properties": {
           "category": {
@@ -1537,6 +2218,11 @@
               }
             ],
             "title": "Effective Date"
+          },
+          "is_public": {
+            "default": true,
+            "title": "Is Public",
+            "type": "boolean"
           },
           "library_id": {
             "anyOf": [
@@ -1615,6 +2301,17 @@
             ],
             "title": "Effective Date"
           },
+          "is_public": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Public"
+          },
           "status": {
             "anyOf": [
               {
@@ -1670,6 +2367,69 @@
           "requester_person_id"
         ],
         "title": "LibraryReservationCreate",
+        "type": "object"
+      },
+      "LibraryReservationUpdate": {
+        "properties": {
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "queue_position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Position"
+          },
+          "ready_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ready At"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "title": "LibraryReservationUpdate",
         "type": "object"
       },
       "LibraryResourceCreate": {
@@ -2380,6 +3140,216 @@
         "title": "LibraryServiceUpdate",
         "type": "object"
       },
+      "LibrarySpecialistCreate": {
+        "properties": {
+          "booking_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Booking Url"
+          },
+          "departments": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Departments",
+            "type": "array"
+          },
+          "is_active": {
+            "default": true,
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "is_public": {
+            "default": true,
+            "title": "Is Public",
+            "type": "boolean"
+          },
+          "library_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Library Id"
+          },
+          "schools": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Schools",
+            "type": "array"
+          },
+          "sort_order": {
+            "default": 0,
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "staff_id": {
+            "format": "uuid",
+            "title": "Staff Id",
+            "type": "string"
+          },
+          "subjects": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Subjects",
+            "type": "array"
+          },
+          "support_areas": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Support Areas",
+            "type": "array"
+          }
+        },
+        "required": [
+          "staff_id"
+        ],
+        "title": "LibrarySpecialistCreate",
+        "type": "object"
+      },
+      "LibrarySpecialistUpdate": {
+        "properties": {
+          "booking_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Booking Url"
+          },
+          "departments": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Departments"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          },
+          "is_public": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Public"
+          },
+          "library_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Library Id"
+          },
+          "schools": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schools"
+          },
+          "sort_order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort Order"
+          },
+          "staff_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff Id"
+          },
+          "subjects": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subjects"
+          },
+          "support_areas": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Support Areas"
+          }
+        },
+        "title": "LibrarySpecialistUpdate",
+        "type": "object"
+      },
       "LibraryStaffCreate": {
         "properties": {
           "bio": {
@@ -2938,6 +3908,332 @@
         "title": "LibraryUpdate",
         "type": "object"
       },
+      "LibraryWorkflowCreate": {
+        "properties": {
+          "audience": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audience"
+          },
+          "is_active": {
+            "default": true,
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "is_public": {
+            "default": true,
+            "title": "Is Public",
+            "type": "boolean"
+          },
+          "library_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Library Id"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "sort_order": {
+            "default": 0,
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "workflow_type": {
+            "title": "Workflow Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workflow_type",
+          "title",
+          "slug"
+        ],
+        "title": "LibraryWorkflowCreate",
+        "type": "object"
+      },
+      "LibraryWorkflowStepCreate": {
+        "properties": {
+          "file_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Id"
+          },
+          "instructions": {
+            "title": "Instructions",
+            "type": "string"
+          },
+          "is_active": {
+            "default": true,
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "link_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link Url"
+          },
+          "sort_order": {
+            "default": 0,
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "workflow_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow Id"
+          }
+        },
+        "required": [
+          "title",
+          "instructions"
+        ],
+        "title": "LibraryWorkflowStepCreate",
+        "type": "object"
+      },
+      "LibraryWorkflowStepUpdate": {
+        "properties": {
+          "file_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Id"
+          },
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          },
+          "link_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link Url"
+          },
+          "sort_order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort Order"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "workflow_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow Id"
+          }
+        },
+        "title": "LibraryWorkflowStepUpdate",
+        "type": "object"
+      },
+      "LibraryWorkflowUpdate": {
+        "properties": {
+          "audience": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audience"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          },
+          "is_public": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Public"
+          },
+          "library_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Library Id"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          },
+          "sort_order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort Order"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "workflow_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow Type"
+          }
+        },
+        "title": "LibraryWorkflowUpdate",
+        "type": "object"
+      },
       "PublicationResult": {
         "properties": {
           "abstract": {
@@ -3439,7 +4735,23 @@
           },
           {
             "in": "header",
-            "name": "x-internal-api-key",
+            "name": "X-Internal-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Key"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Internal-API-Key",
             "required": false,
             "schema": {
               "anyOf": [
@@ -3577,6 +4889,22 @@
               ],
               "title": "Include"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -3599,6 +4927,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "List Libraries",
         "tags": [
           "Library Branches"
@@ -3606,6 +4939,24 @@
       },
       "post": {
         "operationId": "create_library_api_v1_library_branches__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -3659,6 +5010,22 @@
               "format": "uuid",
               "title": "Library Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -3731,6 +5098,22 @@
               ],
               "title": "Include"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -3753,6 +5136,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Get Library",
         "tags": [
           "Library Branches"
@@ -3769,6 +5157,22 @@
               "format": "uuid",
               "title": "Library Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -3826,6 +5230,54 @@
               "title": "Library Id",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -3869,6 +5321,22 @@
               "format": "uuid",
               "title": "Library Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -3935,6 +5403,22 @@
               "format": "uuid",
               "title": "File Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -4016,6 +5500,22 @@
               "title": "Library Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "requestBody": {
@@ -4063,9 +5563,9 @@
         ]
       }
     },
-    "/api/v1/library/branches/{library_id}/links/": {
+    "/api/v1/library/branches/{library_id}/hours/today": {
       "get": {
-        "operationId": "list_external_links_api_v1_library_branches__library_id__links__get",
+        "operationId": "get_library_today_hours_api_v1_library_branches__library_id__hours_today_get",
         "parameters": [
           {
             "in": "path",
@@ -4079,12 +5579,12 @@
           },
           {
             "in": "query",
-            "name": "active_only",
+            "name": "timezone",
             "required": false,
             "schema": {
-              "default": true,
-              "title": "Active Only",
-              "type": "boolean"
+              "default": "Africa/Nairobi",
+              "title": "Timezone",
+              "type": "string"
             }
           }
         ],
@@ -4108,6 +5608,110 @@
             "description": "Validation Error"
           }
         },
+        "summary": "Get Library Today Hours",
+        "tags": [
+          "Library Hours"
+        ]
+      }
+    },
+    "/api/v1/library/branches/{library_id}/links/": {
+      "get": {
+        "operationId": "list_external_links_api_v1_library_branches__library_id__links__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "library_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Library Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "active_only",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Active Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "List External Links",
         "tags": [
           "Library External Links"
@@ -4124,6 +5728,22 @@
               "format": "uuid",
               "title": "Library Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -4191,6 +5811,22 @@
               "title": "Link Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -4239,6 +5875,22 @@
               "format": "uuid",
               "title": "Link Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -4306,15 +5958,29 @@
               "title": "Link Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": true,
-                "title": "Body",
-                "type": "object"
+                "$ref": "#/components/schemas/LibraryExternalLinkToggle"
               }
             }
           },
@@ -4374,6 +6040,22 @@
               "title": "Active Only",
               "type": "boolean"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -4396,6 +6078,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "List Charges",
         "tags": [
           "Library Charges"
@@ -4403,6 +6090,24 @@
       },
       "post": {
         "operationId": "create_charge_api_v1_library_charges__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -4457,6 +6162,22 @@
               "title": "Charge Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -4495,6 +6216,22 @@
               "format": "uuid",
               "title": "Charge Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -4705,6 +6442,22 @@
               ],
               "title": "Include"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -4727,6 +6480,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "List Resources Route",
         "tags": [
           "Library \u2013 Electronic Resources"
@@ -4735,6 +6493,24 @@
       "post": {
         "description": "Create a new electronic resource.",
         "operationId": "create_resource_route_api_v1_library_databases__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -4841,6 +6617,22 @@
               ],
               "title": "Include"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -4863,6 +6655,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Get Resource By Slug Route",
         "tags": [
           "Library \u2013 Electronic Resources"
@@ -4882,6 +6679,22 @@
               "format": "uuid",
               "title": "Resource Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -4955,6 +6768,22 @@
               ],
               "title": "Include"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -4977,6 +6806,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Get Resource Detail",
         "tags": [
           "Library \u2013 Electronic Resources"
@@ -4994,6 +6828,22 @@
               "format": "uuid",
               "title": "Resource Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -5092,6 +6942,22 @@
               "title": "Resource Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "requestBody": {
@@ -5159,6 +7025,22 @@
               "title": "Guide Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -5209,6 +7091,22 @@
               "title": "Guide Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "requestBody": {
@@ -5249,6 +7147,1032 @@
         "summary": "Update Guide Route",
         "tags": [
           "Library \u2013 Electronic Resource Guides"
+        ]
+      }
+    },
+    "/api/v1/library/guide-sections/": {
+      "get": {
+        "operationId": "list_guide_sections_api_v1_library_guide_sections__get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "guide_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Guide Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "section_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Section Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "is_active",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Is Active"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Guide Sections",
+        "tags": [
+          "Library Guide Sections"
+        ]
+      },
+      "post": {
+        "operationId": "create_guide_section_api_v1_library_guide_sections__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryGuideSectionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Guide Section",
+        "tags": [
+          "Library Guide Sections"
+        ]
+      }
+    },
+    "/api/v1/library/guide-sections/{section_id}": {
+      "delete": {
+        "operationId": "delete_guide_section_api_v1_library_guide_sections__section_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "section_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Section Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Guide Section",
+        "tags": [
+          "Library Guide Sections"
+        ]
+      },
+      "patch": {
+        "operationId": "update_guide_section_api_v1_library_guide_sections__section_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "section_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Section Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryGuideSectionUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Guide Section",
+        "tags": [
+          "Library Guide Sections"
+        ]
+      }
+    },
+    "/api/v1/library/guides/": {
+      "get": {
+        "operationId": "list_guides_api_v1_library_guides__get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "library_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Library Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "guide_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Guide Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "subject",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Subject"
+            }
+          },
+          {
+            "in": "query",
+            "name": "course_code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Course Code"
+            }
+          },
+          {
+            "in": "query",
+            "name": "audience",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Audience"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Per Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_total",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Include Total",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Guides",
+        "tags": [
+          "Library Guides"
+        ]
+      },
+      "post": {
+        "operationId": "create_guide_api_v1_library_guides__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryGuideCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Guide",
+        "tags": [
+          "Library Guides"
+        ]
+      }
+    },
+    "/api/v1/library/guides/records/{guide_id}": {
+      "get": {
+        "operationId": "get_guide_record_api_v1_library_guides_records__guide_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "guide_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Guide Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Guide Record",
+        "tags": [
+          "Library Guides"
+        ]
+      }
+    },
+    "/api/v1/library/guides/slug/{slug}": {
+      "get": {
+        "operationId": "get_guide_by_slug_api_v1_library_guides_slug__slug__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Guide By Slug",
+        "tags": [
+          "Library Guides"
+        ]
+      }
+    },
+    "/api/v1/library/guides/{guide_id}": {
+      "delete": {
+        "operationId": "delete_guide_api_v1_library_guides__guide_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "guide_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Guide Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Guide",
+        "tags": [
+          "Library Guides"
+        ]
+      },
+      "patch": {
+        "operationId": "update_guide_api_v1_library_guides__guide_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "guide_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Guide Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryGuideUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Guide",
+        "tags": [
+          "Library Guides"
+        ]
+      }
+    },
+    "/api/v1/library/guides/{slug}": {
+      "get": {
+        "operationId": "get_guide_api_v1_library_guides__slug__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Guide",
+        "tags": [
+          "Library Guides"
+        ]
+      }
+    },
+    "/api/v1/library/hours/today": {
+      "get": {
+        "operationId": "list_today_hours_api_v1_library_hours_today_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "timezone",
+            "required": false,
+            "schema": {
+              "default": "Africa/Nairobi",
+              "title": "Timezone",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Today Hours",
+        "tags": [
+          "Library Hours"
         ]
       }
     },
@@ -5321,6 +8245,22 @@
               "title": "Include Total",
               "type": "boolean"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -5355,6 +8295,24 @@
       },
       "post": {
         "operationId": "submit_inquiry_api_v1_library_inquiries__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -5409,6 +8367,22 @@
               "title": "Inquiry Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -5447,6 +8421,22 @@
               "format": "uuid",
               "title": "Inquiry Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -5491,6 +8481,22 @@
               "format": "uuid",
               "title": "Inquiry Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -5548,6 +8554,22 @@
               "title": "Inquiry Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "requestBody": {
@@ -5595,6 +8617,23 @@
       "get": {
         "operationId": "list_loans_api_v1_library_loans__get",
         "parameters": [
+          {
+            "in": "query",
+            "name": "library_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Library Id"
+            }
+          },
           {
             "in": "query",
             "name": "resource_id",
@@ -5660,6 +8699,22 @@
               "title": "Include Total",
               "type": "boolean"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -5694,6 +8749,24 @@
       },
       "post": {
         "operationId": "issue_loan_api_v1_library_loans__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -5748,6 +8821,22 @@
               "title": "Loan Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -5791,6 +8880,22 @@
               "format": "uuid",
               "title": "Loan Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -5848,6 +8953,22 @@
               "title": "Loan Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -5878,6 +8999,672 @@
         "summary": "Renew Loan",
         "tags": [
           "Library Loans"
+        ]
+      }
+    },
+    "/api/v1/library/policies/": {
+      "get": {
+        "operationId": "list_policy_pages_api_v1_library_policies__get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "library_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Library Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "policy_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Policy Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Per Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_total",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Include Total",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Policy Pages",
+        "tags": [
+          "Library Policies"
+        ]
+      },
+      "post": {
+        "operationId": "create_policy_page_api_v1_library_policies__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryPolicyPageCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Policy Page",
+        "tags": [
+          "Library Policies"
+        ]
+      }
+    },
+    "/api/v1/library/policies/slug/{slug}": {
+      "get": {
+        "operationId": "get_policy_by_slug_api_v1_library_policies_slug__slug__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Policy By Slug",
+        "tags": [
+          "Library Policies"
+        ]
+      }
+    },
+    "/api/v1/library/policies/{policy_id}": {
+      "delete": {
+        "operationId": "delete_policy_api_v1_library_policies__policy_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Policy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Policy",
+        "tags": [
+          "Library Policies"
+        ]
+      },
+      "patch": {
+        "operationId": "update_policy_api_v1_library_policies__policy_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Policy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryPolicyPageUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Policy",
+        "tags": [
+          "Library Policies"
+        ]
+      }
+    },
+    "/api/v1/library/policies/{policy_page_id}": {
+      "delete": {
+        "operationId": "delete_policy_page_api_v1_library_policies__policy_page_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "policy_page_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Policy Page Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Policy Page",
+        "tags": [
+          "Library Policies"
+        ]
+      },
+      "patch": {
+        "operationId": "update_policy_page_api_v1_library_policies__policy_page_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "policy_page_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Policy Page Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryPolicyPageUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Policy Page",
+        "tags": [
+          "Library Policies"
+        ]
+      }
+    },
+    "/api/v1/library/policies/{slug}": {
+      "get": {
+        "operationId": "get_policy_page_api_v1_library_policies__slug__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Policy Page",
+        "tags": [
+          "Library Policies"
         ]
       }
     },
@@ -5958,6 +9745,22 @@
               "title": "Include Total",
               "type": "boolean"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -5993,6 +9796,24 @@
       "post": {
         "description": "Save a publication to user's reading list.",
         "operationId": "save_publication_route_api_v1_library_publications_saved_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -6048,6 +9869,22 @@
               "title": "Saved Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -6087,6 +9924,22 @@
               "format": "uuid",
               "title": "Saved Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -6328,6 +10181,54 @@
               "title": "Include Total",
               "type": "boolean"
             }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -6350,6 +10251,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "List Regulations",
         "tags": [
           "Library Regulations"
@@ -6357,6 +10263,24 @@
       },
       "post": {
         "operationId": "create_regulation_api_v1_library_regulations__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -6411,6 +10335,22 @@
               "title": "Regulation Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -6450,6 +10390,54 @@
               "title": "Regulation Id",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -6472,6 +10460,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Get Regulation",
         "tags": [
           "Library Regulations"
@@ -6488,6 +10481,22 @@
               "format": "uuid",
               "title": "Regulation Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -6536,6 +10545,23 @@
       "get": {
         "operationId": "list_reservations_api_v1_library_reservations__get",
         "parameters": [
+          {
+            "in": "query",
+            "name": "library_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Library Id"
+            }
+          },
           {
             "in": "query",
             "name": "resource_id",
@@ -6601,6 +10627,22 @@
               "title": "Include Total",
               "type": "boolean"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -6635,6 +10677,24 @@
       },
       "post": {
         "operationId": "create_reservation_api_v1_library_reservations__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -6689,6 +10749,22 @@
               "title": "Reservation Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -6712,6 +10788,76 @@
           }
         ],
         "summary": "Cancel Reservation",
+        "tags": [
+          "Library Reservations"
+        ]
+      },
+      "patch": {
+        "operationId": "update_reservation_api_v1_library_reservations__reservation_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "reservation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Reservation Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryReservationUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Reservation",
         "tags": [
           "Library Reservations"
         ]
@@ -6843,6 +10989,22 @@
               ],
               "title": "Include"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -6865,6 +11027,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "List Resources",
         "tags": [
           "Library Resources"
@@ -6872,6 +11039,24 @@
       },
       "post": {
         "operationId": "create_resource_api_v1_library_resources__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -6925,6 +11110,22 @@
               "format": "uuid",
               "title": "Resource Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -6997,6 +11198,22 @@
               ],
               "title": "Include"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -7019,6 +11236,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Get Resource",
         "tags": [
           "Library Resources"
@@ -7035,6 +11257,22 @@
               "format": "uuid",
               "title": "Resource Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -7079,18 +11317,65 @@
         ]
       }
     },
-    "/api/v1/library/services/": {
+    "/api/v1/library/search": {
       "get": {
-        "operationId": "list_services_api_v1_library_services__get",
+        "operationId": "search_library_api_v1_library_search_get",
         "parameters": [
           {
             "in": "query",
-            "name": "library_id",
+            "name": "q",
             "required": true,
             "schema": {
-              "format": "uuid",
-              "title": "Library Id",
+              "minLength": 1,
+              "title": "Q",
               "type": "string"
+            }
+          },
+          {
+            "description": "Comma-separated result types: branch,catalog,database,download,external_link,regulation,service,staff,guide,specialist,workflow,policy",
+            "in": "query",
+            "name": "types",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated result types: branch,catalog,database,download,external_link,regulation,service,staff,guide,specialist,workflow,policy",
+              "title": "Types"
+            }
+          },
+          {
+            "in": "query",
+            "name": "library_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Library Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 40,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
             }
           }
         ],
@@ -7114,6 +11399,100 @@
             "description": "Validation Error"
           }
         },
+        "summary": "Search Library",
+        "tags": [
+          "Library Search"
+        ]
+      }
+    },
+    "/api/v1/library/services/": {
+      "get": {
+        "operationId": "list_services_api_v1_library_services__get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "library_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Library Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "List Services",
         "tags": [
           "Library Services"
@@ -7121,6 +11500,24 @@
       },
       "post": {
         "operationId": "create_service_api_v1_library_services__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -7175,6 +11572,22 @@
               "title": "Service Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -7213,6 +11626,22 @@
               "format": "uuid",
               "title": "Service Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -7257,6 +11686,342 @@
         ]
       }
     },
+    "/api/v1/library/specialists/": {
+      "get": {
+        "operationId": "list_specialists_api_v1_library_specialists__get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "library_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Library Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "subject",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Subject"
+            }
+          },
+          {
+            "in": "query",
+            "name": "school",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "School"
+            }
+          },
+          {
+            "in": "query",
+            "name": "department",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Department"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Specialists",
+        "tags": [
+          "Library Specialists"
+        ]
+      },
+      "post": {
+        "operationId": "create_specialist_api_v1_library_specialists__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibrarySpecialistCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Specialist",
+        "tags": [
+          "Library Specialists"
+        ]
+      }
+    },
+    "/api/v1/library/specialists/{specialist_id}": {
+      "delete": {
+        "operationId": "delete_specialist_api_v1_library_specialists__specialist_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "specialist_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Specialist Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Specialist",
+        "tags": [
+          "Library Specialists"
+        ]
+      },
+      "patch": {
+        "operationId": "update_specialist_api_v1_library_specialists__specialist_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "specialist_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Specialist Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibrarySpecialistUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Specialist",
+        "tags": [
+          "Library Specialists"
+        ]
+      }
+    },
     "/api/v1/library/staff/": {
       "get": {
         "operationId": "list_staff_api_v1_library_staff__get",
@@ -7269,6 +12034,54 @@
               "format": "uuid",
               "title": "Library Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -7304,6 +12117,24 @@
       },
       "post": {
         "operationId": "create_staff_api_v1_library_staff__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -7345,6 +12176,107 @@
         ]
       }
     },
+    "/api/v1/library/staff/leadership": {
+      "get": {
+        "operationId": "list_library_leadership_api_v1_library_staff_leadership_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "library_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Library Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Library Leadership",
+        "tags": [
+          "Library Staff"
+        ]
+      }
+    },
     "/api/v1/library/staff/{staff_id}": {
       "delete": {
         "operationId": "delete_staff_api_v1_library_staff__staff_id__delete",
@@ -7357,6 +12289,22 @@
               "format": "uuid",
               "title": "Staff Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -7396,6 +12344,22 @@
               "format": "uuid",
               "title": "Staff Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -7469,6 +12433,22 @@
               ],
               "title": "Period Type"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -7503,6 +12483,24 @@
       },
       "post": {
         "operationId": "create_statistics_api_v1_library_statistics__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -7541,6 +12539,141 @@
         "summary": "Create Statistics",
         "tags": [
           "Library Statistics"
+        ]
+      }
+    },
+    "/api/v1/library/stats": {
+      "get": {
+        "operationId": "get_public_stats_api_v1_library_stats_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Public Stats",
+        "tags": [
+          "Stats"
+        ]
+      }
+    },
+    "/api/v1/library/stats/admin": {
+      "get": {
+        "operationId": "get_admin_stats_api_v1_library_stats_admin_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Admin Stats",
+        "tags": [
+          "Stats"
+        ]
+      }
+    },
+    "/api/v1/library/stats/internal/admin": {
+      "get": {
+        "description": "Return admin counters to an authenticated sibling service.",
+        "operationId": "get_internal_admin_stats_api_v1_library_stats_internal_admin_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Internal-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Key"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Internal-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Internal Admin Stats",
+        "tags": [
+          "Stats"
         ]
       }
     },
@@ -7629,6 +12762,22 @@
               "title": "Include Total",
               "type": "boolean"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -7663,6 +12812,24 @@
       },
       "post": {
         "operationId": "create_ticket_api_v1_library_tickets__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -7717,6 +12884,22 @@
               "title": "Ticket Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "responses": {
@@ -7755,6 +12938,22 @@
               "format": "uuid",
               "title": "Ticket Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
             }
           }
         ],
@@ -7800,6 +12999,22 @@
               "title": "Ticket Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
           }
         ],
         "requestBody": {
@@ -7840,6 +13055,943 @@
         "summary": "Update Ticket",
         "tags": [
           "Library Support Tickets"
+        ]
+      }
+    },
+    "/api/v1/library/workflow-steps/": {
+      "get": {
+        "operationId": "list_workflow_steps_api_v1_library_workflow_steps__get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "workflow_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workflow Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "is_active",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Is Active"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Workflow Steps",
+        "tags": [
+          "Library Workflow Steps"
+        ]
+      },
+      "post": {
+        "operationId": "create_workflow_step_api_v1_library_workflow_steps__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryWorkflowStepCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Workflow Step",
+        "tags": [
+          "Library Workflow Steps"
+        ]
+      }
+    },
+    "/api/v1/library/workflow-steps/{step_id}": {
+      "delete": {
+        "operationId": "delete_workflow_step_api_v1_library_workflow_steps__step_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "step_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Step Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Workflow Step",
+        "tags": [
+          "Library Workflow Steps"
+        ]
+      },
+      "patch": {
+        "operationId": "update_workflow_step_api_v1_library_workflow_steps__step_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "step_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Step Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryWorkflowStepUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Workflow Step",
+        "tags": [
+          "Library Workflow Steps"
+        ]
+      }
+    },
+    "/api/v1/library/workflows/": {
+      "get": {
+        "operationId": "list_workflows_api_v1_library_workflows__get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "library_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Library Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workflow_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workflow Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "audience",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Audience"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Per Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_total",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Include Total",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Workflows",
+        "tags": [
+          "Library Workflows"
+        ]
+      },
+      "post": {
+        "operationId": "create_workflow_api_v1_library_workflows__post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryWorkflowCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Workflow",
+        "tags": [
+          "Library Workflows"
+        ]
+      }
+    },
+    "/api/v1/library/workflows/records/{workflow_id}": {
+      "get": {
+        "operationId": "get_workflow_record_api_v1_library_workflows_records__workflow_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Workflow Record",
+        "tags": [
+          "Library Workflows"
+        ]
+      }
+    },
+    "/api/v1/library/workflows/slug/{slug}": {
+      "get": {
+        "operationId": "get_workflow_by_slug_api_v1_library_workflows_slug__slug__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Workflow By Slug",
+        "tags": [
+          "Library Workflows"
+        ]
+      }
+    },
+    "/api/v1/library/workflows/{slug}": {
+      "get": {
+        "operationId": "get_workflow_api_v1_library_workflows__slug__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fields"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Workflow",
+        "tags": [
+          "Library Workflows"
+        ]
+      }
+    },
+    "/api/v1/library/workflows/{workflow_id}": {
+      "delete": {
+        "operationId": "delete_workflow_api_v1_library_workflows__workflow_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Workflow",
+        "tags": [
+          "Library Workflows"
+        ]
+      },
+      "patch": {
+        "operationId": "update_workflow_api_v1_library_workflows__workflow_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "ksu_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ksu Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryWorkflowUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Workflow",
+        "tags": [
+          "Library Workflows"
         ]
       }
     }

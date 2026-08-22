@@ -12,7 +12,8 @@ from ksu_common.auth import TokenPayload
 from ksu_contracts.rbac import has_scope
 from ksu_common.schemas.responses import success
 from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelector
-from ksu_common.cache import cached_public, cache_response, invalidate_prefix
+from ksu_common.cache import cached_public, cache_response
+from ...services.cache import invalidate_library_caches
 from ksu_common.audit import audit_action
 from ksu_common.rate_limit import rate_limit
 
@@ -64,7 +65,7 @@ resources_router = APIRouter(
 
 
 async def invalidate_public_library_cache() -> None:
-    await invalidate_prefix("public")
+    await invalidate_library_caches()
 
 
 @resources_router.get("/az")
@@ -90,10 +91,10 @@ async def get_resource_by_slug_route(
     fields: FieldSelection = Depends(FieldsQuery(always_include={"id"})),
 ):
     """Get electronic resource by slug with guides."""
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     resource = await get_resource_by_slug(db, slug, public_only=not is_writer)
     if is_writer:
-        require_library_scope(user, "library:read", resource.library_id)
+        require_library_scope(user, "library.read", resource.library_id)
     guides = await list_guides(db, resource.id)
     detail = ElectronicResourceDetail.model_validate(resource)
     detail.guides = [ElectronicResourceGuideOut.model_validate(g) for g in guides]
@@ -112,10 +113,10 @@ async def get_resource_detail(
     fields: FieldSelection = Depends(FieldsQuery(always_include={"id"})),
 ):
     """Get electronic resource by ID with guides."""
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     resource = await get_resource(db, resource_id, public_only=not is_writer)
     if is_writer:
-        require_library_scope(user, "library:read", resource.library_id)
+        require_library_scope(user, "library.read", resource.library_id)
     guides = await list_guides(db, resource.id)
     detail = ElectronicResourceDetail.model_validate(resource)
     detail.guides = [ElectronicResourceGuideOut.model_validate(g) for g in guides]
@@ -142,9 +143,9 @@ async def list_resources_route(
     fields: FieldSelection = Depends(FieldsQuery(always_include={"id"})),
 ):
     """List electronic resources with filtering."""
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     if is_writer:
-        require_library_scope(user, "library:read", library_id)
+        require_library_scope(user, "library.read", library_id)
     selector = FieldSelector(ElectronicResource, fields, always_include={"id"})
     result = await list_resources(
         db,
@@ -174,10 +175,10 @@ async def create_resource_route(
     request: Request,
     body: ElectronicResourceCreate,
     db: AsyncSession = Depends(get_db),
-    user: TokenPayload = Depends(requires_scope("library:write")),
+    user: TokenPayload = Depends(requires_scope("library.write")),
 ):
     """Create a new electronic resource."""
-    require_library_scope(user, "library:write", body.library_id)
+    require_library_scope(user, "library.write", body.library_id)
     resource = await create_resource(db, body)
     await invalidate_public_library_cache()
     return success(
@@ -197,13 +198,13 @@ async def update_resource_route(
     resource_id: uuid.UUID,
     body: ElectronicResourceUpdate,
     db: AsyncSession = Depends(get_db),
-    user: TokenPayload = Depends(requires_scope("library:write")),
+    user: TokenPayload = Depends(requires_scope("library.write")),
 ):
     """Update an electronic resource."""
     current_library_id = await get_resource_library_id(db, resource_id)
-    require_library_scope(user, "library:write", current_library_id)
+    require_library_scope(user, "library.write", current_library_id)
     if "library_id" in body.model_fields_set:
-        require_library_scope(user, "library:write", body.library_id)
+        require_library_scope(user, "library.write", body.library_id)
     resource = await update_resource(db, resource_id, body)
     await invalidate_public_library_cache()
     return success(data=ElectronicResourceOut.model_validate(resource).model_dump())
@@ -219,11 +220,11 @@ async def delete_resource_route(
     request: Request,
     resource_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    user: TokenPayload = Depends(requires_scope("library:admin")),
+    user: TokenPayload = Depends(requires_scope("library.admin")),
 ):
     """Delete an electronic resource."""
     library_id = await get_resource_library_id(db, resource_id)
-    require_library_scope(user, "library:admin", library_id)
+    require_library_scope(user, "library.admin", library_id)
     await delete_resource(db, resource_id)
     await invalidate_public_library_cache()
 
@@ -260,11 +261,11 @@ async def create_guide_route(
     resource_id: uuid.UUID,
     body: ElectronicResourceGuideCreate,
     db: AsyncSession = Depends(get_db),
-    user: TokenPayload = Depends(requires_scope("library:write")),
+    user: TokenPayload = Depends(requires_scope("library.write")),
 ):
     """Create a guide for an electronic resource."""
     library_id = await get_resource_library_id(db, resource_id)
-    require_library_scope(user, "library:write", library_id)
+    require_library_scope(user, "library.write", library_id)
     guide = await create_guide(db, resource_id, body)
     await invalidate_public_library_cache()
     return success(
@@ -285,11 +286,11 @@ async def update_guide_route(
     guide_id: uuid.UUID,
     body: ElectronicResourceGuideUpdate,
     db: AsyncSession = Depends(get_db),
-    user: TokenPayload = Depends(requires_scope("library:write")),
+    user: TokenPayload = Depends(requires_scope("library.write")),
 ):
     """Update an electronic resource guide."""
     library_id = await get_guide_library_id(db, guide_id)
-    require_library_scope(user, "library:write", library_id)
+    require_library_scope(user, "library.write", library_id)
     guide = await update_guide(db, guide_id, body)
     await invalidate_public_library_cache()
     return success(data=ElectronicResourceGuideOut.model_validate(guide).model_dump())
@@ -306,11 +307,11 @@ async def delete_guide_route(
     resource_id: uuid.UUID,
     guide_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    user: TokenPayload = Depends(requires_scope("library:admin")),
+    user: TokenPayload = Depends(requires_scope("library.admin")),
 ):
     """Delete an electronic resource guide."""
     library_id = await get_guide_library_id(db, guide_id)
-    require_library_scope(user, "library:admin", library_id)
+    require_library_scope(user, "library.admin", library_id)
     await delete_guide(db, guide_id)
     await invalidate_public_library_cache()
 
@@ -364,7 +365,7 @@ async def list_saved_publications(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
     db: AsyncSession = Depends(get_db),
-    user: TokenPayload = Depends(requires_scope("library:read")),
+    user: TokenPayload = Depends(requires_scope("library.read")),
 ):
     """List user's saved publications."""
     person_id = uuid.UUID(user.sub)
@@ -387,7 +388,7 @@ async def save_publication_route(
     request: Request,
     body: SavedPublicationCreate,
     db: AsyncSession = Depends(get_db),
-    user: TokenPayload = Depends(requires_scope("library:read")),
+    user: TokenPayload = Depends(requires_scope("library.read")),
 ):
     """Save a publication to user's reading list."""
     person_id = uuid.UUID(user.sub)
@@ -408,7 +409,7 @@ async def update_saved_publication(
     saved_id: uuid.UUID,
     body: SavedPublicationUpdate,
     db: AsyncSession = Depends(get_db),
-    user: TokenPayload = Depends(requires_scope("library:read")),
+    user: TokenPayload = Depends(requires_scope("library.read")),
 ):
     """Update a saved publication (notes, reading status)."""
     person_id = uuid.UUID(user.sub)
@@ -424,7 +425,7 @@ async def unsave_publication_route(
     request: Request,
     saved_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    user: TokenPayload = Depends(requires_scope("library:read")),
+    user: TokenPayload = Depends(requires_scope("library.read")),
 ):
     """Remove a publication from user's saved list."""
     person_id = uuid.UUID(user.sub)

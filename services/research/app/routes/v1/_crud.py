@@ -19,6 +19,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...core.auth import get_current_user, require_scope, require_scoped_record
 from ...core.database import get_db
 from ...schemas.base import JsonObject, SuccessEnvelope, SuccessEnvelopeWithMeta
+from ...services.research_domains import (
+    assert_record_in_domain,
+    resolve_domain_filters,
+    stamp_domain_defaults,
+)
+from ...services.research_portal_context import caller_can_publish
+from ...services.research_workflow import hold_for_review
 from ._fields import FieldsDep, FieldSelection, build_selector
 
 
@@ -38,6 +45,8 @@ def build_crud_router(
     router = APIRouter(prefix=prefix, tags=[tag])
     read_dependencies = [] if public_read else [Depends(require_scope(write_scope))]
     model_has_center_scope = hasattr(service.model, "center_id")
+    # Portal domains (farm, sustainability) are keyed off the route prefix.
+    resource_key = prefix.strip("/")
 
     def maybe_cached_public(*args, **kwargs):
         if public_read:
@@ -214,12 +223,7 @@ def build_crud_router(
             require_scoped_record(user, write_scope, "research", center_id)
         selector = build_selector(service.model, fields)
         list_method = service.list_public if public_read else service.list
-        result = await list_method(
-            db,
-            page=page,
-            per_page=per_page,
-            search=search,
-            filters={
+        list_filters = {
                 "status": status_filter,
                 "is_active": is_active,
                 "is_featured": is_featured,
@@ -286,7 +290,19 @@ def build_crud_router(
                 "funder_type": funder_type,
                 "is_required": is_required,
                 "is_accepting_contributions": is_accepting_contributions,
-            },
+        }
+        # A caller whose only authority is a portal domain (farm,
+        # sustainability) is narrowed to that domain's slice of this shared
+        # table. The override is deliberate: the filter must not be widened by
+        # omitting or changing the query parameter.
+        if not public_read:
+            list_filters.update(resolve_domain_filters(user, resource_key))
+        result = await list_method(
+            db,
+            page=page,
+            per_page=per_page,
+            search=search,
+            filters=list_filters,
             year=year,
             sort=sort,
             order=order,
@@ -355,6 +371,15 @@ def build_crud_router(
             center_id = getattr(data, "center_id", None)
             if access is not None and (model_has_center_scope or center_id is not None):
                 require_scoped_record(access, write_scope, "research", center_id)
+            # Reject a payload that files the record outside the caller's
+            # domain, then stamp the domain's discriminator so a farm manager
+            # never has to know that "farm project" means project_type=action.
+            assert_record_in_domain(access, resource_key, data)
+            data = stamp_domain_defaults(access, resource_key, data)
+            # Records created by anyone without publish authority are held for
+            # review instead of going live immediately.
+            if not caller_can_publish(access):
+                data = hold_for_review(resource_key, data)
             try:
                 item = await service.create(
                     db,
@@ -388,6 +413,10 @@ def build_crud_router(
                 require_scoped_record(user, write_scope, "research", center_id)
         if model_has_center_scope and current_center_id is None and next_center_id is None:
             require_scoped_record(user, write_scope, "research", None)
+        # The stored record must already belong to the caller's domain, and the
+        # patch must not move it out of that domain.
+        assert_record_in_domain(user, resource_key, item)
+        assert_record_in_domain(user, resource_key, data)
         try:
             item = await service.update(db, item, data, actor_id=user.sub)
         except ValueError as exc:
@@ -411,6 +440,7 @@ def build_crud_router(
         center_id = getattr(item, "center_id", None)
         if model_has_center_scope or center_id is not None:
             require_scoped_record(user, write_scope, "research", center_id)
+        assert_record_in_domain(user, resource_key, item)
         await service.soft_delete(db, item, actor_id=user.sub)
         return success(
             data={"id": str(item_id), "deleted": True},

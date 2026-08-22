@@ -195,11 +195,11 @@ export const authApi = {
 
   logout: () => mainApi.post<void>("/api/v1/auth/logout"),
 
-  refresh: (refreshToken: string) =>
-    mainApi.post<{ data: { access_token: string; refresh_token: string } }>(
+  refresh: () =>
+    mainApi.post<{ data: { authenticated: boolean; token_type: "cookie" } }>(
       "/api/v1/auth/refresh",
       {
-        refresh_token: refreshToken,
+        token_transport: "cookie",
       },
     ),
 
@@ -228,6 +228,11 @@ export const authApi = {
     }),
 };
 
+/**
+ * The institutional record behind founding year, charter date, tagline, and
+ * mission — read by 12 public pages. There is no list route: the backend
+ * exposes the current record and a slug lookup, so writes are keyed by id.
+ */
 export const universityInfoApi = {
   getCurrent: (params?: FieldSelectionParams) =>
     mainApi.get<{ data: UniversityInfo }>("/api/v1/university-info", params),
@@ -237,6 +242,18 @@ export const universityInfoApi = {
       `/api/v1/university-info/${slug}`,
       params,
     ),
+
+  create: (data: Partial<UniversityInfo>) =>
+    mainApi.post<{ data: UniversityInfo }>("/api/v1/university-info", data),
+
+  update: (id: string, data: Partial<UniversityInfo>) =>
+    mainApi.patch<{ data: UniversityInfo }>(
+      `/api/v1/university-info/${id}`,
+      data,
+    ),
+
+  delete: (id: string) =>
+    mainApi.delete<void>(`/api/v1/university-info/${id}`),
 };
 
 export const statsApi = {

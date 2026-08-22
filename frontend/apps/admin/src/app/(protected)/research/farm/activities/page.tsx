@@ -39,7 +39,7 @@ export default function FarmActivitiesPage() {
       description="Manage farm workshops, field days, demonstrations, and community training events."
       queryKey={["research", "farm", "activities"]}
       resource={{ list: eventsApi.listAdmin, create: eventsApi.create, update: eventsApi.update, delete: eventsApi.delete }}
-      manageScopes={["content.manage_events", "admin:*"]}
+      manageScopes={["farm.manage", "content.manage_events", "admin:*"]}
       listParams={{ event_type: "workshop" }}
       summarySlot={<FarmWorkspaceHeader />}
       listFilters={activityFilters}

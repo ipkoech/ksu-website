@@ -16,12 +16,16 @@ networks:
 # ── Named volumes ─────────────────────────────────────────────────────────────
 volumes:
   postgres_data:
-  redis_data:
+  redis_data: # Durable Celery broker/result data (legacy volume name retained).
   uploads_data:
   prometheus_data:
   alertmanager_data:
   frontend_node_modules:
   frontend_pnpm_store:
+
+secrets:
+  alertmanager_config:
+    file: ${ALERTMANAGER_CONFIG_FILE:-./monitoring/alertmanager.yml}
 
 x-frontend-dev: &frontend-dev
   image: node@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43bb9c86130c3e2
@@ -138,24 +142,40 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── Redis (shared: cache + Celery queues) ─────────────────────────────────────
+  # ── Redis broker (durable Celery queues/results; never evict) ─────────────────
   redis:
     image: redis:7-alpine
     command:
       - redis-server
       - --appendonly
       - "yes"
-      # Bounded so a cache-fill cannot consume the host. The policy stays
-      # noeviction on purpose: this one instance is both the cache and the
-      # Celery broker, and an eviction policy that can drop keys would silently
-      # discard queued tasks. Splitting cache and broker onto separate
-      # instances is the prerequisite for running the cache under allkeys-lru.
       - --maxmemory
-      - ${REDIS_MAXMEMORY:-512mb}
+      - ${REDIS_BROKER_MAXMEMORY:-512mb}
       - --maxmemory-policy
-      - ${REDIS_MAXMEMORY_POLICY:-noeviction}
+      - noeviction
     volumes:
       - redis_data:/data
+    networks: [ksu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Cache/rate-limit data is disposable and may be evicted under pressure.
+  redis-cache:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+      - --maxmemory
+      - ${REDIS_CACHE_MAXMEMORY:-512mb}
+      - --maxmemory-policy
+      - ${REDIS_CACHE_MAXMEMORY_POLICY:-allkeys-lru}
     networks: [ksu]
     restart: unless-stopped
     healthcheck:
@@ -177,7 +197,7 @@ services:
     command: ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "172.30.0.2", "--workers", "${API_WORKERS:-2}"]
     environment:
       <<: *backend-database-capacity
-      APP_ENV: production
+      APP_ENV: ${APP_ENV:-production}
       KSU_RELEASE: ${KSU_RELEASE:-unknown}
       DEBUG: "false"
       JWT_SIGNING_ENABLED: "true"
@@ -197,8 +217,8 @@ services:
       ANALYTICS_RETENTION_DAYS: ${ANALYTICS_RETENTION_DAYS:-395}
       IDEMPOTENCY_RETENTION_DAYS: ${IDEMPOTENCY_RETENTION_DAYS:-30}
       OUTBOX_RETENTION_DAYS: ${OUTBOX_RETENTION_DAYS:-7}
-      REDIS_URL: ${MAIN_REDIS_URL:-redis://redis:6379/0}
-      CACHE_REDIS_URL: ${MAIN_CACHE_REDIS_URL:-redis://redis:6379/0}
+      REDIS_URL: ${MAIN_REDIS_URL:-redis://redis-cache:6379/0}
+      CACHE_REDIS_URL: ${MAIN_CACHE_REDIS_URL:-redis://redis-cache:6379/0}
       CELERY_BROKER_URL: ${MAIN_CELERY_BROKER_URL:-redis://redis:6379/0}
       CELERY_RESULT_BACKEND: ${MAIN_CELERY_RESULT_BACKEND:-redis://redis:6379/0}
       RESEARCH_SERVICE_URL: http://research:8001
@@ -223,6 +243,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      redis-cache:
         condition: service_healthy
     networks:
       ksu:
@@ -249,7 +271,7 @@ services:
     command: ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8001", "--proxy-headers", "--forwarded-allow-ips", "172.30.0.2", "--workers", "${API_WORKERS:-2}"]
     environment:
       <<: *backend-database-capacity
-      APP_ENV: production
+      APP_ENV: ${APP_ENV:-production}
       KSU_RELEASE: ${KSU_RELEASE:-unknown}
       JWT_PUBLIC_KEY_B64: ${JWT_PUBLIC_KEY_B64:?JWT_PUBLIC_KEY_B64 is required}
       JWT_ALGORITHM: RS256
@@ -258,8 +280,8 @@ services:
       JWT_AUDIENCE: ${JWT_AUDIENCE:-ksu-platform}
       DATABASE_URL: postgresql+asyncpg://${RESEARCH_DB_USER:-ksu_research}:${RESEARCH_DB_PASSWORD:?RESEARCH_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: research
-      REDIS_URL: ${RESEARCH_REDIS_URL:-redis://redis:6379/2}
-      CACHE_REDIS_URL: ${RESEARCH_CACHE_REDIS_URL:-redis://redis:6379/2}
+      REDIS_URL: ${RESEARCH_REDIS_URL:-redis://redis-cache:6379/2}
+      CACHE_REDIS_URL: ${RESEARCH_CACHE_REDIS_URL:-redis://redis-cache:6379/2}
       CELERY_BROKER_URL: ${RESEARCH_CELERY_BROKER_URL:-redis://redis:6379/2}
       CELERY_RESULT_BACKEND: ${RESEARCH_CELERY_RESULT_BACKEND:-redis://redis:6379/2}
       MAIN_SERVICE_URL: http://main:8000
@@ -278,6 +300,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      redis-cache:
         condition: service_healthy
       main:
         condition: service_healthy
@@ -306,7 +330,7 @@ services:
     command: ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8003", "--proxy-headers", "--forwarded-allow-ips", "172.30.0.2", "--workers", "${API_WORKERS:-2}"]
     environment:
       <<: *backend-database-capacity
-      APP_ENV: production
+      APP_ENV: ${APP_ENV:-production}
       KSU_RELEASE: ${KSU_RELEASE:-unknown}
       JWT_PUBLIC_KEY_B64: ${JWT_PUBLIC_KEY_B64:?JWT_PUBLIC_KEY_B64 is required}
       JWT_ALGORITHM: RS256
@@ -315,8 +339,8 @@ services:
       JWT_AUDIENCE: ${JWT_AUDIENCE:-ksu-platform}
       DATABASE_URL: postgresql+asyncpg://${HERI_DB_USER:-ksu_heri}:${HERI_DB_PASSWORD:?HERI_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: heri
-      REDIS_URL: ${HERI_REDIS_URL:-redis://redis:6379/3}
-      CACHE_REDIS_URL: ${HERI_CACHE_REDIS_URL:-redis://redis:6379/3}
+      REDIS_URL: ${HERI_REDIS_URL:-redis://redis-cache:6379/3}
+      CACHE_REDIS_URL: ${HERI_CACHE_REDIS_URL:-redis://redis-cache:6379/3}
       CELERY_BROKER_URL: ${HERI_CELERY_BROKER_URL:-redis://redis:6379/3}
       CELERY_RESULT_BACKEND: ${HERI_CELERY_RESULT_BACKEND:-redis://redis:6379/3}
       RESEARCH_SERVICE_URL: ${HERI_RESEARCH_SERVICE_URL:-http://research:8001}
@@ -334,6 +358,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      redis-cache:
         condition: service_healthy
     networks:
       ksu:
@@ -360,7 +386,7 @@ services:
     command: ["uvicorn", "wsgi:app", "--host", "0.0.0.0", "--port", "8002", "--proxy-headers", "--forwarded-allow-ips", "172.30.0.2", "--workers", "${API_WORKERS:-2}"]
     environment:
       <<: *backend-database-capacity
-      APP_ENV: production
+      APP_ENV: ${APP_ENV:-production}
       KSU_RELEASE: ${KSU_RELEASE:-unknown}
       JWT_PUBLIC_KEY_B64: ${JWT_PUBLIC_KEY_B64:?JWT_PUBLIC_KEY_B64 is required}
       JWT_ALGORITHM: RS256
@@ -369,8 +395,8 @@ services:
       JWT_AUDIENCE: ${JWT_AUDIENCE:-ksu-platform}
       DATABASE_URL: postgresql+asyncpg://${LIBRARY_DB_USER:-ksu_library}:${LIBRARY_DB_PASSWORD:?LIBRARY_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: library
-      REDIS_URL: ${LIBRARY_REDIS_URL:-redis://redis:6379/1}
-      CACHE_REDIS_URL: ${LIBRARY_CACHE_REDIS_URL:-redis://redis:6379/1}
+      REDIS_URL: ${LIBRARY_REDIS_URL:-redis://redis-cache:6379/1}
+      CACHE_REDIS_URL: ${LIBRARY_CACHE_REDIS_URL:-redis://redis-cache:6379/1}
       CELERY_BROKER_URL: ${LIBRARY_CELERY_BROKER_URL:-redis://redis:6379/1}
       CELERY_RESULT_BACKEND: ${LIBRARY_CELERY_RESULT_BACKEND:-redis://redis:6379/1}
       MAIN_SERVICE_URL: http://main:8000
@@ -386,6 +412,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      redis-cache:
         condition: service_healthy
       main:
         condition: service_healthy
@@ -412,7 +440,7 @@ services:
     env_file: ./services/main/.env
     environment:
       <<: *backend-database-capacity
-      APP_ENV: production
+      APP_ENV: ${APP_ENV:-production}
       JWT_SIGNING_ENABLED: "false"
       JWT_PRIVATE_KEY_B64: ""
       JWT_PUBLIC_KEY_B64: ${JWT_PUBLIC_KEY_B64:?JWT_PUBLIC_KEY_B64 is required}
@@ -424,7 +452,7 @@ services:
       CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${MAIN_DB_USER:-ksu_main}:${MAIN_DB_PASSWORD:?MAIN_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: main
-      REDIS_URL: ${MAIN_REDIS_URL:-redis://redis:6379/0}
+      REDIS_URL: ${MAIN_REDIS_URL:-redis://redis-cache:6379/0}
       CELERY_BROKER_URL: ${MAIN_CELERY_BROKER_URL:-redis://redis:6379/0}
       CELERY_RESULT_BACKEND: ${MAIN_CELERY_RESULT_BACKEND:-redis://redis:6379/0}
       INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
@@ -447,6 +475,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      redis-cache:
         condition: service_healthy
     networks: [ksu]
     restart: unless-stopped
@@ -475,16 +505,21 @@ services:
     env_file: ./services/library/.env
     environment:
       <<: *backend-database-capacity
-      APP_ENV: production
+      APP_ENV: ${APP_ENV:-production}
+      JWT_PUBLIC_KEY_B64: ${JWT_PUBLIC_KEY_B64:?JWT_PUBLIC_KEY_B64 is required}
+      JWT_ALGORITHM: RS256
+      JWT_KEY_ID: ${JWT_KEY_ID:?JWT_KEY_ID is required}
+      JWT_ISSUER: ${JWT_ISSUER:-ksu-auth}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-ksu-platform}
       CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${LIBRARY_DB_USER:-ksu_library}:${LIBRARY_DB_PASSWORD:?LIBRARY_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: library
-      REDIS_URL: ${LIBRARY_REDIS_URL:-redis://redis:6379/1}
+      REDIS_URL: ${LIBRARY_REDIS_URL:-redis://redis-cache:6379/1}
       CELERY_BROKER_URL: ${LIBRARY_CELERY_BROKER_URL:-redis://redis:6379/1}
       CELERY_RESULT_BACKEND: ${LIBRARY_CELERY_RESULT_BACKEND:-redis://redis:6379/1}
       MAIN_SERVICE_URL: http://main:8000
       MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
-      INTERNAL_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
+      INTERNAL_API_KEY: ${LIBRARY_INTERNAL_API_KEY:-}
       KSU_WORKER_METRICS_HOST: 0.0.0.0
       KSU_WORKER_METRICS_PORT: 9101
       PROMETHEUS_MULTIPROC_DIR: /tmp/ksu-prometheus
@@ -499,6 +534,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      redis-cache:
         condition: service_healthy
     networks: [ksu]
     restart: unless-stopped
@@ -518,11 +555,16 @@ services:
     env_file: ./services/research/.env
     environment:
       <<: *backend-database-capacity
-      APP_ENV: production
+      APP_ENV: ${APP_ENV:-production}
+      JWT_PUBLIC_KEY_B64: ${JWT_PUBLIC_KEY_B64:?JWT_PUBLIC_KEY_B64 is required}
+      JWT_ALGORITHM: RS256
+      JWT_KEY_ID: ${JWT_KEY_ID:?JWT_KEY_ID is required}
+      JWT_ISSUER: ${JWT_ISSUER:-ksu-auth}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-ksu-platform}
       CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${RESEARCH_DB_USER:-ksu_research}:${RESEARCH_DB_PASSWORD:?RESEARCH_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: research
-      REDIS_URL: ${RESEARCH_REDIS_URL:-redis://redis:6379/2}
+      REDIS_URL: ${RESEARCH_REDIS_URL:-redis://redis-cache:6379/2}
       CELERY_BROKER_URL: ${RESEARCH_CELERY_BROKER_URL:-redis://redis:6379/2}
       CELERY_RESULT_BACKEND: ${RESEARCH_CELERY_RESULT_BACKEND:-redis://redis:6379/2}
       MAIN_SERVICE_URL: http://main:8000
@@ -546,6 +588,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      redis-cache:
+        condition: service_healthy
       main:
         condition: service_healthy
     networks: [ksu]
@@ -567,11 +611,16 @@ services:
     env_file: ./services/heri_africa/.env
     environment:
       <<: *backend-database-capacity
-      APP_ENV: production
+      APP_ENV: ${APP_ENV:-production}
+      JWT_PUBLIC_KEY_B64: ${JWT_PUBLIC_KEY_B64:?JWT_PUBLIC_KEY_B64 is required}
+      JWT_ALGORITHM: RS256
+      JWT_KEY_ID: ${JWT_KEY_ID:?JWT_KEY_ID is required}
+      JWT_ISSUER: ${JWT_ISSUER:-ksu-auth}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-ksu-platform}
       CELERY_CONCURRENCY: ${CELERY_CONCURRENCY:-1}
       DATABASE_URL: postgresql+asyncpg://${HERI_DB_USER:-ksu_heri}:${HERI_DB_PASSWORD:?HERI_DB_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-ksu_services_db}
       DB_SCHEMA: heri
-      REDIS_URL: ${HERI_REDIS_URL:-redis://redis:6379/3}
+      REDIS_URL: ${HERI_REDIS_URL:-redis://redis-cache:6379/3}
       CELERY_BROKER_URL: ${HERI_CELERY_BROKER_URL:-redis://redis:6379/3}
       CELERY_RESULT_BACKEND: ${HERI_CELERY_RESULT_BACKEND:-redis://redis:6379/3}
       RESEARCH_SERVICE_URL: http://research:8001
@@ -594,6 +643,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      redis-cache:
+        condition: service_healthy
     networks: [ksu]
     restart: unless-stopped
 
@@ -611,7 +662,12 @@ services:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
       - prometheus_data:/prometheus
-    networks: [ksu, api]
+    networks:
+      ksu:
+      api:
+        # Keep the gateway's trusted proxy address (172.30.0.2) available when
+        # observability services start before the gateway after a reboot.
+        ipv4_address: 172.30.0.7
     depends_on:
       alertmanager:
         condition: service_started
@@ -620,13 +676,16 @@ services:
   alertmanager:
     image: prom/alertmanager:v0.27.0
     profiles: [observability]
+    user: "65534:${ALERTMANAGER_CONFIG_GID:-1000}"
     command:
-      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --config.file=/run/secrets/alertmanager.yml
       - --storage.path=/alertmanager
     ports:
       - "127.0.0.1:${ALERTMANAGER_PORT:-9093}:9093"
+    secrets:
+      - source: alertmanager_config
+        target: alertmanager.yml
     volumes:
-      - ${ALERTMANAGER_CONFIG_FILE:-./monitoring/alertmanager.yml}:/etc/alertmanager/alertmanager.yml:ro
       - alertmanager_data:/alertmanager
     networks: [ksu]
     restart: unless-stopped
@@ -660,6 +719,17 @@ services:
     networks: [ksu]
     depends_on:
       redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis-cache-exporter:
+    image: oliver006/redis_exporter:v1.65.0
+    profiles: [observability]
+    command:
+      - --redis.addr=redis://redis-cache:6379
+    networks: [ksu]
+    depends_on:
+      redis-cache:
         condition: service_healthy
     restart: unless-stopped
 

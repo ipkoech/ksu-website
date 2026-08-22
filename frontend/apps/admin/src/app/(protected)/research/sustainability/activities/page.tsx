@@ -74,7 +74,7 @@ export default function SustainabilityActivitiesPage() {
       description="Manage sustainability workshops, seminars, field days, and climate events."
       queryKey={["research", "sustainability-activities"]}
       resource={{ list: eventsApi.listAdmin, create: eventsApi.create, update: eventsApi.update, delete: eventsApi.delete }}
-      manageScopes={["content.manage_events", "admin:*"]}
+      manageScopes={["sustainability.manage", "content.manage_events", "admin:*"]}
       listParams={{ scope_type: "research_sustainability" }}
       summarySlot={<SustainabilityWorkspaceHeader />}
       listFilters={activityFilters}

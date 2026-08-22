@@ -15,10 +15,12 @@ from sqlalchemy.orm import selectinload
 
 from ksu_common import TokenPayload, build_user_dependencies
 from ksu_common.cache import get_redis
+from ksu_contracts.rbac import authorize_permission, normalize_permission
 
 from .core.config import get_settings
 from .core.database import get_session
 from .models import ApiKey, Person, Role, RolePermission, User, UserRole
+from .security.role_assignments import is_role_assignment_current
 
 security = HTTPBearer(auto_error=False)
 settings = get_settings()
@@ -190,111 +192,17 @@ async def get_token_payload(
     return await get_current_token(credentials)
 
 
-def _normalize_scope(scope: str) -> str:
-    return scope.strip().lower()
-
-
-def _split_scope(scope: str) -> tuple[str, str]:
-    normalized = _normalize_scope(scope)
-    colon_index = normalized.index(":") if ":" in normalized else -1
-    dot_index = normalized.index(".") if "." in normalized else -1
-    separator_index = colon_index if dot_index == -1 else dot_index if colon_index == -1 else min(colon_index, dot_index)
-    if separator_index == -1:
-        return normalized, ""
-    return normalized[:separator_index], normalized[separator_index + 1 :]
-
-
-def _resource_aliases(resource: str) -> set[str]:
-    aliases = {
-        "organization": {"organization", "governance"},
-        "governance": {"governance", "organization"},
-    }
-    return aliases.get(resource, {resource})
-
-
-def _action_grants(permission_action: str, required_action: str) -> bool:
-    if permission_action in {"*", required_action}:
-        return True
-
-    read_actions = {"read", "view", "list"}
-    write_actions = {"write", "create", "update", "edit", "manage"}
-    delete_actions = {"delete", "remove"}
-
-    if permission_action == "read":
-        return required_action in read_actions
-    if permission_action == "write":
-        return (
-            required_action in write_actions
-            or required_action.startswith("manage")
-            or required_action in {"publish", "unpublish", "upload", "send"}
-        )
-    if permission_action == "manage":
-        return required_action not in delete_actions
-    if permission_action.startswith("manage"):
-        return required_action in write_actions or required_action.startswith("manage")
-    if permission_action == "delete":
-        return required_action in delete_actions
-    if permission_action == "upload":
-        return required_action == "upload"
-    if permission_action == "send":
-        return required_action == "send"
-    if permission_action == "view":
-        return required_action in read_actions
-
-    return False
-
-
-def _scope_variants(scope: str) -> set[str]:
-    resource, action = _split_scope(scope)
-    if not action:
-        return {resource}
-
-    variants = {
-        f"{resource}:{action}",
-        f"{resource}.{action}",
-    }
-    if action == "read":
-        variants.update({f"{resource}.view", f"{resource}:view"})
-    if action == "view":
-        variants.update({f"{resource}:read", f"{resource}.read"})
-    if action == "write":
-        variants.update({f"{resource}.manage", f"{resource}:manage"})
-    if action.startswith("manage"):
-        variants.update({f"{resource}:write", f"{resource}.write"})
-    return variants
-
-
-def _permission_grants_scope(permission: str, scope: str) -> bool:
-    permission_resource, permission_action = _split_scope(permission)
-    required_resource, required_action = _split_scope(scope)
-    if permission == "*" or permission == "admin:*":
-        return True
-    if not permission_action:
-        return permission == scope
-    if permission_resource not in _resource_aliases(required_resource):
-        return False
-    if required_action == "*":
-        return permission_action == "*"
-    return _action_grants(permission_action, required_action)
-
-
 def _has_permission(permissions: set[str], scope: str) -> bool:
-    """Check if any permission grants the required scope."""
-    normalized_permissions = {_normalize_scope(permission) for permission in permissions}
-    normalized_scope = _normalize_scope(scope)
-    if "*" in normalized_permissions or "admin:*" in normalized_permissions:
-        return True
-    if normalized_permissions.intersection(_scope_variants(normalized_scope)):
-        return True
-    return any(_permission_grants_scope(permission, normalized_scope) for permission in normalized_permissions)
+    """Check a permission using the shared, versioned backend policy."""
+    return authorize_permission(permissions, scope).allowed
 
 
 def permissions_for_user(user: User) -> set[str]:
     """Return active permission names granted to a loaded user."""
     return {
-        rp.permission.name
+        normalize_permission(rp.permission.name)
         for assignment in user.role_assignments
-        if assignment.is_active and assignment.role and assignment.role.is_active
+        if is_role_assignment_current(assignment) and assignment.role and assignment.role.is_active
         for rp in assignment.role.role_permissions
         if rp.permission and rp.permission.is_active
     }

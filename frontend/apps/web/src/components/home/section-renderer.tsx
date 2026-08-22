@@ -125,6 +125,7 @@ export function HomepageSections({
   socialLinks,
   vcHub,
   suppressImplicitFeaturedStories = false,
+  handledVariants = [],
 }: {
   sections: HomepageSection[];
   hero?: HomepageResolvedHero | null;
@@ -134,16 +135,28 @@ export function HomepageSections({
   socialLinks?: HomeSocialLinks;
   vcHub?: VcPublicHub | null;
   suppressImplicitFeaturedStories?: boolean;
+  /**
+   * Layout variants the caller already rendered with its own treatment and
+   * stripped from `sections`. Without them the de-duplication guards below
+   * search an array those variants were just removed from, so every guard
+   * resolves false and suppression silently never fires — which is how a
+   * page carrying both `news_grid` and `events_list` renders its events
+   * twice.
+   */
+  handledVariants?: string[];
 }) {
   const orderedSections = orderHomepageSections(sections);
+  const handled = new Set(handledVariants);
+  const present = (variant: string) =>
+    handled.has(variant) ||
+    sections.some((section) => section.layout_variant === variant);
+
   const factsSection = sections.find(
     (section) =>
       section.layout_variant === "facts_strip" ||
       section.section_key === "facts",
   );
-  const hasPulseStrip = sections.some(
-    (section) => section.layout_variant === "pulse_strip",
-  );
+  const hasPulseStrip = present("pulse_strip");
   const academicDatesSection = sections.find(
     (section) =>
       section.layout_variant === "date_timeline" ||
@@ -152,15 +165,9 @@ export function HomepageSections({
   const eventsSection = sections.find(
     (section) => section.layout_variant === "events_list",
   );
-  const hasMergedNewsEvents = sections.some(
-    (section) => section.layout_variant === "news_grid",
-  );
-  const hasMergedProgrammeDates = sections.some(
-    (section) => section.layout_variant === "programme_finder",
-  );
-  const hasExplicitFeaturedStories = sections.some(
-    (section) => section.layout_variant === "featured_stories",
-  );
+  const hasMergedNewsEvents = present("news_grid");
+  const hasMergedProgrammeDates = present("programme_finder");
+  const hasExplicitFeaturedStories = present("featured_stories");
 
   return (
     <>

@@ -13,7 +13,7 @@ from ksu_common import cached_public
 from ksu_common.schemas.responses import success
 
 from ...deps import DbSession
-from ...models import Media, MediaLink
+from ...models import Media, MediaFolder, MediaLink
 from ...services import MediaService
 from ...services._base import ilike_any, paginate_query
 from ...core.config import public_media_rate_limit
@@ -82,13 +82,17 @@ def public_media_link_payload(link: MediaLink) -> dict[str, object | None]:
 
 @router.get("")
 @public_media_rate_limit
-@cached_public(timeout=300, vary_on=("page", "per_page", "media_type", "search"))
+@cached_public(
+    timeout=300,
+    vary_on=("page", "per_page", "media_type", "collection", "search"),
+)
 async def list_public_media(
     request: Request,
     db: DbSession,
     page: int = Query(1, ge=1),
     per_page: int = Query(24, ge=1, le=100),
     media_type: str | None = None,
+    collection: str | None = Query(default=None, min_length=1, max_length=255),
     search: str | None = None,
 ):
     query = (
@@ -98,6 +102,12 @@ async def list_public_media(
     )
     if media_type:
         query = query.where(Media.media_type == media_type)
+    if collection:
+        query = query.join(MediaFolder, Media.folder_id == MediaFolder.id).where(
+            MediaFolder.deleted_at.is_(None),
+            MediaFolder.is_public.is_(True),
+            MediaFolder.slug == collection,
+        )
     if search:
         query = query.where(
             ilike_any(

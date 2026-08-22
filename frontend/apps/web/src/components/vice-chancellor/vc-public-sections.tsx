@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, MapPin, Play } from "lucide-react";
+import { ArrowRight, CalendarDays, MapPin } from "lucide-react";
 import type { VcPublicItem, VcPublicMedia } from "@ksu/api-client";
 import { PublicImage } from "@/components/public/public-image";
-import { VcVideoPlayer } from "./vc-video-player";
+import { AboutReveal } from "@/components/about/about-reveal";
+import { VcGalleryLightbox } from "./vc-gallery-lightbox";
 
 function formatDate(value?: string | null, short = false) {
   if (!value) return null;
@@ -27,82 +28,111 @@ function itemHref(
   return `/about/vice-chancellor/galleries/${item.slug}`;
 }
 
-function ImageStoryCard({
-  item,
-  featured = false,
-}: {
-  item: VcPublicItem;
-  featured?: boolean;
-}) {
+/**
+ * One activity, as a ledger row.
+ *
+ * The supplied activity photographs are pre-branded social graphics: each
+ * carries a KSU masthead across the top of the frame and a URL strip across
+ * the foot. A full-bleed treatment therefore has to bury most of the image
+ * under a scrim just to make a headline legible, which is why this section
+ * demotes the photograph to a supporting frame. Cropped to a square and held
+ * at this size, the baked-in furniture falls outside the visible area and the
+ * picture does what it is actually good for — showing the room and the people
+ * in it — while the headline carries the row.
+ */
+function ActivityRow({ item }: { item: VcPublicItem }) {
   const href = itemHref("activity", item);
-  const card = (
-    <article
-      className={`group relative isolate overflow-hidden bg-primary ${featured ? "min-h-[330px] sm:min-h-[410px]" : "min-h-[290px]"}`}
-    >
-      <PublicImage
-        src={item.cover?.url}
-        alt={item.cover?.alt_text || item.title}
-        ratio="fill"
-        className="absolute inset-0"
-        imageClassName="transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
-        sizes={
-          featured
-            ? "(min-width: 1024px) 80vw, 100vw"
-            : "(min-width: 1024px) 27vw, 100vw"
-        }
-      />
-      <div
-        className={`absolute inset-0 ${
-          featured
-            ? "bg-[linear-gradient(90deg,hsl(var(--primary)/.96)_0%,hsl(var(--primary)/.76)_34%,transparent_72%),linear-gradient(0deg,rgba(0,0,0,.28),transparent_55%)]"
-            : "bg-[linear-gradient(0deg,rgba(0,0,0,.82)_0%,rgba(0,0,0,.12)_72%)]"
-        }`}
-      />
-      <div
-        className={`absolute inset-0 flex flex-col justify-end text-white ${featured ? "max-w-xl p-7 sm:p-10" : "p-6"}`}
-      >
-        <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-secondary">
-          {item.editorial_label ||
-            (featured ? "Featured story" : "Leadership in action")}
-        </p>
-        <h3
-          className={`mt-3 font-[family-name:var(--font-display)] font-semibold leading-[1.08] ${featured ? "text-3xl sm:text-4xl" : "text-2xl"}`}
-        >
+  const place = item.editorial_label;
+
+  const body = (
+    <>
+      <div className="min-w-0 flex-1">
+        <h3 className="font-[family-name:var(--font-display)] text-2xl font-normal leading-[1.15] tracking-tight text-primary text-balance transition-colors duration-200 group-hover:text-secondary sm:text-[1.75rem]">
           {item.title}
         </h3>
         {item.summary ? (
-          <p
-            className={`mt-3 leading-6 text-white/90 ${featured ? "max-w-md text-sm sm:text-base" : "line-clamp-2 text-sm"}`}
-          >
+          <p className="mt-3 line-clamp-2 text-base leading-7 text-muted-foreground">
             {item.summary}
           </p>
         ) : null}
         {href ? (
-          <span className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-secondary">
-            Read the story <ArrowRight className="size-4" aria-hidden />
+          <span className="mt-5 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-primary">
+            Read the story
+            <ArrowRight
+              className="size-4 transition-transform duration-300 motion-safe:group-hover:translate-x-1 motion-reduce:transform-none"
+              aria-hidden
+            />
           </span>
         ) : null}
       </div>
-    </article>
+      {/* The baked-in masthead and URL strip sit in the top and bottom eighths
+          of these graphics. A 16/10 crop at full mobile width still shows both,
+          so the frame scales the picture up and pans past them; from `sm` up
+          the frame is narrow enough that the 4:3 crop clears them on its own. */}
+      {item.cover?.url ? (
+        <div className="order-first w-full overflow-hidden bg-surface-subtle ring-1 ring-primary/10 sm:order-last">
+          <div className="relative aspect-[16/10] overflow-hidden sm:aspect-[4/3]">
+            <PublicImage
+              src={item.cover.url}
+              alt={item.cover.alt_text || item.title}
+              ratio="fill"
+              className="absolute inset-0 scale-[1.28] sm:scale-100"
+              imageClassName="object-cover transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.05] motion-reduce:transform-none"
+              sizes="(min-width: 1024px) 13rem, (min-width: 640px) 10rem, 100vw"
+            />
+          </div>
+        </div>
+      ) : null}
+    </>
   );
-  return href ? (
-    <Link
-      href={href}
-      className="block focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-secondary/50"
-    >
-      {card}
-    </Link>
-  ) : (
-    card
+
+  const inner = (
+    <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_10rem] sm:items-start sm:gap-8 lg:grid-cols-[minmax(0,1fr)_13rem] lg:gap-10">
+      {body}
+    </div>
+  );
+
+  return (
+    <article className="group border-b border-primary/15 py-7 last:border-b-0 sm:py-8">
+      {place ? (
+        <p className="mb-4 flex items-center gap-1.5 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-secondary">
+          <MapPin className="size-3.5 shrink-0" aria-hidden />
+          {place}
+        </p>
+      ) : null}
+      {href ? (
+        <Link
+          href={href}
+          className="block rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-4"
+        >
+          {inner}
+        </Link>
+      ) : (
+        inner
+      )}
+    </article>
   );
 }
 
 export function VcActivitiesSection({ items }: { items: VcPublicItem[] }) {
   if (!items.length) return null;
-  const featured = items.find((item) => item.is_featured) || items[0];
-  const supporting = items
-    .filter((item) => item.id !== featured.id)
-    .slice(0, 3);
+
+  // Place is the only structured field these records carry — no dates, no
+  // categories — and it is also the most telling one: the reach runs from the
+  // home campus out to the county and across the border. The list is ordered
+  // as the studio ordered it; the places are surfaced as a standfirst so the
+  // pattern is legible before the reader starts down the rows.
+  const places = Array.from(
+    new Set(
+      items
+        .map((item) => item.editorial_label?.trim())
+        .filter((label): label is string => Boolean(label)),
+    ),
+  );
+  // Several of these labels carry their own comma ("Arusha, Tanzania"), so a
+  // comma-joined list would read as more places than there are. A middot keeps
+  // each one whole.
+  const placeLine = places.join(" \u00b7 ");
 
   return (
     <section
@@ -110,169 +140,26 @@ export function VcActivitiesSection({ items }: { items: VcPublicItem[] }) {
       className="scroll-mt-24 bg-white py-14 sm:py-20"
     >
       <div className="container">
-        <h2 className="font-[family-name:var(--font-display)] text-4xl font-semibold text-primary sm:text-5xl">
-          Leadership in action
-        </h2>
-        <div className="mt-6">
-          <ImageStoryCard item={featured} featured />
-        </div>
-        {supporting.length ? (
-          <div className="mt-2 grid gap-2 md:grid-cols-3">
-            {supporting.map((item) => (
-              <ImageStoryCard key={item.id} item={item} />
-            ))}
+        <AboutReveal>
+          <div className="max-w-3xl">
+            <h2 className="font-[family-name:var(--font-display)] text-4xl font-normal tracking-tight text-primary sm:text-5xl">
+              Leadership in <em className="italic">action</em>
+            </h2>
+            {places.length > 1 ? (
+              <p className="mt-5 max-w-[58ch] text-base leading-8 text-muted-foreground">
+                Where the office has been lately &mdash;{" "}
+                <span className="text-foreground">{placeLine}</span>.
+              </p>
+            ) : null}
           </div>
-        ) : null}
-      </div>
-    </section>
-  );
-}
+        </AboutReveal>
 
-function PodiumListItem({
-  item,
-  isVideo,
-}: {
-  item: VcPublicItem;
-  isVideo: boolean;
-}) {
-  const href = isVideo ? item.source_url : itemHref("speech", item);
-  const date = formatDate(item.recorded_at || item.delivered_at);
-  const content = (
-    <article className="group grid grid-cols-[112px_minmax(0,1fr)] gap-4 border-b border-white/20 py-5 first:pt-0 last:border-0">
-      <div className="relative aspect-[4/3] overflow-hidden bg-black">
-        <PublicImage
-          src={item.cover?.url || item.thumbnail_url}
-          alt={item.cover?.alt_text || ""}
-          ratio="fill"
-          className="absolute inset-0"
-          sizes="112px"
-        />
-        {isVideo ? (
-          <span className="absolute inset-0 grid place-items-center bg-black/15">
-            <span className="grid size-9 place-items-center rounded-full border border-white/80 bg-black/30">
-              <Play className="ml-0.5 size-4 fill-current" aria-hidden />
-            </span>
-          </span>
-        ) : null}
-      </div>
-      <div>
-        <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold leading-tight text-white">
-          {item.title}
-        </h3>
-        {date ? (
-          <p className="mt-1 text-[0.68rem] uppercase tracking-[0.1em] text-white/65">
-            {date}
-          </p>
-        ) : null}
-        {item.summary ? (
-          <p className="mt-2 line-clamp-2 text-xs leading-5 text-white/70">
-            {item.summary}
-          </p>
-        ) : null}
-        {href ? (
-          <span className="mt-2 inline-flex items-center gap-2 text-xs font-bold text-secondary">
-            View {isVideo ? "video" : "address"}{" "}
-            <ArrowRight className="size-3.5" />
-          </span>
-        ) : null}
-      </div>
-    </article>
-  );
-
-  if (!href) return content;
-  return isVideo ? (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="block focus-visible:ring-2 focus-visible:ring-secondary"
-    >
-      {content}
-    </a>
-  ) : (
-    <Link
-      href={href}
-      className="block focus-visible:ring-2 focus-visible:ring-secondary"
-    >
-      {content}
-    </Link>
-  );
-}
-
-export function VcPodiumSection({
-  videos,
-  speeches,
-}: {
-  videos: VcPublicItem[];
-  speeches: VcPublicItem[];
-}) {
-  if (!videos.length && !speeches.length) return null;
-  const featuredVideo =
-    videos.find((item) => item.is_featured && item.embed_url) ||
-    videos.find((item) => item.embed_url);
-  const listItems = [
-    ...videos
-      .filter((item) => item.id !== featuredVideo?.id)
-      .map((item) => ({ item, isVideo: true })),
-    ...speeches.map((item) => ({ item, isVideo: false })),
-  ].slice(0, 3);
-
-  return (
-    <section
-      id="vc-speeches"
-      className="scroll-mt-24 bg-primary py-14 text-white sm:py-18"
-    >
-      <div className="container">
-        <h2 className="font-[family-name:var(--font-display)] text-4xl font-semibold sm:text-5xl">
-          From the podium
-        </h2>
-        <div className="mt-7 grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,.85fr)]">
-          <div>
-            {featuredVideo ? (
-              <>
-                <VcVideoPlayer
-                  title={featuredVideo.title}
-                  embedUrl={featuredVideo.embed_url}
-                  posterUrl={
-                    featuredVideo.cover?.url || featuredVideo.thumbnail_url
-                  }
-                />
-                <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-secondary">
-                      {featuredVideo.category || "Featured address"}
-                    </p>
-                    <h3 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold">
-                      {featuredVideo.title}
-                    </h3>
-                  </div>
-                  {formatDate(featuredVideo.recorded_at) ? (
-                    <p className="text-sm text-white/65">
-                      {formatDate(featuredVideo.recorded_at)}
-                    </p>
-                  ) : null}
-                </div>
-              </>
-            ) : (
-              <div className="border-l-2 border-secondary pl-6">
-                <p className="text-sm uppercase tracking-[0.14em] text-secondary">
-                  Addresses and reflections
-                </p>
-                <p className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-3xl leading-tight">
-                  Messages guiding the University’s shared direction.
-                </p>
-              </div>
-            )}
-          </div>
-          <div>
-            {listItems.map(({ item, isVideo }) => (
-              <PodiumListItem
-                key={`${isVideo ? "video" : "speech"}-${item.id}`}
-                item={item}
-                isVideo={isVideo}
-              />
-            ))}
-          </div>
+        <div className="mt-10 max-w-5xl border-t border-primary/15 sm:mt-12">
+          {items.slice(0, 6).map((item, index) => (
+            <AboutReveal key={item.id} delay={Math.min(index, 3) * 90}>
+              <ActivityRow item={item} />
+            </AboutReveal>
+          ))}
         </div>
       </div>
     </section>
@@ -351,54 +238,35 @@ export function VcGallerySection({
     : albums.flatMap((album) => (album.cover ? [album.cover] : []));
   if (!images.length) return null;
   const albumHref = albums[0] ? itemHref("gallery", albums[0]) : null;
-  const slots = [
-    "md:col-span-3 md:row-span-2",
-    "md:col-span-4 md:row-span-2",
-    "md:col-span-3",
-    "md:col-span-2",
-  ];
 
   return (
     <section id="vc-gallery" className="scroll-mt-24 bg-white py-14 sm:py-18">
       <div className="container">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <h2 className="font-[family-name:var(--font-display)] text-4xl font-semibold text-primary sm:text-5xl">
-            Moments that matter
-          </h2>
-          {albumHref ? (
-            <Link
-              href={albumHref}
-              className="inline-flex items-center gap-2 text-sm font-bold text-primary"
-            >
-              Explore the gallery <ArrowRight className="size-4" />
-            </Link>
-          ) : null}
-        </div>
-        <div className="mt-6 grid auto-rows-[150px] grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-10 md:auto-rows-[145px]">
-          {images.slice(0, 4).map((image, index) => (
-            <figure
-              key={image.id}
-              className={`relative overflow-hidden bg-surface-subtle ${slots[index] || "md:col-span-3"}`}
-            >
-              <PublicImage
-                src={image.url}
-                alt={
-                  image.alt_text ||
-                  image.caption ||
-                  "Vice Chancellor gallery moment"
-                }
-                ratio="fill"
-                className="absolute inset-0"
-                sizes="(min-width: 1024px) 35vw, 100vw"
-              />
-              {image.caption ? (
-                <figcaption className="absolute inset-x-0 bottom-0 bg-black/55 px-4 py-3 text-xs text-white">
-                  {image.caption}
-                </figcaption>
-              ) : null}
-            </figure>
-          ))}
-        </div>
+        <AboutReveal>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="font-[family-name:var(--font-display)] text-4xl font-normal tracking-tight text-primary sm:text-5xl">
+                Moments that <em className="italic">matter</em>
+              </h2>
+              <p className="mt-4 text-base leading-8 text-muted-foreground">
+                {images.length} photographs from the office. Select any one to
+                view it larger.
+              </p>
+            </div>
+            {albumHref ? (
+              <Link
+                href={albumHref}
+                className="inline-flex min-h-11 items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-primary hover:underline"
+              >
+                Explore the gallery{" "}
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
+            ) : null}
+          </div>
+        </AboutReveal>
+        <AboutReveal className="mt-8">
+          <VcGalleryLightbox images={images} />
+        </AboutReveal>
       </div>
     </section>
   );

@@ -1,6 +1,7 @@
 """Central administration for non-school public inquiry conversations.
 
-Access model: full admins (``admin:*``) keep unrestricted access, including
+Access model: holders of ``support.manage_inquiries`` may include school-owned
+threads, while
 the ability to peek at school-owned threads via ``include_school_owned``.
 Corporate Communication holders (``content.manage`` or
 ``support.manage_contacts``) get the same inbox and conversation actions but
@@ -49,7 +50,7 @@ async def get_inquiry_actor(
     user: Annotated[User, Depends(get_current_active_user)],
 ) -> InquiryActor:
     """Authorize central-inbox access for admins or corporate scope holders."""
-    if user_has_scope(user, "admin:*"):
+    if user_has_scope(user, "support.manage_inquiries"):
         return InquiryActor(user=user, is_admin=True)
     if any(user_has_scope(user, scope) for scope in CORPORATE_INQUIRY_SCOPES):
         return InquiryActor(user=user, is_admin=False)

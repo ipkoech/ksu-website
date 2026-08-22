@@ -23,7 +23,8 @@ from ._shared import SeedContext
 
 
 SEED_OWNER = "student-life-stories-v1"
-SEED_VERSION = 1
+# 2: bodies carry the source documents' headings and lists, not flat paragraphs.
+SEED_VERSION = 2
 
 _ASSET_FILE = Path(__file__).parent / "assets" / "student_life_stories.json"
 _UPLOADS_ROOT = Path(__file__).resolve().parents[2] / "uploads"
@@ -97,14 +98,61 @@ def _load_story_texts() -> dict[str, dict[str, Any]]:
     return json.loads(_ASSET_FILE.read_text(encoding="utf-8"))
 
 
-def _split_byline(paragraphs: list[str]) -> tuple[str | None, list[str]]:
-    if paragraphs and paragraphs[0].strip().lower().startswith("by:"):
-        return paragraphs[0].split(":", 1)[1].strip(), paragraphs[1:]
-    return None, paragraphs
+def _blocks(record: dict[str, Any]) -> list[dict[str, str]]:
+    """Typed blocks for a story, tolerating the older text-only asset shape."""
+    blocks = record.get("blocks")
+    if isinstance(blocks, list) and blocks:
+        return [
+            {"type": str(b.get("type") or "paragraph"), "text": str(b.get("text") or "")}
+            for b in blocks
+            if str(b.get("text") or "").strip()
+        ]
+    return [{"type": "paragraph", "text": str(p)} for p in record.get("paragraphs", [])]
 
 
-def _rich_text(paragraphs: list[str]) -> str:
-    return "".join(f"<p>{p}</p>" for p in paragraphs)
+def _split_byline(
+    blocks: list[dict[str, str]],
+) -> tuple[str | None, list[dict[str, str]]]:
+    if blocks and blocks[0]["text"].strip().lower().startswith("by:"):
+        return blocks[0]["text"].split(":", 1)[1].strip(), blocks[1:]
+    return None, blocks
+
+
+def _escape(text: str) -> str:
+    return (
+        text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    )
+
+
+def _rich_text(blocks: list[dict[str, str]]) -> str:
+    """Render the document's own structure, not one flat run of paragraphs.
+
+    Section headings and bulleted lists are how these documents are written; a
+    version that wraps every block in <p> publishes the words but loses the
+    shape the author gave them. Consecutive list items are gathered into one
+    <ul> so a list reads as a list.
+    """
+    parts: list[str] = []
+    index = 0
+    while index < len(blocks):
+        block = blocks[index]
+        kind = block["type"]
+        text = _escape(block["text"])
+
+        if kind == "list_item":
+            items: list[str] = []
+            while index < len(blocks) and blocks[index]["type"] == "list_item":
+                items.append(f"<li>{_escape(blocks[index]['text'])}</li>")
+                index += 1
+            parts.append(f"<ul>{''.join(items)}</ul>")
+            continue
+
+        if kind == "heading":
+            parts.append(f"<h2>{text}</h2>")
+        else:
+            parts.append(f"<p>{text}</p>")
+        index += 1
+    return "".join(parts)
 
 
 def _is_seed_owned(structured_content: Any) -> bool:
@@ -164,11 +212,17 @@ async def seed_student_life_stories(db: AsyncSession, ctx: SeedContext) -> None:
         if record is None:
             continue
 
-        byline, paragraphs = _split_byline(list(record["paragraphs"]))
-        if not paragraphs:
+        byline, blocks = _split_byline(_blocks(record))
+        if not blocks:
             continue
         title = str(record["title"]).strip()
-        summary = paragraphs[0]
+        paragraphs = [b["text"] for b in blocks]
+        # The standfirst comes from the first body paragraph, never a heading:
+        # a section title makes no sense as a story's opening line.
+        summary = next(
+            (b["text"] for b in blocks if b["type"] == "paragraph"),
+            paragraphs[0],
+        )
         words = sum(len(p.split()) for p in paragraphs)
 
         cover = await _upsert_cover_media(db, str(spec["cover"]), title)
@@ -185,11 +239,14 @@ async def seed_student_life_stories(db: AsyncSession, ctx: SeedContext) -> None:
         story.title = title
         story.summary = summary[:497] + "…" if len(summary) > 500 else summary
         story.plain_text = "\n\n".join(paragraphs)
-        story.rich_text = _rich_text(paragraphs)
+        story.rich_text = _rich_text(blocks)
         story.structured_content = {
             "seed": {"owner": SEED_OWNER, "version": SEED_VERSION},
             "source_type": "student_life_editorial",
             "campus_life_category": spec["category"],
+            # The document's own structure, so a reader can set headings and
+            # lists without re-parsing the flattened plain text.
+            "blocks": blocks,
         }
         story.featured_media_id = cover.id if cover is not None else None
         story.story_type = str(spec["story_type"])

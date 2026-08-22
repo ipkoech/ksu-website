@@ -142,7 +142,7 @@ export function AudienceBandSection() {
               whileInView="visible"
               viewport={{ once: true, amount: 0.3 }}
               className={cn(
-                "group relative overflow-hidden rounded-xl border border-border bg-gradient-to-br p-6 shadow-sm transition-shadow duration-300 hover:shadow-lg",
+                "group relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br p-6 shadow-sm transition-shadow duration-300 hover:shadow-lg",
                 audience.gradient
               )}
             >

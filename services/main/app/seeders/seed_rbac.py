@@ -7,47 +7,25 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Role, RolePermission, UserRole
+from app.models import Permission, Role, RolePermission, UserRole
 from app.security.scopes import (
     SCHOOL_PORTAL_PERMISSION_NAMES,
     SCHOOL_PORTAL_VIEW_PERMISSION_NAMES,
 )
 from ksu_contracts.roles import ALL_PERMISSIONS, ROLE_DEFINITIONS
+from ksu_contracts.rbac import KNOWN_PERMISSIONS, normalize_permission
 
 from ._shared import SeedContext, upsert_permission, upsert_role, upsert_role_permission
 
 
 PERMISSION_SPECS = [
-    ("admin:*", "Full administrative access across the platform", "admin", "*"),
-    ("users:read", "View users", "users", "read"),
-    ("users:write", "Create and update users", "users", "write"),
-    ("users:delete", "Deactivate users", "users", "delete"),
-    ("roles:read", "View roles", "roles", "read"),
-    ("roles:write", "Create and update roles", "roles", "write"),
-    ("roles:delete", "Delete roles", "roles", "delete"),
-    ("permissions:read", "View permissions", "permissions", "read"),
-    ("permissions:write", "Create and update permissions", "permissions", "write"),
-    ("audit:read", "View audit logs", "audit", "read"),
-    ("settings:read", "View system settings", "settings", "read"),
-    ("settings:write", "Create and update system settings", "settings", "write"),
-    ("api_keys:read", "View API keys", "api_keys", "read"),
-    ("api_keys:write", "Create and update API keys", "api_keys", "write"),
-    ("api_keys:delete", "Revoke API keys", "api_keys", "delete"),
-    ("webhooks:read", "View webhooks", "webhooks", "read"),
-    ("webhooks:write", "Create and update webhooks", "webhooks", "write"),
-    ("webhooks:delete", "Delete webhooks", "webhooks", "delete"),
-    ("notifications:read", "View notification templates and deliveries", "notifications", "read"),
-    ("notifications:write", "Create and update notification templates", "notifications", "write"),
-    ("notifications:delete", "Delete notification templates", "notifications", "delete"),
-    ("notifications:send", "Send and preview notifications", "notifications", "send"),
-    ("academic:read", "View academic entities", "academic", "read"),
-    ("academic:write", "Create and update academic entities", "academic", "write"),
-    ("academic:delete", "Delete academic entities", "academic", "delete"),
-    ("staff:read", "View staff assignments", "staff", "read"),
-    ("staff:write", "Create and update staff assignments", "staff", "write"),
-    ("staff:delete", "Delete staff assignments", "staff", "delete"),
-    ("governance:read", "View governance records", "governance", "read"),
-    ("governance:write", "Manage governance records", "governance", "write"),
+    ("api_keys.view", "View API keys", "api_keys", "view"),
+    ("api_keys.manage", "Create and update API keys", "api_keys", "manage"),
+    ("api_keys.delete", "Revoke API keys", "api_keys", "delete"),
+    ("webhooks.view", "View webhooks", "webhooks", "view"),
+    ("webhooks.manage", "Create and update webhooks", "webhooks", "manage"),
+    ("webhooks.delete", "Delete webhooks", "webhooks", "delete"),
+    ("notifications.delete", "Delete notification templates", "notifications", "delete"),
     ("governance.manage_roles", "Manage governance role definitions", "governance", "manage_roles"),
     ("governance.manage_members", "Manage governance member appointments", "governance", "manage_members"),
     ("governance.manage_order", "Manage governance display order", "governance", "manage_order"),
@@ -55,9 +33,9 @@ PERMISSION_SPECS = [
     ("governance.approve", "Approve governance content", "governance", "approve"),
     ("governance.publish", "Publish governance content", "governance", "publish"),
     ("governance.archive", "Archive governance content", "governance", "archive"),
-    ("media:upload", "Upload media assets", "media", "upload"),
-    ("media:delete", "Delete media assets", "media", "delete"),
-    ("media:manage", "Manage media folders and links", "media", "manage"),
+    ("media.upload", "Upload media assets", "media", "upload"),
+    ("media.delete", "Delete media assets", "media", "delete"),
+    ("media.manage", "Manage media folders and links", "media", "manage"),
     ("content.manage", "Manage public content records", "content", "manage"),
     ("content.manage_stories", "Manage public stories and contributor requests", "content", "manage_stories"),
     ("content.submit", "Submit public content for review", "content", "submit"),
@@ -192,22 +170,6 @@ LEGACY_PORTAL_ROLE_NAMES = frozenset({
 })
 
 
-# Reconcile roles whose publication authority changed so stale grants are
-# removed idempotently when existing databases are reseeded.
-RECONCILED_ROLE_NAMES = frozenset({
-    "content_admin",
-    "content_manager",
-    "library_admin",
-    "research_content_admin",
-    "research_content",
-    "research_admin",
-    "sustainability_admin",
-    "research_sustainability",
-    "university_farm_admin",
-    "research_farm",
-})
-
-
 ROLE_SPECS = [
     {
         "name": "super_admin",
@@ -221,7 +183,11 @@ ROLE_SPECS = [
         "display_name": "Academic Admin",
         "description": "Administrative role for schools, departments, programmes, and admissions.",
         "is_system": True,
-        "permission_names": ["academic:read", "academic:write", "academic:delete", "staff:read"],
+        "permission_names": [
+            "academic.view", "academic.manage_campuses", "academic.manage_schools",
+            "academic.manage_departments", "academic.manage_programmes",
+            "admissions.manage_info", "staff.view_assignments",
+        ],
     },
     {
         "name": "school_admin",
@@ -264,7 +230,7 @@ ROLE_SPECS = [
         "description": "Administrative role for staff and governance assignments.",
         "is_system": True,
         "permission_names": [
-            "staff:read", "staff:write", "staff:delete", "governance:read", "governance:write",
+            "staff.view_assignments", "staff.manage_assignments", "governance.view",
             "governance.manage_roles", "governance.manage_members", "governance.manage_order",
             "governance.review", "governance.approve", "governance.publish", "governance.archive",
         ],
@@ -275,27 +241,12 @@ ROLE_SPECS = [
         "description": "Administrative role for users, roles, permissions, audit logs, settings, integrations, and notifications.",
         "is_system": True,
         "permission_names": [
-            "users:read",
-            "users:write",
-            "users:delete",
-            "roles:read",
-            "roles:write",
-            "roles:delete",
-            "permissions:read",
-            "permissions:write",
-            "audit:read",
-            "settings:read",
-            "settings:write",
-            "api_keys:read",
-            "api_keys:write",
-            "api_keys:delete",
-            "webhooks:read",
-            "webhooks:write",
-            "webhooks:delete",
-            "notifications:read",
-            "notifications:write",
-            "notifications:delete",
-            "notifications:send",
+            "users.view", "users.create", "users.edit", "users.delete", "users.suspend", "users.invite",
+            "roles.view", "roles.manage", "permissions.view", "permissions.manage",
+            "audit.view", "settings.view", "settings.manage",
+            "api_keys.view", "api_keys.manage", "api_keys.delete",
+            "webhooks.view", "webhooks.manage", "webhooks.delete",
+            "notifications.view", "notifications.manage", "notifications.delete", "notifications.send",
         ],
     },
 ]
@@ -354,6 +305,8 @@ async def seed_rbac(db: AsyncSession, ctx: SeedContext) -> None:
         )
 
     await _retire_legacy_portal_roles(db)
+    await _normalize_existing_permissions(db, ctx)
+    await _retire_wildcard_permissions(db)
 
     for spec in ROLE_SPECS:
         role = await upsert_role(
@@ -367,12 +320,72 @@ async def seed_rbac(db: AsyncSession, ctx: SeedContext) -> None:
         )
         for permission_name in spec["permission_names"]:
             await upsert_role_permission(db, role, ctx.permissions[permission_name])
-        if spec["name"] in RECONCILED_ROLE_NAMES:
-            await _reconcile_role_permissions(
-                db,
-                role,
-                {ctx.permissions[permission_name].id for permission_name in spec["permission_names"]},
+        await _reconcile_role_permissions(
+            db,
+            role,
+            {ctx.permissions[permission_name].id for permission_name in spec["permission_names"]},
+        )
+
+
+async def _retire_wildcard_permissions(db: AsyncSession) -> None:
+    """Deactivate historical wildcard grants and remove every role link to them."""
+    wildcard_permissions = (
+        await db.execute(
+            select(Permission).where(
+                (Permission.name == "*")
+                | Permission.name.endswith(":*")
+                | Permission.name.endswith(".*")
             )
+        )
+    ).scalars().all()
+    if not wildcard_permissions:
+        return
+
+    wildcard_ids = {permission.id for permission in wildcard_permissions}
+    for permission in wildcard_permissions:
+        permission.is_active = False
+    links = (
+        await db.execute(
+            select(RolePermission).where(RolePermission.permission_id.in_(wildcard_ids))
+        )
+    ).scalars().all()
+    for link in links:
+        await db.delete(link)
+    await db.flush()
+
+
+async def _normalize_existing_permissions(db: AsyncSession, ctx: SeedContext) -> None:
+    """Migrate legacy aliases to canonical dotted permissions and retire unknown grants."""
+    permissions = (await db.execute(select(Permission))).scalars().all()
+    for permission in permissions:
+        canonical_name = normalize_permission(permission.name)
+        if permission.name == canonical_name and canonical_name in KNOWN_PERMISSIONS:
+            continue
+
+        links = (
+            await db.execute(
+                select(RolePermission).where(RolePermission.permission_id == permission.id)
+            )
+        ).scalars().all()
+        canonical = ctx.permissions.get(canonical_name)
+        if canonical is not None:
+            for link in links:
+                existing = await db.scalar(
+                    select(RolePermission).where(
+                        RolePermission.role_id == link.role_id,
+                        RolePermission.permission_id == canonical.id,
+                    )
+                )
+                if existing is None:
+                    role = await db.get(Role, link.role_id)
+                    if role is not None:
+                        await upsert_role_permission(db, role, canonical)
+                await db.delete(link)
+        else:
+            for link in links:
+                await db.delete(link)
+        permission.is_active = False
+    await db.flush()
 
 
 async def _retire_legacy_portal_roles(db: AsyncSession) -> None:

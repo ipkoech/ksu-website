@@ -24,17 +24,35 @@ from ._shared import (
 PORTAL_USER_SPECS = [
     {
         "key": "portal_super_admin",
-        "email": "system.admin@ksu.dev.com",
+        "email": "super.admin@ksu.dev.com",
         "full_name": "KSU Super Admin",
         "role": "super_admin",
         "institutional_role": "super_admin",
+        "service_memberships": ["main", "research", "library", "heri", "system"],
     },
     {
-        "key": "portal_system_admin",
+        "key": "portal_admin",
         "email": "admin@ksu.dev.com",
         "full_name": "KSU Admin",
         "role": "admin",
         "institutional_role": "admin",
+        "service_memberships": ["main", "library", "system"],
+    },
+    {
+        "key": "portal_system_admin",
+        "email": "system.admin@ksu.dev.com",
+        "full_name": "KSU System Admin",
+        "role": "system_admin",
+        "institutional_role": "system_admin",
+        "service_memberships": ["system"],
+    },
+    {
+        "key": "portal_academic_admin",
+        "email": "academic.admin@ksu.dev.com",
+        "full_name": "KSU Academic Admin",
+        "role": "academic_admin",
+        "institutional_role": "academic_admin",
+        "service_memberships": ["main"],
     },
     {
         "key": "portal_school_admin",
@@ -42,6 +60,7 @@ PORTAL_USER_SPECS = [
         "full_name": "KSU School Admin",
         "role": "school_admin",
         "institutional_role": "school_admin",
+        "service_memberships": ["main"],
     },
     {
         "key": "portal_department_admin",
@@ -49,6 +68,7 @@ PORTAL_USER_SPECS = [
         "full_name": "KSU Department Admin",
         "role": "dept_admin",
         "institutional_role": "department_admin",
+        "service_memberships": ["main"],
     },
     {
         "key": "portal_corporate_admin",
@@ -56,6 +76,15 @@ PORTAL_USER_SPECS = [
         "full_name": "KSU Corporate Communication Admin",
         "role": "corporate_communication_admin",
         "institutional_role": "corporate_communication_admin",
+        "service_memberships": ["main"],
+    },
+    {
+        "key": "portal_story_contributor",
+        "email": "story.contributor@ksu.dev.com",
+        "full_name": "KSU Story Contributor",
+        "role": "story_contributor",
+        "institutional_role": "story_contributor",
+        "service_memberships": ["main"],
     },
     {
         "key": "portal_research_admin",
@@ -63,6 +92,7 @@ PORTAL_USER_SPECS = [
         "full_name": "KSU Research Admin",
         "role": "research_admin",
         "institutional_role": "research_admin",
+        "service_memberships": ["research"],
     },
     {
         "key": "portal_library_admin",
@@ -70,10 +100,25 @@ PORTAL_USER_SPECS = [
         "full_name": "KSU Library Admin",
         "role": "library_admin",
         "institutional_role": "library_admin",
+        "service_memberships": ["library"],
+    },
+    {
+        "key": "portal_staff",
+        "email": "staff.profile@ksu.dev.com",
+        "full_name": "KSU Staff Profile User",
+        "role": "staff",
+        "institutional_role": "staff",
+        "service_memberships": ["main"],
+    },
+    {
+        "key": "portal_heri_admin",
+        "email": "heri.admin@ksu.dev.com",
+        "full_name": "KSU HERI Africa Admin",
+        "role": "heri_admin",
+        "institutional_role": "heri_admin",
+        "service_memberships": ["heri"],
     },
 ]
-
-SCHOOL_DEAN_PORTAL_USER_PASSWORD = "ChangeMe@26"
 
 SCHOOL_DEAN_PORTAL_USER_SPECS = [
     {
@@ -96,7 +141,6 @@ PORTAL_ROLE_EXTRA_PERMISSIONS = {
 }
 
 LEGACY_PORTAL_USER_EMAILS = frozenset({
-    "super.admin@ksu.dev.com",
     "governance.admin@ksu.dev.com",
     "research.content@ksu.dev.com",
     "research.farm@ksu.dev.com",
@@ -104,7 +148,6 @@ LEGACY_PORTAL_USER_EMAILS = frozenset({
     "publications.admin@ksu.dev.com",
     "student.clubs.admin@ksu.dev.com",
     "researcher@ksu.dev.com",
-    "staff.profile@ksu.dev.com",
 })
 
 
@@ -144,9 +187,9 @@ async def seed_portal_users(db: AsyncSession, ctx: SeedContext) -> None:
             push_tokens=None,
             is_active=True,
             is_verified=True,
-            mfa_enabled=False,
-            mfa_secret=None,
             failed_login_attempts=0,
+            service_memberships=spec["service_memberships"],
+            must_change_password=False,
         )
         await _assign_user_to_person(db, person, user)
 
@@ -172,12 +215,14 @@ async def seed_portal_users(db: AsyncSession, ctx: SeedContext) -> None:
             note="Seeded portal-specific assignment for browser QA",
         )
 
-    await _seed_school_dean_portal_users(db, ctx)
+    await _seed_school_dean_portal_users(db, ctx, password=password)
 
 
 async def _seed_school_dean_portal_users(
     db: AsyncSession,
     ctx: SeedContext,
+    *,
+    password: str,
 ) -> None:
     role = ctx.roles.get("school_admin")
     if role is None:
@@ -195,16 +240,16 @@ async def _seed_school_dean_portal_users(
             ctx,
             spec["key"],
             email=person.email,
-            password=SCHOOL_DEAN_PORTAL_USER_PASSWORD,
+            password=password,
             full_name=person.full_name,
             phone=person.phone,
             avatar_url=None,
             push_tokens=None,
             is_active=True,
             is_verified=True,
-            mfa_enabled=False,
-            mfa_secret=None,
             failed_login_attempts=0,
+            service_memberships=["main"],
+            must_change_password=False,
         )
         await _assign_user_to_person(db, person, user)
 
@@ -255,9 +300,11 @@ async def _assign_user_to_person(db: AsyncSession, person: Person, user: User) -
 
 
 async def _retire_legacy_portal_users(db: AsyncSession) -> None:
-    """Deactivate portal QA accounts removed from the canonical seven-user seed."""
+    """Deactivate QA accounts removed from the canonical portal account set."""
+    legacy_emails = set(LEGACY_PORTAL_USER_EMAILS)
+    legacy_emails.add(os.getenv("KSU_SEED_TEST_ADMIN_EMAIL", "test.admin@example.invalid"))
     legacy_users = (
-        await db.execute(select(User).where(User.email.in_(LEGACY_PORTAL_USER_EMAILS)))
+        await db.execute(select(User).where(User.email.in_(legacy_emails)))
     ).scalars().all()
     if not legacy_users:
         return

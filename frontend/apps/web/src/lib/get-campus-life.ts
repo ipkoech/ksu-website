@@ -5,6 +5,7 @@ import {
   contactsApi,
   faqsApi,
   sportsFacilitiesApi,
+  storiesApi,
   studentGovernanceApi,
   testimonialsApi,
   mainApi,
@@ -14,6 +15,7 @@ import {
   type ContactDirectory,
   type FAQ,
   type SportsFacility,
+  type Story,
   type StudentGovernance,
   type Testimonial,
 } from "@ksu/api-client";
@@ -45,6 +47,10 @@ const contactFields =
   "id,name,contact_type,email,phone,extension,physical_address,building,room_number,operating_hours,is_main,is_public,status";
 const testimonialFields =
   "id,name,role,quote,testimonial_type,photo_id,is_featured,display_order";
+const storyFields =
+  "id,title,slug,summary,category,story_type,source_type,reading_minutes,published_at,featured_media_id";
+/** The whole register, in one page. 71 records today; the cap allows growth. */
+const ROSTER_PER_PAGE = 100;
 
 export interface CampusLifePageData {
   clubs: Club[];
@@ -61,6 +67,7 @@ export interface CampusLifePageData {
     sport?: SportsFacility | null;
     art?: ArtsCulture | null;
     governance?: StudentGovernance | null;
+    story?: Story | null;
   };
   totals?: {
     clubs?: number;
@@ -71,6 +78,54 @@ export interface CampusLifePageData {
   };
   page?: number;
   editorial?: LifeAroundStudiesEditorial | null;
+  /**
+   * Every registered club, unpaginated, for the landing's roster.
+   *
+   * The roster's argument is the shape of the whole register — twenty-nine
+   * county associations beside seventeen professional bodies — so a page of
+   * twenty-four would not just truncate it, it would misstate it.
+   */
+  roster?: Club[];
+  /** Published student-life stories, newest first, for the landing's chapters. */
+  stories?: Story[];
+}
+
+/** Media envelope returned by the campus-life composition endpoint. */
+export interface CampusLifeMedia {
+  id?: string | null;
+  url?: string | null;
+  public_url?: string | null;
+  cdn_url?: string | null;
+  thumbnail_url?: string | null;
+  alt_text?: string | null;
+}
+
+/** A published club activity with a start time, used by the "this week" rail. */
+export interface CampusLifeActivity {
+  id: string;
+  title?: string | null;
+  description?: string | null;
+  activity_type?: string | null;
+  start_datetime?: string | null;
+  end_datetime?: string | null;
+  location?: string | null;
+  club?: { id: string; name: string } | null;
+  cover_image?: CampusLifeMedia | null;
+}
+
+/** Shared shape of the club / sport / governance summaries in the composition. */
+export interface CampusLifeRecordSummary {
+  id: string;
+  name?: string | null;
+  slug?: string | null;
+  href?: string | null;
+  description?: string | null;
+  acronym?: string | null;
+  governance_type?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  office_location?: string | null;
+  cover_image?: CampusLifeMedia | null;
 }
 
 export interface LifeAroundStudiesEditorial {
@@ -92,12 +147,12 @@ export interface LifeAroundStudiesEditorial {
     }>;
   };
   stats: Record<string, number>;
-  clubs: Array<Record<string, unknown>>;
-  sports: Array<Record<string, unknown>>;
-  accommodation: Array<Record<string, unknown>>;
-  arts: Array<Record<string, unknown>>;
-  governance: Array<Record<string, unknown>>;
-  activities: Array<Record<string, unknown>>;
+  clubs: CampusLifeRecordSummary[];
+  sports: CampusLifeRecordSummary[];
+  accommodation: CampusLifeRecordSummary[];
+  arts: CampusLifeRecordSummary[];
+  governance: CampusLifeRecordSummary[];
+  activities: CampusLifeActivity[];
   faqs: Array<Record<string, unknown>>;
   contacts: Array<Record<string, unknown>>;
 }
@@ -191,6 +246,14 @@ export async function getCampusLifeData(
 ): Promise<CampusLifePageData> {
   const [area, slug] = segments;
 
+  /**
+   * Fetch one collection, but only when the current route actually renders it.
+   *
+   * Each area displays exactly one collection, so fetching the other four cost
+   * four unused round trips on every interior page view. Areas the route does
+   * not render resolve to empty without touching the network; the landing needs
+   * none of them, because it composes from `roster`, `stories` and `editorial`.
+   */
   async function fetchArea<T>(
     targetArea: string,
     perPage: number,
@@ -198,6 +261,7 @@ export async function getCampusLifeData(
     apiCall: (params: QueryParams) => Promise<ListEnvelope<T>>,
     typeParam: string,
   ): Promise<{ data: T[]; total: number }> {
+    if (area !== targetArea) return { data: [], total: 0 };
     const params = listParamsForArea(
       area,
       targetArea,
@@ -207,11 +271,9 @@ export async function getCampusLifeData(
       typeParam,
       page,
     );
-    if (area === targetArea) {
-      return safeListWithCount(apiCall(params) as Promise<ListEnvelope<T> & { meta?: { total?: number } }>);
-    }
-    const data = await safeList(apiCall(params));
-    return { data, total: data.length };
+    return safeListWithCount(
+      apiCall(params) as Promise<ListEnvelope<T> & { meta?: { total?: number } }>,
+    );
   }
 
   const [
@@ -229,20 +291,25 @@ export async function getCampusLifeData(
     fetchArea("sports", 16, sportsFields, sportsFacilitiesApi.list.bind(sportsFacilitiesApi), "facility_type"),
     fetchArea("gallery", 16, artsFields, artsCultureApi.list.bind(artsCultureApi), "category"),
     fetchArea("student-life", 12, governanceFields, studentGovernanceApi.list.bind(studentGovernanceApi), "governance_type"),
-    safeList(
-      faqsApi.list({
-        scope_type: "student_life",
-        per_page: 8,
-        fields: faqFields,
-      }),
-    ),
-    safeList(
-      contactsApi.list({
-        scope_type: "student_life",
-        per_page: 8,
-        fields: contactFields,
-      }),
-    ),
+    // The support area and the landing both answer practical questions.
+    area === "support" || !area
+      ? safeList(
+          faqsApi.list({
+            scope_type: "student_life",
+            per_page: 8,
+            fields: faqFields,
+          }),
+        )
+      : Promise.resolve<FAQ[]>([]),
+    area === "support"
+      ? safeList(
+          contactsApi.list({
+            scope_type: "student_life",
+            per_page: 8,
+            fields: contactFields,
+          }),
+        )
+      : Promise.resolve<ContactDirectory[]>([]),
     area
       ? Promise.resolve<Testimonial[]>([])
       : safeList(
@@ -255,13 +322,32 @@ export async function getCampusLifeData(
 
   const detail: CampusLifePageData["detail"] = {};
   let editorial: LifeAroundStudiesEditorial | null = null;
+  let roster: Club[] = [];
+  let stories: Story[] = [];
+
   if (!area) {
-    try {
-      const response = await mainApi.get<{ data?: LifeAroundStudiesEditorial }>("/api/v1/campus-life/homepage");
-      editorial = response.data ?? null;
-    } catch (error) {
-      console.warn("Failed to fetch Life Around Studies composition:", error);
-    }
+    // The landing composes from three sources that no interior page uses. They
+    // are independent, so they go out together rather than in sequence.
+    const [editorialResult, rosterResult, storiesResult] = await Promise.all([
+      mainApi
+        .get<{ data?: LifeAroundStudiesEditorial }>("/api/v1/campus-life/homepage")
+        .then((response) => response.data ?? null)
+        .catch((error) => {
+          console.warn("Failed to fetch Life Around Studies composition:", error);
+          return null;
+        }),
+      safeList(
+        clubsApi.list({ per_page: ROSTER_PER_PAGE, fields: clubListFields }),
+      ),
+      // The campus-life stories are the seeded Corporate Communication
+      // features. Admissions and graduation notices are official news and
+      // belong on the homepage, not here, so the whole editorial set is fetched
+      // and the landing filters it rather than taking a mixed first page.
+      safeList(storiesApi.list({ per_page: 30, fields: storyFields })),
+    ]);
+    editorial = editorialResult;
+    roster = rosterResult;
+    stories = storiesResult;
   }
 
   if (area === "clubs" && slug) {
@@ -294,6 +380,17 @@ export async function getCampusLifeData(
     );
   }
 
+  // /campus-life/stories/<slug> opens a story directly; there is no category
+  // index in between. The sibling list rides along for the "keep reading" row.
+  if (area === "stories" && slug) {
+    const [record, siblings] = await Promise.all([
+      safeRecord(storiesApi.getBySlug(slug)),
+      safeList(storiesApi.list({ per_page: 12, fields: storyFields })),
+    ]);
+    detail.story = record;
+    stories = siblings;
+  }
+
   return {
     clubs: clubsResult.data,
     accommodations: accommodationsResult.data,
@@ -313,5 +410,7 @@ export async function getCampusLifeData(
     },
     page,
     editorial,
+    roster,
+    stories,
   };
 }

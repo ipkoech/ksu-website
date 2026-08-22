@@ -26,7 +26,7 @@ const fallbackSocialLinks = {
  * (public setting corporate_communication.social_links); the hardcoded map
  * is the fallback when the setting is unseeded or the API is unreachable.
  */
-async function getSocialLinks(): Promise<typeof fallbackSocialLinks> {
+export async function getSocialLinks(): Promise<typeof fallbackSocialLinks> {
   try {
     const managed = await corporateCommSettingsApi.publicSocialLinks();
     if (!managed) return fallbackSocialLinks;
@@ -97,7 +97,11 @@ export async function PageShell({
   header,
 }: PageShellProps) {
   const [resolvedMegaMenuData, socialLinks] = await Promise.all([
-    header ? Promise.resolve(megaMenuData) : megaMenuData ? Promise.resolve(megaMenuData) : getNavData(),
+    header
+      ? Promise.resolve(megaMenuData)
+      : megaMenuData
+        ? Promise.resolve(megaMenuData)
+        : getNavData(),
     getSocialLinks(),
   ]);
 
@@ -192,7 +196,10 @@ export function BreadcrumbTrail({
     <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
       <ol className="flex flex-wrap items-center gap-2">
         {items.map((item, index) => (
-          <li key={`${item.label}-${index}`} className="flex items-center gap-2">
+          <li
+            key={`${item.label}-${index}`}
+            className="flex items-center gap-2"
+          >
             {item.href ? (
               <Link
                 href={item.href}

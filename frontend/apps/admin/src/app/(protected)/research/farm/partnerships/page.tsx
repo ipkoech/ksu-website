@@ -10,7 +10,7 @@ export default function FarmPartnershipsPage() {
       description="Manage farm, community, industry, and technical partners supporting demonstration and field research."
       queryKey={["research", "farm", "partnerships"]}
       resource={researchServiceApi.partners}
-      manageScopes={["partnerships.manage", "research:write"]}
+      manageScopes={["farm.manage", "research:write"]}
       listParams={{ is_active: true, status: "active", partner_type: "community" }}
       summarySlot={<FarmWorkspaceHeader />}
       recordColumns={partnerColumns}

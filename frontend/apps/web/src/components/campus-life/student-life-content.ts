@@ -40,7 +40,7 @@ const media = (slug: string, name: string) =>
 export const studentLifeHero = {
   title: "Life Around Studies",
   intro:
-    "Through a wide range of programmes coordinated by the Department of Student Affairs, Kisii University nurtures well-rounded graduates — supporting student welfare, leadership, culture, service and professional growth across every semester.",
+    "Through a wide range of programmes coordinated by the Department of Student Affairs, Kisii University nurtures well-rounded graduates, supporting student welfare, leadership, culture, service and professional growth across every semester.",
   image: media("empowering-student-life", "image1"),
   imageAlt: "Kisii University students during a student affairs programme",
   storySlug: "empowering-student-life",
@@ -62,7 +62,7 @@ export const studentLifeCategories: StudentLifeCategory[] = [
     label: "Art & Culture",
     title: "Culture is lived here, not archived",
     narrative:
-      "Music, dance, heritage and expression run through campus life. Every year the Cultural Festival spills out of the university and into the streets of Kisii Town — a colourful celebration of heritage, diversity and national pride carried by the students themselves.",
+      "Music, dance, heritage and expression run through campus life. Every year the Cultural Festival spills out of the university and into the streets of Kisii Town, a colourful celebration of heritage, diversity and national pride carried by the students themselves.",
     image: media("cultural-festival-11th", "image1"),
     imageAlt: "Procession at the 11th Kisii University Cultural Festival",
     stories: [
@@ -96,7 +96,7 @@ export const studentLifeCategories: StudentLifeCategory[] = [
         title:
           "Shaping Futures: Empowering Students Through Career Guidance and Professional Development",
         excerpt:
-          "Employers increasingly seek graduates with practical skills, professional networks and adaptability — and the university has built the programmes to deliver exactly that.",
+          "Employers increasingly seek graduates with practical skills, professional networks and adaptability, and the university has built the programmes to deliver exactly that.",
         cover: media("career-guidance", "image1"),
         gallery: [
           media("career-guidance", "image2"),
@@ -120,9 +120,9 @@ export const studentLifeCategories: StudentLifeCategory[] = [
   {
     id: "student-health",
     label: "Student Health",
-    title: "Wellbeing first — and students who save lives",
+    title: "Wellbeing first, and students who save lives",
     narrative:
-      "Health on campus goes beyond the clinic. Alongside campus health and counselling services, student volunteers train to act when seconds matter — turning ordinary members of the university community into first responders.",
+      "Health on campus goes beyond the clinic. Alongside campus health and counselling services, student volunteers train to act when seconds matter, turning ordinary members of the university community into first responders.",
     image: media("st-john-95th-parade", "image2"),
     imageAlt: "St. John Ambulance Kisii University Division members",
     stories: [
@@ -131,7 +131,7 @@ export const studentLifeCategories: StudentLifeCategory[] = [
         title:
           "From Students to Lifesavers: The St. John Ambulance KSU Division",
         excerpt:
-          "When an emergency strikes there is rarely time to think. Survival often depends on the person standing closest — and at Kisii University, that person is trained.",
+          "When an emergency strikes there is rarely time to think. Survival often depends on the person standing closest, and at Kisii University, that person is trained.",
         cover: media("st-john-95th-parade", "image2"),
       },
     ],
@@ -143,7 +143,7 @@ export const studentLifeCategories: StudentLifeCategory[] = [
     label: "Leadership",
     title: "Leadership is practised, not just taught",
     narrative:
-      "From national parade grounds to elegant evenings honouring discipline and excellence, Kisii University students learn responsibility by carrying it — in service organisations, student government and every stage in between.",
+      "From national parade grounds to elegant evenings honouring discipline and excellence, Kisii University students learn responsibility by carrying it, in service organisations, student government and every stage in between.",
     image: media("st-john-95th-parade", "image1"),
     imageAlt:
       "Kisii University members at the 95th St. John Ambulance Annual Parade",
@@ -171,7 +171,7 @@ export const studentLifeCategories: StudentLifeCategory[] = [
     label: "Research & Innovation",
     title: "Ideas that refuse to wait for graduation",
     narrative:
-      "In April 2026 the university made history with its first-ever Innovation Week — four days, more than 300 participants and 97 exhibitors co-creating a sustainable future through interdisciplinary research, green innovation and community impact.",
+      "In April 2026 the university made history with its first-ever Innovation Week, four days, more than 300 participants and 97 exhibitors co-creating a sustainable future through interdisciplinary research, green innovation and community impact.",
     image: media("innovation-week", "image3"),
     imageAlt: "Exhibition during Kisii University's inaugural Innovation Week",
     stories: [
@@ -179,7 +179,7 @@ export const studentLifeCategories: StudentLifeCategory[] = [
         slug: "innovation-week",
         title: "The Inaugural Innovation Week: Co-creating a Sustainable Future",
         excerpt:
-          "A bold declaration of the university's transformation into an innovation-driven institution — students, researchers and partners building the future side by side.",
+          "A bold declaration of the university's transformation into an innovation-driven institution, students, researchers and partners building the future side by side.",
         cover: media("innovation-week", "image1"),
         gallery: [media("innovation-week", "image2")],
       },
@@ -192,7 +192,7 @@ export const studentLifeCategories: StudentLifeCategory[] = [
     label: "Clubs & Societies",
     title: "Communities that compete at national level",
     narrative:
-      "Dozens of clubs and societies turn interests into impact — academic, professional and personal. Some carry the university's name all the way to State House, where Kisii University clubs have received national recognition from the President.",
+      "Dozens of clubs and societies turn interests into impact, academic, professional and personal. Some carry the university's name all the way to State House, where Kisii University clubs have received national recognition from the President.",
     image: media("best-tax-club-award", "image1"),
     imageAlt: "Kisii University Tax Club recognition at State House, Nairobi",
     stories: [
@@ -220,7 +220,7 @@ export const studentLifeCategories: StudentLifeCategory[] = [
     label: "Accommodation",
     title: "A supportive place to live and learn",
     narrative:
-      "Learning well starts with living well. University hostels and accommodation options keep students close to lectures, libraries, and the communities that make campus feel like home — with housing guidance available for every budget.",
+      "Learning well starts with living well. University hostels and accommodation options keep students close to lectures, libraries, and the communities that make campus feel like home, with housing guidance available for every budget.",
     image: "/images/homepage/kisii-administration-campus.jpg",
     imageAlt: "Kisii University campus",
     stories: [],

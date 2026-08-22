@@ -8,7 +8,8 @@ export interface User {
   avatar_url?: string;
   is_active: boolean;
   is_verified: boolean;
-  mfa_enabled: boolean;
+  service_memberships: Array<"main" | "research" | "library" | "heri" | "system">;
+  must_change_password: boolean;
   last_login_at?: string;
   created_at: string;
   updated_at: string;
@@ -3217,12 +3218,14 @@ export interface ImportJob {
 export interface LoginRequest {
   email: string;
   password: string;
+  token_transport?: "cookie";
 }
 
 export interface LoginResponse {
-  user: User;
-  access_token: string;
-  refresh_token: string;
+  data: {
+    authenticated: boolean;
+    token_type: "cookie";
+  };
 }
 
 export interface PaginatedResponse<T> {

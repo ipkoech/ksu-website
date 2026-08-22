@@ -28,7 +28,7 @@ router = APIRouter(prefix="/library/assistant/staff", tags=["Library Assistant S
 async def list_conversations(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
     status_filter: str | None = Query(None, alias="status"),
     context_id: uuid.UUID | None = Query(None),
     assigned_to: uuid.UUID | None = Query(None),
@@ -52,7 +52,7 @@ async def get_conversation(
     request: Request,
     conversation_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
 ):
     conversation = await svc.get_staff_conversation(db, user, conversation_id)
     from ...services.assistant_conversations import _conversation_data
@@ -67,7 +67,7 @@ async def assign_conversation(
     conversation_id: uuid.UUID,
     data: LibraryAssistantStaffAssignmentUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     return success(data=await svc.assign_conversation(db, user, conversation_id, data))
 
@@ -79,7 +79,7 @@ async def update_status(
     conversation_id: uuid.UUID,
     data: LibraryAssistantStaffStatusUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     return success(data=await svc.update_status(db, user, conversation_id, data))
 
@@ -91,7 +91,7 @@ async def reply_to_conversation(
     conversation_id: uuid.UUID,
     data: LibraryAssistantStaffReplyCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     return success(
         data=await svc.reply_to_conversation(db, user, conversation_id, data),

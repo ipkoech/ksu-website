@@ -39,6 +39,7 @@ export const SERVICE_ROLES: Record<Service, readonly string[]> = {
     "library-manager",
     "library-staff",
   ],
+  heri: ["super-admin", "heri-admin", "heri-editor", "heri-publisher", "heri-partnership-manager"],
   system: [
     "super-admin",
     "admin",
@@ -85,6 +86,7 @@ export const ROLE_HIERARCHY: Record<Service, readonly string[]> = {
     "library-manager",
     "library-staff",
   ],
+  heri: ["super-admin", "heri-admin", "heri-publisher", "heri-editor", "heri-partnership-manager"],
   system: [
     "super-admin",
     "admin",

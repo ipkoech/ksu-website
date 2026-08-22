@@ -86,7 +86,7 @@ function MosaicTile({
 
   const tile = (
     <motion.article
-      className="group relative aspect-[3/4] overflow-hidden rounded-2xl border border-border"
+      className="group relative aspect-[3/4] overflow-hidden rounded-3xl border border-border"
       initial={reducedMotion ? undefined : { opacity: 0, y: 20 }}
       whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
@@ -134,7 +134,7 @@ function MosaicTile({
   return item.cta_url ? (
     <Link
       href={item.cta_url}
-      className={cn("block rounded-2xl", focusVisibleStyles.primary)}
+      className={cn("block rounded-3xl", focusVisibleStyles.primary)}
       aria-label={item.title ?? undefined}
     >
       {tile}

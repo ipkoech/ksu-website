@@ -18,6 +18,7 @@ OUTPUT_DIR = ROOT / "contracts"
 JWT_PRIVATE_KEY_B64, JWT_PUBLIC_KEY_B64 = ci_jwt_key_pair()
 JWT_VERIFY_ENV = {
     "JWT_PUBLIC_KEY_B64": JWT_PUBLIC_KEY_B64,
+    "JWT_KEY_ID": "docs-active-key",
     "JWT_ALGORITHM": "RS256",
     "JWT_ISSUER": "ksu-auth-docs",
     "JWT_AUDIENCE": "ksu-platform-docs",

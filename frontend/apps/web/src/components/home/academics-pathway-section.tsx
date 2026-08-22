@@ -101,7 +101,7 @@ export function AcademicsPathwaySection({
 
         <div className="mt-10 grid gap-8 xl:grid-cols-[minmax(0,1.5fr)_minmax(340px,0.7fr)]">
           {/* Schools Grid */}
-          <div className="rounded-xl border border-border bg-accent/30 p-5">
+          <div className="rounded-3xl border border-border bg-accent/30 p-5">
             <div className="mb-5 flex items-center justify-between">
               <h3 className="font-[family-name:var(--font-display)] text-xl font-bold text-foreground">
                 Schools
@@ -157,7 +157,7 @@ export function AcademicsPathwaySection({
           </div>
 
           {/* Application Journey */}
-          <div className="rounded-xl bg-primary p-6 text-white shadow-xl shadow-primary/15">
+          <div className="rounded-3xl bg-primary p-6 text-white shadow-xl shadow-primary/15">
             <h3 className="font-[family-name:var(--font-display)] text-xl font-bold">
               Application Journey
             </h3>

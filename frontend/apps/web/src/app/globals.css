@@ -1,5 +1,248 @@
 @import "@ksu/ui/globals.css";
 
+/* ── Landing page design language ────────────────────────────────────
+   One band rhythm, one shell width, one display scale, one eyebrow.
+
+   Before this block the homepage carried eight different vertical
+   rhythms (64/64, 80/96, 56/96, 80/80, 64/112, 0/0, 64/0, 48/48),
+   two container widths, five radius scales and five eyebrow trackings.
+   Sections were individually plausible and collectively incoherent.
+   Anything landing-page-level should use these rather than ad-hoc
+   px-/py-/max-w- utilities.
+   ------------------------------------------------------------------ */
+
+/* Vertical rhythm. `ksu-band` is the default for a full section;
+   `ksu-band-tight` is for interludes that sit between two bands. */
+.ksu-band {
+  padding-block: clamp(3.5rem, 7vw, 6.25rem);
+}
+.ksu-band-tight {
+  padding-block: clamp(2.5rem, 5vw, 4rem);
+}
+.ksu-band-top {
+  padding-top: clamp(3.5rem, 7vw, 6.25rem);
+}
+.ksu-band-bottom {
+  padding-bottom: clamp(3.5rem, 7vw, 6.25rem);
+}
+
+/* Horizontal shell. 1680px is what 18 of 20 call sites already used;
+   the two stragglers at 1440px made left edges shift while scrolling. */
+.ksu-shell {
+  width: 100%;
+  max-width: 1680px;
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4vw, 3rem);
+}
+
+/* Display scale — three steps, all fluid. Replaces the ad-hoc mix of
+   text-3xl / 4xl / 5xl / 6xl that gave near-identical headings
+   different sizes from section to section. */
+.ksu-d1 {
+  font-size: clamp(2.6rem, 6.6vw, 4.9rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+}
+.ksu-d2 {
+  font-size: clamp(1.95rem, 4.2vw, 3.2rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+.ksu-d3 {
+  font-size: clamp(1.3rem, 2.2vw, 1.75rem);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+
+/* One eyebrow, one tracking. */
+.ksu-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* ── Approved homepage typography ────────────────────────────────────
+   The Bookman Old Style / Arial stack is the system-wide theme face
+   (--font-sans / --font-display in @ksu/ui), so the landing shell only
+   restates the 12pt = 16px baseline it is composed on.
+   ------------------------------------------------------------------ */
+.ksu-landing {
+  font-size: 12pt; /* 16px */
+  line-height: 1.5;
+}
+
+/* Landing type scale. Sizes are the pt values from the approved design
+   at the 12pt = 16px baseline the page is set on. */
+.ksu-l-label {
+  font-size: 0.875rem; /* 10.5pt */
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.3;
+}
+.ksu-l-small {
+  font-size: 0.875rem; /* 10.5pt */
+  line-height: 1.5;
+}
+.ksu-l-card {
+  font-size: clamp(1.125rem, 0.9rem + 0.7vw, 1.333rem); /* 13.5 → 16pt */
+  line-height: 1.3;
+}
+.ksu-l-h2 {
+  font-size: clamp(1.75rem, 1rem + 2.4vw, 3rem); /* 28 → 48px */
+  line-height: 1.14;
+  letter-spacing: -0.01em;
+}
+.ksu-l-h1 {
+  font-size: clamp(2.625rem, 1.2rem + 4.2vw, 4.5rem); /* 42 → 72px */
+  line-height: 1.06;
+  letter-spacing: -0.015em;
+}
+
+/* ── Page canvas ─────────────────────────────────────────────────────
+   The ground is white. These are the graphics that keep it from reading
+   as a blank sheet: two very soft brand washes in the margins and a fine
+   dot field, all fixed behind the content and all far below the contrast
+   of anything on top of them.
+
+   Deliberately weak. The washes peak at 5% and the dots at 3.5%, they sit
+   at the page edges rather than under the reading column, and the whole
+   layer is `pointer-events: none` at a negative z-index. If any of this
+   becomes noticeable as texture, it is too strong.
+   ------------------------------------------------------------------ */
+.ksu-canvas {
+  position: relative;
+  background-color: hsl(var(--surface-page));
+  isolation: isolate;
+}
+
+.ksu-canvas::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(
+      42rem 42rem at 88% 8%,
+      hsl(var(--primary) / 0.05),
+      transparent 62%
+    ),
+    radial-gradient(
+      38rem 38rem at 4% 62%,
+      hsl(var(--gold) / 0.045),
+      transparent 62%
+    ),
+    radial-gradient(
+      34rem 34rem at 96% 92%,
+      hsl(var(--secondary) / 0.035),
+      transparent 62%
+    );
+}
+
+.ksu-canvas::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(
+    hsl(var(--primary) / 0.035) 1px,
+    transparent 1px
+  );
+  background-size: 26px 26px;
+  /* Faded out of the middle third so the dots never sit behind body copy. */
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    transparent 18%,
+    transparent 82%,
+    #000 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    transparent 18%,
+    transparent 82%,
+    #000 100%
+  );
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .ksu-canvas::before,
+  .ksu-canvas::after {
+    display: none;
+  }
+}
+
+/* ── Browser surfaces ────────────────────────────────────────────────
+   Selection, caret and scrollbar ship with defaults that belong to no
+   design system. They are part of the page, so they carry the brand. */
+::selection {
+  background: hsl(var(--secondary) / 0.22);
+  color: hsl(var(--brand-overlay));
+}
+
+.ksu-landing :is(input, textarea) {
+  caret-color: hsl(var(--primary));
+}
+
+@supports (scrollbar-color: auto) {
+  .ksu-landing {
+    scrollbar-color: hsl(var(--primary) / 0.35) transparent;
+    scrollbar-width: thin;
+  }
+}
+
+/* The campus-life scroller and the suggestion listbox are the two places
+   a scrollbar sits inside the composition rather than at the page edge. */
+.ksu-landing ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.ksu-landing ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ksu-landing ::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.3);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+.ksu-landing ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.55);
+  background-clip: content-box;
+}
+
+/* Partner rail: one continuous loop, paused on hover and on keyboard
+   focus, static under reduced motion (the component swaps to a wrapping
+   row in that mode, so the animation only has to stop). */
+@keyframes ksu-partner-rail {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.ksu-partner-rail-track {
+  animation: ksu-partner-rail var(--rail-duration, 48s) linear infinite;
+  will-change: transform;
+}
+
+.ksu-partner-rail:hover .ksu-partner-rail-track,
+.ksu-partner-rail:focus-within .ksu-partner-rail-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ksu-partner-rail-track {
+    animation: none;
+  }
+}
+
 /* Compact spacing for public pages — explicit utility classes */
 .ksu-compact-public-page .ksu-section-pad {
   padding-top: clamp(1.75rem, 3vw, 2.75rem);

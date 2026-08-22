@@ -173,6 +173,28 @@ def create_service_app(
         allow_headers=list(cors.headers),
     )
 
+    allowed_cookie_origins = {origin.rstrip("/") for origin in cors.origins}
+
+    @app.middleware("http")
+    async def protect_cookie_authenticated_writes(request: Request, call_next):
+        """Reject cross-origin state changes that carry the auth cookie.
+
+        Bearer clients remain usable without an Origin header. Browser cookie
+        requests are additionally protected from CSRF beyond SameSite=Lax.
+        """
+        if request.method not in {"GET", "HEAD", "OPTIONS"} and request.cookies.get("ksu_access"):
+            origin = request.headers.get("origin")
+            if (
+                origin is not None
+                and "*" not in allowed_cookie_origins
+                and origin.rstrip("/") not in allowed_cookie_origins
+            ):
+                return JSONResponse(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    content={"status": "error", "message": "Untrusted request origin", "code": "csrf_origin"},
+                )
+        return await call_next(request)
+
     error_response_class = (
         config.error_response_class or config.default_response_class or JSONResponse
     )

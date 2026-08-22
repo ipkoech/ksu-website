@@ -8,6 +8,7 @@ from .rbac import (
     build_scope_dependency,
     get_role_scopes,
     has_scope,
+    normalize_permission,
 )
 from .roles import ALL_PERMISSIONS, ROLE_DEFINITIONS, RoleDefinition, normalize_role_name
 
@@ -22,5 +23,6 @@ __all__ = [
     "build_scope_dependency",
     "get_role_scopes",
     "has_scope",
+    "normalize_permission",
     "normalize_role_name",
 ]

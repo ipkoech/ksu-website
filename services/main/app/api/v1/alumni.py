@@ -54,13 +54,13 @@ async def get_alumnus(item_id: uuid.UUID, db: DbSession, fields: FieldSelection 
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("alumni.manage"))])
 async def create_alumnus(data: AlumniCreate, db: DbSession, _: CurrentUser):
     item = await AlumniService.create(db, **data.model_dump())
     return success(data=item, message="Alumni profile created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.patch("/{item_id}", dependencies=[Depends(require_scope("alumni.manage"))])
 async def update_alumnus(item_id: uuid.UUID, data: AlumniUpdate, db: DbSession, _: CurrentUser):
     item = await AlumniService.get_by_id(db, item_id, public_only=False)
     if item is None:
@@ -69,7 +69,7 @@ async def update_alumnus(item_id: uuid.UUID, data: AlumniUpdate, db: DbSession, 
     return success(data=item, message="Alumni profile updated")
 
 
-@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("alumni.manage"))])
 async def delete_alumnus(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await AlumniService.get_by_id(db, item_id, public_only=False)
     if item is None:

@@ -52,13 +52,13 @@ async def get_sports_facility(slug: str, db: DbSession, fields: FieldSelection =
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("student_life.manage_sports"))])
 async def create_sports_facility(data: SportsFacilityCreate, db: DbSession, _: CurrentUser):
     item = await SportsFacilityService.create(db, **data.model_dump())
     return success(data=item, message="Sports facility created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.patch("/{item_id}", dependencies=[Depends(require_scope("student_life.manage_sports"))])
 async def update_sports_facility(item_id: uuid.UUID, data: SportsFacilityUpdate, db: DbSession, _: CurrentUser):
     item = await SportsFacilityService.get_by_id(db, item_id)
     if item is None:
@@ -67,7 +67,7 @@ async def update_sports_facility(item_id: uuid.UUID, data: SportsFacilityUpdate,
     return success(data=item, message="Sports facility updated")
 
 
-@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("student_life.manage_sports"))])
 async def delete_sports_facility(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await SportsFacilityService.get_by_id(db, item_id)
     if item is None:

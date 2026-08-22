@@ -40,7 +40,7 @@ CLUB_MANAGE_PERMISSIONS = ["clubs.manage_own"]
 # Permissions that may list every club for central review, checked at university scope.
 CLUB_REVIEW_LIST_PERMISSIONS = ("content.review", "content.manage", "clubs.view")
 # Central holders who may flip a club profile's visibility (is_public / is_active).
-CLUB_VISIBILITY_PERMISSIONS = {"content.publish", "clubs.admin", "admin:*"}
+CLUB_VISIBILITY_PERMISSIONS = {"content.publish", "student_life.manage_clubs"}
 CLUB_VISIBILITY_FIELDS = {"is_public", "is_active"}
 CLUB_EVENT_PERMISSIONS = ["clubs.events_manage", "clubs.manage_own"]
 CLUB_STORY_PERMISSIONS = ["clubs.stories_manage", "clubs.manage_own"]
@@ -128,7 +128,7 @@ def _club_content_update_payload(data) -> dict:
 def _club_profile_update_payload(data, user: CurrentUser) -> dict:
     payload = data.model_dump(exclude_unset=True)
     permissions = permissions_for_user(user)
-    if {"admin:*", "clubs.admin"}.intersection(permissions):
+    if "student_life.manage_clubs" in permissions:
         return payload
     allowed_fields = set(CLUB_PROFILE_OWNER_MUTABLE_FIELDS)
     if "content.publish" in permissions:
@@ -303,7 +303,7 @@ async def get_club_activities(slug: str, db: DbSession, fields: FieldSelection =
     return success(data=selector.apply(items))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("student_life.manage_clubs"))])
 async def create_club(data: ClubCreate, db: DbSession, _: CurrentUser):
     item = await ClubService.create(db, **data.model_dump())
     return success(data=item, message="Club created")
@@ -659,7 +659,7 @@ async def set_club_media_publication(
     )
 
 
-@router.delete("/{club_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/{club_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("student_life.manage_clubs"))])
 async def delete_club(club_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await _club_or_404(db, club_id)
     await ClubService.delete(db, item)

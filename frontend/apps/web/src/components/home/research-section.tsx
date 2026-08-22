@@ -124,7 +124,7 @@ export function ResearchSection() {
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.3 }}
-              className="group rounded-xl border border-white/15 bg-white/5 p-5 backdrop-blur-sm transition hover:bg-white/10"
+              className="group rounded-3xl border border-white/15 bg-white/5 p-5 backdrop-blur-sm transition hover:bg-white/10"
             >
               <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-secondary/20 text-secondary">
                 <area.icon className="h-5 w-5" aria-hidden />
@@ -145,7 +145,7 @@ export function ResearchSection() {
         whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.5, delay: 0.4 }}
-        className="mt-12 grid gap-6 rounded-xl border border-white/15 bg-white/5 p-6 backdrop-blur-sm sm:grid-cols-3 lg:grid-cols-5"
+        className="mt-12 grid gap-6 rounded-3xl border border-white/15 bg-white/5 p-6 backdrop-blur-sm sm:grid-cols-3 lg:grid-cols-5"
       >
         {[
           { value: "50+", label: "Active Projects" },

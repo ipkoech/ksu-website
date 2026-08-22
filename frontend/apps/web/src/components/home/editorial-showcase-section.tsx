@@ -64,9 +64,9 @@ export function EditorialShowcaseSection({
       id={id}
       aria-labelledby={`${id}-heading`}
       className={cn(
-        "py-12 lg:py-16",
+        "ksu-band",
         tone === "wash"
-          ? "bg-[color-mix(in_srgb,hsl(var(--primary))_5%,white)]"
+          ? "bg-[hsl(var(--surface-band))]"
           : "bg-white",
       )}
     >
@@ -81,7 +81,7 @@ export function EditorialShowcaseSection({
             <div>
               <h2
                 id={`${id}-heading`}
-                className="text-balance font-[family-name:var(--font-display)] text-4xl font-normal leading-[1.05] tracking-tight text-brand-overlay sm:text-5xl lg:text-6xl"
+                className="ksu-d2 text-balance font-[family-name:var(--font-display)] font-normal text-brand-overlay"
               >
                 {headingLead} <em className="italic">{headingAccent}</em>
               </h2>
@@ -105,7 +105,7 @@ export function EditorialShowcaseSection({
         {/* Featured card, or a clear empty state when the feed has nothing */}
         {featured ? (
         <Reveal as="article" delay={80} amount={0.2}
-          className="mt-10 grid overflow-hidden rounded-2xl border border-border bg-[color-mix(in_srgb,hsl(var(--primary))_3%,white)] lg:min-h-[480px] lg:grid-cols-2"
+          className="mt-10 grid overflow-hidden rounded-3xl border border-border bg-[color-mix(in_srgb,hsl(var(--primary))_3%,white)] lg:min-h-[480px] lg:grid-cols-2"
         >
           <Link
             href={featured.href}
@@ -153,7 +153,7 @@ export function EditorialShowcaseSection({
           </div>
         </Reveal>
         ) : (
-          <div className="mt-10 rounded-2xl border border-dashed border-border bg-[color-mix(in_srgb,hsl(var(--primary))_3%,white)] px-8 py-14 text-center">
+          <div className="mt-10 rounded-3xl border border-dashed border-border bg-[color-mix(in_srgb,hsl(var(--primary))_3%,white)] px-8 py-14 text-center">
             <p className="text-base font-medium text-muted-foreground">
               {emptyMessage}
             </p>
@@ -169,7 +169,7 @@ export function EditorialShowcaseSection({
                   href={card.href}
                   className={cn("group block", focusVisibleStyles.primary)}
                 >
-                  <div className="relative aspect-[16/10] overflow-hidden rounded-2xl">
+                  <div className="relative aspect-[16/10] overflow-hidden rounded-3xl">
                     <ShowcaseMedia
                       imageUrl={card.imageUrl}
                       alt=""
@@ -205,7 +205,7 @@ export function EditorialShowcaseSection({
 
         {/* Optional events strip */}
         {events && events.length > 0 && (
-          <div className="mt-10 rounded-2xl border border-border bg-[color-mix(in_srgb,hsl(var(--primary))_3%,white)] p-6 lg:p-8">
+          <div className="mt-10 rounded-3xl border border-border bg-[color-mix(in_srgb,hsl(var(--primary))_3%,white)] p-6 lg:p-8">
             <div className="flex items-center justify-between gap-4">
               <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-brand-overlay/70">
                 <CalendarDays className="h-4 w-4 text-secondary" aria-hidden />

@@ -28,6 +28,7 @@ export type ContentKind =
   | "announcements"
   | "media";
 export type ContentListingMode = "all" | "category" | "past";
+const PUBLIC_GALLERY_COLLECTION = "university-gallery";
 export type MediaDeskSection =
   | "overview"
   | "news"
@@ -611,7 +612,7 @@ async function getEntityOptions() {
     safeList<Department>(
       departmentsApi.list({
         fields: entityOptionFields,
-        per_page: 200,
+        per_page: 100,
       }),
     ),
   ]);
@@ -794,7 +795,7 @@ export async function getContentListingData(
 
   const canUseEntityContent =
     Boolean(entityType && entityId) &&
-    (kind === "news" || kind === "events" || kind === "media");
+    (kind === "news" || kind === "events");
 
   if (canUseEntityContent && entityType && entityId) {
     const primary = await listEntityContent({
@@ -805,37 +806,22 @@ export async function getContentListingData(
       perPage,
       search,
     });
-    const filtered =
-      kind === "media" && mediaType
-        ? primary.records.filter(
-            (record) =>
-              record.contentKind === "media" && record.media_type === mediaType,
-          )
-        : primary.records;
+    const filtered = primary.records;
 
     return {
       kind,
       mediaDeskSection: mediaSectionForKind(kind),
       title: listTitle(kind, mode, mediaType),
       eyebrow: listingEyebrow(kind),
-      body:
-        kind === "media"
-          ? "Public images and videos published for the selected school or department."
-          : "Published records for the selected school or department.",
+      body: "Published records for the selected school or department.",
       href: recordHrefPrefix(kind),
       mode,
       records: filtered,
       featured: filtered[0] ?? null,
       nav: nav.filter((item) => item.href !== recordHrefPrefix(kind)),
-      categories:
-        kind === "media"
-          ? [
-              { label: "Image", href: "/media/gallery?type=image" },
-              { label: "Video", href: "/media/gallery?type=video" },
-            ]
-          : [],
+      categories: [],
       calendarEvents: await getCalendarEvents(),
-      total: mediaType ? filtered.length : primary.total,
+      total: primary.total,
       page,
       perPage,
       filters: {
@@ -849,14 +835,25 @@ export async function getContentListingData(
   }
 
   if (kind === "media" && mode === "all" && !mediaType) {
-    const [newsRecords, eventRecords, articleRecords, announcementRecords] =
+    const [
+      newsRecords,
+      eventRecords,
+      articleRecords,
+      announcementRecords,
+      galleryRecords,
+    ] =
       await Promise.all([
-        listByKind("news", { per_page: 3, search }),
-        listByKind("events", { per_page: 3, search }),
-        listByKind("blogs", { per_page: 3, search }),
-        listByKind("announcements", { per_page: 3, search }),
+        listByKind("news", { per_page: 6, search }),
+        listByKind("events", { per_page: 6, search }),
+        listByKind("blogs", { per_page: 6, search }),
+        listByKind("announcements", { per_page: 6, search }),
+        listByKind("media", {
+          per_page: 6,
+          search,
+          collection: PUBLIC_GALLERY_COLLECTION,
+        }),
       ]);
-    const records = [
+    const editorialRecords = [
       ...newsRecords.records,
       ...eventRecords.records,
       ...articleRecords.records,
@@ -869,7 +866,7 @@ export async function getContentListingData(
       );
     });
     const featured =
-      records.find(
+      editorialRecords.find(
         (record) =>
           record.contentKind !== "media" &&
           Boolean(
@@ -877,7 +874,7 @@ export async function getContentListingData(
             ("is_main" in record && record.is_main),
           ),
       ) ??
-      records[0] ??
+      editorialRecords[0] ??
       null;
 
     return {
@@ -888,7 +885,7 @@ export async function getContentListingData(
       body: "News, events, articles, announcements, and gallery records from Kisii University in one public media desk.",
       href: "/media",
       mode,
-      records,
+      records: [...editorialRecords, ...galleryRecords.records],
       featured,
       nav: mediaDeskNav,
       categories: [],
@@ -912,12 +909,20 @@ export async function getContentListingData(
 
   if (kind === "events" && mode !== "past") listParams.upcoming = true;
   if (kind === "events" && mode === "past") listParams.upcoming = false;
-  if (kind === "media" && mediaType) listParams.media_type = mediaType;
+  if (kind === "media") {
+    listParams.collection = PUBLIC_GALLERY_COLLECTION;
+    if (mediaType) listParams.media_type = mediaType;
+  }
 
   const primary = await listByKind(kind, listParams);
   const allForCategories =
     kind === "media" || kind === "announcements"
-      ? await listByKind(kind, { per_page: 100 })
+      ? await listByKind(kind, {
+          per_page: 100,
+          ...(kind === "media"
+            ? { collection: PUBLIC_GALLERY_COLLECTION }
+            : {}),
+        })
       : primary;
   const categorySlug = mode === "category" ? slug : undefined;
   const filtered =

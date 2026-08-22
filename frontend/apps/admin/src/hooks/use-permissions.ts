@@ -23,10 +23,6 @@ export function usePermissions() {
       service.scopes.forEach((scope) => allPermissions.add(normalizePermission(scope)));
     });
 
-    if (user.roles?.some((role) => ["super-admin", "admin"].includes(normalizeRole(role)))) {
-      allPermissions.add("*");
-    }
-
     return allPermissions;
   }, [user]);
 
@@ -155,6 +151,6 @@ export function usePermissions() {
     canCreate,
     canEdit,
     canDelete,
-    isAdmin: permissions.has("*") || permissions.has("admin:*"),
+    isAdmin: user?.roles?.some((role) => ["super-admin", "admin", "system-admin"].includes(normalizeRole(role))) ?? false,
   };
 }

@@ -570,7 +570,7 @@ async def get_media(media_id: uuid.UUID, db: DbSession, user: CurrentUser, field
     return success(data=selector.apply(media))
 
 
-@router.patch("/{media_id}", dependencies=[Depends(require_scope("media:manage"))])
+@router.patch("/{media_id}", dependencies=[Depends(require_scope("media.manage"))])
 async def update_media(media_id: uuid.UUID, data: MediaUpdate, db: DbSession, user: CurrentUser):
     media = await MediaService.get_authorized_by_id(db, media_id, user)
     if media is None:
@@ -591,7 +591,7 @@ async def update_media(media_id: uuid.UUID, data: MediaUpdate, db: DbSession, us
     return success(data=media, message="Media updated")
 
 
-@router.delete("/{media_id}", dependencies=[Depends(require_scope("media:delete"))], status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{media_id}", dependencies=[Depends(require_scope("media.delete"))], status_code=status.HTTP_204_NO_CONTENT)
 async def delete_media(media_id: uuid.UUID, db: DbSession, user: CurrentUser):
     media = await MediaService.get_authorized_by_id(db, media_id, user)
     if media is None:

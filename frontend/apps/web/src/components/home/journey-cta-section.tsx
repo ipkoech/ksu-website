@@ -113,7 +113,7 @@ export function JourneyCtaSection() {
               <Link
                 href={route.href}
                 className={cn(
-                  "relative block min-h-[320px] overflow-hidden rounded-xl",
+                  "relative block min-h-[320px] overflow-hidden rounded-3xl",
                   focusVisibleStyles.white
                 )}
               >
@@ -132,7 +132,7 @@ export function JourneyCtaSection() {
                   )}
                 />
                 <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 text-white backdrop-blur-sm">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-3xl bg-white/20 text-white backdrop-blur-sm">
                     <route.icon className="h-6 w-6" aria-hidden />
                   </span>
                   <h3 className="mt-5 font-[family-name:var(--font-display)] text-2xl font-bold text-white sm:text-3xl">

@@ -43,11 +43,11 @@ async def list_public_contexts(
 async def list_contexts(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
     library_id: uuid.UUID | None = Query(None),
     status_filter: str | None = Query(None, alias="status"),
 ):
-    require_library_scope(user, "library:read", library_id)
+    require_library_scope(user, "library.read", library_id)
     data = await svc.list_contexts(
         db,
         public_only=False,
@@ -64,10 +64,10 @@ async def get_context(
     request: Request,
     context_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
 ):
     context = await svc.get_context(db, context_id, public_only=False)
-    require_library_scope(user, "library:read", context.library_id)
+    require_library_scope(user, "library.read", context.library_id)
     return success(
         data=LibraryAssistantContextOut.model_validate(
             svc._context_data(context)
@@ -81,9 +81,9 @@ async def create_context(
     request: Request,
     data: LibraryAssistantContextCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
-    require_library_scope(user, "library:write", data.library_id)
+    require_library_scope(user, "library.write", data.library_id)
     context = await svc.create_context(
         db,
         data,
@@ -103,12 +103,12 @@ async def update_context(
     context_id: uuid.UUID,
     data: LibraryAssistantContextUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     context = await svc.get_context(db, context_id, public_only=False)
-    require_library_scope(user, "library:write", context.library_id)
+    require_library_scope(user, "library.write", context.library_id)
     if "library_id" in data.model_fields_set:
-        require_library_scope(user, "library:write", data.library_id)
+        require_library_scope(user, "library.write", data.library_id)
     updated = await svc.update_context(
         db,
         context,
@@ -128,10 +128,10 @@ async def publish_context(
     request: Request,
     context_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     context = await svc.get_context(db, context_id, public_only=False)
-    require_library_scope(user, "library:write", context.library_id)
+    require_library_scope(user, "library.write", context.library_id)
     published = await svc.publish_context(db, context)
     await invalidate_prefix("public")
     return success(
@@ -146,10 +146,10 @@ async def archive_context(
     request: Request,
     context_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     context = await svc.get_context(db, context_id, public_only=False)
-    require_library_scope(user, "library:admin", context.library_id)
+    require_library_scope(user, "library.admin", context.library_id)
     archived = await svc.archive_context(db, context)
     await invalidate_prefix("public")
     return success(

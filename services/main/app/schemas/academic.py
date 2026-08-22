@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date
+from datetime import date, datetime
 from typing import Any
 
 from pydantic import Field
@@ -342,6 +342,13 @@ class AcademicCalendarRead(BaseReadSchema):
     events: list[dict[str, Any]] | None = None
     intakes: list[dict[str, Any]] | None = None
     status: str
+    workflow_status: str = "draft"
+    is_public: bool = False
+    is_published: bool = False
+    published_at: datetime | None = None
+    supersedes_id: uuid.UUID | None = None
+    normalized_events: list[dict[str, Any]] | None = None
+    document_links: list[dict[str, Any]] | None = None
 
 
 class AcademicCalendarUpdate(BaseSchema):
@@ -360,3 +367,35 @@ class AcademicCalendarUpdate(BaseSchema):
     holidays: list[dict[str, Any]] | None = None
     events: list[dict[str, Any]] | None = None
     status: str | None = Field(default=None, max_length=32)
+
+
+class AcademicCalendarEventCreate(BaseSchema):
+    title: str = Field(min_length=1, max_length=255)
+    event_type: str = Field(min_length=1, max_length=32)
+    description: str | None = None
+    start_date: date
+    end_date: date | None = None
+    audience: str | None = Field(default=None, max_length=128)
+    location: str | None = Field(default=None, max_length=255)
+    document_id: uuid.UUID | None = None
+    is_highlighted: bool = False
+    display_order: int = 100
+
+
+class AcademicCalendarEventUpdate(BaseSchema):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    event_type: str | None = Field(default=None, min_length=1, max_length=32)
+    description: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    audience: str | None = Field(default=None, max_length=128)
+    location: str | None = Field(default=None, max_length=255)
+    document_id: uuid.UUID | None = None
+    is_highlighted: bool | None = None
+    display_order: int | None = None
+
+
+class AcademicCalendarDocumentCreate(BaseSchema):
+    document_id: uuid.UUID
+    relationship_type: str = Field(default="supporting", max_length=32)
+    display_order: int = 100

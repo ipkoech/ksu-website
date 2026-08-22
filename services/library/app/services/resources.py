@@ -123,6 +123,52 @@ async def get_resource_entity(
     )
 
 
+async def _lock_resource_for_update(
+    db: AsyncSession, resource_id: uuid.UUID
+) -> LibraryResource | None:
+    """Fetch a resource with a row lock held until the transaction commits.
+
+    Copy counters are read-modify-write, so concurrent issue/return calls
+    would otherwise interleave and oversubscribe (or leak) a copy.
+    """
+    result = await db.execute(
+        sa.select(LibraryResource)
+        .where(
+            LibraryResource.id == resource_id,
+            LibraryResource.deleted_at.is_(None),
+        )
+        .with_for_update()
+    )
+    return result.scalar_one_or_none()
+
+
+async def _load_loan_detail(db: AsyncSession, loan_id: uuid.UUID) -> LibraryLoanOut:
+    """Re-select a loan with its resource eagerly loaded, ready to serialize.
+
+    ``db.refresh(loan, ["resource"])`` repopulates the relationship but leaves
+    the nested resource's own columns expired after commit, so serializing them
+    would trigger lazy IO and raise ``MissingGreenlet`` on the async engine.
+    """
+    result = await db.execute(
+        sa.select(LibraryLoan)
+        .where(LibraryLoan.id == loan_id)
+        .options(*_LOAN_DETAIL_OPTIONS)
+    )
+    return LibraryLoanOut.model_validate(result.scalar_one())
+
+
+async def _load_reservation_detail(
+    db: AsyncSession, reservation_id: uuid.UUID
+) -> LibraryReservationOut:
+    """Re-select a reservation with its resource eagerly loaded."""
+    result = await db.execute(
+        sa.select(LibraryResourceReservation)
+        .where(LibraryResourceReservation.id == reservation_id)
+        .options(*_RESERVATION_DETAIL_OPTIONS)
+    )
+    return LibraryReservationOut.model_validate(result.scalar_one())
+
+
 async def get_resource_library_id(db: AsyncSession, resource_id: uuid.UUID) -> uuid.UUID:
     resource = await get_resource_entity(db, resource_id)
     return resource.library_id
@@ -217,7 +263,9 @@ async def delete_resource(db: AsyncSession, resource_id: uuid.UUID) -> None:
 
 async def issue_loan(db: AsyncSession, data: LibraryLoanCreate) -> LibraryLoanOut:
     """Issue a new loan for a resource."""
-    resource = await get_resource_entity(db, data.resource_id)
+    resource = await _lock_resource_for_update(db, data.resource_id)
+    if resource is None:
+        raise ValueError(f"Library resource {data.resource_id} not found")
 
     if not resource.is_loanable:
         raise ValueError("This resource is not loanable")
@@ -231,8 +279,7 @@ async def issue_loan(db: AsyncSession, data: LibraryLoanCreate) -> LibraryLoanOu
     loan = LibraryLoan(**data.model_dump())
     db.add(loan)
     await db.commit()
-    await db.refresh(loan, attribute_names=["resource"])
-    return LibraryLoanOut.model_validate(loan)
+    return await _load_loan_detail(db, loan.id)
 
 
 async def return_loan(
@@ -254,15 +301,14 @@ async def return_loan(
     if loan.returned_at is None:
         loan.returned_at = datetime.now(timezone.utc)
 
-    resource = await LibraryResource.get_by_id(db, loan.resource_id)
+    resource = await _lock_resource_for_update(db, loan.resource_id)
     if resource is not None:
         resource.available_copies += 1
         if resource.status == "on_loan" and resource.available_copies > 0:
             resource.status = "available"
 
     await db.commit()
-    await db.refresh(loan, attribute_names=["resource"])
-    return LibraryLoanOut.model_validate(loan)
+    return await _load_loan_detail(db, loan.id)
 
 
 async def renew_loan(db: AsyncSession, loan_id: uuid.UUID) -> LibraryLoanOut:
@@ -288,8 +334,7 @@ async def renew_loan(db: AsyncSession, loan_id: uuid.UUID) -> LibraryLoanOut:
     loan.renewals_count += 1
 
     await db.commit()
-    await db.refresh(loan, attribute_names=["resource"])
-    return LibraryLoanOut.model_validate(loan)
+    return await _load_loan_detail(db, loan.id)
 
 
 async def get_loan(db: AsyncSession, loan_id: uuid.UUID) -> LibraryLoanOut:
@@ -352,7 +397,10 @@ async def create_reservation(
     db: AsyncSession, data: LibraryReservationCreate
 ) -> LibraryReservationOut:
     """Create a resource reservation."""
-    await get_resource_entity(db, data.resource_id)
+    # Lock the parent resource so the count-then-insert below cannot interleave
+    # with a concurrent reservation and hand out a duplicate queue position.
+    if await _lock_resource_for_update(db, data.resource_id) is None:
+        raise ValueError(f"Library resource {data.resource_id} not found")
 
     count_result = await db.execute(
         sa.select(sa.func.count()).where(
@@ -373,8 +421,7 @@ async def create_reservation(
     )
     db.add(reservation)
     await db.commit()
-    await db.refresh(reservation, attribute_names=["resource"])
-    return LibraryReservationOut.model_validate(reservation)
+    return await _load_reservation_detail(db, reservation.id)
 
 
 async def cancel_reservation(
@@ -414,8 +461,7 @@ async def update_reservation(
         setattr(reservation, field, value)
 
     await db.commit()
-    await db.refresh(reservation, attribute_names=["resource"])
-    return LibraryReservationOut.model_validate(reservation)
+    return await _load_reservation_detail(db, reservation.id)
 
 
 async def list_reservations(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import shutil
 import struct
 import uuid
 import zlib
@@ -28,6 +29,7 @@ from ._shared import (
 COVER_WIDTH = 960
 COVER_HEIGHT = 540
 COVER_ROOT = "seed/covers"
+SCHOOL_COVER_ASSET_ROOT = Path(__file__).with_name("assets") / "school-covers"
 
 
 def _theme_for_name(name: str) -> str:
@@ -501,6 +503,27 @@ def _render_cover(path: Path, *, name: str, theme: str) -> None:
     _write_png(path, data)
 
 
+def _bundled_school_cover(target: dict[str, str]) -> Path | None:
+    """Return the reviewed, repository-bundled cover for a school target."""
+
+    if target["entity_type"] != "school":
+        return None
+    path = SCHOOL_COVER_ASSET_ROOT / Path(_target_storage_path(target)).name
+    return path if path.is_file() else None
+
+
+def _materialize_cover(path: Path, target: dict[str, str]) -> bool:
+    """Copy a bundled school cover, falling back to generated department artwork."""
+
+    bundled_cover = _bundled_school_cover(target)
+    if bundled_cover is not None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(bundled_cover, path)
+        return True
+    _render_cover(path, name=target["name"], theme=target["theme"])
+    return False
+
+
 def cover_targets_from_specs() -> list[dict[str, str]]:
     targets: list[dict[str, str]] = []
     for school in SCHOOL_SPECS:
@@ -563,7 +586,12 @@ async def preserves_generated_school_panorama(
 
 
 async def _upsert_cover_media(
-    db: AsyncSession, target: dict[str, str], path: Path, storage_path: str
+    db: AsyncSession,
+    target: dict[str, str],
+    path: Path,
+    storage_path: str,
+    *,
+    bundled: bool = False,
 ) -> Media:
     content = path.read_bytes()
     file_hash = hashlib.sha256(content).hexdigest()
@@ -581,8 +609,8 @@ async def _upsert_cover_media(
         "public_url": f"/uploads/{storage_path}",
         "cdn_url": None,
         "title": f"{target['name']} cover image",
-        "alt_text": f"Abstract cover artwork for {target['name']}",
-        "description": f"Generated Kisii University cover artwork for {target['name']}.",
+        "alt_text": f"Kisii University cover image for {target['name']}",
+        "description": f"Kisii University branded cover image for {target['name']}.",
         "caption": None,
         "tags": [
             "kisii-university",
@@ -592,17 +620,17 @@ async def _upsert_cover_media(
         ],
         "credit": "Generated for Kisii University seed data",
         "media_type": "image",
-        "width": COVER_WIDTH,
-        "height": COVER_HEIGHT,
+        "width": 1200 if bundled else COVER_WIDTH,
+        "height": 675 if bundled else COVER_HEIGHT,
         "thumbnail_url": f"/uploads/{storage_path}",
         "thumbnails": None,
         "uploaded_by_id": None,
         "is_public": True,
         "is_processed": True,
         "extra_metadata": {
-            "source": "generated",
+            "source": "generated-school-cover" if bundled else "generated",
             "seed_asset": True,
-            "generated_by": "seed_cover_images",
+            "generated_by": "imagegen" if bundled else "seed_cover_images",
             "theme": target["theme"],
         },
     }
@@ -680,8 +708,10 @@ async def seed_cover_images(db: AsyncSession, ctx: SeedContext) -> None:
 
         storage_path = _target_storage_path(target)
         absolute_path = upload_root / storage_path
-        _render_cover(absolute_path, name=target["name"], theme=target["theme"])
-        media = await _upsert_cover_media(db, target, absolute_path, storage_path)
+        bundled = _materialize_cover(absolute_path, target)
+        media = await _upsert_cover_media(
+            db, target, absolute_path, storage_path, bundled=bundled
+        )
         entity.cover_image_id = media.id
         await _link_cover(
             db, media, entity_type=target["entity_type"], entity_id=entity.id
@@ -709,8 +739,10 @@ async def seed_cover_images(db: AsyncSession, ctx: SeedContext) -> None:
         }
         storage_path = _target_storage_path(target)
         absolute_path = upload_root / storage_path
-        _render_cover(absolute_path, name=target["name"], theme=target["theme"])
-        media = await _upsert_cover_media(db, target, absolute_path, storage_path)
+        bundled = _materialize_cover(absolute_path, target)
+        media = await _upsert_cover_media(
+            db, target, absolute_path, storage_path, bundled=bundled
+        )
         school.cover_image_id = media.id
         await _link_cover(db, media, entity_type="school", entity_id=school.id)
 

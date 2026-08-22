@@ -90,6 +90,9 @@ async def seed_university_info(db: AsyncSession, ctx: SeedContext) -> None:
         social_links={
             "website": "https://kisiiuniversity.ac.ke",
             "x": "https://twitter.com/kisiuniofficial",
+            "facebook": "https://www.facebook.com/Kisiiuniversityofficial",
+            "source": "https://kisiiuniversity.ac.ke",
+            "verified_at": "2026-08-10",
         },
         quick_facts={
             "founding_year": 1965,

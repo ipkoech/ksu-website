@@ -16,17 +16,8 @@ type BackendUser = {
   avatar_url?: string;
   roles?: string[];
   permissions?: string[];
-};
-
-type TokenResponse = {
-  access_token: string;
-  refresh_token: string;
-  token_type?: string;
-};
-
-type StoredTokens = {
-  accessToken?: string;
-  refreshToken?: string;
+  service_memberships?: string[];
+  must_change_password?: boolean;
 };
 
 const TOKEN_STORAGE_KEY = "ksu-auth-tokens";
@@ -60,6 +51,7 @@ const RESEARCH_RESOURCES = new Set([
   "research_program",
   "external_publications",
 ]);
+const HERI_RESOURCES = new Set(["heri"]);
 const LIBRARY_RESOURCES = new Set(["library"]);
 
 function getMainApiBaseUrl() {
@@ -73,21 +65,15 @@ function canUseSessionStorage() {
   return typeof window !== "undefined" && typeof window.sessionStorage !== "undefined";
 }
 
-export function getStoredAuthTokens(): StoredTokens {
-  if (!canUseSessionStorage()) return {};
-  const raw = window.sessionStorage.getItem(TOKEN_STORAGE_KEY);
-  if (!raw) return {};
-  try {
-    return JSON.parse(raw) as StoredTokens;
-  } catch {
-    window.sessionStorage.removeItem(TOKEN_STORAGE_KEY);
-    return {};
-  }
+export function getStoredAuthTokens(): Record<string, never> {
+  // Remove credentials persisted by older frontend releases. Browser auth is
+  // now carried exclusively by HttpOnly cookies.
+  if (canUseSessionStorage()) window.sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+  return {};
 }
 
-export function setStoredAuthTokens(tokens: StoredTokens) {
-  if (!canUseSessionStorage()) return;
-  window.sessionStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokens));
+export function setStoredAuthTokens(_tokens: unknown) {
+  clearStoredAuthTokens();
 }
 
 export function clearStoredAuthTokens() {
@@ -96,7 +82,8 @@ export function clearStoredAuthTokens() {
 }
 
 export function getStoredAccessToken() {
-  return getStoredAuthTokens().accessToken;
+  getStoredAuthTokens();
+  return undefined;
 }
 
 function unwrapApiData<T>(payload: T | BackendAuthEnvelope<T>): T {
@@ -144,50 +131,49 @@ function splitPermission(permission: string) {
 function mapPermissionToScopes(permission: string): string[] {
   const normalized = normalizePermission(permission);
   const { resource, action } = splitPermission(normalized);
-  const wildcard = `${resource}.*`;
   const dotScope = action ? `${resource}.${action}` : resource;
 
   switch (resource) {
     case "admin":
-      return ["*"];
+      return [dotScope];
     case "users":
       if (action === "read") return ["users.view"];
       if (action === "write") return ["users.create", "users.edit", "users.invite", "users.suspend"];
       if (action === "delete") return ["users.delete"];
-      return [wildcard];
+      return [dotScope];
     case "roles":
       if (action === "read") return ["roles.view"];
       if (action === "write") return ["roles.manage"];
       if (action === "delete") return ["roles.delete"];
-      return [wildcard];
+      return [dotScope];
     case "permissions":
       if (action === "read") return ["permissions.view"];
       if (action === "write") return ["permissions.manage"];
-      return [wildcard];
+      return [dotScope];
     case "audit":
       if (action === "read") return ["audit.view"];
-      return [wildcard];
+      return [dotScope];
     case "analytics":
       if (action === "read") return ["analytics.view"];
       if (action === "write") return ["analytics.manage", "analytics.view"];
-      return [wildcard];
+      return [dotScope];
     case "settings":
       if (action === "read") return ["settings.view"];
       if (action === "write") return ["settings.manage"];
-      return [wildcard];
+      return [dotScope];
     case "api_keys":
       if (action === "read") return ["api_keys.view"];
       if (action === "write" || action === "delete") return ["api_keys.manage"];
-      return [wildcard];
+      return [dotScope];
     case "webhooks":
       if (action === "read") return ["webhooks.view"];
       if (action === "write" || action === "delete") return ["webhooks.manage"];
-      return [wildcard];
+      return [dotScope];
     case "notifications":
       if (action === "read") return ["notifications.view"];
       if (action === "write" || action === "delete") return ["notifications.manage"];
       if (action === "send") return ["notifications.send"];
-      return [wildcard];
+      return [dotScope];
     case "academic":
       if (action === "read") return ["academic.view", "admissions.view", "persons.view"];
       if (action === "write") {
@@ -202,11 +188,11 @@ function mapPermissionToScopes(permission: string): string[] {
         ];
       }
       if (action === "delete") return ["academic.delete"];
-      return [wildcard];
+      return [dotScope];
     case "admissions":
       if (action === "read") return ["admissions.view", "admissions.view_applications"];
       if (action === "write") return ["admissions.manage_intakes", "admissions.manage_info", "admissions.manage_applications"];
-      return [wildcard];
+      return [dotScope];
     case "content":
       if (action === "read") return ["content.view", "content.view_drafts"];
       if (action === "write") {
@@ -220,12 +206,12 @@ function mapPermissionToScopes(permission: string): string[] {
           "content.view",
         ];
       }
-      return [wildcard];
+      return [dotScope];
     case "staff":
       if (action === "read") return ["staff.view_assignments"];
       if (action === "write") return ["staff.manage_assignments"];
       if (action === "delete") return ["staff.delete"];
-      return [wildcard];
+      return [dotScope];
     case "administration":
       if (action === "view" || action === "read") return ["administration.view"];
       if (action === "write" || action === "manage") {
@@ -237,38 +223,38 @@ function mapPermissionToScopes(permission: string): string[] {
           "administration.view",
         ];
       }
-      return [dotScope, wildcard];
+      return [dotScope];
     case "office":
       if (action === "view" || action === "read") return ["office.view"];
       if (action === "write" || action === "manage") {
         return ["office.manage_content", "office.manage_staff", "office.manage_services", "office.view"];
       }
-      return [dotScope, wildcard];
+      return [dotScope];
     case "governance":
       if (action === "read") return ["governance.view"];
       if (action === "write") return ["governance.manage", "governance.manage_boards", "organization.manage_divisions"];
-      return [wildcard];
+      return [dotScope];
     case "organization":
       if (action === "read") return ["governance.view"];
       if (action === "write") return ["organization.manage_divisions"];
-      return [wildcard];
+      return [dotScope];
     case "persons":
       if (action === "read") return ["persons.view"];
       if (action === "write" || action === "delete") return ["persons.manage", "persons.view"];
-      return [wildcard];
+      return [dotScope];
     case "media":
       if (action === "upload") return ["media.upload", "media.view"];
       if (action === "manage") return ["media.manage", "media.view"];
       if (action === "delete") return ["media.delete"];
-      return [wildcard];
+      return [dotScope];
     case "marketing":
       if (action === "read") return ["marketing.view"];
       if (action === "write") return ["marketing.manage_sliders", "marketing.manage_testimonials", "marketing.manage_newsletters"];
-      return [wildcard];
+      return [dotScope];
     case "research":
-      return action ? [dotScope, wildcard] : [wildcard];
+      return [dotScope];
     case "library":
-      return action ? [dotScope, wildcard] : [wildcard];
+      return [dotScope];
     default:
       return [dotScope];
   }
@@ -276,6 +262,7 @@ function mapPermissionToScopes(permission: string): string[] {
 
 function serviceForPermission(permission: string): Service | null {
   const { resource } = splitPermission(permission);
+  if (HERI_RESOURCES.has(resource)) return "heri";
   if (LIBRARY_RESOURCES.has(resource)) return "library";
   if (RESEARCH_RESOURCES.has(resource)) return "research";
   if (SYSTEM_RESOURCES.has(resource)) return "system";
@@ -283,137 +270,23 @@ function serviceForPermission(permission: string): Service | null {
   return "main";
 }
 
-function inferServiceScopes(service: Service, roles: string[], permissions: string[]) {
+function inferServiceScopes(service: Service, permissions: string[]) {
   const permissionScopes = permissions
     .filter((permission) => {
       const mappedService = serviceForPermission(permission);
-      return mappedService === service || permission === "admin:*";
+      return mappedService === service;
     })
     .flatMap(mapPermissionToScopes);
 
-  if (permissionScopes.includes("*") || roles.includes("super-admin") || roles.includes("admin")) {
-    return ["*"];
-  }
-  if (service === "system" && roles.includes("system-admin")) {
-    return [
-      "users.*",
-      "roles.*",
-      "permissions.*",
-      "audit.view",
-      "settings.*",
-      "api_keys.*",
-      "webhooks.*",
-      "notifications.*",
-      "analytics.view",
-    ];
-  }
-  if (service === "main" && roles.includes("academic-admin")) {
-    return ["academic.*", "admissions.*", "staff.view_assignments", "persons.view"];
-  }
-  if (service === "main" && roles.includes("staff-admin")) {
-    return ["staff.*", "persons.*", "governance.*", "organization.*", "academic.view"];
-  }
-  if (service === "main" && roles.includes("institution-admin")) {
-    return ["administration.*", "office.*", "staff.*", "persons.view", "media.view", "media.upload"];
-  }
-  if (service === "main" && roles.includes("office-admin")) {
-    return [
-      "administration.view",
-      "office.view",
-      "office.manage_content",
-      "office.manage_staff",
-      "office.manage_services",
-      "staff.view_assignments",
-      "media.view",
-      "media.upload",
-    ];
-  }
-  if (service === "main" && roles.includes("office-editor")) {
-    return ["administration.view", "office.view", "office.manage_content", "office.manage_services", "media.view", "media.upload"];
-  }
-  if (service === "main" && roles.includes("office-staff-manager")) {
-    return ["administration.view", "office.view", "office.manage_staff", "staff.view_assignments", "staff.manage_assignments", "persons.view"];
-  }
-  if (service === "main" && roles.includes("content-admin")) {
-    return ["content.*", "media.*", "support.*", "marketing.*"];
-  }
-  if (service === "main" && roles.includes("content-manager")) {
-    return [
-      "content.manage_news",
-      "content.manage_events",
-      "content.manage_blogs",
-      "content.manage_announcements",
-      "content.view",
-      "media.upload",
-      "media.view",
-    ];
-  }
-  if (service === "main" && roles.includes("school-admin")) {
-    return ["academic.manage_schools", "academic.manage_departments", "academic.manage_staff", "academic.view"];
-  }
-  if (service === "main" && roles.includes("dept-admin")) {
-    return ["academic.manage_departments", "academic.manage_staff", "academic.manage_programmes", "academic.view"];
-  }
-  if (service === "research" && roles.includes("research-admin")) {
-    return ["research.*"];
-  }
-  if (service === "research" && roles.includes("research-content")) {
-    return [
-      "research.view",
-      "content.view",
-      "content.view_drafts",
-      "content.manage_news",
-      "content.manage_blogs",
-      "content.manage_events",
-      "content.manage_announcements",
-      "content.publish",
-      "marketing.manage_sliders",
-      "media.upload",
-    ];
-  }
-  if (service === "research" && roles.includes("research-farm")) {
-    return [
-      "research.view",
-      "research.view_projects",
-      "research.manage_projects",
-      "research.manage_centers",
-      "research_theme.manage",
-      "research_program.manage",
-      "partnerships.manage_partners",
-      "sustainability.manage",
-      "content.manage_news",
-      "content.manage_events",
-      "media.upload",
-    ];
-  }
-  if (service === "research" && roles.includes("research-sustainability")) {
-    return [
-      "research.view",
-      "research.view_projects",
-      "research.manage_projects",
-      "research.manage_reports",
-      "sustainability.view",
-      "sustainability.manage",
-      "partnerships.manage_partners",
-      "content.manage_news",
-      "content.manage_events",
-      "content.manage_announcements",
-      "training_program.manage",
-      "media.upload",
-    ];
-  }
-  if (service === "library" && roles.includes("library-admin")) {
-    return ["library.*"];
-  }
   return Array.from(new Set(permissionScopes));
 }
 
-function deriveServices(roles: string[], permissions: string[]) {
+function deriveServices(roles: string[], permissions: string[], memberships: Service[]) {
   return (Object.entries(SERVICE_ROLES) as [Service, readonly string[]][])
     .map(([service, serviceRoles]) => {
       const matchedRoles = roles.filter((role) => serviceRoles.includes(role));
-      const scopes = inferServiceScopes(service, matchedRoles, permissions);
-      if (matchedRoles.length === 0 && scopes.length === 0) {
+      const scopes = inferServiceScopes(service, permissions);
+      if (!memberships.includes(service) && matchedRoles.length === 0 && scopes.length === 0) {
         return null;
       }
       return { service, roles: matchedRoles, scopes };
@@ -425,6 +298,9 @@ export function normalizeBackendUser(payload: BackendUser | BackendAuthEnvelope<
   const user = unwrapApiData(payload);
   const roles = (user.roles || []).map(normalizeRole);
   const permissions = (user.permissions || []).map(normalizePermission);
+  const serviceMemberships = (user.service_memberships || []).filter(
+    (service): service is Service => ["main", "research", "library", "heri", "system"].includes(service),
+  );
 
   return {
     id: user.id,
@@ -433,19 +309,18 @@ export function normalizeBackendUser(payload: BackendUser | BackendAuthEnvelope<
     avatarUrl: user.avatar_url,
     roles,
     permissions,
-    services: deriveServices(roles, permissions),
+    services: deriveServices(roles, permissions, serviceMemberships),
+    serviceMemberships,
+    mustChangePassword: Boolean(user.must_change_password),
   };
 }
 
 export async function refreshStoredAuthTokens() {
-  const { refreshToken } = getStoredAuthTokens();
-  if (!refreshToken) return false;
-
   const response = await fetch(`${getMainApiBaseUrl()}/api/v1/auth/refresh`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refresh_token: refreshToken }),
+    body: JSON.stringify({ token_transport: "cookie" }),
   });
 
   if (!response.ok) {
@@ -453,21 +328,13 @@ export async function refreshStoredAuthTokens() {
     return false;
   }
 
-  const raw = await readJson<BackendAuthEnvelope<TokenResponse> | TokenResponse>(response);
-  const data = unwrapApiData(raw);
-  setStoredAuthTokens({
-    accessToken: data.access_token,
-    refreshToken: data.refresh_token || refreshToken,
-  });
   return true;
 }
 
-export async function fetchCurrentUser(accessToken = getStoredAccessToken()) {
-  if (!accessToken) return null;
-
+export async function fetchCurrentUser() {
+  clearStoredAuthTokens();
   const response = await fetch(`${getMainApiBaseUrl()}/api/v1/auth/me?fields=id,email,full_name,avatar_url,roles,permissions`, {
     credentials: "include",
-    headers: { Authorization: `Bearer ${accessToken}` },
   });
 
   if (!response.ok) {
@@ -486,18 +353,14 @@ export async function loginWithPassword(credentials: LoginCredentials): Promise<
     body: JSON.stringify(credentials),
   });
 
-  const raw = await readJson<BackendAuthEnvelope<TokenResponse> | TokenResponse>(response);
+  const raw = await readJson<BackendAuthEnvelope<{ authenticated: boolean }> | { authenticated: boolean }>(response);
   if (!response.ok) {
     throw new Error(errorMessage(raw as BackendAuthEnvelope<unknown>, "Login failed"));
   }
 
-  const tokens = unwrapApiData(raw);
-  setStoredAuthTokens({
-    accessToken: tokens.access_token,
-    refreshToken: tokens.refresh_token,
-  });
-
-  const user = await fetchCurrentUser(tokens.access_token);
+  unwrapApiData(raw);
+  clearStoredAuthTokens();
+  const user = await fetchCurrentUser();
   if (!user) {
     clearStoredAuthTokens();
     throw new Error("Authenticated, but failed to load user profile");
@@ -505,20 +368,14 @@ export async function loginWithPassword(credentials: LoginCredentials): Promise<
 
   return {
     user,
-    accessToken: tokens.access_token,
-    refreshToken: tokens.refresh_token,
   };
 }
 
 export async function logoutCurrentSession() {
-  const { accessToken } = getStoredAuthTokens();
   clearStoredAuthTokens();
-
-  if (!accessToken) return;
   await fetch(`${getMainApiBaseUrl()}/api/v1/auth/logout`, {
     method: "POST",
     credentials: "include",
-    headers: { Authorization: `Bearer ${accessToken}` },
   }).catch(() => undefined);
 }
 
@@ -545,5 +402,19 @@ export async function resetPassword(token: string, newPassword: string) {
   const raw = await readJson<BackendAuthEnvelope<unknown>>(response);
   if (!response.ok) {
     throw new Error(errorMessage(raw, "Failed to reset password"));
+  }
+}
+
+export async function changePassword(currentPassword: string, newPassword: string) {
+  const response = await fetch(`${getMainApiBaseUrl()}/api/v1/auth/change-password`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ old_password: currentPassword, new_password: newPassword }),
+  });
+
+  const raw = await readJson<BackendAuthEnvelope<unknown>>(response);
+  if (!response.ok) {
+    throw new Error(errorMessage(raw, "Failed to change password"));
   }
 }

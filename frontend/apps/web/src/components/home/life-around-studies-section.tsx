@@ -1,160 +1,215 @@
-"use client";
-
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { cn } from "@ksu/ui/lib/utils";
+import { AmbientPageBackground } from "@ksu/ui";
 import { focusVisibleStyles } from "@ksu/ui/motion";
 import { PublicImage } from "@/components/public/public-image";
-import { Reveal } from "@/components/home/reveal";
+import { ImageCurtainReveal } from "@/components/about/image-curtain-reveal";
+import {
+  Reveal,
+  RevealGroup,
+  RevealItem,
+} from "@/components/home/motion-primitives";
+import { YouTubeFacade } from "@/components/home/youtube-facade";
 import type {
   HomepageSection,
   HomepageSectionItem,
 } from "@/lib/homepage-sections";
 
+const CAMPUS_FILM = {
+  id: "tv2zAL4ry08",
+  title: "Kisii University Students Social Life",
+};
+
 /**
- * The campus-life CMS section as a panoramic gallery: a centred display
- * heading, a full-bleed band of five images, and a white arc sweeping
- * across the band's lower edge with the description and CTA beneath it.
+ * Where each card sits around the film, in reading order.
+ *
+ * The grid is four columns by three rows. The film holds the middle two
+ * columns across the top two rows; four cards flank it down the outer
+ * columns and two run the full width beneath. 1+1+4+1+1+2+2 fills all twelve
+ * cells, so the composition never ends on a hole.
+ */
+const CELL_SPANS = [
+  "lg:col-start-1 lg:row-start-1",
+  "lg:col-start-1 lg:row-start-2",
+  "lg:col-start-4 lg:row-start-1",
+  "lg:col-start-4 lg:row-start-2",
+  "lg:col-span-2 lg:col-start-1 lg:row-start-3",
+  "lg:col-span-2 lg:col-start-3 lg:row-start-3",
+];
+
+function contentText(item: HomepageSectionItem | undefined, key: string) {
+  const value = item?.content?.[key];
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+/**
+ * "Life at Kisii": the students' own film at the centre, with the strands of
+ * campus life arranged around it.
+ *
+ * Cards carry their words in a footer under the photograph rather than laid
+ * over it. Text on an image is always a compromise between legibility and
+ * seeing the picture; separating them lets the photograph be a photograph.
  */
 export function LifeAroundStudiesSection({
   section,
 }: {
   section: HomepageSection;
 }) {
-
   const items = (section.items ?? [])
     .filter((item) => item.is_enabled !== false)
     .sort(
       (first, second) =>
         (first.display_order ?? 100) - (second.display_order ?? 100),
     )
-    .slice(0, 5);
+    .slice(0, 6);
 
   if (items.length === 0) return null;
-
-  const title = section.title ?? "Life around studies";
-  const titleWords = title.split(" ");
-  const titleLead = titleWords.slice(0, -1).join(" ");
-  const titleAccent = titleWords[titleWords.length - 1];
+  const bento = items.length === 6;
 
   return (
-    <section
+    <AmbientPageBackground
+      as="section"
+      variant="poster"
+      intensity="soft"
       id={section.section_key}
       aria-labelledby="life-heading"
-      className="relative z-10 -mt-[28px] overflow-clip rounded-t-[28px] bg-white pt-12 lg:pt-16"
+      className="overflow-hidden py-16 text-brand-overlay lg:py-24"
     >
-      {/* Centred header */}
-      <div className="mx-auto max-w-2xl px-4 text-center sm:px-6">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
-          {section.subtitle ?? "Campus life"}
-        </p>
-        <h2
-          id="life-heading"
-          className="mt-3 text-balance font-[family-name:var(--font-display)] text-3xl font-normal leading-tight text-primary sm:text-4xl lg:text-5xl"
-        >
-          {titleLead} <em className="italic">{titleAccent}</em>
-        </h2>
-      </div>
-
-      {/* Full-bleed image band with a white arc over its lower edge */}
-      <Reveal amount={0.2}
-        className="relative mt-10 lg:mt-14"
-      >
-        <ul className="grid grid-cols-2 gap-2 px-2 sm:grid-cols-3 sm:gap-3 sm:px-3 lg:grid-cols-5">
-          {items.map((item, index) => (
-            <li
-              key={item.id}
-              className={cn(
-                // On smaller grids the trailing tiles hide rather than wrap unevenly.
-                index >= 2 && "hidden sm:block",
-                index >= 3 && "sm:hidden lg:block",
-              )}
-            >
-              <LifeTile item={item} />
-            </li>
-          ))}
-        </ul>
-        {/* The arc: a white curve sweeping across the bottom of the band */}
-        <svg
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-16 w-full sm:h-24 lg:h-32"
-          viewBox="0 0 1440 120"
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
-          <path d="M0,120 L0,86 Q720,-28 1440,86 L1440,120 Z" fill="#fff" />
-        </svg>
-      </Reveal>
-
-      {/* Description + CTA beneath the arc */}
-      <div className="mx-auto max-w-xl px-4 pb-16 pt-4 text-center sm:px-6 lg:pb-20">
-        {section.description ? (
-          <p className="text-sm leading-6 text-muted-foreground md:text-base md:leading-7">
-            {section.description}
-          </p>
-        ) : null}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+      <div className="ksu-shell">
+        <Reveal className="flex flex-wrap items-end justify-between gap-4">
+          <div className="max-w-[42rem]">
+            <h2 id="life-heading" className="ksu-l-h2 font-normal">
+              {section.title?.trim() || "Life at Kisii"}
+            </h2>
+            {section.description ? (
+              <p className="mt-3 max-w-[56ch] text-brand-overlay/65">
+                {section.description}
+              </p>
+            ) : null}
+          </div>
           <Link
             href="/campus-life"
             className={cn(
-              "inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-[background-color,transform] duration-200 hover:bg-primary/90 active:scale-[0.98]",
+              "group inline-flex min-h-11 items-center gap-2 font-medium text-secondary",
               focusVisibleStyles.primary,
             )}
           >
             Explore campus life
-          </Link>
-          <Link
-            href="/admissions/how-to-apply"
-            className={cn(
-              "group inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary transition-colors duration-200 hover:text-secondary",
-              focusVisibleStyles.primary,
-            )}
-          >
-            Study with us
-            <ArrowRight
-              className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
+            <span
+              className="transition-transform duration-300 group-hover:translate-x-1"
               aria-hidden
-            />
+            >
+              →
+            </span>
           </Link>
+        </Reveal>
+
+        {/* Desktop: the film centred, cards around it. */}
+        <RevealGroup
+          as="div"
+          stagger={0.06}
+          className="mt-10 hidden auto-rows-[15.5rem] gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-[repeat(3,minmax(0,15.5rem))]"
+        >
+          <RevealItem className="h-full sm:col-span-2 lg:col-span-2 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+            <YouTubeFacade
+              id={CAMPUS_FILM.id}
+              title={CAMPUS_FILM.title}
+              className="h-full w-full rounded-3xl"
+              sizes="(min-width: 1024px) 46vw, 100vw"
+            />
+          </RevealItem>
+
+          {items.map((item, index) => (
+            <RevealItem
+              key={item.id}
+              className={cn("h-full min-w-0", bento && CELL_SPANS[index])}
+            >
+              <LifeCard item={item} />
+            </RevealItem>
+          ))}
+        </RevealGroup>
+
+        {/* Small screens: the film first, then the cards one flick apart. */}
+        <div className="mt-8 sm:hidden">
+          <YouTubeFacade
+            id={CAMPUS_FILM.id}
+            title={CAMPUS_FILM.title}
+            className="h-56 w-full rounded-3xl"
+            sizes="100vw"
+          />
+          <ul className="-mx-5 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-4">
+            {items.map((item) => (
+              <li
+                key={item.id}
+                className="h-[17rem] w-[74vw] min-w-0 shrink-0 snap-start"
+              >
+                <LifeCard item={item} />
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
-    </section>
+    </AmbientPageBackground>
   );
 }
 
-function LifeTile({ item }: { item: HomepageSectionItem }) {
-  const imageSrc = contentText(item, "imageUrl") ?? "/logos/ksu-bck1.jpg";
-  const title = item.title ?? "Campus life";
+/**
+ * Photograph on top, words in the footer beneath it. The whole card is one
+ * link, so the target is the card rather than a line of text.
+ */
+function LifeCard({ item }: { item: HomepageSectionItem }) {
+  const title = item.title?.trim() || "Campus life";
+  const description = item.subtitle?.trim() || item.body_text?.trim();
+  const imageSrc =
+    contentText(item, "imageUrl") ??
+    "/images/student-life/Life-around-studies/culture.jpg";
 
-  const tile = (
-    <article className="group relative aspect-[3/4] overflow-hidden rounded-xl sm:aspect-[4/5]">
-      <PublicImage
-        src={imageSrc}
-        alt={item.media_alt_text ?? title}
-        ratio="fill"
-        className="absolute inset-0 h-full w-full"
-        imageClassName="object-cover transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.03]"
-        sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
-      />
-      <span className="sr-only">{title}</span>
+  const card = (
+    <article className="group flex h-full w-full flex-col overflow-hidden rounded-3xl bg-white shadow-[0_1px_2px_hsl(var(--brand-overlay)/0.05),0_14px_34px_-22px_hsl(var(--brand-overlay)/0.45)] ring-1 ring-brand-overlay/8 transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:group-hover:-translate-y-1 motion-safe:group-hover:shadow-[0_1px_2px_hsl(var(--brand-overlay)/0.06),0_26px_50px_-24px_hsl(var(--brand-overlay)/0.55)]">
+      <ImageCurtainReveal className="relative min-h-[7.5rem] flex-1 overflow-hidden">
+        <PublicImage
+          src={imageSrc}
+          alt={item.media_alt_text ?? ""}
+          ratio="fill"
+          className="absolute inset-0 h-full w-full bg-transparent"
+          imageClassName="object-cover transition-transform [transition-duration:900ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] motion-safe:group-hover:scale-[1.06]"
+          sizes="(min-width: 1024px) 23vw, (min-width: 640px) 46vw, 74vw"
+        />
+      </ImageCurtainReveal>
+
+      {/* Footer: the words live here, on their own surface, so the
+          photograph never has to carry text. */}
+      <div className="flex items-start gap-3 border-t border-brand-overlay/8 p-4">
+        <span className="min-w-0 flex-1">
+          <span className="ksu-l-small block font-medium transition-colors duration-300 group-hover:text-primary">
+            {title}
+          </span>
+          {description ? (
+            <span className="ksu-l-small mt-1 line-clamp-2 text-brand-overlay/60">
+              {description}
+            </span>
+          ) : null}
+        </span>
+        <ArrowUpRight
+          className="mt-0.5 h-4 w-4 shrink-0 text-brand-overlay/25 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-secondary"
+          aria-hidden
+        />
+      </div>
     </article>
   );
 
   return item.cta_url ? (
     <Link
       href={item.cta_url}
-      className={cn("block rounded-xl", focusVisibleStyles.primary)}
+      className={cn("block h-full rounded-3xl", focusVisibleStyles.primary)}
       aria-label={title}
     >
-      {tile}
+      {card}
     </Link>
   ) : (
-    tile
+    card
   );
-}
-
-function contentText(item: HomepageSectionItem | undefined, key: string) {
-  const value = item?.content?.[key];
-  return typeof value === "string" && value.trim() ? value : undefined;
 }
 
 export default LifeAroundStudiesSection;

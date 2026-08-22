@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,7 +24,11 @@ class RBACService:
         result = await db.execute(
             select(UserRole)
             .options(selectinload(UserRole.role))
-            .where(UserRole.user_id == user_id, UserRole.is_active.is_(True))
+            .where(
+                UserRole.user_id == user_id,
+                UserRole.is_active.is_(True),
+                (UserRole.expires_at.is_(None) | (UserRole.expires_at > datetime.now(timezone.utc))),
+            )
         )
         return list(result.scalars().all())
 
@@ -70,8 +75,7 @@ class RBACService:
         if existing:
             existing.is_active = True
             existing.assigned_by_id = granted_by_id
-            if expires_at is not None:
-                existing.expires_at = expires_at
+            existing.expires_at = expires_at
             if note is not None:
                 existing.note = note
             await db.flush()

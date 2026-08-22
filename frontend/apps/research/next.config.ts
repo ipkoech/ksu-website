@@ -17,6 +17,38 @@ const nextConfig: NextConfig = {
         hostname: "*.kisiiuniversity.ac.ke",
       },
       {
+        protocol: "https",
+        hostname: "www.kumc.edu",
+      },
+      {
+        protocol: "https",
+        hostname: "icons.duckduckgo.com",
+      },
+      {
+        protocol: "https",
+        hostname: "www.knls.ac.ke",
+      },
+      {
+        protocol: "https",
+        hostname: "www.computeraid.org",
+      },
+      {
+        protocol: "https",
+        hostname: "www.jci.edu.cn",
+      },
+      {
+        protocol: "https",
+        hostname: "www.semyung.ac.kr",
+      },
+      {
+        protocol: "https",
+        hostname: "www.iyf.org",
+      },
+      {
+        protocol: "https",
+        hostname: "www.knchr.org",
+      },
+      {
         protocol: "http",
         hostname: "localhost",
       },

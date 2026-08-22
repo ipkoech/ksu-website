@@ -87,7 +87,7 @@ export function FeaturedStoriesGrid({
               <Link
                 href={heroStory.href}
                 className={cn(
-                  "relative block h-full min-h-[400px] overflow-hidden rounded-xl bg-primary",
+                  "relative block h-full min-h-[400px] overflow-hidden rounded-3xl bg-primary",
                   focusVisibleStyles.default
                 )}
               >
@@ -130,7 +130,7 @@ export function FeaturedStoriesGrid({
               <Link
                 href={story.href}
                 className={cn(
-                  "relative block h-full min-h-[220px] overflow-hidden rounded-xl bg-primary",
+                  "relative block h-full min-h-[220px] overflow-hidden rounded-3xl bg-primary",
                   focusVisibleStyles.default
                 )}
               >
@@ -172,7 +172,7 @@ export function FeaturedStoriesGrid({
                   <Link
                     href={story.href}
                     className={cn(
-                      "block overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md active:scale-[0.98]",
+                      "block overflow-hidden rounded-3xl border border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md active:scale-[0.98]",
                       focusVisibleStyles.default
                     )}
                   >

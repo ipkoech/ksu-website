@@ -8,8 +8,12 @@ from ..services.seed import seed_heri
 
 async def main() -> None:
     async with AsyncSessionLocal() as db:
-        await seed_heri(db)
-        await db.commit()
+        try:
+            await seed_heri(db)
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
 
 
 if __name__ == "__main__":

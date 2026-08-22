@@ -27,7 +27,7 @@ STRATEGIC_PLAN_URL = (
 ACADEMIC_STRUCTURE_SOURCE = "Kisii University Schools and Departments"
 ACADEMIC_STRUCTURE_URL = "https://kisiiuniversity.ac.ke/schools_departments"
 PUBLISHED_AT = datetime(2026, 7, 14, tzinfo=timezone.utc)
-VERIFIED_ON = date(2026, 7, 14)
+VERIFIED_ON = date(2026, 8, 10)
 
 MILESTONES = (
     ("1965", "1965", date(1965, 1, 1), "The Beginning", "The institution began as a Primary Teachers Training College on land donated by the County Council of Gusii."),
@@ -181,7 +181,11 @@ INSTITUTIONAL_PAGES = (
                 ("Feedback", "Review the outcome and tell us how the service can improve.", "message-circle"),
             )},
             {"slug": "service-quote", "section_type": "quote", "heading": "We serve with respect because you deserve it.", "body": "Public service is our calling and your trust is our responsibility.", "theme": "green", "items": ()},
-            {"slug": "charter-documents", "section_type": "document_collection", "heading": "Charter documents and related policies", "theme": "ivory", "items": ()},
+            {"slug": "charter-documents", "section_type": "document_collection", "heading": "Official service-charter versions", "theme": "ivory", "items": (
+                ("English Version", "Read the official English service-charter presentation.", "file-text", "Open English version", "https://kisiiuniversity.ac.ke/about/english-version"),
+                ("Kiswahili Version", "Soma toleo rasmi la Kiswahili la mkataba wa huduma.", "languages", "Fungua toleo la Kiswahili", "https://kisiiuniversity.ac.ke/about/kiswahili-version"),
+                ("Kenyan Sign Language Version", "Watch the official accessible service-charter presentation.", "accessibility", "Open sign-language version", "https://kisiiuniversity.ac.ke/about/sign-language-version"),
+            )},
         ),
     },
     {
@@ -314,6 +318,17 @@ async def _seed_institutional_pages(db: AsyncSession, university) -> None:
         )
         db.add(strategic_media)
         await db.flush()
+    else:
+        strategic_media.public_url = STRATEGIC_PLAN_URL
+        strategic_media.title = STRATEGIC_PLAN_SOURCE
+        strategic_media.alt_text = STRATEGIC_PLAN_SOURCE
+        strategic_media.description = "Official Kisii University Strategic Plan for 2024–2028."
+        strategic_media.is_public = True
+        strategic_media.is_processed = True
+        strategic_media.extra_metadata = {
+            "source": "kisiiuniversity.ac.ke",
+            "verified_on": VERIFIED_ON.isoformat(),
+        }
     strategic_document = await _get_one(db, Document, Document.slug == "kisii-university-strategic-plan-2024-2028")
     if strategic_document is None:
         strategic_document = Document(
@@ -325,6 +340,16 @@ async def _seed_institutional_pages(db: AsyncSession, university) -> None:
         )
         db.add(strategic_document)
         await db.flush()
+    else:
+        strategic_document.title = STRATEGIC_PLAN_SOURCE
+        strategic_document.document_type = "strategic_plan"
+        strategic_document.category = "strategic-plan"
+        strategic_document.description = "Official Kisii University Strategic Plan for 2024–2028."
+        strategic_document.file_id = strategic_media.id
+        strategic_document.version = "2024–2028"
+        strategic_document.is_public = True
+        strategic_document.requires_login = False
+        strategic_document.is_active = True
 
     for page_spec in INSTITUTIONAL_PAGES:
         page = await _get_one(db, InstitutionalPage, InstitutionalPage.slug == page_spec["slug"])
@@ -335,51 +360,98 @@ async def _seed_institutional_pages(db: AsyncSession, university) -> None:
                 db, Document, Document.category == category,
                 Document.is_public.is_(True), Document.is_active.is_(True),
             )
-        if page is not None:
-            if page.primary_document_id is None and primary_document is not None:
-                page.primary_document_id = primary_document.id
-                resources = next((section for section in page.sections if section.section_type == "document_collection"), None)
-                if resources and not any(link.document_id == primary_document.id for link in resources.documents):
-                    db.add(InstitutionalSectionDocument(
-                        section_id=resources.id, document_id=primary_document.id,
-                        public_label=primary_document.title, display_order=10, is_featured=True,
-                    ))
-            continue
-        page = InstitutionalPage(
-            university_info_id=university.id, page_type=page_spec["page_type"], slug=page_spec["slug"],
-            eyebrow=page_spec.get("eyebrow"), title=page_spec["title"], introduction=page_spec["introduction"],
-            primary_document_id=primary_document.id if primary_document else None,
-            reporting_period_label=page_spec.get("reporting_period_label"),
-            seo_title=page_spec["title"], seo_description=page_spec["introduction"][:512],
-            status="published", workflow_status="published", published_at=PUBLISHED_AT,
-        )
-        db.add(page)
+        page_payload = {
+            "university_info_id": university.id,
+            "page_type": page_spec["page_type"],
+            "slug": page_spec["slug"],
+            "eyebrow": page_spec.get("eyebrow"),
+            "title": page_spec["title"],
+            "introduction": page_spec["introduction"],
+            "primary_document_id": primary_document.id if primary_document else None,
+            "reporting_period_label": page_spec.get("reporting_period_label"),
+            "seo_title": page_spec["title"],
+            "seo_description": page_spec["introduction"][:512],
+            "status": "published",
+            "workflow_status": "published",
+            "published_at": PUBLISHED_AT,
+        }
+        if page is None:
+            page = InstitutionalPage(**page_payload)
+            db.add(page)
+        else:
+            for field_name, value in page_payload.items():
+                setattr(page, field_name, value)
         await db.flush()
         for section_order, section_spec in enumerate(page_spec["sections"], start=1):
-            section = InstitutionalPageSection(
-                institutional_page_id=page.id, slug=section_spec["slug"],
-                section_type=section_spec["section_type"], eyebrow=section_spec.get("eyebrow"),
-                heading=section_spec["heading"], summary=section_spec.get("summary"),
-                body=section_spec.get("body"), theme=section_spec.get("theme", "light"),
-                layout_variant=section_spec.get("layout_variant", "default"),
-                display_order=section_order * 10, status="published", workflow_status="published",
-                published_at=PUBLISHED_AT,
+            section = await _get_one(
+                db,
+                InstitutionalPageSection,
+                InstitutionalPageSection.institutional_page_id == page.id,
+                InstitutionalPageSection.slug == section_spec["slug"],
             )
-            db.add(section)
+            section_payload = {
+                "institutional_page_id": page.id,
+                "slug": section_spec["slug"],
+                "section_type": section_spec["section_type"],
+                "eyebrow": section_spec.get("eyebrow"),
+                "heading": section_spec["heading"],
+                "summary": section_spec.get("summary"),
+                "body": section_spec.get("body"),
+                "theme": section_spec.get("theme", "light"),
+                "layout_variant": section_spec.get("layout_variant", "default"),
+                "display_order": section_order * 10,
+                "status": "published",
+                "workflow_status": "published",
+                "published_at": PUBLISHED_AT,
+            }
+            if section is None:
+                section = InstitutionalPageSection(**section_payload)
+                db.add(section)
+            else:
+                for field_name, value in section_payload.items():
+                    setattr(section, field_name, value)
             await db.flush()
             for item_order, item_spec in enumerate(section_spec.get("items", ()), start=1):
                 title, description, icon_key, *link = item_spec
-                db.add(InstitutionalPageItem(
-                    section_id=section.id, title=title, description=description, icon_key=icon_key,
-                    link_label=link[0] if link else None, link_url=link[1] if len(link) > 1 else None,
-                    display_order=item_order * 10, status="published", workflow_status="published",
-                    published_at=PUBLISHED_AT,
-                ))
+                item = await _get_one(
+                    db,
+                    InstitutionalPageItem,
+                    InstitutionalPageItem.section_id == section.id,
+                    InstitutionalPageItem.title == title,
+                )
+                item_payload = {
+                    "section_id": section.id,
+                    "title": title,
+                    "description": description,
+                    "icon_key": icon_key,
+                    "link_label": link[0] if link else None,
+                    "link_url": link[1] if len(link) > 1 else None,
+                    "display_order": item_order * 10,
+                    "status": "published",
+                    "workflow_status": "published",
+                    "published_at": PUBLISHED_AT,
+                }
+                if item is None:
+                    db.add(InstitutionalPageItem(**item_payload))
+                else:
+                    for field_name, value in item_payload.items():
+                        setattr(item, field_name, value)
             if section.section_type == "document_collection" and primary_document:
-                db.add(InstitutionalSectionDocument(
-                    section_id=section.id, document_id=primary_document.id,
-                    public_label=primary_document.title, display_order=10, is_featured=True,
-                ))
+                section_document = await _get_one(
+                    db,
+                    InstitutionalSectionDocument,
+                    InstitutionalSectionDocument.section_id == section.id,
+                    InstitutionalSectionDocument.document_id == primary_document.id,
+                )
+                if section_document is None:
+                    db.add(InstitutionalSectionDocument(
+                        section_id=section.id, document_id=primary_document.id,
+                        public_label=primary_document.title, display_order=10, is_featured=True,
+                    ))
+                else:
+                    section_document.public_label = primary_document.title
+                    section_document.display_order = 10
+                    section_document.is_featured = True
 
 
 async def seed_about_content(db: AsyncSession, ctx: SeedContext) -> None:

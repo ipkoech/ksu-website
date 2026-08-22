@@ -53,7 +53,7 @@ def _require_vc_action(user: CurrentUser, action: str) -> None:
         "review": ("vc_hub.review",),
         "publish": ("vc_hub.publish",),
     }[action]
-    if not any(user_has_scope(user, scope) for scope in (*required, "admin:*")):
+    if not any(user_has_scope(user, scope) for scope in required):
         raise HTTPException(status_code=403, detail="Insufficient privileges")
 
 

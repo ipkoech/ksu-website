@@ -170,7 +170,7 @@ export function ProgrammeFinderInteractive({
             </button>
           </div>
 
-          {filtersOpen ? <div id="programme-filters" role="dialog" aria-label="Programme filters" className="absolute right-0 top-full z-50 mt-2 grid w-[min(24rem,calc(100vw-2rem))] grid-cols-1 gap-3 rounded-xl bg-white p-4 shadow-[0_24px_60px_-30px_hsl(var(--primary)/.55)] ring-1 ring-primary/10 sm:p-5">
+          {filtersOpen ? <div id="programme-filters" role="dialog" aria-label="Programme filters" className="absolute right-0 top-full z-50 mt-2 grid w-[min(24rem,calc(100vw-2rem))] grid-cols-1 gap-3 rounded-3xl bg-white p-4 shadow-[0_24px_60px_-30px_hsl(var(--primary)/.55)] ring-1 ring-primary/10 sm:p-5">
             <FilterSelect
               label="School"
               name="school_id"

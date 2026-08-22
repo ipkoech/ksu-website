@@ -10,7 +10,7 @@ export default function SustainabilityPartnersPage() {
       description="Manage partners supporting sustainability and climate change work."
       queryKey={["research", "sustainability-partners"]}
       resource={researchServiceApi.partners}
-      manageScopes={["sustainability.manage", "partnerships.manage", "research:write"]}
+      manageScopes={["sustainability.manage", "research:write"]}
       summarySlot={<SustainabilityWorkspaceHeader />}
       recordColumns={partnerColumns}
       detailBaseHref="/research/sustainability/partners"

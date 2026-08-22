@@ -12,6 +12,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ksu_common.models.base import Base
 
+from ..security.role_assignments import is_role_assignment_current
+
 if TYPE_CHECKING:
     from .notification import Notification
     from .person import Person
@@ -42,8 +44,15 @@ class User(Base):
     # Account status
     is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
     is_verified: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
+    service_memberships: Mapped[list[str]] = mapped_column(
+        JSONB, nullable=False, server_default=sa.text("'[]'::jsonb")
+    )
+    must_change_password: Mapped[bool] = mapped_column(
+        sa.Boolean, nullable=False, server_default=sa.text("false")
+    )
 
-    # MFA
+    # Legacy storage retained for migration compatibility. These fields are
+    # deliberately not exposed until complete MFA challenge/recovery exists.
     mfa_enabled: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
     mfa_secret: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
 
@@ -92,7 +101,7 @@ class User(Base):
         return [
             assignment.role.name
             for assignment in self.role_assignments
-            if assignment.is_active and assignment.role and assignment.role.is_active
+            if is_role_assignment_current(assignment) and assignment.role and assignment.role.is_active
         ]
 
     def has_role(self, role_name: str) -> bool:

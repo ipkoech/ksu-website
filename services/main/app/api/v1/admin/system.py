@@ -54,20 +54,23 @@ class BulkSettingsUpdatePayload(BaseModel):
     settings: list[BulkSettingUpdateItem] = Field(default_factory=list)
 
 
-@router.get("/settings", dependencies=[Depends(require_scope("settings:read"))])
+@router.get("/settings", dependencies=[Depends(require_scope("settings.view"))])
 async def list_settings(db: DbSession, _: CurrentUser, page: int = 1, per_page: int = 50, category: str | None = None, fields: FieldSelection = FieldsDep):
     selector = build_selector(Setting, fields)
     result = await SettingService.list(db, page=page, per_page=per_page, category=category, load_options=selector.load_options)
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.post("/settings", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("settings:write"))])
+@router.post("/settings", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("settings.manage"))])
 async def create_setting(data: SettingCreate, db: DbSession, user: CurrentUser):
-    item = await SettingService.create(db, updated_by_id=user.id, **data.model_dump())
+    try:
+        item = await SettingService.create(db, updated_by_id=user.id, **data.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return success(data=item, message="Setting created")
 
 
-@router.get("/settings/{item_id}", dependencies=[Depends(require_scope("settings:read"))])
+@router.get("/settings/{item_id}", dependencies=[Depends(require_scope("settings.view"))])
 async def get_setting(item_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(Setting, fields)
     item = await SettingService.get_by_id(db, item_id, load_options=selector.load_options)
@@ -76,7 +79,7 @@ async def get_setting(item_id: uuid.UUID, db: DbSession, _: CurrentUser, fields:
     return success(data=selector.apply(item))
 
 
-@router.put("/settings", dependencies=[Depends(require_scope("settings:write"))])
+@router.put("/settings", dependencies=[Depends(require_scope("settings.manage"))])
 async def bulk_update_settings(data: BulkSettingsUpdatePayload, db: DbSession, user: CurrentUser):
     updated_items: list[Setting] = []
     for entry in data.settings:
@@ -94,8 +97,8 @@ async def bulk_update_settings(data: BulkSettingsUpdatePayload, db: DbSession, u
     return success(data=updated_items, message="Settings updated")
 
 
-@router.patch("/settings/{item_id}", dependencies=[Depends(require_scope("settings:write"))])
-@router.put("/settings/{item_id}", dependencies=[Depends(require_scope("settings:write"))])
+@router.patch("/settings/{item_id}", dependencies=[Depends(require_scope("settings.manage"))])
+@router.put("/settings/{item_id}", dependencies=[Depends(require_scope("settings.manage"))])
 async def update_setting(item_id: uuid.UUID, data: SettingUpdate, db: DbSession, user: CurrentUser):
     item = await SettingService.get_by_id(db, item_id)
     if item is None:
@@ -104,7 +107,7 @@ async def update_setting(item_id: uuid.UUID, data: SettingUpdate, db: DbSession,
     return success(data=item, message="Setting updated")
 
 
-@router.delete("/settings/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("settings:write"))])
+@router.delete("/settings/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("settings.manage"))])
 async def delete_setting(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await SettingService.get_by_id(db, item_id)
     if item is None:
@@ -112,20 +115,20 @@ async def delete_setting(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     await SettingService.delete(db, item)
 
 
-@router.get("/api-keys", dependencies=[Depends(require_scope("api_keys:read"))])
+@router.get("/api-keys", dependencies=[Depends(require_scope("api_keys.view"))])
 async def list_api_keys(db: DbSession, _: CurrentUser, page: int = 1, per_page: int = 50, is_active: bool | None = Query(default=None), fields: FieldSelection = FieldsDep):
     selector = build_selector(ApiKey, fields)
     result = await ApiKeyService.list(db, page=page, per_page=per_page, is_active=is_active, load_options=selector.load_options)
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.post("/api-keys", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("api_keys:write"))])
+@router.post("/api-keys", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("api_keys.manage"))])
 async def create_api_key(data: ApiKeyCreate, db: DbSession, user: CurrentUser):
     item, raw_key = await ApiKeyService.create(db, created_by_id=user.id, **data.model_dump())
     return success(data={"api_key": raw_key, "record": item}, message="API key created")
 
 
-@router.get("/api-keys/{item_id}", dependencies=[Depends(require_scope("api_keys:read"))])
+@router.get("/api-keys/{item_id}", dependencies=[Depends(require_scope("api_keys.view"))])
 async def get_api_key(item_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(ApiKey, fields)
     item = await ApiKeyService.get_by_id(db, item_id, load_options=selector.load_options)
@@ -134,8 +137,8 @@ async def get_api_key(item_id: uuid.UUID, db: DbSession, _: CurrentUser, fields:
     return success(data=selector.apply(item))
 
 
-@router.patch("/api-keys/{item_id}", dependencies=[Depends(require_scope("api_keys:write"))])
-@router.put("/api-keys/{item_id}", dependencies=[Depends(require_scope("api_keys:write"))])
+@router.patch("/api-keys/{item_id}", dependencies=[Depends(require_scope("api_keys.manage"))])
+@router.put("/api-keys/{item_id}", dependencies=[Depends(require_scope("api_keys.manage"))])
 async def update_api_key(item_id: uuid.UUID, data: ApiKeyUpdate, db: DbSession, _: CurrentUser):
     item = await ApiKeyService.get_by_id(db, item_id)
     if item is None:
@@ -144,7 +147,7 @@ async def update_api_key(item_id: uuid.UUID, data: ApiKeyUpdate, db: DbSession, 
     return success(data=item, message="API key updated")
 
 
-@router.delete("/api-keys/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("api_keys:delete"))])
+@router.delete("/api-keys/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("api_keys.delete"))])
 async def revoke_api_key(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await ApiKeyService.get_by_id(db, item_id)
     if item is None:
@@ -152,14 +155,14 @@ async def revoke_api_key(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     await ApiKeyService.revoke(db, item)
 
 
-@router.get("/webhooks", dependencies=[Depends(require_scope("webhooks:read"))])
+@router.get("/webhooks", dependencies=[Depends(require_scope("webhooks.view"))])
 async def list_webhooks(db: DbSession, _: CurrentUser, page: int = 1, per_page: int = 50, is_active: bool | None = Query(default=None), fields: FieldSelection = FieldsDep):
     selector = build_selector(Webhook, fields)
     result = await WebhookService.list(db, page=page, per_page=per_page, is_active=is_active, load_options=selector.load_options)
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.post("/webhooks", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("webhooks:write"))])
+@router.post("/webhooks", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("webhooks.manage"))])
 async def create_webhook(data: WebhookCreate, db: DbSession, user: CurrentUser):
     try:
         item = await WebhookService.create(db, created_by_id=user.id, **data.model_dump())
@@ -171,7 +174,7 @@ async def create_webhook(data: WebhookCreate, db: DbSession, user: CurrentUser):
     )
 
 
-@router.get("/webhooks/{item_id}", dependencies=[Depends(require_scope("webhooks:read"))])
+@router.get("/webhooks/{item_id}", dependencies=[Depends(require_scope("webhooks.view"))])
 async def get_webhook(item_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(Webhook, fields)
     item = await WebhookService.get_by_id(db, item_id, load_options=selector.load_options)
@@ -180,8 +183,8 @@ async def get_webhook(item_id: uuid.UUID, db: DbSession, _: CurrentUser, fields:
     return success(data=selector.apply(item))
 
 
-@router.patch("/webhooks/{item_id}", dependencies=[Depends(require_scope("webhooks:write"))])
-@router.put("/webhooks/{item_id}", dependencies=[Depends(require_scope("webhooks:write"))])
+@router.patch("/webhooks/{item_id}", dependencies=[Depends(require_scope("webhooks.manage"))])
+@router.put("/webhooks/{item_id}", dependencies=[Depends(require_scope("webhooks.manage"))])
 async def update_webhook(item_id: uuid.UUID, data: WebhookUpdate, db: DbSession, _: CurrentUser):
     item = await WebhookService.get_by_id(db, item_id)
     if item is None:
@@ -195,7 +198,7 @@ async def update_webhook(item_id: uuid.UUID, data: WebhookUpdate, db: DbSession,
 
 @router.get(
     "/webhooks/{item_id}/deliveries",
-    dependencies=[Depends(require_scope("webhooks:read"))],
+    dependencies=[Depends(require_scope("webhooks.view"))],
     response_model=SuccessResponse[list[WebhookDeliveryRead]],
 )
 async def list_webhook_deliveries(
@@ -214,7 +217,7 @@ async def list_webhook_deliveries(
 @router.post(
     "/webhooks/{item_id}/deliveries/{event_id}/retry",
     status_code=status.HTTP_202_ACCEPTED,
-    dependencies=[Depends(require_scope("webhooks:write"))],
+    dependencies=[Depends(require_scope("webhooks.manage"))],
     response_model=SuccessResponse[dict[str, str]],
 )
 async def retry_webhook_delivery(
@@ -233,7 +236,7 @@ async def retry_webhook_delivery(
     return success(data={"status": "queued"}, message="Webhook retry queued")
 
 
-@router.delete("/webhooks/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("webhooks:delete"))])
+@router.delete("/webhooks/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("webhooks.delete"))])
 async def delete_webhook(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await WebhookService.get_by_id(db, item_id)
     if item is None:

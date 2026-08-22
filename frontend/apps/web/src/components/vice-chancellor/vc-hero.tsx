@@ -1,14 +1,23 @@
 "use client";
 
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import Link from "next/link";
 import { Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import vcOfficial from "../../../../../public/images/vc/vc-official.jpg";
+import vcPortrait from "../../../../../public/images/vc/vc-main-potrait.jpg";
 
-const heroTitle = "Meet Our Vice Chancellor";
-const heroStatement =
+/**
+ * Below this the landscape frame has to be cropped so hard that the
+ * Vice-Chancellor sits at the edge, so the portrait asset takes over.
+ */
+const PORTRAIT_BREAKPOINT = "(max-width: 639px)";
+
+// Used only when VC Studio has not supplied a title, introduction, or hero image.
+const FALLBACK_TITLE = "Meet Our Vice Chancellor";
+const FALLBACK_STATEMENT =
   "Step inside the work of the Vice Chancellor. From decisions made at his desk to conversations shaping the University’s future.";
+const FALLBACK_IMAGE_ALT = "The Vice Chancellor at work";
 
 function useReducedMotion() {
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -92,13 +101,65 @@ function ReservedTypedText({
   );
 }
 
+/**
+ * The default hero image, art-directed.
+ *
+ * `next/image` picks a size, never a different picture, so the swap needs a
+ * real `<picture>`: `getImageProps` still gives both sources the optimiser's
+ * srcset, and the browser resolves exactly one of them — no double download.
+ *
+ * The landscape frame stays on tablet and desktop; below 640px the portrait
+ * takes over, because cropping 4:3 down to a phone-shaped hero pushed the
+ * subject to the edge and no `object-position` value rescued it.
+ */
+function VcHeroPicture({ alt }: { alt: string }) {
+  const shared = { alt, fill: true, priority: true, sizes: "100vw" } as const;
+  const { props: portrait } = getImageProps({ ...shared, src: vcPortrait });
+  const {
+    props: { srcSet: landscapeSrcSet, ...landscape },
+  } = getImageProps({ ...shared, src: vcOfficial });
+
+  return (
+    <picture>
+      <source
+        media={PORTRAIT_BREAKPOINT}
+        srcSet={portrait.srcSet}
+        sizes={portrait.sizes}
+      />
+      <source srcSet={landscapeSrcSet} sizes={landscape.sizes} />
+      <img
+        {...landscape}
+        alt={alt}
+        className="absolute inset-0 h-full w-full object-cover object-[68%_center] max-sm:object-[50%_18%] lg:object-center"
+      />
+    </picture>
+  );
+}
+
 export function VcHero({
   professionalProfileUrl,
   hasWelcomeVideo,
+  title,
+  introduction,
+  heroImageUrl,
+  heroImageAlt,
 }: {
   professionalProfileUrl: string;
   hasWelcomeVideo: boolean;
+  title?: string | null;
+  introduction?: string | null;
+  heroImageUrl?: string | null;
+  heroImageAlt?: string | null;
 }) {
+  // The seeded hero points at the old site's staff-profile portrait, which is
+  // not a hero frame. Anything uploaded to our own media store is a real
+  // editorial choice and outranks the local pair; the legacy URL does not.
+  const useCmsHero = Boolean(
+    heroImageUrl && !heroImageUrl.includes("/storage/staffprofiles/"),
+  );
+  const heroTitle = title?.trim() || FALLBACK_TITLE;
+  const heroStatement = introduction?.trim() || FALLBACK_STATEMENT;
+  const [heroImageFailed, setHeroImageFailed] = useState(false);
   const reducedMotion = useReducedMotion();
   const typedTitle = useTypedText(heroTitle, {
     delay: 180,
@@ -116,15 +177,24 @@ export function VcHero({
 
   return (
     <section className="relative isolate min-h-[560px] overflow-hidden bg-slate-950 text-white sm:min-h-[590px] lg:min-h-[620px]">
-      <Image
-        src={vcOfficial}
-        alt="The Vice Chancellor working at his desk"
-        fill
-        priority
-        placeholder="blur"
-        sizes="100vw"
-        className="object-cover object-[74%_center] sm:object-[68%_center] lg:object-center"
-      />
+      {/* The art-directed local pair leads: it is the only source with a
+          frame shot for each shape. A CMS hero is a single image and would
+          have to be cropped to fit a phone, so it is used only when the
+          studio has deliberately overridden the default. */}
+      {useCmsHero && !heroImageFailed ? (
+        // CMS-supplied hero: remote URL, so no static blur placeholder.
+        <Image
+          src={heroImageUrl!}
+          alt={heroImageAlt || FALLBACK_IMAGE_ALT}
+          fill
+          priority
+          sizes="100vw"
+          onError={() => setHeroImageFailed(true)}
+          className="object-cover object-[74%_center] sm:object-[68%_center] lg:object-center"
+        />
+      ) : (
+        <VcHeroPicture alt={heroImageAlt || FALLBACK_IMAGE_ALT} />
+      )}
 
       <div className="relative flex min-h-[560px] w-full items-center px-4 py-10 sm:min-h-[590px] sm:px-7 lg:min-h-[620px] lg:px-10">
         <div className="max-w-[630px] [text-shadow:0_2px_18px_rgba(0,0,0,.95),0_1px_3px_rgba(0,0,0,1)]">

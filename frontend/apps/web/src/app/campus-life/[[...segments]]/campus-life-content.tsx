@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
 import {
   ArrowRight,
   BedDouble,
@@ -25,7 +26,9 @@ import type {
 import { ListPagination, ScrollReveal } from "@ksu/ui/components";
 import type { CampusLifePageData } from "@/lib/get-campus-life";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
-import { CampusLifeStoryLanding } from "@/components/campus-life/campus-life-story-landing";
+import { CampusLifeLanding } from "@/components/campus-life/campus-life-landing";
+import { StoryReader } from "@/components/campus-life/story-reader";
+import { ClubDetailPage } from "@/components/campus-life/club-detail-page";
 import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
 import { PublicImage } from "@/components/public/public-image";
 import {
@@ -36,6 +39,8 @@ import { PublicActionLink } from "@/components/public/public-primitives";
 
 type CampusArea =
   | "landing"
+  | "stories"
+  | "story-detail"
   | "student-life"
   | "clubs"
   | "club-detail"
@@ -163,9 +168,10 @@ const sportsFallback = [
   "Inter-school and inter-university competitions",
 ];
 
-function areaFromSegments(segments: string[]): CampusArea {
+function areaFromSegments(segments: string[]): CampusArea | null {
   const [area, slug] = segments;
   if (!area) return "landing";
+  if (area === "stories") return slug ? "story-detail" : "stories";
   if (area === "clubs" && slug) return "club-detail";
   if (area === "sports" && slug) return "sport-detail";
   if (area === "accommodation" && slug) return "accommodation-detail";
@@ -177,7 +183,9 @@ function areaFromSegments(segments: string[]): CampusArea {
   if (area === "accommodation") return "accommodation";
   if (area === "support") return "support";
   if (area === "gallery") return "gallery";
-  return "landing";
+  // An unrecognised segment is not the landing page. Falling through to it
+  // served a full duplicate of /campus-life at every mistyped URL.
+  return null;
 }
 
 function titleFromSlug(slug?: string) {
@@ -699,57 +707,6 @@ function GovernanceCard({ item }: { item: StudentGovernance }) {
   );
 }
 
-function Landing({ data }: { data: CampusLifePageData }) {
-  const editorial = data.editorial;
-  const items = editorial?.section.items ?? [];
-  const featured = items.find((item) => item.is_featured) ?? items[0];
-  const supporting = items.filter((item) => item.id !== featured?.id).slice(0, 4);
-  const itemImage = (item: typeof featured) => {
-    const content = item?.content;
-    return content && typeof content.imageUrl === "string" ? content.imageUrl : "/images/Home/OurKSU-82.jpg";
-  };
-
-  return (
-    <div className="space-y-0">
-      <section className="relative overflow-hidden rounded-[2rem] bg-primary px-5 py-12 text-white shadow-xl shadow-primary/15 sm:px-8 lg:px-14 lg:py-16">
-        <div className="absolute -right-24 -top-24 size-72 rounded-full bg-secondary/20 blur-3xl" />
-        <div className="relative grid gap-10 lg:grid-cols-[1.05fr_.95fr] lg:items-end">
-          <ScrollReveal variant="fade-up">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">{editorial?.section.subtitle ?? "Life around studies"}</p>
-            <h1 className="mt-4 max-w-3xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] sm:text-5xl lg:text-7xl">{editorial?.section.title ?? "A student experience with room to become."}</h1>
-            <p className="mt-6 max-w-2xl text-base leading-8 text-white/75">{editorial?.section.description ?? "Discover the communities, spaces, support and opportunities that shape everyday life at Kisii University."}</p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <ActionLink href="/campus-life/clubs" primary>Find your community</ActionLink>
-              <ActionLink href="/campus-life/support">Student support</ActionLink>
-            </div>
-          </ScrollReveal>
-          <ScrollReveal variant="zoom-in" className="relative min-h-[280px] overflow-hidden rounded-[1.5rem] bg-white/10 sm:min-h-[360px]">
-            <PublicImage src={itemImage(featured)} alt={featured?.title ?? "Students at Kisii University"} ratio="fill" className="absolute inset-0 h-full rounded-[1.5rem]" imageClassName="h-full object-cover" sizes="(min-width: 1024px) 45vw, 100vw" />
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent" />
-            {featured ? <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7"><p className="text-xs uppercase tracking-[0.18em] text-secondary">{featured.subtitle ?? "Student experience"}</p><p className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold">{featured.title}</p></div> : null}
-          </ScrollReveal>
-        </div>
-      </section>
-
-      <section className="grid gap-5 py-12 sm:grid-cols-2 lg:grid-cols-4 lg:py-16">
-        {supporting.map((item, index) => (
-          <ScrollReveal key={item.id} variant="fade-up" delay={index * 70}>
-            <Link href={item.cta_url ?? "/campus-life"} className="group block overflow-hidden rounded-[1.35rem] bg-white shadow-sm ring-1 ring-black/5 transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl">
-              <div className="relative aspect-[4/3] overflow-hidden"><PublicImage src={itemImage(item)} alt={item.title ?? "Life around studies"} ratio="fill" className="absolute inset-0 h-full rounded-none" imageClassName="h-full object-cover transition-transform duration-500 motion-safe:group-hover:scale-105" sizes="(min-width: 1024px) 24vw, 50vw" /><div className="absolute inset-0 bg-gradient-to-t from-primary/55 to-transparent" /></div>
-              <div className="p-5"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">{item.audience === "prospective" ? "Before you arrive" : item.audience === "current_student" ? "For students" : "Campus life"}</p><h2 className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold text-foreground">{item.title}</h2><p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{item.body_text}</p><span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">{item.cta_label ?? "Explore"}<ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" /></span></div>
-            </Link>
-          </ScrollReveal>
-        ))}
-      </section>
-
-      <section className="rounded-[2rem] bg-[linear-gradient(135deg,hsl(var(--surface-subtle)),#fff)] px-5 py-10 sm:px-8 lg:px-12 lg:py-14">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">The KSU rhythm</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground sm:text-4xl">Make space for the things that make university yours.</h2></div><Link href="/campus-life" className="inline-flex items-center gap-2 text-sm font-semibold text-primary">Explore all student life <ArrowRight className="size-4" /></Link></div>
-        <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{navItems.slice(1, 5).map((item, index) => <Link key={item.href} href={item.href} className="group rounded-2xl bg-white/75 p-5 ring-1 ring-black/5 transition-colors duration-200 hover:bg-white"><span className="text-3xl font-semibold text-primary/20">0{index + 1}</span><h3 className="mt-5 font-semibold text-foreground">{item.title}</h3><span className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground group-hover:text-primary">Open page <ArrowRight className="size-4" /></span></Link>)}</div>
-      </section>
-    </div>
-  );
-}
-
 function listingBaseHref(path: string, filters?: CampusLifeFilters) {
   const sp = new URLSearchParams();
   if (filters?.q) sp.set("q", filters.q);
@@ -814,65 +771,6 @@ function ClubsPage({
             "Attend a meeting or contact the club through the published contact details.",
             "Confirm registration or membership requirements through student-life offices.",
             "For new clubs, prepare purpose, leadership, patron, and constitution details for approval.",
-          ]}
-        />
-      </Section>
-    </>
-  );
-}
-
-function ClubDetail({ club }: { club?: Club | null }) {
-  return (
-    <>
-      <Section
-        eyebrow="Club Profile"
-        title={club?.name ?? "Club record not found"}
-        body={
-          club
-            ? shortText(
-                club.about ?? club.mission ?? club.objectives,
-                "Club profile.",
-              )
-            : "The requested club was not returned by the public records API."
-        }
-      >
-        <DetailGrid
-          rows={[
-            ["Type", club?.club_type || "Not published"],
-            [
-              "Members",
-              club?.membership_count
-                ? String(club.membership_count)
-                : "Not published",
-            ],
-            ["Meeting schedule", club?.meeting_schedule || "Not published"],
-            ["Membership fee", money(club?.membership_fee)],
-            ["Email", club?.email || "Not published"],
-            ["Phone", club?.phone || "Not published"],
-          ]}
-        />
-      </Section>
-      <Section
-        eyebrow="Purpose"
-        title="Mission, objectives, and participation"
-        body="Club detail pages should help students decide whether to visit, join, or contact the group."
-        dark
-      >
-        <TextBlocks
-          dark
-          blocks={[
-            [
-              "About",
-              club?.about || "About information has not been published.",
-            ],
-            [
-              "Mission",
-              club?.mission || "Mission information has not been published.",
-            ],
-            [
-              "Objectives",
-              club?.objectives || "Objectives have not been published.",
-            ],
           ]}
         />
       </Section>
@@ -1617,13 +1515,17 @@ function ContentByArea({
   data,
   filters,
 }: {
-  area: CampusArea;
+  // The landing, story and club-detail areas are rendered by CampusLifeContent
+  // outside the sidebar shell, so they never reach this dispatcher.
+  area: Exclude<
+    CampusArea,
+    "landing" | "stories" | "story-detail" | "club-detail"
+  >;
   slug?: string;
   data: CampusLifePageData;
   filters?: CampusLifeFilters;
 }) {
   if (area === "clubs") return <ClubsPage data={data} filters={filters} />;
-  if (area === "club-detail") return <ClubDetail club={data.detail?.club} />;
   if (area === "sports") return <SportsPage data={data} filters={filters} />;
   if (area === "sport-detail")
     return <SportDetail sport={data.detail?.sport} />;
@@ -1643,7 +1545,8 @@ function ContentByArea({
   if (area === "gallery") return <GalleryPage data={data} filters={filters} />;
   if (area === "gallery-detail")
     return <GalleryDetail item={data.detail?.art} />;
-  return <Landing data={data} />;
+  const exhaustive: never = area;
+  return exhaustive;
 }
 
 export function CampusLifeContent({
@@ -1652,6 +1555,7 @@ export function CampusLifeContent({
   filters,
 }: CampusLifeContentProps) {
   const area = areaFromSegments(segments);
+  if (!area) notFound();
   const [, slug] = segments;
   const currentHref = `/campus-life${segments.length ? `/${segments.join("/")}` : ""}`;
   const copy = PageCopy({ area, slug, data });
@@ -1660,7 +1564,21 @@ export function CampusLifeContent({
     <PageShell>
       <AboutPageLenis>
         {area === "landing" ? (
-          <CampusLifeStoryLanding testimonials={data.testimonials ?? []} />
+          <CampusLifeLanding
+            editorial={data.editorial}
+            testimonials={data.testimonials ?? []}
+            roster={data.roster ?? []}
+            stories={data.stories ?? []}
+            faqs={data.faqs ?? []}
+          />
+        ) : area === "club-detail" ? (
+          <ClubDetailPage club={data.detail?.club} />
+        ) : area === "story-detail" ? (
+          <StoryReader story={data.detail?.story} stories={data.stories ?? []} />
+        ) : area === "stories" ? (
+          // Bare /campus-life/stories has no index of its own: the stories are
+          // listed on the landing, in context.
+          redirect("/campus-life#stories")
         ) : (
           <>
             <Hero
@@ -1682,30 +1600,38 @@ export function CampusLifeContent({
             </div>
           </>
         )}
-        <section className="border-y border-primary/10 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
-          <div className="grid w-full gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
-                Student Services
-              </p>
-              <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground sm:text-4xl">
-                Keep moving through campus life
-              </h2>
-              <p className="mt-4 text-base leading-8 text-muted-foreground">
-                Use official systems for service requests and student portals,
-                and use the campus-life pages to understand what support,
-                housing, activities, and student communities are available.
-              </p>
+        {/* Pages that write their own close do not get the services band after
+            it: repeating a directory of links would undo the ending they built.
+            Only the sidebar-shell listing pages still carry it. */}
+        {area === "landing" ||
+        area === "club-detail" ||
+        area === "story-detail" ||
+        area === "stories" ? null : (
+          <section className="border-y border-primary/10 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
+            <div className="grid w-full gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+                  Student Services
+                </p>
+                <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-semibold text-foreground sm:text-4xl">
+                  Keep moving through campus life
+                </h2>
+                <p className="mt-4 text-base leading-8 text-muted-foreground">
+                  Use official systems for service requests and student portals,
+                  and use the campus-life pages to understand what support,
+                  housing, activities, and student communities are available.
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <ActionLink href={officialLinks.portal} primary>
+                  Student portal
+                </ActionLink>
+                <ActionLink href="/campus-life/support">Support</ActionLink>
+                <ActionLink href="/campus-life/gallery">Gallery</ActionLink>
+              </div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <ActionLink href={officialLinks.portal} primary>
-                Student portal
-              </ActionLink>
-              <ActionLink href="/campus-life/support">Support</ActionLink>
-              <ActionLink href="/campus-life/gallery">Gallery</ActionLink>
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
       </AboutPageLenis>
     </PageShell>
   );

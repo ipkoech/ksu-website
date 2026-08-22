@@ -2,17 +2,20 @@
 
 from __future__ import annotations
 
+import hashlib
+import mimetypes
 import re
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Department, Person, StaffAssignment
+from app.models import Department, Media, Person, StaffAssignment
 from app.schemas.base import slugify
 
 from ._shared import LEADERSHIP_PEOPLE, SeedContext, get_or_create_person
 from .live_staff_profile_snapshot import LIVE_STAFF_PROFILE_PAGES
+from .live_staff_profile_updates_20260810 import LIVE_STAFF_PROFILE_UPDATES
 
 TITLE_PATTERN = re.compile(r"^(Prof\. Dr\.|Prof\.|Dr\.|Mr\.|Mrs\.|Ms\.|Miss\.)\s+", re.IGNORECASE)
 SUFFIX_PATTERN = re.compile(r",?\s*(PhD|PHD|MSc|MBA|CPA|CPS)\.?$", re.IGNORECASE)
@@ -191,6 +194,17 @@ def _profile_spec(page: dict[str, Any]) -> dict[str, Any]:
     if work_text and work_text.lower().strip(".") != "no work experience":
         professional_memberships = [{"type": "work_experience", "raw": work_text, "source": "official_profile"}]
 
+    photo_url = next(
+        (
+            str(image.get("url"))
+            for image in page.get("images") or []
+            if image.get("url")
+            and "default-avatar" not in str(image.get("url"))
+            and "/logo/" not in str(image.get("url"))
+        ),
+        None,
+    )
+
     return {
         "source_path": page["path"],
         "source_url": page["source_url"],
@@ -211,6 +225,7 @@ def _profile_spec(page: dict[str, Any]) -> dict[str, Any]:
         "institutional_role": _institutional_role(official_role),
         "specialization": official_role,
         "website_url": page["source_url"],
+        "photo_url": photo_url,
         "is_researcher": bool(
             research_text
             and research_text.lower().strip(".") != "no research interests provided"
@@ -223,11 +238,52 @@ def _profile_spec(page: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+_PROFILE_PAGES_BY_SOURCE = {
+    str(page["source_url"]): page
+    for page in [*LIVE_STAFF_PROFILE_PAGES, *LIVE_STAFF_PROFILE_UPDATES]
+}
+
 LIVE_STAFF_PROFILE_SPECS = [
     _profile_spec(page)
-    for page in LIVE_STAFF_PROFILE_PAGES
+    for page in _PROFILE_PAGES_BY_SOURCE.values()
     if page["page_type"] == "profile" and str(page["path"]).startswith("/profile_view/")
 ]
+
+
+async def _upsert_profile_photo(db: AsyncSession, spec: dict[str, Any]) -> Media | None:
+    public_url = spec.get("photo_url")
+    if not public_url:
+        return None
+    media = (await db.execute(select(Media).where(Media.public_url == public_url))).scalar_one_or_none()
+    filename = str(public_url).rstrip("/").rsplit("/", 1)[-1]
+    mime_type, _ = mimetypes.guess_type(filename)
+    payload = {
+        "filename": filename,
+        "original_filename": filename,
+        "mime_type": mime_type or "image/jpeg",
+        "file_size": 0,
+        "file_hash": hashlib.sha256(str(public_url).encode("utf-8")).hexdigest(),
+        "storage_provider": "remote",
+        "storage_path": str(public_url),
+        "public_url": str(public_url),
+        "title": f"Portrait of {spec['full_name']}",
+        "alt_text": f"Portrait of {spec['full_name']}",
+        "description": f"Official staff portrait published on {spec['source_url']}.",
+        "tags": ["staff", "portrait", "official-profile"],
+        "credit": "Kisii University",
+        "media_type": "image",
+        "is_public": True,
+        "is_processed": True,
+        "extra_metadata": {"source_url": spec["source_url"], "verified_on": "2026-08-10"},
+    }
+    if media is None:
+        media = Media(**payload)
+        db.add(media)
+    else:
+        for field_name, value in payload.items():
+            setattr(media, field_name, value)
+    await db.flush()
+    return media
 
 
 async def seed_staff_profiles(db: AsyncSession, ctx: SeedContext) -> None:
@@ -253,7 +309,10 @@ async def seed_staff_profiles(db: AsyncSession, ctx: SeedContext) -> None:
                 is_researcher=spec["is_researcher"],
             )
         department = _department_from_role(spec["official_role"], ctx.departments)
+        photo = await _upsert_profile_photo(db, spec)
         person.department_id = department.id if department else person.department_id
+        if photo is not None:
+            person.photo_id = photo.id
         person.website_url = spec["website_url"]
         person.full_bio = spec["full_bio"]
         person.education_background = spec["education_background"]
@@ -269,11 +328,11 @@ async def seed_staff_profiles(db: AsyncSession, ctx: SeedContext) -> None:
 
 
 async def delete_unassigned_legacy_dean_profiles(db: AsyncSession, ctx: SeedContext) -> int:
-    canonical_ids = {
-        person.id
-        for key, person in ctx.people.items()
-        if key in SCHOOL_DEAN_LEADERSHIP_KEYS and person is not None
-    }
+    # Every person held by this run's context is canonical seed input. Some
+    # profiles legitimately acquire a dean-like institutional role while the
+    # live profile data is merged, so limiting this protection to school-dean
+    # keys can delete a person that later assignment steps still reference.
+    canonical_ids = {person.id for person in ctx.people.values() if person is not None}
     candidate_roles = {"dean", *SCHOOL_DEAN_INSTITUTIONAL_ROLES}
     if DEAN_STUDENTS_INSTITUTIONAL_ROLE in candidate_roles:
         candidate_roles.remove(DEAN_STUDENTS_INSTITUTIONAL_ROLE)

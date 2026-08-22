@@ -17,7 +17,7 @@ from ._fields import FieldSelection, FieldsDep, build_selector
 router = APIRouter()
 
 
-@router.get("", dependencies=[Depends(require_scope("users:read"))])
+@router.get("", dependencies=[Depends(require_scope("users.view"))])
 async def list_users(
     db: DbSession,
     _: CurrentUser,
@@ -32,7 +32,7 @@ async def list_users(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{user_id}", dependencies=[Depends(require_scope("users:read"))])
+@router.get("/{user_id}", dependencies=[Depends(require_scope("users.view"))])
 async def get_user(user_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(User, fields)
     user = await UserService.get_by_id(db, user_id, load_options=selector.load_options)
@@ -41,14 +41,14 @@ async def get_user(user_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: Fi
     return success(data=selector.apply(user))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("users:write"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("users.create"))])
 async def create_user(data: UserCreate, db: DbSession, _: CurrentUser):
     user = await UserService.create(db, **data.model_dump())
     await db.refresh(user)
     return success(data=user, message="User created")
 
 
-@router.patch("/{user_id}", dependencies=[Depends(require_scope("users:write"))])
+@router.patch("/{user_id}", dependencies=[Depends(require_scope("users.edit"))])
 async def update_user(user_id: uuid.UUID, data: UserUpdate, db: DbSession, _: CurrentUser):
     user = await UserService.get_by_id(db, user_id)
     if user is None:
@@ -57,7 +57,7 @@ async def update_user(user_id: uuid.UUID, data: UserUpdate, db: DbSession, _: Cu
     return success(data=user, message="User updated")
 
 
-@router.delete("/{user_id}", dependencies=[Depends(require_scope("users:delete"))], status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{user_id}", dependencies=[Depends(require_scope("users.delete"))], status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(user_id: uuid.UUID, db: DbSession, _: CurrentUser):
     user = await UserService.get_by_id(db, user_id)
     if user is None:

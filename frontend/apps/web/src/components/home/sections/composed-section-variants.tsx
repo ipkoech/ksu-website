@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type ReactNode,
+} from "react";
 import {
   Activity,
   ArrowRight,
@@ -43,6 +49,7 @@ import type {
   HomeSchoolCard,
   HomeSocialLinks,
 } from "@/lib/homepage-data";
+import { personDisplayName } from "@/lib/person-name";
 import {
   background,
   heroImage,
@@ -241,7 +248,11 @@ export function HeroAdmissionsSection({
     section.description ??
     section.subtitle ??
     "Advancing inclusive education, research, innovation and community impact.";
-  const actions = heroActions(content?.actions, section.items, admissions ?? undefined);
+  const actions = heroActions(
+    content?.actions,
+    section.items,
+    admissions ?? undefined,
+  );
 
   return (
     <section className="relative isolate h-[60vh] min-h-[480px] max-h-[720px] overflow-hidden bg-primary text-white lg:h-[70vh]">
@@ -682,7 +693,10 @@ function formatPublicDate(value?: string | null) {
   }).format(date);
 }
 
-export function PulseStripSection({ section, factsSection }: SectionVariantProps) {
+export function PulseStripSection({
+  section,
+  factsSection,
+}: SectionVariantProps) {
   const stats = factsSection ? extractStats(factsSection) : [];
 
   if (stats.length === 0) return null;
@@ -784,9 +798,7 @@ function NumberStatItem({
     >
       <div className="font-[family-name:var(--font-display)] text-4xl font-bold tabular-nums tracking-tight text-primary sm:text-5xl lg:text-6xl">
         <CountUpNumber value={stat.value} delay={delay} />
-        {stat.suffix && (
-          <span className="text-secondary">{stat.suffix}</span>
-        )}
+        {stat.suffix && <span className="text-secondary">{stat.suffix}</span>}
       </div>
       <p className="mt-2 text-sm text-muted-foreground lg:text-base">
         {stat.label}
@@ -830,7 +842,7 @@ function CountUpNumber({ value, delay }: { value: number; delay: number }) {
           requestAnimationFrame(animate);
         }
       },
-      { threshold: 0.3 }
+      { threshold: 0.3 },
     );
 
     if (ref.current) {
@@ -1100,11 +1112,14 @@ export function ProgrammeFinderSection({
   const intakes = programmeFinderData?.intakes ?? [];
   const programmes = programmeFinderData?.programmes ?? [];
   const schools = programmeFinderData?.schools ?? [];
-  const activeIntake = intakes.find((intake) => intake.isOpen) ?? intakes[0] ?? null;
+  const activeIntake =
+    intakes.find((intake) => intake.isOpen) ?? intakes[0] ?? null;
   const intakeProgrammes = programmeFinderData?.activeIntakeProgrammes?.length
     ? programmeFinderData.activeIntakeProgrammes
     : activeIntake
-      ? programmes.filter((programme) => programme.intakeIds?.includes(activeIntake.id)).slice(0, 6)
+      ? programmes
+          .filter((programme) => programme.intakeIds?.includes(activeIntake.id))
+          .slice(0, 6)
       : [];
   const activeDeadline =
     activeIntake?.lateApplicationEnd ?? activeIntake?.applicationEnd;
@@ -1129,10 +1144,7 @@ export function ProgrammeFinderSection({
 
       <div className="relative z-10 mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         {/* Opening */}
-        <Reveal
-          variant="fade-up"
-          className="mx-auto max-w-3xl text-center"
-        >
+        <Reveal variant="fade-up" className="mx-auto max-w-3xl text-center">
           <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-white sm:text-4xl">
             {section.title ?? "Find the right programme. Build your future."}
           </h2>
@@ -1353,7 +1365,8 @@ function CampusMosaicCard({
   featured?: boolean;
 }) {
   const imageUrl = itemContentText(item, "imageUrl");
-  const imageAlt = itemContentText(item, "imageAlt") ?? item.title ?? "Campus life";
+  const imageAlt =
+    itemContentText(item, "imageAlt") ?? item.title ?? "Campus life";
 
   return (
     <LinkWrapper
@@ -1426,11 +1439,10 @@ export function LeadershipActivitySection({
   vcHub,
 }: SectionVariantProps) {
   const staff = section.settings_enriched?.staff_profile;
-  const leaderName =
-    staff?.display_name ??
-    staff?.full_name ??
-    settingText(section, "leaderName") ??
-    "Prof. Charles O. Ong’ondo, PhD";
+  const leaderName = personDisplayName(
+    staff,
+    settingText(section, "leaderName") ?? "Prof. Charles O. Ong’ondo, PhD",
+  );
   const leaderTitle =
     staff?.institutional_role === "vc" ||
     staff?.institutional_role === "vice_chancellor"
@@ -1866,9 +1878,7 @@ function ComposedSocialMediaLinks({
 
   return (
     <div className={className}>
-      <p className="text-xs font-bold text-primary">
-        Follow Kisii University
-      </p>
+      <p className="text-xs font-bold text-primary">Follow Kisii University</p>
       <div className="mt-3 flex flex-wrap gap-2">
         {items.map(({ label, href, icon: Icon, colorClassName }) => (
           <a

@@ -84,8 +84,26 @@ export type HomeProgrammeCard = HomeCard & {
   intakeIds?: string[] | null;
 };
 
+/** An event card that keeps the raw dates the homepage needs to render a
+ *  prominent day/month block and to prove the event has not passed. */
+export type HomeEventCard = HomeCard & {
+  startDate?: string | null;
+  endDate?: string | null;
+  venue?: string | null;
+  timeLabel?: string | null;
+};
+
+/** Filter options for the programme finder, read off the live catalogue so
+ *  the selects never assert levels or modes the university does not offer. */
+export type HomeProgrammeFilters = {
+  levels: string[];
+  modes: string[];
+};
+
 export type HomeSchoolCard = HomeCard & {
   programmes: HomeProgrammeCard[];
+  /** From the cover media record, when the editor has written one. */
+  imageAlt?: string | null;
 };
 
 export type HomeLink = {
@@ -117,6 +135,11 @@ type ProgrammeWithMedia = Programme & {
   cover_image?: Partial<Media> | null;
 };
 
+/** A record fetched with `include=featured_media(...)`. */
+type WithFeaturedMedia<T> = T & {
+  featured_media?: Partial<Media> | null;
+};
+
 export type HomeIntake = {
   id: string;
   name: string;
@@ -144,13 +167,15 @@ export type HomepageData = {
   viceChancellor: HomeLeader | null;
   featuredProgrammes: HomeProgrammeCard[];
   programmesSummary: HomeMetric[];
+  programmeFilters: HomeProgrammeFilters;
   activeIntakes: HomeIntake[];
   activeIntakeProgrammes: HomeProgrammeCard[];
   admissionsActions: HomeCard[];
   latestNews: HomeCard[];
   featuredStories: HomeCard[];
-  upcomingEvents: HomeCard[];
+  upcomingEvents: HomeEventCard[];
   latestBlog: HomeCard | null;
+  latestBlogs: HomeCard[];
   serviceLinks: HomeLink[];
   publicQuickLinks: HomeLink[];
   contactActions: HomeAction[];
@@ -321,7 +346,7 @@ async function getSchoolsList() {
     fields:
       "id,name,code,slug,description,about,cover_image_id,departments_count",
     include:
-      "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
+      "cover_image(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title)",
   });
   return (response.data ?? []) as SchoolWithMedia[];
 }
@@ -332,7 +357,7 @@ async function getProgrammesList() {
     fields:
       "id,name,slug,level,mode_of_study,duration,department_id,department_name,cover_image_id,display_order,intake_ids",
     include:
-      "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title),department(id,name,school_id,school_name,school(id,name,code,slug))",
+      "cover_image(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title),department(id,name,school_id,school_name,school(id,name,code,slug))",
   });
   return (response.data ?? []) as ProgrammeWithMedia[];
 }
@@ -346,7 +371,7 @@ async function getProgrammesBySchool(schools: SchoolWithMedia[]) {
         fields:
           "id,name,slug,level,mode_of_study,duration,department_id,department_name,cover_image_id,display_order",
         include:
-          "cover_image(id,url,public_url,cdn_url,thumbnail_url,alt_text,title),department(id,name,school_id,school_name,school(id,name,code,slug))",
+          "cover_image(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title),department(id,name,school_id,school_name,school(id,name,code,slug))",
       });
 
       return [school.id, normalizeFeaturedProgrammes(response.data ?? [])] as const;
@@ -361,7 +386,8 @@ async function getLatestNews() {
     is_published: true,
     per_page: 3,
     fields:
-      "id,title,slug,summary,plain_text,category,published_at,is_main,is_featured,cover_image_id,featured_media_id,created_at",
+      "id,title,slug,summary,plain_text,category,published_at,is_main,is_featured,featured_media_id,created_at",
+    include: "featured_media(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title)",
   });
   return response.data ?? [];
 }
@@ -370,9 +396,13 @@ async function getUpcomingEvents() {
   const response = await eventsApi.list({
     is_published: true,
     upcoming: true,
-    per_page: 3,
+    // The homepage calendar plots a month at a time, so it needs more than
+    // the three the old list rendered. Still bounded: a calendar showing a
+    // year of events is a listings page, not a homepage section.
+    per_page: 24,
     fields:
-      "id,title,slug,summary,plain_text,event_type,start_date,end_date,location,venue,cover_image_id,featured_media_id,is_featured,published_at,created_at",
+      "id,title,slug,summary,plain_text,event_type,start_date,end_date,location,venue,featured_media_id,is_featured,published_at,created_at",
+    include: "featured_media(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title)",
   });
   return response.data ?? [];
 }
@@ -380,9 +410,10 @@ async function getUpcomingEvents() {
 async function getLatestBlogs() {
   const response = await blogsApi.list({
     is_published: true,
-    per_page: 1,
+    per_page: 3,
     fields:
-      "id,title,slug,summary,excerpt,plain_text,category,published_at,author_name,cover_image_id,featured_media_id,created_at",
+      "id,title,slug,summary,excerpt,plain_text,category,published_at,author_name,featured_media_id,created_at",
+    include: "featured_media(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title)",
   });
   return response.data ?? [];
 }
@@ -393,7 +424,7 @@ async function getFeaturedStories() {
     per_page: 7,
     fields:
       "id,title,slug,summary,plain_text,story_type,category,published_at,featured_media_id,featured_media,contributor_name_snapshot,created_at",
-    include: "featured_media(id,url,public_url,cdn_url,thumbnail_url,alt_text,title)",
+    include: "featured_media(id,public_url,cdn_url,thumbnail_url,storage_path,alt_text,title)",
   });
   return response.data ?? [];
 }
@@ -516,12 +547,40 @@ function buildFacts(
   ].filter((metric) => Number(metric.value) > 0);
 }
 
+/**
+ * Present a statistic the way a reader scans it.
+ *
+ * The services return bare numbers with a unit suffix, which concatenated
+ * naively gives "12947500KES" — technically the right figure and unreadable
+ * at a glance. Currency codes move in front of a compacted amount, counts get
+ * thousands separators, and a trailing unit like "Ha" stays where it is.
+ */
+function formatStatValue(value: number | string, suffix?: string | null) {
+  const numeric = Number(value);
+  const unit = (suffix ?? "").trim();
+  if (!Number.isFinite(numeric)) return `${value}${unit}`;
+
+  const isCurrency = /^[A-Z]{3}$/.test(unit);
+  const compact =
+    Math.abs(numeric) >= 10_000
+      ? new Intl.NumberFormat("en-KE", {
+          notation: "compact",
+          maximumFractionDigits: 1,
+        }).format(numeric)
+      : new Intl.NumberFormat("en-KE", { maximumFractionDigits: 1 }).format(
+          numeric,
+        );
+
+  if (isCurrency) return `${unit} ${compact}`;
+  return unit ? `${compact} ${unit}` : compact;
+}
+
 function normalizeStats(stats?: PublicStatsResponse | null): HomeMetric[] {
   return (
     stats?.stats
       ?.filter((stat) => Number(stat.value) > 0)
       .map((stat) => ({
-        value: `${stat.value}${stat.suffix ?? ""}`,
+        value: formatStatValue(stat.value, stat.suffix),
         label: stat.label,
         detail: stat.description,
       })) ?? []
@@ -551,6 +610,7 @@ function normalizeSchools(
     imageUrl:
       publicMediaUrl(school.cover_image) ??
       publicFileUrl(school.cover_image_id),
+    imageAlt: present(school.cover_image?.alt_text),
     programmes: programmesBySchool.get(school.id) ?? [],
   }));
 }
@@ -603,7 +663,28 @@ function buildProgrammeSummary(programmes: Programme[]): HomeMetric[] {
   ].filter((metric) => Number.parseInt(metric.value, 10) > 0);
 }
 
-function normalizeNews(news: News[]): HomeCard[] {
+/**
+ * Distinct study levels and modes across the published catalogue. The finder
+ * selects are built from these rather than a hardcoded list, so a level the
+ * university does not currently offer is never presented as searchable.
+ */
+function buildProgrammeFilters(programmes: Programme[]): HomeProgrammeFilters {
+  const collect = (pick: (programme: Programme) => string | null | undefined) =>
+    Array.from(
+      new Set(
+        programmes
+          .map((programme) => present(pick(programme)))
+          .filter((value): value is string => value !== null),
+      ),
+    ).sort((first, second) => first.localeCompare(second));
+
+  return {
+    levels: collect((programme) => programme.level),
+    modes: collect((programme) => programme.mode_of_study),
+  };
+}
+
+function normalizeNews(news: WithFeaturedMedia<News>[]): HomeCard[] {
   return news.map((item) => ({
     id: item.id,
     title: item.title,
@@ -618,39 +699,79 @@ function normalizeNews(news: News[]): HomeCard[] {
     href: `/media/news/${item.slug}`,
     action: "Read update",
     imageUrl:
-      publicFileUrl(item.cover_image_id) ??
+      publicMediaUrl(item.featured_media) ??
       publicFileUrl(item.featured_media_id),
     meta: formatDisplayDate(item.published_at ?? item.created_at),
   }));
 }
 
-function normalizeEvents(events: Event[]): HomeCard[] {
-  return events.map((item) => ({
-    id: item.id,
-    title: item.title,
-    eyebrow: item.event_type || "Event",
-    body: truncate(
-      plainText(item.summary) ||
-        plainText(item.plain_text) ||
-        plainText(item.content) ||
-        "View event details, venue, and schedule information.",
-      110,
-    ),
-    href: `/media/events/${item.slug}`,
-    action: "View event",
-    imageUrl:
-      publicFileUrl(item.cover_image_id) ??
-      publicFileUrl(item.featured_media_id),
-    meta: [
-      formatDisplayDate(item.start_date),
-      present(item.venue) ?? present(item.location),
-    ]
-      .filter(Boolean)
-      .join(" · "),
-  }));
+/**
+ * Upcoming events, with the raw dates kept alongside the display copy.
+ *
+ * The listing is already requested with `upcoming: true`, but a cached page
+ * outlives the events on it: an event that closed since the last revalidate
+ * would otherwise still be presented as upcoming. Anything whose end (or
+ * start, when there is no end) is in the past is dropped here.
+ */
+function normalizeEvents(events: WithFeaturedMedia<Event>[]): HomeEventCard[] {
+  const now = Date.now();
+
+  return events
+    .filter((item) => {
+      const boundary = present(item.end_date) ?? present(item.start_date);
+      if (!boundary) return true;
+      const time = new Date(boundary).getTime();
+      return Number.isNaN(time) || time >= now;
+    })
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      eyebrow: item.event_type || "Event",
+      body: truncate(
+        plainText(item.summary) ||
+          plainText(item.plain_text) ||
+          plainText(item.content) ||
+          "View event details, venue, and schedule information.",
+        110,
+      ),
+      href: `/media/events/${item.slug}`,
+      action: "View event",
+      imageUrl:
+        publicMediaUrl(item.featured_media) ??
+        publicFileUrl(item.featured_media_id),
+      meta: [
+        formatDisplayDate(item.start_date),
+        present(item.venue) ?? present(item.location),
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      startDate: present(item.start_date),
+      endDate: present(item.end_date),
+      venue: present(item.venue) ?? present(item.location),
+      timeLabel: formatTimeRange(item.start_date, item.end_date),
+    }));
 }
 
-function normalizeBlog(item?: Blog): HomeCard | null {
+/** "10:00 AM - 4:00 PM" when the record carries clock times, else nothing.
+ *  A date-only value (`2026-05-20`) parses to midnight and would otherwise
+ *  advertise every event as starting at 12:00 AM. */
+function formatTimeRange(start?: string | null, end?: string | null) {
+  const formatted = [start, end].map((value) => {
+    const text = present(value);
+    if (!text || !/\d{2}:\d{2}/.test(text)) return null;
+    const date = new Date(text);
+    if (Number.isNaN(date.getTime())) return null;
+    return new Intl.DateTimeFormat("en-KE", {
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date);
+  });
+
+  if (!formatted[0]) return null;
+  return formatted[1] ? `${formatted[0]} - ${formatted[1]}` : formatted[0];
+}
+
+function normalizeBlog(item?: WithFeaturedMedia<Blog>): HomeCard | null {
   if (!item) return null;
 
   return {
@@ -668,7 +789,7 @@ function normalizeBlog(item?: Blog): HomeCard | null {
     href: `/media/articles/${item.slug}`,
     action: "Read blog",
     imageUrl:
-      publicFileUrl(item.cover_image_id) ??
+      publicMediaUrl(item.featured_media) ??
       publicFileUrl(item.featured_media_id),
     meta: [
       formatDisplayDate(item.published_at ?? item.created_at),
@@ -742,6 +863,10 @@ function formatDisplayDate(value?: string | null) {
 
 function resolveResearchAssetUrl(value: string) {
   if (/^(https?:|data:|blob:)/i.test(value)) return value;
+  // Partner brand marks are served from this app's own /public, not by the
+  // research service. Resolving them against the research API base would
+  // point every logo at the gateway, which has no such route.
+  if (value.startsWith("/images/")) return value;
   return new URL(
     value.startsWith("/") ? value : `/${value}`,
     researchApiBaseUrl,
@@ -884,6 +1009,7 @@ export async function getHomepageData(): Promise<HomepageData> {
       : null,
     featuredProgrammes,
     programmesSummary: buildProgrammeSummary(programmes),
+    programmeFilters: buildProgrammeFilters(programmes),
     activeIntakes: normalizeIntakes(activeIntakes),
     activeIntakeProgrammes,
     admissionsActions: [
@@ -910,6 +1036,9 @@ export async function getHomepageData(): Promise<HomepageData> {
     featuredStories: normalizeStories(featuredStories),
     upcomingEvents: normalizeEvents(upcomingEvents),
     latestBlog: normalizeBlog(latestBlogs[0]),
+    latestBlogs: latestBlogs
+      .map((item) => normalizeBlog(item))
+      .filter((card): card is HomeCard => card !== null),
     serviceLinks,
     publicQuickLinks,
     contactActions: [

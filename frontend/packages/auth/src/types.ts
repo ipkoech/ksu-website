@@ -1,4 +1,4 @@
-export type Service = "main" | "research" | "library" | "system";
+export type Service = "main" | "research" | "library" | "heri" | "system";
 
 export interface User {
   id: string;
@@ -8,6 +8,8 @@ export interface User {
   roles: string[];
   permissions: string[];
   services: ServiceAccess[];
+  serviceMemberships: Service[];
+  mustChangePassword: boolean;
 }
 
 export interface ServiceAccess {
@@ -42,8 +44,6 @@ export interface LoginCredentials {
 
 export interface AuthResponse {
   user: User;
-  accessToken?: string;
-  refreshToken?: string;
 }
 
 export interface Session {

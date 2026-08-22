@@ -49,6 +49,37 @@ def _normalize_value(value: str) -> str:
     return value.strip().lower().replace(":", ".")
 
 
+PERMISSION_ALIASES: Mapping[str, str] = {
+    "users.read": "users.view",
+    "roles.read": "roles.view",
+    "roles.write": "roles.manage",
+    "roles.delete": "roles.manage",
+    "permissions.read": "permissions.view",
+    "permissions.write": "permissions.manage",
+    "audit.read": "audit.view",
+    "settings.read": "settings.view",
+    "settings.write": "settings.manage",
+    "api_keys.read": "api_keys.view",
+    "api_keys.write": "api_keys.manage",
+    "webhooks.read": "webhooks.view",
+    "webhooks.write": "webhooks.manage",
+    "notifications.read": "notifications.view",
+    "notifications.write": "notifications.manage",
+    "analytics.read": "analytics.view",
+    "staff.read": "staff.view_assignments",
+    "staff.write": "staff.manage_assignments",
+    "staff.delete": "staff.manage_assignments",
+    "governance.read": "governance.view",
+    "governance.write": "governance.manage_members",
+}
+
+
+def normalize_permission(permission: str) -> str:
+    """Return the canonical dotted name for a permission or legacy alias."""
+    normalized = _normalize_value(permission)
+    return PERMISSION_ALIASES.get(normalized, normalized)
+
+
 def _normalize_scope_type(value: str) -> str:
     normalized = value.strip().lower().replace("-", "_")
     if normalized == "directorate":
@@ -62,7 +93,7 @@ def _split_permission(permission: str) -> tuple[str, str]:
     return resource, action if separator else ""
 
 
-KNOWN_PERMISSIONS = frozenset(_normalize_value(permission) for permission in ALL_PERMISSIONS)
+KNOWN_PERMISSIONS = frozenset(normalize_permission(permission) for permission in ALL_PERMISSIONS)
 
 
 def _resource_aliases(resource: str) -> frozenset[str]:
@@ -74,19 +105,19 @@ def _resource_aliases(resource: str) -> frozenset[str]:
 
 
 def _is_known_permission(permission: str) -> bool:
-    return _normalize_value(permission) in KNOWN_PERMISSIONS
+    return normalize_permission(permission) in KNOWN_PERMISSIONS
 
 
 def _required_permission(action: str, resource: str) -> str | None:
     normalized_action = _normalize_value(action)
     normalized_resource = _normalize_value(resource)
     if not normalized_resource and "." in normalized_action:
-        return normalized_action
+        return normalize_permission(normalized_action)
     if not normalized_action or not normalized_resource:
         return None
     if "." in normalized_action:
         return None
-    return f"{normalized_resource}.{normalized_action}"
+    return normalize_permission(f"{normalized_resource}.{normalized_action}")
 
 
 def _action_grants(granted_action: str, required_action: str) -> bool:
@@ -115,6 +146,8 @@ def _action_grants(granted_action: str, required_action: str) -> bool:
 
 
 def _permission_grants(granted_permission: str, required_permission: str) -> bool:
+    granted_permission = normalize_permission(granted_permission)
+    required_permission = normalize_permission(required_permission)
     granted_resource, granted_action = _split_permission(granted_permission)
     required_resource, required_action = _split_permission(required_permission)
     if _normalize_value(granted_permission) in {"*", "admin.*"}:
@@ -288,4 +321,5 @@ __all__ = [
     "get_role_scopes",
     "has_scope",
     "build_scope_dependency",
+    "normalize_permission",
 ]

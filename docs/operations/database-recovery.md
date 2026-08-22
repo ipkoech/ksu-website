@@ -24,7 +24,7 @@ BACKUP_RETENTION_DAYS=14 \
 APP_ENV=production \
 POSTGRES_CONTAINER=ksu-production-postgres-1 \
 POSTGRES_DB=ksu_services_db \
-POSTGRES_USER=ksu_service_user \
+POSTGRES_USER=postgres \
 scripts/backup_database.sh
 ```
 
@@ -34,10 +34,27 @@ then reaps expired local backups. Alert if no new off-host metadata file appears
 within 26 hours. Keep at least 14 daily and 12 monthly recovery points in the
 off-host store.
 
+The dump login must be a dedicated backup role with read access to all four
+schemas, or the PostgreSQL administrator for the initial deployment. A normal
+service role cannot produce a complete platform backup and must not be used.
+
 ## Restore drill
 
 Never rehearse against the production database. Create a disposable database,
 then run:
+
+For the local Compose stack, the wrapper creates a fresh backup, starts an
+isolated PostgreSQL container on a random loopback port, restores and verifies
+it, writes recovery evidence, and removes the disposable container:
+
+```bash
+RECOVERY_OPERATOR="operator-name" scripts/run_compose_restore_drill.sh
+```
+
+Evidence is written under `backups/restore-drills/` by default. Override that
+with `RECOVERY_DRILL_DIR` or provide an exact `RECOVERY_REPORT_FILE`.
+
+For an externally managed disposable database, run the lower-level drill:
 
 ```bash
 BACKUP_FILE=/srv/ksu/backups/production/ksu-production-TIMESTAMP.dump \
@@ -56,8 +73,10 @@ scripts/test_database_restore.sh
 The drill refuses a missing or altered checksum, restores with ownership omitted,
 reconstructs the four least-privilege roles, verifies every object owner and
 foreign privilege, verifies all four Alembic heads, and requires more than the
-version table in every schema. Record the backup timestamp, start/end time,
-database size, result, and operator. Drop the disposable database afterward.
+version table in every schema. Its evidence file records the backup timestamp,
+start/end time, database size, result, operator, and measured recovery time in
+seconds. Compare that measured time with the two-hour RTO target and investigate
+any regression. Drop the disposable database afterward.
 
 ## Lifecycle policy
 

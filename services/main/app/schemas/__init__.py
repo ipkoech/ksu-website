@@ -57,6 +57,9 @@ from .alumni import (
 )
 from .academic import (
     AcademicCalendarCreate,
+    AcademicCalendarDocumentCreate,
+    AcademicCalendarEventCreate,
+    AcademicCalendarEventUpdate,
     AcademicCalendarRead,
     AcademicCalendarUpdate,
     CampusCreate,
@@ -71,6 +74,13 @@ from .academic import (
     SchoolCreate,
     SchoolRead,
     SchoolUpdate,
+)
+from .timetable import (
+    AcademicTimetableCreate,
+    AcademicTimetableUpdate,
+    TimetableSittingCreate,
+    TimetableSittingUpdate,
+    TimetableVenueCreate,
 )
 from .content import (
     AnnouncementCreate,
@@ -112,6 +122,7 @@ from .analytics import (
 )
 from .auth import (
     ChangePasswordRequest,
+    CookieAuthResponse,
     ForgotPasswordRequest,
     RefreshRequest,
     ResetPasswordRequest,
@@ -400,6 +411,7 @@ __all__ = [
     "VerifyEmailRequest",
     "ChangePasswordRequest",
     "TokenResponse",
+    "CookieAuthResponse",
     "PermissionRead",
     "RoleCreate",
     "RoleRead",
@@ -461,6 +473,14 @@ __all__ = [
     "DepartmentServiceUpdate",
     "DepartmentUpdate",
     "AcademicCalendarCreate",
+    "AcademicCalendarEventCreate",
+    "AcademicCalendarEventUpdate",
+    "AcademicCalendarDocumentCreate",
+    "AcademicTimetableCreate",
+    "AcademicTimetableUpdate",
+    "TimetableSittingCreate",
+    "TimetableSittingUpdate",
+    "TimetableVenueCreate",
     "AcademicCalendarRead",
     "AcademicCalendarUpdate",
     "ProgrammeCreate",

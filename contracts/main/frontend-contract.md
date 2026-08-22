@@ -1212,6 +1212,24 @@ Delete Webhook
 - Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
+### `GET /api/v1/admin/system/webhooks/{item_id}/deliveries`
+
+List Webhook Deliveries
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `page` (query, integer), `per_page` (query, integer), `ksu_access` (cookie, string | null)
+- Success response: 200 SuccessResponse_list_WebhookDeliveryRead__
+
+### `POST /api/v1/admin/system/webhooks/{item_id}/deliveries/{event_id}/retry`
+
+Retry Webhook Delivery
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `item_id` (path, string), `event_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 202 SuccessResponse_dict_str__str__
+
 ### `GET /api/v1/admin/users`
 
 List Admin Users
@@ -1971,6 +1989,17 @@ Forgot Password
 - Parameters: -
 - Success response: 200 -
 
+### `GET /api/v1/auth/jwks`
+
+Jwks
+
+Publish verifier-only key material for external and internal consumers.
+
+- Auth: public
+- Request body: -
+- Parameters: -
+- Success response: 200 object
+
 ### `POST /api/v1/auth/login`
 
 Login
@@ -2013,7 +2042,7 @@ Refresh
 
 - Auth: public
 - Request body: RefreshRequest
-- Parameters: -
+- Parameters: `ksu_refresh` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/auth/reset-password`
@@ -2416,6 +2445,24 @@ Get News
 - Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
 - Success response: 200 -
 
+### `GET /api/v1/page-section-definitions`
+
+List Page Cms Definitions
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/page-section-sources/{source_type}`
+
+Search Page Cms Sources
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `source_type` (path, string), `q` (query, string), `scope_type` (query, string), `scope_id` (query, string | null), `page` (query, integer), `per_page` (query, integer), `layout_variant` (query, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
 ### `POST /api/v1/page-sections`
 
 Create Page Section
@@ -2461,18 +2508,12 @@ Create Section Item
 - Parameters: `section_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
-### `PUT /api/v1/page-sections/{section_id}/items/batch`
+### `PATCH /api/v1/page-sections/{section_id}/items/reorder`
 
-Batch Save Section Items
-
-Transactionally upsert and soft-disable section items in one request.
-
-Items with an ``id`` are updated, items without are created, and every id
-in ``remove_ids`` is soft-disabled (``is_enabled=False``). All changes share
-the request's DB transaction, so any failure rolls back the whole batch.
+Reorder Section Items
 
 - Auth: HTTPBearer
-- Request body: SectionItemBatchSave
+- Request body: SectionItemReorderRequest
 - Parameters: `section_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
@@ -2481,7 +2522,7 @@ the request's DB transaction, so any failure rolls back the whole batch.
 Run Page Section Workflow Action
 
 - Auth: HTTPBearer
-- Request body: PageSectionWorkflowBody | null
+- Request body: -
 - Parameters: `section_id` (path, string), `action` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
@@ -2492,6 +2533,33 @@ Get Page Composition
 - Auth: public
 - Request body: -
 - Parameters: `page_key` (path, string), `scope_type` (query, string), `scope_id` (query, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/pages/{page_key}/preview`
+
+Get Page Preview
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page_key` (path, string), `scope_type` (query, string), `scope_id` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/pages/{page_key}/sections/reorder`
+
+Reorder Page Sections
+
+- Auth: HTTPBearer
+- Request body: PageSectionReorderRequest
+- Parameters: `page_key` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/pages/{page_key}/validate`
+
+Validate Page
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `page_key` (path, string), `scope_type` (query, string), `scope_id` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/partnership-spotlights`
@@ -3703,6 +3771,28 @@ Download Import Template
 
 ## Internal
 
+### `POST /api/v1/internal/audit`
+
+Ingest Internal Audit
+
+Idempotently persist a sibling service's audit event in Main's schema.
+
+- Auth: public
+- Request body: InternalAuditPayload
+- Parameters: `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
+- Success response: 202 object
+
+### `GET /api/v1/internal/audit`
+
+List Internal Audit
+
+Return only the requested service's audit stream to authenticated callers.
+
+- Auth: public
+- Request body: -
+- Parameters: `service_name` (query, string), `page` (query, integer), `per_page` (query, integer), `user_id` (query, string | null), `resource_type` (query, string | null), `resource_id` (query, string | null), `status` (query, string | null), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
+- Success response: 200 InternalAuditListResponse
+
 ### `GET /api/v1/internal/departments/{department_id}`
 
 Get Department Snapshot
@@ -3720,6 +3810,28 @@ Send Internal Email
 - Request body: InternalEmailPayload
 - Parameters: `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
 - Success response: 200 -
+
+### `GET /api/v1/internal/events`
+
+List Internal Events
+
+Return public scoped events to authenticated sibling services.
+
+- Auth: public
+- Request body: -
+- Parameters: `scope_type` (query, string | null), `scope_id` (query, string | null), `page` (query, integer), `per_page` (query, integer), `fields` (query, string | null), `include` (query, string | null), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/internal/media/resolve`
+
+Resolve Public Media
+
+Resolve browser-safe media snapshots without exposing Main's tables.
+
+- Auth: public
+- Request body: InternalMediaResolvePayload
+- Parameters: `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
+- Success response: 200 InternalMediaResolveResponse
 
 ### `GET /api/v1/internal/media/{media_id}`
 
@@ -3827,7 +3939,7 @@ Subscribe Newsletter
 
 - Auth: public
 - Request body: NewsletterSubscriberCreate
-- Parameters: -
+- Parameters: `Idempotency-Key` (header, string)
 - Success response: 201 -
 
 ### `GET /api/v1/newsletters/subscribers`
@@ -3836,18 +3948,7 @@ List Newsletter Subscribers
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `status` (query, string | null), `q` (query, string | null), `is_verified` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
-- Success response: 200 -
-
-### `POST /api/v1/newsletters/subscribers/{item_id}/unsubscribe`
-
-Unsubscribe Newsletter Subscriber Admin
-
-Honor unsubscribe requests received out-of-band (phone or email).
-
-- Auth: HTTPBearer
-- Request body: -
-- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `status` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/newsletters/unsubscribe`
@@ -3856,18 +3957,7 @@ Unsubscribe Newsletter
 
 - Auth: public
 - Request body: -
-- Parameters: `email` (query, string)
-- Success response: 200 -
-
-### `GET /api/v1/newsletters/unsubscribe/{token}`
-
-Unsubscribe Newsletter By Token
-
-One-click unsubscribe used by the link embedded in every newsletter email.
-
-- Auth: public
-- Request body: -
-- Parameters: `token` (path, string)
+- Parameters: `email` (query, string), `Idempotency-Key` (header, string)
 - Success response: 200 -
 
 ### `PATCH /api/v1/newsletters/{item_id}`
@@ -3887,33 +3977,6 @@ Delete Newsletter
 - Request body: -
 - Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
-
-### `POST /api/v1/newsletters/{item_id}/cancel-schedule`
-
-Cancel Newsletter Schedule
-
-- Auth: HTTPBearer
-- Request body: -
-- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
-- Success response: 200 -
-
-### `POST /api/v1/newsletters/{item_id}/schedule`
-
-Schedule Newsletter Send
-
-- Auth: HTTPBearer
-- Request body: NewsletterScheduleRequest
-- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
-- Success response: 200 -
-
-### `POST /api/v1/newsletters/{item_id}/send`
-
-Send Newsletter Now
-
-- Auth: HTTPBearer
-- Request body: -
-- Parameters: `item_id` (path, string), `ksu_access` (cookie, string | null)
-- Success response: 200 -
 
 ### `GET /api/v1/newsletters/{slug}`
 
@@ -4160,7 +4223,7 @@ List Media
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `folder_id` (query, string | null), `media_type` (query, string | null), `uploaded_by_id` (query, string | null), `entity_type` (query, string | null), `entity_id` (query, string | null), `role` (query, string | null), `is_public` (query, boolean | null), `search` (query, string | null), `record_state` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `folder_id` (query, string | null), `media_type` (query, string | null), `uploaded_by_id` (query, string | null), `entity_type` (query, string | null), `entity_id` (query, string | null), `role` (query, string | null), `search` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/media/folders`
@@ -4214,7 +4277,7 @@ List Media Links
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `entity_type` (query, string | null), `entity_id` (query, string | null), `media_id` (query, string | null), `role` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Parameters: `entity_type` (query, string), `entity_id` (query, string), `role` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/media/links`
@@ -4582,7 +4645,7 @@ Create Public Entity Inquiry
 
 - Auth: public
 - Request body: PublicEntityInquiryCreate
-- Parameters: `entity_type` (path, string), `entity_slug` (path, string)
+- Parameters: `entity_type` (path, string), `entity_slug` (path, string), `Idempotency-Key` (header, string)
 - Success response: 201 -
 
 ### `GET /api/v1/public/leadership/`
@@ -4739,7 +4802,7 @@ Create Public School Inquiry
 
 - Auth: public
 - Request body: PublicEntityInquiryCreate
-- Parameters: `school_slug` (path, string)
+- Parameters: `school_slug` (path, string), `Idempotency-Key` (header, string)
 - Success response: 201 -
 
 ### `GET /api/v1/public/team`
@@ -6862,7 +6925,7 @@ Transition Content
 
 ## Schemas
 
-Generated component schemas: `260`
+Generated component schemas: `270`
 
 ### `AboutPageContentCreate`
 
@@ -7391,6 +7454,30 @@ Generated component schemas: `260`
 - `school_id`: `string | null` (optional)
 - `slug`: `string | null` (optional)
 - `title`: `string | null` (optional)
+
+### `AuditLogRead`
+
+- `action`: `string` (required)
+- `changes`: `object | null` (optional)
+- `created_at`: `string` (required)
+- `deleted_at`: `string | null` (optional)
+- `details`: `object | null` (optional)
+- `error_message`: `string | null` (optional)
+- `happened_at`: `string` (required)
+- `id`: `string` (required)
+- `ip_address`: `string | null` (optional)
+- `request_method`: `string` (required)
+- `request_path`: `string` (required)
+- `resource_id`: `string | null` (optional)
+- `resource_type`: `string | null` (optional)
+- `route_name`: `string | null` (optional)
+- `service_name`: `string` (required)
+- `session_jti`: `string | null` (optional)
+- `status`: `string` (required)
+- `status_code`: `integer` (required)
+- `updated_at`: `string` (required)
+- `user_agent`: `string | null` (optional)
+- `user_id`: `string | null` (optional)
 
 ### `BlogCreate`
 
@@ -8586,12 +8673,67 @@ Generated component schemas: `260`
 - `slug`: `string | null` (optional)
 - `timezone`: `string | null` (optional)
 
+### `InternalAuditListResponse`
+
+- `data`: `array<AuditLogRead>` (required)
+- `message`: `string` (required)
+- `meta`: `InternalAuditPageMeta` (required)
+- `status`: `string` (required)
+
+### `InternalAuditPageMeta`
+
+- `has_next`: `boolean` (required)
+- `page`: `integer` (required)
+- `per_page`: `integer` (required)
+
+### `InternalAuditPayload`
+
+- `action`: `string` (required)
+- `changes`: `object | null` (optional)
+- `details`: `object | null` (optional)
+- `error_message`: `string | null` (optional)
+- `happened_at`: `string` (required)
+- `id`: `string` (required)
+- `ip_address`: `string | null` (optional)
+- `request_method`: `string` (required)
+- `request_path`: `string` (required)
+- `resource_id`: `string | null` (optional)
+- `resource_type`: `string | null` (optional)
+- `route_name`: `string | null` (optional)
+- `service_name`: `string` (required)
+- `session_jti`: `string | null` (optional)
+- `status`: `string` (required)
+- `status_code`: `integer` (required)
+- `user_agent`: `string | null` (optional)
+- `user_id`: `string | null` (optional)
+
 ### `InternalEmailPayload`
 
 - `html_body`: `string | null` (optional)
 - `subject`: `string` (required)
 - `text_body`: `string` (required)
 - `to_email`: `string` (required)
+
+### `InternalMediaResolvePayload`
+
+- `ids`: `array<string>` (required)
+
+### `InternalMediaResolveResponse`
+
+- `data`: `array<InternalMediaSnapshot>` (required)
+- `status`: `string` (required)
+
+### `InternalMediaSnapshot`
+
+- `alt_text`: `string | null` (optional)
+- `caption`: `string | null` (optional)
+- `description`: `string | null` (optional)
+- `id`: `string` (required)
+- `is_public`: `boolean` (required)
+- `media_type`: `string` (required)
+- `thumbnail_url`: `string | null` (optional)
+- `title`: `string | null` (optional)
+- `url`: `string` (required)
 
 ### `InternalNotificationBroadcastPayload`
 
@@ -8753,10 +8895,6 @@ Generated component schemas: `260`
 - `summary`: `string | null` (optional)
 - `title`: `string` (required)
 
-### `NewsletterScheduleRequest`
-
-- `scheduled_send_at`: `string` (required)
-
 ### `NewsletterSubscriberCreate`
 
 - `categories`: `array<string> | null` (optional)
@@ -8869,6 +9007,20 @@ Generated component schemas: `260`
 - `valid_from`: `string | null` (optional)
 - `valid_to`: `string | null` (optional)
 
+### `PageSectionMediaLinkUpdate`
+
+- `display_order`: `integer` (optional)
+- `id`: `string | null` (optional)
+- `is_public`: `boolean` (optional)
+- `media_id`: `string` (required)
+- `role`: `string` (required)
+
+### `PageSectionReorderRequest`
+
+- `items`: `array<ReorderEntry>` (required)
+- `scope_id`: `string | null` (optional)
+- `scope_type`: `string` (optional)
+
 ### `PageSectionUpdate`
 
 - `description`: `string | null` (optional)
@@ -8876,7 +9028,9 @@ Generated component schemas: `260`
 - `is_enabled`: `boolean | null` (optional)
 - `items`: `array<SectionItemUpdate> | null` (optional)
 - `layout_variant`: `string | null` (optional)
+- `media_links`: `array<PageSectionMediaLinkUpdate> | null` (optional)
 - `page_key`: `string | null` (optional)
+- `revision`: `integer | null` (optional)
 - `scope_id`: `string | null` (optional)
 - `scope_type`: `string | null` (optional)
 - `section_key`: `string | null` (optional)
@@ -8885,10 +9039,6 @@ Generated component schemas: `260`
 - `title`: `string | null` (optional)
 - `valid_from`: `string | null` (optional)
 - `valid_to`: `string | null` (optional)
-
-### `PageSectionWorkflowBody`
-
-- `reason`: `string | null` (optional)
 
 ### `PartnershipSpotlightCreate`
 
@@ -9201,7 +9351,14 @@ Generated component schemas: `260`
 
 ### `RefreshRequest`
 
-- `refresh_token`: `string` (required)
+- `refresh_token`: `string | null` (optional)
+- `token_transport`: `string` (optional)
+
+### `ReorderEntry`
+
+- `display_order`: `integer` (required)
+- `id`: `string` (required)
+- `revision`: `integer` (required)
 
 ### `ReorderItem`
 
@@ -9631,86 +9788,52 @@ Generated component schemas: `260`
 - `vision`: `string | null` (optional)
 - `website`: `string | null` (optional)
 
-### `SectionItemBatchEntry`
-
-- `audience`: `string` (optional)
-- `body_text`: `string | null` (optional)
-- `content`: `object | null` (optional)
-- `cta_description`: `string | null` (optional)
-- `cta_label`: `string | null` (optional)
-- `cta_url`: `string | null` (optional)
-- `display_order`: `integer` (optional)
-- `id`: `string | null` (optional)
-- `is_enabled`: `boolean` (optional)
-- `is_featured`: `boolean` (optional)
-- `item_type`: `string` (optional)
-- `media_alt_text`: `string | null` (optional)
-- `media_caption`: `string | null` (optional)
-- `page_section_id`: `string | null` (optional)
-- `poster_media_id`: `string | null` (optional)
-- `source_id`: `string | null` (optional)
-- `source_type`: `string | null` (optional)
-- `status`: `string | null` (optional)
-- `subtitle`: `string | null` (optional)
-- `title`: `string | null` (optional)
-- `transcript`: `string | null` (optional)
-- `video_duration_seconds`: `integer | null` (optional)
-- `video_provider`: `string | null` (optional)
-- `video_url`: `string | null` (optional)
-
-### `SectionItemBatchSave`
-
-- `items`: `array<SectionItemBatchEntry>` (optional)
-- `remove_ids`: `array<string>` (optional)
-
 ### `SectionItemCreate`
 
-- `audience`: `string` (optional)
 - `body_text`: `string | null` (optional)
 - `content`: `object | null` (optional)
 - `cta_description`: `string | null` (optional)
 - `cta_label`: `string | null` (optional)
 - `cta_url`: `string | null` (optional)
 - `display_order`: `integer` (optional)
+- `editorial_overrides`: `object | null` (optional)
 - `is_enabled`: `boolean` (optional)
-- `is_featured`: `boolean` (optional)
 - `item_type`: `string` (optional)
 - `media_alt_text`: `string | null` (optional)
 - `media_caption`: `string | null` (optional)
 - `page_section_id`: `string | null` (optional)
-- `poster_media_id`: `string | null` (optional)
 - `source_id`: `string | null` (optional)
 - `source_type`: `string | null` (optional)
-- `status`: `string | null` (optional)
 - `subtitle`: `string | null` (optional)
 - `title`: `string | null` (optional)
-- `transcript`: `string | null` (optional)
 - `video_duration_seconds`: `integer | null` (optional)
 - `video_provider`: `string | null` (optional)
 - `video_url`: `string | null` (optional)
+
+### `SectionItemReorderRequest`
+
+- `items`: `array<ReorderEntry>` (required)
 
 ### `SectionItemUpdate`
 
-- `audience`: `string | null` (optional)
 - `body_text`: `string | null` (optional)
 - `content`: `object | null` (optional)
 - `cta_description`: `string | null` (optional)
 - `cta_label`: `string | null` (optional)
 - `cta_url`: `string | null` (optional)
 - `display_order`: `integer | null` (optional)
+- `editorial_overrides`: `object | null` (optional)
+- `id`: `string | null` (optional)
 - `is_enabled`: `boolean | null` (optional)
-- `is_featured`: `boolean | null` (optional)
 - `item_type`: `string | null` (optional)
 - `media_alt_text`: `string | null` (optional)
 - `media_caption`: `string | null` (optional)
 - `page_section_id`: `string | null` (optional)
-- `poster_media_id`: `string | null` (optional)
+- `revision`: `integer | null` (optional)
 - `source_id`: `string | null` (optional)
 - `source_type`: `string | null` (optional)
-- `status`: `string | null` (optional)
 - `subtitle`: `string | null` (optional)
 - `title`: `string | null` (optional)
-- `transcript`: `string | null` (optional)
 - `video_duration_seconds`: `integer | null` (optional)
 - `video_provider`: `string | null` (optional)
 - `video_url`: `string | null` (optional)
@@ -10115,6 +10238,20 @@ Generated component schemas: `260`
 - `meta`: `object | null` (optional)
 - `status`: `string` (optional)
 
+### `SuccessResponse_dict_str__str__`
+
+- `data`: `object | null` (optional)
+- `message`: `string` (optional)
+- `meta`: `object | null` (optional)
+- `status`: `string` (optional)
+
+### `SuccessResponse_list_WebhookDeliveryRead__`
+
+- `data`: `array<WebhookDeliveryRead> | null` (optional)
+- `message`: `string` (optional)
+- `meta`: `object | null` (optional)
+- `status`: `string` (optional)
+
 ### `SupportTicketCreate`
 
 - `category`: `string | null` (optional)
@@ -10285,15 +10422,17 @@ Generated component schemas: `260`
 - `full_name`: `string` (required)
 - `is_active`: `boolean` (optional)
 - `is_verified`: `boolean` (optional)
-- `mfa_enabled`: `boolean` (optional)
+- `must_change_password`: `boolean` (optional)
 - `password`: `string` (required)
 - `phone`: `string | null` (optional)
 - `push_tokens`: `array<string> | null` (optional)
+- `service_memberships`: `array<string>` (optional)
 
 ### `UserLogin`
 
 - `email`: `string` (required)
 - `password`: `string` (required)
+- `token_transport`: `string` (optional)
 
 ### `UserPreferenceInput`
 
@@ -10324,10 +10463,11 @@ Generated component schemas: `260`
 - `full_name`: `string | null` (optional)
 - `is_active`: `boolean | null` (optional)
 - `is_verified`: `boolean | null` (optional)
-- `mfa_enabled`: `boolean | null` (optional)
+- `must_change_password`: `boolean | null` (optional)
 - `password`: `string | null` (optional)
 - `phone`: `string | null` (optional)
 - `push_tokens`: `array<string> | null` (optional)
+- `service_memberships`: `array<string> | null` (optional)
 
 ### `ValidationError`
 
@@ -10535,12 +10675,25 @@ Generated component schemas: `260`
 - `secret`: `string | null` (optional)
 - `url`: `string` (required)
 
+### `WebhookDeliveryRead`
+
+- `attempt_number`: `integer` (required)
+- `attempted_at`: `string` (required)
+- `created_at`: `string` (required)
+- `duration_ms`: `number | null` (optional)
+- `error`: `string | null` (optional)
+- `event_id`: `string` (required)
+- `id`: `string` (required)
+- `next_attempt_at`: `string | null` (optional)
+- `status`: `string` (required)
+- `status_code`: `integer | null` (optional)
+- `updated_at`: `string` (required)
+- `webhook_id`: `string` (required)
+
 ### `WebhookUpdate`
 
 - `events`: `array<string> | null` (optional)
-- `failure_count`: `integer | null` (optional)
 - `is_active`: `boolean | null` (optional)
-- `last_status`: `integer | null` (optional)
 - `name`: `string | null` (optional)
 - `secret`: `string | null` (optional)
 - `url`: `string | null` (optional)

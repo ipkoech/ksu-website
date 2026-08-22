@@ -378,7 +378,7 @@ async def transition_about_content(kind: str, item_id: uuid.UUID, data: AboutWor
     item = await _item_or_404(db, model, item_id)
     permissions = permissions_for_user(user)
     required = "content.publish" if data.action in {"publish", "unpublish"} else "content.review" if data.action in {"approve", "request_changes"} else "about.manage"
-    if required not in permissions and "admin:*" not in permissions:
+    if required not in permissions:
         raise HTTPException(status_code=403, detail="Insufficient workflow permission")
     try:
         item = await AboutContentAdminService.transition(db, item, data.action, user.id, data.reason)

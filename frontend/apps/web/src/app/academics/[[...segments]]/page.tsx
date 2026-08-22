@@ -4,7 +4,7 @@ import {
   DepartmentDetailSection,
   type DepartmentDetailSectionKey,
 } from "@/components/public/department-detail-section";
-import { ProgrammeDetailPage } from "@/components/public/programme-detail-page";
+import { ProgrammeDetailRedesign } from "@/components/public/programme-detail-redesign";
 import { PublicSectionPage } from "@/components/public/section-page";
 import { AcademicRecordsPage } from "@/components/public/academic-records-page";
 import { SchoolDetailOverview } from "@/components/public/school-detail-overview";
@@ -21,6 +21,9 @@ import { getSchoolDetailOverviewData } from "@/lib/school-detail-data";
 import type { EntityMediaType } from "@/lib/entity-media-data";
 import { FlowingAcademicsLanding } from "@/components/public/flowing-academics-landing";
 import { getActiveIntake } from "@/lib/get-academics";
+import { PageShell } from "@/components/site-shell";
+import { ExaminationTimetableFinder } from "@/components/public/examination-timetable-finder";
+import { getExaminationTimetableData } from "@/lib/examination-timetable-data";
 
 const schoolDetailSections = new Set<SchoolDetailSectionKey>([
   "team",
@@ -62,6 +65,10 @@ export default async function AcademicsRoutePage({
     school_id?: string;
     sort?: string;
     page?: string;
+    academic_year?: string;
+    semester?: string;
+    programme_id?: string;
+    course_code?: string;
   }>;
 }) {
   const { segments = [] } = await params;
@@ -72,9 +79,19 @@ export default async function AcademicsRoutePage({
   const [area, schoolSlug, child, childSlug, departmentChild, mediaChild] =
     segments;
 
+  if (area === "examinations" && schoolSlug === "timetable" && !child) {
+    return (
+      <ExaminationTimetableFinder
+        data={await getExaminationTimetableData(filters)}
+      />
+    );
+  }
+
   if (area === "programmes" && schoolSlug && !child) {
     return (
-      <ProgrammeDetailPage data={await getProgrammeDetailData(schoolSlug)} />
+      <ProgrammeDetailRedesign
+        data={await getProgrammeDetailData(schoolSlug)}
+      />
     );
   }
 
@@ -244,6 +261,7 @@ export default async function AcademicsRoutePage({
 
   const academicRecordKind =
     area === "schools" ||
+    (area === "departments" && !schoolSlug) ||
     area === "programmes" ||
     area === "calendar" ||
     area === "examinations"
@@ -262,20 +280,9 @@ export default async function AcademicsRoutePage({
 
   if (segments.length === 0) {
     return (
-      <PublicSectionPage
-        config={config}
-        header={headerConfig ? <EntityHeader {...headerConfig} /> : undefined}
-        heroSize="compact"
-        academicLeadership={null}
-        hideScopeCards
-        landingContent={
-          <FlowingAcademicsLanding
-            config={config}
-            academicLeadership={academicLeadership}
-            activeIntake={activeIntake}
-          />
-        }
-      />
+      <PageShell>
+        <FlowingAcademicsLanding activeIntake={activeIntake} />
+      </PageShell>
     );
   }
 

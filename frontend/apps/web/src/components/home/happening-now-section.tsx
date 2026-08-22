@@ -71,7 +71,7 @@ export function HappeningNowSection({
                 <motion.article
                   key={item.id ?? item.href}
                   className={cn(
-                    "group overflow-hidden rounded-2xl border border-border bg-white transition-colors hover:border-primary",
+                    "group overflow-hidden rounded-3xl border border-border bg-white transition-colors hover:border-primary",
                     index === 0 && "sm:col-span-2"
                   )}
                   initial={reducedMotion ? undefined : { opacity: 0, y: 16 }}
@@ -139,7 +139,7 @@ export function HappeningNowSection({
           <div className="flex flex-col gap-5">
             {upcoming.length > 0 && (
               <motion.div
-                className="rounded-2xl border border-border bg-white p-5"
+                className="rounded-3xl border border-border bg-white p-5"
                 initial={reducedMotion ? undefined : { opacity: 0, y: 16 }}
                 whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.3 }}
@@ -193,7 +193,7 @@ export function HappeningNowSection({
 
             {blog ? (
               <motion.div
-                className="group overflow-hidden rounded-2xl border border-border bg-white transition-colors hover:border-primary"
+                className="group overflow-hidden rounded-3xl border border-border bg-white transition-colors hover:border-primary"
                 initial={reducedMotion ? undefined : { opacity: 0, y: 16 }}
                 whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.3 }}

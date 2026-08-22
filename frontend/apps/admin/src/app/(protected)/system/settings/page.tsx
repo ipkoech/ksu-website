@@ -106,7 +106,7 @@ export default function SettingsPage() {
                   <CardContent className="grid gap-4 md:grid-cols-2">
                     {categorySettings.map((setting) => {
                       const rawValue = String(setting.value ?? "");
-                      const isBoolean = ["bool", "boolean"].includes(setting.value_type.toLowerCase()) || ["maintenance_mode", "require_2fa"].includes(setting.key) || ["true", "false"].includes(rawValue);
+                      const isBoolean = ["bool", "boolean"].includes(setting.value_type.toLowerCase()) || setting.key === "maintenance_mode" || ["true", "false"].includes(rawValue);
                       return (
                         <div key={setting.key} className="space-y-2 rounded-lg border p-4">
                           <Label>{setting.description || setting.key}</Label>

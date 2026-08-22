@@ -13,7 +13,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ksu_common.auth import TokenPayload
 from ksu_contracts.rbac import has_scope
 from ksu_common.schemas.responses import success
-from ksu_common.cache import cache_response, invalidate_prefix
+from ksu_common.cache import cache_response
+from ...services.cache import invalidate_library_caches
 from ksu_common.audit import audit_action
 from ksu_common.field_selection import FieldSelection, FieldsQuery, FieldSelector
 from ksu_common.rate_limit import rate_limit
@@ -102,14 +103,14 @@ inquiries_router = APIRouter(prefix="/library/inquiries", tags=["Library Inquiri
 async def list_inquiries(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
     library_id: Optional[uuid.UUID] = Query(None),
     status: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    require_library_scope(user, "library:read", library_id)
+    require_library_scope(user, "library.read", library_id)
     result = await svc.list_inquiries(
         db,
         library_id=library_id,
@@ -130,10 +131,10 @@ async def get_inquiry(
     request: Request,
     inquiry_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
 ):
     inquiry = await svc.get_inquiry(db, inquiry_id)
-    require_library_scope(user, "library:read", inquiry.library_id)
+    require_library_scope(user, "library.read", inquiry.library_id)
     return success(data=LibraryInquiryOut.model_validate(inquiry).model_dump())
 
 
@@ -187,10 +188,10 @@ async def reply_to_inquiry(
     inquiry_id: uuid.UUID,
     data: LibraryInquiryReply,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     existing = await svc.get_inquiry(db, inquiry_id)
-    require_library_scope(user, "library:write", existing.library_id)
+    require_library_scope(user, "library.write", existing.library_id)
     inquiry = await svc.reply_to_inquiry(
         db,
         inquiry_id,
@@ -209,10 +210,10 @@ async def update_inquiry(
     inquiry_id: uuid.UUID,
     data: LibraryInquiryUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     existing = await svc.get_inquiry(db, inquiry_id)
-    require_library_scope(user, "library:write", existing.library_id)
+    require_library_scope(user, "library.write", existing.library_id)
     inquiry = await svc.update_inquiry_status(db, inquiry_id, data)
     return success(data=LibraryInquiryOut.model_validate(inquiry).model_dump())
 
@@ -225,10 +226,10 @@ async def delete_inquiry(
     request: Request,
     inquiry_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     existing = await svc.get_inquiry(db, inquiry_id)
-    require_library_scope(user, "library:admin", existing.library_id)
+    require_library_scope(user, "library.admin", existing.library_id)
     await svc.delete_inquiry(db, inquiry_id)
 
 
@@ -245,7 +246,7 @@ tickets_router = APIRouter(prefix="/library/tickets", tags=["Library Support Tic
 async def list_tickets(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
     status: Optional[str] = Query(None),
     category: Optional[str] = Query(None),
     assigned_to: Optional[uuid.UUID] = Query(None),
@@ -274,7 +275,7 @@ async def get_ticket(
     request: Request,
     ticket_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:read"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.read"))],
 ):
     ticket = await svc.get_ticket(db, ticket_id)
     return success(data=SupportTicketOut.model_validate(ticket).model_dump())
@@ -321,7 +322,7 @@ async def update_ticket(
     ticket_id: uuid.UUID,
     data: SupportTicketUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     ticket = await svc.update_ticket(db, ticket_id, data)
     return success(data=SupportTicketOut.model_validate(ticket).model_dump())
@@ -333,7 +334,7 @@ async def delete_ticket(
     request: Request,
     ticket_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     await svc.delete_ticket(db, ticket_id)
 
@@ -346,7 +347,7 @@ regulations_router = APIRouter(
 
 
 async def invalidate_public_library_cache() -> None:
-    await invalidate_prefix("public")
+    await invalidate_library_caches()
 
 
 @regulations_router.get("/")
@@ -362,9 +363,9 @@ async def list_regulations(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     if is_writer:
-        require_library_scope(user, "library:read", library_id)
+        require_library_scope(user, "library.read", library_id)
     result = await svc.list_regulations(
         db,
         library_id=library_id,
@@ -394,14 +395,14 @@ async def get_regulation(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     regulation = (
         await svc.get_regulation(db, regulation_id)
         if is_writer
         else await svc.get_public_regulation(db, regulation_id)
     )
     if is_writer:
-        require_library_scope(user, "library:read", regulation.library_id)
+        require_library_scope(user, "library.read", regulation.library_id)
     selector = FieldSelector(LibraryRegulation, fields, always_include={"id"})
     data = LibraryRegulationOut.model_validate(regulation).model_dump(mode="json")
     return success(data=selector.apply(data))
@@ -413,9 +414,9 @@ async def create_regulation(
     request: Request,
     data: LibraryRegulationCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
-    require_library_scope(user, "library:write", data.library_id)
+    require_library_scope(user, "library.write", data.library_id)
     regulation = await svc.create_regulation(db, data)
     await invalidate_public_library_cache()
     return success(
@@ -435,12 +436,12 @@ async def update_regulation(
     regulation_id: uuid.UUID,
     data: LibraryRegulationUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     existing = await svc.get_regulation(db, regulation_id)
-    require_library_scope(user, "library:write", existing.library_id)
+    require_library_scope(user, "library.write", existing.library_id)
     if "library_id" in data.model_fields_set:
-        require_library_scope(user, "library:write", data.library_id)
+        require_library_scope(user, "library.write", data.library_id)
     regulation = await svc.update_regulation(db, regulation_id, data)
     await invalidate_public_library_cache()
     return success(data=LibraryRegulationOut.model_validate(regulation).model_dump())
@@ -456,10 +457,10 @@ async def delete_regulation(
     request: Request,
     regulation_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     existing = await svc.get_regulation(db, regulation_id)
-    require_library_scope(user, "library:admin", existing.library_id)
+    require_library_scope(user, "library.admin", existing.library_id)
     await svc.delete_regulation(db, regulation_id)
     await invalidate_public_library_cache()
 
@@ -485,9 +486,9 @@ async def list_specialists(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     if is_writer:
-        require_library_scope(user, "library:read", library_id)
+        require_library_scope(user, "library.read", library_id)
     result = await svc.list_specialists(
         db,
         library_id=library_id,
@@ -510,9 +511,9 @@ async def create_specialist(
     request: Request,
     data: LibrarySpecialistCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
-    require_library_scope(user, "library:write", data.library_id)
+    require_library_scope(user, "library.write", data.library_id)
     specialist = await svc.create_specialist(db, data)
     await invalidate_public_library_cache()
     return success(
@@ -532,12 +533,12 @@ async def update_specialist(
     specialist_id: uuid.UUID,
     data: LibrarySpecialistUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     existing = await svc.get_specialist(db, specialist_id)
-    require_library_scope(user, "library:write", existing.library_id)
+    require_library_scope(user, "library.write", existing.library_id)
     if "library_id" in data.model_fields_set:
-        require_library_scope(user, "library:write", data.library_id)
+        require_library_scope(user, "library.write", data.library_id)
     specialist = await svc.update_specialist(db, specialist_id, data)
     await invalidate_public_library_cache()
     return success(data=LibrarySpecialistOut.model_validate(specialist).model_dump())
@@ -553,10 +554,10 @@ async def delete_specialist(
     request: Request,
     specialist_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     existing = await svc.get_specialist(db, specialist_id)
-    require_library_scope(user, "library:admin", existing.library_id)
+    require_library_scope(user, "library.admin", existing.library_id)
     await svc.delete_specialist(db, specialist_id)
     await invalidate_public_library_cache()
 
@@ -581,9 +582,9 @@ async def list_guides(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     if is_writer:
-        require_library_scope(user, "library:read", library_id)
+        require_library_scope(user, "library.read", library_id)
     result = await svc.list_guides(
         db,
         library_id=library_id,
@@ -609,10 +610,10 @@ async def get_guide_by_slug(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     guide = await svc.get_guide_by_slug(db, slug, public_only=not is_writer)
     if is_writer:
-        require_library_scope(user, "library:read", guide.library_id)
+        require_library_scope(user, "library.read", guide.library_id)
     selector = FieldSelector(LibraryGuide, fields, always_include={"id"})
     return success(data=selector.apply(svc._guide_out(guide).model_dump(mode="json")))
 
@@ -623,9 +624,9 @@ async def create_guide(
     request: Request,
     data: LibraryGuideCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
-    require_library_scope(user, "library:write", data.library_id)
+    require_library_scope(user, "library.write", data.library_id)
     guide = await svc.create_guide(db, data)
     await invalidate_public_library_cache()
     return success(
@@ -641,12 +642,12 @@ async def update_guide(
     guide_id: uuid.UUID,
     data: LibraryGuideUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     existing = await svc.get_guide(db, guide_id)
-    require_library_scope(user, "library:write", existing.library_id)
+    require_library_scope(user, "library.write", existing.library_id)
     if "library_id" in data.model_fields_set:
-        require_library_scope(user, "library:write", data.library_id)
+        require_library_scope(user, "library.write", data.library_id)
     guide = await svc.update_guide(db, guide_id, data)
     await invalidate_public_library_cache()
     return success(data=LibraryGuideOut.model_validate(guide).model_dump())
@@ -658,10 +659,10 @@ async def delete_guide(
     request: Request,
     guide_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     existing = await svc.get_guide(db, guide_id)
-    require_library_scope(user, "library:admin", existing.library_id)
+    require_library_scope(user, "library.admin", existing.library_id)
     await svc.delete_guide(db, guide_id)
     await invalidate_public_library_cache()
 
@@ -683,9 +684,9 @@ async def list_workflows(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     if is_writer:
-        require_library_scope(user, "library:read", library_id)
+        require_library_scope(user, "library.read", library_id)
     result = await svc.list_workflows(
         db,
         library_id=library_id,
@@ -708,10 +709,10 @@ async def get_workflow_by_slug(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     workflow = await svc.get_workflow_by_slug(db, slug, public_only=not is_writer)
     if is_writer:
-        require_library_scope(user, "library:read", workflow.library_id)
+        require_library_scope(user, "library.read", workflow.library_id)
     selector = FieldSelector(LibraryWorkflow, fields, always_include={"id"})
     return success(data=selector.apply(svc._workflow_out(workflow).model_dump(mode="json")))
 
@@ -722,9 +723,9 @@ async def create_workflow(
     request: Request,
     data: LibraryWorkflowCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
-    require_library_scope(user, "library:write", data.library_id)
+    require_library_scope(user, "library.write", data.library_id)
     workflow = await svc.create_workflow(db, data)
     await invalidate_public_library_cache()
     return success(
@@ -742,12 +743,12 @@ async def update_workflow(
     workflow_id: uuid.UUID,
     data: LibraryWorkflowUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     existing = await svc.get_workflow(db, workflow_id)
-    require_library_scope(user, "library:write", existing.library_id)
+    require_library_scope(user, "library.write", existing.library_id)
     if "library_id" in data.model_fields_set:
-        require_library_scope(user, "library:write", data.library_id)
+        require_library_scope(user, "library.write", data.library_id)
     workflow = await svc.update_workflow(db, workflow_id, data)
     await invalidate_public_library_cache()
     return success(data=LibraryWorkflowOut.model_validate(workflow).model_dump())
@@ -761,10 +762,10 @@ async def delete_workflow(
     request: Request,
     workflow_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     existing = await svc.get_workflow(db, workflow_id)
-    require_library_scope(user, "library:admin", existing.library_id)
+    require_library_scope(user, "library.admin", existing.library_id)
     await svc.delete_workflow(db, workflow_id)
     await invalidate_public_library_cache()
 
@@ -787,9 +788,9 @@ async def list_policies(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     if is_writer:
-        require_library_scope(user, "library:read", library_id)
+        require_library_scope(user, "library.read", library_id)
     result = await svc.list_policies(
         db,
         library_id=library_id,
@@ -813,10 +814,10 @@ async def get_policy_by_slug(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     policy = await svc.get_policy_by_slug(db, slug, public_only=not is_writer)
     if is_writer:
-        require_library_scope(user, "library:read", policy.library_id)
+        require_library_scope(user, "library.read", policy.library_id)
     selector = FieldSelector(LibraryPolicyPage, fields, always_include={"id"})
     data = LibraryPolicyPageOut.model_validate(policy).model_dump(mode="json")
     return success(data=selector.apply(data))
@@ -828,9 +829,9 @@ async def create_policy(
     request: Request,
     data: LibraryPolicyPageCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
-    require_library_scope(user, "library:write", data.library_id)
+    require_library_scope(user, "library.write", data.library_id)
     policy = await svc.create_policy(db, data)
     await invalidate_public_library_cache()
     return success(
@@ -848,12 +849,12 @@ async def update_policy(
     policy_id: uuid.UUID,
     data: LibraryPolicyPageUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     existing = await svc.get_policy(db, policy_id)
-    require_library_scope(user, "library:write", existing.library_id)
+    require_library_scope(user, "library.write", existing.library_id)
     if "library_id" in data.model_fields_set:
-        require_library_scope(user, "library:write", data.library_id)
+        require_library_scope(user, "library.write", data.library_id)
     policy = await svc.update_policy(db, policy_id, data)
     await invalidate_public_library_cache()
     return success(data=LibraryPolicyPageOut.model_validate(policy).model_dump())
@@ -867,10 +868,10 @@ async def delete_policy(
     request: Request,
     policy_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     existing = await svc.get_policy(db, policy_id)
-    require_library_scope(user, "library:admin", existing.library_id)
+    require_library_scope(user, "library.admin", existing.library_id)
     await svc.delete_policy(db, policy_id)
     await invalidate_public_library_cache()
 

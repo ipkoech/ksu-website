@@ -72,6 +72,9 @@ def _record_payload(record: Any, *, href_prefix: str, description: str | None = 
         "governance_type",
         "term_start",
         "term_end",
+        "email",
+        "phone",
+        "office_location",
     ):
         if hasattr(record, key):
             payload[key] = getattr(record, key)

@@ -45,7 +45,7 @@ async def _get_conversation(db: AsyncSession, conversation_id: uuid.UUID) -> Lib
 
 
 def _scope_filter(query, user: TokenPayload):
-    scope_ids = allowed_library_scope_ids(user, "library:read")
+    scope_ids = allowed_library_scope_ids(user, "library.read")
     if scope_ids is not None:
         query = query.where(
             LibraryConversation.library_id.in_([uuid.UUID(value) for value in scope_ids])
@@ -86,7 +86,7 @@ async def get_staff_conversation(
     conversation_id: uuid.UUID,
 ) -> LibraryConversation:
     conversation = await _get_conversation(db, conversation_id)
-    require_library_scope(user, "library:read", conversation.library_id)
+    require_library_scope(user, "library.read", conversation.library_id)
     return conversation
 
 
@@ -97,7 +97,7 @@ async def assign_conversation(
     data: LibraryAssistantStaffAssignmentUpdate,
 ) -> dict:
     conversation = await _get_conversation(db, conversation_id)
-    require_library_scope(user, "library:write", conversation.library_id)
+    require_library_scope(user, "library.write", conversation.library_id)
     conversation.assigned_to_person_id = data.assigned_to_person_id
     conversation.status = "assigned" if data.assigned_to_person_id else "awaiting_librarian"
     await db.flush()
@@ -111,7 +111,7 @@ async def update_status(
     data: LibraryAssistantStaffStatusUpdate,
 ) -> dict:
     conversation = await _get_conversation(db, conversation_id)
-    require_library_scope(user, "library:write", conversation.library_id)
+    require_library_scope(user, "library.write", conversation.library_id)
     conversation.status = data.status
     await db.flush()
     return _conversation_data(conversation)
@@ -124,7 +124,7 @@ async def reply_to_conversation(
     data: LibraryAssistantStaffReplyCreate,
 ) -> dict:
     conversation = await _get_conversation(db, conversation_id)
-    require_library_scope(user, "library:write", conversation.library_id)
+    require_library_scope(user, "library.write", conversation.library_id)
     message = LibraryConversationMessage(
         conversation_id=conversation.id,
         sender_type="librarian",

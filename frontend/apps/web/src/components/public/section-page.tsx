@@ -1,8 +1,13 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
-import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
-import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import {
+  CampusPageHeader,
+  ScrollReveal,
+  ScrollRevealGroup,
+  type CampusHeaderImageName,
+} from "@ksu/ui/components";
+import { PageShell } from "@/components/site-shell";
 import { RichTextRenderer } from "@ksu/ui/rich-text-renderer";
 import {
   PublicActionLink,
@@ -29,6 +34,12 @@ export type PublicPageSection = {
   variant?: "cards" | "article";
   columns?: 2 | 3 | 4;
   cards: PublicCard[];
+  pagination?: {
+    page: number;
+    perPage: number;
+    total: number;
+    pages: number;
+  };
   filters?: {
     action: string;
     query?: string;
@@ -65,6 +76,11 @@ export type PublicPageConfig = {
   relatedTitle?: string;
   relatedItems?: PublicCard[];
   sections: PublicPageSection[];
+  /**
+   * Pin a campus landmark for the page header. Omit and the header resolves one
+   * from `currentHref`, which keeps related routes on the same building.
+   */
+  headerImage?: CampusHeaderImageName;
   continueTitle?: string;
   continueBody?: string;
   continueItems?: PublicCard[];
@@ -293,188 +309,178 @@ export function PublicSectionPage({
     <PageShell header={header}>
       <>
         {showHero ? (
-          <section
-            className={
-              compactHero
-                ? "relative overflow-hidden border-b border-border bg-surface-subtle px-4 py-4 sm:px-6 lg:px-8 lg:py-5"
-                : "relative overflow-hidden border-b border-border bg-surface-subtle px-4 py-6 sm:px-6 lg:px-8 lg:py-8"
-            }
-          >
-            <div className="relative mx-auto w-full max-w-[1680px]">
-              <BreadcrumbTrail items={config.breadcrumb} />
-
-              <div
-                className={
-                  compactHero
-                    ? "mt-4 grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)_260px] xl:items-start"
-                    : "mt-6 grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)_280px] xl:items-start"
-                }
-              >
-                <nav
-                  aria-label={config.navLabel}
-                  className="rounded-lg border border-border bg-white p-3 shadow-sm xl:sticky xl:top-28"
-                >
-                  <p className="px-2 text-xs font-semibold uppercase text-secondary">
-                    {config.sectionLabel}
-                  </p>
-                  <ul className="mt-3 space-y-2">
-                    {config.navItems.map((item) => (
-                      <li key={item.href ?? item.title}>
-                        {item.href ? (
-                          <Link
-                            href={item.href}
-                            className="group flex items-center gap-3 rounded-md border border-transparent px-3 py-2.5 text-sm font-semibold text-muted-foreground transition hover:border-primary/20 hover:bg-primary/5 hover:text-foreground"
-                          >
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-muted text-primary transition group-hover:bg-primary group-hover:text-white">
-                              <ChevronRight aria-hidden className="h-4 w-4" />
-                            </span>
-                            <span className="min-w-0 flex-1">{item.title}</span>
-                          </Link>
-                        ) : (
-                          <span className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-muted-foreground">
-                            {item.title}
-                          </span>
-                        )}
-                      </li>
+          <>
+            <CampusPageHeader
+              variant={compactHero ? "compact" : "default"}
+              eyebrow={config.eyebrow}
+              title={config.title}
+              description={config.body}
+              breadcrumbs={config.breadcrumb}
+              image={config.headerImage}
+              seed={config.currentHref}
+              actions={
+                config.primaryAction || config.secondaryActions?.length ? (
+                  <>
+                    {config.primaryAction ? (
+                      <PublicActionLink action={config.primaryAction} primary />
+                    ) : null}
+                    {config.secondaryActions?.map((action) => (
+                      <PublicActionLink key={action.label} action={action} />
                     ))}
-                  </ul>
-                </nav>
-
+                  </>
+                ) : null
+              }
+            />
+            <section
+              className={
+                compactHero
+                  ? "relative overflow-hidden border-b border-border bg-surface-subtle px-4 py-4 sm:px-6 lg:px-8 lg:py-5"
+                  : "relative overflow-hidden border-b border-border bg-surface-subtle px-4 py-6 sm:px-6 lg:px-8 lg:py-8"
+              }
+            >
+              <div className="relative mx-auto w-full max-w-[1680px]">
                 <div
                   className={
-                    compactHero ? "min-w-0 p-1" : "min-w-0 p-1 sm:p-2 lg:p-3"
+                    compactHero
+                      ? "mt-4 grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)_260px] xl:items-start"
+                      : "mt-6 grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)_280px] xl:items-start"
                   }
                 >
-                  <p className="text-sm font-semibold uppercase text-secondary">
-                    {config.eyebrow}
-                  </p>
-                  <h1
-                    className={
-                      compactHero
-                        ? "mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground sm:text-3xl xl:text-4xl"
-                        : "mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl xl:text-5xl"
-                    }
+                  <nav
+                    aria-label={config.navLabel}
+                    className="rounded-lg border border-border bg-white p-3 shadow-sm xl:sticky xl:top-28"
                   >
-                    {config.title}
-                  </h1>
-                  <p
-                    className={
-                      compactHero
-                        ? "mt-3 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base"
-                        : "mt-4 max-w-3xl text-base leading-8 text-muted-foreground"
-                    }
-                  >
-                    {config.body}
-                  </p>
-                  {config.primaryAction || config.secondaryActions?.length ? (
-                    <div
-                      className={
-                        compactHero
-                          ? "mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap"
-                          : "mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap"
-                      }
-                    >
-                      {config.primaryAction ? (
-                        <PublicActionLink
-                          action={config.primaryAction}
-                          primary
-                        />
-                      ) : null}
-                      {config.secondaryActions?.map((action) => (
-                        <PublicActionLink key={action.label} action={action} />
-                      ))}
-                    </div>
-                  ) : null}
-                  {heroContent}
-
-                  {!hideScopeCards && config.scopeCards?.length ? (
-                    <div
-                      className={
-                        compactHero
-                          ? "mt-5 border-t border-border pt-4"
-                          : "mt-7 border-t border-border pt-5"
-                      }
-                    >
-                      <p className="text-xs font-semibold uppercase text-muted-foreground">
-                        {config.scopeTitle ?? "Page highlights"}
-                      </p>
-                      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                        {config.scopeCards.map((item) => (
-                          <div
-                            key={item.title}
-                            className="rounded-lg border border-border bg-white p-4 shadow-sm"
-                          >
-                            <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary ring-1 ring-primary/15">
-                              <PublicIconGlyph
-                                icon={item.icon}
-                                className="h-4 w-4"
-                              />
+                    <p className="px-2 text-xs font-semibold uppercase text-secondary">
+                      {config.sectionLabel}
+                    </p>
+                    <ul className="mt-3 space-y-2">
+                      {config.navItems.map((item) => (
+                        <li key={item.href ?? item.title}>
+                          {item.href ? (
+                            <Link
+                              href={item.href}
+                              className="group flex items-center gap-3 rounded-md border border-transparent px-3 py-2.5 text-sm font-semibold text-muted-foreground transition hover:border-primary/20 hover:bg-primary/5 hover:text-foreground"
+                            >
+                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-muted text-primary transition group-hover:bg-primary group-hover:text-white">
+                                <ChevronRight aria-hidden className="h-4 w-4" />
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                {item.title}
+                              </span>
+                            </Link>
+                          ) : (
+                            <span className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-muted-foreground">
+                              {item.title}
                             </span>
-                            <p className="mt-3 text-xs font-semibold uppercase text-muted-foreground">
-                              {item.eyebrow ?? item.title}
-                            </p>
-                            <p className="mt-2 text-sm font-semibold leading-6 text-foreground">
-                              {item.body}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </nav>
 
-                <aside className="space-y-5">
-                  <div className="rounded-lg border border-border bg-white p-5 shadow-sm">
-                    <p className="text-xs font-semibold uppercase text-secondary">
-                      {config.asideTitle ?? "Explore this section"}
-                    </p>
-                    <p className="mt-4 text-sm leading-7 text-muted-foreground">
-                      {config.asideBody}
-                    </p>
+                  <div
+                    className={
+                      compactHero ? "min-w-0 p-1" : "min-w-0 p-1 sm:p-2 lg:p-3"
+                    }
+                  >
+                    {/* Eyebrow, title, body and actions now live on the campus
+                      header band above, so this column carries only the
+                      page-specific hero content and highlights. */}
+                    {heroContent}
+
+                    {!hideScopeCards && config.scopeCards?.length ? (
+                      <div
+                        className={
+                          // Only rule off from hero content that actually sits
+                          // above; without it the divider reads as an orphan.
+                          !heroContent
+                            ? ""
+                            : compactHero
+                              ? "mt-5 border-t border-border pt-4"
+                              : "mt-7 border-t border-border pt-5"
+                        }
+                      >
+                        <p className="text-xs font-semibold uppercase text-muted-foreground">
+                          {config.scopeTitle ?? "Page highlights"}
+                        </p>
+                        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                          {config.scopeCards.map((item) => (
+                            <div
+                              key={item.title}
+                              className="rounded-lg border border-border bg-white p-4 shadow-sm"
+                            >
+                              <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary ring-1 ring-primary/15">
+                                <PublicIconGlyph
+                                  icon={item.icon}
+                                  className="h-4 w-4"
+                                />
+                              </span>
+                              <p className="mt-3 text-xs font-semibold uppercase text-muted-foreground">
+                                {item.eyebrow ?? item.title}
+                              </p>
+                              <p className="mt-2 text-sm font-semibold leading-6 text-foreground">
+                                {item.body}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
 
-                  {config.relatedItems?.length ? (
-                    <nav
-                      aria-label={config.relatedTitle ?? "Related pages"}
-                      className="rounded-lg border border-border bg-white p-3 shadow-sm"
-                    >
-                      <p className="px-2 text-xs font-semibold uppercase text-secondary">
-                        {config.relatedTitle ?? "Related Pages"}
+                  <aside className="space-y-5">
+                    <div className="rounded-lg border border-border bg-white p-5 shadow-sm">
+                      <p className="text-xs font-semibold uppercase text-secondary">
+                        {config.asideTitle ?? "Explore this section"}
                       </p>
-                      <ul className="mt-3 space-y-2">
-                        {config.relatedItems.slice(0, 4).map((item) => {
-                          if (!item.href) return null;
+                      <p className="mt-4 text-sm leading-7 text-muted-foreground">
+                        {config.asideBody}
+                      </p>
+                    </div>
 
-                          return (
-                            <li key={item.href}>
-                              <Link
-                                href={item.href}
-                                className="group flex items-center gap-3 rounded-md border border-transparent px-3 py-2.5 text-sm font-semibold text-muted-foreground transition hover:border-primary/20 hover:bg-primary/5 hover:text-foreground"
-                              >
-                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-muted text-primary transition group-hover:bg-primary group-hover:text-white">
-                                  <PublicIconGlyph
-                                    icon={item.icon}
-                                    className="h-4 w-4"
+                    {config.relatedItems?.length ? (
+                      <nav
+                        aria-label={config.relatedTitle ?? "Related pages"}
+                        className="rounded-lg border border-border bg-white p-3 shadow-sm"
+                      >
+                        <p className="px-2 text-xs font-semibold uppercase text-secondary">
+                          {config.relatedTitle ?? "Related Pages"}
+                        </p>
+                        <ul className="mt-3 space-y-2">
+                          {config.relatedItems.slice(0, 4).map((item) => {
+                            if (!item.href) return null;
+
+                            return (
+                              <li key={item.href}>
+                                <Link
+                                  href={item.href}
+                                  className="group flex items-center gap-3 rounded-md border border-transparent px-3 py-2.5 text-sm font-semibold text-muted-foreground transition hover:border-primary/20 hover:bg-primary/5 hover:text-foreground"
+                                >
+                                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-muted text-primary transition group-hover:bg-primary group-hover:text-white">
+                                    <PublicIconGlyph
+                                      icon={item.icon}
+                                      className="h-4 w-4"
+                                    />
+                                  </span>
+                                  <span className="min-w-0 flex-1">
+                                    {item.title}
+                                  </span>
+                                  <ChevronRight
+                                    aria-hidden
+                                    className="h-4 w-4 text-muted-foreground/70 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary"
                                   />
-                                </span>
-                                <span className="min-w-0 flex-1">
-                                  {item.title}
-                                </span>
-                                <ChevronRight
-                                  aria-hidden
-                                  className="h-4 w-4 text-muted-foreground/70 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary"
-                                />
-                              </Link>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </nav>
-                  ) : null}
-                </aside>
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </nav>
+                    ) : null}
+                  </aside>
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
+          </>
         ) : null}
 
         {landingContent}

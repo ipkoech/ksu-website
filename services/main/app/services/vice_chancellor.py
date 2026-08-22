@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable, Iterable
 
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -134,6 +135,16 @@ async def validate_placement_source(db: AsyncSession, payload: VcHubPlacementCre
         raise ValueError(f"The {payload.section} source was not found")
 
 
+def _audit_fields(changed_fields: dict[str, Any]) -> dict[str, Any]:
+    """Coerce a model_dump() to something JSONB can hold.
+
+    Payloads carry UUIDs and datetimes for fields like hero_media_id and
+    visible_from; handing those straight to the JSONB column raises a
+    StatementError at bind time and turns an edit into a 500.
+    """
+    return jsonable_encoder(changed_fields)
+
+
 async def _reset_published_edit(
     db: AsyncSession, record: Any, actor_id: uuid.UUID, changed_fields: dict[str, Any]
 ) -> None:
@@ -150,7 +161,34 @@ async def _reset_published_edit(
         to_status="draft",
         action="edit_reset",
         actor_id=actor_id,
-        changed_fields=changed_fields,
+        changed_fields=_audit_fields(changed_fields),
+    ))
+
+
+async def _log_live_edit(
+    db: AsyncSession, record: Any, actor_id: uuid.UUID, changed_fields: dict[str, Any]
+) -> None:
+    """Record an edit that deliberately does not unpublish the record.
+
+    The hub is the page shell, not an article: the public endpoint requires it to
+    be published, so resetting it to draft on every edit takes the whole VC page
+    down to its empty state until someone re-runs the approval chain. Individual
+    placements and speeches still reset — only the shell is exempt, and the edit
+    is still audited.
+
+    Logged as "review_edit" — the status does not change, so this is an edit to
+    already-approved content. CONTENT_WORKFLOW_ACTIONS is enforced by a CHECK
+    constraint, so a new action name would need a migration alongside it.
+    """
+    current = record.workflow_status or record.status
+    db.add(ContentWorkflowLog(
+        content_type="vice-chancellor",
+        content_id=record.id,
+        from_status=current,
+        to_status=current,
+        action="review_edit",
+        actor_id=actor_id,
+        changed_fields=_audit_fields(changed_fields),
     ))
 
 
@@ -226,7 +264,7 @@ class ViceChancellorAdminService:
             await validate_media(db, values["hero_media_id"], allowed_types={"image"})
         if values.get("welcome_video_id") and await db.get(VcVideo, values["welcome_video_id"]) is None:
             raise ValueError("Welcome video was not found")
-        await _reset_published_edit(db, hub, actor_id, values)
+        await _log_live_edit(db, hub, actor_id, values)
         apply_updates(hub, **values)
         hub.updated_by_id = actor_id
         await db.flush()

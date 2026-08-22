@@ -15,6 +15,7 @@ from ..security.scopes import (
     RESEARCH_LEADERSHIP_SCOPE_ROLES,
     SCHOOL_PORTAL_PERMISSION_NAMES,
 )
+from ..security.role_assignments import is_role_assignment_current
 
 ScopeKey = tuple[str, uuid.UUID]
 
@@ -184,12 +185,27 @@ PORTAL_DEFINITIONS = {
         "href": "/library",
         "permissions": {
             "library.view",
-            "library:read",
+            "library.read",
             "library.manage_resources",
             "library.manage_services",
             "library.manage_collections",
             "library.manage_staff",
             "library.manage_loans",
+        },
+    },
+    "heri": {
+        "label": "HERI Africa Portal",
+        "service": "heri",
+        "href": "/heri",
+        "permissions": {
+            "heri.content.read",
+            "heri.content.write",
+            "heri.content.submit",
+            "heri.content.review",
+            "heri.content.publish",
+            "heri.media.read",
+            "heri.media.write",
+            "heri.workflow.publish",
         },
     },
 }
@@ -207,7 +223,7 @@ def _active_role_assignments(user: User) -> Iterable:
     return (
         assignment
         for assignment in getattr(user, "role_assignments", []) or []
-        if getattr(assignment, "is_active", True)
+        if is_role_assignment_current(assignment)
         and getattr(assignment, "role", None)
         and getattr(assignment.role, "is_active", True)
     )

@@ -13,6 +13,7 @@ const roleDestinations: RoleDestination[] = [
   { roles: ["content-admin", "content-manager", "content-staff", "cocms-admin", "corporate-admin"], href: "/corporate-communication", service: "main" },
   { roles: ["story-contributor"], href: "/story-contributor", service: "main" },
   { roles: ["library-admin", "library-manager", "library-staff"], href: "/library", service: "library" },
+  { roles: ["heri-admin", "heri-editor", "heri-publisher", "heri-partnership-manager"], href: "/heri", service: "heri" },
   { roles: ["research-content"], href: "/research/content", service: "research" },
   { roles: ["research-farm"], href: "/research/farm", service: "research" },
   { roles: ["research-sustainability"], href: "/research/sustainability", service: "research" },
@@ -32,6 +33,7 @@ const portalPriority = [
   "/schools",
   "/departments",
   "/library",
+  "/heri",
   "/settings/profile",
 ];
 
@@ -48,6 +50,7 @@ const serviceFallbacks: Record<Service, string> = {
   main: "/admin",
   research: "/research",
   library: "/library",
+  heri: "/heri",
   system: "/super-admin",
 };
 

@@ -1,0 +1,23 @@
+# Publishes the datastore ports to the host so services can be run natively
+# (uvicorn / next dev) against the same Postgres and Redis the stack already uses.
+#
+# Only the datastores are affected; no application container is defined here.
+# Host ports are deliberately offset from the defaults because this machine
+# already runs a native PostgreSQL on 5432.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.localdev.yml up -d postgres redis redis-cache
+#
+# Bound to 127.0.0.1 so nothing is reachable from outside this machine.
+
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:55432:5432"
+
+  redis:
+    ports:
+      - "127.0.0.1:56379:6379"
+
+  redis-cache:
+    ports:
+      - "127.0.0.1:56380:6379"

@@ -36,13 +36,13 @@ async def get_campus(slug: str, db: DbSession, fields: FieldSelection = FieldsDe
     return success(data=selector.apply(campus))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("academic:write"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("academic.manage_campuses"))])
 async def create_campus(data: CampusCreate, db: DbSession, _: CurrentUser):
     campus = await CampusService.create(db, **data.model_dump())
     return success(data=campus, message="Campus created")
 
 
-@router.patch("/{campus_id}", dependencies=[Depends(require_scope("academic:write"))])
+@router.patch("/{campus_id}", dependencies=[Depends(require_scope("academic.manage_campuses"))])
 async def update_campus(campus_id: uuid.UUID, data: CampusUpdate, db: DbSession, _: CurrentUser):
     campus = await CampusService.get_by_id(db, campus_id)
     if campus is None:

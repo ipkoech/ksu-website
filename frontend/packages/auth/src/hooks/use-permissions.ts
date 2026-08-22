@@ -58,7 +58,6 @@ export function usePermissions() {
 
   const hasScope = (scope: string): boolean => {
     if (!user) return false;
-    if (isSuperAdmin(user.roles)) return true;
     if (availableScopes.has("*") || availableScopes.has("admin:*")) return true;
 
     const candidates = equivalentScopes(scope);

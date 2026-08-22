@@ -27,8 +27,8 @@ from ...services import ContentWorkflowService, StoryContributorAccountRequestSe
 
 router = APIRouter()
 
-STORY_MANAGE_PERMISSIONS = {"content.manage", "content.manage_stories", "admin:*"}
-STORY_CONTRIBUTOR_PERMISSIONS = {"stories.submit", "content.submit", "content.manage", "admin:*"}
+STORY_MANAGE_PERMISSIONS = {"content.manage", "content.manage_stories"}
+STORY_CONTRIBUTOR_PERMISSIONS = {"stories.submit", "content.submit", "content.manage"}
 
 # Fields a contributor may change on their own story. Everything else on
 # StoryUpdate (is_featured, homepage_priority, source_type, contributor

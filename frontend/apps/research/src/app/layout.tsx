@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ksuSans, ksuDisplay } from "@ksu/ui/fonts";
+import { ksuBookman, ksuSans, ksuDisplay } from "@ksu/ui/fonts";
 import { AccessibilityInitScript, AccessibilityShell } from "@ksu/ui";
 import { PublicFooter } from "@ksu/ui/layout/public";
 import { Announcements } from "@ksu/ui/components";
@@ -131,7 +131,7 @@ export default async function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${ksuSans.variable} ${ksuDisplay.variable}`}
+      className={`${ksuBookman.variable} ${ksuSans.variable} ${ksuDisplay.variable}`}
     >
       <body className="font-sans antialiased" suppressHydrationWarning>
         <AccessibilityInitScript />

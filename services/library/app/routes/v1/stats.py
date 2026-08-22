@@ -15,7 +15,7 @@ from ...core.database import get_db
 from ...core.config import get_settings
 from ...services.stats import admin_library_stats, public_library_stats
 
-router = APIRouter(prefix="/stats", tags=["Stats"])
+router = APIRouter(prefix="/library/stats", tags=["Stats"])
 verify_internal_key = internal_key_guard(
     lambda: get_settings().INTERNAL_API_KEY,
     allow_legacy_header=False,
@@ -36,7 +36,7 @@ async def get_public_stats(
 async def get_admin_stats(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    user: TokenPayload = Depends(requires_scope("library:read")),
+    user: TokenPayload = Depends(requires_scope("library.read")),
 ):
     result = await admin_library_stats(db)
     return success(data=result.model_dump())

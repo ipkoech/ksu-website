@@ -196,7 +196,7 @@ async def get_direct_reports(assignment_id: uuid.UUID, db: DbSession, _: Current
     return success(data=selector.apply(reports))
 
 
-@router.post("/assignments", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("staff:write"))])
+@router.post("/assignments", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("staff.manage_assignments"))])
 async def create_assignment(data: StaffAssignmentCreate, db: DbSession, user: CurrentUser):
     payload = data.model_dump()
     await _require_assignment_scope(
@@ -225,7 +225,7 @@ async def create_assignment(data: StaffAssignmentCreate, db: DbSession, user: Cu
     return success(data=assignment, message="Assignment created")
 
 
-@router.patch("/assignments/{assignment_id}", dependencies=[Depends(require_scope("staff:write"))])
+@router.patch("/assignments/{assignment_id}", dependencies=[Depends(require_scope("staff.manage_assignments"))])
 async def update_assignment(assignment_id: uuid.UUID, data: StaffAssignmentUpdate, db: DbSession, user: CurrentUser):
     assignment = await StaffService.get_by_id(db, assignment_id)
     if assignment is None:
@@ -272,7 +272,7 @@ async def update_assignment(assignment_id: uuid.UUID, data: StaffAssignmentUpdat
     return success(data=assignment, message="Assignment updated")
 
 
-@router.patch("/assignments/{assignment_id}/end", dependencies=[Depends(require_scope("staff:write"))])
+@router.patch("/assignments/{assignment_id}/end", dependencies=[Depends(require_scope("staff.manage_assignments"))])
 async def end_assignment(assignment_id: uuid.UUID, data: StaffAssignmentEnd, db: DbSession, user: CurrentUser):
     assignment = await StaffService.get_by_id(db, assignment_id)
     if assignment is None:
@@ -291,7 +291,7 @@ async def end_assignment(assignment_id: uuid.UUID, data: StaffAssignmentEnd, db:
     return success(data=assignment, message="Assignment ended")
 
 
-@router.patch("/assignments/{assignment_id}/activate", dependencies=[Depends(require_scope("staff:write"))])
+@router.patch("/assignments/{assignment_id}/activate", dependencies=[Depends(require_scope("staff.manage_assignments"))])
 async def activate_assignment(assignment_id: uuid.UUID, data: StaffAssignmentActivate, db: DbSession, user: CurrentUser):
     assignment = await StaffService.get_by_id(db, assignment_id)
     if assignment is None:
@@ -320,7 +320,7 @@ async def activate_assignment(assignment_id: uuid.UUID, data: StaffAssignmentAct
     return success(data=assignment, message="Assignment activated")
 
 
-@router.post("/assignments/{assignment_id}/reassign", dependencies=[Depends(require_scope("staff:write"))])
+@router.post("/assignments/{assignment_id}/reassign", dependencies=[Depends(require_scope("staff.manage_assignments"))])
 async def reassign_assignment(assignment_id: uuid.UUID, data: StaffAssignmentReassign, db: DbSession, user: CurrentUser):
     assignment = await StaffService.get_by_id(db, assignment_id)
     if assignment is None:
@@ -357,7 +357,7 @@ async def reassign_assignment(assignment_id: uuid.UUID, data: StaffAssignmentRea
     return success(data=replacement, message="Assignment reassigned")
 
 
-@router.delete("/assignments/{assignment_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("staff:delete"))])
+@router.delete("/assignments/{assignment_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("staff.manage_assignments"))])
 async def delete_assignment(assignment_id: uuid.UUID, db: DbSession, user: CurrentUser):
     assignment = await StaffService.get_by_id(db, assignment_id)
     if assignment is None:

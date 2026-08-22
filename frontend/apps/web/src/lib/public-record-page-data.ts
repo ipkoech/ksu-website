@@ -1,5 +1,6 @@
 import {
   accommodationsApi,
+  academicCalendarsApi,
   alumniApi,
   alumniAssociationsApi,
   announcementsApi,
@@ -20,7 +21,9 @@ import {
   sportsFacilitiesApi,
   studentGovernanceApi,
   wingsApi,
+  mainApi,
   type Accommodation,
+  type AcademicCalendar,
   type Alumni,
   type AlumniAssociation,
   type Announcement,
@@ -58,8 +61,18 @@ import {
   getSearchPage,
 } from "@/lib/public-page-data";
 import { researchFrontendUrl } from "@/lib/service-urls";
+import { publicFileUrl } from "@/lib/public-media";
 
-type ListEnvelope<T> = { data?: T[] };
+type ListEnvelope<T> = {
+  data?: T[];
+  meta?: {
+    page?: number;
+    per_page?: number;
+    total?: number;
+    pages?: number;
+    total_pages?: number;
+  };
+};
 type RecordEnvelope<T> = { data?: T | null };
 
 const officialSources = {
@@ -80,17 +93,21 @@ const eventFields =
   "id,title,slug,summary,plain_text,rich_text,content,start_date,end_date,venue,location,is_virtual,registration_required,published_at,created_at";
 const announcementFields =
   "id,title,slug,summary,plain_text,rich_text,content,category,priority,audience,target_audience,published_at,valid_from,valid_to,created_at";
-const schoolFields = "id,name,slug,about,description,mandate,departments_count";
+const schoolFields =
+  "id,name,code,slug,school_type,about,description,mandate,dean_name,office_location,email,departments_count,cover_image_id";
 const programmeFields =
-  "id,name,slug,level,mode_of_study,duration,department_name,about,objectives,curriculum_overview,entry_requirements,career_prospects";
+  "id,name,code,slug,level,mode_of_study,duration,department_name,about,objectives,curriculum_overview,entry_requirements,career_prospects,intake_months,accreditation_status,accrediting_body,cover_image_id";
 const intakeFields = "id,name,slug,application_start,application_end,is_open";
-const documentFields = "id,title,slug,description";
+const academicCalendarFields =
+  "id,academic_year,semester,start_date,end_date,registration_start,registration_end,late_registration_end,teaching_start,teaching_end,exam_start,exam_end,results_release,status";
+const documentFields =
+  "id,title,slug,description,document_type,category,version,published_at";
 const divisionFields =
   "id,name,slug,code,division_type,description,head_message,mission,is_active,display_order";
 const wingFields =
   "id,name,slug,code,wing_type,description,mandate,service_charter,office_location,email,phone,is_active,display_order";
 const departmentFields =
-  "id,name,slug,department_type,about,mandate,service_charter,programmes_count,display_order";
+  "id,name,code,slug,department_type,school_id,school_name,about,mandate,head_id,hod_name,email,office_location,cover_image_id,programmes_count,display_order";
 const clubFields =
   "id,name,slug,club_type,about,mission,objectives,membership_count,meeting_schedule";
 const accommodationFields =
@@ -250,6 +267,56 @@ function formatDate(value?: string | null) {
   }).format(date);
 }
 
+function formatDateRange(start?: string | null, end?: string | null) {
+  if (!start && !end) return null;
+  if (!start) return `Until ${formatDate(end)}`;
+  if (!end) return `From ${formatDate(start)}`;
+  return `${formatDate(start)} – ${formatDate(end)}`;
+}
+
+function academicCalendarCard(calendar: AcademicCalendar): PublicCard {
+  const dates = [
+    formatDateRange(calendar.start_date, calendar.end_date),
+    calendar.registration_start || calendar.registration_end
+      ? `Registration: ${formatDateRange(calendar.registration_start, calendar.registration_end)}`
+      : null,
+    calendar.teaching_start || calendar.teaching_end
+      ? `Teaching: ${formatDateRange(calendar.teaching_start, calendar.teaching_end)}`
+      : null,
+    calendar.exam_start || calendar.exam_end
+      ? `Examinations: ${formatDateRange(calendar.exam_start, calendar.exam_end)}`
+      : null,
+    calendar.results_release
+      ? `Results release: ${formatDate(calendar.results_release)}`
+      : null,
+  ].filter(Boolean);
+
+  return {
+    href: `/academics/calendar?academic_year=${encodeURIComponent(calendar.academic_year)}&semester=${calendar.semester}`,
+    title: `${calendar.academic_year} · Semester ${calendar.semester}`,
+    body: dates.join(". "),
+    icon: "calendar",
+    eyebrow:
+      calendar.status === "current" ? "Current semester" : "Published calendar",
+    metadata: {
+      id: calendar.id,
+      academicYear: calendar.academic_year,
+      semester: String(calendar.semester),
+      status: calendar.status,
+      startDate: calendar.start_date,
+      endDate: calendar.end_date,
+      registrationStart: calendar.registration_start,
+      registrationEnd: calendar.registration_end,
+      lateRegistrationEnd: calendar.late_registration_end,
+      teachingStart: calendar.teaching_start,
+      teachingEnd: calendar.teaching_end,
+      examStart: calendar.exam_start,
+      examEnd: calendar.exam_end,
+      resultsRelease: calendar.results_release,
+    },
+  };
+}
+
 async function safeList<T>(request: Promise<ListEnvelope<T>>): Promise<T[]> {
   try {
     const response = await request;
@@ -257,6 +324,19 @@ async function safeList<T>(request: Promise<ListEnvelope<T>>): Promise<T[]> {
   } catch (error) {
     console.error("Failed to fetch public records:", error);
     return [];
+  }
+}
+
+async function safePaginatedList<T>(request: Promise<ListEnvelope<T>>) {
+  try {
+    const response = await request;
+    return {
+      data: Array.isArray(response.data) ? response.data : [],
+      meta: response.meta,
+    };
+  } catch (error) {
+    console.error("Failed to fetch paginated public records:", error);
+    return { data: [] as T[], meta: undefined };
   }
 }
 
@@ -351,18 +431,30 @@ function announcementCard(item: Announcement): PublicCard {
 }
 
 function schoolCard(item: School): PublicCard {
-  return pageCard(
-    item.name,
-    `/academics/schools/${item.slug}`,
-    shortText(
-      item.about ?? item.description ?? item.mandate,
-      "Academic school record.",
+  return {
+    ...pageCard(
+      item.name,
+      `/academics/schools/${item.slug}`,
+      shortText(
+        item.about ?? item.description ?? item.mandate,
+        "Explore this school’s teaching, departments and academic programmes.",
+        230,
+      ),
+      "building",
+      "Explore school",
     ),
-    "building",
-    item.departments_count
-      ? `${item.departments_count} departments`
-      : "View school",
-  );
+    image: publicFileUrl(item.cover_image_id),
+    metadata: {
+      code: item.code,
+      type: formatPublicLabel(item.school_type),
+      dean: item.dean_name,
+      location: item.office_location,
+      email: item.email,
+      departments: item.departments_count
+        ? `${item.departments_count} department${item.departments_count === 1 ? "" : "s"}`
+        : null,
+    },
+  };
 }
 
 function programmeCard(item: Programme): PublicCard {
@@ -381,13 +473,63 @@ function programmeCard(item: Programme): PublicCard {
     150,
   );
 
-  return pageCard(
-    item.name,
-    `/academics/programmes/${item.slug}`,
-    [facts, requirementContext].filter(Boolean).join(". "),
-    "book",
-    "View programme",
-  );
+  return {
+    ...pageCard(
+      item.name,
+      `/academics/programmes/${item.slug}`,
+      [facts, requirementContext].filter(Boolean).join(". "),
+      "book",
+      "View programme",
+    ),
+    image: publicFileUrl(item.cover_image_id),
+    metadata: {
+      code: item.code,
+      level: formatPublicLabel(item.level),
+      duration: item.duration,
+      mode: formatPublicLabel(item.mode_of_study),
+      department,
+      intakeMonths: item.intake_months ?? undefined,
+      accreditation: item.accreditation_status
+        ? [formatPublicLabel(item.accreditation_status), item.accrediting_body]
+            .filter(Boolean)
+            .join(" · ")
+        : null,
+      overview: shortText(
+        item.about ?? item.objectives ?? item.curriculum_overview,
+        requirementContext,
+        220,
+      ),
+    },
+  };
+}
+
+function academicDepartmentCard(item: Department): PublicCard {
+  const schoolName = item.school_name ?? item.school?.name ?? "Academic school";
+  return {
+    ...pageCard(
+      item.name,
+      `/academics/departments/${item.slug}`,
+      shortText(
+        item.about ?? item.mandate,
+        "Explore this department’s teaching, academic programmes and areas of expertise.",
+        220,
+      ),
+      "building",
+      "View department",
+    ),
+    image: publicFileUrl(item.cover_image_id),
+    metadata: {
+      code: item.code,
+      school: schoolName,
+      schoolId: item.school_id,
+      head: item.hod_name ?? item.head?.full_name,
+      email: item.email,
+      location: item.office_location,
+      programmes: item.programmes_count
+        ? `${item.programmes_count} programme${item.programmes_count === 1 ? "" : "s"}`
+        : null,
+    },
+  };
 }
 
 function schoolOptions(schools: School[]) {
@@ -1776,6 +1918,8 @@ export async function getAcademicsPageConfig(
     school_id?: string;
     sort?: string;
     page?: number;
+    academic_year?: string;
+    semester?: string;
   } = {},
 ): Promise<PublicPageConfig> {
   const base = { ...getAcademicsPage(segments), hideContinue: true };
@@ -1786,6 +1930,8 @@ export async function getAcademicsPageConfig(
   const schoolId = searchParams.school_id?.trim() || undefined;
   const sort = searchParams.sort?.trim() || undefined;
   const page = Math.max(1, searchParams.page ?? 1);
+  const selectedAcademicYear = searchParams.academic_year?.trim() || undefined;
+  const selectedSemester = searchParams.semester?.trim() || undefined;
 
   if (area === "programmes" && slug) {
     const programme = await safeRecord(
@@ -1870,40 +2016,63 @@ export async function getAcademicsPageConfig(
     };
   }
 
-  const [schools, allSchools, programmesRaw, intakes, calendarDocs, examDocs] =
-    await Promise.all([
-      safeList(
-        schoolsApi.list({ per_page: 24, search: query, fields: schoolFields }),
-      ),
-      safeList(schoolsApi.list({ per_page: 100, fields: "id,name" })),
-      safeList(
-        programmesApi.list({
-          per_page: area === "programmes" ? 8 : 100,
-          page: area === "programmes" ? page : undefined,
-          level,
-          q: query,
-          school_id: schoolId,
-          mode_of_study: mode,
-          fields: programmeFields,
-        }),
-      ),
-      safeList(intakesApi.list({ per_page: 8, fields: intakeFields })),
-      safeList(
-        documentsApi.list({
-          category: "academic-calendar",
-          per_page: 6,
-          fields: documentFields,
-        }),
-      ),
-      safeList(
-        documentsApi.list({
-          category: "examinations",
-          per_page: 6,
-          fields: documentFields,
-        }),
-      ),
-    ]);
-  const programmes = sortProgrammes(programmesRaw, sort);
+  const [
+    schools,
+    allSchools,
+    programmesResponse,
+    intakes,
+    academicCalendars,
+    calendarDocs,
+    examDocs,
+    academicDepartments,
+  ] = await Promise.all([
+    safeList(
+      schoolsApi.list({ per_page: 24, search: query, fields: schoolFields }),
+    ),
+    safeList(schoolsApi.list({ per_page: 100, fields: "id,name" })),
+    safePaginatedList(
+      programmesApi.list({
+        per_page: area === "programmes" ? 12 : 100,
+        page: area === "programmes" ? page : undefined,
+        level,
+        q: query,
+        school_id: schoolId,
+        mode_of_study: mode,
+        fields: programmeFields,
+      }),
+    ),
+    safeList(intakesApi.list({ per_page: 8, fields: intakeFields })),
+    safeList(
+      academicCalendarsApi.list({
+        per_page: 20,
+        fields: academicCalendarFields,
+      }),
+    ),
+    safeList(
+      documentsApi.list({
+        category: "academic-calendar",
+        per_page: 6,
+        fields: documentFields,
+      }),
+    ),
+    safeList(
+      documentsApi.list({
+        category: "examinations",
+        per_page: 6,
+        fields: documentFields,
+      }),
+    ),
+    safeList(
+      departmentsApi.list({
+        per_page: 100,
+        department_type: "academic",
+        school_id: schoolId,
+        search: query,
+        fields: departmentFields,
+      }),
+    ),
+  ]);
+  const programmes = sortProgrammes(programmesResponse.data, sort);
   const activeFilters = [
     level ? formatPublicLabel(level) : null,
     mode ? formatPublicLabel(mode) : null,
@@ -1965,6 +2134,15 @@ export async function getAcademicsPageConfig(
             : "Programmes",
           body: "Programme cards show level, duration, study mode, department, and requirement context. Search by name, filter by level, school, or study mode, then open the programme record for application guidance.",
           columns: 3,
+          pagination: {
+            page: programmesResponse.meta?.page ?? page,
+            perPage: programmesResponse.meta?.per_page ?? 12,
+            total: programmesResponse.meta?.total ?? programmes.length,
+            pages:
+              programmesResponse.meta?.pages ??
+              programmesResponse.meta?.total_pages ??
+              1,
+          },
           filters: {
             action: "/academics/programmes",
             query,
@@ -1980,15 +2158,7 @@ export async function getAcademicsPageConfig(
             submitLabel: "Filter",
             clearHref: "/academics/programmes",
           },
-          cards: programmes.length
-            ? programmes.map(programmeCard)
-            : [
-                emptyPublishedCard(
-                  "programme",
-                  officialSources.schools,
-                  "schools and departments",
-                ),
-              ],
+          cards: programmes.map(programmeCard),
         },
       ],
       relatedTitle: "Admissions",
@@ -2006,7 +2176,45 @@ export async function getAcademicsPageConfig(
     };
   }
 
+  if (area === "departments") {
+    return {
+      ...base,
+      title: "Academic departments",
+      body: academicDepartments.length
+        ? "Browse academic departments by school, discipline and published expertise."
+        : "No academic departments match the current filters.",
+      sections: [
+        {
+          eyebrow: "Academic Departments",
+          title: "Department directory",
+          body: "Departments are grouped by their academic school. Search by name or discipline, or choose a school to narrow the directory.",
+          columns: 3,
+          filters: {
+            action: "/academics/departments",
+            query,
+            queryPlaceholder: "Search departments",
+            schoolId,
+            schoolOptions: schoolOptions(allSchools),
+            submitLabel: "Filter",
+            clearHref: "/academics/departments",
+          },
+          cards: academicDepartments.length
+            ? academicDepartments.map(academicDepartmentCard)
+            : [],
+        },
+      ],
+    };
+  }
+
   if (area === "calendar") {
+    const structuredCalendarCards = academicCalendars
+      .slice()
+      .sort(
+        (first, second) =>
+          new Date(first.start_date).getTime() -
+          new Date(second.start_date).getTime(),
+      )
+      .map(academicCalendarCard);
     const intakeCards = intakes.map((item: Intake) =>
       pageCard(
         item.name,
@@ -2025,6 +2233,29 @@ export async function getAcademicsPageConfig(
         "Open document",
       ),
     );
+    const selectedCalendar =
+      academicCalendars.find(
+        (item) =>
+          (!selectedAcademicYear ||
+            item.academic_year === selectedAcademicYear) &&
+          (!selectedSemester || String(item.semester) === selectedSemester),
+      ) ??
+      academicCalendars.find((item) => item.status === "current") ??
+      academicCalendars[0];
+    const composition = selectedCalendar
+      ? await safeRecord(
+          mainApi.get<
+            RecordEnvelope<{
+              calendar?: Record<string, unknown>;
+              events?: Array<Record<string, unknown>>;
+              documents?: Array<Record<string, unknown>>;
+            }>
+          >("/api/v1/academic-calendars/composition/current", {
+            academic_year: selectedCalendar.academic_year,
+            semester: selectedCalendar.semester,
+          }),
+        )
+      : null;
 
     return {
       ...base,
@@ -2032,11 +2263,31 @@ export async function getAcademicsPageConfig(
       sections: [
         {
           eyebrow: "Academic Calendar",
-          title: "Intakes and calendar documents",
-          body: "Calendar content uses intake records and documents.",
+          title: "Published semester dates",
+          body: "Registration, teaching, examination, and results periods come from published academic calendar records. Intake windows and official documents provide related guidance.",
           columns: 3,
-          cards: [...intakeCards, ...documentCards].length
-            ? [...intakeCards, ...documentCards]
+          cards: [
+            ...structuredCalendarCards,
+            ...intakeCards.map((card) => ({
+              ...card,
+              eyebrow: "Intake window",
+            })),
+            ...documentCards.map((card) => ({
+              ...card,
+              eyebrow: "Official document",
+            })),
+          ].length
+            ? [
+                ...structuredCalendarCards,
+                ...intakeCards.map((card) => ({
+                  ...card,
+                  eyebrow: "Intake window",
+                })),
+                ...documentCards.map((card) => ({
+                  ...card,
+                  eyebrow: "Official document",
+                })),
+              ]
             : [
                 emptyPublishedCard(
                   "calendar",
@@ -2046,10 +2297,35 @@ export async function getAcademicsPageConfig(
               ],
         },
       ],
+      relatedTitle: "Calendar composition",
+      relatedItems: [],
+      scopeCards: selectedCalendar
+        ? [
+            {
+              ...academicCalendarCard(selectedCalendar),
+              metadata: {
+                ...academicCalendarCard(selectedCalendar).metadata,
+                normalizedEvents: JSON.stringify(composition?.events ?? []),
+                relatedDocuments: JSON.stringify(composition?.documents ?? []),
+              },
+            },
+          ]
+        : [],
     };
   }
 
   if (area === "examinations") {
+    const currentCalendar =
+      academicCalendars.find((item) => item.status === "current") ??
+      academicCalendars[0];
+    const publishedTimetables = await safeList<Record<string, unknown>>(
+      mainApi.get<ListEnvelope<Record<string, unknown>>>(
+        "/api/v1/timetables",
+        currentCalendar
+          ? { calendar_id: currentCalendar.id, timetable_type: "examination" }
+          : { timetable_type: "examination" },
+      ),
+    );
     return {
       ...base,
       body: "Examination information brings together timetable, notice, and document links.",
@@ -2060,15 +2336,20 @@ export async function getAcademicsPageConfig(
           body: "Timetables, notices, and examination documents for students and staff.",
           columns: 3,
           cards: examDocs.length
-            ? examDocs.map((item) =>
-                pageCard(
+            ? examDocs.map((item) => ({
+                ...pageCard(
                   item.title,
                   `/downloads/${item.slug}`,
                   shortText(item.description, "Examination document."),
                   "clipboard",
                   "Open document",
                 ),
-              )
+                metadata: {
+                  type:
+                    formatPublicLabel(item.document_type) ?? "Official notice",
+                  version: item.version,
+                },
+              }))
             : [
                 emptyPublishedCard(
                   "examination",
@@ -2076,6 +2357,27 @@ export async function getAcademicsPageConfig(
                   "schools and departments",
                 ),
               ],
+        },
+      ],
+      scopeCards: [
+        {
+          title: currentCalendar
+            ? `${currentCalendar.academic_year} · Semester ${currentCalendar.semester}`
+            : "Current examination period",
+          body:
+            currentCalendar?.exam_start || currentCalendar?.exam_end
+              ? (formatDateRange(
+                  currentCalendar.exam_start,
+                  currentCalendar.exam_end,
+                ) ?? "")
+              : "Examination dates will appear when published.",
+          metadata: {
+            academicYear: currentCalendar?.academic_year,
+            semester: currentCalendar ? String(currentCalendar.semester) : null,
+            examStart: currentCalendar?.exam_start,
+            examEnd: currentCalendar?.exam_end,
+            timetableData: JSON.stringify(publishedTimetables),
+          },
         },
       ],
     };

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
@@ -13,6 +12,7 @@ import {
   Sprout,
 } from "lucide-react";
 import { researchServiceApi, type ResearchGenericRecord } from "@ksu/api-client";
+import { CampusPageHeader } from "@ksu/ui/components";
 import { PageShell } from "@/components/site-shell";
 import { DonationForm, type DonationFormState } from "./support-form";
 
@@ -291,30 +291,14 @@ export default async function SupportKsuPage({
 
 function SupportHero({ contactHref }: { contactHref: string }) {
   return (
-    <header className="relative isolate min-h-[280px] overflow-hidden bg-brand-overlay sm:min-h-[320px] lg:min-h-[360px]">
-      <Image
-        src="/images/headers/main-admin.jpg"
-        alt="Main administration building at Kisii University"
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover"
-      />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,20,49,0.78)_0%,rgba(2,20,49,0.42)_55%,rgba(2,20,49,0.1)_100%)]" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent" />
-      <div className="relative mx-auto flex min-h-[280px] max-w-[1680px] flex-col justify-end px-4 pb-8 pt-20 sm:min-h-[320px] sm:px-6 sm:pb-10 lg:min-h-[360px] lg:px-8 xl:px-10 2xl:px-12">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">
-          Advancement &amp; Giving
-          <span aria-hidden className="mt-2 block h-0.5 w-7 bg-secondary" />
-        </p>
-        <h1 className="mt-3 max-w-3xl text-balance font-[family-name:var(--font-display)] text-3xl font-bold leading-[1.1] text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.55)] sm:text-4xl lg:text-5xl">
-          Support Kisii University
-        </h1>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-white/85 sm:text-base sm:leading-8">
-          Every gift, from scholarships to laboratories, helps students learn, researchers
-          discover, and communities thrive. Choose a priority and give in minutes.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3">
+    <CampusPageHeader
+      image="main-admin"
+      eyebrow="Advancement & Giving"
+      title="Support Kisii University"
+      description="Every gift, from scholarships to laboratories, helps students learn, researchers discover, and communities thrive. Choose a priority and give in minutes."
+      breadcrumbs={[{ label: "Home", href: "/" }, { label: "Support KSU" }]}
+      actions={
+        <>
           <a
             href="#make-a-gift"
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-secondary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90"
@@ -328,9 +312,9 @@ function SupportHero({ contactHref }: { contactHref: string }) {
           >
             Discuss a major gift
           </a>
-        </div>
-      </div>
-    </header>
+        </>
+      }
+    />
   );
 }
 

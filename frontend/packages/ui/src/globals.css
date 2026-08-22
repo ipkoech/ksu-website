@@ -108,10 +108,10 @@ html[data-a11y-text-align]
 }
 
 html[data-a11y-contrast="increased"] {
-  --foreground: 222 60% 5%;
-  --muted-foreground: 215 28% 31%;
-  --border: 215 28% 55%;
-  --input: 215 28% 55%;
+  --foreground: 202 75% 8%;
+  --muted-foreground: 201 32% 28%;
+  --border: 201 30% 50%;
+  --input: 201 30% 50%;
   --ring: 201 100% 28%;
 }
 
@@ -128,9 +128,9 @@ html[data-a11y-contrast="high"] {
   --accent-foreground: 0 0% 0%;
   --border: 0 0% 20%;
   --input: 0 0% 20%;
-  --primary: 216 100% 24%;
+  --primary: 201 100% 20%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 24 100% 30%;
+  --secondary: 24 100% 26%;
   --secondary-foreground: 0 0% 100%;
   --ring: 0 0% 0%;
 }
@@ -317,71 +317,142 @@ html[data-a11y-widget-size="oversized"] .ksu-floating-action svg {
 @layer base {
   :root {
     /* Border Radius */
-    --radius: 0.625rem;
+    /* Surfaces sit at 24px across the public site. */
+    --radius: 1.5rem;
 
     /* ========================================
        KSU Brand Colors
        Primary: University Cyan Blue (#0077B6)
-       Secondary: Orange accent (#C15106)
+       Secondary: Orange (#C15106)
+       Accent: Institutional Gold
        ======================================== */
 
     --primary: 201 100% 36%;
     --primary-foreground: 0 0% 100%;
 
-    /* Darkened from 39% so small orange text on white meets WCAG AA (≥4.5:1) */
-    --secondary: 24 94% 34%;
+    /* Bright cyan from the institutional poster artwork. Marks, numerals and
+       the dot matrices. Like the orange below it, this is a display value:
+       2.68:1 on white, so never small text. */
+    --cyan-bright: 200 75% 52%;
+
+    /* The poster orange. Fills, large display type, graphics and the calls to
+       action. At 2.73:1 against white it does not meet AA in either
+       direction, which is a deliberate, signed-off trade for brand fidelity
+       on buttons; `--secondary-ink` is the value for orange *text*. */
+    --secondary: 24 91% 54%;
     --secondary-foreground: 0 0% 100%;
+
+    /* The poster's mid-blue content panel. Carries white only: ink reaches
+       3.11:1 on it and gold 2.13:1, so neither may sit on this surface. */
+    --panel: 218 43% 51%;
+    --panel-foreground: 0 0% 100%;
+
+    /* Brand gold.
+       `--gold` is the decorative value: it carries figures, rules and marks
+       on dark grounds, where it clears AA comfortably. It does NOT clear AA
+       as small text on white, so `--gold-ink` is the value to use for gold
+       type on a light surface. `--gold-soft` is the wash. */
+    --gold: 43 74% 49%;
+    --gold-foreground: 202 68% 14%;
+    --gold-ink: 38 92% 27%;
+    --gold-soft: 43 90% 94%;
+    /* Gold on a mid-blue ground. `--gold` only reaches 3.2:1 on
+       `--primary-deep`, so anything set in gold over the lighter blue
+       surfaces uses this lifted shade instead. */
+    --gold-light: 43 88% 70%;
+
+    /* Shade steps for the three brand hues. Soft is the tinted surface, deep
+       is the pressed/hover state, and `-ink` is the AA-safe text value on
+       white. Sections should reach for these rather than inventing new
+       color-mix() values at the call site. */
+    --primary-soft: 201 100% 96%;
+    --primary-muted: 201 65% 88%;
+    --primary-deep: 201 100% 27%;
+    --primary-ink: 201 100% 22%;
+
+    --secondary-soft: 24 94% 96%;
+    --secondary-muted: 24 80% 87%;
+    --secondary-deep: 24 94% 28%;
+    /* Orange text on white: 5.93:1. The readable sibling of `--secondary`. */
+    --secondary-ink: 24 94% 26%;
 
     /* Neutrals */
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --foreground: 202 68% 14%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 202 68% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 202 68% 14%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 201 45% 96%;
+    --muted-foreground: 201 22% 42%;
 
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 201 45% 96%;
+    --accent-foreground: 202 68% 14%;
 
     /* Public brand surfaces */
     --surface: 0 0% 100%;
-    --surface-foreground: 222 47% 11%;
-    --surface-subtle: 210 40% 98%;
-    --surface-muted: 210 40% 96%;
+    --surface-foreground: 202 68% 14%;
+    --surface-subtle: 201 50% 98%;
+    --surface-muted: 201 45% 96%;
     --surface-strong: 201 100% 36%;
-    --brand-overlay: 222 47% 11%;
+
+    /* The dark ground for hero scrims, the statistics panel, the intake
+       panel, the Vice-Chancellor band and the closing CTA.
+       Deliberately a deep shade of the brand cyan rather than a near-black:
+       a black panel on a cyan-and-orange page reads as a different design
+       system. This is `--primary` taken down to an ink value, so every dark
+       surface stays inside the palette. Also serves as the body ink, which
+       is why it stops at 14% rather than going fully dark. */
+    --brand-overlay: 202 68% 14%;
+
+    /* Text and hairlines on the ink ground. These exist so dark surfaces
+       stop reaching for neutral greys (`text-gray-400`, `border-gray-800`),
+       which sit outside the palette and read as a different design system
+       once the ground itself is brand blue. `--ink-muted` clears AA on
+       `--brand-overlay` at roughly 8:1. */
+    --ink-foreground: 0 0% 100%;
+    --ink-muted: 201 35% 84%;
+    --ink-border: 202 45% 22%;
+
+    /* The public page ground is white. Sections that need separation use a
+       tinted band rather than a different neutral, so the whole page stays
+       one surface family. */
+    --surface-page: 0 0% 100%;
+    --surface-band: 201 60% 97.5%;
 
     /* Semantic Colors */
     --destructive: 0 74% 42%;
     --destructive-foreground: 0 0% 100%;
+    /* Error text on the ink ground. `--destructive` is tuned for white
+       surfaces and only reaches ~3.5:1 on dark, which an error message of
+       all things must not do. */
+    --destructive-soft: 0 88% 80%;
 
     --success: 142 72% 29%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 43%;
-    --warning-foreground: 222 47% 11%;
+    --warning: 43 74% 42%;
+    --warning-foreground: 202 68% 14%;
 
     --info: 199 89% 36%;
     --info-foreground: 0 0% 100%;
 
     /* Form Elements */
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
+    --border: 201 40% 91%;
+    --input: 201 40% 91%;
     --ring: 201 100% 44%;
 
     /* Sidebar */
     --sidebar: 0 0% 98%;
-    --sidebar-foreground: 222 47% 11%;
+    --sidebar-foreground: 202 68% 14%;
     --sidebar-primary: 201 100% 44%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 96%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 214 32% 91%;
+    --sidebar-accent: 201 45% 96%;
+    --sidebar-accent-foreground: 202 68% 14%;
+    --sidebar-border: 201 40% 91%;
     --sidebar-ring: 201 100% 44%;
 
     /* Chart Colors */
@@ -395,20 +466,24 @@ html[data-a11y-widget-size="oversized"] .ksu-floating-action svg {
        Typography
        Shared across all frontend apps.
        ======================================== */
-    /* Apps opt into brand faces by defining --app-font-sans / --app-font-display
-       (e.g. via next/font variables). Everything else gets the system sans stack. */
-    --font-sans: var(
-      --app-font-sans,
-      ui-sans-serif,
-      system-ui,
-      -apple-system,
-      "Segoe UI",
-      Roboto,
-      "Helvetica Neue",
-      Arial,
-      sans-serif
-    );
-    --font-display: var(--app-font-display, var(--font-sans));
+    /* Institutional face for every frontend app: Bookman Old Style, with
+       Arial and the generic sans as the fallbacks. Both the text and the
+       display role use it, so headings and body read as one voice.
+
+       Bookman Old Style is licensed to Windows/Office and absent everywhere
+       else, so `--app-font-bookman` — self-hosted URW Bookman, which is
+       metric-compatible with it — sits directly behind it and carries every
+       other platform. Machines that do have the real face still use it.
+       See packages/ui/src/fonts/LICENSE-bookman.md.
+
+       The accessibility "readable font" preference still overrides this on
+       <body>, which is the point of that setting. */
+    --font-sans:
+      "Bookman Old Style", var(--app-font-bookman, "URW Bookman"), Arial,
+      sans-serif;
+    --font-display:
+      "Bookman Old Style", var(--app-font-bookman, "URW Bookman"), Arial,
+      sans-serif;
     --font-size-xs: 0.75rem;
     --font-size-sm: 0.875rem;
     --font-size-base: 1rem;
@@ -486,58 +561,59 @@ html[data-a11y-widget-size="oversized"] .ksu-floating-action svg {
      Dark Mode Theme
      ======================================== */
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    --background: 202 60% 10%;
+    --foreground: 201 40% 97%;
 
-    --card: 222 47% 13%;
-    --card-foreground: 210 40% 98%;
+    --card: 202 55% 13%;
+    --card-foreground: 201 40% 97%;
 
-    --popover: 222 47% 13%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 202 55% 13%;
+    --popover-foreground: 201 40% 97%;
 
     --primary: 199 89% 48%;
-    --primary-foreground: 222 47% 11%;
+    --primary-foreground: 202 60% 10%;
 
     --secondary: 24 95% 53%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 202 40% 18%;
+    --muted-foreground: 201 25% 68%;
 
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 202 40% 18%;
+    --accent-foreground: 201 40% 97%;
 
-    --surface: 222 47% 13%;
-    --surface-foreground: 210 40% 98%;
-    --surface-subtle: 222 47% 15%;
-    --surface-muted: 217 33% 17%;
+    --surface: 202 55% 13%;
+    --surface-foreground: 201 40% 97%;
+    --surface-subtle: 202 50% 15%;
+    --surface-muted: 202 40% 18%;
     --surface-strong: 199 89% 48%;
-    --brand-overlay: 222 47% 6%;
+    /* Dark theme: the same brand ink, taken deeper. */
+    --brand-overlay: 202 70% 8%;
 
     --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 201 40% 97%;
 
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    --warning: 43 74% 52%;
     --warning-foreground: 0 0% 0%;
 
     --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
+    --border: 202 40% 20%;
+    --input: 202 40% 20%;
     --ring: 199 89% 48%;
 
     /* Sidebar */
-    --sidebar: 222 47% 9%;
-    --sidebar-foreground: 210 40% 98%;
+    --sidebar: 202 60% 9%;
+    --sidebar-foreground: 201 40% 97%;
     --sidebar-primary: 199 89% 48%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
+    --sidebar-primary-foreground: 202 60% 10%;
+    --sidebar-accent: 202 40% 18%;
+    --sidebar-accent-foreground: 201 40% 97%;
+    --sidebar-border: 202 40% 20%;
     --sidebar-ring: 199 89% 48%;
 
     /* Adjusted shadows for dark mode */
@@ -1288,6 +1364,99 @@ html[data-a11y-widget-size="oversized"] .ksu-floating-action svg {
   .ksu-academic-orbits::after {
     inset: 29%;
     border-color: hsl(var(--secondary) / 0.12);
+  }
+
+  /* ── Poster variant ──────────────────────────────────────────────
+     The institution's own print language: hard square dot lattices
+     anchored in the corners, bleeding off the edge, in cyan and orange.
+     No red — the flag colours stay on print. Deliberately geometric and
+     static, where the `academic` variant is soft and drifting.
+     ---------------------------------------------------------------- */
+  .ksu-poster-dots {
+    background-image: radial-gradient(
+      currentColor 2px,
+      transparent 2.4px
+    );
+    background-size: 22px 22px;
+    background-repeat: repeat;
+  }
+
+  /* Each corner is a finite lattice, faded toward the page so it reads as
+     a printed block rather than as wallpaper running under the content. */
+  .ksu-poster-dots-tl {
+    color: hsl(var(--cyan-bright) / 0.5);
+    mask-image: linear-gradient(135deg, #000 0%, #000 26%, transparent 62%);
+    -webkit-mask-image: linear-gradient(
+      135deg,
+      #000 0%,
+      #000 26%,
+      transparent 62%
+    );
+  }
+
+  .ksu-poster-dots-tr {
+    color: hsl(var(--secondary) / 0.42);
+    mask-image: linear-gradient(225deg, #000 0%, #000 24%, transparent 58%);
+    -webkit-mask-image: linear-gradient(
+      225deg,
+      #000 0%,
+      #000 24%,
+      transparent 58%
+    );
+  }
+
+  .ksu-poster-dots-br {
+    color: hsl(var(--cyan-bright) / 0.34);
+    mask-image: linear-gradient(315deg, #000 0%, #000 22%, transparent 55%);
+    -webkit-mask-image: linear-gradient(
+      315deg,
+      #000 0%,
+      #000 22%,
+      transparent 55%
+    );
+  }
+
+  /* Bottom corners and the two flanks. Each fades toward the reading
+     column so the geometry stays in the margins at every height. */
+  .ksu-poster-dots-bl {
+    color: hsl(var(--secondary) / 0.30);
+    mask-image: linear-gradient(45deg, #000 0%, #000 22%, transparent 55%);
+    -webkit-mask-image: linear-gradient(
+      45deg,
+      #000 0%,
+      #000 22%,
+      transparent 55%
+    );
+  }
+
+  .ksu-poster-dots-l {
+    color: hsl(var(--cyan-bright) / 0.28);
+    mask-image: linear-gradient(90deg, #000 0%, transparent 82%);
+    -webkit-mask-image: linear-gradient(90deg, #000 0%, transparent 82%);
+  }
+
+  .ksu-poster-dots-r {
+    color: hsl(var(--secondary) / 0.24);
+    mask-image: linear-gradient(270deg, #000 0%, transparent 82%);
+    -webkit-mask-image: linear-gradient(270deg, #000 0%, transparent 82%);
+  }
+
+  /* The ghosted campus photograph the poster sits its content on. */
+  .ksu-poster-plate {
+    background-position: center 22%;
+    background-size: cover;
+    mask-image: linear-gradient(
+      180deg,
+      #000 0%,
+      rgb(0 0 0 / 0.35) 48%,
+      transparent 86%
+    );
+    -webkit-mask-image: linear-gradient(
+      180deg,
+      #000 0%,
+      rgb(0 0 0 / 0.35) 48%,
+      transparent 86%
+    );
   }
 
   .hero-fade-slide {

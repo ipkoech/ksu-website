@@ -15,6 +15,8 @@ from .innovations import router as innovations_router
 from .innovation_partnership import router as innovation_partnership_router
 from .internal import router as internal_router
 from .partners import router as partners_router
+from .portal import router as portal_router
+from .workflow import router as workflow_router
 from .page_cms_source_contract import router as page_cms_source_contract_router
 from .projects import router as projects_router
 from .publications import router as publications_router
@@ -28,6 +30,8 @@ from .training import router as training_router
 router = APIRouter()
 router.include_router(health_router)
 router.include_router(internal_router)
+router.include_router(portal_router)
+router.include_router(workflow_router)
 router.include_router(audit_router)
 router.include_router(analytics_router)
 router.include_router(ask_ai_router)

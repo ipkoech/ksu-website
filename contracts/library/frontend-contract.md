@@ -17,7 +17,7 @@ List Audit Logs
 
 - Auth: public
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `user_id` (query, string | null), `resource_type` (query, string | null), `status` (query, string | null), `x-internal-api-key` (header, string | null)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `user_id` (query, string | null), `resource_type` (query, string | null), `status` (query, string | null), `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
 - Success response: 200 -
 
 ## Health
@@ -37,9 +37,9 @@ Health
 
 List Libraries
 
-- Auth: public
+- Auth: HTTPBearer
 - Request body: -
-- Parameters: `active_only` (query, boolean), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean), `fields` (query, string | null), `include` (query, string | null)
+- Parameters: `active_only` (query, boolean), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/library/branches/`
@@ -48,16 +48,16 @@ Create Library
 
 - Auth: HTTPBearer
 - Request body: LibraryCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/library/branches/{library_id}`
 
 Get Library
 
-- Auth: public
+- Auth: HTTPBearer
 - Request body: -
-- Parameters: `library_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Parameters: `library_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/library/branches/{library_id}`
@@ -66,7 +66,7 @@ Update Library
 
 - Auth: HTTPBearer
 - Request body: LibraryUpdate
-- Parameters: `library_id` (path, string)
+- Parameters: `library_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/library/branches/{library_id}`
@@ -75,7 +75,7 @@ Delete Library
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `library_id` (path, string)
+- Parameters: `library_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ## Library Charges
@@ -84,9 +84,9 @@ Delete Library
 
 List Charges
 
-- Auth: public
+- Auth: HTTPBearer
 - Request body: -
-- Parameters: `library_id` (query, string), `active_only` (query, boolean)
+- Parameters: `library_id` (query, string), `active_only` (query, boolean), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/library/charges/`
@@ -95,7 +95,7 @@ Create Charge
 
 - Auth: HTTPBearer
 - Request body: LibraryChargeCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/library/charges/{charge_id}`
@@ -104,7 +104,7 @@ Update Charge
 
 - Auth: HTTPBearer
 - Request body: LibraryChargeUpdate
-- Parameters: `charge_id` (path, string)
+- Parameters: `charge_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/library/charges/{charge_id}`
@@ -113,7 +113,7 @@ Delete Charge
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `charge_id` (path, string)
+- Parameters: `charge_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ## Library External Links
@@ -122,9 +122,9 @@ Delete Charge
 
 List External Links
 
-- Auth: public
+- Auth: HTTPBearer
 - Request body: -
-- Parameters: `library_id` (path, string), `active_only` (query, boolean)
+- Parameters: `library_id` (path, string), `active_only` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/library/branches/{library_id}/links/`
@@ -133,7 +133,7 @@ Create External Link
 
 - Auth: HTTPBearer
 - Request body: LibraryExternalLinkCreate
-- Parameters: `library_id` (path, string)
+- Parameters: `library_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/library/branches/{library_id}/links/{link_id}`
@@ -142,7 +142,7 @@ Update External Link
 
 - Auth: HTTPBearer
 - Request body: LibraryExternalLinkUpdate
-- Parameters: `library_id` (path, string), `link_id` (path, string)
+- Parameters: `library_id` (path, string), `link_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/library/branches/{library_id}/links/{link_id}`
@@ -151,7 +151,7 @@ Delete External Link
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `library_id` (path, string), `link_id` (path, string)
+- Parameters: `library_id` (path, string), `link_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `PATCH /api/v1/library/branches/{library_id}/links/{link_id}/toggle`
@@ -159,8 +159,8 @@ Delete External Link
 Toggle External Link
 
 - Auth: HTTPBearer
-- Request body: object
-- Parameters: `library_id` (path, string), `link_id` (path, string)
+- Request body: LibraryExternalLinkToggle
+- Parameters: `library_id` (path, string), `link_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ## Library Files
@@ -171,7 +171,7 @@ List Library Files
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `library_id` (path, string)
+- Parameters: `library_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/library/branches/{library_id}/files/`
@@ -180,7 +180,7 @@ Create Library File
 
 - Auth: HTTPBearer
 - Request body: LibraryFileCreate
-- Parameters: `library_id` (path, string)
+- Parameters: `library_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/library/branches/{library_id}/files/{file_id}`
@@ -189,8 +189,111 @@ Delete Library File
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `library_id` (path, string), `file_id` (path, string)
+- Parameters: `library_id` (path, string), `file_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
+
+## Library Guide Sections
+
+### `GET /api/v1/library/guide-sections/`
+
+List Guide Sections
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `guide_id` (query, string | null), `section_type` (query, string | null), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/library/guide-sections/`
+
+Create Guide Section
+
+- Auth: HTTPBearer
+- Request body: LibraryGuideSectionCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `PATCH /api/v1/library/guide-sections/{section_id}`
+
+Update Guide Section
+
+- Auth: HTTPBearer
+- Request body: LibraryGuideSectionUpdate
+- Parameters: `section_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/library/guide-sections/{section_id}`
+
+Delete Guide Section
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `section_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+## Library Guides
+
+### `GET /api/v1/library/guides/`
+
+List Guides
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `library_id` (query, string | null), `guide_type` (query, string | null), `subject` (query, string | null), `course_code` (query, string | null), `audience` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/library/guides/`
+
+Create Guide
+
+- Auth: HTTPBearer
+- Request body: LibraryGuideCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/library/guides/records/{guide_id}`
+
+Get Guide Record
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `guide_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/library/guides/slug/{slug}`
+
+Get Guide By Slug
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/library/guides/{guide_id}`
+
+Update Guide
+
+- Auth: HTTPBearer
+- Request body: LibraryGuideUpdate
+- Parameters: `guide_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/library/guides/{guide_id}`
+
+Delete Guide
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `guide_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/library/guides/{slug}`
+
+Get Guide
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
 
 ## Library Hours
 
@@ -200,7 +303,7 @@ Set Library Hours
 
 - Auth: HTTPBearer
 - Request body: array<LibraryHoursCreate>
-- Parameters: `library_id` (path, string)
+- Parameters: `library_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/library/branches/{library_id}/hours/`
@@ -212,6 +315,24 @@ Get Library Hours
 - Parameters: `library_id` (path, string)
 - Success response: 200 -
 
+### `GET /api/v1/library/branches/{library_id}/hours/today`
+
+Get Library Today Hours
+
+- Auth: public
+- Request body: -
+- Parameters: `library_id` (path, string), `timezone` (query, string)
+- Success response: 200 -
+
+### `GET /api/v1/library/hours/today`
+
+List Today Hours
+
+- Auth: public
+- Request body: -
+- Parameters: `timezone` (query, string)
+- Success response: 200 -
+
 ## Library Inquiries
 
 ### `GET /api/v1/library/inquiries/`
@@ -220,7 +341,7 @@ List Inquiries
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `library_id` (query, string | null), `status` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean)
+- Parameters: `library_id` (query, string | null), `status` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/library/inquiries/`
@@ -229,7 +350,7 @@ Submit Inquiry
 
 - Auth: HTTPBearer
 - Request body: LibraryInquiryCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/library/inquiries/{inquiry_id}`
@@ -238,7 +359,7 @@ Get Inquiry
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `inquiry_id` (path, string)
+- Parameters: `inquiry_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/library/inquiries/{inquiry_id}`
@@ -247,7 +368,7 @@ Update Inquiry
 
 - Auth: HTTPBearer
 - Request body: LibraryInquiryUpdate
-- Parameters: `inquiry_id` (path, string)
+- Parameters: `inquiry_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/library/inquiries/{inquiry_id}`
@@ -256,7 +377,7 @@ Delete Inquiry
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `inquiry_id` (path, string)
+- Parameters: `inquiry_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `POST /api/v1/library/inquiries/{inquiry_id}/reply`
@@ -265,7 +386,7 @@ Reply To Inquiry
 
 - Auth: HTTPBearer
 - Request body: LibraryInquiryReply
-- Parameters: `inquiry_id` (path, string)
+- Parameters: `inquiry_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ## Library Loans
@@ -276,7 +397,7 @@ List Loans
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `resource_id` (query, string | null), `status` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean)
+- Parameters: `library_id` (query, string | null), `resource_id` (query, string | null), `status` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/library/loans/`
@@ -285,7 +406,7 @@ Issue Loan
 
 - Auth: HTTPBearer
 - Request body: LibraryLoanCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/library/loans/{loan_id}`
@@ -294,7 +415,7 @@ Get Loan
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `loan_id` (path, string)
+- Parameters: `loan_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/library/loans/{loan_id}`
@@ -303,7 +424,7 @@ Return Loan
 
 - Auth: HTTPBearer
 - Request body: LibraryLoanUpdate
-- Parameters: `loan_id` (path, string)
+- Parameters: `loan_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/library/loans/{loan_id}/renew`
@@ -312,7 +433,81 @@ Renew Loan
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `loan_id` (path, string)
+- Parameters: `loan_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+## Library Policies
+
+### `GET /api/v1/library/policies/`
+
+List Policy Pages
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `library_id` (query, string | null), `policy_type` (query, string | null), `status` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/library/policies/`
+
+Create Policy Page
+
+- Auth: HTTPBearer
+- Request body: LibraryPolicyPageCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/library/policies/slug/{slug}`
+
+Get Policy By Slug
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/library/policies/{policy_id}`
+
+Update Policy
+
+- Auth: HTTPBearer
+- Request body: LibraryPolicyPageUpdate
+- Parameters: `policy_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/library/policies/{policy_id}`
+
+Delete Policy
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `policy_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `PATCH /api/v1/library/policies/{policy_page_id}`
+
+Update Policy Page
+
+- Auth: HTTPBearer
+- Request body: LibraryPolicyPageUpdate
+- Parameters: `policy_page_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/library/policies/{policy_page_id}`
+
+Delete Policy Page
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `policy_page_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+### `GET /api/v1/library/policies/{slug}`
+
+Get Policy Page
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ## Library Regulations
@@ -321,9 +516,9 @@ Renew Loan
 
 List Regulations
 
-- Auth: public
+- Auth: HTTPBearer
 - Request body: -
-- Parameters: `library_id` (query, string | null), `category` (query, string | null), `status` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean)
+- Parameters: `library_id` (query, string | null), `category` (query, string | null), `status` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/library/regulations/`
@@ -332,16 +527,16 @@ Create Regulation
 
 - Auth: HTTPBearer
 - Request body: LibraryRegulationCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/library/regulations/{regulation_id}`
 
 Get Regulation
 
-- Auth: public
+- Auth: HTTPBearer
 - Request body: -
-- Parameters: `regulation_id` (path, string)
+- Parameters: `regulation_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/library/regulations/{regulation_id}`
@@ -350,7 +545,7 @@ Update Regulation
 
 - Auth: HTTPBearer
 - Request body: LibraryRegulationUpdate
-- Parameters: `regulation_id` (path, string)
+- Parameters: `regulation_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/library/regulations/{regulation_id}`
@@ -359,7 +554,7 @@ Delete Regulation
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `regulation_id` (path, string)
+- Parameters: `regulation_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ## Library Reservations
@@ -370,7 +565,7 @@ List Reservations
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `resource_id` (query, string | null), `status` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean)
+- Parameters: `library_id` (query, string | null), `resource_id` (query, string | null), `status` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/library/reservations/`
@@ -379,7 +574,16 @@ Create Reservation
 
 - Auth: HTTPBearer
 - Request body: LibraryReservationCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/library/reservations/{reservation_id}`
+
+Update Reservation
+
+- Auth: HTTPBearer
+- Request body: LibraryReservationUpdate
+- Parameters: `reservation_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/library/reservations/{reservation_id}`
@@ -388,7 +592,7 @@ Cancel Reservation
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `reservation_id` (path, string)
+- Parameters: `reservation_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ## Library Resources
@@ -397,9 +601,9 @@ Cancel Reservation
 
 List Resources
 
-- Auth: public
+- Auth: HTTPBearer
 - Request body: -
-- Parameters: `library_id` (query, string), `resource_type` (query, string | null), `status` (query, string | null), `q` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean), `fields` (query, string | null), `include` (query, string | null)
+- Parameters: `library_id` (query, string), `resource_type` (query, string | null), `status` (query, string | null), `q` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/library/resources/`
@@ -408,16 +612,16 @@ Create Resource
 
 - Auth: HTTPBearer
 - Request body: LibraryResourceCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/library/resources/{resource_id}`
 
 Get Resource
 
-- Auth: public
+- Auth: HTTPBearer
 - Request body: -
-- Parameters: `resource_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Parameters: `resource_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/library/resources/{resource_id}`
@@ -426,7 +630,7 @@ Update Resource
 
 - Auth: HTTPBearer
 - Request body: LibraryResourceUpdate
-- Parameters: `resource_id` (path, string)
+- Parameters: `resource_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/library/resources/{resource_id}`
@@ -435,8 +639,19 @@ Delete Resource
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `resource_id` (path, string)
+- Parameters: `resource_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
+
+## Library Search
+
+### `GET /api/v1/library/search`
+
+Search Library
+
+- Auth: public
+- Request body: -
+- Parameters: `q` (query, string), `types` (query, string | null), `library_id` (query, string | null), `limit` (query, integer)
+- Success response: 200 -
 
 ## Library Services
 
@@ -444,9 +659,9 @@ Delete Resource
 
 List Services
 
-- Auth: public
+- Auth: HTTPBearer
 - Request body: -
-- Parameters: `library_id` (query, string)
+- Parameters: `library_id` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/library/services/`
@@ -455,7 +670,7 @@ Create Service
 
 - Auth: HTTPBearer
 - Request body: LibraryServiceCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/library/services/{service_id}`
@@ -464,7 +679,7 @@ Update Service
 
 - Auth: HTTPBearer
 - Request body: LibraryServiceUpdate
-- Parameters: `service_id` (path, string)
+- Parameters: `service_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/library/services/{service_id}`
@@ -473,7 +688,45 @@ Delete Service
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `service_id` (path, string)
+- Parameters: `service_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+## Library Specialists
+
+### `GET /api/v1/library/specialists/`
+
+List Specialists
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `library_id` (query, string | null), `subject` (query, string | null), `school` (query, string | null), `department` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/library/specialists/`
+
+Create Specialist
+
+- Auth: HTTPBearer
+- Request body: LibrarySpecialistCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `PATCH /api/v1/library/specialists/{specialist_id}`
+
+Update Specialist
+
+- Auth: HTTPBearer
+- Request body: LibrarySpecialistUpdate
+- Parameters: `specialist_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/library/specialists/{specialist_id}`
+
+Delete Specialist
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `specialist_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ## Library Staff
@@ -484,7 +737,7 @@ List Staff
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `library_id` (query, string)
+- Parameters: `library_id` (query, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/library/staff/`
@@ -493,7 +746,16 @@ Create Staff
 
 - Auth: HTTPBearer
 - Request body: LibraryStaffCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/library/staff/leadership`
+
+List Library Leadership
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `library_id` (query, string | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/library/staff/{staff_id}`
@@ -502,7 +764,7 @@ Update Staff
 
 - Auth: HTTPBearer
 - Request body: LibraryStaffUpdate
-- Parameters: `staff_id` (path, string)
+- Parameters: `staff_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/library/staff/{staff_id}`
@@ -511,7 +773,7 @@ Delete Staff
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `staff_id` (path, string)
+- Parameters: `staff_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ## Library Statistics
@@ -522,7 +784,7 @@ List Statistics
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `library_id` (query, string), `period_type` (query, string | null)
+- Parameters: `library_id` (query, string), `period_type` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/library/statistics/`
@@ -531,7 +793,7 @@ Create Statistics
 
 - Auth: HTTPBearer
 - Request body: LibraryStatisticsCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ## Library Support Tickets
@@ -542,7 +804,7 @@ List Tickets
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `status` (query, string | null), `category` (query, string | null), `assigned_to` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean)
+- Parameters: `status` (query, string | null), `category` (query, string | null), `assigned_to` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/library/tickets/`
@@ -551,7 +813,7 @@ Create Ticket
 
 - Auth: HTTPBearer
 - Request body: SupportTicketCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/library/tickets/{ticket_id}`
@@ -560,7 +822,7 @@ Get Ticket
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `ticket_id` (path, string)
+- Parameters: `ticket_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/library/tickets/{ticket_id}`
@@ -569,7 +831,7 @@ Update Ticket
 
 - Auth: HTTPBearer
 - Request body: SupportTicketUpdate
-- Parameters: `ticket_id` (path, string)
+- Parameters: `ticket_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/library/tickets/{ticket_id}`
@@ -578,7 +840,110 @@ Delete Ticket
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `ticket_id` (path, string)
+- Parameters: `ticket_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+## Library Workflow Steps
+
+### `GET /api/v1/library/workflow-steps/`
+
+List Workflow Steps
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `workflow_id` (query, string | null), `is_active` (query, boolean | null), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/library/workflow-steps/`
+
+Create Workflow Step
+
+- Auth: HTTPBearer
+- Request body: LibraryWorkflowStepCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `PATCH /api/v1/library/workflow-steps/{step_id}`
+
+Update Workflow Step
+
+- Auth: HTTPBearer
+- Request body: LibraryWorkflowStepUpdate
+- Parameters: `step_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/library/workflow-steps/{step_id}`
+
+Delete Workflow Step
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `step_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 204 No Content
+
+## Library Workflows
+
+### `GET /api/v1/library/workflows/`
+
+List Workflows
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `library_id` (query, string | null), `workflow_type` (query, string | null), `audience` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `POST /api/v1/library/workflows/`
+
+Create Workflow
+
+- Auth: HTTPBearer
+- Request body: LibraryWorkflowCreate
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 201 -
+
+### `GET /api/v1/library/workflows/records/{workflow_id}`
+
+Get Workflow Record
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `workflow_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/library/workflows/slug/{slug}`
+
+Get Workflow By Slug
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/library/workflows/{slug}`
+
+Get Workflow
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `PATCH /api/v1/library/workflows/{workflow_id}`
+
+Update Workflow
+
+- Auth: HTTPBearer
+- Request body: LibraryWorkflowUpdate
+- Parameters: `workflow_id` (path, string), `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `DELETE /api/v1/library/workflows/{workflow_id}`
+
+Delete Workflow
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `workflow_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ## Library – Electronic Resource Guides
@@ -602,7 +967,7 @@ Create a guide for an electronic resource.
 
 - Auth: HTTPBearer
 - Request body: ElectronicResourceGuideCreate
-- Parameters: `resource_id` (path, string)
+- Parameters: `resource_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `PATCH /api/v1/library/databases/{resource_id}/guides/{guide_id}`
@@ -613,7 +978,7 @@ Update an electronic resource guide.
 
 - Auth: HTTPBearer
 - Request body: ElectronicResourceGuideUpdate
-- Parameters: `resource_id` (path, string), `guide_id` (path, string)
+- Parameters: `resource_id` (path, string), `guide_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/library/databases/{resource_id}/guides/{guide_id}`
@@ -624,7 +989,7 @@ Delete an electronic resource guide.
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `resource_id` (path, string), `guide_id` (path, string)
+- Parameters: `resource_id` (path, string), `guide_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ## Library – Electronic Resources
@@ -635,9 +1000,9 @@ List Resources Route
 
 List electronic resources with filtering.
 
-- Auth: public
+- Auth: HTTPBearer
 - Request body: -
-- Parameters: `library_id` (query, string | null), `section_letter` (query, string | null), `resource_type` (query, string | null), `access_level` (query, string | null), `featured` (query, boolean | null), `q` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean), `fields` (query, string | null), `include` (query, string | null)
+- Parameters: `library_id` (query, string | null), `section_letter` (query, string | null), `resource_type` (query, string | null), `access_level` (query, string | null), `featured` (query, boolean | null), `q` (query, string | null), `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/library/databases/`
@@ -648,7 +1013,7 @@ Create a new electronic resource.
 
 - Auth: HTTPBearer
 - Request body: ElectronicResourceCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `GET /api/v1/library/databases/az`
@@ -668,9 +1033,9 @@ Get Resource By Slug Route
 
 Get electronic resource by slug with guides.
 
-- Auth: public
+- Auth: HTTPBearer
 - Request body: -
-- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Parameters: `slug` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `GET /api/v1/library/databases/{resource_id}`
@@ -679,9 +1044,9 @@ Get Resource Detail
 
 Get electronic resource by ID with guides.
 
-- Auth: public
+- Auth: HTTPBearer
 - Request body: -
-- Parameters: `resource_id` (path, string), `fields` (query, string | null), `include` (query, string | null)
+- Parameters: `resource_id` (path, string), `fields` (query, string | null), `include` (query, string | null), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `PATCH /api/v1/library/databases/{resource_id}`
@@ -692,7 +1057,7 @@ Update an electronic resource.
 
 - Auth: HTTPBearer
 - Request body: ElectronicResourceUpdate
-- Parameters: `resource_id` (path, string)
+- Parameters: `resource_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/library/databases/{resource_id}`
@@ -703,7 +1068,7 @@ Delete an electronic resource.
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `resource_id` (path, string)
+- Parameters: `resource_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ## Library – Publications
@@ -727,7 +1092,7 @@ List user's saved publications.
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean)
+- Parameters: `page` (query, integer), `per_page` (query, integer), `include_total` (query, boolean), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `POST /api/v1/library/publications/saved`
@@ -738,7 +1103,7 @@ Save a publication to user's reading list.
 
 - Auth: HTTPBearer
 - Request body: SavedPublicationCreate
-- Parameters: -
+- Parameters: `ksu_access` (cookie, string | null)
 - Success response: 201 -
 
 ### `PATCH /api/v1/library/publications/saved/{saved_id}`
@@ -749,7 +1114,7 @@ Update a saved publication (notes, reading status).
 
 - Auth: HTTPBearer
 - Request body: SavedPublicationUpdate
-- Parameters: `saved_id` (path, string)
+- Parameters: `saved_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 200 -
 
 ### `DELETE /api/v1/library/publications/saved/{saved_id}`
@@ -760,7 +1125,7 @@ Remove a publication from user's saved list.
 
 - Auth: HTTPBearer
 - Request body: -
-- Parameters: `saved_id` (path, string)
+- Parameters: `saved_id` (path, string), `ksu_access` (cookie, string | null)
 - Success response: 204 No Content
 
 ### `GET /api/v1/library/publications/search`
@@ -774,9 +1139,40 @@ Search external publication databases (CrossRef, PubMed, etc.).
 - Parameters: `q` (query, string), `author` (query, string | null), `year` (query, integer | null), `source` (query, string | null), `page` (query, integer), `per_page` (query, integer)
 - Success response: 200 -
 
+## Stats
+
+### `GET /api/v1/library/stats`
+
+Get Public Stats
+
+- Auth: public
+- Request body: -
+- Parameters: -
+- Success response: 200 -
+
+### `GET /api/v1/library/stats/admin`
+
+Get Admin Stats
+
+- Auth: HTTPBearer
+- Request body: -
+- Parameters: `ksu_access` (cookie, string | null)
+- Success response: 200 -
+
+### `GET /api/v1/library/stats/internal/admin`
+
+Get Internal Admin Stats
+
+Return admin counters to an authenticated sibling service.
+
+- Auth: public
+- Request body: -
+- Parameters: `X-Internal-Key` (header, string | null), `X-Internal-API-Key` (header, string | null)
+- Success response: 200 -
+
 ## Schemas
 
-Generated component schemas: `35`
+Generated component schemas: `49`
 
 ### `CitationRequest`
 
@@ -913,6 +1309,10 @@ Generated component schemas: `35`
 - `sort_order`: `integer` (optional)
 - `url`: `string` (required)
 
+### `LibraryExternalLinkToggle`
+
+- `is_active`: `boolean` (required)
+
 ### `LibraryExternalLinkUpdate`
 
 - `description`: `string | null` (optional)
@@ -935,6 +1335,62 @@ Generated component schemas: `35`
 - `related_entity_type`: `string | null` (optional)
 - `sort_order`: `integer` (optional)
 - `title`: `string` (required)
+
+### `LibraryGuideCreate`
+
+- `audience`: `string | null` (optional)
+- `course_code`: `string | null` (optional)
+- `department_id`: `string | null` (optional)
+- `guide_type`: `string` (required)
+- `is_active`: `boolean` (optional)
+- `is_public`: `boolean` (optional)
+- `library_id`: `string | null` (optional)
+- `owner_staff_id`: `string | null` (optional)
+- `school_id`: `string | null` (optional)
+- `slug`: `string` (required)
+- `sort_order`: `integer` (optional)
+- `subject`: `string | null` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string` (required)
+
+### `LibraryGuideSectionCreate`
+
+- `content`: `string` (required)
+- `file_ids`: `array<string> | null` (optional)
+- `guide_id`: `string | null` (optional)
+- `heading`: `string` (required)
+- `is_active`: `boolean` (optional)
+- `resource_links`: `array<object> | null` (optional)
+- `section_type`: `string` (optional)
+- `sort_order`: `integer` (optional)
+
+### `LibraryGuideSectionUpdate`
+
+- `content`: `string | null` (optional)
+- `file_ids`: `array<string> | null` (optional)
+- `guide_id`: `string | null` (optional)
+- `heading`: `string | null` (optional)
+- `is_active`: `boolean | null` (optional)
+- `resource_links`: `array<object> | null` (optional)
+- `section_type`: `string | null` (optional)
+- `sort_order`: `integer | null` (optional)
+
+### `LibraryGuideUpdate`
+
+- `audience`: `string | null` (optional)
+- `course_code`: `string | null` (optional)
+- `department_id`: `string | null` (optional)
+- `guide_type`: `string | null` (optional)
+- `is_active`: `boolean | null` (optional)
+- `is_public`: `boolean | null` (optional)
+- `library_id`: `string | null` (optional)
+- `owner_staff_id`: `string | null` (optional)
+- `school_id`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `sort_order`: `integer | null` (optional)
+- `subject`: `string | null` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string | null` (optional)
 
 ### `LibraryHoursCreate`
 
@@ -981,12 +1437,39 @@ Generated component schemas: `35`
 - `returned_to_staff_id`: `string | null` (optional)
 - `status`: `string | null` (optional)
 
+### `LibraryPolicyPageCreate`
+
+- `content`: `string` (required)
+- `file_id`: `string | null` (optional)
+- `is_public`: `boolean` (optional)
+- `library_id`: `string | null` (optional)
+- `policy_type`: `string` (required)
+- `related_regulation_id`: `string | null` (optional)
+- `slug`: `string` (required)
+- `sort_order`: `integer` (optional)
+- `status`: `string` (optional)
+- `title`: `string` (required)
+
+### `LibraryPolicyPageUpdate`
+
+- `content`: `string | null` (optional)
+- `file_id`: `string | null` (optional)
+- `is_public`: `boolean | null` (optional)
+- `library_id`: `string | null` (optional)
+- `policy_type`: `string | null` (optional)
+- `related_regulation_id`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `sort_order`: `integer | null` (optional)
+- `status`: `string | null` (optional)
+- `title`: `string | null` (optional)
+
 ### `LibraryRegulationCreate`
 
 - `category`: `string | null` (optional)
 - `content`: `string` (required)
 - `document_id`: `string | null` (optional)
 - `effective_date`: `string | null` (optional)
+- `is_public`: `boolean` (optional)
 - `library_id`: `string | null` (optional)
 - `status`: `string` (optional)
 - `title`: `string` (required)
@@ -997,6 +1480,7 @@ Generated component schemas: `35`
 - `content`: `string | null` (optional)
 - `document_id`: `string | null` (optional)
 - `effective_date`: `string | null` (optional)
+- `is_public`: `boolean | null` (optional)
 - `status`: `string | null` (optional)
 - `title`: `string | null` (optional)
 
@@ -1005,6 +1489,14 @@ Generated component schemas: `35`
 - `notes`: `string | null` (optional)
 - `requester_person_id`: `string` (required)
 - `resource_id`: `string` (required)
+
+### `LibraryReservationUpdate`
+
+- `expires_at`: `string | null` (optional)
+- `notes`: `string | null` (optional)
+- `queue_position`: `integer | null` (optional)
+- `ready_at`: `string | null` (optional)
+- `status`: `string | null` (optional)
 
 ### `LibraryResourceCreate`
 
@@ -1088,6 +1580,32 @@ Generated component schemas: `35`
 - `service_type`: `string | null` (optional)
 - `sort_order`: `integer | null` (optional)
 
+### `LibrarySpecialistCreate`
+
+- `booking_url`: `string | null` (optional)
+- `departments`: `array<string>` (optional)
+- `is_active`: `boolean` (optional)
+- `is_public`: `boolean` (optional)
+- `library_id`: `string | null` (optional)
+- `schools`: `array<string>` (optional)
+- `sort_order`: `integer` (optional)
+- `staff_id`: `string` (required)
+- `subjects`: `array<string>` (optional)
+- `support_areas`: `array<string>` (optional)
+
+### `LibrarySpecialistUpdate`
+
+- `booking_url`: `string | null` (optional)
+- `departments`: `array<string> | null` (optional)
+- `is_active`: `boolean | null` (optional)
+- `is_public`: `boolean | null` (optional)
+- `library_id`: `string | null` (optional)
+- `schools`: `array<string> | null` (optional)
+- `sort_order`: `integer | null` (optional)
+- `staff_id`: `string | null` (optional)
+- `subjects`: `array<string> | null` (optional)
+- `support_areas`: `array<string> | null` (optional)
+
 ### `LibraryStaffCreate`
 
 - `bio`: `string | null` (optional)
@@ -1152,6 +1670,50 @@ Generated component schemas: `35`
 - `sort_order`: `integer | null` (optional)
 - `vision`: `string | null` (optional)
 - `website_url`: `string | null` (optional)
+
+### `LibraryWorkflowCreate`
+
+- `audience`: `string | null` (optional)
+- `is_active`: `boolean` (optional)
+- `is_public`: `boolean` (optional)
+- `library_id`: `string | null` (optional)
+- `slug`: `string` (required)
+- `sort_order`: `integer` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string` (required)
+- `workflow_type`: `string` (required)
+
+### `LibraryWorkflowStepCreate`
+
+- `file_id`: `string | null` (optional)
+- `instructions`: `string` (required)
+- `is_active`: `boolean` (optional)
+- `link_url`: `string | null` (optional)
+- `sort_order`: `integer` (optional)
+- `title`: `string` (required)
+- `workflow_id`: `string | null` (optional)
+
+### `LibraryWorkflowStepUpdate`
+
+- `file_id`: `string | null` (optional)
+- `instructions`: `string | null` (optional)
+- `is_active`: `boolean | null` (optional)
+- `link_url`: `string | null` (optional)
+- `sort_order`: `integer | null` (optional)
+- `title`: `string | null` (optional)
+- `workflow_id`: `string | null` (optional)
+
+### `LibraryWorkflowUpdate`
+
+- `audience`: `string | null` (optional)
+- `is_active`: `boolean | null` (optional)
+- `is_public`: `boolean | null` (optional)
+- `library_id`: `string | null` (optional)
+- `slug`: `string | null` (optional)
+- `sort_order`: `integer | null` (optional)
+- `summary`: `string | null` (optional)
+- `title`: `string | null` (optional)
+- `workflow_type`: `string | null` (optional)
 
 ### `PublicationResult`
 

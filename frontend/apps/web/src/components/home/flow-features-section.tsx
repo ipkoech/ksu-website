@@ -86,20 +86,20 @@ export function FlowFeaturesSection({
     <section
       id="mandate-pillars"
       aria-labelledby="mandate-pillars-heading"
-      className="relative z-10 -mt-[28px] w-full rounded-t-[28px] px-4 pb-20 pt-10 sm:px-6 sm:pb-24 sm:pt-14 md:px-10"
+      className="ksu-band relative z-10 -mt-[28px] w-full rounded-t-[28px] px-4 sm:px-6 md:px-10"
       style={{ backgroundColor: "hsl(var(--brand-overlay))" }}
     >
-      <div className="mx-auto w-full max-w-[1400px]">
+      <div className="mx-auto w-full max-w-[1680px]">
         <h2
           id="mandate-pillars-heading"
-          className="mb-10 text-center font-[family-name:var(--font-display)] text-3xl font-normal leading-tight text-white sm:mb-14 sm:text-4xl md:text-5xl"
+          className="ksu-d2 mb-10 text-center font-[family-name:var(--font-display)] font-normal text-white sm:mb-14"
         >
           One mandate. <em className="italic">Three promises.</em>
         </h2>
 
         <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3">
           {/* Card 1 — text, glow entering from the left */}
-          <article className="relative min-h-[380px] overflow-hidden rounded-2xl p-6 sm:min-h-[460px] sm:p-8"
+          <article className="relative min-h-[380px] overflow-hidden rounded-3xl p-6 sm:min-h-[460px] sm:p-8"
             style={{ backgroundColor: cardSurface }}>
             <div
               className="absolute -left-[420px] top-1/2 h-[460px] w-[460px] -translate-y-1/2 rounded-full bg-primary opacity-30 blur-3xl"
@@ -125,7 +125,7 @@ export function FlowFeaturesSection({
           </article>
 
           {/* Card 2 — video fading into the surface */}
-          <article className="relative flex min-h-[380px] flex-col overflow-hidden rounded-2xl sm:min-h-[460px]"
+          <article className="relative flex min-h-[380px] flex-col overflow-hidden rounded-3xl sm:min-h-[460px]"
             style={{ backgroundColor: cardSurface }}>
             <div className="relative h-[285px] w-full shrink-0 overflow-hidden sm:h-[345px]">
               <Image
@@ -152,20 +152,18 @@ export function FlowFeaturesSection({
                     </>
                   ) : null}
                 </h3>
-                {second.body.length <= CLAMP_LENGTH ? null : (
-                  <ExpandableBody
-                    text={second.body}
-                    expanded={expandedId === second.id}
-                    onToggle={() => toggle(second.id)}
-                    className="mt-3 max-w-[320px]"
-                  />
-                )}
+                <ExpandableBody
+                  text={second.body}
+                  expanded={expandedId === second.id}
+                  onToggle={() => toggle(second.id)}
+                  className="mt-4 max-w-[320px]"
+                />
               </div>
             </div>
           </article>
 
           {/* Card 3 — text, glow in the top-right, body pinned to the bottom */}
-          <article className="relative min-h-[380px] overflow-hidden rounded-2xl p-6 sm:min-h-[460px] sm:p-8"
+          <article className="relative min-h-[380px] overflow-hidden rounded-3xl p-6 sm:min-h-[460px] sm:p-8"
             style={{ backgroundColor: cardSurface }}>
             <div
               className="absolute -right-28 -top-28 h-56 w-56 rounded-full bg-primary opacity-30 blur-3xl"

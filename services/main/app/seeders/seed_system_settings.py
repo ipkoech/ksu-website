@@ -27,7 +27,6 @@ SETTINGS = [
     ("email_verification_required", "email", True, "Require email verification"),
     
     # Security settings
-    ("require_2fa", "security", False, "Require two-factor authentication"),
     ("session_timeout_minutes", "security", 60, "Session timeout in minutes"),
     ("password_min_length", "security", 8, "Minimum password length"),
     ("max_login_attempts", "security", 5, "Max failed login attempts"),
@@ -55,6 +54,9 @@ def get_value_type(value):
 
 
 async def seed_system_settings(db: AsyncSession) -> None:
+    # MFA is intentionally unavailable until enrollment, challenge, and
+    # recovery flows exist. Remove the historical no-op control on every seed.
+    await db.execute(text("DELETE FROM settings WHERE key = 'require_2fa'"))
     for key, category, value, description in SETTINGS:
         value_type = get_value_type(value)
         value_json = json.dumps(value)

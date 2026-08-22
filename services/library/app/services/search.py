@@ -523,7 +523,7 @@ async def unified_search(
         )
         if library_id:
             statement = statement.where(LibraryRegulation.library_id == library_id)
-        rows = (await db.execute(statement.order_by(LibraryRegulation.sort_order, LibraryRegulation.title).limit(per_type))).scalars().all()
+        rows = (await db.execute(statement.order_by(LibraryRegulation.title).limit(per_type))).scalars().all()
         library_names.update(await _library_names(db, [row.library_id for row in rows if row.library_id]))
         results.extend(
             {
@@ -531,7 +531,7 @@ async def unified_search(
                 "type": "regulation",
                 "title": row.title,
                 "description": _snippet(row.content, row.category),
-                "url": f"/services#regulation-{row.slug}",
+                "url": "/services#regulations-heading",
                 "library_id": str(row.library_id) if row.library_id else None,
                 "library_name": library_names.get(row.library_id) if row.library_id else None,
                 "metadata": {"category": row.category, "status": row.status},

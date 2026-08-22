@@ -1,20 +1,42 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { useId, useState, type FormEvent } from "react";
+import { Loader2 } from "lucide-react";
 import { getMainApiBaseUrl } from "@ksu/api-client";
+import { cn } from "@ksu/ui/lib/utils";
+import { focusVisibleStyles } from "@ksu/ui/motion";
 
 type SubscribeState = "idle" | "submitting" | "success" | "error";
 
-export function NewsletterSubscribeForm() {
+/** Deliberately permissive: the server is the authority on deliverability,
+ *  and a stricter pattern here only rejects addresses that are in fact
+ *  valid. This catches the typo cases (missing @, missing domain). */
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function NewsletterSubscribeForm({
+  variant = "light",
+}: {
+  /** `dark` is the navy CTA band; `light` is the composed CMS section. */
+  variant?: "light" | "dark";
+}) {
+  const fieldId = useId();
+  const messageId = `${fieldId}-message`;
   const [email, setEmail] = useState("");
   const [state, setState] = useState<SubscribeState>("idle");
   const [message, setMessage] = useState("");
 
+  const invalid = state === "error";
+  const submitting = state === "submitting";
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail) return;
+
+    if (!emailPattern.test(normalizedEmail)) {
+      setState("error");
+      setMessage("Enter a valid email address, for example name@example.com.");
+      return;
+    }
 
     setState("submitting");
     setMessage("");
@@ -46,45 +68,77 @@ export function NewsletterSubscribeForm() {
     }
   }
 
+  const dark = variant === "dark";
+
   return (
-    <form onSubmit={onSubmit} className="w-full">
-      <div className="flex w-full flex-col overflow-hidden rounded-md border border-border bg-white shadow-sm sm:flex-row">
-        <label className="sr-only" htmlFor="homepage-newsletter-email">
+    <form onSubmit={onSubmit} className="w-full" noValidate>
+      <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row">
+        <label className="sr-only" htmlFor={fieldId}>
           Email address
         </label>
         <input
-          id="homepage-newsletter-email"
+          id={fieldId}
           type="email"
+          name="email"
+          autoComplete="email"
           required
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={(event) => {
+            setEmail(event.target.value);
+            if (state !== "idle") {
+              setState("idle");
+              setMessage("");
+            }
+          }}
           placeholder="Enter your email address"
-          className="min-h-12 flex-1 px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground/70 focus:ring-2 focus:ring-primary/30"
-          disabled={state === "submitting"}
+          disabled={submitting}
+          aria-invalid={invalid || undefined}
+          aria-describedby={message ? messageId : undefined}
+          className={cn(
+            "ksu-l-small min-h-12 min-w-0 flex-1 rounded-lg border bg-white px-4 text-brand-overlay outline-none placeholder:text-brand-overlay/45 disabled:opacity-70",
+            invalid ? "border-[hsl(var(--destructive))]" : "border-transparent",
+            focusVisibleStyles.primary,
+          )}
         />
         <button
           type="submit"
-          disabled={state === "submitting"}
-          className="inline-flex min-h-12 items-center justify-center gap-2 bg-primary px-5 text-sm font-bold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {state === "submitting" ? (
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-          ) : (
-            <ArrowRight className="h-4 w-4" aria-hidden />
+          disabled={submitting}
+          className={cn(
+            "inline-flex min-h-12 items-center justify-center gap-2 rounded-lg px-8 font-medium transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-70",
+            dark
+              ? "bg-secondary text-white hover:bg-secondary/90"
+              : "bg-primary text-white hover:bg-primary/90",
+            dark ? focusVisibleStyles.white : focusVisibleStyles.primary,
           )}
-          Subscribe
+        >
+          {submitting ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+          ) : null}
+          {submitting ? "Subscribing…" : "Subscribe"}
         </button>
       </div>
-      {message ? (
-        <p
-          className={`mt-2 text-xs font-medium ${
-            state === "error" ? "text-red-700" : "text-primary"
-          }`}
-          role={state === "error" ? "alert" : "status"}
-        >
-          {message}
-        </p>
-      ) : null}
+
+      {/* Both live regions are always mounted, so a message that replaces an
+          identical one is still announced. */}
+      <p
+        id={messageId}
+        role={invalid ? "alert" : "status"}
+        aria-live={invalid ? "assertive" : "polite"}
+        className={cn(
+          "ksu-l-small mt-2 min-h-[1.25rem]",
+          invalid
+            ? dark
+              ? "text-[hsl(var(--destructive-soft))]"
+              : "text-[hsl(var(--destructive))]"
+            : dark
+              ? "text-white/85"
+              : "text-primary",
+        )}
+      >
+        {message}
+      </p>
     </form>
   );
 }
+
+export default NewsletterSubscribeForm;

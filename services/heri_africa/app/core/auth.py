@@ -15,9 +15,10 @@ public_key = decode_key_material(settings.JWT_PUBLIC_KEY_B64, field_name="JWT_PU
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
-    access_token: str | None = Cookie(default=None, alias="access_token"),
+    access_token: str | None = Cookie(default=None, alias="ksu_access"),
+    legacy_access_token: str | None = Cookie(default=None, alias="access_token"),
 ) -> TokenPayload:
-    token = credentials.credentials if credentials else access_token
+    token = credentials.credentials if credentials else access_token or legacy_access_token
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or missing token", headers={"WWW-Authenticate": "Bearer"})
     try:

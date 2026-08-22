@@ -60,13 +60,13 @@ async def get_alumni_association_members(slug: str, db: DbSession, fields: Field
     return success(data=selector.apply(item.members))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("alumni.manage"))])
 async def create_alumni_association(data: AlumniAssociationCreate, db: DbSession, _: CurrentUser):
     item = await AlumniAssociationService.create(db, **data.model_dump())
     return success(data=item, message="Alumni association created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.patch("/{item_id}", dependencies=[Depends(require_scope("alumni.manage"))])
 async def update_alumni_association(item_id: uuid.UUID, data: AlumniAssociationUpdate, db: DbSession, _: CurrentUser):
     item = await AlumniAssociationService.get_by_id(db, item_id)
     if item is None:
@@ -75,7 +75,7 @@ async def update_alumni_association(item_id: uuid.UUID, data: AlumniAssociationU
     return success(data=item, message="Alumni association updated")
 
 
-@router.post("/{association_id}/members", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("/{association_id}/members", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("alumni.manage"))])
 async def add_alumni_association_member(
     association_id: uuid.UUID,
     data: AlumniAssociationMemberCreate,
@@ -89,7 +89,7 @@ async def add_alumni_association_member(
     return success(data=member, message="Association member saved")
 
 
-@router.delete("/{association_id}/members/{alumni_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/{association_id}/members/{alumni_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("alumni.manage"))])
 async def remove_alumni_association_member(association_id: uuid.UUID, alumni_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await AlumniAssociationService.get_by_id(db, association_id)
     if item is None:
@@ -97,7 +97,7 @@ async def remove_alumni_association_member(association_id: uuid.UUID, alumni_id:
     await AlumniAssociationService.remove_member(db, association_id, alumni_id)
 
 
-@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("alumni.manage"))])
 async def delete_alumni_association(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await AlumniAssociationService.get_by_id(db, item_id)
     if item is None:

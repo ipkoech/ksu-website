@@ -64,6 +64,36 @@ class InternalMediaResolvePayload(BaseModel):
     ids: list[uuid.UUID] = Field(min_length=1, max_length=100)
 
 
+class InternalAuditPageMeta(BaseModel):
+    page: int
+    per_page: int
+    has_next: bool
+
+
+class InternalAuditListResponse(BaseModel):
+    status: str
+    message: str
+    data: list[AuditLogRead]
+    meta: InternalAuditPageMeta
+
+
+class InternalMediaSnapshot(BaseModel):
+    id: uuid.UUID
+    title: str | None = None
+    alt_text: str | None = None
+    description: str | None = None
+    caption: str | None = None
+    media_type: str
+    thumbnail_url: str | None = None
+    url: str
+    is_public: bool
+
+
+class InternalMediaResolveResponse(BaseModel):
+    status: str
+    data: list[InternalMediaSnapshot]
+
+
 class InternalAuditPayload(BaseModel):
     id: uuid.UUID
     service_name: str = Field(max_length=64)
@@ -95,7 +125,7 @@ async def ingest_internal_audit(payload: InternalAuditPayload, db: AsyncSession 
     return {"status": "accepted", "id": str(payload.id)}
 
 
-@router.get("/audit", dependencies=[Depends(verify_internal_key)], response_model=dict[str, Any])
+@router.get("/audit", dependencies=[Depends(verify_internal_key)], response_model=InternalAuditListResponse)
 async def list_internal_audit(
     service_name: str = Query(..., max_length=64),
     page: int = Query(1, ge=1),
@@ -291,7 +321,11 @@ async def get_public_media_snapshot(media_id: uuid.UUID, db: AsyncSession = Depe
     }
 
 
-@router.post("/media/resolve", dependencies=[Depends(verify_internal_key)], response_model=dict[str, Any])
+@router.post(
+    "/media/resolve",
+    dependencies=[Depends(verify_internal_key)],
+    response_model=InternalMediaResolveResponse,
+)
 async def resolve_public_media(
     payload: InternalMediaResolvePayload,
     db: AsyncSession = Depends(get_db),

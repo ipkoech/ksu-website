@@ -23,6 +23,7 @@ from ksu_common.security import decode_key_material
 from sqlalchemy import select
 
 from .api.v1 import register_routes
+from .api.v1._idempotency import install_main_idempotency
 from .cache_invalidation import should_invalidate_public_cache
 from .core.config import get_settings
 from .core.database import AsyncSessionLocal
@@ -62,7 +63,7 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    return create_service_app(
+    app = create_service_app(
         ServiceAppConfig(
             service_name=settings.SERVICE_NAME,
             title="KSU Main Site API",
@@ -94,6 +95,11 @@ def create_app() -> FastAPI:
         ),
         after_response=_after_response,
     )
+    # The shared response-validation layer rebuilds route handlers. Install
+    # request-context idempotency afterwards so its context wrapper remains the
+    # outermost handler for every adopted mutation.
+    install_main_idempotency(app.routes)
+    return app
 
 
 def _begin_request_audit(request: Request) -> object:

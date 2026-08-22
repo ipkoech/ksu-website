@@ -36,7 +36,7 @@ async def get_public_stats(
     return success(data=result.model_dump())
 
 
-@router.get("/admin", dependencies=[Depends(require_scope("analytics:read"))])
+@router.get("/admin", dependencies=[Depends(require_scope("analytics.view"))])
 async def get_admin_stats(
     db: DbSession,
     _: CurrentUser,
@@ -95,7 +95,7 @@ PORTAL_STAT_SCOPES = {
     ),
     "library": (
         "library.view",
-        "library:read",
+        "library.read",
         "library.manage_resources",
         "library.manage_services",
         "library.manage_collections",

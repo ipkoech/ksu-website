@@ -10,7 +10,16 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import AdmissionInfo, Announcement, Club, ContactDirectory, Document, FAQ, Media
+from app.models import (
+    AdmissionInfo,
+    Announcement,
+    Club,
+    ContactDirectory,
+    Document,
+    FAQ,
+    Media,
+    StudentGovernance,
+)
 from app.schemas.base import slugify
 
 from ._shared import SeedContext
@@ -407,24 +416,79 @@ FAQ_SPECS = [
     },
     {
         "question": "How do students join clubs and societies?",
-        "answer": "Students can review active clubs through the campus life section, then contact the dean of students or the listed club contact for registration guidance.",
-        "category": "Student Life",
+        "answer": "Browse the seventy-one registered clubs on the campus life pages and open the one you are interested in. Clubs are registered and administered by the Office of the Dean of Students, so where a club publishes no contact of its own, that office holds the register and can point you to the current officials. Most clubs welcome new members at any point in the semester.",
+        "category": "Clubs and societies",
         "scope_type": "student_life",
-        "is_main": False,
+        "is_main": True,
         "display_order": 80,
     },
     {
         "question": "Where do students get welfare or campus life support?",
-        "answer": "Students should contact the dean of students office for welfare, clubs, societies, accommodation guidance, and campus life support.",
-        "category": "Student Life",
+        "answer": "The Office of the Dean of Students offers support and welfare services to all students. It handles first-year registration and orientation, coordinates student loans and bursaries, provides counselling and chaplaincy services, manages sports and games activities, and registers and administers students' clubs and societies.",
+        "category": "Welfare",
+        "scope_type": "student_life",
+        "is_main": True,
+        "display_order": 90,
+    },
+    {
+        "question": "Who represents students at Kisii University?",
+        "answer": "The Kisii University Students Association (KSUSA) is the elected student government. Its officials are chosen by the student body and sworn in before the Vice Chancellor, and they hold the mandate to speak for students in university decisions that affect them.",
+        "category": "Student democracy",
+        "scope_type": "student_life",
+        "is_main": True,
+        "display_order": 100,
+    },
+    {
+        "question": "What career support is available to students?",
+        "answer": "The Office of Student Career Services, on the ground floor of the Sakagwa Academic Block, provides academic advising and one-on-one career counselling. It runs career progression workshops covering CV and cover letter writing and mock interviews, and links students to industry through recruitment drives, career fairs, internships and mentorship programmes.",
+        "category": "Careers",
+        "scope_type": "student_life",
+        "is_main": True,
+        "display_order": 110,
+    },
+    {
+        "question": "Can students start a new club?",
+        "answer": "Yes. Write the purpose of the club and find fifteen founding members, ask a member of staff to stand as patron, then register the constitution with the Office of the Dean of Students, which registers and administers all students' clubs and societies.",
+        "category": "Clubs and societies",
         "scope_type": "student_life",
         "is_main": False,
-        "display_order": 90,
+        "display_order": 120,
+    },
+    {
+        "question": "Is counselling available on campus?",
+        "answer": "Counselling services are provided by the Office of the Dean of Students, alongside programmes on student orientation, mental health awareness, substance abuse prevention, gender-based violence prevention, peer counselling and mentorship.",
+        "category": "Welfare",
+        "scope_type": "student_life",
+        "is_main": True,
+        "display_order": 130,
     },
 ]
 
 
 CONTACT_SPECS = [
+    # Student-life offices. Only the university's published switchboard and
+    # address are used: neither department publishes a direct line or a mailbox
+    # of its own, and inventing one would send students nowhere.
+    {
+        "name": "Office of the Dean of Students",
+        "contact_type": "student_welfare",
+        "email": "info@kisiiuniversity.ac.ke",
+        "phone": ["+254 720 875 082"],
+        "physical_address": "Kisii University Main Campus, Kisii, Kenya",
+        "operating_hours": {"weekdays": "8:00 AM - 5:00 PM"},
+        "scope_type": "student_life",
+        "is_main": True,
+    },
+    {
+        "name": "Office of Student Career Services",
+        "contact_type": "careers",
+        "email": "info@kisiiuniversity.ac.ke",
+        "phone": ["+254 720 875 082"],
+        "physical_address": "Sakagwa Academic Block, ground floor, Kisii University Main Campus",
+        "operating_hours": {"weekdays": "8:00 AM - 5:00 PM"},
+        "scope_type": "student_life",
+        "is_main": False,
+    },
     {
         "name": "Kisii University Main Office",
         "contact_type": "main",
@@ -565,15 +629,162 @@ OFFICIAL_CLUB_INDEX: list[tuple[str, str]] = [
 ]
 
 
+# What each cohort actually is, written for a student deciding whether to walk
+# in. The official index publishes only a name and a cohort, so these describe
+# the kind of body a club belongs to; nothing here asserts a fact about an
+# individual club that the university has not published.
+#
+# Deliberately absent: membership numbers, meeting times, fees, office
+# locations and contacts. Those are real-world facts the register does not
+# carry, and a plausible guess at one is worse than an honest blank.
+CLUB_COHORTS: dict[str, dict[str, str]] = {
+    "county": {
+        "label": "County students' association",
+        "about": (
+            "A county students' association brings together everyone at Kisii "
+            "University who comes from the same county. For most members it is "
+            "the first familiar room they find on campus: people who speak the "
+            "same first language, know the same places back home, and have "
+            "already worked out where to find what a new student needs."
+        ),
+        "mission": (
+            "To help students from the county settle into university life, keep "
+            "ties to home, and look out for one another through their studies."
+        ),
+        "objectives": (
+            "Welcome and orient first-year students from the county. "
+            "Organise social, cultural and welfare activities through the year. "
+            "Represent members' concerns to the students' association and the "
+            "Dean of Students. Support members facing financial or personal "
+            "difficulty. Keep contact with alumni from the same county."
+        ),
+    },
+    "professional": {
+        "label": "Course-linked professional body",
+        "about": (
+            "A professional students' association is organised around a course "
+            "of study, and exists to put students in contact with the "
+            "profession before they graduate into it. Members meet practitioners, "
+            "prepare for professional examinations and industry attachments, and "
+            "run the academic events their department is known for."
+        ),
+        "mission": (
+            "To bridge the classroom and the profession, so members graduate "
+            "with the contacts, practical exposure and confidence the field "
+            "expects."
+        ),
+        "objectives": (
+            "Link members with practitioners, employers and professional bodies. "
+            "Run seminars, workshops, clinics and industry visits. Support "
+            "preparation for professional examinations and attachments. Mentor "
+            "junior students through the course. Represent members academically "
+            "within the school or department."
+        ),
+    },
+    "edu-tainment": {
+        "label": "Performing and creative arts club",
+        "about": (
+            "A performing arts club is where students go for the part of "
+            "university that has nothing to do with a transcript: stage, page, "
+            "music, movement and sport for its own sake. These are the groups "
+            "that carry the university's name to the annual Cultural Festival "
+            "and to inter-university competitions."
+        ),
+        "mission": (
+            "To give students a stage, an audience and the discipline of "
+            "rehearsal, and to represent Kisii University where talent is "
+            "judged."
+        ),
+        "objectives": (
+            "Train and rehearse members through the semester. Perform at "
+            "university events and the annual Cultural Festival. Compete in "
+            "inter-university and national festivals. Welcome beginners "
+            "alongside experienced performers. Keep the university's cultural "
+            "and creative traditions in practice."
+        ),
+    },
+    "mentorship": {
+        "label": "Mentorship and advocacy society",
+        "about": (
+            "A mentorship society organises students around a cause or a skill "
+            "rather than a course: public policy, tax literacy, agriculture, "
+            "youth leadership, personal development. Members take the subject "
+            "beyond campus, and some of these societies have earned national "
+            "recognition for it."
+        ),
+        "mission": (
+            "To develop members as leaders and practitioners in a chosen field, "
+            "and to carry that work into the community beyond the university."
+        ),
+        "objectives": (
+            "Train members through workshops, mentorship and practical projects. "
+            "Engage the wider community and relevant national bodies. Enter "
+            "national competitions and awards in the field. Pair junior members "
+            "with senior ones and with alumni. Build the professional and civic "
+            "networks members will graduate into."
+        ),
+    },
+    "religious": {
+        "label": "Faith community",
+        "about": (
+            "A faith community on campus keeps its own calendar of worship, "
+            "fellowship and service alongside the academic one. Members meet "
+            "regularly through the semester, and the groups are open to any "
+            "student who wants to attend."
+        ),
+        "mission": (
+            "To provide a place of worship, fellowship and pastoral support for "
+            "students of the faith throughout their time at the university."
+        ),
+        "objectives": (
+            "Hold regular worship and fellowship meetings on campus. Offer "
+            "pastoral care and counsel to members. Run community outreach and "
+            "charitable service. Welcome new students into the community each "
+            "intake. Work alongside the other faith communities on campus."
+        ),
+    },
+    "edu-service": {
+        "label": "Service and volunteering corps",
+        "about": (
+            "A service corps trains students to be useful when it matters: "
+            "first aid, emergency response, conservation, scouting and "
+            "community work. Members train so that the person standing closest "
+            "in an emergency is someone who knows what to do, and the "
+            "university's brigades have represented Kisii at national parades."
+        ),
+        "mission": (
+            "To train students in practical service skills and put them to work "
+            "for the university and the surrounding community."
+        ),
+        "objectives": (
+            "Train members in first aid, safety or conservation practice. "
+            "Provide duty cover at university events and ceremonies. Serve the "
+            "surrounding community through organised outreach. Represent the "
+            "university at national parades and camps. Maintain the standards "
+            "of the parent national body."
+        ),
+    },
+}
+
+
 def _club_spec(name: str, cohort: str, display_order: int) -> dict[str, object]:
-    cohort_label = f"{cohort.replace('-', ' ')} cohort"
+    """Build a club record from the official index entry and its cohort.
+
+    The public index at ``CLUB_SOURCE_URL`` publishes a name and a cohort and
+    nothing else, so the descriptive copy comes from the cohort. Contact
+    details, membership counts, fees and schedules are left unset rather than
+    invented; the public pages omit what is not published.
+    """
+    cohort_copy = CLUB_COHORTS.get(cohort)
+    if cohort_copy is None:  # pragma: no cover - guards a new cohort appearing
+        raise ValueError(f"No description written for club cohort {cohort!r}")
     return {
         "slug": slugify(name),
         "name": name,
         "club_type": cohort,
-        "about": f"{name} is listed on the official Kisii University Clubs & Societies index under the {cohort_label}.",
-        "mission": f"Official Kisii University club record published under the {cohort_label}.",
-        "objectives": f"Maintain the public club listing from {CLUB_SOURCE_URL}.",
+        "about": cohort_copy["about"],
+        "mission": cohort_copy["mission"],
+        "objectives": cohort_copy["objectives"],
         "membership_count": 0,
         "display_order": display_order,
     }
@@ -582,6 +793,88 @@ def _club_spec(name: str, cohort: str, display_order: int) -> dict[str, object]:
 CLUB_SPECS = [
     _club_spec(name, cohort, display_order)
     for display_order, (name, cohort) in enumerate(OFFICIAL_CLUB_INDEX, start=10)
+]
+
+
+# The elected student body and the office it answers to.
+#
+# KSUSA is named on the university's own site, which reports its leaders taking
+# the oath of office before the Vice Chancellor. Office bearers are not seeded:
+# they change with each election, and naming the wrong student is worse than
+# naming none. Terms, contacts and office locations are likewise left unset
+# until Student Affairs publishes them.
+STUDENT_GOVERNANCE_SPECS: list[dict[str, object]] = [
+    {
+        "slug": "ksusa",
+        "name": "Kisii University Students Association",
+        "acronym": "KSUSA",
+        "governance_type": "student_association",
+        "about": (
+            "KSUSA is the elected student government of Kisii University. Its "
+            "officials are chosen by the student body and sworn in before the "
+            "Vice Chancellor, and they hold the mandate to speak for students "
+            "in university decisions that affect them."
+        ),
+        "mandate": (
+            "To represent the interests of every registered student, to channel "
+            "student concerns to university management, and to organise and "
+            "account for student activities and welfare across the campuses."
+        ),
+        "constitution": (
+            "KSUSA operates under a constitution approved by the university, "
+            "which sets out the elected offices, the conduct of elections, and "
+            "the handover of office at the end of each term."
+        ),
+        "display_order": 10,
+    },
+    {
+        "slug": "dean-of-students",
+        "name": "Office of the Dean of Students",
+        "acronym": None,
+        "governance_type": "administration",
+        # Wording follows the department's own published About and Mandate at
+        # kisiiuniversity.ac.ke/dpt/dean-of-students/about.
+        "about": (
+            "The Department offers support and welfare services to all students "
+            "in the University. Student support services consist of all academic "
+            "and non-academic services that students require to enable them "
+            "comfortably pursue their studies."
+        ),
+        "mandate": (
+            "To develop, nurture and promote an enabling environment that "
+            "supports and enhances both academic and developmental pursuits of "
+            "students. The department registers and orients first-year students, "
+            "coordinates student loans and bursaries, provides counselling and "
+            "chaplaincy services, manages sports and games activities, and "
+            "registers and administers students' clubs and societies."
+        ),
+        "constitution": None,
+        "display_order": 20,
+    },
+    {
+        "slug": "student-career-services",
+        "name": "Office of Student Career Services",
+        "acronym": "OSCS",
+        "governance_type": "administration",
+        # From the department's published About and Mandate at
+        # kisiiuniversity.ac.ke/dpt/student-career-services/about.
+        "about": (
+            "Established in October 2018, the Office of Student Career Services "
+            "is a support system for students in their career journey. It works "
+            "with university students and with secondary school students, "
+            "helping them explore career options and prepare for the job market."
+        ),
+        "mandate": (
+            "Academic advising and one-on-one career counselling. Career "
+            "progression workshops covering CV and cover letter writing and mock "
+            "interviews. Industry linkages through recruitment drives, career "
+            "fairs, internships and mentorship. Inter-institutional exchanges "
+            "and an entrepreneurial incubator for graduates."
+        ),
+        "constitution": None,
+        "office_location": "Sakagwa Academic Block, ground floor",
+        "display_order": 30,
+    },
 ]
 
 
@@ -831,6 +1124,44 @@ async def _upsert_club(db: AsyncSession, spec: dict[str, object]) -> None:
     await db.flush()
 
 
+async def _upsert_student_governance(db: AsyncSession, spec: dict[str, object]) -> None:
+    item = (
+        await db.execute(
+            select(StudentGovernance).where(StudentGovernance.slug == spec["slug"])
+        )
+    ).scalar_one_or_none()
+    payload = {
+        "name": spec["name"],
+        "slug": spec["slug"],
+        "acronym": spec["acronym"],
+        "governance_type": spec["governance_type"],
+        "about": spec["about"],
+        "mandate": spec["mandate"],
+        "constitution": spec["constitution"],
+        # Office bearers, terms and contacts change with each election and are
+        # not published on the public site; they stay unset rather than guessed.
+        # An office location is seeded only where the department publishes one.
+        "school_id": None,
+        "chairperson_id": None,
+        "vice_chairperson_id": None,
+        "secretary_general_id": None,
+        "term_start": None,
+        "term_end": None,
+        "email": None,
+        "phone": None,
+        "office_location": spec.get("office_location"),
+        "logo_id": None,
+        "is_active": True,
+    }
+    if item is None:
+        item = StudentGovernance(id=uuid.uuid4(), **payload)
+        db.add(item)
+    else:
+        for field_name, value in payload.items():
+            setattr(item, field_name, value)
+    await db.flush()
+
+
 async def _upsert_announcement(db: AsyncSession, spec: dict[str, object]) -> None:
     item = (await db.execute(select(Announcement).where(Announcement.slug == spec["slug"]))).scalar_one_or_none()
     payload = {
@@ -898,6 +1229,9 @@ async def seed_public_records(db: AsyncSession, ctx: SeedContext) -> None:
 
     for spec in CLUB_SPECS:
         await _upsert_club(db, spec)
+
+    for spec in STUDENT_GOVERNANCE_SPECS:
+        await _upsert_student_governance(db, spec)
 
     for spec in ANNOUNCEMENT_SPECS:
         await _upsert_announcement(db, spec)

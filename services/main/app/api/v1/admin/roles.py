@@ -26,7 +26,7 @@ class RoleCreatePayload(RoleCreate):
     permissions: list[str] = Field(default_factory=list)
 
 
-@router.get("", dependencies=[Depends(require_scope("roles:read"))])
+@router.get("", dependencies=[Depends(require_scope("roles.view"))])
 async def list_roles(
     db: DbSession,
     _: CurrentUser,
@@ -47,7 +47,7 @@ async def list_roles(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{role_id}", dependencies=[Depends(require_scope("roles:read"))])
+@router.get("/{role_id}", dependencies=[Depends(require_scope("roles.view"))])
 async def get_role(role_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(Role, fields)
     role = await RBACService.get_role(db, role_id)
@@ -56,7 +56,7 @@ async def get_role(role_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: Fi
     return success(data=selector.apply(role))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("roles:write"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("roles.manage"))])
 async def create_role(data: RoleCreatePayload, db: DbSession, _: CurrentUser):
     role_data = data.model_dump(exclude={"permissions"})
     role = await RBACService.create_role(db, **role_data)
@@ -65,8 +65,8 @@ async def create_role(data: RoleCreatePayload, db: DbSession, _: CurrentUser):
     return success(data=role, message="Role created")
 
 
-@router.patch("/{role_id}", dependencies=[Depends(require_scope("roles:write"))])
-@router.put("/{role_id}", dependencies=[Depends(require_scope("roles:write"))])
+@router.patch("/{role_id}", dependencies=[Depends(require_scope("roles.manage"))])
+@router.put("/{role_id}", dependencies=[Depends(require_scope("roles.manage"))])
 async def update_role(role_id: uuid.UUID, data: RoleUpdate, db: DbSession, _: CurrentUser):
     role = await RBACService.get_role(db, role_id)
     if role is None:
@@ -75,7 +75,7 @@ async def update_role(role_id: uuid.UUID, data: RoleUpdate, db: DbSession, _: Cu
     return success(data=role, message="Role updated")
 
 
-@router.delete("/{role_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("roles:delete"))])
+@router.delete("/{role_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("roles.manage"))])
 async def delete_role(role_id: uuid.UUID, db: DbSession, _: CurrentUser):
     role = await RBACService.get_role(db, role_id)
     if role is None:
@@ -83,7 +83,7 @@ async def delete_role(role_id: uuid.UUID, db: DbSession, _: CurrentUser):
     await RBACService.delete_role(db, role)
 
 
-@router.get("/{role_id}/permissions", dependencies=[Depends(require_scope("roles:read"))])
+@router.get("/{role_id}/permissions", dependencies=[Depends(require_scope("roles.view"))])
 async def get_role_permissions(role_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     role = await RBACService.get_role(db, role_id)
     if role is None:
@@ -93,7 +93,7 @@ async def get_role_permissions(role_id: uuid.UUID, db: DbSession, _: CurrentUser
     return success(data=selector.apply(permissions))
 
 
-@router.put("/{role_id}/permissions", dependencies=[Depends(require_scope("roles:write"))])
+@router.put("/{role_id}/permissions", dependencies=[Depends(require_scope("roles.manage"))])
 async def update_role_permissions(role_id: uuid.UUID, data: RolePermissionsUpdatePayload, db: DbSession, _: CurrentUser):
     role = await RBACService.get_role(db, role_id)
     if role is None:

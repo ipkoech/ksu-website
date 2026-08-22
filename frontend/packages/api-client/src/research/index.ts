@@ -838,6 +838,84 @@ function readonlyInnovationRelationApi(
   };
 }
 
+/** Server-derived Research Portal bootstrap. */
+export interface ResearchPortalContextResponse {
+  /** `{permission: granted}` over the portal's closed capability set. */
+  capabilities: Record<string, boolean>;
+  /** Nav keys the server allows; matches `navKey` in the portal registry. */
+  allowed_navigation: string[];
+  /** Domain workspaces this caller belongs to (e.g. `["farm"]`). */
+  domains: string[];
+  /** True when the caller acts across every research domain. */
+  is_global: boolean;
+  can_review: boolean;
+  can_publish: boolean;
+  /** Filters the server applies to this caller's list queries, per domain. */
+  domain_filters: Record<string, Record<string, Record<string, unknown>>>;
+}
+
+export const researchPortalQueryKeys = {
+  bootstrap: ["research-portal", "context"] as const,
+  capabilities: ["research-portal", "capabilities"] as const,
+};
+
+export const researchPortalApi = {
+  context: () =>
+    researchApi.get<{ data: ResearchPortalContextResponse }>(
+      "/api/v1/research-portal/context",
+    ),
+  capabilities: () =>
+    researchApi.get<{
+      data: Pick<
+        ResearchPortalContextResponse,
+        "capabilities" | "allowed_navigation"
+      >;
+    }>("/api/v1/research-portal/capabilities"),
+};
+
+/** A record awaiting review in the research portal. */
+export interface ResearchWorkflowItem {
+  id: string;
+  resource: string;
+  title: string;
+  workflow_state: "draft" | "pending" | "published" | "rejected";
+  /** False when the model cannot record who submitted or reviewed it. */
+  audit_supported: boolean;
+  updated_at?: string | null;
+}
+
+export interface ResearchWorkflowQueue {
+  items: ResearchWorkflowItem[];
+  total: number;
+  domains: string[];
+  audit_supported: Record<string, boolean>;
+}
+
+export const researchWorkflowQueryKeys = {
+  queue: (resource?: string) =>
+    ["research-workflow", "queue", resource ?? "all"] as const,
+};
+
+const workflowAction =
+  (action: "submit" | "approve" | "reject" | "unpublish") =>
+  (resource: string, id: string, note?: string) =>
+    researchApi.post<{ data: ResearchWorkflowItem; message?: string }>(
+      `/api/v1/research-workflow/${resource}/${id}/${action}`,
+      note ? { note } : {},
+    );
+
+export const researchWorkflowApi = {
+  queue: (params?: { resource?: string; per_page?: number }) =>
+    researchApi.get<{ data: ResearchWorkflowQueue }>(
+      "/api/v1/research-workflow/queue",
+      params,
+    ),
+  submit: workflowAction("submit"),
+  approve: workflowAction("approve"),
+  reject: workflowAction("reject"),
+  unpublish: workflowAction("unpublish"),
+};
+
 export const researchServiceApi = {
   // /research-prefixed paths: the gateway's shared /api/v1 space resolves
   // bare /search, /analytics, and /stats to the main service.

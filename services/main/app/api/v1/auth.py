@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Cookie, HTTPException, Request, Response, status
 
 from ksu_common.schemas.responses import success
 from ksu_common.security import decode_key_material, public_jwk
 
 from ...core.config import get_settings
-from ...deps import CurrentToken, CurrentUser, DbSession
+from ...deps import CurrentToken, CurrentUser, DbSession, permissions_for_user
 from ...models import User
 from ...schemas import (
     ChangePasswordRequest,
+    CookieAuthResponse,
     ForgotPasswordRequest,
     RefreshRequest,
     ResetPasswordRequest,
@@ -51,6 +52,7 @@ def _cookie_secure() -> bool:
 
 
 def _set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
+    response.headers["Cache-Control"] = "no-store"
     response.set_cookie(
         ACCESS_COOKIE_NAME,
         access_token,
@@ -67,25 +69,20 @@ def _set_auth_cookies(response: Response, access_token: str, refresh_token: str)
         httponly=True,
         secure=_cookie_secure(),
         samesite="lax",
-        path="/",
+        path="/api/v1/auth",
     )
 
 
 def _clear_auth_cookies(response: Response) -> None:
     response.delete_cookie(ACCESS_COOKIE_NAME, path="/")
+    response.delete_cookie(REFRESH_COOKIE_NAME, path="/api/v1/auth")
+    # Also remove refresh cookies issued by older releases at the root path.
     response.delete_cookie(REFRESH_COOKIE_NAME, path="/")
 
 
 def _serialize_auth_user(user: User) -> dict:
     """Return an auth-friendly user payload with computed role names."""
-    permissions = sorted(
-        {
-            permission
-            for assignment in user.role_assignments
-            if assignment.is_active and assignment.role and assignment.role.is_active
-            for permission in assignment.role.permissions
-        }
-    )
+    permissions = sorted(permissions_for_user(user))
     return {
         "id": str(user.id),
         "email": user.email,
@@ -95,7 +92,8 @@ def _serialize_auth_user(user: User) -> dict:
         "push_tokens": user.push_tokens,
         "is_active": user.is_active,
         "is_verified": user.is_verified,
-        "mfa_enabled": user.mfa_enabled,
+        "service_memberships": user.service_memberships,
+        "must_change_password": user.must_change_password,
         "last_login_at": user.last_login_at.isoformat() if user.last_login_at else None,
         "failed_login_attempts": user.failed_login_attempts,
         "locked_until": user.locked_until.isoformat() if user.locked_until else None,
@@ -116,18 +114,34 @@ async def login(data: UserLogin, db: DbSession, response: Response, request: Req
         data.password,
         ip_address=request.client.host if request.client else None,
     )
+    if data.token_transport == "bearer":
+        return success(
+            data=TokenResponse(access_token=access_token, refresh_token=refresh_token).model_dump()
+        )
     _set_auth_cookies(response, access_token, refresh_token)
     return success(
-        data=TokenResponse(access_token=access_token, refresh_token=refresh_token).model_dump()
+        data=CookieAuthResponse().model_dump()
     )
 
 
 @router.post("/refresh")
-async def refresh(data: RefreshRequest, db: DbSession, response: Response):
-    access_token, refresh_token = await AuthService.refresh_token(db, data.refresh_token)
+async def refresh(
+    data: RefreshRequest,
+    db: DbSession,
+    response: Response,
+    refresh_cookie: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
+):
+    raw_refresh_token = data.refresh_token if data.token_transport == "bearer" else refresh_cookie
+    if not raw_refresh_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token")
+    access_token, refresh_token = await AuthService.refresh_token(db, raw_refresh_token)
+    if data.token_transport == "bearer":
+        return success(
+            data=TokenResponse(access_token=access_token, refresh_token=refresh_token).model_dump()
+        )
     _set_auth_cookies(response, access_token, refresh_token)
     return success(
-        data=TokenResponse(access_token=access_token, refresh_token=refresh_token).model_dump()
+        data=CookieAuthResponse().model_dump()
     )
 
 
@@ -168,8 +182,14 @@ async def verify_email(data: VerifyEmailRequest, db: DbSession):
 
 
 @router.post("/change-password")
-async def change_password(data: ChangePasswordRequest, db: DbSession, user: CurrentUser):
+async def change_password(
+    data: ChangePasswordRequest,
+    db: DbSession,
+    user: CurrentUser,
+    response: Response,
+):
     await AuthService.change_password(db, user, data.old_password, data.new_password)
+    _clear_auth_cookies(response)
     return success(message="Password changed successfully")
 
 

@@ -1,4 +1,4 @@
-import { getStoredAccessToken, refreshStoredAccessToken } from "./auth-tokens";
+import { refreshStoredAccessToken } from "./auth-tokens";
 import {
   getLibraryApiBaseUrl,
   getMainApiBaseUrl,
@@ -116,9 +116,6 @@ export class ApiClient {
 
     const headers: Record<string, string> = {
       ...this.headers,
-      ...(getStoredAccessToken() && !options.headers?.Authorization
-        ? { Authorization: `Bearer ${getStoredAccessToken()}` }
-        : {}),
       ...options.headers,
     };
 

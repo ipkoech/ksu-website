@@ -40,7 +40,7 @@ export function VisitUsSection({
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-border">
+            <div className="relative aspect-[16/10] overflow-hidden rounded-3xl border border-border">
               <PublicImage
                 src="/logos/ksu-bck1.jpg"
                 alt="Kisii University main campus"

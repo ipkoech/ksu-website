@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, TypeVar
 
+from ksu_common.research_partners import PARTNER_SOURCE_URL, RESEARCH_PARTNERS, partner_logo_id
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -79,18 +80,6 @@ async def upsert_public_media(
     alt_text: str,
 ) -> None:
     """Media is Main-owned; seeders may record URLs but never create Main rows."""
-    return None
-
-
-def partner_logo_url(spec: dict[str, Any]) -> str | None:
-    domain = spec.get("logo_domain")
-    if not domain:
-        return None
-    return f"https://www.google.com/s2/favicons?domain={domain}&sz=256"
-
-
-async def upsert_partner_logo(db: AsyncSession, spec: dict[str, Any], slug: str) -> None:
-    """Keep the source URL in Partner.social_links; Main owns media creation."""
     return None
 
 
@@ -1022,41 +1011,32 @@ async def seed_innovations_and_outputs(
 
 
 async def seed_partners(db: AsyncSession) -> None:
-    source_url = "https://kisiiuniversity.ac.ke/%D7%97%D7%96%D7%99%D7%AA%D7%99/research_partnerships/2b25301b-de41-435a-a8f1-763f78cd3df2"
-    specs = [
-        {"name": "University of Kansas Medical Centre", "partner_type": "academic", "partnership_level": "strategic", "country": "United States", "website": "https://www.kumc.edu/", "logo_domain": "kumc.edu"},
-        {"name": "Pentecostal Life University", "partner_type": "academic", "partnership_level": "strategic", "country": "Malawi", "website": "https://plu.ac.mw/", "logo_domain": "plu.ac.mw"},
-        {"name": "Computer Aid International", "partner_type": "international", "partnership_level": "technical", "country": "United Kingdom", "website": "https://www.computeraid.org/", "logo_domain": "computeraid.org"},
-        {"name": "Kenya National Library Service", "acronym": "KNLS", "partner_type": "government", "partnership_level": "implementing", "country": "Kenya", "website": "https://www.knls.ac.ke/", "logo_domain": "knls.ac.ke"},
-        {"name": "Kenya Marine Fisheries Research Institute", "acronym": "KMFRI", "partner_type": "government", "partnership_level": "research", "country": "Kenya", "website": "https://www.kmfri.go.ke/", "logo_domain": "kmfri.go.ke"},
-        {"name": "Books for Africa", "partner_type": "foundation", "partnership_level": "community", "country": "United States", "website": "https://www.booksforafrica.org/", "logo_domain": "booksforafrica.org"},
-        {"name": "Jingdezhen University", "partner_type": "academic", "partnership_level": "strategic", "country": "China", "website": "https://www.jci.edu.cn/english/", "logo_domain": "jci.edu.cn"},
-        {"name": "Bowling Green State University", "partner_type": "academic", "partnership_level": "strategic", "country": "United States", "website": "https://www.bgsu.edu/", "logo_domain": "bgsu.edu"},
-        {"name": "Austin Peay State University", "partner_type": "academic", "partnership_level": "strategic", "country": "United States", "website": "https://www.apsu.edu/", "logo_domain": "apsu.edu"},
-        {"name": "International Computer Driving License", "acronym": "ICDL Africa", "partner_type": "international", "partnership_level": "technical", "country": "Africa", "website": "https://icdl.org/icdl-africa/", "logo_domain": "icdl.org"},
-        {"name": "Kenya Agricultural and Livestock Research Organization (KARLO)", "acronym": "KARLO", "partner_type": "government", "partnership_level": "research", "country": "Kenya", "website": "https://www.kalro.org/", "logo_domain": "kalro.org"},
-        {"name": "University of Minnesota", "acronym": "UMN", "partner_type": "academic", "partnership_level": "strategic", "country": "United States", "website": "https://twin-cities.umn.edu/", "logo_domain": "umn.edu"},
-        {"name": "Semyung University", "partner_type": "academic", "partnership_level": "strategic", "country": "South Korea", "website": "https://www.semyung.ac.kr/eng.do", "logo_domain": "semyung.ac.kr"},
-        {"name": "University of Cape Town", "partner_type": "academic", "partnership_level": "strategic", "country": "South Africa", "website": "https://www.uct.ac.za/", "logo_domain": "uct.ac.za"},
-        {"name": "International Youth Fellowship", "acronym": "IYF", "partner_type": "ngo", "partnership_level": "community", "country": "International", "website": "https://www.iyf.org/", "logo_domain": "iyf.org"},
-        {"name": "Kantar Public", "partner_type": "industry", "partnership_level": "research", "country": "United Kingdom", "website": "https://www.veriangroup.com/", "logo_domain": "veriangroup.com"},
-        {"name": "Mogadishu University", "partner_type": "academic", "partnership_level": "strategic", "country": "Somalia", "website": "https://mu.edu.so/", "logo_domain": "mu.edu.so"},
-        {"name": "Kenya National Commission on Human Rights", "partner_type": "government", "partnership_level": "community", "country": "Kenya", "website": "https://www.knchr.org/", "logo_domain": "knchr.org"},
-    ]
     official_slugs: list[str] = []
-    for order, spec in enumerate(specs, start=1):
+    for order, spec in enumerate(RESEARCH_PARTNERS, start=1):
         slug = slugify(spec["name"])
-        await upsert_partner_logo(db, spec, slug)
+        legacy_slug = spec.get("legacy_slug")
+        if legacy_slug:
+            legacy_partner = await db.scalar(select(Partner).where(Partner.slug == legacy_slug))
+            if legacy_partner is not None:
+                current_partner = await db.scalar(select(Partner).where(Partner.slug == slug))
+                if current_partner is None:
+                    legacy_partner.slug = slug
+                else:
+                    await db.delete(legacy_partner)
+                await db.flush()
         payload = {
-            **{key: value for key, value in spec.items() if key != "logo_domain"},
-            "logo_id": None,
+            **{key: value for key, value in spec.items() if key not in {"logo_url", "legacy_slug"}},
+            "logo_id": partner_logo_id(slug),
             "about": f"Active memorandum of understanding between Kisii University and {spec['name']}.",
             "collaboration_areas": "Research, academic collaboration, extension, innovation, and institutional partnership.",
             "key_achievements": "Published by Kisii University as an active memorandum of understanding.",
             "social_links": {
-                "source_url": source_url,
+                "source_url": PARTNER_SOURCE_URL,
                 "source_type": "official_ksu_research_partnerships",
-                "logo_source_url": partner_logo_url(spec),
+                "logo_url": spec["logo_url"],
+                "asset_path": spec["logo_url"],
+                "logo_asset_path": spec["logo_url"],
+                "logo_source_url": spec["logo_url"],
             },
             "status": "active",
             "is_active": True,

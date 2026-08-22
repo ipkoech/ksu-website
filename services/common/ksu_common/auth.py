@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Cookie, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from .security import decode_key_material, decode_token
@@ -52,17 +52,19 @@ def build_user_dependencies(
 
     async def get_current_user(
         credentials: HTTPAuthorizationCredentials | None = _bearer_dependency,
+        access_cookie: str | None = Cookie(default=None, alias="ksu_access"),
     ) -> TokenPayload:
         exc = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-        if not credentials:
+        token = credentials.credentials if credentials else access_cookie if isinstance(access_cookie, str) else None
+        if not token:
             raise exc
         try:
             payload = decode_token(
-                credentials.credentials,
+                token,
                 key=public_key,
                 algorithm=algorithm,
                 issuer=issuer,
@@ -81,11 +83,12 @@ def build_user_dependencies(
 
     async def get_optional_user(
         credentials: HTTPAuthorizationCredentials | None = _bearer_dependency,
+        access_cookie: str | None = Cookie(default=None, alias="ksu_access"),
     ) -> TokenPayload | None:
-        if not credentials:
+        if not credentials and not isinstance(access_cookie, str):
             return None
         try:
-            return await get_current_user(credentials)
+            return await get_current_user(credentials, access_cookie)
         except HTTPException:
             return None
 

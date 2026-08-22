@@ -10,7 +10,22 @@ export interface LandingStat {
 
 interface WhyKsuSectionProps {
   stats: LandingStat[];
+  /** Heading, split into the roman line and the italic turn. From the CMS
+   *  section title when an editor has set one. */
+  headingLead?: string;
+  headingAccent?: string;
+  /** The two story paragraphs. CMS section description and subtitle. */
+  lead?: string;
+  support?: string;
 }
+
+const fallbackCopy = {
+  headingLead: "Why Kisii",
+  headingAccent: "University.",
+  lead: "Kisii University is a leading public university at the centre of Kisii. Eight schools, applied research, and community transformation. Founded 1965, chartered 2013.",
+  support:
+    "We nurture minds, advance research, and serve community: programmes shaped with employers and professional bodies, research that answers local questions, and a campus with room to become.",
+};
 
 /* Cool light wash of the brand primary — the section ground the hero hands
    over to. All ink is the deep navy brand overlay. */
@@ -24,41 +39,44 @@ const numeralGradient =
  * display heading beside the university's story, then a row of compact stat
  * cards over campus scenes, the middle one staggered.
  */
-export function WhyKsuSection({ stats }: WhyKsuSectionProps) {
+export function WhyKsuSection({
+  stats,
+  headingLead,
+  headingAccent,
+  lead,
+  support,
+}: WhyKsuSectionProps) {
   const cardStats = stats;
+  const copy = {
+    headingLead: headingLead?.trim() || fallbackCopy.headingLead,
+    headingAccent: headingAccent?.trim() || fallbackCopy.headingAccent,
+    lead: lead?.trim() || fallbackCopy.lead,
+    support: support?.trim() || fallbackCopy.support,
+  };
 
   return (
     <section
       id="why-ksu"
       aria-labelledby="why-ksu-heading"
-      className="relative z-10 rounded-t-[28px] px-6 py-14 text-brand-overlay sm:px-10 sm:py-16"
+      className="ksu-band relative z-10 rounded-t-[28px] px-6 text-brand-overlay sm:px-10"
       style={{ backgroundColor: ground }}
     >
-      <div className="mx-auto w-full max-w-7xl">
+      <div className="mx-auto w-full max-w-[1680px]">
         {/* Heading + story */}
         <div className="flex flex-col items-start justify-between gap-10 lg:flex-row lg:gap-20">
           <h2
             id="why-ksu-heading"
-            className="font-[family-name:var(--font-display)] text-[36px] font-normal leading-[0.98] tracking-tight sm:text-[48px] lg:text-[54px]"
+            className="ksu-d2 font-[family-name:var(--font-display)] font-normal"
           >
-            Why Kisii
+            {copy.headingLead}
             <br />
-            <em className="italic">University.</em>
+            <em className="italic">{copy.headingAccent}</em>
           </h2>
 
           <div className="flex max-w-xl flex-col">
             <div className="text-[17px] leading-[1.55] sm:text-[18px]">
-              <p>
-                Kisii University is a leading public university at the centre
-                of Kisii. Eight schools, applied research, and community
-                transformation. Founded 1965, chartered 2013.
-              </p>
-              <p className="mt-4">
-                We nurture minds, advance research, and serve community:
-                programmes shaped with employers and professional bodies,
-                research that answers local questions, and a campus with room
-                to become.
-              </p>
+              <p>{copy.lead}</p>
+              <p className="mt-4">{copy.support}</p>
             </div>
             <Link
               href="/about"
@@ -73,19 +91,19 @@ export function WhyKsuSection({ stats }: WhyKsuSectionProps) {
         </div>
 
         {/* Compact stat cards */}
+        {/* One flush row. The previous `index % 3 === 1` stagger dropped every
+            second card 40px, which reads as deliberate with exactly three
+            stats and as a rendering fault with the seven the CMS actually
+            returns. A proof row has to look composed. */}
         {cardStats.length > 0 && (
-          <ul className="mt-14 grid list-none grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {cardStats.map((stat, index) => (
+          <ul className="mt-14 grid list-none grid-cols-2 gap-5 lg:grid-cols-4">
+            {cardStats.map((stat) => (
               <li
                 key={stat.label}
-                className={
-                  index % 3 === 1
-                    ? "relative h-[130px] w-full sm:h-[160px] lg:mt-10"
-                    : "relative h-[130px] w-full sm:h-[160px]"
-                }
+                className="relative h-[130px] w-full sm:h-[160px]"
               >
                 <div
-                  className="relative h-full w-full overflow-hidden rounded-2xl bg-white ring-1 ring-primary/10"
+                  className="relative h-full w-full overflow-hidden rounded-3xl bg-white ring-1 ring-primary/10"
                 >
                   <div className="absolute bottom-5 left-5 right-5">
                     <p

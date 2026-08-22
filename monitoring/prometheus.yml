@@ -33,6 +33,14 @@ scrape_configs:
     static_configs:
       - targets: [postgres-exporter:9187]
 
-  - job_name: ksu-redis
+  - job_name: ksu-redis-broker
     static_configs:
       - targets: [redis-exporter:9121]
+        labels:
+          redis_role: broker
+
+  - job_name: ksu-redis-cache
+    static_configs:
+      - targets: [redis-cache-exporter:9121]
+        labels:
+          redis_role: cache

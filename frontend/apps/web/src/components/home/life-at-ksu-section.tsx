@@ -108,7 +108,7 @@ export function LifeAtKsuSection() {
               whileInView="visible"
               viewport={{ once: true, amount: 0.3 }}
               className={cn(
-                "group overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.98]",
+                "group overflow-hidden rounded-3xl border border-border bg-white shadow-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.98]",
                 card.featured && "lg:col-span-2"
               )}
             >

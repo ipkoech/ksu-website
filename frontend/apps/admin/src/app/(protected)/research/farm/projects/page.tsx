@@ -10,7 +10,7 @@ export default function FarmProjectsPage() {
       description="Manage farm-linked action research, demonstrations, and applied field projects."
       queryKey={["research", "farm", "projects"]}
       resource={researchServiceApi.projects}
-      manageScopes={["research.manage_projects", "research:write"]}
+      manageScopes={["farm.manage", "research:write"]}
       listParams={{ is_active: true, is_public: true, project_type: "action" }}
       summarySlot={<FarmWorkspaceHeader />}
       listFilters={farmProjectFilters}

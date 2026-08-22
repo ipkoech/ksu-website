@@ -52,40 +52,182 @@ VC_VIDEO_SPECS = (
         "recorded_at": datetime(2026, 3, 12, 10, 0, tzinfo=timezone.utc),
     },
 )
+# Where each activity happened. News carries no location column, so the place a
+# card prints comes from the placement's editorial_label — the field the studio
+# already exposes for exactly this kind of per-card annotation.
+VC_ACTIVITY_PLACES = {
+    "kmfri-ceo-dr-paul-orina-pays-courtesy-call-to-vice-chancellor": "Main Campus",
+    "ksu-vice-chancellor-joins-nyamira-county-governor-to-celebrate-vocational-training-graduates": "Nyamira County",
+    "ksu-top-achievers-dinner": "Main Campus",
+    "ksu-vc-presides-over-the-aicad-technical-committee-meeting-in-arusha-tanzania": "Arusha, Tanzania",
+}
 VC_SPEECH_SPECS = (
     {
-        "title": "Celebrating the Class of 2026",
-        "slug": "celebrating-the-class-of-2026",
+        "title": "Language education at the centre of Africa's research revival",
+        "slug": "language-education-at-the-centre-of-africas-research-revival",
         "speech_type": "address",
-        "summary": "Development editorial copy accompanying official coverage of Kisii University's 15th graduation ceremony.",
-        "plain_text": (
-            "This development entry introduces the official graduation coverage and recognises the work "
-            "of graduates, families, faculty, staff, and partners. Replace this text in VC Studio with the "
-            "approved address or transcript when it is available."
+        "summary": (
+            "At the continental launch of HERI Africa, the Vice-Chancellor set out Kisii University's "
+            "role as host of the East Africa Research Chair in Language Education."
         ),
-        "delivered_at": datetime(2026, 3, 12, 10, 0, tzinfo=timezone.utc),
-        "venue": "Kisii University",
-        "occasion": "15th Graduation Ceremony",
-        "audience": "Graduates, families, staff, and guests",
-        "video_id": "_krrQWU98b4",
+        "plain_text": (
+            "Kisii University hosted the official launch of Harnessing Education Research for Impact in "
+            "Africa (HERI Africa) on 19 February 2026, an event graced by the Cabinet Secretary for "
+            "Education, Hon. Julius Migos Ogamba.\n\n"
+            "HERI Africa is a pan-African initiative to revitalise Africa-led, university-based education "
+            "research and to raise the continent's share of global education research from about three "
+            "per cent today to thirty per cent by 2050. Kisii University hosts the East Africa Research "
+            "Chair in Language Education; the Chair in Mathematics Education is hosted at the University "
+            "of Embu.\n\n"
+            "Addressing delegates, the Vice-Chancellor said the institution “is open to all partners who "
+            "are involved in scientific research geared towards the realisation of Vision 2030”, and "
+            "urged lecturers to help students “embrace leadership, innovation and research” so that they "
+            "are recognised globally and are able to secure work.\n\n"
+            "This is an editorial account of the address compiled from published coverage. The full text "
+            "will be published here when it is released by the Office of the Vice-Chancellor."
+        ),
+        "delivered_at": datetime(2026, 2, 19, 9, 0, tzinfo=timezone.utc),
+        "venue": "Kisii University, Main Campus",
+        "occasion": "Launch of the HERI Africa Programme",
+        "audience": "The Cabinet Secretary for Education, university leaders, researchers and partners",
+        "video_id": None,
         "is_featured": True,
+        "sources": (
+            {
+                "label": "Kisii University launches HERI Africa programme — Education News",
+                "url": "https://educationnews.co.ke/kisii-university-launches-heri-africa-programme-to-boost-research-innovation/",
+            },
+            {
+                "label": "Kisii University ignites Africa's research revolution — Dawan Africa",
+                "url": "https://www.dawan.africa/news/kisii-university-ignites-africas-research-revolution-with-heri-launch",
+            },
+        ),
     },
     {
-        "title": "Innovation, Enterprise and Shared Progress",
+        "title": "Solutions cannot come from one sector alone",
+        "slug": "solutions-cannot-come-from-one-sector-alone",
+        "speech_type": "address",
+        "summary": (
+            "Opening the 3rd International Multi-Disciplinary Conference, the Vice-Chancellor argued for "
+            "collaborative research and for judgement, not access, as the real test of artificial intelligence."
+        ),
+        "plain_text": (
+            "Kisii University convened its 3rd International Multi-Disciplinary Conference, drawing "
+            "researchers, scholars, policymakers and students from the United States and from West, "
+            "Central and East Africa, in person and online. The programme centred on inclusivity and on "
+            "collaborative approaches to health and sustainable development, alongside the place of "
+            "artificial intelligence and competency-based education in preparing students.\n\n"
+            "“Solutions to today's challenges cannot come from one sector alone,” the Vice-Chancellor told "
+            "delegates, noting that progress in health depends as much on education, sociology, business "
+            "and technology as it does on the health sciences.\n\n"
+            "On artificial intelligence he was direct: “The issue is not simply accessing information from "
+            "AI, but how we use that information to bring positive and transformative change.”\n\n"
+            "He also pressed the case for research capacity — modern laboratories, equipment and trained "
+            "personnel — and for partnership between universities, research institutions, government "
+            "agencies and development partners, observing that “no single university can adequately "
+            "address research challenges alone.”\n\n"
+            "This is an editorial account of the address compiled from published coverage. The full text "
+            "will be published here when it is released by the Office of the Vice-Chancellor."
+        ),
+        "delivered_at": datetime(2026, 6, 12, 9, 0, tzinfo=timezone.utc),
+        "venue": "Kisii University, Main Campus",
+        "occasion": "3rd International Multi-Disciplinary Conference",
+        "audience": "Researchers, policymakers and students from across Africa and the United States",
+        "video_id": None,
+        "is_featured": False,
+        "sources": (
+            {
+                "label": "Kisii University hosts global conference to drive research and innovation — The Mt Kenya Times",
+                "url": "https://mountkenyatimes.co.ke/kisii-university-hosts-global-conference-to-drive-research-and-innovation/",
+            },
+        ),
+    },
+    {
+        "title": "Handing over the site for the Student Village",
+        "slug": "handing-over-the-site-for-the-student-village",
+        "speech_type": "statement",
+        "summary": (
+            "Remarks at the handover of the Student Village site to the contractor — 1,680 beds under the "
+            "national Affordable Housing Programme."
+        ),
+        "plain_text": (
+            "The Vice-Chancellor handed over the Student Village site to the contractor, opening "
+            "construction of a hostel complex designed to accommodate 1,680 students in secured modern "
+            "housing with a constant water supply and internet access. Kisii University is the first "
+            "university to benefit from the national Affordable Housing Programme.\n\n"
+            "The Vice-Chancellor described the project as part of the long-term development plan of the "
+            "University, intended both to relieve parents of the cost of renting accommodation off campus "
+            "and to make Kisii a credible destination for international students.\n\n"
+            "This is an editorial account compiled from published coverage. The date of the ceremony and "
+            "the full remarks should be confirmed and completed in VC Studio."
+        ),
+        "delivered_at": None,
+        "venue": "Kisii University, Main Campus",
+        "occasion": "Student Village site handover, Affordable Housing Programme",
+        "audience": "Contractors, housing officials, students and staff",
+        "video_id": None,
+        "is_featured": False,
+        "sources": (
+            {
+                "label": "Kisii University hands over site for Affordable Housing Programme — Kenya News Agency",
+                "url": "https://www.kenyanews.go.ke/kisii-university-hands-over-site-for-affordable-housing-programme/",
+            },
+            {
+                "label": "Kisii University launches construction of hostel complex — Education News",
+                "url": "https://educationnews.co.ke/kisii-university-launches-construction-of-hostel-complex-to-accommodate-1680-students/",
+            },
+        ),
+    },
+    {
+        "title": "Conferring the Class of 2026",
+        # slug kept from the first seed so the published URL does not break
+        "slug": "celebrating-the-class-of-2026",
+        "speech_type": "address",
+        "summary": (
+            "The Vice-Chancellor's address at the University's fifteenth graduation ceremony, delivered "
+            "before graduands, their families, faculty and guests."
+        ),
+        "plain_text": (
+            "Kisii University held its 15th Graduation Ceremony on 12 March 2026. The Vice-Chancellor, as "
+            "chair of Senate, presented the graduands and addressed the congregation before the conferment "
+            "of degrees and the award of diplomas and certificates.\n\n"
+            "The ceremony was broadcast in full on the University's official channel; the recording is "
+            "linked below.\n\n"
+            "The approved text of the address will be published here when it is released by the Office of "
+            "the Vice-Chancellor."
+        ),
+        "delivered_at": datetime(2026, 3, 12, 10, 0, tzinfo=timezone.utc),
+        "venue": "Chancellor's Pavilion, Kisii University",
+        "occasion": "15th Graduation Ceremony",
+        "audience": "Graduands, families, faculty, staff and invited guests",
+        "video_id": "_krrQWU98b4",
+        "is_featured": False,
+        "sources": (),
+    },
+    {
+        "title": "Innovation, enterprise and shared progress",
         "slug": "innovation-enterprise-and-shared-progress",
         "speech_type": "reflection",
-        "summary": "Development editorial copy introducing the University's official Innovation Week coverage.",
+        "summary": (
+            "Opening remarks at Innovation Week 2026, the University's annual showcase of student and "
+            "staff research, creativity and enterprise."
+        ),
         "plain_text": (
-            "This development entry provides context for the official Innovation Week recording and the "
-            "University's focus on research, creativity, enterprise, and community impact. Replace it in "
-            "VC Studio when an approved speech or transcript is available."
+            "Innovation Week 2026 brought student and staff teams, partners and visitors to the Main "
+            "Campus for the University's annual showcase of research, creativity, enterprise and "
+            "collaborative problem solving. The Vice-Chancellor opened the week and toured the exhibition "
+            "with the deans and directors.\n\n"
+            "The full session was recorded and is linked below.\n\n"
+            "The approved text of the remarks will be published here when it is released by the Office of "
+            "the Vice-Chancellor."
         ),
         "delivered_at": datetime(2026, 4, 11, 12, 0, tzinfo=timezone.utc),
-        "venue": "Kisii University",
+        "venue": "Kisii University, Main Campus",
         "occasion": "Innovation Week 2026",
-        "audience": "Students, staff, researchers, partners, and innovators",
+        "audience": "Students, staff, researchers, partners and innovators",
         "video_id": "uLXWUSqegL4",
         "is_featured": False,
+        "sources": (),
     },
 )
 VC_GALLERY_SPECS = (
@@ -230,12 +372,16 @@ async def _upsert_speech(
         speech.plain_text = str(spec["plain_text"])
         speech.rich_text = f"<p>{spec['plain_text']}</p>"
         speech.structured_content = _seed_metadata()
-        speech.related_links = [
-            {
-                "label": "Official Kisii University video",
-                "url": videos[str(spec["video_id"])].source_url,
-            }
-        ]
+        related: list[dict[str, str]] = []
+        if spec.get("video_id"):
+            related.append(
+                {
+                    "label": "Official Kisii University video",
+                    "url": videos[str(spec["video_id"])].source_url,
+                }
+            )
+        related.extend(dict(source) for source in spec.get("sources") or ())
+        speech.related_links = related
         speech.speech_type = str(spec["speech_type"])
         speech.delivered_at = spec["delivered_at"]
         speech.venue = str(spec["venue"])
@@ -246,6 +392,9 @@ async def _upsert_speech(
         speech.meta_description = str(spec["summary"])
         _publish(speech, now)
     await db.flush()
+
+    if not spec.get("video_id"):
+        return speech
 
     video = videos[str(spec["video_id"])]
     link = (
@@ -391,6 +540,7 @@ async def _ensure_placement(
     source_id: uuid.UUID,
     display_order: int,
     is_featured: bool = False,
+    editorial_label: str | None = None,
 ) -> None:
     source_fields = {
         "activities": "news_id",
@@ -420,6 +570,8 @@ async def _ensure_placement(
     placement.display_order = display_order
     placement.is_featured = is_featured
     placement.is_enabled = True
+    if editorial_label and not placement.editorial_label:
+        placement.editorial_label = editorial_label
     await db.flush()
 
 
@@ -535,6 +687,7 @@ async def seed_vice_chancellor_hub(db: AsyncSession, ctx: SeedContext) -> None:
             source_id=news.id,
             display_order=100 + order * 10,
             is_featured=order == 1,
+            editorial_label=VC_ACTIVITY_PLACES.get(news.slug),
         )
     for order, speech in enumerate(speeches, start=1):
         await _ensure_placement(
@@ -579,6 +732,7 @@ async def seed_vice_chancellor_hub(db: AsyncSession, ctx: SeedContext) -> None:
 
 
 __all__ = [
+    "VC_ACTIVITY_PLACES",
     "VC_EVENT_SPECS",
     "VC_GALLERY_SPECS",
     "VC_SEED_OWNER",

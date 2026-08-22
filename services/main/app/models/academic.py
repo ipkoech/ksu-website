@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date
+from datetime import date, datetime
 from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa
@@ -12,11 +12,14 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ksu_common.models.base import Base
 
+from .content import UpdatedByMixin, WorkflowMetadataMixin
+
 if TYPE_CHECKING:
     from .admissions import Intake, Programme
     from .media import Media
     from .person import Person
     from .organization import Wing
+    from .document import Document
 
 
 class Campus(Base):
@@ -347,7 +350,7 @@ class DepartmentService(Base):
         return f"<DepartmentService {self.name}>"
 
 
-class AcademicCalendar(Base):
+class AcademicCalendar(Base, WorkflowMetadataMixin, UpdatedByMixin):
     """Term/semester scheduling data per academic year."""
 
     __tablename__ = "academic_calendars"
@@ -377,12 +380,28 @@ class AcademicCalendar(Base):
         nullable=False,
         server_default="draft",
     )  # draft | published | archived | current
+    is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"), index=True)
+    is_published: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"), index=True)
+    published_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True, index=True)
+    archived_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    supersedes_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("academic_calendars.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     intakes: Mapped[list["Intake"]] = relationship(
         "Intake",
         back_populates="academic_calendar",
         cascade="all, delete-orphan",
         lazy="selectin",
+    )
+    normalized_events: Mapped[list["AcademicCalendarEvent"]] = relationship(
+        "AcademicCalendarEvent", back_populates="calendar", cascade="all, delete-orphan", lazy="selectin"
+    )
+    document_links: Mapped[list["AcademicCalendarDocument"]] = relationship(
+        "AcademicCalendarDocument", back_populates="calendar", cascade="all, delete-orphan", lazy="selectin"
+    )
+    supersedes: Mapped[Optional["AcademicCalendar"]] = relationship(
+        "AcademicCalendar", remote_side="AcademicCalendar.id", foreign_keys=[supersedes_id]
     )
 
     __table_args__ = (
@@ -393,4 +412,62 @@ class AcademicCalendar(Base):
         return f"<AcademicCalendar {self.academic_year} S{self.semester}>"
 
 
-__all__ = ["Campus", "School", "Department", "DepartmentService", "AcademicCalendar"]
+class AcademicCalendarEvent(Base, WorkflowMetadataMixin, UpdatedByMixin):
+    """One independently publishable date or date range in an academic calendar."""
+
+    __tablename__ = "academic_calendar_events"
+
+    calendar_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("academic_calendars.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    title: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    event_type: Mapped[str] = mapped_column(sa.String(32), nullable=False, index=True)
+    description: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    start_date: Mapped[date] = mapped_column(sa.Date, nullable=False, index=True)
+    end_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
+    audience: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True, index=True)
+    location: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    document_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        sa.ForeignKey("documents.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    is_highlighted: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
+    display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+    status: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="draft", index=True)
+    is_public: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"), index=True)
+    is_published: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"), index=True)
+    published_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True, index=True)
+    archived_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+
+    calendar: Mapped["AcademicCalendar"] = relationship("AcademicCalendar", back_populates="normalized_events")
+    document: Mapped[Optional["Document"]] = relationship("Document")
+
+    __table_args__ = (
+        sa.CheckConstraint("end_date IS NULL OR end_date >= start_date", name="ck_academic_calendar_event_dates"),
+        sa.Index("ix_academic_calendar_events_public", "calendar_id", "is_public", "is_published", "start_date"),
+    )
+
+
+class AcademicCalendarDocument(Base):
+    """A typed document attachment, including examination notices and timetables."""
+
+    __tablename__ = "academic_calendar_documents"
+    calendar_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("academic_calendars.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    relationship_type: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="supporting")
+    display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, server_default=sa.text("100"))
+    calendar: Mapped["AcademicCalendar"] = relationship("AcademicCalendar", back_populates="document_links")
+    document: Mapped["Document"] = relationship("Document")
+
+    __table_args__ = (
+        sa.UniqueConstraint("calendar_id", "document_id", "relationship_type", name="uq_academic_calendar_document"),
+    )
+
+
+__all__ = [
+    "Campus", "School", "Department", "DepartmentService", "AcademicCalendar",
+    "AcademicCalendarEvent", "AcademicCalendarDocument",
+]

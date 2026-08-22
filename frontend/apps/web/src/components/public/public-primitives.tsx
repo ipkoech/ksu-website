@@ -66,6 +66,8 @@ export type PublicCard = {
   icon?: PublicIconName;
   eyebrow?: string;
   external?: boolean;
+  image?: string | null;
+  metadata?: Record<string, string | string[] | null | undefined>;
 };
 
 export type PublicFactItem = {

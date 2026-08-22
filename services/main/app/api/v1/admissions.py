@@ -73,7 +73,7 @@ async def list_admission_info(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/admin", dependencies=[Depends(require_scope("academic:write"))])
+@router.get("/admin", dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def list_admin_admission_info(
     db: DbSession,
     _: CurrentUser,
@@ -129,13 +129,13 @@ async def get_admission_pathway(slug: str, db: DbSession, fields: FieldSelection
     return success(data=selector.apply(item))
 
 
-@router.post("/pathways", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("academic:write"))])
+@router.post("/pathways", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def create_admission_pathway(data: AdmissionPathwayCreate, db: DbSession, _: CurrentUser):
     item = await AdmissionPathwayService.create(db, **data.model_dump())
     return success(data=item, message="Admission pathway created")
 
 
-@router.patch("/pathways/{item_id}", dependencies=[Depends(require_scope("academic:write"))])
+@router.patch("/pathways/{item_id}", dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def update_admission_pathway(item_id: uuid.UUID, data: AdmissionPathwayUpdate, db: DbSession, _: CurrentUser):
     item = await AdmissionPathwayService.get_by_id(db, item_id)
     if item is None:
@@ -144,7 +144,7 @@ async def update_admission_pathway(item_id: uuid.UUID, data: AdmissionPathwayUpd
     return success(data=item, message="Admission pathway updated")
 
 
-@router.delete("/pathways/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("academic:delete"))])
+@router.delete("/pathways/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def delete_admission_pathway(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await AdmissionPathwayService.get_by_id(db, item_id)
     if item is None:
@@ -192,13 +192,13 @@ async def get_admission_requirement(item_id: uuid.UUID, db: DbSession, fields: F
     return success(data=selector.apply(item))
 
 
-@router.post("/requirements", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("academic:write"))])
+@router.post("/requirements", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def create_admission_requirement(data: AdmissionRequirementCreate, db: DbSession, _: CurrentUser):
     item = await AdmissionRequirementService.create(db, **data.model_dump())
     return success(data=item, message="Admission requirement created")
 
 
-@router.patch("/requirements/{item_id}", dependencies=[Depends(require_scope("academic:write"))])
+@router.patch("/requirements/{item_id}", dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def update_admission_requirement(item_id: uuid.UUID, data: AdmissionRequirementUpdate, db: DbSession, _: CurrentUser):
     item = await AdmissionRequirementService.get_by_id(db, item_id)
     if item is None:
@@ -207,7 +207,7 @@ async def update_admission_requirement(item_id: uuid.UUID, data: AdmissionRequir
     return success(data=item, message="Admission requirement updated")
 
 
-@router.delete("/requirements/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("academic:delete"))])
+@router.delete("/requirements/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def delete_admission_requirement(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await AdmissionRequirementService.get_by_id(db, item_id)
     if item is None:
@@ -251,13 +251,13 @@ async def get_programme_fee_structure(item_id: uuid.UUID, db: DbSession, fields:
     return success(data=selector.apply(item))
 
 
-@router.post("/fee-structures", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("academic:write"))])
+@router.post("/fee-structures", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def create_programme_fee_structure(data: ProgrammeFeeStructureCreate, db: DbSession, _: CurrentUser):
     item = await ProgrammeFeeStructureService.create(db, **data.model_dump())
     return success(data=item, message="Programme fee structure created")
 
 
-@router.patch("/fee-structures/{item_id}", dependencies=[Depends(require_scope("academic:write"))])
+@router.patch("/fee-structures/{item_id}", dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def update_programme_fee_structure(item_id: uuid.UUID, data: ProgrammeFeeStructureUpdate, db: DbSession, _: CurrentUser):
     item = await ProgrammeFeeStructureService.get_by_id(db, item_id)
     if item is None:
@@ -266,7 +266,7 @@ async def update_programme_fee_structure(item_id: uuid.UUID, data: ProgrammeFeeS
     return success(data=item, message="Programme fee structure updated")
 
 
-@router.delete("/fee-structures/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("academic:delete"))])
+@router.delete("/fee-structures/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def delete_programme_fee_structure(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await ProgrammeFeeStructureService.get_by_id(db, item_id)
     if item is None:
@@ -312,13 +312,13 @@ async def get_admission_document(slug: str, db: DbSession, fields: FieldSelectio
     return success(data=selector.apply(item))
 
 
-@router.post("/documents", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("academic:write"))])
+@router.post("/documents", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def create_admission_document(data: AdmissionDocumentCreate, db: DbSession, _: CurrentUser):
     item = await AdmissionDocumentService.create(db, **data.model_dump())
     return success(data=item, message="Admission document created")
 
 
-@router.patch("/documents/{item_id}", dependencies=[Depends(require_scope("academic:write"))])
+@router.patch("/documents/{item_id}", dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def update_admission_document(item_id: uuid.UUID, data: AdmissionDocumentUpdate, db: DbSession, _: CurrentUser):
     item = await AdmissionDocumentService.get_by_id(db, item_id)
     if item is None:
@@ -327,7 +327,7 @@ async def update_admission_document(item_id: uuid.UUID, data: AdmissionDocumentU
     return success(data=item, message="Admission document updated")
 
 
-@router.delete("/documents/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("academic:delete"))])
+@router.delete("/documents/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def delete_admission_document(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await AdmissionDocumentService.get_by_id(db, item_id)
     if item is None:
@@ -369,13 +369,13 @@ async def get_admission_faq(item_id: uuid.UUID, db: DbSession, fields: FieldSele
     return success(data=selector.apply(item))
 
 
-@router.post("/faqs", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("academic:write"))])
+@router.post("/faqs", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def create_admission_faq(data: AdmissionFaqCreate, db: DbSession, _: CurrentUser):
     item = await AdmissionFaqService.create(db, **data.model_dump())
     return success(data=item, message="Admission FAQ created")
 
 
-@router.patch("/faqs/{item_id}", dependencies=[Depends(require_scope("academic:write"))])
+@router.patch("/faqs/{item_id}", dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def update_admission_faq(item_id: uuid.UUID, data: AdmissionFaqUpdate, db: DbSession, _: CurrentUser):
     item = await AdmissionFaqService.get_by_id(db, item_id)
     if item is None:
@@ -384,7 +384,7 @@ async def update_admission_faq(item_id: uuid.UUID, data: AdmissionFaqUpdate, db:
     return success(data=item, message="Admission FAQ updated")
 
 
-@router.delete("/faqs/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("academic:delete"))])
+@router.delete("/faqs/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def delete_admission_faq(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await AdmissionFaqService.get_by_id(db, item_id)
     if item is None:
@@ -422,13 +422,13 @@ async def get_admission_page_section(item_id: uuid.UUID, db: DbSession, fields: 
     return success(data=selector.apply(item))
 
 
-@router.post("/page-sections", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("academic:write"))])
+@router.post("/page-sections", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def create_admission_page_section(data: AdmissionPageSectionCreate, db: DbSession, _: CurrentUser):
     item = await AdmissionPageSectionService.create(db, **data.model_dump())
     return success(data=item, message="Admission page section created")
 
 
-@router.patch("/page-sections/{item_id}", dependencies=[Depends(require_scope("academic:write"))])
+@router.patch("/page-sections/{item_id}", dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def update_admission_page_section(item_id: uuid.UUID, data: AdmissionPageSectionUpdate, db: DbSession, _: CurrentUser):
     item = await AdmissionPageSectionService.get_by_id(db, item_id)
     if item is None:
@@ -437,7 +437,7 @@ async def update_admission_page_section(item_id: uuid.UUID, data: AdmissionPageS
     return success(data=item, message="Admission page section updated")
 
 
-@router.delete("/page-sections/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("academic:delete"))])
+@router.delete("/page-sections/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def delete_admission_page_section(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await AdmissionPageSectionService.get_by_id(db, item_id)
     if item is None:
@@ -464,13 +464,13 @@ async def get_admission_info(slug: str, db: DbSession, fields: FieldSelection = 
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("academic:write"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def create_admission_info(data: AdmissionInfoCreate, db: DbSession, _: CurrentUser):
     item = await AdmissionInfoService.create(db, **data.model_dump())
     return success(data=item, message="Admission information created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("academic:write"))])
+@router.patch("/{item_id}", dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def update_admission_info(item_id: uuid.UUID, data: AdmissionInfoUpdate, db: DbSession, _: CurrentUser):
     item = await AdmissionInfoService.get_by_id(db, item_id)
     if item is None:
@@ -479,7 +479,7 @@ async def update_admission_info(item_id: uuid.UUID, data: AdmissionInfoUpdate, d
     return success(data=item, message="Admission information updated")
 
 
-@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("academic:delete"))])
+@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admissions.manage_info"))])
 async def delete_admission_info(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await AdmissionInfoService.get_by_id(db, item_id)
     if item is None:

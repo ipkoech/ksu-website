@@ -23,7 +23,7 @@ from ...schemas.exports import (
 from ...services.exports import ResearchExportService
 from ...tasks.celery_app import celery_app
 
-RESEARCH_WRITE_SCOPE = require_scope("research:write")
+RESEARCH_WRITE_SCOPE = require_scope("research.manage_reports")
 
 router = APIRouter(tags=["Research Exports"], dependencies=[Depends(RESEARCH_WRITE_SCOPE)])
 

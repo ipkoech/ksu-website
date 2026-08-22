@@ -38,7 +38,7 @@ async def get_university_info_by_slug(slug: str, db: DbSession, fields: FieldSel
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("about.manage"))])
 async def create_university_info(data: UniversityInfoCreate, db: DbSession, _: CurrentUser):
     try:
         item = await UniversityInfoService.create(db, **data.model_dump())
@@ -47,7 +47,7 @@ async def create_university_info(data: UniversityInfoCreate, db: DbSession, _: C
     return success(data=item, message="University info created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.patch("/{item_id}", dependencies=[Depends(require_scope("about.manage"))])
 async def update_university_info(item_id: uuid.UUID, data: UniversityInfoUpdate, db: DbSession, _: CurrentUser):
     item = await UniversityInfoService.get_by_id(db, item_id)
     if item is None:
@@ -56,7 +56,7 @@ async def update_university_info(item_id: uuid.UUID, data: UniversityInfoUpdate,
     return success(data=item, message="University info updated")
 
 
-@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("about.manage"))])
 async def delete_university_info(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await UniversityInfoService.get_by_id(db, item_id)
     if item is None:

@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ksu_contracts.rbac import AuthorizationDecision, authorize_permission
 
 from ..models import Department, Programme, User, Wing
+from .role_assignments import is_role_assignment_current
 
 
 ScopeResolver = Callable[
@@ -104,8 +105,8 @@ DEPARTMENT_ASSIGNMENT_PERMISSIONS = frozenset(
 LIBRARY_ASSIGNMENT_PERMISSIONS = frozenset(
     {
         "library.view",
-        "library:read",
-        "library:write",
+        "library.read",
+        "library.write",
         "library.manage_resources",
         "library.manage_services",
         "library.manage_collections",
@@ -118,7 +119,7 @@ RESEARCH_ASSIGNMENT_PERMISSIONS = frozenset(
     {
         "research.view",
         "research.view_projects",
-        "research:read",
+        "research.view",
         "research.manage_projects",
         "research.manage_services",
         "research.manage_office",
@@ -135,8 +136,8 @@ CLUB_ASSIGNMENT_PERMISSIONS = frozenset(
         "clubs.stories_manage",
         "media.upload",
         "media.manage",
-        "media:upload",
-        "media:manage",
+        "media.upload",
+        "media.manage",
     }
 )
 
@@ -230,7 +231,7 @@ def _active_role_assignments(user: User) -> Iterable:
     return (
         assignment
         for assignment in getattr(user, "role_assignments", []) or []
-        if getattr(assignment, "is_active", True)
+        if is_role_assignment_current(assignment)
         and getattr(assignment, "role", None)
         and getattr(assignment.role, "is_active", True)
     )

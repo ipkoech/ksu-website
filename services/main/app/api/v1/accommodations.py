@@ -69,13 +69,13 @@ async def get_accommodation(slug: str, db: DbSession, fields: FieldSelection = F
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("student_life.manage_accommodations"))])
 async def create_accommodation(data: AccommodationCreate, db: DbSession, _: CurrentUser):
     item = await AccommodationService.create(db, **data.model_dump())
     return success(data=item, message="Accommodation created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.patch("/{item_id}", dependencies=[Depends(require_scope("student_life.manage_accommodations"))])
 async def update_accommodation(item_id: uuid.UUID, data: AccommodationUpdate, db: DbSession, _: CurrentUser):
     item = await AccommodationService.get_by_id(db, item_id)
     if item is None:
@@ -84,7 +84,7 @@ async def update_accommodation(item_id: uuid.UUID, data: AccommodationUpdate, db
     return success(data=item, message="Accommodation updated")
 
 
-@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("student_life.manage_accommodations"))])
 async def delete_accommodation(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await AccommodationService.get_by_id(db, item_id)
     if item is None:

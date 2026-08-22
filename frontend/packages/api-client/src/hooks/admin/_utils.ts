@@ -1,5 +1,5 @@
 import { ApiClientError } from "../../client";
-import { getStoredAccessToken, refreshStoredAccessToken } from "../../auth-tokens";
+import { refreshStoredAccessToken } from "../../auth-tokens";
 import { getMainApiBaseUrl } from "../../service-urls";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -39,7 +39,6 @@ export async function adminRequest<T>(
       credentials: "include",
       headers: {
         "Content-Type": "application/json",
-        ...(getStoredAccessToken() ? { Authorization: `Bearer ${getStoredAccessToken()}` } : {}),
       },
       body: options?.body ? JSON.stringify(options.body) : undefined,
     });

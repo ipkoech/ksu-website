@@ -368,6 +368,28 @@ async def import_all_bundled_programme_covers(
     return ImportSummary(imported=imported, updated=updated)
 
 
+async def seed_bundled_programme_covers(db: AsyncSession) -> ImportSummary:
+    """Seed every reviewed programme cover in the runner's current transaction."""
+
+    from app.core.config import get_settings
+
+    imported = 0
+    updated = 0
+    for school_code in sorted(SCHOOL_COVER_SCOPES):
+        school_scope = SCHOOL_COVER_SCOPES[school_code]
+        summary = await import_programme_covers(
+            db,
+            bundled_programme_cover_source_dir(school_scope),
+            load_programme_cover_concepts(school_code),
+            school_scope=school_scope,
+            manifest=load_manifest(bundled_programme_cover_manifest_path(school_scope)),
+            upload_root=get_settings().upload_dir_path,
+        )
+        imported += summary.imported
+        updated += summary.updated
+    return ImportSummary(imported=imported, updated=updated)
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     school_group = parser.add_mutually_exclusive_group(required=True)

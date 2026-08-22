@@ -230,6 +230,7 @@ class AuthService:
         user.password_hash = hash_password(new_password)
         user.password_reset_token = None
         user.password_reset_expires = None
+        user.must_change_password = False
         await AuthService.logout_all(db, user.id)
         await db.flush()
 
@@ -250,6 +251,7 @@ class AuthService:
         if not verify_password(old_pw, user.password_hash):
             raise PermissionError("Current password is incorrect")
         user.password_hash = hash_password(new_pw)
+        user.must_change_password = False
         await AuthService.logout_all(db, user.id)
         await db.flush()
 

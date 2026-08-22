@@ -28,7 +28,7 @@ interface CTAProps {
 const bgClasses = {
   primary: "bg-primary",
   secondary: "bg-secondary",
-  dark: "bg-gray-900",
+  dark: "bg-brand-overlay",
   gradient: "bg-gradient-to-r from-primary to-primary/80",
 };
 
@@ -45,7 +45,7 @@ export function CTA({
   if (variant === "inline") {
     return (
       <div className={cn("flex flex-wrap items-center gap-4", className)}>
-        <span className="text-gray-700">{title}</span>
+        <span className="text-foreground/80">{title}</span>
         {actions.map((action, idx) => (
           <Link
             key={idx}

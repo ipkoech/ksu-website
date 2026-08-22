@@ -10,7 +10,7 @@ export default function FarmFocusAreasPage() {
       description="Manage farm focus areas and thematic priorities."
       queryKey={["research", "farm-focus-areas"]}
       resource={researchServiceApi.focusAreas}
-      manageScopes={["research_theme.manage", "research.manage_projects", "research:write"]}
+      manageScopes={["farm.manage", "research:write"]}
       importResource="research-focus-areas"
       summarySlot={<FarmWorkspaceHeader />}
       detailBaseHref="/research/farm/focus-areas"

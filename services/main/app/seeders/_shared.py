@@ -6,8 +6,10 @@ import uuid
 import hashlib
 import shutil
 from dataclasses import dataclass, field
+from datetime import datetime, time
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -1227,6 +1229,22 @@ async def upsert_programme(session: AsyncSession, ctx: SeedContext, **payload: A
 
 
 async def upsert_intake(session: AsyncSession, ctx: SeedContext, **payload: Any) -> Intake:
+    timezone_name = str(payload.get("timezone") or "Africa/Nairobi")
+    timezone = ZoneInfo(timezone_name)
+    payload.setdefault(
+        "application_opens_at",
+        datetime.combine(payload["application_start"], time.min, timezone),
+    )
+    payload.setdefault(
+        "application_closes_at",
+        datetime.combine(payload["application_end"], time(23, 59, 59), timezone),
+    )
+    late_application_end = payload.get("late_application_end")
+    if late_application_end is not None:
+        payload.setdefault(
+            "late_application_closes_at",
+            datetime.combine(late_application_end, time(23, 59, 59), timezone),
+        )
     intake = await fetch_one(session, Intake, code=payload["code"])
     if intake is None:
         intake = Intake(id=uuid.uuid4(), **payload)

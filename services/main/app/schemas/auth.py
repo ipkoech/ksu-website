@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import EmailStr, Field, field_validator
+from pydantic import EmailStr, Field, field_validator, model_validator
 
 from .base import BaseReadSchema, BaseSchema, PhoneStr, UrlStr
 
@@ -27,9 +27,16 @@ def _validate_password(value: str) -> str:
     return value
 
 
+def _reject_unsupported_mfa(value: object) -> object:
+    if isinstance(value, dict) and "mfa_enabled" in value:
+        raise ValueError("MFA enrollment is not supported; mfa_enabled cannot be set")
+    return value
+
+
 class UserLogin(BaseSchema):
     email: EmailStr
     password: str = Field(min_length=8, max_length=255)
+    token_transport: Literal["cookie", "bearer"] = "cookie"
 
     @field_validator("email", mode="before")
     @classmethod
@@ -46,7 +53,15 @@ class UserCreate(BaseSchema):
     push_tokens: list[str] | None = None
     is_active: bool = True
     is_verified: bool = False
-    mfa_enabled: bool = False
+    service_memberships: list[Literal["main", "research", "library", "heri", "system"]] = Field(
+        default_factory=list
+    )
+    must_change_password: bool = False
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_unsupported_mfa(cls, value: object) -> object:
+        return _reject_unsupported_mfa(value)
 
     @field_validator("email", mode="before")
     @classmethod
@@ -68,7 +83,13 @@ class UserUpdate(BaseSchema):
     push_tokens: list[str] | None = None
     is_active: bool | None = None
     is_verified: bool | None = None
-    mfa_enabled: bool | None = None
+    service_memberships: list[Literal["main", "research", "library", "heri", "system"]] | None = None
+    must_change_password: bool | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_unsupported_mfa(cls, value: object) -> object:
+        return _reject_unsupported_mfa(value)
 
     @field_validator("email", mode="before")
     @classmethod
@@ -93,7 +114,8 @@ class UserRead(BaseReadSchema):
     push_tokens: list[str] | None = None
     is_active: bool
     is_verified: bool
-    mfa_enabled: bool
+    service_memberships: list[str] = Field(default_factory=list)
+    must_change_password: bool = False
     last_login_at: datetime | None = None
     failed_login_attempts: int
     locked_until: datetime | None = None
@@ -123,7 +145,8 @@ class SessionRead(BaseReadSchema):
 
 
 class RefreshRequest(BaseSchema):
-    refresh_token: str = Field(min_length=1)
+    refresh_token: str | None = Field(default=None, min_length=1)
+    token_transport: Literal["cookie", "bearer"] = "cookie"
 
 
 class ForgotPasswordRequest(BaseSchema):
@@ -164,3 +187,8 @@ class TokenResponse(BaseSchema):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+
+
+class CookieAuthResponse(BaseSchema):
+    authenticated: bool = True
+    token_type: Literal["cookie"] = "cookie"

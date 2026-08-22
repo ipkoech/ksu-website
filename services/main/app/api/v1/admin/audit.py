@@ -18,7 +18,7 @@ router = APIRouter()
 
 
 def _authorize_audit_list_access(user, service_name: str | None) -> None:
-    if user_has_scope(user, "audit:read"):
+    if user_has_scope(user, "audit.view"):
         return
     if service_name == "research" and user_has_scope(user, "research.view"):
         return
@@ -66,7 +66,7 @@ async def list_audit_logs(
     return success(data=selector.apply(result.items), meta=result.meta)
 
 
-@router.get("/{audit_id}", dependencies=[Depends(require_scope("audit:read"))])
+@router.get("/{audit_id}", dependencies=[Depends(require_scope("audit.view"))])
 async def get_audit_log(audit_id: uuid.UUID, db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(AuditLog, fields)
     item = await AuditService.get_by_id(db, audit_id)

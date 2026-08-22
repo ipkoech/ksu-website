@@ -66,6 +66,7 @@ SENSITIVE_FIELD_NAMES: frozenset[str] = frozenset(
         "continuation_token_hash",
         "secret",
         "mfa_secret",
+        "mfa_enabled",
         "otp_secret",
         "totp_secret",
         "client_secret",

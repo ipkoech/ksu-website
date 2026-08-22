@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ksuSans, ksuDisplay } from "@ksu/ui/fonts";
+import { ksuBookman, ksuSans, ksuDisplay } from "@ksu/ui/fonts";
 import { Providers } from "./providers";
 import {
   AccessibilityInitScript,
@@ -37,7 +37,7 @@ export default function RootLayout({
       lang="en"
       data-scroll-behavior="smooth"
       suppressHydrationWarning
-      className={`${ksuSans.variable} ${ksuDisplay.variable}`}
+      className={`${ksuBookman.variable} ${ksuSans.variable} ${ksuDisplay.variable}`}
     >
       <body className="font-sans antialiased">
         <AccessibilityInitScript />

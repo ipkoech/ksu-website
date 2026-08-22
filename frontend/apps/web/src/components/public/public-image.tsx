@@ -26,6 +26,13 @@ interface PublicImageProps {
   imageClassName?: string;
   sizes?: string;
   priority?: boolean;
+  /**
+   * Load immediately without `priority`'s preload hint. For images that are
+   * below the fold but not reliably intersectable — a marquee translates its
+   * items past the viewport edge, so lazy ones would never load and would
+   * appear blank as they scroll into view.
+   */
+  eager?: boolean;
   unoptimized?: boolean;
   fallbackSrc?: string;
   fallbackContent?: ReactNode;
@@ -39,6 +46,7 @@ export function PublicImage({
   imageClassName,
   sizes = "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw",
   priority = false,
+  eager = false,
   unoptimized = false,
   fallbackSrc = defaultFallback,
   fallbackContent,
@@ -73,10 +81,22 @@ export function PublicImage({
               currentSrc,
             )
           }
-          loading={priority ? undefined : "lazy"}
+          // `priority` sets its own loading mode, so it must be left alone;
+          // otherwise "eager" has to be explicit, because next/image treats
+          // an undefined `loading` as lazy.
+          loading={priority ? undefined : eager ? "eager" : "lazy"}
           className={cn("object-cover", imageClassName)}
           onError={() => {
-            if (currentSrc !== fallbackSrc) {
+            // A caller that supplied `fallbackContent` has said what a missing
+            // image should look like, so honour it on failure too — not only
+            // when `src` was absent to begin with. Falling through to the
+            // shared branded `fallbackSrc` here is what made all eight school
+            // cards render the same poster when their covers 404'd: eight
+            // distinct, correct URLs collapsing onto one image reads as a
+            // content bug rather than as missing artwork.
+            if (fallbackContent) {
+              setFailed(true);
+            } else if (currentSrc !== fallbackSrc) {
               setCurrentSrc(fallbackSrc);
             } else {
               setFailed(true);

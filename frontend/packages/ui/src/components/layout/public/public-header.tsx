@@ -246,7 +246,7 @@ export function PublicHeader({
                 className={cn(
                   "hidden h-11 rounded-full px-5 text-sm font-semibold xl:flex",
                   isTransparent
-                    ? "bg-white text-primary hover:bg-gray-100"
+                    ? "bg-white text-primary hover:bg-[hsl(var(--primary-soft))]"
                     : "bg-primary text-white shadow-sm shadow-primary/20 hover:bg-primary/90",
                 )}
               >
@@ -345,6 +345,11 @@ export function buildNavigation(
         label: "UNIVERSITY MANAGEMENT",
         href: "/about/university-management",
         description: "Executive leadership and administration",
+      },
+      {
+        label: "MEET OUR VC",
+        href: "/about/vice-chancellor",
+        description: "The Vice-Chancellor's welcome, record and addresses",
       },
       {
         label: "UNIVERSITY SERVICE CHARTER",
@@ -812,7 +817,7 @@ function MenuSection({
 }) {
   return (
     <div className="mb-5 last:mb-0">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {title}
       </h3>
       <div className="space-y-1">{children}</div>
@@ -851,12 +856,12 @@ function CompactNestedMenu({
                 "flex min-h-11 items-center justify-between gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
                 activeSubmenu === item.href
                   ? "bg-primary/5 text-primary"
-                  : "text-gray-800 hover:bg-primary/5 hover:text-primary",
+                  : "text-foreground hover:bg-primary/5 hover:text-primary",
               )}
             >
               <span>{item.label}</span>
               {hasChildren ? (
-                <ChevronDown className="h-4 w-4 -rotate-90 text-gray-400" aria-hidden />
+                <ChevronDown className="h-4 w-4 -rotate-90 text-muted-foreground" aria-hidden />
               ) : item.external ? (
                 <ExternalLink className="h-3.5 w-3.5" aria-hidden />
               ) : null}
@@ -874,7 +879,7 @@ function CompactNestedMenu({
               target={child.external ? "_blank" : undefined}
               rel={child.external ? "noopener noreferrer" : undefined}
               role="menuitem"
-              className="flex min-h-11 items-center rounded-md px-3 py-2.5 text-sm font-medium text-gray-800 transition-colors hover:bg-primary/5 hover:text-primary"
+              className="flex min-h-11 items-center rounded-md px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/5 hover:text-primary"
             >
               {child.label}
             </Link>
@@ -892,16 +897,16 @@ function MenuCardLink({ item }: { item: NavItem }) {
       target={item.external ? "_blank" : undefined}
       rel={item.external ? "noopener noreferrer" : undefined}
       role="menuitem"
-      className="-mx-3 block min-h-12 rounded-lg px-3 py-2 transition-colors motion-reduce:transition-none hover:bg-gray-50 group"
+      className="-mx-3 block min-h-12 rounded-lg px-3 py-2 transition-colors motion-reduce:transition-none hover:bg-[hsl(var(--primary-soft))] group"
     >
-      <div className="flex items-center gap-2 text-sm font-medium text-gray-900 transition-colors group-hover:text-primary">
+      <div className="flex items-center gap-2 text-sm font-medium text-foreground transition-colors group-hover:text-primary">
         <span className="min-w-0 flex-1">{item.label}</span>
         {item.external ? (
           <ExternalLink className="h-3.5 w-3.5" aria-hidden />
         ) : null}
       </div>
       {item.description && (
-        <div className="text-xs leading-5 text-gray-500">
+        <div className="text-xs leading-5 text-muted-foreground">
           {item.description}
         </div>
       )}
@@ -942,7 +947,7 @@ function GroupedMenuGrid({
 }) {
   if (!sections.length) {
     return (
-      <p className="rounded-lg border border-dashed border-gray-200 px-3 py-4 text-sm text-gray-500">
+      <p className="rounded-lg border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
         No menu items available.
       </p>
     );
@@ -973,7 +978,7 @@ function GroupedMenuGrid({
 
     return (
       <div className="space-y-5">
-        <div className="grid gap-6 border-b border-gray-200 pb-5 md:grid-cols-2">
+        <div className="grid gap-6 border-b border-border pb-5 md:grid-cols-2">
           {topSections.map((section) => (
             <MenuLinkGrid
               key={section.title}
@@ -997,7 +1002,7 @@ function GroupedMenuGrid({
     <div className="space-y-4">
       {sections.map((section, index) => (
         <div key={section.title}>
-          {index > 0 ? <div className="mb-4 border-t border-gray-200" /> : null}
+          {index > 0 ? <div className="mb-4 border-t border-border" /> : null}
           <MenuLinkGrid title={section.title} items={section.items} />
         </div>
       ))}
@@ -1023,8 +1028,8 @@ function MenuLinkGrid({
         className={cn(
           "mb-3",
           headingStyle === "bold"
-            ? "text-base font-bold text-gray-950"
-            : "text-xs font-semibold uppercase tracking-wider text-gray-500",
+            ? "text-base font-bold text-foreground"
+            : "text-xs font-semibold uppercase tracking-wider text-muted-foreground",
         )}
       >
         {title}
@@ -1042,7 +1047,7 @@ function MenuLinkGrid({
             target={child.external ? "_blank" : undefined}
             rel={child.external ? "noopener noreferrer" : undefined}
             role="menuitem"
-            className="block min-h-11 rounded-lg px-2.5 py-2 text-sm leading-5 text-gray-700 transition-colors motion-reduce:transition-none hover:bg-gray-50 hover:text-primary"
+            className="block min-h-11 rounded-lg px-2.5 py-2 text-sm leading-5 text-foreground/80 transition-colors motion-reduce:transition-none hover:bg-[hsl(var(--primary-soft))] hover:text-primary"
           >
             <span className="break-words">{child.label}</span>
           </Link>
@@ -1083,14 +1088,14 @@ function MobileNav({
         <div className="relative">
           <Search
             aria-hidden
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
           />
           <input
             id="mobile-site-search"
             name="q"
             type="search"
             placeholder="SEARCH KISII UNIVERSITY"
-            className="h-11 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="h-11 w-full rounded-lg border border-border bg-white pl-9 pr-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
       </form>
@@ -1098,14 +1103,14 @@ function MobileNav({
       <div className="grid grid-cols-2 gap-2 border-b p-4">
         <a
           href="tel:+254720875082"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition hover:border-primary/30 hover:text-primary"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-white px-3 text-sm font-semibold text-foreground/80 transition hover:border-primary/30 hover:text-primary"
         >
           <Phone aria-hidden className="h-4 w-4" />
           Call
         </a>
         <a
           href="mailto:info@kisiiuniversity.ac.ke"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition hover:border-primary/30 hover:text-primary"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-white px-3 text-sm font-semibold text-foreground/80 transition hover:border-primary/30 hover:text-primary"
         >
           <Mail aria-hidden className="h-4 w-4" />
           Email
@@ -1129,7 +1134,7 @@ function MobileNav({
 
       {/* Quick Links */}
       <div className="border-t p-4 space-y-3">
-        <p className="text-xs font-semibold text-gray-500 uppercase">
+        <p className="text-xs font-semibold text-muted-foreground uppercase">
           QUICK LINKS
         </p>
         <div className="space-y-2">
@@ -1138,7 +1143,7 @@ function MobileNav({
               process.env.NEXT_PUBLIC_HERI_AFRICA_FRONTEND_URL ||
               "https://heri-africa.kisiiuniversity.ac.ke"
             }
-            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
+            className="block min-h-11 py-3 text-sm text-foreground/80 hover:text-primary"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -1146,7 +1151,7 @@ function MobileNav({
           </a>
           <a
             href="https://digital.kisiiuniversity.ac.ke/"
-            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
+            className="block min-h-11 py-3 text-sm text-foreground/80 hover:text-primary"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -1154,7 +1159,7 @@ function MobileNav({
           </a>
           <a
             href="https://portal.kisiiuniversity.ac.ke"
-            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
+            className="block min-h-11 py-3 text-sm text-foreground/80 hover:text-primary"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -1162,7 +1167,7 @@ function MobileNav({
           </a>
           <a
             href="https://digital.kisiiuniversity.ac.ke/job_portal/open_adverts"
-            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
+            className="block min-h-11 py-3 text-sm text-foreground/80 hover:text-primary"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -1170,7 +1175,7 @@ function MobileNav({
           </a>
           <a
             href="https://digital.kisiiuniversity.ac.ke/conferences"
-            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
+            className="block min-h-11 py-3 text-sm text-foreground/80 hover:text-primary"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -1178,7 +1183,7 @@ function MobileNav({
           </a>
           <a
             href="https://digital.kisiiuniversity.ac.ke/procurement_portal/tenders"
-            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
+            className="block min-h-11 py-3 text-sm text-foreground/80 hover:text-primary"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -1186,7 +1191,7 @@ function MobileNav({
           </a>
           <a
             href="https://digital.kisiiuniversity.ac.ke/ksu_customer_care_centerr"
-            className="block min-h-11 py-3 text-sm text-gray-700 hover:text-primary"
+            className="block min-h-11 py-3 text-sm text-foreground/80 hover:text-primary"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -1247,20 +1252,20 @@ function MobileNavItem({
         onClick={onToggle}
         aria-expanded={isExpanded}
         aria-controls={`mobile-nav-${item.href.replace(/[^a-zA-Z0-9_-]/g, "-")}`}
-        className="flex min-h-11 w-full items-center justify-between py-3 pr-4 text-left text-gray-900 hover:bg-gray-50"
+        className="flex min-h-11 w-full items-center justify-between py-3 pr-4 text-left text-foreground hover:bg-[hsl(var(--primary-soft))]"
         style={{ paddingLeft: indent }}
       >
         <span className="min-w-0">
           <span className="block font-medium">{item.label}</span>
           {item.description ? (
-            <span className="mt-0.5 block text-xs leading-5 text-gray-500">
+            <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
               {item.description}
             </span>
           ) : null}
         </span>
         <ChevronDown
           className={cn(
-            "ml-3 h-5 w-5 shrink-0 text-gray-400 transition-transform",
+            "ml-3 h-5 w-5 shrink-0 text-muted-foreground transition-transform",
             isExpanded && "rotate-180",
           )}
           aria-hidden
@@ -1269,7 +1274,7 @@ function MobileNavItem({
       {isExpanded && (
         <div
           id={`mobile-nav-${item.href.replace(/[^a-zA-Z0-9_-]/g, "-")}`}
-          className="overflow-hidden bg-gray-50"
+          className="overflow-hidden bg-[hsl(var(--primary-soft))]"
         >
           <MobileNavLink
             item={{
@@ -1313,12 +1318,12 @@ function MobileNavLink({
       target={item.external ? "_blank" : undefined}
       rel={item.external ? "noopener noreferrer" : undefined}
       onClick={onClose}
-      className="flex min-h-11 items-center justify-between py-3 pr-4 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary"
+      className="flex min-h-11 items-center justify-between py-3 pr-4 text-sm text-foreground/80 hover:bg-[hsl(var(--primary-soft))] hover:text-primary"
       style={{ paddingLeft: `${1 + depth}rem` }}
     >
       <span className="min-w-0 flex-1">{item.label}</span>
       {item.external && (
-        <ExternalLink className="h-4 w-4 text-gray-400" aria-hidden />
+        <ExternalLink className="h-4 w-4 text-muted-foreground" aria-hidden />
       )}
     </Link>
   );

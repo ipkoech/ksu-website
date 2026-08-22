@@ -10,7 +10,7 @@ export default function ResearchFarmsPage() {
       description="Manage university farm profile records and operational metadata."
       queryKey={["research", "farms"]}
       resource={researchServiceApi.farms}
-      manageScopes={["research.manage_projects", "research:write"]}
+      manageScopes={["farm.manage", "research:write"]}
       summarySlot={<FarmWorkspaceHeader />}
       listFilters={farmFilters}
       recordColumns={farmColumns}

@@ -18,12 +18,6 @@ const rows = [
 ];
 
 async function setupAdmin(page: Page, permissions = ["admin:*"]) {
-  await page.addInitScript(() =>
-    window.sessionStorage.setItem(
-      "ksu-auth-tokens",
-      JSON.stringify({ accessToken: "e2e-token" }),
-    ),
-  );
   await page.route("**/api/v1/auth/me**", (route) =>
     route.fulfill({ json: { ...adminUser, permissions } }),
   );

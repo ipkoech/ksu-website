@@ -286,7 +286,7 @@ export function AcademicSection({
                   <ScrollReveal key={school.id} delay={index * 50}>
                     <Link
                       href={`/academics/schools/${school.slug}`}
-                      className="group block h-full overflow-hidden rounded-xl bg-white border border-border shadow-sm hover:shadow-lg transition-[transform,box-shadow] duration-200 hover:-translate-y-1 active:scale-[0.98]"
+                      className="group block h-full overflow-hidden rounded-3xl bg-white border border-border shadow-sm hover:shadow-lg transition-[transform,box-shadow] duration-200 hover:-translate-y-1 active:scale-[0.98]"
                     >
                       <PublicImage
                         src={imageUrl}
@@ -343,7 +343,7 @@ export function AcademicSection({
                 <ScrollReveal key={category.level} delay={index * 75}>
                   <Link
                     href={category.href}
-                    className="group relative overflow-hidden rounded-xl p-4 h-full min-h-[120px] flex flex-col justify-between transition-transform duration-200 hover:-translate-y-1 active:scale-[0.98]"
+                    className="group relative overflow-hidden rounded-3xl p-4 h-full min-h-[120px] flex flex-col justify-between transition-transform duration-200 hover:-translate-y-1 active:scale-[0.98]"
                   >
                     <div
                       className={`absolute inset-0 bg-gradient-to-br ${category.color}`}
@@ -371,7 +371,7 @@ export function AcademicSection({
 
         {/* Step 3: Apply - Admissions CTA */}
         <ScrollReveal>
-          <div className="rounded-2xl bg-gradient-to-br from-secondary via-secondary to-secondary/90 p-8 lg:p-12 text-white overflow-hidden relative">
+          <div className="rounded-3xl bg-gradient-to-br from-secondary via-secondary to-secondary/90 p-8 lg:p-12 text-white overflow-hidden relative">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
@@ -426,7 +426,7 @@ export function AcademicSection({
                     ].map((item) => (
                       <div
                         key={item.label}
-                        className="bg-white/20 backdrop-blur-sm rounded-xl p-3"
+                        className="bg-white/20 backdrop-blur-sm rounded-3xl p-3"
                       >
                         <p className="text-2xl lg:text-3xl font-bold">
                           {String(item.value).padStart(2, "0")}

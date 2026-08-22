@@ -24,9 +24,10 @@ _bearer = HTTPBearer(auto_error=False)
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
-    access_token: str | None = Cookie(default=None, alias="access_token"),
+    access_token: str | None = Cookie(default=None, alias="ksu_access"),
+    legacy_access_token: str | None = Cookie(default=None, alias="access_token"),
 ) -> TokenPayload:
-    token = credentials.credentials if credentials else access_token
+    token = credentials.credentials if credentials else access_token or legacy_access_token
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -62,10 +63,11 @@ async def get_current_user(
 
 async def get_optional_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
-    access_token: str | None = Cookie(default=None, alias="access_token"),
+    access_token: str | None = Cookie(default=None, alias="ksu_access"),
+    legacy_access_token: str | None = Cookie(default=None, alias="access_token"),
 ) -> TokenPayload | None:
     """Decode a user token when present without treating service calls as users."""
-    token = credentials.credentials if credentials else access_token
+    token = credentials.credentials if credentials else access_token or legacy_access_token
     if not token:
         return None
     try:

@@ -882,9 +882,12 @@ function publicSlugApi<TRecord, TPayload>(path: string) {
 }
 
 export const libraryServiceApi = {
-  stats: () => libraryApi.get<{ data: PublicStatsResponse }>("/api/v1/stats"),
+  stats: () =>
+    libraryApi.get<{ data: PublicStatsResponse }>("/api/v1/library/stats"),
   adminStats: () =>
-    libraryApi.get<{ data: PublicStatsResponse }>("/api/v1/stats/admin"),
+    libraryApi.get<{ data: PublicStatsResponse }>(
+      "/api/v1/library/stats/admin",
+    ),
   branches: {
     list: (params?: ListParams<{ active_only?: boolean }>) =>
       libraryApi.get<PaginatedResponse<LibraryBranch>>(

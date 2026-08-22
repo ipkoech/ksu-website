@@ -52,13 +52,13 @@ async def get_student_governance(slug: str, db: DbSession, fields: FieldSelectio
     return success(data=selector.apply(item))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("admin:*"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("student_life.manage_governance"))])
 async def create_student_governance(data: StudentGovernanceCreate, db: DbSession, _: CurrentUser):
     item = await StudentGovernanceService.create(db, **data.model_dump())
     return success(data=item, message="Student governance body created")
 
 
-@router.patch("/{item_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.patch("/{item_id}", dependencies=[Depends(require_scope("student_life.manage_governance"))])
 async def update_student_governance(item_id: uuid.UUID, data: StudentGovernanceUpdate, db: DbSession, _: CurrentUser):
     item = await StudentGovernanceService.get_by_id(db, item_id)
     if item is None:
@@ -67,7 +67,7 @@ async def update_student_governance(item_id: uuid.UUID, data: StudentGovernanceU
     return success(data=item, message="Student governance body updated")
 
 
-@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("admin:*"))])
+@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_scope("student_life.manage_governance"))])
 async def delete_student_governance(item_id: uuid.UUID, db: DbSession, _: CurrentUser):
     item = await StudentGovernanceService.get_by_id(db, item_id)
     if item is None:

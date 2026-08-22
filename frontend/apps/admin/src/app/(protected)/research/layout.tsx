@@ -1,6 +1,6 @@
 "use client";
 
-import { PortalShell } from "@/components/portals/portal-shell";
+import { ResearchPortalProvider } from "@/components/research/research-portal-provider";
 import { ResearchAskAIWidget } from "./_components/research-ask-ai-widget";
 
 export default function ResearchLayout({
@@ -9,9 +9,9 @@ export default function ResearchLayout({
   children: React.ReactNode;
 }) {
   return (
-    <PortalShell portalKey="research">
+    <ResearchPortalProvider>
       {children}
       <ResearchAskAIWidget />
-    </PortalShell>
+    </ResearchPortalProvider>
   );
 }

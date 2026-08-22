@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..security.role_assignments import is_role_assignment_current
+
 
 def rooms_for_user(user) -> set[str]:
     rooms = {f"user:{user.id}"}
     permissions: set[str] = set()
     for assignment in getattr(user, "role_assignments", ()) or ():
-        if not getattr(assignment, "is_active", True):
+        if not is_role_assignment_current(assignment):
             continue
         if getattr(assignment, "scope_type", None) == "school" and assignment.scope_id:
             rooms.add(f"school:{assignment.scope_id}")

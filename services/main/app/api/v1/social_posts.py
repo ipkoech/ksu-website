@@ -22,11 +22,10 @@ from ._fields import FieldSelection, FieldsDep, build_selector
 router = APIRouter()
 
 #: Marketing/communications staff can manage and publish social posts and see
-#: which platform accounts are connected. ``admin:*`` implicitly satisfies this
-#: via the wildcard-aware permission resolution in ``deps._has_permission``.
+#: which platform accounts are connected.
 SOCIAL_MANAGE_SCOPE = "marketing.manage_social"
-#: Connected account management (credentials!) stays admin-only.
-SOCIAL_ACCOUNT_ADMIN_SCOPE = "admin:*"
+#: Connected account management uses the same explicit communications authority.
+SOCIAL_ACCOUNT_ADMIN_SCOPE = "marketing.manage_social"
 
 
 @router.get("", dependencies=[Depends(require_scope(SOCIAL_MANAGE_SCOPE))])

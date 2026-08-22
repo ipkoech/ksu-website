@@ -10,7 +10,7 @@ export default function FarmImpactStoriesPage() {
       description="Manage impact stories linked to university farm activities."
       queryKey={["research", "farm-impact-stories"]}
       resource={researchServiceApi.stories}
-      manageScopes={["research.manage_impact", "sustainability.manage", "research:write"]}
+      manageScopes={["farm.manage", "research:write"]}
       importResource="research-stories"
       summarySlot={<FarmWorkspaceHeader />}
       detailBaseHref="/research/farm/impact-stories"

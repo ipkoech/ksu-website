@@ -41,6 +41,8 @@ type RoleAssignmentForm = {
   note: string;
 };
 
+const serviceOptions = ["main", "research", "library", "heri", "system"] as const;
+
 function roleAssignmentsToPayload(assignments: RoleAssignmentForm[]): UserRoleAssignmentPayload[] {
   return assignments
     .filter((assignment) => assignment.role_id)
@@ -97,6 +99,8 @@ export default function UserDetailPage() {
     email: "",
     full_name: "",
     is_active: false,
+    service_memberships: [] as Array<(typeof serviceOptions)[number]>,
+    must_change_password: false,
   });
   const [roleAssignmentsForm, setRoleAssignmentsForm] = React.useState<RoleAssignmentForm[]>([]);
   const [roleError, setRoleError] = React.useState<string | null>(null);
@@ -109,6 +113,8 @@ export default function UserDetailPage() {
       email: user.data.email,
       full_name: user.data.full_name,
       is_active: user.data.is_active,
+      service_memberships: user.data.service_memberships ?? [],
+      must_change_password: user.data.must_change_password ?? false,
     });
     setRoleAssignmentsForm(
       roleAssignments
@@ -203,6 +209,41 @@ export default function UserDetailPage() {
                     Active account
                   </label>
                 </div>
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Service memberships</Label>
+                <div className="flex flex-wrap gap-4 rounded-md border p-3">
+                  {serviceOptions.map((service) => (
+                    <label key={service} className="flex items-center gap-2 text-sm capitalize">
+                      <Checkbox
+                        disabled={!canManage}
+                        checked={localState.service_memberships.includes(service)}
+                        onCheckedChange={(checked) =>
+                          setLocalState((current) => ({
+                            ...current,
+                            service_memberships: checked
+                              ? [...current.service_memberships, service]
+                              : current.service_memberships.filter((item) => item !== service),
+                          }))
+                        }
+                      />
+                      {service}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Password security</Label>
+                <label className="flex items-center gap-3 rounded-md border p-3 text-sm">
+                  <Checkbox
+                    disabled={!canManage}
+                    checked={localState.must_change_password}
+                    onCheckedChange={(checked) =>
+                      setLocalState((current) => ({ ...current, must_change_password: Boolean(checked) }))
+                    }
+                  />
+                  Require password change at next login
+                </label>
               </div>
             </CardContent>
           </Card>

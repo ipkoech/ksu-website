@@ -17,11 +17,16 @@ from ksu_common.security import is_safe_public_url
 from ..models import ApiKey, Setting, Webhook, WebhookDelivery
 from ._base import apply_updates, paginate_query
 
+UNSUPPORTED_SETTING_KEYS = frozenset({"require_2fa"})
+
 
 class SettingService:
     @staticmethod
     async def get_by_id(db: AsyncSession, item_id: uuid.UUID, *, load_options: Sequence = ()) -> Setting | None:
-        query = select(Setting).where(Setting.id == item_id)
+        query = select(Setting).where(
+            Setting.id == item_id,
+            Setting.key.not_in(UNSUPPORTED_SETTING_KEYS),
+        )
         if load_options:
             query = query.options(*load_options)
         result = await db.execute(query)
@@ -29,6 +34,8 @@ class SettingService:
 
     @staticmethod
     async def get_by_key(db: AsyncSession, key: str, *, public_only: bool = False, load_options: Sequence = ()) -> Setting | None:
+        if key in UNSUPPORTED_SETTING_KEYS:
+            return None
         query = select(Setting).where(Setting.key == key)
         if public_only:
             query = query.where(Setting.is_public.is_(True))
@@ -39,6 +46,8 @@ class SettingService:
 
     @staticmethod
     async def create(db: AsyncSession, *, updated_by_id: uuid.UUID | None = None, **data) -> Setting:
+        if data.get("key") in UNSUPPORTED_SETTING_KEYS:
+            raise ValueError("MFA settings are unavailable until MFA is fully supported")
         item = Setting(updated_by_id=updated_by_id, **data)
         db.add(item)
         await db.flush()
@@ -66,7 +75,11 @@ class SettingService:
         public_only: bool | None = None,
         load_options: Sequence = (),
     ) -> PaginatedResult:
-        query = select(Setting).order_by(Setting.category.asc(), Setting.key.asc())
+        query = (
+            select(Setting)
+            .where(Setting.key.not_in(UNSUPPORTED_SETTING_KEYS))
+            .order_by(Setting.category.asc(), Setting.key.asc())
+        )
         if load_options:
             query = query.options(*load_options)
         if category:
@@ -77,7 +90,14 @@ class SettingService:
 
     @staticmethod
     async def list_public(db: AsyncSession, *, category: str | None = None, load_options: Sequence = ()) -> list[Setting]:
-        query = select(Setting).where(Setting.is_public.is_(True)).order_by(Setting.category.asc(), Setting.key.asc())
+        query = (
+            select(Setting)
+            .where(
+                Setting.is_public.is_(True),
+                Setting.key.not_in(UNSUPPORTED_SETTING_KEYS),
+            )
+            .order_by(Setting.category.asc(), Setting.key.asc())
+        )
         if load_options:
             query = query.options(*load_options)
         if category:

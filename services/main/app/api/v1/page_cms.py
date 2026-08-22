@@ -75,7 +75,7 @@ def _require_page_authoring_edit(user: CurrentUser, record) -> None:
         return
     if any(
         user_has_scope(user, permission)
-        for permission in ("content.edit_submitted", "page_sections.review", "admin:*")
+        for permission in ("content.edit_submitted", "page_sections.review")
     ):
         return
     raise HTTPException(status_code=403, detail="Submitted content requires review edit privileges")
@@ -83,15 +83,15 @@ def _require_page_authoring_edit(user: CurrentUser, record) -> None:
 
 def _require_partnership_spotlight_workflow_action(user: CurrentUser, action: str) -> None:
     if action == "submit":
-        allowed = ("partnership_spotlights.manage", "content.manage", "admin:*")
+        allowed = ("partnership_spotlights.manage", "content.manage")
     elif action in {"approve", "request_changes"}:
-        allowed = ("content.review", "content.manage", "admin:*")
+        allowed = ("content.review", "content.manage")
     elif action in {"publish", "unpublish"}:
-        allowed = ("content.publish", "content.manage", "admin:*")
+        allowed = ("content.publish", "content.manage")
     elif action == "archive":
-        allowed = ("content.manage", "admin:*")
+        allowed = ("content.manage",)
     else:
-        allowed = ("partnership_spotlights.manage", "content.manage", "admin:*")
+        allowed = ("partnership_spotlights.manage", "content.manage")
     if any(user_has_scope(user, permission) for permission in allowed):
         return
     raise HTTPException(status_code=403, detail="Insufficient privileges")

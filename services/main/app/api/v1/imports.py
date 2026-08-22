@@ -8,7 +8,7 @@ from fastapi.responses import Response
 
 from ksu_common.schemas.responses import success
 
-from ...deps import CurrentUser, DbSession, _has_permission
+from ...deps import CurrentUser, DbSession, _has_permission, permissions_for_user
 from ...schemas.imports import ImportCommitRead, ImportCommitRequest, ImportJobRead
 from ...services.imports import ImportService
 from ...tasks.celery_app import celery_app
@@ -17,13 +17,7 @@ router = APIRouter()
 
 
 def _permissions_for_user(user) -> set[str]:
-    return {
-        role_permission.permission.name
-        for assignment in user.role_assignments
-        if assignment.is_active and assignment.role and assignment.role.is_active
-        for role_permission in assignment.role.role_permissions
-        if role_permission.permission and role_permission.permission.is_active
-    }
+    return permissions_for_user(user)
 
 
 def _ensure_scope(user, scope: str) -> None:

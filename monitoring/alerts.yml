@@ -22,14 +22,14 @@ groups:
           description: "{{ $labels.instance }} has not been scraped for more than five minutes."
 
       - alert: KsuRedisExporterDown
-        expr: up{job="ksu-redis"} == 0
+        expr: up{job=~"ksu-redis-(broker|cache)"} == 0
         for: 2m
         labels:
           severity: critical
           component: redis
         annotations:
           summary: "KSU Redis exporter is unreachable"
-          description: "Prometheus cannot scrape the Redis exporter."
+          description: "Prometheus cannot scrape the {{ $labels.redis_role }} Redis exporter."
 
       - alert: KsuPostgresExporterDown
         expr: up{job="ksu-postgres"} == 0
@@ -59,7 +59,7 @@ groups:
           component: redis
         annotations:
           summary: "KSU Redis is unavailable"
-          description: "The Redis exporter cannot connect to Redis."
+          description: "The Redis exporter cannot connect to {{ $labels.redis_role }} Redis."
 
   - name: ksu-http-performance
     rules:
@@ -159,7 +159,7 @@ groups:
           component: redis
         annotations:
           summary: "KSU Redis memory utilization exceeds 80%"
-          description: "Redis memory utilization has exceeded 80% for ten minutes."
+          description: "{{ $labels.redis_role }} Redis memory utilization has exceeded 80% for ten minutes."
 
       - alert: KsuRedisMemoryLimitNotConfigured
         expr: redis_memory_max_bytes == 0

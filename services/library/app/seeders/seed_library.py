@@ -125,12 +125,12 @@ SERVICES = [
 ]
 
 CATALOG = [
-    ("Academic Writing and Research Methods", "Grace N. Omondi", "Kisii University Press", 2024, "book", "QA-KSU-001", "KSU-LIB-0001", 8, 6, ["research", "writing", "postgraduate"]),
-    ("Community Health Practice in Kenya", "Raymond Oigara", "East African Academic", 2023, "book", "RA-KEN-024", "KSU-LIB-0002", 5, 3, ["health sciences", "community health"]),
-    ("Journal of Agriculture and Natural Resources", "School of Agriculture", "Kisii University", 2025, "journal", "SAGR-JRN-2025", "KSU-LIB-0003", 4, 4, ["agriculture", "natural resources"]),
-    ("Responsible Computing and AI Ethics", "Jane C. Maina", "Mozilla RCC Series", 2026, "report", "QA76.9-R37", "KSU-LIB-0004", 3, 2, ["computing", "ai ethics"]),
-    ("Climate Literacy for Youth Employability", "Research Extension Office", "Kisii University", 2026, "report", "GE195-KSU", "KSU-LIB-0005", 6, 6, ["climate", "employability"]),
-    ("Postgraduate Thesis Formatting Guide", "Graduate School", "Kisii University", 2025, "thesis", "KSU-THESIS-GUIDE", "KSU-LIB-0006", 10, 10, ["thesis", "postgraduate"]),
+    # Verified against the public Kisii University Koha OPAC on 2026-08-10.
+    ("Scientific Data Management", "Arie Shoshani", "CRC Press", 2010, "book", "Q 183.9.S56 2010", "011090", 1, 1, ["electronic data processing", "data management"]),
+    ("Sabina and the Mystery of the Ogre", "Christopher Okemwa", "Nsemia Inc. Publishers", 2015, "book", "PR 9199.3 .O44 2015", "000000023575", 1, 1, ["literature", "fiction"]),
+    ("A Framework for Effective Information Security Risk Management in Kenyan Public Universities", "Patrick Macharia Njoroge", "Kisii University", 2020, "thesis", "THE LB 2866 .M33 2020", "000000024528", 1, 1, ["information security", "risk management", "universities"]),
+    ("Developing a Model for Security Control in Web Content Management Systems", "Alex Maraga", "Kisii University", 2021, "thesis", "THE TK 5105.59 .M37 2021", "000000024091", 1, 1, ["web content management", "security controls"]),
+    ("Mapambazuko ya Machweo na Hadithi Nyingine", "D. W. Lutomia; Phibbian I. Muthama", "Mountain Top Educational Publishers Limited", 2021, "book", "PL 8704 .A2 M37 2021", "000000009972", 1, 1, ["kiswahili", "short stories"]),
 ]
 
 ELECTRONIC = [

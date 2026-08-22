@@ -123,6 +123,7 @@ const canonicalPortalKeys = new Set([
   "departments",
   "library",
   "staff-profile",
+  "heri",
 ]);
 
 const portalAliases = new Map<string, string>([

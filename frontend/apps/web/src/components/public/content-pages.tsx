@@ -2,18 +2,21 @@ import Link from "next/link";
 import {
   ArrowRight,
   CalendarDays,
+  ChevronRight,
   Download,
   ExternalLink,
   FileText,
   Image as ImageIcon,
   LinkIcon,
   MapPin,
+  Megaphone,
   Newspaper,
   PlayCircle,
 } from "lucide-react";
 import { RichTextRenderer } from "@ksu/ui/rich-text-renderer";
 import {
   AmbientPageBackground,
+  CampusPageHeader,
   ListPagination,
   ScrollReveal,
   ScrollRevealGroup,
@@ -29,6 +32,7 @@ import {
   type ListFilterOption,
 } from "@/components/public/list-filter-form";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
+import { NewsletterSubscribeForm } from "@/components/home/newsletter-subscribe-form";
 import {
   categoryLabel,
   mediaPlaybackUrl,
@@ -139,13 +143,13 @@ function RecordCard({
   return (
     <Link
       href={href}
-      className="group grid min-w-0 rounded-lg border border-border bg-white shadow-sm transition-[border-color,box-shadow] hover:border-primary/30 hover:shadow-[0_18px_50px_-38px_rgba(15,23,42,0.55)]"
+      className="group grid min-w-0 overflow-hidden rounded-2xl bg-white ring-1 ring-primary/10 transition-transform hover:-translate-y-0.5"
     >
       <div
         className={
           compact
-            ? "aspect-[16/9] overflow-hidden rounded-t-lg bg-surface-muted"
-            : "aspect-[4/3] overflow-hidden rounded-t-lg bg-surface-muted"
+            ? "aspect-[16/9] overflow-hidden bg-surface-muted"
+            : "aspect-[4/3] overflow-hidden bg-surface-muted"
         }
       >
         <ContentImage record={record} />
@@ -155,7 +159,7 @@ function RecordCard({
           <span>{categoryLabel(record)}</span>
           {date ? <span className="text-muted-foreground/70">{date}</span> : null}
         </div>
-        <h3 className="mt-2 line-clamp-2 text-base font-bold leading-6 text-foreground group-hover:text-primary">
+        <h3 className="mt-2 line-clamp-2 font-[family-name:var(--font-display)] text-lg font-normal leading-6 tracking-tight text-primary group-hover:underline">
           {recordTitle(record)}
         </h3>
         {summary ? (
@@ -163,7 +167,7 @@ function RecordCard({
             {summary}
           </p>
         ) : null}
-        <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-primary">
+        <span className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-primary">
           {actionLabel}
           <ArrowRight aria-hidden className="h-3.5 w-3.5" />
         </span>
@@ -172,87 +176,16 @@ function RecordCard({
   );
 }
 
-const editorialMosaicPattern = [
-  "md:col-span-4 md:row-span-2",
-  "md:col-span-2 md:row-span-1",
-  "md:col-span-2 md:row-span-1",
-  "md:col-span-3 md:row-span-1",
-  "md:col-span-3 md:row-span-1",
-];
-
-function EditorialMosaic({
-  records,
-  keyPrefix,
-}: {
-  records: ContentRecord[];
-  keyPrefix: string;
-}) {
-  return (
-    <ScrollRevealGroup
-      className="grid gap-3 md:auto-rows-[14rem] md:grid-cols-6"
-      staggerDelay={55}
-    >
-      {records.map((record, index) => {
-        const date = recordDate(record);
-        const isLead = index % editorialMosaicPattern.length === 0;
-
-        return (
-          <Link
-            key={`${keyPrefix}-${record.contentKind}-${record.id}`}
-            href={recordHref(record)}
-            className={`group relative min-h-72 cursor-pointer overflow-hidden rounded-xl bg-surface-muted shadow-sm outline-none ring-primary/35 transition-shadow hover:shadow-[0_22px_55px_-34px_rgba(15,23,42,0.72)] focus-visible:ring-2 md:min-h-0 ${
-              editorialMosaicPattern[index % editorialMosaicPattern.length]
-            }`}
-          >
-            <div className="absolute inset-0 transition-transform duration-500 motion-safe:group-hover:scale-[1.03]">
-              <ContentImage record={record} large={isLead} />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-              <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.08em] text-white/75">
-                <span className="rounded-full bg-white/15 px-2.5 py-1 text-white backdrop-blur-sm">
-                  {categoryLabel(record)}
-                </span>
-                {date ? <span>{date}</span> : null}
-              </div>
-              <h3
-                className={`mt-3 font-[family-name:var(--font-display)] font-semibold leading-tight text-white ${
-                  isLead ? "text-2xl sm:text-3xl" : "text-lg"
-                }`}
-              >
-                {recordTitle(record)}
-              </h3>
-              {isLead && summarize(record, "") ? (
-                <p className="mt-2 line-clamp-2 max-w-2xl text-sm leading-6 text-white/75">
-                  {summarize(record, "")}
-                </p>
-              ) : null}
-            </div>
-          </Link>
-        );
-      })}
-    </ScrollRevealGroup>
-  );
-}
-
 function ListingHero({ data }: { data: ContentListingData }) {
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm lg:p-6">
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-end">
         <div>
-          <BreadcrumbTrail
-            items={[
-              { label: "Home", href: "/" },
-              { label: kindLabel(data.kind) },
-            ]}
-          />
+          {/* Breadcrumb, title and body sit on the campus header band above. */}
           <SectionKicker>{data.eyebrow}</SectionKicker>
-          <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-            {data.title}
-          </h1>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-            {data.body}
-          </p>
+          <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
+            Browse {kindLabel(data.kind).toLowerCase()}
+          </h2>
         </div>
         <nav
           className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1"
@@ -357,32 +290,30 @@ function MediaDeskNav({
   return (
     <nav
       aria-label="Media Desk"
-      className="rounded-lg border border-border bg-white p-2 shadow-sm"
+      className="-mx-4 overflow-x-auto border-y border-primary/10 bg-white px-4 sm:mx-0 sm:overflow-visible sm:rounded-2xl sm:border sm:px-5"
     >
-      <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 xl:grid-cols-6">
+      <div className="flex min-w-max gap-2 sm:grid sm:min-w-0 sm:grid-cols-3 sm:gap-0 xl:grid-cols-6">
         <Link
           href="/media"
-          className={`flex min-h-11 items-center justify-between rounded-md px-3 text-sm font-bold transition-colors ${
+          className={`relative flex min-h-12 items-center justify-center rounded-2xl px-4 text-sm font-bold transition-colors sm:rounded-none ${
             activeSection === "overview"
-              ? "bg-primary text-white"
-              : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+              ? "bg-primary text-white sm:bg-transparent sm:text-primary sm:after:absolute sm:after:inset-x-4 sm:after:bottom-0 sm:after:h-0.5 sm:after:bg-secondary"
+              : "text-muted-foreground hover:bg-primary/5 hover:text-primary sm:hover:bg-transparent"
           }`}
         >
           Latest
-          <ArrowRight aria-hidden className="h-4 w-4" />
         </Link>
         {mediaDeskSections.map((item) => (
           <Link
             key={item.id}
             href={item.href}
-            className={`flex min-h-11 items-center justify-between rounded-md px-3 text-sm font-bold transition-colors ${
+            className={`relative flex min-h-12 items-center justify-center rounded-2xl px-4 text-sm font-bold transition-colors sm:rounded-none ${
               activeSection === item.id
-                ? "bg-primary text-white"
-                : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+                ? "bg-primary text-white sm:bg-transparent sm:text-primary sm:after:absolute sm:after:inset-x-4 sm:after:bottom-0 sm:after:h-0.5 sm:after:bg-secondary"
+                : "text-muted-foreground hover:bg-primary/5 hover:text-primary sm:hover:bg-transparent"
             }`}
           >
             {item.title}
-            <ArrowRight aria-hidden className="h-4 w-4" />
           </Link>
         ))}
       </div>
@@ -390,79 +321,85 @@ function MediaDeskNav({
   );
 }
 
-function MediaDeskSections({ records }: { records: ContentRecord[] }) {
-  const overviewSections = mediaDeskSections.filter((section) =>
-    ["news", "events", "articles", "gallery"].includes(section.id),
-  );
+function EventBrief({ record }: { record: ContentRecord }) {
+  if (record.contentKind !== "events") return null;
+  const date = record.start_date ? new Date(record.start_date) : null;
+  const validDate = date && !Number.isNaN(date.getTime()) ? date : null;
 
   return (
-    <div className="grid gap-5">
-      {overviewSections.map((section) => {
-          const sectionRecords = records
-            .filter((record) => section.kinds.includes(record.contentKind))
-            .slice(0, section.id === "gallery" ? 6 : 5);
+    <Link href={recordHref(record)} className="group grid grid-cols-[3.25rem_1fr_auto] items-center gap-3 border-t border-primary/10 py-3 first:border-t-0">
+      <span className="grid h-13 place-items-center rounded-2xl ring-1 ring-primary/15">
+        <span className="text-[0.62rem] font-bold uppercase tracking-wider text-secondary">{validDate?.toLocaleDateString("en-KE", { month: "short" }) ?? "Date"}</span>
+        <span className="-mt-2 font-[family-name:var(--font-display)] text-xl text-primary">{validDate?.getDate() ?? "—"}</span>
+      </span>
+      <span className="min-w-0">
+        <span className="line-clamp-2 font-[family-name:var(--font-display)] text-sm leading-5 text-primary group-hover:underline">{recordTitle(record)}</span>
+        {record.location ? <span className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><MapPin aria-hidden className="h-3 w-3" />{record.location}</span> : null}
+      </span>
+      <ChevronRight aria-hidden className="h-4 w-4 text-primary" />
+    </Link>
+  );
+}
 
-          if (section.id === "gallery") {
-            return (
-              <div key={section.id} id={section.id} className="scroll-mt-32">
-                <MediaGalleryBento
-                  items={galleryBentoItems(sectionRecords)}
-                  title="University gallery"
-                  description={section.body}
-                />
-                <Link
-                  href={section.href}
-                  className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-full border border-primary/20 bg-white px-4 text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-white"
-                >
-                  View all gallery
-                  <ArrowRight aria-hidden className="h-4 w-4" />
-                </Link>
-              </div>
-            );
-          }
+function MediaLead({ record }: { record: ContentRecord }) {
+  return (
+    <Link href={recordHref(record)} className="group grid min-w-0 overflow-hidden rounded-2xl bg-white ring-1 ring-primary/10 lg:grid-rows-[minmax(18rem,1fr)_auto]">
+      <div className="aspect-[16/10] min-h-0 overflow-hidden bg-surface-muted lg:aspect-auto">
+        <div className="h-full transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"><ContentImage record={record} large /></div>
+      </div>
+      <div className="p-5 sm:p-6">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary"><span>{categoryLabel(record)}</span>{recordDate(record) ? <span className="text-muted-foreground">{recordDate(record)}</span> : null}</div>
+        <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-normal leading-tight tracking-tight text-primary sm:text-3xl">{recordTitle(record)}</h2>
+        {summarize(record, "") ? <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">{summarize(record, "")}</p> : null}
+        <span className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-primary group-hover:underline">Read story <ArrowRight aria-hidden className="h-4 w-4" /></span>
+      </div>
+    </Link>
+  );
+}
 
-          return (
-            <div key={section.id} id={section.id} className="scroll-mt-32">
-              <ScrollReveal
-                as="section"
-                className="rounded-lg border border-border bg-white p-5 shadow-sm lg:p-6"
-              >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
-                    <SectionKicker>Media Desk</SectionKicker>
-                    <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-foreground">
-                      {section.title}
-                    </h2>
-                    <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground">
-                      {section.body}
-                    </p>
-                  </div>
-                  <Link
-                    href={section.href}
-                    className="inline-flex min-h-10 items-center gap-2 rounded-full border border-primary/20 px-4 text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-white"
-                  >
-                    View all
-                    <ArrowRight aria-hidden className="h-4 w-4" />
-                  </Link>
-                </div>
+function LatestEditorialCard({ record, wide = false }: { record: ContentRecord; wide?: boolean }) {
+  return (
+    <Link href={recordHref(record)} className={`group grid min-w-0 grid-cols-[7rem_minmax(0,1fr)] overflow-hidden rounded-2xl bg-white ring-1 ring-primary/10 transition-transform hover:-translate-y-0.5 ${wide ? "md:col-span-2 md:grid-cols-[1.15fr_.85fr]" : "md:block"}`}>
+      <div className={`min-h-28 overflow-hidden bg-surface-muted ${wide ? "md:aspect-auto" : "md:aspect-[16/10] md:min-h-0"}`}><ContentImage record={record} large={wide} /></div>
+      <div className="p-4 sm:p-5">
+        <div className="flex flex-wrap gap-2 text-[0.68rem] font-bold uppercase tracking-wider text-primary"><span>{categoryLabel(record)}</span>{recordDate(record) ? <span className="text-muted-foreground">{recordDate(record)}</span> : null}</div>
+        <h3 className={`mt-2 font-[family-name:var(--font-display)] font-normal leading-tight tracking-tight text-primary group-hover:underline ${wide ? "text-xl sm:text-2xl" : "text-lg"}`}>{recordTitle(record)}</h3>
+        {wide && summarize(record, "") ? <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">{summarize(record, "")}</p> : null}
+      </div>
+    </Link>
+  );
+}
 
-                {sectionRecords.length ? (
-                  <div className="mt-5">
-                    <EditorialMosaic
-                      records={sectionRecords}
-                      keyPrefix={section.id}
-                    />
-                  </div>
-                ) : (
-                  <p className="mt-5 rounded-lg border border-dashed border-border bg-surface-subtle p-4 text-sm leading-6 text-muted-foreground">
-                    No {section.title.toLowerCase()} records are currently
-                    published.
-                  </p>
-                )}
-              </ScrollReveal>
-            </div>
-          );
-        })}
+function MediaDeskSections({ data }: { data: ContentListingData }) {
+  const editorial = data.records.filter((record) => record.contentKind !== "media");
+  const lead = data.featured ?? editorial[0] ?? null;
+  const latest = editorial.filter((record) => record !== lead && record.contentKind !== "announcements" && record.contentKind !== "events").slice(0, 5);
+  const events = (data.calendarEvents?.length ? data.calendarEvents : editorial.filter((record) => record.contentKind === "events")).slice(0, 2);
+  const announcements = editorial.filter((record) => record.contentKind === "announcements").slice(0, 2);
+  const compactGallerySpans = [
+    "col-span-1 row-span-2 sm:col-span-1 sm:row-span-2",
+    "col-span-1 row-span-1 sm:col-span-1 sm:row-span-1",
+    "col-span-1 row-span-1 sm:col-span-1 sm:row-span-1",
+    "col-span-1 row-span-1 sm:col-span-1 sm:row-span-1",
+    "col-span-1 row-span-1 sm:col-span-1 sm:row-span-1",
+  ];
+  const galleryItems = galleryBentoItems(data.records.filter((record) => record.contentKind === "media").slice(0, 5)).map((item, index) => ({ ...item, span: compactGallerySpans[index] ?? compactGallerySpans[4]! }));
+
+  return (
+    <div className="grid gap-10 lg:gap-14">
+      {(lead || events.length || announcements.length) ? <section className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(19rem,.9fr)]">
+        {lead ? <MediaLead record={lead} /> : null}
+        <div className="grid min-w-0 content-start gap-4">
+          {events.length ? <div className="rounded-2xl bg-white p-5 ring-1 ring-primary/10"><div className="flex items-center gap-3"><CalendarDays aria-hidden className="h-5 w-5 text-secondary" /><h2 className="font-[family-name:var(--font-display)] text-xl font-normal text-primary">Upcoming events</h2></div><div className="mt-3">{events.map((record) => <EventBrief key={`event-${record.id}`} record={record} />)}</div><Link href="/media/events" className="mt-2 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-primary hover:underline">View all <ArrowRight aria-hidden className="h-4 w-4" /></Link></div> : null}
+          {announcements.length ? <div className="rounded-2xl bg-white p-5 ring-1 ring-primary/10"><div className="flex items-center gap-3"><Megaphone aria-hidden className="h-5 w-5 text-secondary" /><h2 className="font-[family-name:var(--font-display)] text-xl font-normal text-primary">Official announcements</h2></div><div className="mt-3 divide-y divide-primary/10">{announcements.map((record) => <Link key={`notice-${record.id}`} href={recordHref(record)} className="block py-3 text-sm leading-6 text-primary hover:underline">{recordTitle(record)}{recordDate(record) ? <span className="mt-1 block text-xs text-muted-foreground">{recordDate(record)}</span> : null}</Link>)}</div><Link href="/media/announcements" className="mt-2 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-primary hover:underline">View all <ArrowRight aria-hidden className="h-4 w-4" /></Link></div> : null}
+        </div>
+      </section> : null}
+
+      {latest.length ? <ScrollReveal as="section"><div className="flex items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">University communications</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-normal tracking-tight text-primary sm:text-4xl">Latest from <em className="italic">Kisii University.</em></h2></div><Link href="/media/news" className="hidden min-h-11 items-center gap-2 text-sm font-bold text-primary hover:underline sm:inline-flex">View all <ArrowRight aria-hidden className="h-4 w-4" /></Link></div><div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">{latest.map((record, index) => <LatestEditorialCard key={`latest-${record.contentKind}-${record.id}`} record={record} wide={index === 0} />)}</div></ScrollReveal> : null}
+
+      {galleryItems.length ? <ScrollReveal as="section"><div className="mb-6 flex items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">In pictures</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-normal tracking-tight text-primary sm:text-4xl">University <em className="italic">gallery.</em></h2></div><Link href="/media/gallery" className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-primary hover:underline">View gallery <ArrowRight aria-hidden className="h-4 w-4" /></Link></div><MediaGalleryBento compact items={galleryItems} title="University gallery" description="Published photographs and visual stories from Kisii University." /></ScrollReveal> : null}
+
+      <section className="grid gap-6 overflow-hidden rounded-2xl bg-primary px-5 py-8 text-white sm:px-8 lg:grid-cols-[.8fr_1.2fr] lg:items-center lg:px-10"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">University updates</p><h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-normal tracking-tight sm:text-4xl">Stay <em className="italic">informed.</em></h2><p className="mt-3 max-w-xl text-sm leading-6 text-white/70">Receive the latest university news, events, stories, and official announcements.</p></div><div className="min-w-0"><NewsletterSubscribeForm variant="dark" /><Link href="/contact" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-white hover:underline">Media contacts <ArrowRight aria-hidden className="h-4 w-4" /></Link></div></section>
     </div>
   );
 }
@@ -482,19 +419,17 @@ function MediaDeskStack({
 
   if (data.mediaDeskSection === "gallery") {
     return (
-      <div className="grid gap-5">
+      <div className="grid gap-8">
         <ScrollReveal
           as="section"
-          className="rounded-lg border border-border bg-white p-5 shadow-sm lg:p-6"
+          className="rounded-2xl bg-white p-5 ring-1 ring-primary/10 lg:p-6"
         >
           <div>
+            {/* Title and body sit on the campus header band above. */}
             <SectionKicker>{`${data.total} records`}</SectionKicker>
-            <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-              {data.title}
-            </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-              {section?.body ?? data.body}
-            </p>
+            <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-normal leading-tight tracking-tight text-primary sm:text-4xl">
+              Explore the <em className="italic">gallery.</em>
+            </h2>
           </div>
           <ContentFilters data={data} visible={records.length} />
         </ScrollReveal>
@@ -507,20 +442,25 @@ function MediaDeskStack({
     );
   }
 
+  const lead = records[0] ?? null;
+  const remaining = records.slice(1);
+
   return (
-    <ScrollReveal
-      as="section"
-      className="rounded-lg border border-border bg-white p-5 shadow-sm lg:p-6"
-    >
+    <div className="grid gap-8">
+    <ScrollReveal as="section" className="rounded-2xl bg-white p-5 ring-1 ring-primary/10 lg:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
+          {/* The page title and body sit on the campus header band above, so
+              this card carries only the record count and the filters. */}
           <SectionKicker>{`${data.total} records`}</SectionKicker>
-          <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-            {data.title}
-          </h1>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-            {section?.body ?? data.body}
-          </p>
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-normal leading-tight tracking-tight text-primary sm:text-4xl">
+            Browse <em className="italic">{kindLabel(data.kind).toLowerCase()}.</em>
+          </h2>
+          {section?.body ? (
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
+              {section.body}
+            </p>
+          ) : null}
         </div>
         {data.categories.length ? (
           <div className="flex flex-wrap gap-2">
@@ -538,18 +478,13 @@ function MediaDeskStack({
       </div>
       <ContentFilters data={data} visible={records.length} />
 
-      {records.length ? (
-        <div className="mt-5">
-          <EditorialMosaic
-            records={records}
-            keyPrefix={data.mediaDeskSection ?? data.kind}
-          />
-        </div>
-      ) : (
-        <article className="mt-5 rounded-lg border border-dashed border-border bg-surface-subtle p-5 text-sm text-muted-foreground">
+    </ScrollReveal>
+      {lead ? <ScrollReveal><MediaLead record={lead} /></ScrollReveal> : (
+        <article className="rounded-2xl border border-dashed border-border bg-surface-subtle p-5 text-sm text-muted-foreground">
           No {emptyLabel} records are currently published.
         </article>
       )}
+      {remaining.length ? <ScrollRevealGroup className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" staggerDelay={60}>{remaining.map((record) => <RecordCard key={`${record.contentKind}-${record.id}`} record={record} />)}</ScrollRevealGroup> : null}
       <ListPagination
         page={data.page}
         totalPages={Math.ceil(data.total / data.perPage)}
@@ -557,7 +492,7 @@ function MediaDeskStack({
         perPage={data.perPage}
         baseHref={listingBaseHref(data)}
       />
-    </ScrollReveal>
+    </div>
   );
 }
 
@@ -595,7 +530,7 @@ function ContentFilters({
     allLabel: string;
     options: ListFilterOption[];
   }> =
-    data.kind === "news" || data.kind === "events" || data.kind === "media"
+    data.kind === "news" || data.kind === "events"
       ? [
           {
             name: "entity_type",
@@ -625,7 +560,7 @@ function ContentFilters({
 
   return (
     <PublicListFilterForm
-      className="mt-5 rounded-lg border border-border bg-surface-subtle p-3"
+      className="mt-5 rounded-2xl border border-primary/10 bg-surface-subtle p-3"
       searchValue={data.filters.q}
       searchPlaceholder={`Search ${kindLabel(data.kind).toLowerCase()}`}
       selects={[
@@ -683,46 +618,44 @@ function galleryBentoItems(records: ContentRecord[]): MediaGalleryBentoItem[] {
 }
 
 function MediaDeskListingPage({ data }: { data: ContentListingData }) {
-  const records = data.featured
-    ? data.records.filter((record) =>
-        record.contentKind === "media"
-          ? record.id !== data.featured?.id
-          : record.slug !==
-            (data.featured as Exclude<ContentRecord, { contentKind: "media" }>)
-              .slug,
-      )
-    : data.records;
+  const records = data.records;
 
   return (
     <PageShell>
       <AboutPageLenis>
+        <CampusPageHeader
+          variant="compact"
+          eyebrow={
+            data.mediaDeskSection === "overview"
+              ? "University communications"
+              : data.eyebrow
+          }
+          title={data.title}
+          description={data.body}
+          breadcrumbs={
+            data.mediaDeskSection === "overview"
+              ? [{ label: "Home", href: "/" }, { label: "Media Desk" }]
+              : [
+                  { label: "Home", href: "/" },
+                  { label: "Media Desk", href: "/media" },
+                  { label: data.title },
+                ]
+          }
+          seed={data.href}
+        />
         <AmbientPageBackground variant="academic" intensity="soft">
-          <section className="w-full px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-            <div className="grid w-full gap-5">
-            <BreadcrumbTrail
-              items={[{ label: "Home", href: "/" }, { label: "Media Desk" }]}
-            />
-            <MediaDeskNav activeSection={data.mediaDeskSection} />
-            <div className="min-w-0">
+          <section className="w-full px-5 py-8 sm:px-8 lg:px-16 lg:py-12 xl:px-20">
+            <div className="mx-auto grid w-full max-w-7xl gap-8">
+              <MediaDeskNav activeSection={data.mediaDeskSection} />
               <div className="min-w-0">
-                {data.mediaDeskSection === "overview" ? (
-                  <div className="grid gap-5">
-                    <header className="rounded-lg border border-border bg-white p-5 shadow-sm lg:p-6">
-                      <SectionKicker>University communications</SectionKicker>
-                      <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-                        {data.title}
-                      </h1>
-                      <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-                        {data.body}
-                      </p>
-                    </header>
-                    <MediaDeskSections records={data.records} />
-                  </div>
-                ) : (
-                  <MediaDeskStack data={data} records={records} />
-                )}
+                <div className="min-w-0">
+                  {data.mediaDeskSection === "overview" ? (
+                    <MediaDeskSections data={data} />
+                  ) : (
+                    <MediaDeskStack data={data} records={records} />
+                  )}
+                </div>
               </div>
-            </div>
             </div>
           </section>
         </AmbientPageBackground>
@@ -747,6 +680,17 @@ export function ContentListingPage({ data }: { data: ContentListingData }) {
   return (
     <PageShell>
       <AboutPageLenis>
+        <CampusPageHeader
+          variant="compact"
+          eyebrow={data.eyebrow}
+          title={data.title}
+          description={data.body}
+          breadcrumbs={[
+            { label: "Home", href: "/" },
+            { label: kindLabel(data.kind) },
+          ]}
+          seed={data.href}
+        />
         <section className="w-full bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_70%,hsl(var(--surface-muted))_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="mx-auto grid w-full max-w-[1680px] gap-5">
             <ListingHero data={data} />
@@ -818,7 +762,7 @@ function EventAccess({ data }: { data: ContentDetailData }) {
   return (
     <a
       href={record.meeting_link}
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition-colors hover:bg-primary/90"
+      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-secondary px-5 text-xs font-bold uppercase text-foreground transition-transform hover:-translate-y-0.5"
     >
       Open event link
       <ExternalLink aria-hidden className="h-4 w-4" />
@@ -835,7 +779,7 @@ function MediaDownload({ data }: { data: ContentDetailData }) {
   return (
     <a
       href={source}
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition-colors hover:bg-primary/90"
+      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-xs font-bold uppercase text-white transition-transform hover:-translate-y-0.5"
     >
       Open media
       <Download aria-hidden className="h-4 w-4" />
@@ -916,7 +860,7 @@ function StructuredContentSection({ data }: { data: ContentDetailData }) {
   return (
     <ScrollReveal
       as="section"
-      className="rounded-lg border border-border bg-white p-5 shadow-sm"
+      className="rounded-2xl bg-white p-5 ring-1 ring-primary/10"
     >
       <SectionKicker>Structured Details</SectionKicker>
       <div className="mt-4">
@@ -952,7 +896,7 @@ function GallerySection({ data }: { data: ContentDetailData }) {
   return (
     <ScrollReveal
       as="section"
-      className="rounded-lg border border-border bg-white p-5 shadow-sm"
+      className="rounded-2xl bg-white p-5 ring-1 ring-primary/10"
     >
       <SectionKicker>Gallery</SectionKicker>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -962,7 +906,7 @@ function GallerySection({ data }: { data: ContentDetailData }) {
             href={image.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="group relative overflow-hidden rounded-lg border border-border bg-surface-muted shadow-sm transition-shadow hover:shadow-md"
+            className="group relative overflow-hidden rounded-2xl bg-surface-muted ring-1 ring-primary/10"
           >
             <img
               src={image.url}
@@ -1051,7 +995,7 @@ function DetailBody({ data }: { data: ContentDetailData }) {
     return (
       <ScrollReveal
         as="section"
-        className="rounded-lg border border-border bg-white p-5 shadow-sm"
+        className="rounded-2xl bg-white p-5 ring-1 ring-primary/10"
       >
         <SectionKicker>Media Details</SectionKicker>
         {data.body ? (
@@ -1064,7 +1008,7 @@ function DetailBody({ data }: { data: ContentDetailData }) {
   return (
     <ScrollReveal
       as="article"
-      className="rounded-lg border border-border bg-white px-5 py-6 shadow-sm sm:px-7 lg:px-9 lg:py-8"
+      className="rounded-2xl bg-white px-5 py-6 ring-1 ring-primary/10 sm:px-7 lg:px-9 lg:py-8"
     >
       <RichTextRenderer
         content={data.body}
@@ -1079,7 +1023,7 @@ function DetailBody({ data }: { data: ContentDetailData }) {
 
 function DetailHero({ data }: { data: ContentDetailData }) {
   return (
-    <section className="overflow-hidden rounded-lg border border-primary/10 bg-white shadow-[0_20px_70px_-52px_rgba(30,64,175,0.65)]">
+    <section className="overflow-hidden rounded-2xl bg-white ring-1 ring-primary/10">
       <div className="px-5 py-6 sm:px-7 lg:px-9 lg:py-8">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex min-h-8 items-center rounded-full bg-primary/10 px-3 text-xs font-bold uppercase tracking-[0.08em] text-primary">
@@ -1092,7 +1036,7 @@ function DetailHero({ data }: { data: ContentDetailData }) {
             </span>
           ) : null}
         </div>
-        <h1 className="mt-4 max-w-5xl font-[family-name:var(--font-display)] text-4xl font-semibold leading-[1.05] text-foreground sm:text-5xl xl:text-6xl">
+        <h1 className="mt-4 max-w-5xl font-[family-name:var(--font-display)] text-4xl font-normal leading-[1.05] tracking-tight text-primary sm:text-5xl xl:text-6xl">
           {data.title}
         </h1>
         {data.summary ? (
@@ -1143,19 +1087,19 @@ function DetailHero({ data }: { data: ContentDetailData }) {
 function DetailSidebar({ data }: { data: ContentDetailData }) {
   return (
     <aside className="grid gap-4 xl:sticky xl:top-28 xl:self-start">
-      <section className="rounded-lg border border-border bg-white p-4 shadow-sm">
+      <section className="rounded-2xl bg-white p-4 ring-1 ring-primary/10">
         <SectionKicker>Continue</SectionKicker>
         <div className="mt-3 grid gap-2">
           <Link
             href={data.href}
-            className="inline-flex min-h-11 items-center justify-between gap-3 rounded-md border border-primary/15 px-3 text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-white"
+            className="inline-flex min-h-11 items-center justify-between gap-3 rounded-2xl border border-primary/15 px-3 text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-white"
           >
             More {kindLabel(data.kind).toLowerCase()}
             <ArrowRight aria-hidden className="h-4 w-4" />
           </Link>
           <Link
             href="/media"
-            className="inline-flex min-h-11 items-center justify-between gap-3 rounded-md border border-border px-3 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            className="inline-flex min-h-11 items-center justify-between gap-3 rounded-2xl border border-border px-3 text-sm font-bold text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
           >
             Media Desk
             <ArrowRight aria-hidden className="h-4 w-4" />
@@ -1163,14 +1107,14 @@ function DetailSidebar({ data }: { data: ContentDetailData }) {
         </div>
       </section>
       {data.relatedLinks.length ? (
-        <section className="rounded-lg border border-border bg-white p-4 shadow-sm">
+        <section className="rounded-2xl bg-white p-4 ring-1 ring-primary/10">
           <SectionKicker>Related Links</SectionKicker>
           <div className="mt-3 grid gap-2">
             {data.relatedLinks.map((item) => (
               <a
                 key={item.href}
                 href={item.href}
-                className="group flex min-h-11 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
+                className="group flex min-h-11 items-center gap-2 rounded-2xl border border-border px-3 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
               >
                 <LinkIcon
                   aria-hidden
@@ -1234,8 +1178,9 @@ export function ContentDetailPage({ data }: { data: ContentDetailData }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(data.jsonLd) }}
       />
       <AboutPageLenis>
-        <section className="w-full bg-[linear-gradient(180deg,hsl(var(--surface-subtle))_0%,#ffffff_58%,hsl(var(--surface-muted))_100%)] px-4 py-5 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="mx-auto grid w-full max-w-[1680px] gap-5">
+        <AmbientPageBackground variant="academic" intensity="soft">
+        <section className="w-full px-5 py-8 sm:px-8 lg:px-16 lg:py-12 xl:px-20">
+          <div className="mx-auto grid w-full max-w-7xl gap-8">
             <BreadcrumbTrail
               items={[
                 { label: "Home", href: "/" },
@@ -1245,12 +1190,9 @@ export function ContentDetailPage({ data }: { data: ContentDetailData }) {
               ]}
             />
 
-            <div className="grid w-full gap-5 xl:grid-cols-[240px_minmax(0,1fr)_320px] 2xl:grid-cols-[260px_minmax(0,1fr)_360px]">
-              <aside className="xl:sticky xl:top-28 xl:self-start">
-                <MediaDeskNav activeSection={data.mediaDeskSection} />
-              </aside>
-
-              <div className="grid min-w-0 gap-5">
+            <MediaDeskNav activeSection={data.mediaDeskSection} />
+            <div className="grid w-full min-w-0 gap-8 xl:grid-cols-[minmax(0,1fr)_19rem]">
+              <div className="grid min-w-0 gap-8">
                 <DetailHero data={data} />
                 <div className="grid min-w-0 gap-5">
                   <DetailBody data={data} />
@@ -1265,6 +1207,7 @@ export function ContentDetailPage({ data }: { data: ContentDetailData }) {
             </div>
           </div>
         </section>
+        </AmbientPageBackground>
       </AboutPageLenis>
     </PageShell>
   );

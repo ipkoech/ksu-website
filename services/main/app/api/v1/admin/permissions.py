@@ -14,13 +14,13 @@ from .._fields import FieldSelection, FieldsDep, build_selector
 router = APIRouter()
 
 
-@router.get("", dependencies=[Depends(require_scope("permissions:read"))])
+@router.get("", dependencies=[Depends(require_scope("permissions.view"))])
 async def list_permissions(db: DbSession, _: CurrentUser, fields: FieldSelection = FieldsDep):
     selector = build_selector(Permission, fields)
     return success(data=selector.apply(await RBACService.list_permissions(db)))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("permissions:write"))])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_scope("permissions.manage"))])
 async def create_permission(
     db: DbSession,
     _: CurrentUser,

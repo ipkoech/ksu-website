@@ -25,10 +25,13 @@ ALL_PERMISSIONS: tuple[str, ...] = (
     # ROLES & PERMISSIONS
     "roles.view", "roles.manage", "permissions.view", "permissions.manage",
     # SYSTEM
-    "audit.view", "audit.manage", "settings.manage", "docs.view",
+    "audit.view", "audit.manage", "settings.view", "settings.manage", "docs.view",
     "analytics.view", "analytics.manage", "logs.view", "logs.manage",
     "sessions.view", "sessions.manage",
     "notifications.view", "notifications.manage", "notifications.send",
+    "notifications.delete",
+    "api_keys.view", "api_keys.manage", "api_keys.delete",
+    "webhooks.view", "webhooks.manage", "webhooks.delete",
     # ACADEMIC
     "academic.manage_campuses", "academic.manage_schools", "academic.manage_departments",
     "academic.manage_staff", "academic.manage_programmes", "academic.manage_calendar", "academic.view",
@@ -36,6 +39,9 @@ ALL_PERMISSIONS: tuple[str, ...] = (
     "content.manage_pages", "content.manage_news", "content.manage_events", "content.manage_blogs",
     "content.manage_announcements", "content.manage_categories", "content.view_drafts",
     "content.publish", "content.view",
+    "content.manage", "content.manage_stories", "content.submit", "content.review",
+    "content.edit_submitted", "content.approve", "content.schedule", "content.unpublish",
+    "about.manage", "stories.submit", "stories.view_own", "stories.update_own",
     # RESEARCH
     "research.view_projects", "research.manage_projects", "research.manage_publications",
     "research.manage_centers", "research.manage_collaborations", "research.manage_services",
@@ -60,6 +66,7 @@ ALL_PERMISSIONS: tuple[str, ...] = (
     # STUDENT LIFE
     "student_life.manage_clubs", "student_life.manage_accommodations", "student_life.manage_services",
     "student_life.manage_sports", "student_life.manage_facilities", "student_life.manage_events",
+    "student_life.manage_arts_culture", "student_life.manage_governance",
     "student_life.view",
     # MEDIA
     "media.manage", "media.upload", "media.delete", "media.view",
@@ -67,12 +74,16 @@ ALL_PERMISSIONS: tuple[str, ...] = (
     # MARKETING
     "marketing.manage_sliders", "marketing.manage_testimonials",
     "marketing.manage_newsletters", "marketing.manage_campaigns", "marketing.view",
+    "marketing.manage_social",
     # PAGE CMS
     "page_sections.view", "page_sections.create", "page_sections.update",
     "page_sections.delete", "page_sections.review", "page_sections.publish",
     "section_items.manage", "partnership_spotlights.manage",
     "homepage.view", "homepage.manage", "homepage.publish",
     "school_homepage.manage", "research_homepage.manage", "library_homepage.manage",
+    "vc_hub.view", "vc_hub.manage", "vc_hub.review", "vc_hub.publish",
+    "life_around_studies.view", "life_around_studies.manage",
+    "life_around_studies.review", "life_around_studies.publish",
     # SUPPORT
     "support.manage_faqs", "support.manage_contacts", "support.manage_inquiries",
     "support.manage_feedback", "support.view",
@@ -154,19 +165,25 @@ ALL_PERMISSIONS: tuple[str, ...] = (
     "donations.settings", "donations.manage_metrics", "donations.manage_stories",
     # SUSTAINABILITY
     "sustainability.manage", "sustainability.view",
+    "sustainability.submit", "sustainability.review", "sustainability.publish",
+    "sustainability.bulk",
+    # UNIVERSITY FARM
+    "farm.view", "farm.manage", "farm.submit", "farm.review", "farm.publish",
+    "farm.bulk",
+    # RESEARCH CONTENT LIFECYCLE
+    "research.submit", "research.review", "research.publish",
 )
 
 ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
     "super-admin": RoleDefinition(
         name="super-admin",
-        description="Supreme administrator with unrestricted access.",
-        scopes=("admin:*", *ALL_PERMISSIONS),
+        description="Supreme administrator granted the complete explicit permission catalogue.",
+        scopes=ALL_PERMISSIONS,
     ),
     "admin": RoleDefinition(
         name="admin",
         description="System administrator.",
         scopes=(
-            "admin:*",
             "users.view", "users.create", "users.edit", "users.suspend", "users.invite",
             "roles.view", "permissions.view", "audit.view", "audit.manage",
             "settings.manage", "analytics.view", "logs.view",
@@ -179,7 +196,8 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
             "research.manage_impact", "student_life.view",
             "student_life.manage_clubs", "student_life.manage_accommodations",
             "student_life.manage_services", "student_life.manage_sports",
-            "student_life.manage_facilities", "governance.view",
+            "student_life.manage_facilities", "student_life.manage_arts_culture",
+            "student_life.manage_governance", "governance.view",
             "staff.manage_assignments", "staff.view_assignments", "media.upload",
             "page_sections.view", "page_sections.create", "page_sections.update",
             "page_sections.delete", "page_sections.review", "page_sections.publish",
@@ -330,7 +348,7 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
             "partnerships.manage_agreements", "partnerships.view_inquiries", "partnerships.view_requests",
             "innovation.manage_competitions", "innovation.manage_transfers", "innovation.manage_startups",
             "innovation.review_disclosure", "innovation.manage_ecosystem", "innovation.view_sensitive",
-            "settings.manage", "analytics.view", "audit:read", "media.upload",
+            "settings.manage", "analytics.view", "audit.view", "media.upload",
             "workflow.initiate", "workflow.approve", "workflow.view_all", "users.view",
             "content.manage_announcements", "content.manage_news", "content.manage_events",
             "content.manage_blogs", "content.view_drafts", "content.view",
@@ -345,7 +363,13 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
             "external_publications.view", "marketing.manage_sliders",
             "donations.view", "donations.manage", "donations.confirm",
             "donations.settings", "donations.manage_metrics", "donations.manage_stories",
+            # Research admin is the reviewer/publisher for every research domain.
             "sustainability.manage", "sustainability.view",
+            "sustainability.submit", "sustainability.review", "sustainability.publish",
+            "sustainability.bulk",
+            "farm.view", "farm.manage", "farm.submit", "farm.review", "farm.publish",
+            "farm.bulk",
+            "research.submit", "research.review", "research.publish",
         ),
     ),
     "research-manager": RoleDefinition(
@@ -377,6 +401,9 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
             "workflow.initiate", "media.upload", "scholarship.view",
             "research_theme.view", "research_program.view", "external_publications.view",
             "profile.self_edit",
+            # Staff draft and submit for review; they never review or publish.
+            "research.submit",
+            "farm.view", "sustainability.view",
         ),
     ),
     "research-main-admin": RoleDefinition(
@@ -508,14 +535,16 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
     ),
     "research-sustainability": RoleDefinition(
         name="research-sustainability",
-        description="Research portal user for sustainability projects, partners, activities, stories, and impact metrics.",
+        description="Sustainability manager with full authority over sustainability initiatives, partners, activities, stories, and impact metrics. Submits for review; cannot publish.",
         scopes=(
-            "research.view",
-            "research.view_projects",
-            "research.manage_projects",
-            "research.manage_reports",
+            # Full authority over the sustainability domain, minus publishing.
             "sustainability.view",
             "sustainability.manage",
+            "sustainability.submit",
+            "sustainability.bulk",
+            "research.view",
+            "research.view_projects",
+            "research.submit",
             "partnerships.view",
             "partnerships.manage_partners",
             "content.view",
@@ -563,21 +592,20 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
     ),
     "research-farm": RoleDefinition(
         name="research-farm",
-        description="Research portal user for university farm records, farm projects, partners, activities, impact stories, and focus areas.",
+        description="Farm manager with full authority over university farm records, farm projects, partners, activities, impact stories, and focus areas. Submits for review; cannot publish.",
         scopes=(
+            # Full authority over the farm domain, minus publishing.
+            "farm.view",
+            "farm.manage",
+            "farm.submit",
+            "farm.bulk",
             "research.view",
             "research.view_projects",
-            "research.manage_projects",
-            "research.manage_centers",
-            "research.manage_reports",
+            "research.submit",
             "research_theme.view",
-            "research_theme.manage",
             "research_program.view",
-            "research_program.manage",
             "partnerships.view",
             "partnerships.manage_partners",
-            "sustainability.view",
-            "sustainability.manage",
             "content.view",
             "content.view_drafts",
             "content.manage_news",
@@ -697,7 +725,7 @@ ROLE_DEFINITIONS: Mapping[str, RoleDefinition] = {
     "heri-admin": RoleDefinition(
         name="heri-admin",
         description="Administrator for all HERI Africa content and operations.",
-        scopes=("heri:*",),
+        scopes=tuple(permission for permission in ALL_PERMISSIONS if permission.startswith("heri.")),
     ),
     "heri-editor": RoleDefinition(
         name="heri-editor",

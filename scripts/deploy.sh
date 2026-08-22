@@ -238,7 +238,7 @@ deploy_local() {
     python3 scripts/validate_database_capacity.py "${capacity_args[@]}"
   fi
 
-  local services=(postgres redis main research library heri celery-main celery-library celery-heri)
+  local services=(postgres redis redis-cache main research library heri celery-main celery-library celery-heri)
   if [[ "${with_gateway}" -eq 1 ]]; then
     services+=(gateway)
   fi
@@ -464,12 +464,12 @@ if [[ "\${MODE}" = "status" || "\${MODE}" = "logs" ]]; then
   if [[ "\${DEPLOY_SCOPE}" = "research" ]]; then
     default_services=(main research library celery-main celery-main-integrations beat-main celery-research celery-library beat-library admin-prod research-web-prod research-gateway research-edge)
     if [[ "\${external_data}" -eq 0 ]]; then
-      default_services=(postgres redis "\${default_services[@]}")
+      default_services=(postgres redis redis-cache "\${default_services[@]}")
     fi
   else
     default_services=(main research library heri celery-main celery-main-integrations beat-main celery-research celery-library beat-library celery-heri web-prod admin-prod research-web-prod library-web-prod heri-web-prod gateway edge)
     if [[ "\${external_data}" -eq 0 ]]; then
-      default_services+=(postgres redis)
+      default_services+=(postgres redis redis-cache)
     fi
   fi
   if [[ -n "\${INSPECT_SERVICES}" ]]; then
@@ -713,11 +713,11 @@ fi
 core_services=("\${backend_services[@]}" "\${worker_services[@]}")
 observability_services=()
 if [[ "\${ENV_NAME}" != "dev" ]]; then
-  observability_services=(prometheus alertmanager postgres-exporter redis-exporter)
+  observability_services=(prometheus alertmanager postgres-exporter redis-exporter redis-cache-exporter)
   core_services+=("\${observability_services[@]}")
 fi
 if [[ "\${external_data}" -eq 0 ]]; then
-  core_services=(postgres redis "\${core_services[@]}")
+  core_services=(postgres redis redis-cache "\${core_services[@]}")
 fi
 frontend_services=()
 proxy_services=()
@@ -789,7 +789,7 @@ if [[ "\${SKIP_BUILD}" -eq 0 ]]; then
 fi
 
 if [[ "\${external_data}" -eq 0 ]]; then
-  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" up -d --remove-orphans postgres redis
+  "\${DOCKER[@]}" compose --env-file "\${COMPOSE_ENV_FILE}" -p "\${PROJECT_NAME}" "\${compose_files[@]}" up -d --remove-orphans postgres redis redis-cache
 fi
 
 section "Run reviewed migrations"

@@ -16,6 +16,7 @@ from app.schemas.base import slugify
 
 from ._shared import SeedContext
 from .live_site_snapshot import LIVE_SITE_BLOG_ITEMS, LIVE_SITE_EVENT_ITEMS, LIVE_SITE_NEWS_ITEMS
+from .live_site_updates_20260810 import LIVE_SITE_BLOG_UPDATES, LIVE_SITE_EVENT_UPDATES, LIVE_SITE_NEWS_UPDATES
 
 
 EAT = ZoneInfo("Africa/Nairobi")
@@ -445,6 +446,7 @@ async def _upsert_news(db: AsyncSession, spec: dict[str, object], media: Media) 
         "structured_content": {
             "source_url": spec["source_url"],
             "source_channel": "official_website",
+            "gallery_image_urls": spec.get("gallery_image_urls", []),
         },
         "related_links": spec.get("related_links") or [{"label": "Official Kisii University source", "url": spec["source_url"]}],
         "featured_media_id": media.id,
@@ -487,6 +489,7 @@ async def _upsert_blog(db: AsyncSession, spec: dict[str, object], media: Media) 
         "structured_content": {
             "source_url": spec["source_url"],
             "source_channel": "official_website",
+            "gallery_image_urls": spec.get("gallery_image_urls", []),
         },
         "related_links": spec.get("related_links") or [{"label": "Official Kisii University source", "url": spec["source_url"]}],
         "featured_media_id": media.id,
@@ -528,6 +531,7 @@ async def _upsert_event(db: AsyncSession, spec: dict[str, object], media: Media)
         "structured_content": {
             "source_url": spec["source_url"],
             "source_channel": "official_website",
+            "registration_url": spec.get("registration_url"),
         },
         "start_date": spec["start_date"],
         "end_date": spec["end_date"],
@@ -537,7 +541,14 @@ async def _upsert_event(db: AsyncSession, spec: dict[str, object], media: Media)
         "is_featured": spec["is_featured"],
         "featured_media_id": media.id,
         "author_user_id": None,
-        "related_links": spec.get("related_links") or [{"label": "Official Kisii University source", "url": spec["source_url"]}],
+        "related_links": spec.get("related_links") or [
+            {"label": "Official Kisii University source", "url": spec["source_url"]},
+            *(
+                [{"label": "Conference information", "url": spec["registration_url"]}]
+                if spec.get("registration_url")
+                else []
+            ),
+        ],
         "meta_title": spec["title"],
         "meta_description": _seo_description(spec["summary"]),
         "keywords": {"tags": ["kisii university", "event", "public website"]},
@@ -627,7 +638,10 @@ async def _upsert_slider(db: AsyncSession, group: SliderGroup, spec: dict[str, o
 async def seed_content(db: AsyncSession, ctx: SeedContext) -> None:
     del ctx
 
-    for spec in LIVE_SITE_NEWS_ITEMS:
+    current_news = [*LIVE_SITE_NEWS_UPDATES, *LIVE_SITE_NEWS_ITEMS]
+    current_blogs = [*LIVE_SITE_BLOG_UPDATES, *LIVE_SITE_BLOG_ITEMS]
+
+    for spec in current_news:
         media = await _upsert_media(
             db,
             asset_filename=spec.get("asset_filename"),
@@ -638,7 +652,7 @@ async def seed_content(db: AsyncSession, ctx: SeedContext) -> None:
         )
         await _upsert_news(db, spec, media)
 
-    for spec in LIVE_SITE_BLOG_ITEMS:
+    for spec in current_blogs:
         media = await _upsert_media(
             db,
             asset_filename=spec.get("asset_filename"),
@@ -649,7 +663,7 @@ async def seed_content(db: AsyncSession, ctx: SeedContext) -> None:
         )
         await _upsert_blog(db, spec, media)
 
-    for spec in LIVE_SITE_EVENT_ITEMS:
+    for spec in [*LIVE_SITE_EVENT_UPDATES, *LIVE_SITE_EVENT_ITEMS]:
         media = await _upsert_media(
             db,
             asset_filename=spec.get("asset_filename"),
@@ -661,7 +675,7 @@ async def seed_content(db: AsyncSession, ctx: SeedContext) -> None:
         await _upsert_event(db, spec, media)
 
     slider_group = await _upsert_slider_group(db)
-    for spec in LIVE_SITE_NEWS_ITEMS[:3]:
+    for spec in current_news[:3]:
         media = await _upsert_media(
             db,
             asset_filename=spec.get("asset_filename"),

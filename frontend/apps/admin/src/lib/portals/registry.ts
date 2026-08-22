@@ -1,6 +1,7 @@
 import {
   BarChart3,
   BadgeCheck,
+  BedDouble,
   Bell,
   BookOpen,
   Boxes,
@@ -22,6 +23,7 @@ import {
   Megaphone,
   MessageSquare,
   Newspaper,
+  Palette,
   PanelsTopLeft,
   PenLine,
   Rocket,
@@ -37,10 +39,16 @@ import {
   Trophy,
   UserCheck,
   Users,
+  Volleyball,
+  Vote,
   Waypoints,
 } from "lucide-react";
 import {
+  accommodationsApi,
+  alumniApi,
+  alumniAssociationsApi,
   announcementsApi,
+  artsCultureApi,
   blogsApi,
   academicCalendarsApi,
   contactsApi,
@@ -63,13 +71,20 @@ import {
   programmesApi,
   researchServiceApi,
   slidersApi,
+  sportsFacilitiesApi,
   statsApi,
   staffApi,
   storiesApi,
+  studentGovernanceApi,
   testimonialsApi,
+  universityInfoApi,
   usersApi,
   wingsApi,
   type AcademicCalendar,
+  type Accommodation,
+  type Alumni,
+  type AlumniAssociation,
+  type ArtsCulture,
   type Announcement,
   type Blog,
   type Board,
@@ -121,9 +136,12 @@ import {
   type ResearchPublicationPayload,
   type Slider,
   type SliderGroup,
+  type SportsFacility,
   type StaffAssignment,
   type Story,
+  type StudentGovernance,
   type Testimonial,
+  type UniversityInfo,
   type User,
   type Wing,
 } from "@ksu/api-client";
@@ -4283,6 +4301,517 @@ const corporateCommunicationResources: Record<string, PortalResourceConfig<any, 
     manageScopes: ["policy.manage", "admin:*"],
     exportResource: "policies",
   } as PortalResourceConfig<Policy>,
+
+  /* ------------------------------------------------------------------ *
+   * Surfaces the public site reads but nobody could edit.
+   *
+   * Each of these already had full CRUD on the main service and typed
+   * create/update/delete in the api client; only the portal screen was
+   * missing, so the records could be seeded but never maintained. See
+   * services/main/app/api/v1/{accommodations,arts_culture,sports,
+   * student_governance,alumni,alumni_associations,university_info}.py.
+   * ------------------------------------------------------------------ */
+
+  "university-info": {
+    key: "university-info",
+    title: "University Information",
+    description:
+      "The institutional record behind founding year, charter, motto, mission, and official contacts. Read by the About pages and the homepage.",
+    backHref: "/corporate-communication",
+    queryKey: ["corporate", "university-info"],
+    fields: [
+      { name: "name", label: "Name", required: true },
+      { name: "short_name", label: "Short Name" },
+      { name: "acronym", label: "Acronym" },
+      { name: "slug", label: "Slug", required: true },
+      { name: "motto", label: "Motto" },
+      { name: "institution_type", label: "Institution Type" },
+      { name: "founding_year", label: "Founding Year", type: "number" },
+      { name: "overview", label: "Overview", type: "textarea" },
+      { name: "vision", label: "Vision", type: "textarea" },
+      { name: "mission", label: "Mission", type: "textarea" },
+      { name: "core_values", label: "Core Values", type: "textarea" },
+      { name: "charter_summary", label: "Charter Summary", type: "textarea" },
+      { name: "history_summary", label: "History Summary", type: "textarea" },
+      { name: "email", label: "Email", type: "email" },
+      { name: "phone", label: "Phone" },
+      { name: "alternate_phone", label: "Alternate Phone" },
+      { name: "website", label: "Website", type: "url" },
+      { name: "postal_address", label: "Postal Address" },
+      { name: "physical_address", label: "Physical Address" },
+      { name: "city", label: "City" },
+      { name: "county", label: "County" },
+      { name: "country", label: "Country" },
+    ],
+    // No list route exists — the service exposes the current record and a
+    // slug lookup — so the single record is presented as a one-row list.
+    list: async () => {
+      try {
+        const response = await universityInfoApi.getCurrent();
+        return { data: response.data ? [response.data] : [] };
+      } catch {
+        return { data: [] };
+      }
+    },
+    create: (payload) => universityInfoApi.create(payload),
+    update: (id, payload) => universityInfoApi.update(id, payload),
+    delete: (id) => universityInfoApi.delete(id),
+    getRecordTitle: (record) => record.name,
+    getRecordMeta: (record) =>
+      metaOf(record, ["acronym", "founding_year", "institution_type"]),
+    emptyMessage:
+      "No university information record exists yet. Create one so the About pages and homepage can read it.",
+    viewScopes: ["content.view", "about.manage", "admin:*"],
+    manageScopes: ["about.manage", "admin:*"],
+  } as PortalResourceConfig<UniversityInfo>,
+
+  accommodations: {
+    key: "accommodations",
+    title: "Accommodation",
+    description:
+      "Halls of residence shown on the campus life pages: capacity, fees, amenities, and whether applications are open.",
+    backHref: "/corporate-communication",
+    queryKey: ["corporate", "accommodations"],
+    fields: [
+      { name: "name", label: "Name", required: true },
+      { name: "slug", label: "Slug", required: true },
+      {
+        name: "accommodation_type",
+        label: "Type",
+        type: "select",
+        options: [
+          { label: "Hostel", value: "hostel" },
+          { label: "Hall of Residence", value: "hall" },
+          { label: "Apartment", value: "apartment" },
+          { label: "Off Campus", value: "off_campus" },
+        ],
+      },
+      {
+        name: "gender",
+        label: "Gender",
+        type: "select",
+        options: [
+          { label: "Mixed", value: "mixed" },
+          { label: "Male", value: "male" },
+          { label: "Female", value: "female" },
+        ],
+      },
+      { name: "campus_id", label: "Campus ID (UUID)" },
+      { name: "about", label: "About", type: "textarea" },
+      { name: "rules", label: "Rules", type: "textarea" },
+      { name: "total_rooms", label: "Total Rooms", type: "number" },
+      { name: "capacity", label: "Capacity", type: "number" },
+      { name: "fee_per_semester", label: "Fee per Semester", type: "number" },
+      { name: "fee_per_year", label: "Fee per Year", type: "number" },
+      {
+        name: "warden_id",
+        label: "Warden",
+        type: "entity",
+        relation: { adapter: "person", allowClear: true },
+      },
+      { name: "email", label: "Email", type: "email" },
+      { name: "phone", label: "Phone" },
+      {
+        name: "cover_image_id",
+        label: "Cover Image",
+        type: "media",
+        media: { mediaType: "image", accept: "image/*" },
+      },
+      {
+        name: "is_active",
+        label: "Active",
+        type: "boolean",
+        defaultValue: true,
+      },
+      {
+        name: "is_accepting_applications",
+        label: "Accepting Applications",
+        type: "boolean",
+        defaultValue: true,
+      },
+    ],
+    listFilters: [
+      {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search by name…",
+      },
+      { name: "is_active", label: "Active", type: "boolean" },
+      {
+        name: "is_accepting_applications",
+        label: "Accepting Applications",
+        type: "boolean",
+      },
+    ],
+    list: (filters) => accommodationsApi.list({ ...pageParams, ...filters }),
+    create: (payload) => accommodationsApi.create(payload),
+    update: (id, payload) => accommodationsApi.update(id, payload),
+    delete: (id) => accommodationsApi.delete(id),
+    getRecordTitle: (record) => record.name,
+    getRecordMeta: (record) =>
+      metaOf(record, ["accommodation_type", "gender", "capacity", "is_active"]),
+    emptyMessage: "No accommodation records were returned.",
+    viewScopes: ["student_life.view", "content.view", "admin:*"],
+    manageScopes: ["student_life.manage_accommodations", "admin:*"],
+  } as PortalResourceConfig<Accommodation>,
+
+  "arts-culture": {
+    key: "arts-culture",
+    title: "Arts & Culture",
+    description:
+      "Arts, culture, and heritage entries featured across the campus life pages.",
+    backHref: "/corporate-communication",
+    queryKey: ["corporate", "arts-culture"],
+    fields: [
+      { name: "title", label: "Title", required: true },
+      { name: "slug", label: "Slug", required: true },
+      { name: "category", label: "Category", required: true },
+      { name: "about", label: "About", type: "textarea" },
+      {
+        name: "school_id",
+        label: "School",
+        type: "entity",
+        relation: { adapter: "school", allowClear: true },
+      },
+      { name: "club_id", label: "Club ID (UUID)" },
+      {
+        name: "cover_image_id",
+        label: "Cover Image",
+        type: "media",
+        media: { mediaType: "image", accept: "image/*" },
+      },
+      {
+        name: "is_active",
+        label: "Active",
+        type: "boolean",
+        defaultValue: true,
+      },
+    ],
+    listFilters: [
+      {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search by title…",
+      },
+      { name: "is_active", label: "Active", type: "boolean" },
+    ],
+    list: (filters) => artsCultureApi.list({ ...pageParams, ...filters }),
+    create: (payload) => artsCultureApi.create(payload),
+    update: (id, payload) => artsCultureApi.update(id, payload),
+    delete: (id) => artsCultureApi.delete(id),
+    getRecordTitle: (record) => record.title,
+    getRecordMeta: (record) => metaOf(record, ["category", "is_active"]),
+    emptyMessage: "No arts and culture records were returned.",
+    viewScopes: ["student_life.view", "content.view", "admin:*"],
+    manageScopes: ["student_life.manage_arts_culture", "admin:*"],
+  } as PortalResourceConfig<ArtsCulture>,
+
+  "sports-facilities": {
+    key: "sports-facilities",
+    title: "Sports Facilities",
+    description:
+      "Sports grounds, courts, and gymnasia listed on the campus life pages.",
+    backHref: "/corporate-communication",
+    queryKey: ["corporate", "sports-facilities"],
+    fields: [
+      { name: "name", label: "Name", required: true },
+      { name: "slug", label: "Slug", required: true },
+      { name: "facility_type", label: "Facility Type", required: true },
+      { name: "campus_id", label: "Campus ID (UUID)" },
+      { name: "about", label: "About", type: "textarea" },
+      { name: "location", label: "Location" },
+      {
+        name: "manager_id",
+        label: "Manager",
+        type: "entity",
+        relation: { adapter: "person", allowClear: true },
+      },
+      { name: "email", label: "Email", type: "email" },
+      { name: "phone", label: "Phone" },
+      {
+        name: "cover_image_id",
+        label: "Cover Image",
+        type: "media",
+        media: { mediaType: "image", accept: "image/*" },
+      },
+      {
+        name: "is_active",
+        label: "Active",
+        type: "boolean",
+        defaultValue: true,
+      },
+    ],
+    listFilters: [
+      {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search by name…",
+      },
+      { name: "is_active", label: "Active", type: "boolean" },
+    ],
+    list: (filters) => sportsFacilitiesApi.list({ ...pageParams, ...filters }),
+    create: (payload) => sportsFacilitiesApi.create(payload),
+    update: (id, payload) => sportsFacilitiesApi.update(id, payload),
+    delete: (id) => sportsFacilitiesApi.delete(id),
+    getRecordTitle: (record) => record.name,
+    getRecordMeta: (record) =>
+      metaOf(record, ["facility_type", "location", "is_active"]),
+    emptyMessage: "No sports facility records were returned.",
+    viewScopes: ["student_life.view", "content.view", "admin:*"],
+    manageScopes: ["student_life.manage_sports", "admin:*"],
+  } as PortalResourceConfig<SportsFacility>,
+
+  "student-governance": {
+    key: "student-governance",
+    title: "Student Governance",
+    description:
+      "Student associations and councils, their mandate, office bearers, and term dates.",
+    backHref: "/corporate-communication",
+    queryKey: ["corporate", "student-governance"],
+    fields: [
+      { name: "name", label: "Name", required: true },
+      { name: "slug", label: "Slug", required: true },
+      { name: "acronym", label: "Acronym" },
+      { name: "governance_type", label: "Governance Type", required: true },
+      {
+        name: "school_id",
+        label: "School",
+        type: "entity",
+        relation: { adapter: "school", allowClear: true },
+      },
+      { name: "about", label: "About", type: "textarea" },
+      { name: "mandate", label: "Mandate", type: "textarea" },
+      { name: "constitution", label: "Constitution", type: "textarea" },
+      {
+        name: "chairperson_id",
+        label: "Chairperson",
+        type: "entity",
+        relation: { adapter: "person", allowClear: true },
+      },
+      {
+        name: "vice_chairperson_id",
+        label: "Vice Chairperson",
+        type: "entity",
+        relation: { adapter: "person", allowClear: true },
+      },
+      {
+        name: "secretary_general_id",
+        label: "Secretary General",
+        type: "entity",
+        relation: { adapter: "person", allowClear: true },
+      },
+      { name: "term_start", label: "Term Start", type: "date" },
+      { name: "term_end", label: "Term End", type: "date" },
+      { name: "email", label: "Email", type: "email" },
+      { name: "phone", label: "Phone" },
+      { name: "office_location", label: "Office Location" },
+      {
+        name: "logo_id",
+        label: "Logo",
+        type: "media",
+        media: { mediaType: "image", accept: "image/*" },
+      },
+      {
+        name: "is_active",
+        label: "Active",
+        type: "boolean",
+        defaultValue: true,
+      },
+    ],
+    listFilters: [
+      {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search by name or acronym…",
+      },
+      { name: "is_active", label: "Active", type: "boolean" },
+    ],
+    list: (filters) => studentGovernanceApi.list({ ...pageParams, ...filters }),
+    create: (payload) => studentGovernanceApi.create(payload),
+    update: (id, payload) => studentGovernanceApi.update(id, payload),
+    delete: (id) => studentGovernanceApi.delete(id),
+    getRecordTitle: (record) => record.name,
+    getRecordMeta: (record) =>
+      metaOf(record, ["acronym", "governance_type", "term_end", "is_active"]),
+    emptyMessage: "No student governance records were returned.",
+    viewScopes: ["student_life.view", "content.view", "admin:*"],
+    manageScopes: ["student_life.manage_governance", "admin:*"],
+  } as PortalResourceConfig<StudentGovernance>,
+
+  alumni: {
+    key: "alumni",
+    title: "Alumni Profiles",
+    description:
+      "Graduate profiles used by the alumni pages, including mentorship availability and verification state.",
+    backHref: "/corporate-communication",
+    queryKey: ["corporate", "alumni"],
+    fields: [
+      {
+        name: "person_id",
+        label: "Person",
+        type: "entity",
+        required: true,
+        relation: { adapter: "person" },
+      },
+      {
+        name: "graduation_year",
+        label: "Graduation Year",
+        type: "number",
+        required: true,
+      },
+      {
+        name: "programme_id",
+        label: "Programme",
+        type: "entity",
+        relation: { adapter: "programme", allowClear: true },
+      },
+      {
+        name: "school_id",
+        label: "School",
+        type: "entity",
+        relation: { adapter: "school", allowClear: true },
+      },
+      { name: "degree_classification", label: "Degree Classification" },
+      { name: "current_employer", label: "Current Employer" },
+      { name: "current_position", label: "Current Position" },
+      { name: "industry", label: "Industry" },
+      { name: "location_city", label: "City" },
+      { name: "location_country", label: "Country" },
+      { name: "linkedin_url", label: "LinkedIn", type: "url" },
+      { name: "website", label: "Website", type: "url" },
+      { name: "bio", label: "Bio", type: "textarea" },
+      { name: "achievements", label: "Achievements", type: "textarea" },
+      {
+        name: "is_mentor_available",
+        label: "Available as Mentor",
+        type: "boolean",
+        defaultValue: false,
+      },
+      {
+        name: "is_public",
+        label: "Public",
+        type: "boolean",
+        defaultValue: false,
+      },
+      {
+        name: "show_contact",
+        label: "Show Contact",
+        type: "boolean",
+        defaultValue: false,
+      },
+      {
+        name: "is_verified",
+        label: "Verified",
+        type: "boolean",
+        defaultValue: false,
+      },
+    ],
+    listFilters: [
+      {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search by name, employer, or industry…",
+      },
+      { name: "graduation_year", label: "Graduation Year", type: "text" },
+      { name: "is_public", label: "Public", type: "boolean" },
+      { name: "is_verified", label: "Verified", type: "boolean" },
+    ],
+    list: (filters) => alumniApi.list({ ...pageParams, ...filters }),
+    create: (payload) => alumniApi.create(payload),
+    update: (id, payload) => alumniApi.update(id, payload),
+    delete: (id) => alumniApi.delete(id),
+    getRecordTitle: (record) =>
+      record.current_position
+        ? `${record.current_position} · Class of ${record.graduation_year}`
+        : `Class of ${record.graduation_year}`,
+    getRecordMeta: (record) =>
+      metaOf(record, [
+        "graduation_year",
+        "current_employer",
+        "industry",
+        "is_verified",
+      ]),
+    emptyMessage: "No alumni profiles were returned.",
+    viewScopes: ["alumni.view", "content.view", "admin:*"],
+    manageScopes: ["alumni.manage", "admin:*"],
+  } as PortalResourceConfig<Alumni>,
+
+  "alumni-associations": {
+    key: "alumni-associations",
+    title: "Alumni Associations",
+    description:
+      "Chapters and associations listed on the alumni pages, with their office bearers and contacts.",
+    backHref: "/corporate-communication",
+    queryKey: ["corporate", "alumni-associations"],
+    fields: [
+      { name: "name", label: "Name", required: true },
+      { name: "slug", label: "Slug", required: true },
+      { name: "acronym", label: "Acronym" },
+      { name: "association_type", label: "Association Type", required: true },
+      {
+        name: "school_id",
+        label: "School",
+        type: "entity",
+        relation: { adapter: "school", allowClear: true },
+      },
+      { name: "region", label: "Region" },
+      { name: "about", label: "About", type: "textarea" },
+      { name: "mission", label: "Mission", type: "textarea" },
+      { name: "objectives", label: "Objectives", type: "textarea" },
+      {
+        name: "chairperson_id",
+        label: "Chairperson",
+        type: "entity",
+        relation: { adapter: "person", allowClear: true },
+      },
+      {
+        name: "secretary_id",
+        label: "Secretary",
+        type: "entity",
+        relation: { adapter: "person", allowClear: true },
+      },
+      { name: "email", label: "Email", type: "email" },
+      { name: "phone", label: "Phone" },
+      { name: "established_date", label: "Established", type: "date" },
+      {
+        name: "logo_id",
+        label: "Logo",
+        type: "media",
+        media: { mediaType: "image", accept: "image/*" },
+      },
+      {
+        name: "is_active",
+        label: "Active",
+        type: "boolean",
+        defaultValue: true,
+      },
+    ],
+    listFilters: [
+      {
+        name: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search by name, acronym, or region…",
+      },
+      { name: "is_active", label: "Active", type: "boolean" },
+    ],
+    list: (filters) =>
+      alumniAssociationsApi.list({ ...pageParams, ...filters }),
+    create: (payload) => alumniAssociationsApi.create(payload),
+    update: (id, payload) => alumniAssociationsApi.update(id, payload),
+    delete: (id) => alumniAssociationsApi.delete(id),
+    getRecordTitle: (record) => record.name,
+    getRecordMeta: (record) =>
+      metaOf(record, ["acronym", "association_type", "region", "is_active"]),
+    emptyMessage: "No alumni associations were returned.",
+    viewScopes: ["alumni.view", "content.view", "admin:*"],
+    manageScopes: ["alumni.manage", "admin:*"],
+  } as PortalResourceConfig<AlumniAssociation>,
 };
 
 const corporateResourceHrefs: Record<string, string> = {
@@ -4301,6 +4830,14 @@ const corporateResourceHrefs: Record<string, string> = {
   "newsletter-subscribers": "/corporate-communication/engagement/newsletter-subscribers",
   testimonials: "/corporate-communication/engagement/testimonials",
   "student-clubs": "/corporate-communication/student-life/club-submissions",
+  accommodations: "/corporate-communication/student-life/accommodations",
+  "arts-culture": "/corporate-communication/student-life/arts-culture",
+  "sports-facilities": "/corporate-communication/student-life/sports-facilities",
+  "student-governance": "/corporate-communication/student-life/student-governance",
+  alumni: "/corporate-communication/engagement/alumni",
+  "alumni-associations":
+    "/corporate-communication/engagement/alumni-associations",
+  "university-info": "/corporate-communication/website/university-info",
   documents: "/corporate-communication/records/documents",
   policies: "/corporate-communication/records/policies",
 };
@@ -4345,6 +4882,20 @@ const corporateResourceRouteAliases: Record<string, string> = {
   "engagement/newsletter-subscribers": "newsletter-subscribers",
   "engagement/testimonials": "testimonials",
   "student-life/club-submissions": "student-clubs",
+  accommodations: "accommodations",
+  "arts-culture": "arts-culture",
+  "sports-facilities": "sports-facilities",
+  "student-governance": "student-governance",
+  alumni: "alumni",
+  "alumni-associations": "alumni-associations",
+  "university-info": "university-info",
+  "student-life/accommodations": "accommodations",
+  "student-life/arts-culture": "arts-culture",
+  "student-life/sports-facilities": "sports-facilities",
+  "student-life/student-governance": "student-governance",
+  "engagement/alumni": "alumni",
+  "engagement/alumni-associations": "alumni-associations",
+  "website/university-info": "university-info",
   documents: "documents",
   policies: "policies",
   "records/documents": "documents",
@@ -7846,6 +8397,12 @@ export const portalConfigs: Record<string, PortalConfig> = {
             icon: PanelsTopLeft,
             scope: "marketing.manage_sliders",
           },
+          {
+            title: "University Information",
+            href: "/corporate-communication/website/university-info",
+            icon: Landmark,
+            scope: ["content.view", "admin:*"],
+          },
         ],
       },
       {
@@ -7978,6 +8535,18 @@ export const portalConfigs: Record<string, PortalConfig> = {
             icon: BadgeCheck,
             scope: "content.manage",
           },
+          {
+            title: "Alumni Profiles",
+            href: "/corporate-communication/engagement/alumni",
+            icon: GraduationCap,
+            scope: ["alumni.view", "alumni.manage", "admin:*"],
+          },
+          {
+            title: "Alumni Associations",
+            href: "/corporate-communication/engagement/alumni-associations",
+            icon: Users,
+            scope: ["alumni.view", "alumni.manage", "admin:*"],
+          },
         ],
       },
       {
@@ -7998,6 +8567,30 @@ export const portalConfigs: Record<string, PortalConfig> = {
             href: "/corporate-communication/student-life/life-around-studies",
             icon: Sparkles,
             scope: ["life_around_studies.view", "life_around_studies.manage", "life_around_studies.review", "life_around_studies.publish", "content.review", "homepage.manage", "section_items.manage", "admin:*"],
+          },
+          {
+            title: "Accommodation",
+            href: "/corporate-communication/student-life/accommodations",
+            icon: BedDouble,
+            scope: ["student_life.view", "student_life.manage_accommodations", "admin:*"],
+          },
+          {
+            title: "Arts & Culture",
+            href: "/corporate-communication/student-life/arts-culture",
+            icon: Palette,
+            scope: ["student_life.view", "student_life.manage_arts_culture", "admin:*"],
+          },
+          {
+            title: "Sports Facilities",
+            href: "/corporate-communication/student-life/sports-facilities",
+            icon: Volleyball,
+            scope: ["student_life.view", "student_life.manage_sports", "admin:*"],
+          },
+          {
+            title: "Student Governance",
+            href: "/corporate-communication/student-life/student-governance",
+            icon: Vote,
+            scope: ["student_life.view", "student_life.manage_governance", "admin:*"],
           },
         ],
       },
@@ -8120,6 +8713,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Projects",
         href: "/research/projects",
+        navKey: "projects",
         icon: FlaskConical,
         scope: "research.view_projects",
         group: "Core",
@@ -8127,6 +8721,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Centers",
         href: "/research/centers",
+        navKey: "centers",
         icon: Building2,
         scope: "research.view",
         group: "Core",
@@ -8134,6 +8729,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Programs",
         href: "/research/programs",
+        navKey: "programs",
         icon: BookOpen,
         scope: "research.view",
         group: "Core",
@@ -8141,6 +8737,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Themes",
         href: "/research/themes",
+        navKey: "themes",
         icon: ScrollText,
         scope: "research.view",
         group: "Core",
@@ -8148,6 +8745,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Grants",
         href: "/research/grants",
+        navKey: "grants",
         icon: BadgeCheck,
         scope: "funding.manage",
         group: "Grants & Funding",
@@ -8155,6 +8753,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Grant Applications",
         href: "/research/grant-applications",
+        navKey: "grant-applications",
         icon: ClipboardCheck,
         scope: "funding.manage",
         group: "Grants & Funding",
@@ -8162,6 +8761,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Grant Reviews",
         href: "/research/grant-reviews",
+        navKey: "grant-reviews",
         icon: ClipboardCheck,
         scope: "funding.manage",
         group: "Grants & Funding",
@@ -8169,6 +8769,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Grant Reports",
         href: "/research/grant-reports",
+        navKey: "grant-reports",
         icon: FileText,
         scope: "research.manage_reports",
         group: "Grants & Funding",
@@ -8176,6 +8777,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Grant Guidelines",
         href: "/research/grant-guidelines",
+        navKey: "grant-guidelines",
         icon: ScrollText,
         scope: "funding.manage",
         group: "Grants & Funding",
@@ -8183,6 +8785,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Funders",
         href: "/research/funders",
+        navKey: "funders",
         icon: Users,
         scope: "funding.manage",
         group: "Grants & Funding",
@@ -8190,6 +8793,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Donations",
         href: "/research/donations",
+        navKey: "donations",
         icon: HandCoins,
         scope: "donations.manage",
         group: "Grants & Funding",
@@ -8197,6 +8801,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Innovation",
         href: "/research/innovations",
+        navKey: "innovations",
         icon: Boxes,
         scope: "innovation.review_disclosure",
         group: "Innovation & Output",
@@ -8204,6 +8809,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Startups",
         href: "/research/innovations?tab=startups",
+        navKey: "startups",
         icon: Rocket,
         scope: "innovation.manage_startups",
         group: "Innovation & Output",
@@ -8211,6 +8817,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Incubation",
         href: "/research/innovations?tab=incubation",
+        navKey: "incubation",
         icon: Waypoints,
         scope: "innovation.manage_startups",
         group: "Innovation & Output",
@@ -8218,6 +8825,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Hackathons & Competitions",
         href: "/research/innovations?tab=competitions",
+        navKey: "competitions",
         icon: Trophy,
         scope: "innovation.manage_competitions",
         group: "Innovation & Output",
@@ -8225,6 +8833,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Technology Transfer",
         href: "/research/innovations?tab=transfers",
+        navKey: "transfers",
         icon: BadgeCheck,
         scope: "innovation.manage_transfers",
         group: "Innovation & Output",
@@ -8232,6 +8841,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Publications",
         href: "/research/publications",
+        navKey: "publications",
         icon: FileText,
         scope: ["publications.view", "publications.manage", "research.manage_publications"],
         group: "Innovation & Output",
@@ -8239,6 +8849,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Outputs",
         href: "/research/outputs",
+        navKey: "outputs",
         icon: FileText,
         scope: "research.manage_reports",
         group: "Innovation & Output",
@@ -8246,6 +8857,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Reports",
         href: "/research/reports",
+        navKey: "reports",
         icon: FileText,
         scope: "research.manage_reports",
         group: "Innovation & Output",
@@ -8253,6 +8865,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Impact",
         href: "/research/impact",
+        navKey: "impact",
         icon: ClipboardCheck,
         scope: "sustainability.manage",
         group: "Innovation & Output",
@@ -8260,6 +8873,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Partnerships",
         href: "/research/partnerships",
+        navKey: "partnerships",
         icon: Users,
         scope: "partnerships.manage_partners",
         group: "Partnerships & Services",
@@ -8267,6 +8881,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Research Resources",
         href: "/research/resources",
+        navKey: "resources",
         icon: BookOpen,
         scope: "research.manage_resources",
         group: "Partnerships & Services",
@@ -8274,6 +8889,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Research Services",
         href: "/research/services",
+        navKey: "services",
         icon: ClipboardCheck,
         scope: "research.manage_services",
         group: "Partnerships & Services",
@@ -8281,6 +8897,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Guidelines",
         href: "/research/guidelines",
+        navKey: "guidelines",
         icon: ScrollText,
         scope: "research.manage_guidelines",
         group: "Partnerships & Services",
@@ -8288,6 +8905,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Research News",
         href: "/research/content/news",
+        navKey: "content-news",
         icon: Newspaper,
         scope: "content.manage_news",
         group: "Content",
@@ -8295,6 +8913,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Research Blogs",
         href: "/research/content/blogs",
+        navKey: "content-blogs",
         icon: Newspaper,
         scope: "content.manage_blogs",
         group: "Content",
@@ -8302,6 +8921,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Announcements",
         href: "/research/content/announcements",
+        navKey: "content-announcements",
         icon: Bell,
         scope: "content.manage_announcements",
         group: "Content",
@@ -8309,6 +8929,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Research Events",
         href: "/research/content/events",
+        navKey: "content-events",
         icon: CalendarDays,
         scope: "content.manage_events",
         group: "Content",
@@ -8316,6 +8937,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Research Sliders",
         href: "/research/content/sliders",
+        navKey: "content-sliders",
         icon: PanelsTopLeft,
         scope: "marketing.manage_sliders",
         group: "Content",
@@ -8324,82 +8946,94 @@ export const portalConfigs: Record<string, PortalConfig> = {
         title: "Farm Overview",
         href: "/research/farm",
         icon: Sprout,
-        scope: "research.manage_projects",
+        scope: "farm.view",
+        navKey: "farm-overview",
         group: "Research Farm",
       },
       {
         title: "Farm Sites",
         href: "/research/farm/farms",
         icon: Sprout,
-        scope: "research.manage_projects",
+        scope: "farm.view",
+        navKey: "farm-sites",
         group: "Research Farm",
       },
       {
         title: "Farm Projects",
         href: "/research/farm/projects",
         icon: FlaskConical,
-        scope: "research.manage_projects",
+        scope: "farm.view",
+        navKey: "farm-projects",
         group: "Research Farm",
       },
       {
         title: "Farm Partners",
         href: "/research/farm/partnerships",
         icon: Users,
-        scope: "partnerships.manage_partners",
+        scope: "farm.view",
+        navKey: "farm-partners",
         group: "Research Farm",
       },
       {
         title: "Farm Activities",
         href: "/research/farm/activities",
         icon: CalendarDays,
-        scope: "content.manage_events",
+        scope: "farm.view",
+        navKey: "farm-activities",
         group: "Research Farm",
       },
       {
         title: "Farm Impact Stories",
         href: "/research/farm/impact-stories",
         icon: ClipboardCheck,
-        scope: "sustainability.manage",
+        scope: "farm.view",
+        navKey: "farm-impact-stories",
         group: "Research Farm",
       },
       {
         title: "Farm Focus Areas",
         href: "/research/farm/focus-areas",
         icon: ScrollText,
-        scope: "research_theme.manage",
+        scope: "farm.view",
+        navKey: "farm-focus-areas",
         group: "Research Farm",
       },
       {
         title: "Sustainability Overview",
         href: "/research/sustainability",
         icon: Leaf,
-        scope: "sustainability.manage",
+        scope: "sustainability.view",
+        navKey: "sustainability-overview",
         group: "Sustainability",
       },
       {
         title: "Sustainability Projects",
         href: "/research/sustainability/projects",
         icon: Leaf,
-        scope: "sustainability.manage",
+        scope: "sustainability.view",
+        navKey: "sustainability-projects",
         group: "Sustainability",
       },
       {
         title: "Sustainability Partners",
         href: "/research/sustainability/partners",
         icon: Users,
-        scope: "partnerships.manage_partners",
+        scope: "sustainability.view",
+        navKey: "sustainability-partners",
         group: "Sustainability",
       },
       {
         title: "Sustainability Activities",
         href: "/research/sustainability/activities",
         icon: CalendarDays,
-        scope: "content.manage_events",
+        scope: "sustainability.view",
+        navKey: "sustainability-activities",
         group: "Sustainability",
       },
       {
         title: "Settings Overview",
         href: "/research/settings",
+        navKey: "settings",
         icon: Settings,
         scope: "research.view",
         group: "Research Administration",
@@ -8407,6 +9041,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Research Profile",
         href: "/research/settings/profile",
+        navKey: "settings-profile",
         icon: Building2,
         scope: "research.view",
         group: "Research Administration",
@@ -8414,6 +9049,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Staff",
         href: "/research/content/staff",
+        navKey: "settings-staff",
         icon: UserCheck,
         scope: "staff.manage",
         group: "Research Administration",
@@ -8421,6 +9057,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Services",
         href: "/research/settings/services",
+        navKey: "settings-services",
         icon: MessageSquare,
         scope: "research.manage_services",
         group: "Research Administration",
@@ -8428,6 +9065,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Documents",
         href: "/research/settings/resources",
+        navKey: "settings-resources",
         icon: FileText,
         scope: "research.manage_resources",
         group: "Research Administration",
@@ -8435,6 +9073,7 @@ export const portalConfigs: Record<string, PortalConfig> = {
       {
         title: "Policies",
         href: "/research/settings/guidelines",
+        navKey: "settings-guidelines",
         icon: ScrollText,
         scope: "research.manage_guidelines",
         group: "Research Administration",

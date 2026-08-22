@@ -374,10 +374,10 @@ def authorize_content_workflow_action(user, content, action: str, permissions: s
     if action == "edit":
         workflow_status = getattr(content, "workflow_status", None) or content.status
         if workflow_status in {"submitted", "in_review", "approved", "scheduled"}:
-            if {"content.edit_submitted", "content.manage", "content.manage_stories", "admin:*"}.intersection(permissions):
+            if {"content.edit_submitted", "content.manage", "content.manage_stories"}.intersection(permissions):
                 return
             raise HTTPException(status_code=403, detail="Submitted content requires review edit privileges")
-        if {"content.manage", "content.manage_stories", "admin:*"}.intersection(permissions):
+        if {"content.manage", "content.manage_stories"}.intersection(permissions):
             return
         if owner_id == user.id and "content.edit" in permissions:
             return

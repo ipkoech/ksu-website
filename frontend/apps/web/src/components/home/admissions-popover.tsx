@@ -25,7 +25,7 @@ export function AdmissionsPopover({ admissions }: { admissions: HomepageHeroAdmi
       </button>
       {open ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-[2px]" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setOpen(false)}>
-          <div role="dialog" aria-modal="true" aria-labelledby="admissions-popover-title" className="relative w-full max-w-md rounded-2xl border border-white/15 bg-primary p-6 text-white shadow-2xl sm:p-8">
+          <div role="dialog" aria-modal="true" aria-labelledby="admissions-popover-title" className="relative w-full max-w-md rounded-3xl border border-white/15 bg-primary p-6 text-white shadow-2xl sm:p-8">
             <button type="button" onClick={() => setOpen(false)} aria-label="Close admissions update" className="absolute right-4 top-4 rounded-full p-2 text-white/70 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary"><X className="h-5 w-5" aria-hidden /></button>
             <div className="flex items-start gap-3 border-b border-white/15 pb-5 pr-8">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-white">{letters ? <FileDown className="h-5 w-5" aria-hidden /> : <CalendarDays className="h-5 w-5" aria-hidden />}</span>

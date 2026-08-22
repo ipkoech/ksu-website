@@ -13,7 +13,7 @@ from ksu_common.schemas.responses import success
 from ....deps import CurrentUser, DbSession, require_scope
 from ....services import AnalyticsService
 
-router = APIRouter(dependencies=[Depends(require_scope("analytics:read"))])
+router = APIRouter(dependencies=[Depends(require_scope("analytics.view"))])
 
 
 def _csv_response(filename: str, rows: list[dict[str, Any]]) -> Response:

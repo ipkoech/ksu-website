@@ -9,6 +9,11 @@ ehthumbs.db
 *.swo
 *~
 
+docs/
+.tmp/
+DESIGN.md
+HANDOFF.md
+
 # Local environment and secrets
 .env
 .env.*
@@ -61,6 +66,8 @@ dmypy.json
 
 # Local runtime data
 logs/
+/backups/
+/.deploy/alertmanager.generated.yml
 *.log
 /uploads/
 /media/
@@ -88,6 +95,7 @@ playwright-report/
 **/superpowers/plans/
 *.test.mjs
 .worktrees/
+.impeccable/
 
 designs/
 design/

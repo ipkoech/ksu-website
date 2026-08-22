@@ -1,41 +1,26 @@
-import type { ReactNode } from "react";
 import Link from "next/link";
-import { Eye, Landmark, ShieldCheck, Target, type LucideIcon } from "lucide-react";
+import {
+  Eye,
+  Landmark,
+  ShieldCheck,
+  Target,
+  type LucideIcon,
+} from "lucide-react";
+import { CampusPageHeader } from "@ksu/ui/components";
 import GovernanceChart from "@/components/about/GovernanceChart";
-import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import { getGovernanceData, type BackendBoard } from "@/lib/about-data";
 
 function boardMatches(board: BackendBoard, terms: string[]) {
-  const haystack = `${board.slug} ${board.name} ${board.board_type}`.toLowerCase();
+  const haystack =
+    `${board.slug} ${board.name} ${board.board_type}`.toLowerCase();
   return terms.some((term) => haystack.includes(term));
 }
 
 function present(value?: string | null) {
   const text = value?.trim();
   return text && text.length ? text : null;
-}
-
-function SectionHeading({
-  title,
-  children,
-}: {
-  title: string;
-  children?: ReactNode;
-}) {
-  return (
-    <div>
-      <h1 className="font-[family-name:var(--font-display)] text-3xl font-normal tracking-tight leading-tight text-foreground sm:text-4xl">
-        {title}
-      </h1>
-      <div className="mt-3 h-0.5 w-12 bg-secondary" />
-      {children ? (
-        <div className="mt-5 max-w-4xl text-sm leading-7 text-muted-foreground">
-          {children}
-        </div>
-      ) : null}
-    </div>
-  );
 }
 
 function IdentityCard({
@@ -82,9 +67,8 @@ function BoardIdentityGrid({
     present(board?.vision)
       ? { title: "Vision", body: present(board?.vision), icon: Eye }
       : null,
-  ].filter(
-    (item): item is { title: string; body: string; icon: LucideIcon } =>
-      Boolean(item?.body),
+  ].filter((item): item is { title: string; body: string; icon: LucideIcon } =>
+    Boolean(item?.body),
   );
 
   if (!items.length) return null;
@@ -107,9 +91,7 @@ function BoardIdentityGrid({
 
 export default async function GovernancePage() {
   const data = await getGovernanceData();
-  const council = data.boards.find((board) =>
-    boardMatches(board, ["council"]),
-  );
+  const council = data.boards.find((board) => boardMatches(board, ["council"]));
   const councilDescription =
     present(council?.description) ??
     present(council?.mandate) ??
@@ -118,46 +100,49 @@ export default async function GovernancePage() {
   return (
     <PageShell>
       <AboutPageLenis>
+        <CampusPageHeader
+          image="main-admin"
+          variant="feature"
+          titleWeight="normal"
+          eyebrow="How the university is governed"
+          title="Governance"
+          description={councilDescription}
+          breadcrumbs={[
+            { label: "Home", href: "/" },
+            { label: "About", href: "/about" },
+            { label: "Governance" },
+          ]}
+          actions={
+            <Link
+              href="/about/university-council"
+              className="inline-flex min-h-11 items-center rounded-2xl bg-secondary px-5 py-3 text-sm font-bold text-white transition-colors duration-200 hover:bg-secondary/90 focus:outline-none focus:ring-2 focus:ring-white active:scale-[0.98]"
+            >
+              View University Council
+            </Link>
+          }
+        />
+
         <section className="bg-white">
           <div className="max-w-none px-4 py-5 sm:px-6 lg:px-8">
-            <BreadcrumbTrail
-              items={[
-                { label: "Home", href: "/" },
-                { label: "About", href: "/about" },
-                { label: "Governance" },
-              ]}
-            />
-
-            <div className="mt-6 grid gap-8 ksu-gap-compact lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
-              <SectionHeading title="Governance">
-                <p>
-                  {councilDescription}
-                </p>
-                <Link
-                  href="/about/university-council"
-                  className="mt-5 inline-flex rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-white transition-colors duration-200 hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98]"
-                >
-                  View University Council
-                </Link>
-              </SectionHeading>
-
-              <aside className="rounded-2xl ring-1 ring-primary/10 bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] p-5">
-                <Landmark aria-hidden className="h-8 w-8 text-primary" />
-                <p className="mt-4 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
-                  University Council
-                </p>
-                <p className="mt-2 text-3xl font-semibold text-foreground">
-                  {council?.members.length || council?.member_count || 0}
-                </p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Published council profiles ordered by hierarchy level.
-                </p>
-              </aside>
-            </div>
+            <aside className="rounded-2xl ring-1 ring-primary/10 bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] p-5 lg:max-w-[520px]">
+              <Landmark aria-hidden className="h-8 w-8 text-primary" />
+              <p className="mt-4 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
+                University Council
+              </p>
+              <p className="mt-2 text-3xl font-semibold text-foreground">
+                {council?.members.length || council?.member_count || 0}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Published council profiles ordered by hierarchy level.
+              </p>
+            </aside>
           </div>
         </section>
 
-        <BoardIdentityGrid board={council} mandateTitle="Council mandate" />
+        <BoardIdentityGrid
+          board={council}
+          mandateTitle="What the Council does"
+        />
 
         <section className="bg-white px-4 py-8 sm:px-6 lg:px-8">
           <div className="max-w-none rounded-2xl ring-1 ring-primary/10 bg-white p-4 sm:p-6">

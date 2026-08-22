@@ -32,6 +32,7 @@ from ..models import (
 )
 from ..helpers.storage import delete_file, upload_file
 from ..models import Media, MediaFolder, MediaLink
+from ..security.role_assignments import is_role_assignment_current
 from ._base import apply_updates, ilike_any, paginate_query
 
 settings = get_settings()
@@ -691,7 +692,7 @@ class MediaService:
         if scope_type is None or scope_id is None:
             return False
         for assignment in user.role_assignments:
-            if assignment.is_active and assignment.scope_type == scope_type and assignment.scope_id == scope_id:
+            if is_role_assignment_current(assignment) and assignment.scope_type == scope_type and assignment.scope_id == scope_id:
                 return True
         person = getattr(user, "person", None)
         for assignment in getattr(person, "assignments", []) or []:
@@ -707,7 +708,7 @@ class MediaService:
     async def _visibility_filter(user: User):
         scope_filters = []
         for assignment in user.role_assignments:
-            if assignment.is_active and assignment.scope_type and assignment.scope_id:
+            if is_role_assignment_current(assignment) and assignment.scope_type and assignment.scope_id:
                 scope_filters.append(and_(MediaFolder.scope_type == assignment.scope_type, MediaFolder.scope_id == assignment.scope_id))
         if user.has_role("admin"):
             return True
@@ -721,7 +722,7 @@ class MediaService:
     async def _folder_visibility_filter(user: User):
         scope_filters = []
         for assignment in user.role_assignments:
-            if assignment.is_active and assignment.scope_type and assignment.scope_id:
+            if is_role_assignment_current(assignment) and assignment.scope_type and assignment.scope_id:
                 scope_filters.append(and_(MediaFolder.scope_type == assignment.scope_type, MediaFolder.scope_id == assignment.scope_id))
         if user.has_role("admin"):
             return True

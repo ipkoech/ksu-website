@@ -8,11 +8,11 @@ import {
   Sparkles,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { BreadcrumbTrail, PageShell } from "@/components/site-shell";
+import { CampusPageHeader } from "@ksu/ui/components";
+import { PageShell } from "@/components/site-shell";
 import { AboutPageLenis } from "@/components/ui/about-page-lenis";
 import { getQualityAssuranceData } from "@/lib/about-data";
 import { publicFileUrl } from "@/lib/public-media";
-import { createAboutImagePicker } from "@/components/about/about-image-registry";
 
 type ResourceDocument = {
   id: string;
@@ -47,7 +47,6 @@ function documentMatches(document: ResourceDocument, term: string) {
 
 export default async function QualityAssurancePage() {
   const data = await getQualityAssuranceData();
-  const qualityHeroImage = createAboutImagePicker("qualityAssurance")();
   const planDocuments = data.documents.filter((document) =>
     documentMatches(document, "strategic"),
   );
@@ -116,62 +115,43 @@ export default async function QualityAssurancePage() {
     <PageShell>
       <AboutPageLenis>
         <main className="max-w-none bg-white">
-          <section className="relative isolate overflow-hidden bg-brand-overlay text-white">
-            <div
-              aria-hidden
-              className="absolute inset-0 bg-cover bg-center opacity-55 mix-blend-luminosity"
-              style={{ backgroundImage: `url("${qualityHeroImage}")` }}
-            />
-            <div
-              aria-hidden
-              className="absolute inset-0 bg-gradient-to-r from-brand-overlay via-brand-overlay/88 to-primary/70"
-            />
-            <div className="relative px-4 py-8 sm:px-6 lg:px-8">
-              <div className="mx-auto w-full max-w-none">
-                <BreadcrumbTrail
-                  items={[
-                    { label: "Home", href: "/" },
-                    { label: "About", href: "/about" },
-                    { label: "Quality Assurance" },
-                  ]}
-                />
-
-                <div className="grid min-h-[560px] items-end gap-10 py-14 ksu-section-pad lg:grid-cols-[minmax(0,1fr)_360px] lg:py-20">
-                  <div className="max-w-4xl">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
-                      Quality Assurance
-                    </p>
-                    <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl font-normal tracking-tight leading-tight text-white sm:text-5xl lg:text-6xl">
-                      Quality, planning, and service <em className="italic">accountability</em>
-                    </h1>
-                    {data.overview?.charter_summary ? (
-                      <p className="mt-6 max-w-3xl text-base leading-8 text-white/80 sm:text-lg">
-                        {data.overview.charter_summary}
-                      </p>
-                    ) : (
-                      <div className="mt-6 max-w-2xl">
-                        <EmptyState label="Quality assurance summary" />
-                      </div>
-                    )}
-                  </div>
-
-                  <aside className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
-                    <ShieldCheck aria-hidden className="h-6 w-6 text-secondary" />
-                    <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-white/60">
-                      Backend Records
-                    </p>
-                    <div className="mt-5 grid grid-cols-2 gap-3">
-                      <MetricCard
-                        value={data.strategicPriorities.length}
-                        label="Priorities"
-                      />
-                      <MetricCard value={data.documents.length} label="Documents" />
-                    </div>
-                  </aside>
-                </div>
+          <CampusPageHeader
+            image="main-admin"
+            variant="feature"
+            titleWeight="normal"
+            eyebrow="Quality Assurance"
+            title={
+              <>
+                Quality, planning, and service{" "}
+                <em className="italic">accountability</em>
+              </>
+            }
+            description={data.overview?.charter_summary || undefined}
+            breadcrumbs={[
+              { label: "Home", href: "/" },
+              { label: "About", href: "/about" },
+              { label: "Quality Assurance" },
+            ]}
+          >
+            {data.overview?.charter_summary ? null : (
+              <div className="max-w-2xl">
+                <EmptyState label="Quality assurance summary" />
               </div>
-            </div>
-          </section>
+            )}
+            <aside className="mt-6 max-w-md rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+              <ShieldCheck aria-hidden className="h-6 w-6 text-secondary" />
+              <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-white/60">
+                Backend Records
+              </p>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <MetricCard
+                  value={data.strategicPriorities.length}
+                  label="Priorities"
+                />
+                <MetricCard value={data.documents.length} label="Documents" />
+              </div>
+            </aside>
+          </CampusPageHeader>
 
           <section className="bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] px-4 py-12 sm:px-6 lg:px-8">
             <div className="mx-auto w-full max-w-none">
@@ -308,7 +288,9 @@ function QualityResourceCard({
           {kicker}
         </span>
       </div>
-      <h2 className="mt-5 text-2xl font-normal tracking-tight text-foreground">{title}</h2>
+      <h2 className="mt-5 text-2xl font-normal tracking-tight text-foreground">
+        {title}
+      </h2>
       <p className="mt-3 text-sm leading-7 text-muted-foreground">{body}</p>
       <div className="mt-auto pt-6">
         {documents.length ? (
@@ -374,7 +356,8 @@ function DocumentList({
     <div className={compact ? "grid gap-2" : "grid gap-3 md:grid-cols-2"}>
       {documents.map((document) => {
         const href = publicFileUrl(document.file_id);
-        const body = document.description ?? document.document_type ?? document.category;
+        const body =
+          document.description ?? document.document_type ?? document.category;
         const className =
           "group rounded-2xl ring-1 ring-primary/10 bg-white px-4 py-3 transition-[box-shadow] duration-200 hover:ring-primary/20 hover:shadow-sm";
 

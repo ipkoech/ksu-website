@@ -51,8 +51,6 @@ async def seed_test_user(db: AsyncSession, ctx: SeedContext) -> None:
         push_tokens=None,
         is_active=True,
         is_verified=True,
-        mfa_enabled=False,
-        mfa_secret=None,
         failed_login_attempts=0,
     )
     person.user_id = user.id

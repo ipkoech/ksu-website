@@ -110,7 +110,7 @@ export function MandatePillarsSection() {
                   viewport={{ once: true, amount: 0.3 }}
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-border">
+                  <div className="relative aspect-[16/10] overflow-hidden rounded-3xl border border-border">
                     <PublicImage
                       src={pillar.imageUrl}
                       alt={pillar.imageAlt}
@@ -120,7 +120,7 @@ export function MandatePillarsSection() {
                       sizes="(min-width: 1024px) 50vw, 100vw"
                     />
                     {/* Stat chip anchored to the scene */}
-                    <div className="absolute bottom-4 left-4 rounded-xl border border-white/20 bg-primary/85 px-4 py-2.5 text-white backdrop-blur-sm">
+                    <div className="absolute bottom-4 left-4 rounded-3xl border border-white/20 bg-primary/85 px-4 py-2.5 text-white backdrop-blur-sm">
                       <p className="font-[family-name:var(--font-display)] text-2xl font-bold leading-none">
                         <CountUpNumber
                           value={pillar.stat.value}

@@ -65,7 +65,7 @@ async def create_ticket(data: SupportTicketCreate, db: DbSession, user: CurrentU
     return success(data=ticket, message="Support ticket created")
 
 
-@router.patch("/tickets/{ticket_id}", dependencies=[Depends(require_scope("admin:*"))])
+@router.patch("/tickets/{ticket_id}", dependencies=[Depends(require_scope("support.manage_inquiries"))])
 async def update_ticket(ticket_id: uuid.UUID, data: SupportTicketUpdate, db: DbSession, _: CurrentUser):
     ticket = await SupportTicketService.get_by_id(db, ticket_id)
     if ticket is None:

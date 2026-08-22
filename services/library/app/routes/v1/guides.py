@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ksu_common.audit import audit_action
 from ksu_common.auth import TokenPayload
-from ksu_common.cache import invalidate_prefix
+from ...services.cache import invalidate_library_caches
 from ksu_common.field_selection import FieldSelection, FieldSelector, FieldsQuery
 from ksu_contracts.rbac import has_scope
 from ksu_common.schemas.responses import success
@@ -49,7 +49,7 @@ from ...services import guides as svc
 
 
 async def invalidate_public_library_cache() -> None:
-    await invalidate_prefix("public")
+    await invalidate_library_caches()
 
 
 guides_router = APIRouter(prefix="/library/guides", tags=["Library Guides"])
@@ -73,7 +73,7 @@ async def list_guides(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     selector = FieldSelector(LibraryGuide, fields, always_include={"id"})
     result = await svc.list_guides(
         db,
@@ -99,7 +99,7 @@ async def get_guide(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     selector = FieldSelector(LibraryGuide, fields, always_include={"id"})
     guide = await svc.get_guide_by_slug(
         db,
@@ -115,7 +115,7 @@ async def get_guide_record(
     request: Request,
     guide_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
     selector = FieldSelector(LibraryGuide, fields, always_include={"id"})
@@ -129,7 +129,7 @@ async def create_guide(
     request: Request,
     body: LibraryGuideCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     guide = await svc.create_guide(db, body)
     await invalidate_public_library_cache()
@@ -146,7 +146,7 @@ async def update_guide(
     guide_id: uuid.UUID,
     body: LibraryGuideUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     guide = await svc.update_guide(db, guide_id, body)
     await invalidate_public_library_cache()
@@ -159,7 +159,7 @@ async def delete_guide(
     request: Request,
     guide_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     await svc.delete_guide(db, guide_id)
     await invalidate_public_library_cache()
@@ -169,7 +169,7 @@ async def delete_guide(
 async def list_guide_sections(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
     guide_id: Optional[uuid.UUID] = Query(None),
     section_type: Optional[str] = Query(None),
@@ -193,7 +193,7 @@ async def create_guide_section(
     request: Request,
     body: LibraryGuideSectionCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     section = await svc.create_guide_section(db, body)
     await invalidate_public_library_cache()
@@ -214,7 +214,7 @@ async def update_guide_section(
     section_id: uuid.UUID,
     body: LibraryGuideSectionUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     section = await svc.update_guide_section(db, section_id, body)
     await invalidate_public_library_cache()
@@ -231,7 +231,7 @@ async def delete_guide_section(
     request: Request,
     section_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     await svc.delete_guide_section(db, section_id)
     await invalidate_public_library_cache()
@@ -253,7 +253,7 @@ async def list_specialists(
     school: Optional[str] = Query(None),
     department: Optional[str] = Query(None),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     selector = FieldSelector(LibrarySpecialist, fields, always_include={"id"})
     specialists = await svc.list_specialists(
         db,
@@ -272,7 +272,7 @@ async def create_specialist(
     request: Request,
     body: LibrarySpecialistCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     specialist = await svc.create_specialist(db, body)
     await invalidate_public_library_cache()
@@ -293,7 +293,7 @@ async def update_specialist(
     specialist_id: uuid.UUID,
     body: LibrarySpecialistUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     specialist = await svc.update_specialist(db, specialist_id, body)
     await invalidate_public_library_cache()
@@ -310,7 +310,7 @@ async def delete_specialist(
     request: Request,
     specialist_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     await svc.delete_specialist(db, specialist_id)
     await invalidate_public_library_cache()
@@ -335,7 +335,7 @@ async def list_workflows(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     selector = FieldSelector(LibraryWorkflow, fields, always_include={"id"})
     result = await svc.list_workflows(
         db,
@@ -359,7 +359,7 @@ async def get_workflow(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     selector = FieldSelector(LibraryWorkflow, fields, always_include={"id"})
     workflow = await svc.get_workflow_by_slug(
         db,
@@ -375,7 +375,7 @@ async def get_workflow_record(
     request: Request,
     workflow_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
     selector = FieldSelector(LibraryWorkflow, fields, always_include={"id"})
@@ -389,7 +389,7 @@ async def create_workflow(
     request: Request,
     body: LibraryWorkflowCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     workflow = await svc.create_workflow(db, body)
     await invalidate_public_library_cache()
@@ -408,7 +408,7 @@ async def update_workflow(
     workflow_id: uuid.UUID,
     body: LibraryWorkflowUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     workflow = await svc.update_workflow(db, workflow_id, body)
     await invalidate_public_library_cache()
@@ -423,7 +423,7 @@ async def delete_workflow(
     request: Request,
     workflow_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     await svc.delete_workflow(db, workflow_id)
     await invalidate_public_library_cache()
@@ -433,7 +433,7 @@ async def delete_workflow(
 async def list_workflow_steps(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
     workflow_id: Optional[uuid.UUID] = Query(None),
     is_active: Optional[bool] = Query(None),
@@ -455,7 +455,7 @@ async def create_workflow_step(
     request: Request,
     body: LibraryWorkflowStepCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     step = await svc.create_workflow_step(db, body)
     await invalidate_public_library_cache()
@@ -476,7 +476,7 @@ async def update_workflow_step(
     step_id: uuid.UUID,
     body: LibraryWorkflowStepUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     step = await svc.update_workflow_step(db, step_id, body)
     await invalidate_public_library_cache()
@@ -493,7 +493,7 @@ async def delete_workflow_step(
     request: Request,
     step_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     await svc.delete_workflow_step(db, step_id)
     await invalidate_public_library_cache()
@@ -515,7 +515,7 @@ async def list_policy_pages(
     per_page: int = Query(20, ge=1, le=100),
     include_total: bool = Query(True),
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     selector = FieldSelector(LibraryPolicyPage, fields, always_include={"id"})
     result = await svc.list_policy_pages(
         db,
@@ -539,7 +539,7 @@ async def get_policy_page(
     user: Annotated[Optional[TokenPayload], Depends(get_optional_user)],
     fields: Annotated[FieldSelection, Depends(FieldsQuery(always_include={"id"}))],
 ):
-    is_writer = user is not None and has_scope(user.roles, "library:write")
+    is_writer = user is not None and has_scope(user.roles, "library.write")
     selector = FieldSelector(LibraryPolicyPage, fields, always_include={"id"})
     policy_page = await svc.get_policy_page_by_slug(
         db,
@@ -556,7 +556,7 @@ async def create_policy_page(
     request: Request,
     body: LibraryPolicyPageCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     policy_page = await svc.create_policy_page(db, body)
     await invalidate_public_library_cache()
@@ -577,7 +577,7 @@ async def update_policy_page(
     policy_page_id: uuid.UUID,
     body: LibraryPolicyPageUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:write"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.write"))],
 ):
     policy_page = await svc.update_policy_page(db, policy_page_id, body)
     await invalidate_public_library_cache()
@@ -594,7 +594,7 @@ async def delete_policy_page(
     request: Request,
     policy_page_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[TokenPayload, Depends(requires_scope("library:admin"))],
+    user: Annotated[TokenPayload, Depends(requires_scope("library.admin"))],
 ):
     await svc.delete_policy_page(db, policy_page_id)
     await invalidate_public_library_cache()
