@@ -111,6 +111,8 @@ export default async function FacilitiesPage({
         primary={{ label: "Explore facilities", href: "#facility-portfolio" }}
         secondary={{ label: "View centers", href: "/centers" }}
         illustration="facilities"
+        imageSrc="/institutional-research-images/research-header2.jpg"
+        immersive
       />
 
       <ResearchPortfolioShell

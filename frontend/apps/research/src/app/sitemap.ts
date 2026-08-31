@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
-
-const BASE = "https://research.kisiiuniversity.ac.ke";
+import { researchSiteUrl } from "../config/institution";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const pages = [
@@ -14,7 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/privacy", "/terms", "/sitemap",
   ];
   return pages.map((path) => ({
-    url: `${BASE}${path}`,
+    url: `${researchSiteUrl}${path}`,
     lastModified: new Date(),
     changeFrequency: path === "/" ? "weekly" as const : "monthly" as const,
     priority: path === "/" ? 1 : path.startsWith("/news") || path.startsWith("/events") ? 0.8 : 0.6,

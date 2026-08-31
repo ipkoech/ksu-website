@@ -23,8 +23,11 @@ import {
   getRecordTimelineLabel,
   getRecordTitle,
   getRecordYears,
+  getListPageSize,
 } from "../../lib/research-page-model";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { pageFromSearchParams } from "@ksu/ui/components";
+import { ResearchListPagination } from "../../components/research-list-pagination";
 
 export const revalidate = 300;
 
@@ -41,6 +44,7 @@ type EndowmentSearchParams = {
   year?: string;
   month?: string;
   sort?: string;
+  page?: string;
 };
 
 const fundTypes = ["general", "named", "restricted", "scholarship", "chair"];
@@ -64,6 +68,8 @@ export default async function EndowmentsPage({
   searchParams?: Promise<EndowmentSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
+  const perPage = getListPageSize(12);
   const sort = params.sort || "display_order";
   const order = sort === "name" ? "asc" : "desc";
   const activeFlags = getActiveFlags(params.active);
@@ -75,6 +81,8 @@ export default async function EndowmentsPage({
       year: params.year,
       sort,
       order,
+      page,
+      perPage,
       ...activeFlags,
     }),
     getEndowments(),
@@ -87,6 +95,7 @@ export default async function EndowmentsPage({
   const rowEndowments = featuredEndowment
     ? visibleEndowments.filter((fund) => fund.id !== featuredEndowment.id)
     : visibleEndowments;
+  const totalPages = Math.ceil((params.month ? visibleEndowments.length : endowments.total) / endowments.perPage);
 
   return (
     <main id="research-main" className="min-h-screen bg-surface-subtle">
@@ -123,6 +132,7 @@ export default async function EndowmentsPage({
                 <EndowmentRow key={fund.id} fund={fund} />
               ))}
             </div>
+            <ResearchListPagination page={page} totalPages={totalPages} total={params.month ? visibleEndowments.length : endowments.total} perPage={endowments.perPage} path="/endowments" params={params} className="mt-6" />
           </>
         ) : (
           <div className="mt-7">

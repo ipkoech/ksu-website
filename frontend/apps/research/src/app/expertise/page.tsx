@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ResearchImage } from "../../components/research-image";
 import type { Person } from "@ksu/api-client";
 import { personsApi } from "@ksu/api-client";
 import { pageFromSearchParams } from "@ksu/ui/components";
@@ -66,7 +67,7 @@ export default async function ExpertisePage({
           <div className="min-w-0">
             <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
               <div className="pt-1">
-                <h2 className="font-[family-name:var(--app-font-display)] text-3xl font-semibold leading-tight text-foreground">
+                <h2 className="font-display text-3xl font-semibold leading-tight text-foreground">
                   Expertise Directory
                 </h2>
                 <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
@@ -231,8 +232,7 @@ function ExpertiseCard({ person }: { person: Person }) {
         <div className="flex items-start gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">
             {person.photo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={person.photo_url} alt="" className="h-full w-full object-cover" />
+              <ResearchImage src={person.photo_url} alt="" width={88} height={88} sizes="44px" className="h-full w-full object-cover" />
             ) : (
               <UserRound aria-hidden className="h-5 w-5" />
             )}

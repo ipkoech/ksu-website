@@ -4,22 +4,20 @@ import { AccessibilityInitScript, AccessibilityShell } from "@ksu/ui";
 import { PublicFooter } from "@ksu/ui/layout/public";
 import { Announcements } from "@ksu/ui/components";
 import { announcementsApi } from "@ksu/api-client";
+import { unstable_cache } from "next/cache";
 import { ResearchHeader } from "../components/research-header";
 import { getResearchSiteContext } from "../lib/research-site-context";
 import "./globals.css";
+import {
+  institutionContact,
+  institutionSocialLinks,
+  researchSiteUrl,
+} from "../config/institution";
 
-const socialLinks = {
-  facebook: "https://facebook.com/kisiiuniversity",
-  twitter: "https://twitter.com/kisiiuniversity",
-  instagram: "https://instagram.com/kisiiuniversity",
-  youtube: "https://youtube.com/kisiiuniversity",
-  linkedin: "https://linkedin.com/school/kisiiuniversity",
-};
-
-const contactInfo = {
-  address: "408 - 40200 Kisii, Kenya",
-  phone: "+254 773 452 323",
-  email: "research@kisiiuniversity.ac.ke",
+const contactInfo: { address: string; phone: string; email: string } = {
+  address: institutionContact.postalAddress,
+  phone: institutionContact.phone,
+  email: institutionContact.email,
 };
 
 const researchFooterColumns = [
@@ -76,12 +74,40 @@ const researchLegalLinks = [
   { label: "Kisii University", href: "https://kisiiuniversity.ac.ke/", external: true },
 ];
 
+const getResearchAnnouncements = unstable_cache(
+  () =>
+    announcementsApi.list({
+      is_published: true,
+      per_page: 3,
+      fields: "id,title,slug",
+    }),
+  ["research-layout-announcements-v1"],
+  { revalidate: 300, tags: ["research-content", "research-announcements"] },
+);
+
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    researchSiteUrl,
+  ),
   title: {
     default: "KSU Research Portal",
     template: "%s | KSU Research",
   },
   description: "Kisii University Research Portal - Projects, Publications, and Innovation",
+  alternates: { canonical: "./" },
+  openGraph: {
+    type: "website",
+    siteName: "Kisii University Research",
+    title: "KSU Research Portal",
+    description: "Research, innovation, partnerships, and public impact at Kisii University.",
+    images: [{ url: "/images/research/research-home-hero.webp", alt: "Kisii University research and innovation" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "KSU Research Portal",
+    description: "Research, innovation, partnerships, and public impact at Kisii University.",
+    images: ["/images/research/research-home-hero.webp"],
+  },
   manifest: "/site.webmanifest",
   icons: {
     icon: [
@@ -104,11 +130,7 @@ export default async function RootLayout({
   let resolvedContactInfo = contactInfo;
   try {
     const [response, siteContext] = await Promise.all([
-      announcementsApi.list({
-        is_published: true,
-        per_page: 3,
-        fields: "id,title,slug",
-      }),
+      getResearchAnnouncements(),
       getResearchSiteContext(),
     ]);
     announcements = (response.data ?? []).map((item) => ({
@@ -136,7 +158,7 @@ export default async function RootLayout({
       <body className="font-sans antialiased" suppressHydrationWarning>
         <AccessibilityInitScript />
         <AccessibilityShell mainContentId="research-main">
-          <div className="min-h-screen bg-background text-foreground">
+          <div className="research-canvas min-h-screen text-foreground">
             <Announcements
               announcements={announcements}
               rotating={announcements.length > 1}
@@ -148,9 +170,9 @@ export default async function RootLayout({
             <PublicFooter
               columns={researchFooterColumns}
               contactInfo={resolvedContactInfo}
-              socialLinks={socialLinks}
+              socialLinks={institutionSocialLinks}
               legalLinks={researchLegalLinks}
-              className="bg-brand-overlay"
+              className="bg-[linear-gradient(135deg,hsl(var(--primary))_0%,hsl(var(--primary))_82%,hsl(var(--secondary))_155%)]"
             />
           </div>
         </AccessibilityShell>

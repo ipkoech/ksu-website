@@ -25,6 +25,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@ksu/ui/component
 import { Dialog, DialogContent, DialogTitle } from "@ksu/ui/components";
 import { Input } from "@ksu/ui/components";
 import { Button } from "@ksu/ui/components";
+import { institutionContact, institutionLinks, institutionSocialLinks } from "../config/institution";
 
 function useScrollState() {
 const [isScrolled, setIsScrolled] = useState(false);
@@ -68,15 +69,15 @@ export function ResearchHeader({
           <div className="flex items-center gap-5 text-[11px] font-medium">
             <span className="flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5" />
-              Main Campus, Kisii, Kenya
+              {institutionContact.address}
             </span>
-            <a href="mailto:research@kisiiuniversity.ac.ke" className="flex items-center gap-1.5 transition hover:text-white/80">
+            <a href={institutionContact.emailHref} className="flex items-center gap-1.5 transition hover:text-white/80">
               <Mail className="h-3.5 w-3.5" />
-              research@kisiiuniversity.ac.ke
+              {institutionContact.email}
             </a>
-            <a href="tel:+254773452323" className="flex items-center gap-1.5 transition hover:text-white/80">
+            <a href={institutionContact.phoneHref} className="flex items-center gap-1.5 transition hover:text-white/80">
               <Phone className="h-3.5 w-3.5" />
-              +254 773 452 323
+              {institutionContact.phone}
             </a>
           </div>
           <div className="flex items-center gap-5">
@@ -84,7 +85,7 @@ export function ResearchHeader({
               <Link href="/training" className="text-[11px] font-semibold transition-colors hover:text-white/80">
                 Student Portal
               </Link>
-              <Link href="https://research-portal.nacosti.go.ke/" target="_blank" rel="noopener noreferrer" className="text-[11px] font-semibold transition-colors hover:text-white/80">
+              <Link href={institutionLinks.nacosti} target="_blank" rel="noopener noreferrer" className="text-[11px] font-semibold transition-colors hover:text-white/80">
                 Apply NACOSTI
               </Link>
               <Link href="/team" className="text-[11px] font-semibold transition-colors hover:text-white/80">
@@ -99,16 +100,16 @@ export function ResearchHeader({
             </nav>
             <span className="h-5 w-px bg-white/25" />
             <div className="flex items-center gap-3">
-              <Link href="https://linkedin.com/school/kisiiuniversity" aria-label="Kisii University LinkedIn" className="transition hover:text-white/80">
+              <Link href={institutionSocialLinks.linkedin} aria-label="Kisii University LinkedIn" className="transition hover:text-white/80">
                 <Linkedin className="h-3.5 w-3.5" />
               </Link>
-              <Link href="https://twitter.com/kisiiuniversity" aria-label="Kisii University X" className="text-[11px] font-bold transition hover:text-white/80">
+              <Link href={institutionSocialLinks.twitter} aria-label="Kisii University X" className="text-[11px] font-bold transition hover:text-white/80">
                 X
               </Link>
-              <Link href="https://youtube.com/@kisiiuniversity" aria-label="Kisii University YouTube" className="transition hover:text-white/80">
+              <Link href={institutionSocialLinks.youtube} aria-label="Kisii University YouTube" className="transition hover:text-white/80">
                 <Youtube className="h-3.5 w-3.5" />
               </Link>
-              <Link href="https://facebook.com/kisiiuniversity" aria-label="Kisii University Facebook" className="text-[11px] font-bold transition hover:text-white/80">
+              <Link href={institutionSocialLinks.facebook} aria-label="Kisii University Facebook" className="text-[11px] font-bold transition hover:text-white/80">
                 f
               </Link>
             </div>
@@ -152,7 +153,7 @@ export function ResearchHeader({
               />
             </motion.div>
             <div className="flex min-w-0 flex-col">
-              <p className="truncate font-[family-name:var(--app-font-display)] text-base font-normal uppercase tracking-tight text-foreground sm:text-xl">
+              <p className="truncate font-display text-base font-normal uppercase tracking-tight text-foreground sm:text-xl">
                 Kisii <em className="italic">University</em>
               </p>
               <p className="hidden max-w-[230px] text-[8px] font-bold uppercase leading-4 tracking-[0.1em] text-primary sm:block sm:text-[9px]">
@@ -242,7 +243,7 @@ export function ResearchHeader({
                               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,hsl(var(--primary))_6%,white)] text-primary ring-1 ring-primary/10">
                                 <item.icon className="h-6 w-6" />
                               </div>
-                              <h3 className="mt-4 font-[family-name:var(--app-font-display)] text-lg font-normal tracking-tight text-foreground">
+                              <h3 className="mt-4 font-display text-lg font-normal tracking-tight text-foreground">
                                 {item.title}
                               </h3>
                               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

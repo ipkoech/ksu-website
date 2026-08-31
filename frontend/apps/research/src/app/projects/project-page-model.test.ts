@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import { test } from "node:test";
+import { assert, test } from "vitest";
 
 import {
   filterProjectsByMonth,
@@ -43,16 +42,18 @@ test("month filtering uses backend date fields without inventing records", () =>
   );
 });
 
-test("story sections use public-facing labels", () => {
+test("story sections follow the backend project narrative fields", () => {
   const sections = getVisibleProjectStorySections({
     background: "Low adoption",
     objectives: "Improve support",
     methodology: "Field trials",
+    expected_outcomes: "Improved uptake",
     impact: "Better decisions",
+    deliverables: "Field report",
   } as any);
 
   assert.deepEqual(
     sections.map((section) => section.title),
-    ["The Challenge", "The Idea", "Work in the Field", "What Changed"],
+    ["Background", "Objectives", "Methodology", "Expected Outcomes", "Impact", "Deliverables"],
   );
 });

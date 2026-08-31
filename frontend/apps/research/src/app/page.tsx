@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { institutionContact } from "../config/institution";
 import {
   ArrowRight,
   Award,
@@ -1062,7 +1063,7 @@ function buildFaqItems(items: FAQ[]): FaqItem[] {
     {
       id: "default-contact",
       question: "How do I contact REIRM?",
-      answer: "Use the Contact REIRM page or email research@kisiiuniversity.ac.ke for research, innovation, extension, partnership, and resource mobilization support.",
+      answer: `Use the Contact REIRM page or email ${institutionContact.email} for research, innovation, extension, partnership, and resource mobilization support.`,
     },
     {
       id: "default-policies",

@@ -1,9 +1,5 @@
-import { SkeletonList } from "../../components/skeleton-ui";
+import { ResearchRouteLoading } from "../../components/research-route-loading";
 
 export default function Loading() {
-  return (
-    <div className="mx-auto max-w-[1680px] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-      <SkeletonList />
-    </div>
-  );
+  return <ResearchRouteLoading />;
 }

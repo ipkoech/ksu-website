@@ -27,6 +27,7 @@ import {
   filterRecordsByMonth,
   getRecordMonths,
   getRecordYears,
+  getListPageSize,
 } from "../../lib/research-page-model";
 import type { ResearchGenericRecord, ResearchGrant } from "@ksu/api-client";
 import {
@@ -36,6 +37,8 @@ import {
   Landmark,
   ShieldCheck,
 } from "lucide-react";
+import { pageFromSearchParams } from "@ksu/ui/components";
+import { ResearchListPagination } from "../../components/research-list-pagination";
 
 export const revalidate = 300;
 
@@ -53,6 +56,7 @@ type FundingSearchParams = {
   year?: string;
   month?: string;
   sort?: string;
+  page?: string;
 };
 
 type SupportRecord = {
@@ -90,6 +94,8 @@ export default async function FundingPage({
   searchParams?: Promise<FundingSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
+  const perPage = getListPageSize(12);
   const sort = params.sort || "deadline";
   const sortField = sort === "title_desc" ? "title" : sort;
   const order = sort === "title" ? "asc" : "desc";
@@ -103,6 +109,8 @@ export default async function FundingPage({
       year: params.year,
       sort: sortField,
       order,
+      page,
+      perPage,
       ...activeFlags,
     }),
     getGrants(),
@@ -120,6 +128,7 @@ export default async function FundingPage({
     : visibleGrants;
   const internalGrants = visibleGrants.filter((grant) => grant.grant_type === "internal");
   const externalGrants = visibleGrants.filter((grant) => grant.grant_type === "external");
+  const totalPages = Math.ceil((params.month ? visibleGrants.length : grants.total) / grants.perPage);
 
   return (
     <main id="research-main" className="min-h-screen bg-surface-subtle">
@@ -166,6 +175,7 @@ export default async function FundingPage({
                   <GrantRow key={grant.id} grant={grant} />
                 ))}
               </div> : null}
+              <ResearchListPagination page={page} totalPages={totalPages} total={params.month ? visibleGrants.length : grants.total} perPage={grants.perPage} path="/funding" params={params} className="mt-6" />
             </div>
             {[...guidelines.data, ...resources.data].length > 0 ? <aside className="flex flex-col gap-5">
               <SupportPanel

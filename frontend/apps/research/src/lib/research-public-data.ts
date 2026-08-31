@@ -15,6 +15,7 @@ import {
   type ResearchPublication,
 } from "@ksu/api-client";
 import type { PublicStatsResponse } from "@ksu/api-client";
+import { unstable_cache } from "next/cache";
 
 export type PublicResearchData<T> = {
   data: T[];
@@ -206,11 +207,7 @@ async function safeList<T>(
     }))
     .catch(() => ({ ...defaults }));
 
-  const timeout = new Promise<PublicResearchData<T>>((resolve) => {
-    setTimeout(() => resolve({ ...defaults }), PUBLIC_RESEARCH_TIMEOUT_MS);
-  });
-
-  return Promise.race([request, timeout]);
+  return withBackendTimeout(request, { ...defaults }, "list");
 }
 
 async function safeRecord<T>(
@@ -220,14 +217,30 @@ async function safeRecord<T>(
     .then((response) => ({ data: response.data ?? null, error: null }))
     .catch(() => ({ data: null, error: unavailableMessage }));
 
-  const timeout = new Promise<PublicResearchRecord<T>>((resolve) => {
-    setTimeout(
-      () => resolve({ data: null, error: unavailableMessage }),
-      PUBLIC_RESEARCH_TIMEOUT_MS,
-    );
+  return withBackendTimeout(
+    request,
+    { data: null, error: unavailableMessage },
+    "record",
+  );
+}
+
+async function withBackendTimeout<T>(request: Promise<T>, fallback: T, kind: string) {
+  const startedAt = performance.now();
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<T>((resolve) => {
+    timeoutId = setTimeout(() => resolve(fallback), PUBLIC_RESEARCH_TIMEOUT_MS);
   });
 
-  return Promise.race([request, timeout]);
+  try {
+    return await Promise.race([request, timeout]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+    if (process.env.RESEARCH_PROFILE_REQUESTS === "1") {
+      console.info(
+        `[research-profile] backend ${kind}: ${Math.round(performance.now() - startedAt)}ms`,
+      );
+    }
+  }
 }
 
 async function safeStats() {
@@ -427,8 +440,8 @@ export function getGrantsFiltered(filters: GenericListFilters = {}) {
       order: filters.order,
       is_active: filters.isActive ?? true,
       is_featured: filters.isFeatured,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 12,
     }),
   );
 }
@@ -714,8 +727,8 @@ export function getPartnersFiltered(filters: GenericListFilters = {}) {
       is_active: filters.isActive ?? true,
       is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 12,
     }),
   );
 }
@@ -1116,8 +1129,8 @@ export function getConsultanciesFiltered(filters: GenericListFilters = {}) {
       is_active: filters.isActive ?? true,
       is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 12,
     }),
   );
 }
@@ -1167,8 +1180,8 @@ export function getEndowmentsFiltered(filters: GenericListFilters = {}) {
       is_active: filters.isActive ?? true,
       is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 12,
     }),
   );
 }
@@ -1347,8 +1360,8 @@ export function getTrainingFiltered(filters: GenericListFilters = {}) {
       is_active: filters.isActive ?? true,
       is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 12,
     }),
   );
 }
@@ -1387,8 +1400,8 @@ export function getMentorshipFiltered(filters: GenericListFilters = {}) {
       is_active: filters.isActive ?? true,
       is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 12,
     }),
   );
 }
@@ -1426,8 +1439,8 @@ export function getScholarshipsFiltered(filters: GenericListFilters = {}) {
       is_active: filters.isActive ?? true,
       is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 12,
     }),
   );
 }
@@ -1464,8 +1477,8 @@ export function getEventsFiltered(filters: GenericListFilters = {}) {
       event_type: filters.eventType || undefined,
       is_published: true,
       is_main: false,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 12,
     }),
   );
 }
@@ -1638,8 +1651,8 @@ export function getServicesFiltered(filters: GenericListFilters = {}) {
       is_active: filters.isActive ?? true,
       is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 12,
     }),
   );
 }
@@ -1678,8 +1691,8 @@ export function getGuidelinesFiltered(filters: GenericListFilters = {}) {
       is_active: filters.isActive ?? true,
       is_featured: filters.isFeatured,
       is_public: true,
-      page: 1,
-      per_page: 100,
+      page: filters.page ?? 1,
+      per_page: filters.perPage ?? 12,
     }),
   );
 }
@@ -1728,7 +1741,8 @@ export function getDonationSettings() {
   );
 }
 
-export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
+async function loadResearchOverviewData(): Promise<ResearchOverviewData> {
+  const startedAt = performance.now();
   const [
     projects,
     publications,
@@ -1777,7 +1791,7 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
     safeStats(),
   ]);
 
-  return {
+  const result = {
     projects,
     publications,
     grants,
@@ -1823,7 +1837,21 @@ export async function getResearchOverviewData(): Promise<ResearchOverviewData> {
       guidelines.error,
     ),
   };
+
+  if (process.env.RESEARCH_PROFILE_REQUESTS === "1") {
+    console.info(
+      `[research-profile] overview backend bundle: ${Math.round(performance.now() - startedAt)}ms; ${result.errors.length} degraded source(s)`,
+    );
+  }
+
+  return result;
 }
+
+export const getResearchOverviewData = unstable_cache(
+  loadResearchOverviewData,
+  ["research-overview-v1"],
+  { revalidate: 300, tags: ["research-content", "research-overview"] },
+);
 
 export function compactText(value?: string | number | null) {
   if (value === null || value === undefined) return "";

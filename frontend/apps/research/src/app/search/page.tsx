@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { institutionContact } from "../../config/institution";
+import { ResearchPageShell } from "../../components/research-page-primitives";
+import { ResearchPageHero } from "../../components/research-page-hero";
 import type { ComponentType, ReactNode } from "react";
 import {
   ArrowRight,
@@ -91,7 +94,7 @@ export default async function ResearchSearchPage({
   const errors = groupResponses.map((group) => group.error).filter(Boolean);
 
   return (
-    <main id="research-main" className="min-h-screen bg-white text-foreground">
+    <ResearchPageShell>
       <SearchHero query={query} />
 
       {!query ? (
@@ -170,26 +173,21 @@ export default async function ResearchSearchPage({
           </div>
         </section>
       )}
-    </main>
+    </ResearchPageShell>
   );
 }
 
 function SearchHero({ query }: { query: string }) {
   return (
-    <section className="relative overflow-hidden bg-white">
-      <div className="mx-auto grid max-w-[1920px] lg:grid-cols-[minmax(0,0.92fr)_minmax(520px,1.08fr)]">
-        <div className="flex min-h-[460px] flex-col justify-center px-4 py-14 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <p className="text-sm font-semibold uppercase tracking-eyebrow text-secondary">Research Search</p>
-          <h1 className="mt-4 max-w-3xl font-display text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-            Find research records across Kisii University.
-          </h1>
-          <p className="mt-5 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
-            Search projects, publications, grants, innovations, partners,
-            centers, facilities, outputs, resources, training, news, and events
-            from the REIRM public portfolio.
-          </p>
-
-          <form action="/search" className="mt-7 max-w-3xl">
+    <ResearchPageHero
+      eyebrow="Research Search"
+      title="Find research records across Kisii University"
+      description="Search projects, publications, grants, innovations, partners, centers, facilities, outputs, resources, training, news, and events from the REIRM public portfolio."
+      breadcrumbs={[{ label: "Home", href: "/" }, { label: "Search" }]}
+      imageSrc="/institutional-research-images/KSUInnovationWeek2025,April7,2026-7968.jpg"
+      imageAlt="Kisii University research discovery"
+    >
+          <form action="/search" className="max-w-3xl">
             <div className="flex flex-col gap-3 rounded-lg border border-border bg-white p-2 shadow-sm sm:flex-row">
               <label className="relative min-w-0 flex-1">
                 <span className="sr-only">Search research records</span>
@@ -223,19 +221,11 @@ function SearchHero({ query }: { query: string }) {
             ))}
           </div>
 
-          <p className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground">
-            <Info aria-hidden className="h-4 w-4 text-primary" />
+          <p className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground md:text-white/85">
+            <Info aria-hidden className="h-4 w-4 text-primary md:text-secondary" />
             Research-only results from published public records.
           </p>
-        </div>
-
-        <div className="relative min-h-[320px] bg-surface-muted lg:min-h-[460px]">
-          <div className="absolute inset-0 bg-[url('/images/research/research-demo-imagegen.webp')] bg-cover bg-center" />
-          <div className="absolute inset-y-0 left-0 hidden w-40 bg-gradient-to-r from-white to-transparent lg:block" />
-          <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent" />
-        </div>
-      </div>
-    </section>
+    </ResearchPageHero>
   );
 }
 
@@ -557,7 +547,7 @@ function SearchSupportRail({
         </Link>
         <p className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
           <Mail aria-hidden className="h-4 w-4 text-primary" />
-          research@kisiiuniversity.ac.ke
+          {institutionContact.email}
         </p>
       </RailPanel>
 

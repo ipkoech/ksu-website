@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import { ResearchPageHero, ResearchPageHeroStats } from "../../components/research-page-hero";
 import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
-import { Badge, FilledBadge, PrimaryLink, ResearchSection, SecondaryLink, StatusMessage } from "../../components/research-ui";
+import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { getResearchRecordDownloadHref } from "../../lib/research-downloads";
 import { compactText, formatDate, formatLabel, getGrantGuidelines, getGuidelines, getGuidelinesFiltered } from "../../lib/research-public-data";
-import { filterRecordsByMonth, getRecordMonths, getRecordSummary, getRecordTimelineLabel, getRecordTitle, getRecordYears } from "../../lib/research-page-model";
+import { filterRecordsByMonth, getListPageSize, getRecordMonths, getRecordSummary, getRecordTimelineLabel, getRecordTitle, getRecordYears } from "../../lib/research-page-model";
+import { pageFromSearchParams } from "@ksu/ui/components";
+import { ResearchListPagination } from "../../components/research-list-pagination";
 
 export const revalidate = 300;
 
@@ -14,7 +17,7 @@ export const metadata: Metadata = {
   description: "Research guidelines, grant guidance, policies, and procedures.",
 };
 
-type GuidelineParams = { q?: string; type?: string; category?: string; active?: string; status?: string; year?: string; month?: string; sort?: string };
+type GuidelineParams = { q?: string; type?: string; category?: string; active?: string; status?: string; year?: string; month?: string; sort?: string; page?: string };
 const guidelineTypes = ["guideline", "policy", "procedure", "manual", "sop", "template", "checklist"];
 const statuses = ["active", "draft", "archived", "superseded"];
 const activeStates = [
@@ -32,11 +35,13 @@ const sortOptions = [
 
 export default async function GuidelinesPage({ searchParams }: { searchParams?: Promise<GuidelineParams> }) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
+  const perPage = getListPageSize(12);
   const sort = params.sort || "effective_date";
   const order = sort === "title" ? "asc" : "desc";
   const activeFlags = getActiveFlags(params.active);
   const [guidelines, allGuidelines, grantGuidelines] = await Promise.all([
-    getGuidelinesFiltered({ search: params.q, guidelineType: params.type, category: params.category, status: params.status, year: params.year, sort, order, ...activeFlags }),
+    getGuidelinesFiltered({ search: params.q, guidelineType: params.type, category: params.category, status: params.status, year: params.year, sort, order, page, perPage, ...activeFlags }),
     getGuidelines(),
     getGrantGuidelines(),
   ]);
@@ -46,6 +51,7 @@ export default async function GuidelinesPage({ searchParams }: { searchParams?: 
   const visibleGuidelines = filterRecordsByMonth(guidelines.data, params.year, params.month);
   const featuredGuideline = visibleGuidelines.find((item) => item.is_featured || item.is_mandatory);
   const rowGuidelines = featuredGuideline ? visibleGuidelines.filter((item) => item.id !== featuredGuideline.id) : visibleGuidelines;
+  const totalPages = Math.ceil((params.month ? visibleGuidelines.length : guidelines.total) / guidelines.perPage);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
@@ -57,6 +63,7 @@ export default async function GuidelinesPage({ searchParams }: { searchParams?: 
           <>
             {featuredGuideline ? <div className="mt-6"><FeaturedGuideline item={featuredGuideline} /></div> : null}
             <div className="mt-6 divide-y divide-border rounded-lg border border-border bg-white shadow-sm">{rowGuidelines.map((item) => <GuidelineRow key={item.id} item={item} hrefBase="/guidelines" />)}</div>
+            <ResearchListPagination page={page} totalPages={totalPages} total={params.month ? visibleGuidelines.length : guidelines.total} perPage={guidelines.perPage} path="/guidelines" params={params} className="mt-6" />
           </>
         ) : <div className="mt-7"><StatusMessage>No guidelines match the current filters.</StatusMessage></div>}
       </ResearchSection>
@@ -75,31 +82,7 @@ function GuidelinesMasthead({ resultCount, publishedCount, grantGuidanceCount, c
     { label: "Categories", value: categoriesCount },
   ];
 
-  return (
-    <section className="border-b border-border bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
-        <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
-            <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-muted-foreground/60">/</span>
-            <Link href="/funding" className="transition hover:text-primary">Funding</Link>
-            <span className="text-muted-foreground/60">/</span>
-            <span className="text-foreground">Guidelines</span>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Research Support</p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--app-font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">Controlled documents for research policy, procedure, grant work, and compliance</h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">Scan active guidance by version, effective date, review window, status, and mandatory flag.</p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <PrimaryLink href="/forms">Open forms</PrimaryLink>
-            <SecondaryLink href="/funding">View funding</SecondaryLink>
-          </div>
-        </div>
-        <dl className="grid gap-2 sm:grid-cols-2">
-          {stats.map((stat) => <div key={stat.label} className="rounded-md border border-border bg-surface-subtle px-3 py-2"><dt className="text-[11px] font-semibold uppercase text-muted-foreground">{stat.label}</dt><dd className="mt-1 text-lg font-semibold text-foreground">{stat.value}</dd></div>)}
-        </dl>
-      </div>
-    </section>
-  );
+  return <ResearchPageHero eyebrow="Research Support" title="Controlled documents for research policy, procedure, grant work, and compliance" description="Scan active guidance by version, effective date, review window, status, and mandatory flag." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Funding", href: "/funding" }, { label: "Guidelines" }]} actions={[{ label: "Open forms", href: "/forms" }, { label: "View funding", href: "/funding", variant: "secondary" }]} imageSrc="/institutional-research-images/KSUGreenLandscapingWithoutWMJuly2026-9057.jpg" imageAlt="Kisii University research policy and guidance"><ResearchPageHeroStats facts={stats} /></ResearchPageHero>;
 }
 
 function GuidelineFilters({ params, categories, years, months }: { params: GuidelineParams; categories: string[]; years: string[]; months: Array<{ value: string; label: string }> }) {

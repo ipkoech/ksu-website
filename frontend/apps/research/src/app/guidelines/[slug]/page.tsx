@@ -8,7 +8,15 @@ import { getResearchRecordDownloadHref } from "../../../lib/research-downloads";
 import { compactText, formatDate, generateSlugParams, getGuidelineBySlug } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
+import { researchRecordMetadata } from "../../../lib/research-metadata";
+
 export const revalidate = 300;
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const { data } = await getGuidelineBySlug(slug);
+  return researchRecordMetadata(data, { fallbackTitle: "Research guideline", pathname: "/guidelines/" + slug });
+}
 
 export async function generateStaticParams() {
   return generateSlugParams(researchServiceApi.guidelines.list);

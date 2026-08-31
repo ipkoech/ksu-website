@@ -1,5 +1,63 @@
 @import "@ksu/ui/globals.css";
 
+/* Research portal theme contract, aligned with the main public website. */
+:root {
+  --primary: 201 100% 36%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 24 91% 54%;
+  --secondary-foreground: 0 0% 100%;
+  --font-sans:
+    "Bookman Old Style", var(--app-font-bookman, "URW Bookman"), Georgia,
+    "Times New Roman", serif;
+  --font-display:
+    "Bookman Old Style", var(--app-font-bookman, "URW Bookman"), Georgia,
+    "Times New Roman", serif;
+  --font-size-base: 12pt;
+}
+
+.research-canvas {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(42rem 42rem at 92% 5%, hsl(var(--primary) / 0.075), transparent 62%),
+    radial-gradient(36rem 36rem at 4% 58%, hsl(var(--secondary) / 0.045), transparent 64%),
+    linear-gradient(180deg, hsl(var(--surface-page)) 0%, hsl(var(--surface-band)) 48%, hsl(var(--surface-page)) 100%);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+}
+
+.research-canvas::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(hsl(var(--primary) / 0.035) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 20%, transparent 80%, #000 100%);
+}
+
+.research-background-grid {
+  background-image:
+    linear-gradient(hsl(var(--primary) / 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--primary) / 0.045) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, #000 10%, transparent 76%);
+}
+
+.research-background-dots {
+  background-image: radial-gradient(hsl(var(--primary) / 0.34) 1.25px, transparent 1.25px);
+  background-size: 13px 13px;
+  mask-image: radial-gradient(circle at center, #000 0%, transparent 72%);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .research-canvas::before {
+    display: none;
+  }
+}
+
   @keyframes research-marquee {
     from {
       transform: translateX(0);

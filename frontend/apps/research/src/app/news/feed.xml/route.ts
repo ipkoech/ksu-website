@@ -1,4 +1,5 @@
 import { researchServiceApi } from "@ksu/api-client";
+import { researchSiteUrl } from "../../../config/institution";
 
 export async function GET() {
   try {
@@ -15,7 +16,7 @@ export async function GET() {
     const items = (articles ?? [])
       .filter((article) => article.slug)
       .map((article) => {
-        const link = `https://research.kisiiuniversity.ac.ke/news/${article.slug}`;
+        const link = `${researchSiteUrl}/news/${article.slug}`;
         const description = escapeXml(article.summary ?? "");
         const author = escapeXml(article.author_name ?? "");
         const pubDate = article.published_at
@@ -43,8 +44,8 @@ export async function GET() {
       `<channel>`,
       `  <title>Kisii University Research News</title>`,
       `  <description>Research news, updates, and articles from Kisii University</description>`,
-      `  <link>https://research.kisiiuniversity.ac.ke/news</link>`,
-      `  <atom:link href="https://research.kisiiuniversity.ac.ke/news/feed.xml" rel="self" type="application/rss+xml"/>`,
+      `  <link>${researchSiteUrl}/news</link>`,
+      `  <atom:link href="${researchSiteUrl}/news/feed.xml" rel="self" type="application/rss+xml"/>`,
       items,
       `</channel>`,
       `</rss>`,

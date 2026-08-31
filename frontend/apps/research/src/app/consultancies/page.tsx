@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ResearchImage } from "../../components/research-image";
 import Link from "next/link";
 import { ArrowRight, BriefcaseBusiness, FileText, Filter, Handshake, Search, SlidersHorizontal } from "lucide-react";
 import type { ResearchGenericRecord } from "@ksu/api-client";
@@ -17,7 +18,10 @@ import {
   getRecordTimelineLabel,
   getRecordTitle,
   getRecordYears,
+  getListPageSize,
 } from "../../lib/research-page-model";
+import { pageFromSearchParams } from "@ksu/ui/components";
+import { ResearchListPagination } from "../../components/research-list-pagination";
 
 export const revalidate = 300;
 
@@ -36,6 +40,7 @@ type ConsultancySearchParams = {
   year?: string;
   month?: string;
   sort?: string;
+  page?: string;
 };
 
 const consultancyTypes = ["research", "technical", "policy", "evaluation", "training", "advisory"];
@@ -54,6 +59,8 @@ export default async function ConsultanciesPage({
   searchParams?: Promise<ConsultancySearchParams>;
 }) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
+  const perPage = getListPageSize(12);
   const sort = params.sort || "start_date";
   const order = sort === "title" ? "asc" : "desc";
   const activeFlags = getActiveFlags(params.active);
@@ -67,6 +74,8 @@ export default async function ConsultanciesPage({
       year: params.year,
       sort,
       order,
+      page,
+      perPage,
       ...activeFlags,
     }),
     getConsultancies(),
@@ -79,6 +88,7 @@ export default async function ConsultanciesPage({
   const tableConsultancies = featuredConsultancy
     ? visibleConsultancies.filter((consultancy) => consultancy.id !== featuredConsultancy.id)
     : visibleConsultancies;
+  const totalPages = Math.ceil((params.month ? visibleConsultancies.length : consultancies.total) / consultancies.perPage);
 
   const heroImage = "/images/research/research-office-operations-hero.webp";
 
@@ -103,6 +113,7 @@ export default async function ConsultanciesPage({
                 <StatusMessage>No consultancies match the current filters.</StatusMessage>
               </div>
             )}
+            {visibleConsultancies.length > 0 ? <ResearchListPagination page={page} totalPages={totalPages} total={params.month ? visibleConsultancies.length : consultancies.total} perPage={consultancies.perPage} path="/consultancies" params={params} className="mt-6" /> : null}
           </div>
           <EngagementPathways />
         </div>
@@ -129,7 +140,7 @@ function ConsultancyPortfolioHero({ count, heroImage }: { count: number; heroIma
         <p className="inline-flex rounded-md border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em]">
           Expert services
         </p>
-        <h1 className="mt-4 max-w-4xl text-balance font-[family-name:var(--app-font-display)] text-4xl font-semibold leading-tight sm:text-5xl">
+        <h1 className="mt-4 max-w-4xl text-balance font-display text-4xl font-semibold leading-tight sm:text-5xl">
           Commissioned research, advisory work, and public-value delivery
         </h1>
         <p className="mt-4 max-w-2xl text-pretty text-sm leading-7 text-white/82 sm:text-base">
@@ -138,7 +149,7 @@ function ConsultancyPortfolioHero({ count, heroImage }: { count: number; heroIma
         {count > 0 ? <HeroChip label="Visible engagements" value={count} /> : null}
         <div className="mt-6 flex justify-end">
           <div className="overflow-hidden rounded-2xl border border-white/15 bg-white/10 p-2 shadow-2xl backdrop-blur lg:max-w-[320px]">
-            <img src={heroImage || "/images/research/research-office-operations-hero.webp"} alt="Consultancy engagements and public value" className="h-44 w-full rounded-xl object-cover" />
+            <ResearchImage src={heroImage} fallback="/images/research/research-office-operations-hero.webp" alt="Consultancy engagements and public value" width={640} height={352} className="h-44 w-full rounded-xl object-cover" />
           </div>
         </div>
       </div>
@@ -207,14 +218,14 @@ function FeaturedConsultancy({ consultancy }: { consultancy: ResearchGenericReco
     <Link href={href} className="group mb-5 grid gap-4 rounded-lg border border-primary/25 bg-primary/[0.03] p-4 shadow-sm transition hover:border-primary/45 lg:grid-cols-[minmax(0,1fr)_220px]">
       <div>
         <div className="mb-3 overflow-hidden rounded-lg border border-primary/15 bg-white/80">
-          <img src={imageSrc} alt={getRecordTitle(consultancy, "Consultancy")} className="h-32 w-full object-cover" />
+          <ResearchImage src={imageSrc} alt={getRecordTitle(consultancy, "Consultancy")} width={640} height={256} className="h-32 w-full object-cover" />
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge>{formatLabel(compactText(consultancy.consultancy_type) || "consultancy")}</Badge>
           {consultancy.client_type ? <Badge>{formatLabel(consultancy.client_type)}</Badge> : null}
           <span className="rounded-md bg-primary px-3 py-1 text-xs font-semibold uppercase text-white">Featured</span>
         </div>
-        <h2 className="mt-3 text-balance font-[family-name:var(--app-font-display)] text-2xl font-semibold leading-tight text-foreground">
+        <h2 className="mt-3 text-balance font-display text-2xl font-semibold leading-tight text-foreground">
           {getRecordTitle(consultancy, "Consultancy")}
         </h2>
         {summary ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{summary}</p> : null}
@@ -251,7 +262,7 @@ function ConsultancyTable({ records }: { records: ResearchGenericRecord[] }) {
                 <tr key={consultancy.id ?? consultancy.slug} className="group transition hover:bg-surface-subtle">
                   <td className="px-4 py-3">
                     <Link href={href} className="flex items-start gap-3 rounded-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
-                      <img src={getRecordImage(consultancy, "/images/research/research-about-hero.webp")} alt={getRecordTitle(consultancy, "Consultancy")} className="mt-0.5 h-12 w-16 shrink-0 rounded-md object-cover" />
+                      <ResearchImage src={getRecordImage(consultancy, "/images/research/research-about-hero.webp")} alt={getRecordTitle(consultancy, "Consultancy")} width={128} height={96} sizes="64px" className="mt-0.5 h-12 w-16 shrink-0 rounded-md object-cover" />
                       <span>
                         <span className="font-semibold text-foreground transition group-hover:text-primary">{getRecordTitle(consultancy, "Consultancy")}</span>
                         <span className="mt-1 block line-clamp-1 text-xs text-muted-foreground">{getRecordSummary(consultancy) || compactText(consultancy.outcomes)}</span>

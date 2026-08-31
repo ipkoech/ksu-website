@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { ResourcesSectionPage } from "../_section-page";
+import { permanentRedirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Research Outputs",
   description: "Research output records.",
+  alternates: { canonical: "/outputs" },
 };
 
-export default function ResourceOutputsPage({ searchParams }: { searchParams?: Promise<Record<string, string | undefined>> }) {
-  return <ResourcesSectionPage searchParams={searchParams} activeItem="outputs" visibleSections={["outputs"]} />;
+export default function ResourceOutputsPage() {
+  permanentRedirect("/outputs");
 }

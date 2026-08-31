@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ResearchImage } from "../../components/research-image";
 import { ArrowRight, Database, Filter, LineChart, Search } from "lucide-react";
 import { researchServiceApi } from "@ksu/api-client";
 import type { ResearchGenericRecord } from "@ksu/api-client";
@@ -128,14 +129,14 @@ function ImpactMetricsHero({
         <p className="inline-flex rounded-md border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em]">
           Evidence Dashboard
         </p>
-        <h1 className="mt-4 max-w-4xl text-balance font-[family-name:var(--app-font-display)] text-4xl font-semibold leading-tight sm:text-5xl">
+        <h1 className="mt-4 max-w-4xl text-balance font-display text-4xl font-semibold leading-tight sm:text-5xl">
           Impact metrics that connect evidence to public value
         </h1>
         <p className="mt-4 max-w-2xl text-pretty text-sm leading-7 text-white/82 sm:text-base">
           Published indicators, reporting periods, data sources, and linked research work in one compact dashboard.
         </p>
         <div className="mt-6 overflow-hidden rounded-2xl border border-white/15 bg-white/10 p-2 shadow-2xl backdrop-blur lg:ml-auto lg:max-w-[360px]">
-          <img src={heroImage || "/images/research/research-demo-imagegen.webp"} alt="Impact metrics dashboard" className="h-48 w-full rounded-xl object-cover" />
+          <ResearchImage src={heroImage} fallback="/images/research/research-demo-imagegen.webp" alt="Impact metrics dashboard" width={720} height={384} className="h-48 w-full rounded-xl object-cover" />
         </div>
         {[statCount, metricCount].some((value) => value > 0) ? (
           <dl className="mt-5 flex flex-wrap gap-2">

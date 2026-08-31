@@ -4,6 +4,7 @@ import { ResourcesSectionPage } from "../_section-page";
 export const metadata: Metadata = {
   title: "Resource Library",
   description: "Research resource library records.",
+  alternates: { canonical: "/resources-tools/library" },
 };
 
 export default function ResourceLibraryPage({ searchParams }: { searchParams?: Promise<Record<string, string | undefined>> }) {

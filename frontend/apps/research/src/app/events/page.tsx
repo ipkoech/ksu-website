@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
+import { ResearchPageHero, ResearchPageHeroStats } from "../../components/research-page-hero";
 import Link from "next/link";
 import { ResearchSidePanel } from "../../components/research-detail";
 import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
 import {
   Badge,
   FilledBadge,
-  PrimaryLink,
   ResearchSection,
-  SecondaryLink,
   StatusMessage,
 } from "../../components/research-ui";
 import {
@@ -26,6 +25,9 @@ import {
   getRecordYears,
 } from "../../lib/research-page-model";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { pageFromSearchParams } from "@ksu/ui/components";
+import { ResearchListPagination } from "../../components/research-list-pagination";
+import { getListPageSize } from "../../lib/research-page-model";
 
 export const revalidate = 300;
 
@@ -44,6 +46,7 @@ type EventSearchParams = {
   year?: string;
   month?: string;
   sort?: string;
+  page?: string;
 };
 
 const eventTypes = ["conference", "seminar", "workshop", "webinar", "symposium", "colloquium", "defense", "lecture"];
@@ -67,6 +70,8 @@ export default async function EventsPage({
   searchParams?: Promise<EventSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
+  const perPage = getListPageSize(12);
   const sort = params.sort || "start_date";
   const sortField = sort === "title_desc" ? "title" : sort;
   const order = sort === "title" ? "asc" : "desc";
@@ -81,6 +86,8 @@ export default async function EventsPage({
       year: params.year,
       sort: sortField,
       order,
+      page,
+      perPage,
       ...activeFlags,
     }),
     getEvents(),
@@ -93,6 +100,7 @@ export default async function EventsPage({
   const rowEvents = featuredEvent
     ? visibleEvents.filter((event) => event.id !== featuredEvent.id)
     : visibleEvents;
+  const totalPages = Math.ceil((params.month ? visibleEvents.length : events.total) / events.perPage);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
@@ -133,6 +141,7 @@ export default async function EventsPage({
                   <EventRow key={event.id} event={event} />
                 ))}
               </div>
+              <ResearchListPagination page={page} totalPages={totalPages} total={params.month ? visibleEvents.length : events.total} perPage={events.perPage} path="/events" params={params} className="mt-6" />
             </div>
           </div>
         ) : (
@@ -163,42 +172,7 @@ function EventsMasthead({
     { label: "Event types", value: eventTypesCount },
   ];
 
-  return (
-    <section className="border-b border-border bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
-        <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
-            <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-muted-foreground/60">/</span>
-            <Link href="/training" className="transition hover:text-primary">Learning</Link>
-            <span className="text-muted-foreground/60">/</span>
-            <span className="text-foreground">Events</span>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
-            Events
-          </p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--app-font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-            Research workshops, forums, seminars, and conferences
-          </h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">
-            Browse the public research calendar by event type, date, center, venue, platform, and registration status.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <PrimaryLink href="/news">View news</PrimaryLink>
-            <SecondaryLink href="/training">Explore training</SecondaryLink>
-          </div>
-        </div>
-        <dl className="grid gap-2 sm:grid-cols-2">
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-md border border-border bg-surface-subtle px-3 py-2">
-              <dt className="text-[11px] font-semibold uppercase text-muted-foreground">{stat.label}</dt>
-              <dd className="mt-1 text-lg font-semibold text-foreground">{stat.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </section>
-  );
+  return <ResearchPageHero eyebrow="Events" title="Research workshops, forums, seminars, and conferences" description="Browse the public research calendar by event type, date, center, venue, platform, and registration status." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Learning", href: "/training" }, { label: "Events" }]} actions={[{ label: "View news", href: "/news" }, { label: "Explore training", href: "/training", variant: "secondary" }]} imageSrc="/institutional-research-images/KSUInnovationWeek2025,April7,2026-8234.jpg" imageAlt="Kisii University research event"><ResearchPageHeroStats facts={stats} /></ResearchPageHero>;
 }
 
 function EventFilters({

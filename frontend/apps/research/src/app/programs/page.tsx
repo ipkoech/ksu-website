@@ -106,6 +106,8 @@ export default async function ProgramsPage({
         primary={{ label: "Explore programs", href: "#program-portfolio" }}
         secondary={{ label: "View projects", href: "/projects" }}
         illustration="programs"
+        imageSrc="/institutional-research-images/research-header1.jpg"
+        immersive
       />
 
       <section

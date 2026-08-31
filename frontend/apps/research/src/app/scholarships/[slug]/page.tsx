@@ -16,7 +16,15 @@ import {
   fundingIcons,
 } from "../../../components/funding-ui";
 
+import { researchRecordMetadata } from "../../../lib/research-metadata";
+
 export const revalidate = 300;
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const { data } = await getScholarshipBySlug(slug);
+  return researchRecordMetadata(data, { fallbackTitle: "Research scholarship", pathname: "/scholarships/" + slug });
+}
 
 export async function generateStaticParams() {
   return generateSlugParams(researchServiceApi.scholarships.list);

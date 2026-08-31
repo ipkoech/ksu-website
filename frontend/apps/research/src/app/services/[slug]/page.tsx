@@ -7,7 +7,15 @@ import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import { compactText, generateSlugParams, getServiceBySlug } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTimelineLabel, getRecordTitle } from "../../../lib/research-page-model";
 
+import { researchRecordMetadata } from "../../../lib/research-metadata";
+
 export const revalidate = 300;
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const { data } = await getServiceBySlug(slug);
+  return researchRecordMetadata(data, { fallbackTitle: "Research support service", pathname: "/services/" + slug });
+}
 
 export async function generateStaticParams() {
   return generateSlugParams(researchServiceApi.services.list);

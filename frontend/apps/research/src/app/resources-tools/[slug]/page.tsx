@@ -8,7 +8,15 @@ import { getResearchRecordDownloadHref } from "../../../lib/research-downloads";
 import { compactText, formatLabel, generateSlugParams, getResourceBySlug } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTimelineLabel, getRecordTitle } from "../../../lib/research-page-model";
 
+import { researchRecordMetadata } from "../../../lib/research-metadata";
+
 export const revalidate = 300;
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const { data } = await getResourceBySlug(slug);
+  return researchRecordMetadata(data, { fallbackTitle: "Research resource", pathname: "/resources-tools/" + slug });
+}
 
 export async function generateStaticParams() {
   return generateSlugParams(researchServiceApi.resources.list);

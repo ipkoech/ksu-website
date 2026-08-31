@@ -5,7 +5,9 @@ import { ResearchFilterForm, ResearchRecordRow } from "../../components/research
 import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { FundingIllustratedHero, formatMoney, getDeadlineState, DeadlineStatusBadge, fundingIcons } from "../../components/funding-ui";
 import { compactText, formatDate, formatLabel, getScholarships, getScholarshipsFiltered } from "../../lib/research-public-data";
-import { filterRecordsByMonth, getRecordMonths, getRecordSummary, getRecordTimelineLabel, getRecordTitle, getRecordYears } from "../../lib/research-page-model";
+import { filterRecordsByMonth, getListPageSize, getRecordMonths, getRecordSummary, getRecordTimelineLabel, getRecordTitle, getRecordYears } from "../../lib/research-page-model";
+import { pageFromSearchParams } from "@ksu/ui/components";
+import { ResearchListPagination } from "../../components/research-list-pagination";
 
 export const revalidate = 300;
 
@@ -14,7 +16,7 @@ export const metadata: Metadata = {
   description: "Research scholarship calls and student funding opportunities.",
 };
 
-type ScholarshipParams = { q?: string; type?: string; active?: string; status?: string; year?: string; month?: string; sort?: string };
+type ScholarshipParams = { q?: string; type?: string; active?: string; status?: string; year?: string; month?: string; sort?: string; page?: string };
 const scholarshipTypes = ["research", "postgraduate", "doctoral", "masters", "mobility", "seed", "fellowship"];
 const statuses = ["open", "upcoming", "closed", "awarded", "draft"];
 const activeStates = [
@@ -32,6 +34,8 @@ const sortOptions = [
 
 export default async function ScholarshipsPage({ searchParams }: { searchParams?: Promise<ScholarshipParams> }) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
+  const perPage = getListPageSize(12);
   const sort = params.sort || "application_deadline";
   const order = sort === "name" ? "asc" : "desc";
   const activeFlags = getActiveFlags(params.active);
@@ -43,6 +47,8 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams?
       year: params.year,
       sort,
       order,
+      page,
+      perPage,
       ...activeFlags,
     }),
     getScholarships(),
@@ -54,6 +60,7 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams?
   const rowScholarships = featuredScholarship
     ? visibleScholarships.filter((item) => item.id !== featuredScholarship.id)
     : visibleScholarships;
+  const totalPages = Math.ceil((params.month ? visibleScholarships.length : scholarships.total) / scholarships.perPage);
 
   return (
     <main id="research-main" className="min-h-screen bg-surface-subtle">
@@ -72,6 +79,7 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams?
             <div className="mt-6 divide-y divide-border rounded-lg border border-border bg-white shadow-sm">
               {rowScholarships.map((item) => <ScholarshipRow key={item.id} item={item} />)}
             </div>
+            <ResearchListPagination page={page} totalPages={totalPages} total={params.month ? visibleScholarships.length : scholarships.total} perPage={scholarships.perPage} path="/scholarships" params={params} className="mt-6" />
           </>
         ) : <div className="mt-7"><StatusMessage>No scholarship calls match the current filters.</StatusMessage></div>}
       </ResearchSection>

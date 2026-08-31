@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { ResearchImage } from "../../components/research-image";
+import { ResearchPageShell } from "../../components/research-page-primitives";
 import Link from "next/link";
 import { ScrollReveal } from "@ksu/ui/components";
 import {
@@ -26,6 +28,7 @@ import {
   type AboutTeamMember,
 } from "./about-page-model";
 import { AboutScrollAccordion } from "./about-scroll-accordion";
+import { researchAboutSections as aboutSections } from "../../config/research-page-content";
 
 export const revalidate = 300;
 
@@ -34,15 +37,6 @@ export const metadata: Metadata = {
   description:
     "Mandate, mission, leadership, staff hierarchy, governance, and contact information for Kisii University research support.",
 };
-
-const aboutSections = [
-  { id: "overview", anchor: "about-overview", label: "Overview", icon: ClipboardList },
-  { id: "mandate", anchor: "about-mandate", label: "Mandate", icon: ClipboardList },
-  { id: "leadership", anchor: "about-leadership", label: "Leadership", icon: MessageSquareText },
-  { id: "team", anchor: "about-team", label: "Team", icon: Users },
-  { id: "governance", anchor: "about-governance", label: "Governance", icon: ShieldCheck },
-  { id: "contact", anchor: "about-contact", label: "Contact", icon: Mail },
-] satisfies Array<{ id: string; anchor: string; label: string; icon: LucideIcon }>;
 
 type SectionBackdropVariant =
   | "network"
@@ -58,13 +52,13 @@ export default async function AboutPage() {
   const lead = getLeadTeamMember(teamMembers);
 
   return (
-    <main id="research-main" className="min-h-screen bg-surface-subtle">
+    <ResearchPageShell tone="subtle">
       <AboutWorkspace
         researchContext={researchContext}
         teamMembers={teamMembers}
         lead={lead}
       />
-    </main>
+    </ResearchPageShell>
   );
 }
 
@@ -323,9 +317,11 @@ function LeadershipPortrait({ person }: { person: AboutTeamMember }) {
   return (
     <div className="overflow-hidden rounded-lg border border-white/15 bg-white/10 shadow-sm">
       {photoUrl ? (
-        <img
+        <ResearchImage
           src={String(photoUrl)}
           alt={teamMemberName(person)}
+          width={480}
+          height={600}
           className="aspect-[4/5] min-h-48 w-full object-cover"
         />
       ) : (

@@ -49,7 +49,7 @@ export default function PrivacyPage() {
         <ScrollRevealGroup className="space-y-8" staggerDelay={90}>
           {sections.map((section) => (
             <section key={section.title} className="rounded-lg border border-border bg-white p-6 shadow-sm">
-              <h2 className="font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">
+              <h2 className="font-display text-2xl font-semibold text-foreground">
                 {section.title}
               </h2>
               <p className="mt-3 text-base leading-8 text-muted-foreground">
@@ -110,7 +110,7 @@ function LegalMasthead({
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
           {eyebrow}
         </p>
-        <h1 className="mt-3 max-w-5xl font-[family-name:var(--app-font-display)] text-4xl font-semibold leading-tight text-foreground">
+        <h1 className="mt-3 max-w-5xl font-display text-4xl font-semibold leading-tight text-foreground">
           {title}
         </h1>
         <p className="mt-4 max-w-4xl text-base leading-8 text-muted-foreground">

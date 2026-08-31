@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { ResearchGenericRecord } from "@ksu/api-client";
@@ -6,6 +5,8 @@ import { ArrowRight } from "lucide-react";
 import { Badge, ResearchSection, StatusMessage } from "./research-ui";
 import { compactText, formatDate, formatLabel } from "../lib/research-public-data";
 import { getResearchRecordDownloadHref } from "../lib/research-downloads";
+import { ResearchDetailLayout } from "./research-page-primitives";
+import { ResearchPageHero } from "./research-page-hero";
 
 type DetailSection = {
   title: string;
@@ -58,61 +59,21 @@ export function ResearchDetailHero({
     .filter((fact) => fact.value);
   return (
     <>
-      <section className="border-b border-border bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="mx-auto grid w-full max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-stretch">
-          <div className="min-w-0">
-            <DetailBreadcrumbs items={breadcrumbs} />
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
-              {eyebrow}
-            </p>
-            <h1 className="mt-3 max-w-5xl text-balance font-display text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-              {title}
-            </h1>
-            {body ? (
-              <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">
-                {body}
-              </p>
-            ) : null}
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              {cleanLabels.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {cleanLabels.map((label) => (
-                    <Badge key={label}>{label}</Badge>
-                  ))}
-                </div>
-              ) : null}
-              {actions.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                {actions.map((action) => (
-                  <a
-                    key={`${action.label}-${action.href}`}
-                    href={action.href}
-                    className={
-                      action.variant === "secondary"
-                        ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary/25 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
-                        : "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-                    }
-                  >
-                    {action.label}
-                    <ArrowRight aria-hidden className="h-4 w-4" />
-                  </a>
-                ))}
-                </div>
-              ) : null}
-            </div>
+      <ResearchPageHero
+        eyebrow={eyebrow}
+        title={title}
+        description={body}
+        breadcrumbs={breadcrumbs}
+        actions={actions}
+        imageSrc={imageSrc}
+        imageAlt={imageAlt || title}
+      >
+        {cleanLabels.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {cleanLabels.map((label) => <Badge key={label}>{label}</Badge>)}
           </div>
-
-          <div className="relative hidden min-h-[220px] overflow-hidden rounded-lg border border-border bg-surface-muted shadow-sm lg:block">
-            <Image
-              src={imageSrc}
-              alt={imageAlt || title}
-              fill
-              sizes="320px"
-              className="object-cover"
-            />
-          </div>
-        </div>
-      </section>
+        ) : null}
+      </ResearchPageHero>
 
       {cleanFacts.length > 0 ? (
         <section className="border-b border-border bg-surface-subtle px-4 py-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
@@ -203,15 +164,17 @@ export function ResearchRecordDetail({
         body={compactText(record.code) ? `Code: ${compactText(record.code)}` : undefined}
         tone="white"
       >
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="flex min-w-0 flex-col gap-5">
+        <ResearchDetailLayout
+          main={
+            <>
             {sections.map((section) => (
               <DetailTextSection key={section.title} record={record} section={section} />
             ))}
             {children}
-          </div>
-          <ResearchDetailSidebar facts={facts} labels={labels} />
-        </div>
+            </>
+          }
+          sidebar={<ResearchDetailSidebar facts={facts} labels={labels} />}
+        />
       </ResearchSection>
     </main>
   );

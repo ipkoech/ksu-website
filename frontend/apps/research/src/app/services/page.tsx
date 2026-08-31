@@ -2,15 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
-import { Badge, FilledBadge, PrimaryLink, ResearchSection, SecondaryLink, StatusMessage } from "../../components/research-ui";
+import { ResearchPageHero, ResearchPageHeroStats } from "../../components/research-page-hero";
+import { Badge, FilledBadge, ResearchSection, StatusMessage } from "../../components/research-ui";
 import { compactText, formatDate, formatLabel, getCenters, getServices, getServicesFiltered } from "../../lib/research-public-data";
 import { filterRecordsByMonth, getRecordMonths, getRecordSummary, getRecordTimelineLabel, getRecordTitle, getRecordYears } from "../../lib/research-page-model";
+import { getListPageSize } from "../../lib/research-page-model";
+import { pageFromSearchParams } from "@ksu/ui/components";
+import { ResearchListPagination } from "../../components/research-list-pagination";
 
 export const revalidate = 300;
 
 export const metadata: Metadata = { title: "Research Services", description: "Research support services available through Kisii University." };
 
-type ServiceParams = { q?: string; type?: string; category?: string; center?: string; active?: string; status?: string; year?: string; month?: string; sort?: string };
+type ServiceParams = { q?: string; type?: string; category?: string; center?: string; active?: string; status?: string; year?: string; month?: string; sort?: string; page?: string };
 const serviceTypes = ["support", "consultation", "ethics", "data", "proposal", "training", "commercialization", "partnership"];
 const serviceStatuses = ["available", "paused", "draft", "archived"];
 const activeStates = [
@@ -27,11 +31,13 @@ const sortOptions = [
 
 export default async function ServicesPage({ searchParams }: { searchParams?: Promise<ServiceParams> }) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
+  const perPage = getListPageSize(12);
   const sort = params.sort || "name";
   const order = sort === "name" || sort === "turnaround_time" ? "asc" : "desc";
   const activeFlags = getActiveFlags(params.active);
   const [services, allServices, centers] = await Promise.all([
-    getServicesFiltered({ search: params.q, serviceType: params.type, category: params.category, centerId: params.center, status: params.status, year: params.year, sort, order, ...activeFlags }),
+    getServicesFiltered({ search: params.q, serviceType: params.type, category: params.category, centerId: params.center, status: params.status, year: params.year, sort, order, page, perPage, ...activeFlags }),
     getServices(),
     getCenters(),
   ]);
@@ -41,6 +47,7 @@ export default async function ServicesPage({ searchParams }: { searchParams?: Pr
   const visibleServices = filterRecordsByMonth(services.data, params.year, params.month);
   const featuredService = visibleServices.find((item) => item.is_featured);
   const rowServices = featuredService ? visibleServices.filter((item) => item.id !== featuredService.id) : visibleServices;
+  const totalPages = Math.ceil((params.month ? visibleServices.length : services.total) / services.perPage);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
@@ -52,6 +59,7 @@ export default async function ServicesPage({ searchParams }: { searchParams?: Pr
           <>
             {featuredService ? <div className="mt-6"><FeaturedService item={featuredService} /></div> : null}
             <div className="mt-6 divide-y divide-border rounded-lg border border-border bg-white shadow-sm">{rowServices.map((item) => <ServiceRow key={item.id} item={item} />)}</div>
+            <ResearchListPagination page={page} totalPages={totalPages} total={params.month ? visibleServices.length : services.total} perPage={services.perPage} path="/services" params={params} className="mt-6" />
           </>
         ) : <div className="mt-7"><StatusMessage>No services match the current filters.</StatusMessage></div>}
       </ResearchSection>
@@ -67,31 +75,7 @@ function ServicesMasthead({ resultCount, publishedCount, centersCount, categorie
     { label: "Categories", value: categoriesCount },
   ];
 
-  return (
-    <section className="border-b border-border bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
-        <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
-            <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-muted-foreground/60">/</span>
-            <Link href="/funding" className="transition hover:text-primary">Funding</Link>
-            <span className="text-muted-foreground/60">/</span>
-            <span className="text-foreground">Services</span>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Research Support</p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--app-font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">Support services for researchers, students, collaborators, and public requests</h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">Compare service scope, access route, turnaround, fees, and the center or office responsible for delivery.</p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <PrimaryLink href="/connect">Contact support</PrimaryLink>
-            <SecondaryLink href="/resources-tools">Browse tools</SecondaryLink>
-          </div>
-        </div>
-        <dl className="grid gap-2 sm:grid-cols-2">
-          {stats.map((stat) => <div key={stat.label} className="rounded-md border border-border bg-surface-subtle px-3 py-2"><dt className="text-[11px] font-semibold uppercase text-muted-foreground">{stat.label}</dt><dd className="mt-1 text-lg font-semibold text-foreground">{stat.value}</dd></div>)}
-        </dl>
-      </div>
-    </section>
-  );
+  return <ResearchPageHero eyebrow="Research Support" title="Support services for researchers, students, collaborators, and public requests" description="Compare service scope, access route, turnaround, fees, and the center or office responsible for delivery." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Services" }]} actions={[{ label: "Contact support", href: "/connect" }, { label: "Browse tools", href: "/resources-tools", variant: "secondary" }]} imageSrc="/institutional-research-images/KSUGreenLandscapingWithoutWMJuly2026-9665.jpg" imageAlt="Kisii University research support"><ResearchPageHeroStats facts={stats} /></ResearchPageHero>;
 }
 
 function ServiceFilters({ params, categories, centers, years, months }: { params: ServiceParams; categories: string[]; centers: ResearchGenericRecord[]; years: string[]; months: Array<{ value: string; label: string }> }) {

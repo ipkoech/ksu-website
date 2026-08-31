@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
+import { ResearchPageHero, ResearchPageHeroStats } from "../../components/research-page-hero";
 import Link from "next/link";
 import { ResearchFilterForm, ResearchRecordRow } from "../../components/research-listing";
 import {
   Badge,
   FilledBadge,
-  PrimaryLink,
   ResearchSection,
-  SecondaryLink,
   StatusMessage,
 } from "../../components/research-ui";
 import {
@@ -25,6 +24,9 @@ import {
   getRecordYears,
 } from "../../lib/research-page-model";
 import type { ResearchGenericRecord } from "@ksu/api-client";
+import { pageFromSearchParams } from "@ksu/ui/components";
+import { ResearchListPagination } from "../../components/research-list-pagination";
+import { getListPageSize } from "../../lib/research-page-model";
 
 export const revalidate = 300;
 
@@ -44,6 +46,7 @@ type TrainingSearchParams = {
   year?: string;
   month?: string;
   sort?: string;
+  page?: string;
 };
 
 const programTypes = ["workshop", "course", "seminar", "webinar", "bootcamp", "conference", "retreat"];
@@ -70,6 +73,8 @@ export default async function TrainingPage({
   searchParams?: Promise<TrainingSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
+  const perPage = getListPageSize(12);
   const sort = params.sort || "start_date";
   const sortField = sort === "title_desc" ? "title" : sort;
   const order = sort === "title" ? "asc" : "desc";
@@ -85,6 +90,8 @@ export default async function TrainingPage({
       year: params.year,
       sort: sortField,
       order,
+      page,
+      perPage,
       ...activeFlags,
     }),
     getTraining(),
@@ -97,6 +104,7 @@ export default async function TrainingPage({
   const rowTraining = featuredTraining
     ? visibleTraining.filter((item) => item.id !== featuredTraining.id)
     : visibleTraining;
+  const totalPages = Math.ceil((params.month ? visibleTraining.length : training.total) / training.perPage);
 
   return (
     <main id="research-main" className="min-h-screen bg-white">
@@ -133,6 +141,7 @@ export default async function TrainingPage({
                 <TrainingRow key={item.id} item={item} />
               ))}
             </div>
+            <ResearchListPagination page={page} totalPages={totalPages} total={params.month ? visibleTraining.length : training.total} perPage={training.perPage} path="/training" params={params} className="mt-6" />
           </>
         ) : (
           <div className="mt-7">
@@ -163,40 +172,9 @@ function TrainingMasthead({
   ];
 
   return (
-    <section className="border-b border-border bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
-        <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
-            <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-muted-foreground/60">/</span>
-            <Link href="/training" className="transition hover:text-primary">Learning</Link>
-            <span className="text-muted-foreground/60">/</span>
-            <span className="text-foreground">Training</span>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
-            Learning
-          </p>
-          <h1 className="mt-3 max-w-5xl text-balance font-[family-name:var(--app-font-display)] text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-            Research training, workshops, seminars, and bootcamps
-          </h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">
-            Find research methods, writing, ethics, grant writing, data, innovation, and leadership capacity-building programmes.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <PrimaryLink href="/events">View events</PrimaryLink>
-            <SecondaryLink href="/mentorship">Explore mentorship</SecondaryLink>
-          </div>
-        </div>
-        <dl className="grid gap-2 sm:grid-cols-2">
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-md border border-border bg-surface-subtle px-3 py-2">
-              <dt className="text-[11px] font-semibold uppercase text-muted-foreground">{stat.label}</dt>
-              <dd className="mt-1 text-lg font-semibold text-foreground">{stat.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </section>
+    <ResearchPageHero eyebrow="Learning" title="Research training, workshops, seminars, and bootcamps" description="Find research methods, writing, ethics, grant writing, data, innovation, and leadership capacity-building programmes." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Training" }]} actions={[{ label: "View events", href: "/events" }, { label: "Explore mentorship", href: "/mentorship", variant: "secondary" }]} imageSrc="/institutional-research-images/KSUInnovationWeek2025,April7,2026-8034.jpg" imageAlt="Kisii University research training">
+      <ResearchPageHeroStats facts={stats} />
+    </ResearchPageHero>
   );
 }
 

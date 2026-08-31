@@ -5,7 +5,19 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../.."),
+  outputFileTracingIncludes: {
+    "/institutional-research-images/[file]": [
+      "../../public/images/research/*.jpg",
+    ],
+  },
   transpilePackages: ["@ksu/ui", "@ksu/api-client"],
+  async redirects() {
+    return [
+      { source: "/resources-tools/forms", destination: "/forms", permanent: true },
+      { source: "/resources-tools/outputs", destination: "/outputs", permanent: true },
+      { source: "/resources-tools/services", destination: "/services", permanent: true },
+    ];
+  },
   images: {
     remotePatterns: [
       {

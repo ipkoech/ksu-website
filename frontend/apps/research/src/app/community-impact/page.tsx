@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ResearchImage } from "../../components/research-image";
 import Link from "next/link";
 import { ArrowRight, CalendarDays, Droplets, HandHeart, MapPin, Sprout, Target, UsersRound } from "lucide-react";
 import type { ResearchGenericRecord } from "@ksu/api-client";
@@ -100,7 +101,7 @@ function CommunityImpactHero({
       </div>
       <div className="relative mx-auto grid min-h-[260px] max-w-[1680px] gap-6 lg:grid-cols-[minmax(0,0.45fr)_minmax(460px,0.55fr)] lg:items-center">
         <div className="relative z-10">
-          <h1 className="max-w-3xl text-balance font-[family-name:var(--app-font-display)] text-5xl font-semibold leading-none text-foreground sm:text-6xl">
+          <h1 className="max-w-3xl text-balance font-display text-5xl font-semibold leading-none text-foreground sm:text-6xl">
             Community Impact
           </h1>
           <div className="mt-4 h-1 w-14 rounded-full bg-secondary" />
@@ -141,14 +142,14 @@ function FeaturedImpactStory({ story }: { story: ResearchGenericRecord }) {
   return (
     <article className="group grid min-h-[318px] overflow-hidden rounded-lg border border-border bg-white shadow-sm transition hover:border-primary/35 md:grid-cols-[minmax(280px,0.94fr)_minmax(0,1fr)]">
       <div className="relative min-h-[230px] overflow-hidden bg-brand-overlay">
-        <img src={storyImage} alt={title} className="absolute inset-0 h-full w-full object-cover" />
+        <ResearchImage src={storyImage} alt={title} fill className="object-cover" />
         <div className="absolute left-3 top-3 rounded-md bg-primary px-3 py-1 text-xs font-semibold uppercase text-white">Featured success story</div>
       </div>
       <div className="flex min-w-0 flex-col p-5">
         <div className="flex flex-wrap gap-2">
           <Badge>{formatLabel(compactText(story.story_type) || "impact")}</Badge>
         </div>
-        <h2 className="mt-4 text-balance font-[family-name:var(--app-font-display)] text-3xl font-semibold leading-tight text-foreground lg:text-4xl">
+        <h2 className="mt-4 text-balance font-display text-3xl font-semibold leading-tight text-foreground lg:text-4xl">
           {title}
         </h2>
         <dl className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
@@ -173,7 +174,7 @@ function OutcomeStack({ story }: { story: ResearchGenericRecord }) {
 
   return (
     <section className="rounded-lg border border-border bg-white p-4 shadow-sm">
-      <h2 className="font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">What changed</h2>
+      <h2 className="font-display text-2xl font-semibold text-foreground">What changed</h2>
       <div className="mt-4 divide-y divide-border rounded-lg border border-border">
       {items.map((item) => {
         const Icon = item.icon;
@@ -200,7 +201,7 @@ function SustainabilityInitiativesPanel({ records }: { records: ResearchGenericR
   return (
     <section className="rounded-lg border border-border bg-white p-4 shadow-sm">
       <div className="mb-4 flex items-end justify-between gap-4">
-        <h2 className="font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">Sustainability initiatives</h2>
+        <h2 className="font-display text-2xl font-semibold text-foreground">Sustainability initiatives</h2>
         <Link href="/sustainability" className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
           View all <ArrowRight aria-hidden className="h-4 w-4" />
         </Link>
@@ -210,7 +211,7 @@ function SustainabilityInitiativesPanel({ records }: { records: ResearchGenericR
           const title = getRecordTitle(record, "Sustainability initiative");
           return (
             <Link key={compactText(record.id) || compactText(record.slug) || title} href={record.slug ? `/sustainability/${record.slug}` : "/sustainability"} className="group overflow-hidden rounded-lg border border-border bg-white transition hover:border-primary/35 hover:shadow-sm">
-              <img src={getRecordImage(record, "/images/research/sustainability-hero-imagegen.webp")} alt={title} className="h-28 w-full object-cover transition group-hover:scale-105" />
+              <ResearchImage src={getRecordImage(record, "/images/research/sustainability-hero-imagegen.webp")} alt={title} width={640} height={224} className="h-28 w-full object-cover transition group-hover:scale-105" />
               <div className="p-3">
                 <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-foreground">{title}</h3>
                 <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
@@ -252,7 +253,7 @@ function DonationImpactPanel({ records }: { records: ResearchGenericRecord[] }) 
   return (
     <section className="rounded-lg border border-border bg-white p-4 shadow-sm">
       <div className="mb-4 flex items-end justify-between gap-4">
-        <h2 className="font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">Donation impact</h2>
+        <h2 className="font-display text-2xl font-semibold text-foreground">Donation impact</h2>
         <Link href="/donate" className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
           View all <ArrowRight aria-hidden className="h-4 w-4" />
         </Link>
@@ -296,7 +297,7 @@ function PublicEngagementEvents({ events }: { events: ResearchGenericRecord[] })
     <section className="rounded-lg border border-border bg-white p-4 shadow-sm">
       <div className="mb-4 flex items-end justify-between gap-4">
         <div>
-          <h2 className="font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">Public engagement events</h2>
+          <h2 className="font-display text-2xl font-semibold text-foreground">Public engagement events</h2>
         </div>
         <Link href="/news?tab=-events" className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
           View all <ArrowRight aria-hidden className="h-4 w-4" />
@@ -385,7 +386,7 @@ function LegendDot({ className, label }: { className: string; label: string }) {
 function CommunityQuickLinks() {
   return (
     <aside className="rounded-lg border border-border bg-white p-5 shadow-sm xl:sticky xl:top-28 xl:self-start">
-      <h2 className="font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">Explore more</h2>
+      <h2 className="font-display text-2xl font-semibold text-foreground">Explore more</h2>
       <div className="mt-3 divide-y divide-border">
         {quickLinks.map((link) => (
           <Link key={link.href} href={link.href} className="group flex items-center justify-between gap-4 py-3">

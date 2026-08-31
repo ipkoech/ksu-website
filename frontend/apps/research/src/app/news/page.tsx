@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ResearchPageShell } from "../../components/research-page-primitives";
 import { ScrollReveal, ScrollRevealGroup } from "@ksu/ui/components";
 import {
   ArrowRight,
-  Bell,
   CalendarDays,
   ChevronRight,
-  Grid3X3,
   ImageIcon,
   Mail,
   Megaphone,
-  PenLine,
   Search,
   TrendingUp,
 } from "lucide-react";
+import { researchNewsFallbackImages as fallbackImages, researchNewsTabs as navButtons } from "../../config/research-page-content";
 import type { ResearchGenericRecord } from "@ksu/api-client";
 import {
   compactText,
@@ -51,29 +50,7 @@ type ContentItem = {
   href?: string;
 };
 
-type NewsTabLink = {
-  id: NewsTab;
-  label: string;
-  icon: typeof Grid3X3;
-};
-
-const fallbackImages = [
-  "/images/research/research-hero-imagegen.webp",
-  "/images/research/research-projects-hero.webp",
-  "/images/research/research-events-hero.webp",
-  "/images/research/research-demo-imagegen.webp",
-  "/images/research/research-innovation-hero.webp",
-  "/images/research/sustainability-hero-imagegen.webp",
-  "/images/research/university-farm-hero-imagegen.webp",
-];
-
-const navButtons: NewsTabLink[] = [
-  { id: "news", label: "News", icon: Grid3X3 },
-  { id: "articles", label: "Articles", icon: PenLine },
-  { id: "events", label: "Events", icon: CalendarDays },
-  { id: "announcements", label: "Announcements", icon: Bell },
-  { id: "gallery", label: "Gallery", icon: ImageIcon },
-];
+type NewsTabLink = (typeof navButtons)[number];
 
 export default async function NewsPage({
   searchParams,
@@ -151,7 +128,7 @@ export default async function NewsPage({
   const heroImage = getRecordImage(featured[0]?.record) || getRecordImage(gallery[0]?.record) || fallbackImages[0];
 
   return (
-    <main id="research-main" className="min-h-screen bg-white">
+    <ResearchPageShell>
       <NewsHero
         activeTab={activeTab}
         image={heroImage}
@@ -187,7 +164,7 @@ export default async function NewsPage({
           <ResearchUpdatesBand />
         </div>
       </section>
-    </main>
+    </ResearchPageShell>
   );
 }
 

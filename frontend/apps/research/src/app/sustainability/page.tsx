@@ -184,7 +184,7 @@ function SustainabilityHero({
             <span className="text-foreground">Sustainability</span>
           </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Sustainability</p>
-          <h1 className="mt-4 max-w-5xl text-balance font-[family-name:var(--app-font-display)] text-4xl font-semibold leading-tight text-foreground sm:text-5xl lg:text-6xl">Sustainability at Kisii University Research</h1>
+          <h1 className="mt-4 max-w-5xl text-balance font-display text-4xl font-semibold leading-tight text-foreground sm:text-5xl lg:text-6xl">Sustainability at Kisii University Research</h1>
           <p className="mt-5 max-w-3xl text-pretty text-base leading-8 text-muted-foreground sm:text-lg">Climate, conservation, water, food systems, and measurable public impact brought together through published university research records.</p>
           <div className="mt-7 flex flex-wrap gap-3">
             <PrimaryLink href="#initiatives">Explore initiatives</PrimaryLink>

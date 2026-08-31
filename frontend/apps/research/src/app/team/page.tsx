@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { ResearchPageHero, ResearchPageHeroStats } from "../../components/research-page-hero";
 import Link from "next/link";
 import { ArrowRight, Building2, ExternalLink, UserRound } from "lucide-react";
 import type { Person } from "@ksu/api-client";
 import { personsApi } from "@ksu/api-client";
-import { PrimaryLink, SecondaryLink, StatusMessage } from "../../components/research-ui";
+import { StatusMessage } from "../../components/research-ui";
 import { publicFrontendUrl } from "../../lib/service-urls";
 import { compactText } from "../../lib/research-public-data";
 
@@ -131,38 +132,7 @@ function TeamMasthead({ staffCount }: { staffCount: number }) {
     { label: "Profiles", value: "Main web" },
   ];
 
-  return (
-    <section className="border-b border-border bg-white px-4 py-8 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
-        <div>
-          <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
-            <Link href="/" className="transition hover:text-primary">Home</Link>
-            <span className="text-muted-foreground/60">/</span>
-            <span className="text-foreground">Team</span>
-          </nav>
-          <p className="text-sm font-semibold uppercase tracking-eyebrow text-secondary">Research Team</p>
-          <h1 className="mt-3 max-w-5xl text-balance font-display text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-            Staff and leadership profiles that support research work
-          </h1>
-          <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">
-            Browse researcher records from the main university people service. Staff detail pages open on the main web profile design.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <PrimaryLink href="/expertise">Search expertise</PrimaryLink>
-            <SecondaryLink href="/connect">Contact REIRM</SecondaryLink>
-          </div>
-        </div>
-        <dl className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-md border border-border bg-surface-subtle px-3 py-2">
-              <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{stat.label}</dt>
-              <dd className="mt-1 text-sm font-semibold text-foreground">{stat.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </section>
-  );
+  return <ResearchPageHero eyebrow="Research Team" title="Staff and leadership profiles that support research work" description="Browse researcher records from the main university people service. Staff detail pages open on the main web profile design." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Team" }]} actions={[{ label: "Search expertise", href: "/expertise" }, { label: "Contact REIRM", href: "/connect", variant: "secondary" }]} imageSrc="/institutional-research-images/VC25thJune2026-4415.jpg" imageAlt="Kisii University research leadership"><ResearchPageHeroStats facts={stats} /></ResearchPageHero>;
 }
 
 function personName(person: Person) {

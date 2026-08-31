@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
+import { ResearchPageHero } from "./research-page-hero";
 
 export type PortfolioQuickLink = {
   label: string;
@@ -24,6 +25,8 @@ export function ResearchPortfolioHero({
   primary,
   secondary,
   illustration = "programs",
+  imageSrc,
+  immersive = false,
 }: {
   eyebrow: string;
   title: string;
@@ -31,33 +34,35 @@ export function ResearchPortfolioHero({
   primary?: PortfolioQuickLink;
   secondary?: PortfolioQuickLink;
   illustration?: PortfolioHeroIllustration;
+  imageSrc?: string;
+  immersive?: boolean;
 }) {
   return (
-    <section className="relative isolate overflow-hidden bg-[hsl(var(--brand-overlay))] px-4 py-7 text-white sm:px-6 lg:px-8 lg:py-8 xl:px-10 2xl:px-12">
-      <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_78%_18%,hsl(var(--primary)/0.38),transparent_28%),radial-gradient(circle_at_50%_90%,hsl(var(--secondary)/0.24),transparent_24%),linear-gradient(120deg,hsl(var(--brand-overlay))_0%,hsl(var(--brand-overlay)/0.85)_52%,hsl(var(--primary)/.62)_100%)]" />
-      <div aria-hidden className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.045)_1px,transparent_1px)] bg-[size:48px_48px] opacity-55" />
-      <HeroIllustration variant={illustration} />
-      <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--brand-overlay))]/92 via-[hsl(var(--brand-overlay))]/62 to-[hsl(var(--brand-overlay))]/10" />
-      <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-white/20" />
-      <div className="relative mx-auto max-w-[1680px] py-2">
-        <span className="inline-flex rounded-md border border-white/25 bg-primary/80 px-3 py-1 text-xs font-semibold text-white shadow-sm backdrop-blur">
-          {eyebrow}
-        </span>
-        <h1 className="mt-4 max-w-3xl font-display text-4xl font-semibold leading-tight text-white sm:text-5xl">
-          {title}
-        </h1>
-        <p className="mt-4 max-w-2xl text-pretty text-base leading-7 text-white/92 sm:text-lg">
-          {body}
-        </p>
-        {primary || secondary ? (
-          <div className="mt-6 flex flex-wrap gap-3">
-            {primary ? <PortfolioHeroAction link={primary} primary /> : null}
-            {secondary ? <PortfolioHeroAction link={secondary} /> : null}
-          </div>
-        ) : null}
-      </div>
-    </section>
+    <ResearchPageHero
+      eyebrow={eyebrow}
+      title={title}
+      description={body}
+      breadcrumbs={[{ label: "Home", href: "/" }, { label: title }]}
+      actions={[
+        ...(primary ? [{ label: primary.label, href: primary.href }] : []),
+        ...(secondary ? [{ label: secondary.label, href: secondary.href, variant: "secondary" as const }] : []),
+      ]}
+      imageSrc={imageSrc ?? getPortfolioHeroImage(illustration)}
+      imageAlt={`Kisii University ${title}`}
+      imagePosition="center 45%"
+      size={immersive ? "immersive" : "standard"}
+    />
   );
+}
+
+function getPortfolioHeroImage(illustration: PortfolioHeroIllustration) {
+  if (illustration === "projects" || illustration === "programs" || illustration === "outputs") {
+    return "/institutional-research-images/KSUInnovationWeek2025,April7,2026-8210.jpg";
+  }
+  if (illustration === "publications" || illustration === "expertise") {
+    return "/institutional-research-images/KSUGreenLandscapingWithoutWMJuly2026-3944.jpg";
+  }
+  return "/institutional-research-images/KSUGreenLandscapingWithoutWMJuly2026-3942.jpg";
 }
 
 function HeroIllustration({ variant }: { variant: PortfolioHeroIllustration }) {
@@ -230,12 +235,14 @@ export function ResearchPortfolioShell({
   children: ReactNode;
 }) {
   return (
-    <section id={id} className="bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div className="mx-auto grid max-w-[1680px] gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+    <section id={id} className="relative overflow-hidden border-b border-primary/10 bg-white/[0.82] px-4 py-10 backdrop-blur-[2px] sm:px-6 lg:px-8 lg:py-14 xl:px-10 2xl:px-12">
+      <div aria-hidden className="pointer-events-none absolute -right-32 top-16 h-96 w-96 rounded-full bg-primary/[0.045] blur-3xl" />
+      <div className={`relative mx-auto grid max-w-[1680px] gap-6 ${quickLinks.length ? "xl:grid-cols-[minmax(0,1fr)_320px]" : "grid-cols-1"} xl:items-start`}>
         <div className="min-w-0">
           <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
             <div className="pt-1">
-              <h2 className="font-display text-3xl font-semibold leading-tight text-foreground lg:whitespace-nowrap">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Explore the evidence</p>
+              <h2 className="mt-2 font-display text-3xl font-semibold leading-tight text-foreground lg:whitespace-nowrap">
                 {title}
               </h2>
               <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">{body}</p>
@@ -244,8 +251,8 @@ export function ResearchPortfolioShell({
           </div>
           {children}
         </div>
-        <ResearchPortfolioQuickLinks links={quickLinks} />
-        {footer ? <div className="xl:col-span-2">{footer}</div> : null}
+        {quickLinks.length ? <ResearchPortfolioQuickLinks links={quickLinks} /> : null}
+        {footer ? <div className={quickLinks.length ? "xl:col-span-2" : undefined}>{footer}</div> : null}
       </div>
     </section>
   );
@@ -253,28 +260,29 @@ export function ResearchPortfolioShell({
 
 export function ResearchPortfolioQuickLinks({ links }: { links: PortfolioQuickLink[] }) {
   return (
-    <aside className="rounded-lg border border-border bg-card p-4 shadow-sm xl:sticky xl:top-24">
-      <p className="text-sm font-semibold uppercase tracking-eyebrow text-secondary">
-        Quick links
-      </p>
-      <div className="mt-3 divide-y divide-border">
-        {links.map((link) => (
+    <aside className="relative overflow-hidden rounded-xl bg-[hsl(var(--brand-overlay))] p-5 text-white shadow-[0_20px_50px_-30px_hsl(var(--primary)/0.8)] xl:sticky xl:top-24">
+      <div aria-hidden className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/35 blur-2xl" />
+      <p className="relative text-xs font-bold uppercase tracking-[0.2em] text-secondary">Continue exploring</p>
+      <p className="relative mt-2 font-display text-xl leading-tight text-white">Follow the research ecosystem</p>
+      <div className="relative mt-4 divide-y divide-white/15">
+        {links.map((link, index) => (
           <Link
             key={link.href}
             href={link.href}
-            className="group flex items-start justify-between gap-4 py-3 text-sm transition first:pt-0 last:pb-0"
+            className="group grid grid-cols-[28px_minmax(0,1fr)_auto] items-start gap-3 py-4 text-sm transition first:pt-1 last:pb-1"
           >
+            <span className="font-display text-lg text-secondary">{String(index + 1).padStart(2, "0")}</span>
             <span>
-              <span className="block font-semibold text-foreground group-hover:text-primary">
+              <span className="block font-semibold text-white group-hover:text-secondary">
                 {link.label}
               </span>
               {link.body ? (
-                <span className="mt-1 block text-xs leading-5 text-muted-foreground">{link.body}</span>
+                <span className="mt-1 block text-xs leading-5 text-white/65">{link.body}</span>
               ) : null}
             </span>
             <ArrowRight
               aria-hidden
-              className="mt-1 h-4 w-4 shrink-0 text-muted-foreground/70 transition group-hover:translate-x-1 group-hover:text-primary"
+              className="mt-1 h-4 w-4 shrink-0 text-white/50 transition group-hover:translate-x-1 group-hover:text-secondary"
             />
           </Link>
         ))}

@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { ResearchImage } from "../../components/research-image";
 import type { Person } from "@ksu/api-client";
 import type { LucideIcon } from "lucide-react";
 import { Building2, ExternalLink, Mail, Phone, UserRound } from "lucide-react";
@@ -42,8 +43,7 @@ export function ExpertiseDetailSheet({
           <div className="flex items-start gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">
               {person.photo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={person.photo_url} alt="" className="h-full w-full object-cover" />
+                <ResearchImage src={person.photo_url} alt="" width={112} height={112} sizes="56px" className="h-full w-full object-cover" />
               ) : (
                 <UserRound aria-hidden className="h-7 w-7" />
               )}

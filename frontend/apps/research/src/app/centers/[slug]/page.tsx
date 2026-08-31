@@ -30,7 +30,15 @@ import {
 import type { ResearchGenericRecord, ResearchProject, ResearchPublication } from "@ksu/api-client";
 import { researchServiceApi } from "@ksu/api-client";
 
+import { researchRecordMetadata } from "../../../lib/research-metadata";
+
 export const revalidate = 300;
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const { data } = await getCenterBySlug(slug);
+  return researchRecordMetadata(data, { fallbackTitle: "Research centre", pathname: "/centers/" + slug });
+}
 
 export async function generateStaticParams() {
   return generateSlugParams(researchServiceApi.centers.list);

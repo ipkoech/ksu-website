@@ -12,6 +12,7 @@ import {
   formatLabel,
   type PublicResearchData,
 } from "../lib/research-public-data";
+export { ResearchListingRegion, ResearchResultsFrame } from "./research-page-primitives";
 
 type FilterOption = {
   name: string;

@@ -7,7 +7,15 @@ import { ResearchStoryAccordion } from "../../../components/research-rich-text";
 import { compactText, formatDate, generateSlugParams, getMentorshipBySlug } from "../../../lib/research-public-data";
 import { getNarrativeSections, getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 
+import { researchRecordMetadata } from "../../../lib/research-metadata";
+
 export const revalidate = 300;
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const { data } = await getMentorshipBySlug(slug);
+  return researchRecordMetadata(data, { fallbackTitle: "Mentorship opportunity", pathname: "/mentorship/" + slug });
+}
 
 export async function generateStaticParams() {
   return generateSlugParams(researchServiceApi.mentorship.list);

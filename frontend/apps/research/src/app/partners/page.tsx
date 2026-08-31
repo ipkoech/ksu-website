@@ -13,7 +13,9 @@ import {
   getPartners,
   getPartnersFiltered,
 } from "../../lib/research-public-data";
-import { getRecordSummary, getRecordTitle } from "../../lib/research-page-model";
+import { getListPageSize, getRecordSummary, getRecordTitle } from "../../lib/research-page-model";
+import { pageFromSearchParams } from "@ksu/ui/components";
+import { ResearchListPagination } from "../../components/research-list-pagination";
 
 export const revalidate = 300;
 
@@ -29,6 +31,7 @@ type PartnerSearchParams = {
   active?: string;
   status?: string;
   sort?: string;
+  page?: string;
 };
 
 const partnerTypes = ["academic", "industry", "government", "ngo", "foundation", "international", "community"];
@@ -52,6 +55,8 @@ export default async function PartnersPage({
   searchParams?: Promise<PartnerSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
+  const page = pageFromSearchParams(params);
+  const perPage = getListPageSize(12);
   const sort = params.sort || "display_order";
   const order = sort === "name" ? "asc" : "desc";
   const activeFlags = getActiveFlags(params.active);
@@ -63,6 +68,8 @@ export default async function PartnersPage({
       status: params.status || "active",
       sort,
       order,
+      page,
+      perPage,
       ...activeFlags,
     }),
     getPartners(),
@@ -71,6 +78,7 @@ export default async function PartnersPage({
   const directoryPartners = featuredPartner
     ? partners.data.filter((partner) => partner.id !== featuredPartner.id)
     : partners.data;
+  const totalPages = Math.ceil(partners.total / partners.perPage);
 
   return (
     <main id="research-main" className="min-h-screen bg-white text-foreground">
@@ -106,7 +114,7 @@ export default async function PartnersPage({
             <div className="mb-4 grid gap-3 md:grid-cols-[280px_minmax(0,1fr)] md:items-end">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Partner Directory</p>
-                <h2 className="mt-2 font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">Published partner records</h2>
+                <h2 className="mt-2 font-display text-2xl font-semibold text-foreground">Published partner records</h2>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">Search and filter real partner records from the research backend.</p>
               </div>
               <PartnerFilters params={params} />
@@ -128,6 +136,7 @@ export default async function PartnersPage({
                     ))}
                   </div>
                 ) : null}
+                <ResearchListPagination page={page} totalPages={totalPages} total={partners.total} perPage={partners.perPage} path="/partners" params={params} className="mt-6" />
               </div>
             ) : (
               <StatusMessage>No partner records match the current filters.</StatusMessage>
@@ -165,7 +174,7 @@ function PartnerHero() {
       <div className="relative mx-auto flex min-h-[230px] max-w-[1680px] items-center">
         <div className="max-w-3xl">
           <p className="inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white">Innovation & Partnerships</p>
-          <h1 className="mt-4 font-[family-name:var(--app-font-display)] text-4xl font-semibold leading-none text-white sm:text-5xl">Research Partners</h1>
+          <h1 className="mt-4 font-display text-4xl font-semibold leading-none text-white sm:text-5xl">Research Partners</h1>
           <p className="mt-3 max-w-2xl text-base leading-7 text-white/90">A connected network of institutions, industry, funders, communities, and public agencies helping university research move into use.</p>
           <div className="mt-5 flex flex-wrap gap-3">
             <HeroButton href="/partners/how-to-partner" primary>How to partner</HeroButton>

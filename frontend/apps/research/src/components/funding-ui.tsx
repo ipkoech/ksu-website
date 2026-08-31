@@ -16,6 +16,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { compactText, formatDate, formatLabel } from "../lib/research-public-data";
 import { getResearchRecordDownloadHref } from "../lib/research-downloads";
+import { ResearchPageHero } from "./research-page-hero";
 
 export type FundingAction = {
   label: string;
@@ -54,42 +55,17 @@ export function FundingIllustratedHero({
   const visibleFacts = facts.filter((fact) => compactText(fact.value));
 
   return (
-    <section className="relative isolate overflow-hidden border-b border-border bg-[hsl(var(--brand-overlay))] px-4 py-6 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <FundingHeroArtwork tone={tone} />
-      <div className="relative mx-auto grid max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] lg:items-end">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-eyebrow text-white">
-            {eyebrow}
-          </p>
-          <h1 className="mt-3 max-w-5xl text-balance font-display text-3xl font-semibold leading-tight sm:text-4xl">
-            {title}
-          </h1>
-          {body ? (
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-white/[0.82] sm:text-base">
-              {body}
-            </p>
-          ) : null}
-          {actions.length > 0 ? (
-            <div className="mt-5 flex flex-wrap gap-3">
-              {actions.map((action) => (
-                <Link
-                  key={action.label}
-                  href={action.href}
-                  className={
-                    action.variant === "secondary"
-                      ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/35 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-                      : "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
-                  }
-                >
-                  {action.label}
-                  <ArrowRight aria-hidden className="h-4 w-4" />
-                </Link>
-              ))}
-            </div>
-          ) : null}
-        </div>
-        {visibleFacts.length > 0 ? (
-          <dl className="grid gap-2 rounded-lg border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur sm:grid-cols-2">
+    <ResearchPageHero
+      eyebrow={eyebrow}
+      title={title}
+      description={body}
+      breadcrumbs={[{ label: "Home", href: "/" }, { label: title }]}
+      actions={actions}
+      imageSrc={getFundingHeroImage(tone)}
+      imageAlt={`Kisii University ${title}`}
+    >
+      {visibleFacts.length > 0 ? (
+          <dl className="grid max-w-3xl gap-2 rounded-lg border border-white/20 bg-brand-overlay/55 p-3 backdrop-blur-sm sm:grid-cols-2 lg:grid-cols-4">
             {visibleFacts.slice(0, 4).map((fact) => {
               const Icon = fact.icon ?? CircleDollarSign;
               return (
@@ -104,9 +80,14 @@ export function FundingIllustratedHero({
             })}
           </dl>
         ) : null}
-      </div>
-    </section>
+    </ResearchPageHero>
   );
+}
+
+function getFundingHeroImage(tone: "grant" | "scholarship" | "endowment" | "donate") {
+  if (tone === "scholarship") return "/images/research/research-about-hero.webp";
+  if (tone === "donate") return "/images/research/research-home-hero.webp";
+  return "/images/research/research-projects-hero.webp";
 }
 
 export function FundingHeroArtwork({ tone }: { tone: "grant" | "scholarship" | "endowment" | "donate" }) {

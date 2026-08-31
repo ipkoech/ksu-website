@@ -23,7 +23,15 @@ import {
   getGrantBySlug,
 } from "../../../lib/research-public-data";
 
+import { researchRecordMetadata } from "../../../lib/research-metadata";
+
 export const revalidate = 300;
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const { data } = await getGrantBySlug(slug);
+  return researchRecordMetadata(data, { fallbackTitle: "Funding opportunity", pathname: "/funding/" + slug });
+}
 
 export async function generateStaticParams() {
   return generateSlugParams(researchServiceApi.grants.list);

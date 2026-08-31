@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import { test } from "node:test";
+import { expect, test } from "vitest";
 
 import {
   filterRecordsByMonth,
@@ -28,48 +27,46 @@ const records = [
 ] as any[];
 
 test("record year options are derived from backend date fields", () => {
-  assert.deepEqual(getRecordYears(records), ["2026", "2025"]);
+  expect(getRecordYears(records)).toEqual(["2026", "2025"]);
 });
 
 test("record month options respect the selected year", () => {
-  assert.deepEqual(getRecordMonths(records, "2026"), [
+  expect(getRecordMonths(records, "2026")).toEqual([
     { value: "2", label: "February" },
     { value: "6", label: "June" },
   ]);
 });
 
 test("record month filtering uses backend dates", () => {
-  assert.deepEqual(
+  expect(
     filterRecordsByMonth(records, "2025", "9").map((record) => record.id),
-    ["b"],
-  );
+  ).toEqual(["b"]);
 });
 
 test("record titles and timeline labels do not invent content", () => {
-  assert.equal(getRecordTitle(records[0], "Fallback"), "Climate Initiative");
-  assert.equal(getRecordTimelineLabel(records[1]), "Sep 4, 2025");
+  expect(getRecordTitle(records[0], "Fallback")).toBe("Climate Initiative");
+  expect(getRecordTimelineLabel(records[1])).toBe("4 Sept 2025");
 });
 
 test("published fact items omit missing backend values", () => {
-  assert.deepEqual(
+  expect(
     getPublishedFactItems([
       { label: "Timeline", value: "2024 - 2028" },
       { label: "Center", value: "" },
       { label: "Outputs", value: null },
       { label: "Status", value: "Active" },
     ]),
-    [
+  ).toEqual([
       { label: "Timeline", value: "2024 - 2028" },
       { label: "Status", value: "Active" },
-    ],
-  );
+  ]);
 });
 
 test("list page size uses valid request size and falls back safely", () => {
-  assert.equal(getListPageSize(12), 12);
-  assert.equal(getListPageSize(undefined), 12);
-  assert.equal(getListPageSize(0), 12);
-  assert.equal(getListPageSize(80), 50);
+  expect(getListPageSize(12)).toBe(12);
+  expect(getListPageSize(undefined)).toBe(12);
+  expect(getListPageSize(0)).toBe(12);
+  expect(getListPageSize(80)).toBe(50);
 });
 
 test("narrative sections use configured public labels", () => {
@@ -82,8 +79,7 @@ test("narrative sections use configured public labels", () => {
     ],
   );
 
-  assert.deepEqual(
+  expect(
     sections.map((section) => section.title),
-    ["Program focus", "How the work moves"],
-  );
+  ).toEqual(["Program focus", "How the work moves"]);
 });

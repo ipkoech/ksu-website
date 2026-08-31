@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -49,6 +48,7 @@ import type {
 } from "@ksu/api-client";
 import { researchServiceApi } from "@ksu/api-client";
 import { ProgramUpdatesSheet } from "./program-updates-sheet";
+import { researchRecordMetadata } from "../../../lib/research-metadata";
 
 export const revalidate = 300;
 
@@ -60,14 +60,10 @@ export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
+}) {
   const { slug } = await params;
   const { data } = await getProgramBySlug(slug);
-  if (!data) return { title: "Program Not Found" };
-  const program = data as ResearchGenericRecord;
-  const title = getRecordTitle(program, "Research Program");
-  const desc = getRecordSummary(program) || `Overview of the ${title} research program.`;
-  return { title: `${title} | KSU Research`, description: desc };
+  return researchRecordMetadata(data, { fallbackTitle: "Research programme", pathname: "/programs/" + slug });
 }
 
 export default async function ProgramDetailPage({

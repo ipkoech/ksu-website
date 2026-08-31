@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { ResearchPageHero } from "./research-page-hero";
 
 export type ClusterLink = {
   label: string;
@@ -20,6 +21,8 @@ export function ResearchClusterHero({
   title,
   body,
   breadcrumbs,
+  imageSrc,
+  imageAlt,
   links,
   stats,
   primaryAction,
@@ -36,45 +39,30 @@ export function ResearchClusterHero({
 }) {
   return (
     <>
-      <section className="border-b border-border bg-white px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-        <div className="mx-auto grid w-full max-w-[1680px] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-end">
-          <div className="min-w-0">
-            <ClusterBreadcrumbs items={breadcrumbs} />
-            <p className="text-sm font-semibold uppercase tracking-eyebrow text-secondary">
-              {eyebrow}
-            </p>
-            <h1 className="mt-3 max-w-5xl text-balance font-display text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-              {title}
-            </h1>
-            <p className="mt-3 max-w-4xl text-pretty text-sm leading-7 text-muted-foreground sm:text-base">
-              {body}
-            </p>
-            {primaryAction ? (
-              <Link
-                href={primaryAction.href}
-                className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
-              >
-                {primaryAction.label}
-                <ArrowRight aria-hidden className="h-4 w-4" />
-              </Link>
-            ) : null}
-          </div>
-          {stats.length > 0 ? (
-            <dl className="grid gap-2 sm:grid-cols-2">
+      <ResearchPageHero
+        eyebrow={eyebrow}
+        title={title}
+        description={body}
+        breadcrumbs={breadcrumbs}
+        actions={primaryAction ? [{ label: primaryAction.label, href: primaryAction.href }] : []}
+        imageSrc={imageSrc}
+        imageAlt={imageAlt}
+      >
+        {stats.length > 0 ? (
+            <dl className="grid max-w-3xl gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {stats.slice(0, 4).map((stat) => (
-                <div key={stat.label} className="rounded-md border border-border bg-surface-subtle px-3 py-2">
-                  <dt className="text-[11px] font-semibold uppercase text-muted-foreground">
+                <div key={stat.label} className="rounded-md border border-white/20 bg-brand-overlay/55 px-3 py-2 backdrop-blur-sm">
+                  <dt className="text-[11px] font-semibold uppercase text-white/70">
                     {stat.label}
                   </dt>
-                  <dd className="mt-1 text-lg font-semibold text-foreground">
+                  <dd className="mt-1 text-lg font-semibold text-white">
                     {stat.value}
                   </dd>
                 </div>
               ))}
             </dl>
           ) : null}
-        </div>
-      </section>
+      </ResearchPageHero>
       <ResearchPathwayNav eyebrow={eyebrow} links={links} />
     </>
   );

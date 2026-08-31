@@ -19,6 +19,7 @@ import type { ResearchGenericRecord } from "@ksu/api-client";
 import { ProgramTableControls } from "../app/programs/program-table-controls";
 import { ResearchListPagination } from "./research-list-pagination";
 import { Badge, FilledBadge, StatusMessage } from "./research-ui";
+import { ResearchPageHero } from "./research-page-hero";
 import {
   compactText,
   formatDate,
@@ -357,32 +358,19 @@ export async function InnovationPathwayPublicPage({
 }
 
 function PathwayHero({ config }: { config: PathwayPageConfig }) {
-  const Icon = config.heroIcon;
   return (
-    <section className="relative isolate overflow-hidden bg-[hsl(var(--brand-overlay))] px-4 py-6 text-white sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <div aria-hidden className="absolute inset-0 bg-[linear-gradient(110deg,hsl(var(--brand-overlay))_0%,hsl(var(--primary)/.82)_45%,hsl(var(--primary)/.62)_100%)]" />
-      <div aria-hidden className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:44px_44px] opacity-60" />
-      <PathwayHeroArt kind={config.kind} />
-      <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--brand-overlay))]/92 via-[hsl(var(--brand-overlay))]/62 to-[hsl(var(--brand-overlay))]/10" />
-      <div className="relative mx-auto flex min-h-[200px] max-w-[1680px] items-center py-2">
-        <div className="max-w-2xl">
-          <p className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-eyebrow text-white">
-            <Icon aria-hidden className="h-4 w-4" />
-            {config.eyebrow}
-          </p>
-          <h1 className="mt-4 font-display text-4xl font-semibold leading-tight text-white sm:text-5xl">
-            {config.title}
-          </h1>
-          <p className="mt-3 max-w-xl text-pretty text-base leading-7 text-white/92">
-            {config.subtitle}
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <HeroButton href="#pathway-records" primary>{config.primaryAction}</HeroButton>
-            <HeroButton href={config.secondaryHref}>{config.secondaryAction}</HeroButton>
-          </div>
-        </div>
-      </div>
-    </section>
+    <ResearchPageHero
+      eyebrow={config.eyebrow}
+      title={config.title}
+      description={config.subtitle}
+      breadcrumbs={[{ label: "Home", href: "/" }, { label: config.title }]}
+      actions={[
+        { label: config.primaryAction, href: "#pathway-records" },
+        { label: config.secondaryAction, href: config.secondaryHref, variant: "secondary" },
+      ]}
+      imageSrc="/institutional-research-images/KSUInnovationWeek2025,April7,2026-7982.jpg"
+      imageAlt={`Kisii University ${config.title}`}
+    />
   );
 }
 

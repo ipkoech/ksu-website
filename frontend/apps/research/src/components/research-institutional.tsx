@@ -56,7 +56,7 @@ export function ResearchInstitutionalHero({
               <p className="text-sm font-semibold uppercase text-secondary">
                 {eyebrow}
               </p>
-              <h1 className="mt-3 max-w-5xl font-[family-name:var(--app-font-display)] text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
+              <h1 className="mt-3 max-w-5xl font-display text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
                 {title}
               </h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-white/75 sm:text-base">
@@ -104,7 +104,7 @@ export function ResearchInstitutionalHero({
                       key={fact.label}
                       className="border-white/10 p-4 sm:border-l first:sm:border-l-0"
                     >
-                      <p className="font-[family-name:var(--app-font-display)] text-3xl font-semibold text-white">
+                      <p className="font-display text-3xl font-semibold text-white">
                         {fact.value}
                       </p>
                       <p className="mt-1 text-xs leading-5 text-white/70">

@@ -26,7 +26,15 @@ import {
   getRecordTitle,
 } from "../../../lib/research-page-model";
 
+import { researchRecordMetadata } from "../../../lib/research-metadata";
+
 export const revalidate = 300;
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const { data } = await getArticleBySlug(slug);
+  return researchRecordMetadata(data, { fallbackTitle: "Research news", pathname: "/news/" + slug });
+}
 const passthroughImageLoader = ({ src }: { src: string }) => src;
 
 export async function generateStaticParams() {
@@ -126,7 +134,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
             />
             {tags.length > 0 ? (
               <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-                <h2 className="font-[family-name:var(--app-font-display)] text-xl font-semibold text-foreground">
+                <h2 className="font-display text-xl font-semibold text-foreground">
                   Topics
                 </h2>
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -195,7 +203,7 @@ function NewsEvidencePanel({ title, fields }: { title: string; fields: Array<[st
 
   return (
     <section className="rounded-lg border border-border bg-white p-5 shadow-sm">
-      <h2 className="font-[family-name:var(--app-font-display)] text-xl font-semibold text-foreground">{title}</h2>
+      <h2 className="font-display text-xl font-semibold text-foreground">{title}</h2>
       <div className="mt-4 flex flex-col gap-4">
         {entries.map((entry) => (
           <div key={entry.label}>

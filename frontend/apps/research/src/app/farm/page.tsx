@@ -187,7 +187,7 @@ function FarmHero({ farmCount, projectCount, partnerCount, activityCount }: { fa
             <span className="text-foreground">University Farm</span>
           </nav>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">University Farm</p>
-          <h1 className="mt-4 max-w-5xl text-balance font-[family-name:var(--app-font-display)] text-4xl font-semibold leading-tight text-foreground sm:text-5xl lg:text-6xl">University Farm: Field Research in Practice</h1>
+          <h1 className="mt-4 max-w-5xl text-balance font-display text-4xl font-semibold leading-tight text-foreground sm:text-5xl lg:text-6xl">University Farm: Field Research in Practice</h1>
           <p className="mt-5 max-w-3xl text-pretty text-base leading-8 text-muted-foreground sm:text-lg">Farm facilities, demonstrations, action research, training, partners, and community engagement organized as a living research destination.</p>
           <div className="mt-7 flex flex-wrap gap-3">
             <PrimaryLink href="#facilities">Explore farm facilities</PrimaryLink>

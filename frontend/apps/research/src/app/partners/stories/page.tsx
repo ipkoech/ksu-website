@@ -98,7 +98,7 @@ export default async function PartnerStoriesPage({
         <div className="relative mx-auto flex min-h-[230px] max-w-[1680px] items-center">
           <div className="max-w-3xl">
             <p className="inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white">Partner Evidence</p>
-            <h1 className="mt-4 font-[family-name:var(--app-font-display)] text-4xl font-semibold leading-none text-white sm:text-5xl">Case Studies & Testimonials</h1>
+            <h1 className="mt-4 font-display text-4xl font-semibold leading-none text-white sm:text-5xl">Case Studies & Testimonials</h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-white/90">Published partner-linked work across projects, consultancies, innovation pathways, technology transfer, and impact records.</p>
             <div className="mt-5 flex flex-wrap gap-3">
               <HeroButton href="#case-studies" primary>Explore stories</HeroButton>
@@ -114,7 +114,7 @@ export default async function PartnerStoriesPage({
             <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Published evidence</p>
-                <h2 className="mt-2 font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">What partnerships have produced</h2>
+                <h2 className="mt-2 font-display text-2xl font-semibold text-foreground">What partnerships have produced</h2>
               </div>
               <div className="flex flex-wrap gap-2">
                 {typeTabs.map((tab) => (
@@ -182,7 +182,7 @@ export default async function PartnerStoriesPage({
           <div className="mx-auto max-w-[1680px]">
             <div className="mb-5 max-w-3xl">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Testimonials</p>
-              <h2 className="mt-2 font-[family-name:var(--app-font-display)] text-2xl font-semibold text-foreground">Partner profile highlights</h2>
+              <h2 className="mt-2 font-display text-2xl font-semibold text-foreground">Partner profile highlights</h2>
             </div>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {testimonials.map(({ partner, quote }) => (

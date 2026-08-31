@@ -77,24 +77,28 @@ export function getVisibleProjectStorySections(
 ): StorySection[] {
   return [
     {
-      title: "The Challenge",
-      body: firstText(project, ["background", "problem", "need", "abstract"]),
+      title: "Background",
+      body: compactText(project.background),
     },
     {
-      title: "The Idea",
-      body: firstText(project, ["objectives", "summary", "abstract"]),
+      title: "Objectives",
+      body: compactText(project.objectives),
     },
     {
-      title: "Work in the Field",
-      body: firstText(project, ["methodology", "activities", "description"]),
+      title: "Methodology",
+      body: compactText(project.methodology),
     },
     {
-      title: "What Changed",
-      body: firstText(project, ["impact", "expected_outcomes", "deliverables"]),
+      title: "Expected Outcomes",
+      body: compactText(project.expected_outcomes),
     },
     {
-      title: "What Comes Next",
-      body: firstText(project, ["next_steps", "future_work", "expected_outcomes"]),
+      title: "Impact",
+      body: compactText(project.impact),
+    },
+    {
+      title: "Deliverables",
+      body: compactText(project.deliverables),
     },
   ].filter((section) => section.body);
 }
@@ -109,14 +113,6 @@ export function getProjectTimelineLabel(project: Partial<ResearchProject>) {
 
 export function getProjectDisplayTitle(project: Partial<ResearchProject>) {
   return compactText(project.title) || compactText(project.name) || "Research project";
-}
-
-function firstText(record: ResearchGenericRecord, fields: string[]) {
-  for (const field of fields) {
-    const value = compactText(record[field]);
-    if (value) return value;
-  }
-  return "";
 }
 
 function toDate(value: unknown) {

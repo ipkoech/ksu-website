@@ -123,7 +123,7 @@ export function ResearchImmersiveHero({
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary sm:text-sm">
             {activeSlide.eyebrow}
           </p>
-          <h1 className="mt-4 font-[family-name:var(--app-font-display)] text-4xl font-semibold leading-[1.05] text-white sm:text-5xl lg:text-6xl">
+          <h1 className="mt-4 font-display text-4xl font-semibold leading-[1.05] text-white sm:text-5xl lg:text-6xl">
             {activeSlide.title}
           </h1>
           {activeSlide.body ? (
