@@ -687,6 +687,15 @@ if [[ -f .deploy/docker-compose.external-data.yml ]]; then
       printf '%s_DB_USER=%s\n' "\${db_prefix}" "\${db_auth%%:*}"
       printf '%s_DB_PASSWORD=%s\n' "\${db_prefix}" "\${db_auth#*:}"
     done
+    for shared_key in MAIN_SERVICE_API_KEY RESEARCH_SERVICE_API_KEY LIBRARY_SERVICE_API_KEY INTERNAL_API_KEY; do
+      for shared_file in services/main/.env services/research/.env services/library/.env services/heri_africa/.env; do
+        shared_value="\$(read_env_value "\${shared_file}" "\${shared_key}")"
+        if [[ -n "\${shared_value}" ]]; then
+          printf '%s=%s\n' "\${shared_key}" "\${shared_value}"
+          break
+        fi
+      done
+    done
   } >> "\${COMPOSE_ENV_FILE}"
 fi
 
