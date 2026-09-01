@@ -567,9 +567,18 @@ fi
 RESEARCH_URL="\${APP_SCHEME}://\${RESEARCH_HOST}"
 LIBRARY_URL="\${PUBLIC_URL}/library"
 ADMIN_URL="\${PUBLIC_URL}/admin"
+read_env_value() {
+  local env_file="\$1"
+  local key="\$2"
+  awk -F= -v key="\${key}" '\$1 == key { sub(/^[^=]*=/, ""); print; exit }' "\${env_file}"
+}
 COMPOSE_ENV_FILE=".deploy/\${ENV_NAME}.compose.env"
+previous_compose_env="\${COMPOSE_ENV_FILE}.previous"
 
 mkdir -p .deploy
+if [[ -f "\${COMPOSE_ENV_FILE}" ]]; then
+  cp "\${COMPOSE_ENV_FILE}" "\${previous_compose_env}"
+fi
 if [[ -f .env ]]; then
   cat .env > "\${COMPOSE_ENV_FILE}"
 else
@@ -604,6 +613,15 @@ KSU_MAIN_API_URL=http://main:8000
 KSU_RESEARCH_API_URL=http://research:8001
 KSU_LIBRARY_API_URL=http://library:8002
 EOF
+
+# Preserve deployment-only secrets (JWT keys, API keys, etc.) when the
+# generated Compose environment is rebuilt on a VM with no root .env file.
+for secret_key in JWT_PRIVATE_KEY_B64 JWT_PUBLIC_KEY_B64 JWT_KEY_ID ALERTMANAGER_CONFIG_FILE; do
+  if ! grep -q "^\${secret_key}=" "\${COMPOSE_ENV_FILE}" && [[ -f "\${previous_compose_env}" ]]; then
+    secret_value="\$(read_env_value "\${previous_compose_env}" "\${secret_key}")"
+    [[ -n "\${secret_value}" ]] && printf '%s=%s\n' "\${secret_key}" "\${secret_value}" >> "\${COMPOSE_ENV_FILE}"
+  fi
+done
 
 if [[ "\${ENV_NAME}" != "dev" ]]; then
   echo "COMPOSE_PROFILES=observability" >> "\${COMPOSE_ENV_FILE}"
@@ -658,6 +676,16 @@ if [[ -f .deploy/docker-compose.external-data.yml ]]; then
       printf 'HERI_DATABASE_URL=%s\n' "\$(read_env_value services/heri_africa/.env DATABASE_URL)"
       printf 'HERI_REDIS_URL=%s\n' "\$(read_env_value services/heri_africa/.env REDIS_URL)"
     fi
+    for db_pair in 'MAIN:services/main/.env' 'RESEARCH:services/research/.env' 'LIBRARY:services/library/.env' 'HERI:services/heri_africa/.env'; do
+      db_prefix="\${db_pair%%:*}"
+      db_file="\${db_pair#*:}"
+      [[ -f "\${db_file}" ]] || continue
+      db_url="\$(read_env_value "\${db_file}" DATABASE_URL)"
+      db_auth="\${db_url#*://}"
+      db_auth="\${db_auth%@*}"
+      printf '%s_DB_USER=%s\n' "\${db_prefix}" "\${db_auth%%:*}"
+      printf '%s_DB_PASSWORD=%s\n' "\${db_prefix}" "\${db_auth#*:}"
+    done
   } >> "\${COMPOSE_ENV_FILE}"
 fi
 
