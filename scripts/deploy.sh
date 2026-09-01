@@ -696,6 +696,10 @@ if [[ -f .deploy/docker-compose.external-data.yml ]]; then
         fi
       done
     done
+    # Compose maps these service keys through the internal aliases below.
+    printf 'MAIN_INTERNAL_API_KEY=%s\n' "\$(read_env_value services/main/.env INTERNAL_API_KEY)"
+    printf 'RESEARCH_INTERNAL_API_KEY=%s\n' "\$(read_env_value services/research/.env INTERNAL_API_KEY)"
+    printf 'LIBRARY_INTERNAL_API_KEY=%s\n' "\$(read_env_value services/library/.env INTERNAL_API_KEY)"
   } >> "\${COMPOSE_ENV_FILE}"
 fi
 
