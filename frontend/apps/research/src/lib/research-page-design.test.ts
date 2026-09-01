@@ -16,11 +16,12 @@ test("public story labels avoid internal data language", () => {
 
 test("project details use story-led section labels", () => {
   assert.deepEqual(getDetailStorySections("project"), [
-    "The Challenge",
-    "The Idea",
-    "Work in the Field",
-    "What Changed",
-    "What Comes Next",
+    "Background",
+    "Objectives",
+    "Methodology",
+    "Expected Outcomes",
+    "Impact",
+    "Deliverables",
   ]);
 });
 

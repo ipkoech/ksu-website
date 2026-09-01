@@ -75,6 +75,7 @@ export type ProjectListFilters = {
   isActive?: boolean;
   isFeatured?: boolean;
   year?: string;
+  month?: string;
   sort?: string;
   order?: "asc" | "desc";
   perPage?: number;
@@ -162,7 +163,7 @@ const researchProjectListFields =
   "id,title,slug,code,summary,status,is_active,is_featured,project_type,cover_image:id,url,public_url,thumbnail_url,alt_text";
 const researchProjectFilterFields = "id,start_date,end_date,published_at,created_at,updated_at";
 
-const researchPublicDetailFields = `${researchPublicListFields},background,methodology,expected_outcomes,impact,deliverables,budget,journal_name,publisher,volume,issue,pages,article_number,conference_name,conference_location,conference_date,book_title,editors,edition,isbn,issn,doi,pmid,arxiv_id,is_open_access,impact_factor,quartile,h_index,funding_acknowledgment,email,phone,address,location,venue,registration_url,download_url,file_url,document_url,eligibility,requirements,benefits,scope,content,body,rich_text,plain_text,focus_areas,selection_criteria,obligations,application_instructions,application_process,purpose,beneficiaries,target_beneficiaries,use_guidelines,distribution_policy,annual_distribution_notes,donor_message,donor_background,recognition_notes,mission,vision,mandate,head_message,office_location,social_links,documents,guidelines,applications,reports`;
+const researchPublicDetailFields = `${researchPublicListFields},background,methodology,expected_outcomes,impact,deliverables,budget,gallery_media_ids,attachment_media_ids,document_media_ids,journal_name,publisher,volume,issue,pages,article_number,conference_name,conference_location,conference_date,book_title,editors,edition,isbn,issn,doi,pmid,arxiv_id,is_open_access,impact_factor,quartile,h_index,funding_acknowledgment,email,phone,address,location,venue,registration_url,download_url,file_url,document_url,eligibility,requirements,benefits,scope,content,body,rich_text,plain_text,focus_areas,selection_criteria,obligations,application_instructions,application_process,purpose,beneficiaries,target_beneficiaries,use_guidelines,distribution_policy,annual_distribution_notes,donor_message,donor_background,recognition_notes,mission,vision,mandate,head_message,office_location,social_links,documents,guidelines,applications,reports`;
 const researchResourceListFields =
   "id,name,slug,code,description,summary,resource_type,category,access_type,status,is_active,is_public,is_featured,center_id,department_id,location,room,availability,operating_hours,is_free,fee_structure,contact_name,contact_email,contact_phone,booking_url,access_url,url,file_url,download_url,document_url,cover_image_url,attachment_media_ids,document_media_ids,created_at,updated_at";
 const researchResourceDetailFields =
@@ -307,6 +308,7 @@ export function getProjects(
       program_id: params.programId || undefined,
       project_id: params.projectId || undefined,
       year: parseYear(params.year),
+      month: parseMonth(params.month),
       sort: params.sort || undefined,
       order: params.order,
       is_active: params.isActive ?? true,
@@ -320,10 +322,19 @@ export function getProjects(
 
 export function getProjectBySlug(slug: string) {
   return safeRecord<ResearchProject>(() =>
-    researchServiceApi.projects.getBySlug(slug, {
-      fields: researchPublicDetailFields,
-    }),
+    researchServiceApi.publicProjectDetail(slug),
   );
+}
+
+export function getFeaturedProject() {
+  return safeRecord<ResearchProject>(async () => {
+    const response = await researchServiceApi.featuredProject();
+    return { data: response.data?.data };
+  });
+}
+
+export async function getResearchPortfolioStats() {
+  return safeStats();
 }
 
 export function getProjectFilterRecords() {
@@ -1862,6 +1873,12 @@ function parseYear(value?: string) {
   if (!value) return undefined;
   const year = Number(value);
   return Number.isInteger(year) ? year : undefined;
+}
+
+function parseMonth(value?: string) {
+  if (!value) return undefined;
+  const month = Number(value);
+  return Number.isInteger(month) && month >= 1 && month <= 12 ? month : undefined;
 }
 
 export function formatLabel(value?: string | null) {

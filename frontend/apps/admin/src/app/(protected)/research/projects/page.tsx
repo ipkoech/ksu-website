@@ -52,6 +52,12 @@ const projectListFilters: EditableListFilter[] = [
     relation: { adapter: "researchCenter", filters: { is_active: true } },
   },
   {
+    name: "farm_id",
+    label: "Research Farm / Field Site",
+    type: "entity" as const,
+    relation: { adapter: "researchFarm" as const, filters: { is_active: true } },
+  },
+  {
     name: "program_id",
     label: "Program",
     type: "entity",
@@ -100,6 +106,12 @@ const projectFields = [
     relation: { adapter: "researchCenter" as const, filters: { is_active: true }, allowClear: true },
   },
   {
+    name: "farm_id",
+    label: "Research Farm / Field Site",
+    type: "entity" as const,
+    relation: { adapter: "researchFarm" as const, filters: { is_active: true }, allowClear: true },
+  },
+  {
     name: "pi_id",
     label: "Principal Investigator",
     type: "entity" as const,
@@ -108,14 +120,14 @@ const projectFields = [
   { name: "project_type", label: "Project Type", type: "select" as const, placeholder: "Select type", options: projectTypeOptions },
   { name: "start_date", label: "Start Date", type: "date" as const },
   { name: "end_date", label: "End Date", type: "date" as const },
-  { name: "summary", label: "Summary", type: "textarea" as const },
-  { name: "abstract", label: "Abstract", type: "textarea" as const },
-  { name: "background", label: "Background", type: "textarea" as const },
-  { name: "objectives", label: "Objectives", type: "textarea" as const },
-  { name: "methodology", label: "Methodology", type: "textarea" as const },
-  { name: "expected_outcomes", label: "Expected Outcomes", type: "textarea" as const },
-  { name: "impact", label: "Impact", type: "textarea" as const },
-  { name: "deliverables", label: "Deliverables", type: "textarea" as const },
+  { name: "summary", label: "Summary", type: "textarea" as const, required: true, placeholder: "A concise public overview of the research" },
+  { name: "abstract", label: "Abstract", type: "richtext" as const },
+  { name: "background", label: "Background", type: "richtext" as const },
+  { name: "objectives", label: "Objectives", type: "richtext" as const },
+  { name: "methodology", label: "Methodology", type: "richtext" as const },
+  { name: "expected_outcomes", label: "Expected Outcomes", type: "richtext" as const },
+  { name: "impact", label: "Impact", type: "richtext" as const },
+  { name: "deliverables", label: "Deliverables", type: "richtext" as const },
   { name: "budget", label: "Budget", type: "number" as const },
   { name: "currency", label: "Currency", placeholder: "KES" },
   {
@@ -124,12 +136,37 @@ const projectFields = [
     type: "entity" as const,
     relation: { adapter: "researchGrant" as const, filters: { is_active: true }, allowClear: true },
   },
-  { name: "cover_image_url", label: "Cover Image URL", type: "url" as const },
-  { name: "status", label: "Status", type: "select" as const, placeholder: "Select status", options: statusOptions },
-  { name: "progress_percentage", label: "Progress %", type: "number" as const },
-  { name: "is_active", label: "Active", type: "boolean" as const },
-  { name: "is_featured", label: "Featured", type: "boolean" as const },
-  { name: "is_public", label: "Public", type: "boolean" as const },
+  {
+    name: "cover_image_id",
+    label: "Project Cover Image",
+    type: "media" as const,
+    media: { mediaType: "image", accept: "image/*", uploadEntityType: "research_project", uploadRole: "cover-image", allowUpload: true, isPublic: true },
+  },
+  {
+    name: "gallery_media_ids",
+    label: "Project Gallery",
+    type: "entity-multi" as const,
+    relation: { adapter: "media" as const, filters: { media_type: "image" }, description: "Select public field, laboratory, team, and outcome images." },
+  },
+  {
+    name: "document_media_ids",
+    label: "Public Documents",
+    type: "entity-multi" as const,
+    relation: { adapter: "media" as const, description: "Select proposals, reports, policy briefs, and other public documents." },
+  },
+  {
+    name: "attachment_media_ids",
+    label: "Supporting Attachments",
+    type: "entity-multi" as const,
+    relation: { adapter: "media" as const, description: "Select supplementary files associated with this project." },
+  },
+  { name: "meta_title", label: "Search Title", placeholder: "Optional search-engine title" },
+  { name: "meta_description", label: "Search Description", type: "textarea" as const },
+  { name: "status", label: "Status", type: "select" as const, defaultValue: "ongoing", placeholder: "Select status", options: statusOptions },
+  { name: "progress_percentage", label: "Progress %", type: "number" as const, defaultValue: 0 },
+  { name: "is_active", label: "Active", type: "boolean" as const, defaultValue: true },
+  { name: "is_featured", label: "Featured", type: "boolean" as const, defaultValue: false },
+  { name: "is_public", label: "Public", type: "boolean" as const, defaultValue: true },
 ];
 
 const projectColumns: EditableRecordColumn<ResearchProject>[] = [
@@ -208,6 +245,20 @@ export default function ResearchProjectsPage() {
       listFilters={projectListFilters}
       recordColumns={projectColumns}
       fields={withResearchFieldHelp(projectFields)}
+      validate={(values) => {
+        const errors: Record<string, string> = {};
+        if (values.start_date && values.end_date && String(values.end_date) < String(values.start_date)) {
+          errors.end_date = "End date must be on or after the start date";
+        }
+        const progress = Number(values.progress_percentage ?? 0);
+        if (!Number.isFinite(progress) || progress < 0 || progress > 100) {
+          errors.progress_percentage = "Progress must be between 0 and 100";
+        }
+        if (values.budget != null && values.budget !== "" && Number(values.budget) < 0) {
+          errors.budget = "Budget cannot be negative";
+        }
+        return errors;
+      }}
       editorMode="sheet"
       renderMobileRecord={ProjectMobileRecord}
       list={(filters) =>
@@ -269,6 +320,7 @@ export default function ResearchProjectsPage() {
         code: values.code,
         program_id: values.program_id,
         center_id: values.center_id,
+        farm_id: values.farm_id,
         pi_id: values.pi_id,
         project_type: values.project_type || "applied",
         start_date: values.start_date,
@@ -284,7 +336,12 @@ export default function ResearchProjectsPage() {
         budget: values.budget,
         currency: values.currency || "KES",
         grant_id: values.grant_id,
-        cover_image_url: values.cover_image_url,
+        cover_image_id: values.cover_image_id,
+        gallery_media_ids: values.gallery_media_ids,
+        document_media_ids: values.document_media_ids,
+        attachment_media_ids: values.attachment_media_ids,
+        meta_title: values.meta_title,
+        meta_description: values.meta_description,
         status: values.status || "ongoing",
         progress_percentage: values.progress_percentage ?? 0,
         is_active: values.is_active,

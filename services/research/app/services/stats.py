@@ -68,6 +68,7 @@ def _item(
 async def public_research_stats(db: AsyncSession) -> PublicStatsResponse:
     # Pre-compute all aggregates
     centre_count = await _count(db, ResearchCenter, ResearchCenter.is_active.is_(True))
+    programme_count = await _count(db, ResearchProgram, ResearchProgram.is_active.is_(True))
     farm_hectares_val = await _sum(db, ResearchFarm.size_hectares, ResearchFarm, ResearchFarm.is_active.is_(True), ResearchFarm.is_public.is_(True))
     project_count = await _count(db, ResearchProject, ResearchProject.is_active.is_(True), ResearchProject.is_public.is_(True), ResearchProject.status.in_(("approved", "ongoing", "completed")))
     project_budget_total = await _sum(db, ResearchProject.budget, ResearchProject, ResearchProject.is_active.is_(True), ResearchProject.is_public.is_(True))
@@ -104,6 +105,13 @@ async def public_research_stats(db: AsyncSession) -> PublicStatsResponse:
                 value=centre_count,
                 description="Active research centres and institutes",
                 href="/research/centres",
+            ),
+            _item(
+                key="research_programmes",
+                label="Research Programmes",
+                value=programme_count,
+                description="Active strategic research programmes",
+                href="/research/programs",
             ),
             _item(
                 key="farm_hectares",

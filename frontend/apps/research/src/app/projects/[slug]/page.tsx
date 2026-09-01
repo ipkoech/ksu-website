@@ -8,15 +8,11 @@ import {
   CalendarDays,
   Coins,
   Download,
-  FileText,
   ImageIcon,
-  LineChart,
   Network,
   Tags,
-  Target,
   type LucideIcon,
   UserRound,
-  UsersRound,
 } from "lucide-react";
 import { ResearchBackground } from "../../../components/research-background";
 import { StatusMessage } from "../../../components/research-ui";
@@ -30,6 +26,11 @@ import {
   getProjectPublications,
   getRelatedOutputs,
 } from "../../../lib/research-public-data";
+import {
+  ProjectEditorialStory,
+  ProjectEvidenceSection,
+  projectMediaRecords,
+} from "../../../components/project-detail-sections";
 import { getRecordSummary, getRecordTitle } from "../../../lib/research-page-model";
 import type { ResearchGenericRecord, ResearchProject, ResearchPublication } from "@ksu/api-client";
 import { researchServiceApi } from "@ksu/api-client";
@@ -72,14 +73,15 @@ export default async function ProjectDetailPage({
   const program = project.program as ResearchGenericRecord | undefined;
   const center = project.center as ResearchGenericRecord | undefined;
   const teamMembers = getChildRecords(project, ["team_members", "researchers", "contributors"]);
-  const partners = getChildRecords(project, ["partners", "collaborators"]);
+  const partners = getChildRecords(project, ["partners"]);
   const title = getRecordTitle(project, "Research project");
   const summary = getRecordSummary(project) || compactText(project.abstract);
   const leadName =
     compactText(project.principal_investigator_name) ||
     compactText(project.project_lead_name) ||
     compactText(project.lead_researcher_name) ||
-    compactText(project.lead_name);
+    compactText(project.lead_name) ||
+    getResolvedLeadName(teamMembers);
   const contactEmail = compactText(project.contact_email) || compactText(project.email);
   const coverImage = getProjectCoverImage(project);
   const storySections = getVisibleProjectStorySections(project);
@@ -113,7 +115,7 @@ export default async function ProjectDetailPage({
         <div className="mx-auto max-w-[1680px]">
           <div className="flex min-w-0 flex-col gap-6">
             {storySections.length > 0 ? (
-              <ProjectStoryTable sections={storySections} project={project} coverImage={coverImage} center={center} program={program} leadName={leadName} contactEmail={contactEmail} />
+              <ProjectEditorialStory sections={storySections} project={project} center={center} program={program} leadName={leadName} contactEmail={contactEmail} />
             ) : (
               <EmptyPanel
                 title="Project Story"
@@ -121,7 +123,7 @@ export default async function ProjectDetailPage({
               />
             )}
             {publications.data.length > 0 || outputs.data.length > 0 ? (
-              <EvidenceOutputs publications={publications.data} outputs={outputs.data} />
+              <ProjectEvidenceSection publications={publications.data} outputs={outputs.data} />
             ) : (
               <EmptyPanel
                 title="Evidence & Outputs"
@@ -143,6 +145,14 @@ export default async function ProjectDetailPage({
       <ProjectPartnershipCta />
     </ResearchBackground>
   );
+}
+
+function getResolvedLeadName(teamMembers: ResearchGenericRecord[]): string {
+  const lead =
+    teamMembers.find((member) =>
+      ["pi", "principal_investigator", "lead_researcher"].includes(compactText(member.role).toLowerCase()),
+    ) || teamMembers[0];
+  return lead ? getRecordTitle(lead, "") : "";
 }
 
 function ProjectHero({
@@ -294,89 +304,6 @@ function ProjectGlance({
   );
 }
 
-function ProjectStoryTable({ sections, project, coverImage, center, program, leadName, contactEmail }: { sections: Array<{ title: string; body: string }>; project: ResearchProject & ResearchGenericRecord; coverImage: string; center?: ResearchGenericRecord; program?: ResearchGenericRecord; leadName?: string; contactEmail?: string }) {
-  const icons = [Target, FileText, Network, LineChart, UsersRound];
-  return (
-    <section className="overflow-hidden rounded-2xl border border-primary/15 bg-white/88 shadow-[0_22px_60px_-48px_hsl(var(--primary)/0.65)] backdrop-blur-sm">
-      <div className="px-5 sm:px-8 lg:px-10">
-          <div className="grid gap-7 py-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,.78fr)] lg:items-center lg:py-10">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">The research story</p>
-              <h2 className="mt-3 font-display text-3xl font-semibold text-foreground sm:text-4xl">Where this inquiry begins</h2>
-              <p className="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">{getRecordSummary(project) || compactText(project.abstract)}</p>
-              <dl className="mt-5 grid gap-x-6 gap-y-3 text-xs sm:grid-cols-2">
-                {[{ label: "Programme", value: program ? getRecordTitle(program, "") : "" }, { label: "Principal investigator", value: leadName }, { label: "Centre", value: center ? getRecordTitle(center, "") : "" }, { label: "Contact", value: contactEmail }, { label: "Start date", value: formatDate(project.start_date) }, { label: "Status", value: formatLabel(compactText(project.status)) }].filter((item) => item.value).map((item) => <div key={item.label} className="grid grid-cols-[100px_1fr] gap-2"><dt className="font-semibold text-muted-foreground">{item.label}</dt><dd className="font-medium text-foreground">{item.value}</dd></div>)}
-              </dl>
-            </div>
-            <div className="relative aspect-[16/10] overflow-hidden rounded-2xl">
-              <Image src={coverImage} alt="Project field activity" fill sizes="(min-width:1024px) 34vw, 100vw" className="object-cover" unoptimized />
-            </div>
-          </div>
-          <div className="relative border-t border-primary/10 py-4 before:absolute before:bottom-12 before:left-[1.35rem] before:top-12 before:w-px before:bg-gradient-to-b before:from-primary/60 before:via-primary/20 before:to-secondary/60 sm:before:left-1/2 sm:before:-translate-x-px">
-          {sections.map((section, index) => {
-            const Icon = icons[index] ?? FileText;
-            const reverse = index % 2 === 1;
-            return (
-              <article id={`story-${index}`} key={section.title} className="relative scroll-mt-28 py-7 sm:grid sm:grid-cols-2 sm:gap-16 sm:py-10">
-                <span className="absolute left-0 top-8 z-10 grid h-11 w-11 place-items-center rounded-full border-4 border-white bg-primary text-white shadow-md sm:left-1/2 sm:top-11 sm:-translate-x-1/2">
-                  <Icon aria-hidden className="h-4 w-4" />
-                </span>
-                <div className={`ml-16 rounded-2xl border border-primary/10 bg-white/70 p-5 sm:ml-0 sm:p-6 ${reverse ? "sm:col-start-2" : "sm:col-start-1"}`}>
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Research narrative</p>
-                  <h3 className="mt-2 font-display text-2xl font-semibold text-foreground sm:text-3xl">{section.title}</h3>
-                  <ResearchRichText content={section.body} className="mt-4 text-sm leading-7 text-muted-foreground sm:text-base" />
-                </div>
-              </article>
-            );
-          })}
-          </div>
-        </div>
-    </section>
-  );
-}
-
-function EvidenceOutputs({
-  publications,
-  outputs,
-}: {
-  publications: ResearchPublication[];
-  outputs: ResearchGenericRecord[];
-}) {
-  const groups = [
-    publications.length ? { title: "Publications", records: publications, hrefBase: "/publications" } : null,
-    outputs.length ? { title: "Outputs", records: outputs, hrefBase: "/outputs" } : null,
-  ].filter(Boolean) as Array<{
-    title: string;
-    records: Array<ResearchPublication | ResearchGenericRecord>;
-    hrefBase: string;
-  }>;
-
-  return (
-    <section id="evidence-outputs" className="overflow-hidden rounded-2xl border border-primary/15 bg-white/88 shadow-[0_22px_60px_-48px_hsl(var(--primary)/0.65)] backdrop-blur-sm">
-      <h2 className="border-b border-border px-5 py-4 font-display text-xl font-semibold text-foreground">
-        Evidence & Outputs
-      </h2>
-      <div className="grid divide-y divide-border lg:grid-cols-2 lg:divide-x lg:divide-y-0">
-        {groups.map((group) => (
-          <div key={group.title} className="min-w-0 p-5 sm:p-6">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="font-display text-lg font-semibold text-primary">{group.title}</h3>
-              <span className="rounded-full bg-primary/8 px-2.5 py-1 text-xs font-bold text-primary">{group.records.length}</span>
-            </div>
-            <div className="mt-4 divide-y divide-primary/10 rounded-xl border border-primary/10 bg-white/70">
-              {group.records.slice(0, 4).map((record) => {
-                const generic = record as ResearchGenericRecord;
-                return <Link key={`${group.title}-${generic.id}`} href={generic.slug ? `${group.hrefBase}/${generic.slug}` : group.hrefBase} className="group flex items-start gap-3 px-4 py-3 transition hover:bg-primary/[0.035]"><span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/8 text-primary"><FileText aria-hidden className="h-4 w-4" /></span><span className="min-w-0 flex-1"><span className="line-clamp-2 text-sm font-semibold text-foreground">{getRecordTitle(generic, group.title)}</span><span className="mt-1 block text-xs text-muted-foreground">{formatDate(generic.publication_date) || formatDate(generic.created_at) || formatLabel(compactText(generic.output_type) || compactText(generic.publication_type))}</span></span><ArrowRight aria-hidden className="mt-2 h-4 w-4 shrink-0 text-primary transition group-hover:translate-x-1" /></Link>;
-              })}
-            </div>
-            <Link href={group.hrefBase} className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-primary hover:text-secondary">View all {group.title.toLowerCase()} <ArrowRight aria-hidden className="h-3.5 w-3.5" /></Link>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function ProjectMilestoneTable({
   milestones,
   project,
@@ -468,8 +395,8 @@ function ProfileItem({ record, fallback, href, square = false }: { record: Resea
 }
 
 function ProjectDocumentsMedia({ project }: { project: ResearchProject & ResearchGenericRecord }) {
-  const documents = getMediaRecords(project, ["documents", "attachments", "document_media", "attachment_media"]);
-  const gallery = getMediaRecords(project, ["gallery", "gallery_media", "media"]);
+  const documents = projectMediaRecords(project, ["documents", "attachments", "document_media", "attachment_media"]);
+  const gallery = projectMediaRecords(project, ["gallery", "gallery_media", "media"]);
   const documentCount = documents.length || (project.document_media_ids?.length ?? 0) + (project.attachment_media_ids?.length ?? 0);
   const galleryCount = gallery.length || project.gallery_media_ids?.length || 0;
   if (!documentCount && !galleryCount) return null;
@@ -529,16 +456,6 @@ function getExploreLinks(
 function getChildRecords(record: ResearchGenericRecord, fields: string[]) {
   for (const field of fields) {
     if (Array.isArray(record[field])) return record[field] as ResearchGenericRecord[];
-  }
-  return [];
-}
-
-function getMediaRecords(record: ResearchGenericRecord, fields: string[]) {
-  for (const field of fields) {
-    const value = record[field];
-    if (Array.isArray(value) && value.some((item) => item && typeof item === "object")) {
-      return value.filter((item): item is ResearchGenericRecord => Boolean(item && typeof item === "object"));
-    }
   }
   return [];
 }

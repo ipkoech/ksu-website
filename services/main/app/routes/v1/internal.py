@@ -64,6 +64,10 @@ class InternalMediaResolvePayload(BaseModel):
     ids: list[uuid.UUID] = Field(min_length=1, max_length=100)
 
 
+class InternalPersonResolvePayload(BaseModel):
+    ids: list[uuid.UUID] = Field(min_length=1, max_length=100)
+
+
 class InternalAuditPageMeta(BaseModel):
     page: int
     per_page: int
@@ -356,6 +360,46 @@ async def resolve_public_media(
                     "is_public": True,
                 }
             )
+    return {"status": "success", "data": data}
+
+
+@router.post("/persons/resolve", dependencies=[Depends(verify_internal_key)])
+async def resolve_public_persons(
+    payload: InternalPersonResolvePayload,
+    db: AsyncSession = Depends(get_db),
+):
+    """Resolve public researcher snapshots for records owned by sibling services."""
+    result = await db.execute(
+        select(Person)
+        .options(selectinload(Person.photo))
+        .where(
+            Person.id.in_(set(payload.ids)),
+            Person.deleted_at.is_(None),
+            Person.is_active.is_(True),
+            Person.is_public.is_(True),
+        )
+    )
+    by_id = {item.id: item for item in result.scalars().all()}
+    data = []
+    for identifier in payload.ids:
+        person = by_id.get(identifier)
+        if person is None:
+            continue
+        photo = person.photo
+        data.append(
+            {
+                "id": str(person.id),
+                "slug": person.slug,
+                "name": person.display_name,
+                "display_name": person.display_name,
+                "full_name": person.full_name,
+                "title": person.title,
+                "academic_rank": person.academic_rank,
+                "institutional_role": person.institutional_role,
+                "specialization": person.specialization,
+                "photo_url": photo.url if photo and photo.is_public else None,
+            }
+        )
     return {"status": "success", "data": data}
 
 

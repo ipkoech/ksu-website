@@ -11,14 +11,14 @@ export type ResearchDetailKind =
 export type ResearchSectionDensity = "compact" | "spacious";
 
 export const publicStoryLabels = [
-  "Research Journey",
+  "Research Story",
   "At a Glance",
-  "The Challenge",
-  "The Idea",
-  "Work in the Field",
-  "What Changed",
-  "What Comes Next",
-  "What This Project Produced",
+  "Background",
+  "Objectives",
+  "Methodology",
+  "Expected Outcomes",
+  "Impact",
+  "Deliverables",
   "Evidence & Outputs",
   "Impact Stories",
   "Milestones",
@@ -29,11 +29,12 @@ export const publicStoryLabels = [
 
 const detailSections: Record<ResearchDetailKind, string[]> = {
   project: [
-    "The Challenge",
-    "The Idea",
-    "Work in the Field",
-    "What Changed",
-    "What Comes Next",
+    "Background",
+    "Objectives",
+    "Methodology",
+    "Expected Outcomes",
+    "Impact",
+    "Deliverables",
   ],
   program: [
     "Programme Purpose",

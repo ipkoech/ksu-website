@@ -38,6 +38,8 @@ from ..models import (
 )
 from ._crud import build_simple_service
 from .audit_snapshots import list_audit_snapshots
+from .media_snapshots import public_media_by_id
+from .person_snapshots import public_people_by_id
 
 CenterService = build_simple_service(
     ResearchCenter,
@@ -58,7 +60,7 @@ ProgramService = build_simple_service(
     "status",
     reference_fields={"lead_id": "persons"},
 )
-ProjectService = build_simple_service(
+_BaseProjectService = build_simple_service(
     ResearchProject,
     "title",
     "code",
@@ -67,6 +69,51 @@ ProjectService = build_simple_service(
     "status",
     reference_fields={"pi_id": "persons"},
 )
+
+
+class ProjectService(_BaseProjectService):
+    """Project persistence with a synchronized principal-investigator assignment."""
+
+    @classmethod
+    async def _ensure_principal_investigator(cls, db: AsyncSession, project: ResearchProject) -> None:
+        if project.pi_id is None:
+            return
+        result = await db.execute(
+            select(ProjectTeamMember).where(
+                ProjectTeamMember.project_id == project.id,
+                ProjectTeamMember.person_id == project.pi_id,
+            )
+        )
+        assignment = result.scalar_one_or_none()
+        if assignment is None:
+            db.add(
+                ProjectTeamMember(
+                    project_id=project.id,
+                    person_id=project.pi_id,
+                    role="pi",
+                    title="Principal Investigator",
+                    display_order=0,
+                    is_active=True,
+                )
+            )
+        else:
+            assignment.role = "pi"
+            assignment.title = assignment.title or "Principal Investigator"
+            assignment.display_order = 0
+            assignment.is_active = True
+        await db.flush()
+
+    @classmethod
+    async def create(cls, db: AsyncSession, data, *, actor_id=None):
+        project = await super().create(db, data, actor_id=actor_id)
+        await cls._ensure_principal_investigator(db, project)
+        return project
+
+    @classmethod
+    async def update(cls, db: AsyncSession, item, data, *, actor_id=None):
+        project = await super().update(db, item, data, actor_id=actor_id)
+        await cls._ensure_principal_investigator(db, project)
+        return project
 ProjectTeamMemberService = build_simple_service(ProjectTeamMember, "role", reference_fields={"person_id": "persons"})
 CenterTeamMemberService = build_simple_service(CenterTeamMember, "role", reference_fields={"person_id": "persons"})
 
@@ -204,6 +251,129 @@ class ProjectDetailService:
                 ),
                 "audit": (await list_audit_snapshots(page=1, per_page=20, resource_id=str(project.id))).get("data", []),
             },
+        }
+
+
+class ProjectPublicDetailService:
+    """Public project payload with resolved relationships, people, and media."""
+
+    @staticmethod
+    async def get_featured(db: AsyncSession) -> dict[str, Any] | None:
+        result = await db.execute(
+            ResearchProject.active_query()
+            .where(
+                ResearchProject.is_public.is_(True),
+                ResearchProject.is_featured.is_(True),
+            )
+            .order_by(ResearchProject.display_order.asc(), ResearchProject.created_at.desc())
+            .limit(1)
+        )
+        project = result.scalar_one_or_none()
+        if project is None:
+            return None
+        return await ProjectPublicDetailService.get_by_slug(db, project.slug)
+
+    @staticmethod
+    async def get_by_slug(db: AsyncSession, slug: str) -> dict[str, Any] | None:
+        project = await ProjectService.get_public_by_slug(
+            db,
+            slug,
+            load_options=(
+                selectinload(ResearchProject.center),
+                selectinload(ResearchProject.program),
+                selectinload(ResearchProject.farm),
+                selectinload(ResearchProject.team_members),
+            ),
+        )
+        if project is None:
+            return None
+
+        media_ids = [
+            identifier
+            for identifier in [
+                project.cover_image_id,
+                *(project.gallery_media_ids or []),
+                *(project.attachment_media_ids or []),
+                *(project.document_media_ids or []),
+            ]
+            if identifier is not None
+        ]
+        person_ids = [member.person_id for member in project.team_members]
+        if project.pi_id and project.pi_id not in person_ids:
+            person_ids.insert(0, project.pi_id)
+        try:
+            media_by_id = await public_media_by_id(media_ids)
+        except Exception as exc:
+            logger.warning("Could not resolve public project media for %s: %s", project.id, exc)
+            media_by_id = {}
+        try:
+            people_by_id = await public_people_by_id(person_ids)
+        except Exception as exc:
+            logger.warning("Could not resolve public project people for %s: %s", project.id, exc)
+            people_by_id = {}
+
+        def media_payload(identifier: uuid.UUID | None) -> dict[str, Any] | None:
+            media = media_by_id.get(identifier) if identifier else None
+            if media is None:
+                return None
+            return {
+                "id": str(media.id),
+                "url": media.url,
+                "public_url": media.url,
+                "thumbnail_url": media.thumbnail_url,
+                "title": media.title,
+                "alt_text": media.alt_text,
+                "description": media.description,
+                "caption": media.caption,
+                "media_type": media.media_type,
+            }
+
+        def media_list(identifiers: list[uuid.UUID] | None) -> list[dict[str, Any]]:
+            return [payload for identifier in identifiers or [] if (payload := media_payload(identifier))]
+
+        team_members = []
+        for member in sorted(project.team_members, key=lambda item: (item.display_order, str(item.id))):
+            person = people_by_id.get(member.person_id)
+            team_members.append(
+                {
+                    "id": str(member.id),
+                    "person_id": str(member.person_id),
+                    "role": member.role,
+                    "title": member.title,
+                    "responsibilities": member.responsibilities,
+                    "display_order": member.display_order,
+                    "person": person,
+                    **(person or {}),
+                }
+            )
+        if project.pi_id and not any(member["person_id"] == str(project.pi_id) for member in team_members):
+            principal = people_by_id.get(project.pi_id)
+            if principal:
+                team_members.insert(
+                    0,
+                    {
+                        "id": f"pi-{project.pi_id}",
+                        "person_id": str(project.pi_id),
+                        "role": "pi",
+                        "title": "Principal Investigator",
+                        "responsibilities": None,
+                        "display_order": 0,
+                        "person": principal,
+                        **principal,
+                    },
+                )
+
+        return {
+            **_model_payload(project),
+            "center": _brief(project.center) if project.center else None,
+            "program": _brief(project.program) if project.program else None,
+            "farm": _brief(project.farm) if project.farm else None,
+            "cover_image": media_payload(project.cover_image_id),
+            "gallery_media": media_list(project.gallery_media_ids),
+            "attachment_media": media_list(project.attachment_media_ids),
+            "document_media": media_list(project.document_media_ids),
+            "team_members": team_members,
+            "partners": await ProjectRelationshipService.list_partners(db, project.id),
         }
 
 

@@ -345,7 +345,7 @@ function recordToValues(fields: EditableField[], record?: RecordShape | null) {
       .map((name) => record?.[name])
       .find((candidate) => candidate !== undefined && candidate !== null);
     if (field.type === "boolean") {
-      values[field.name] = Boolean(value);
+      values[field.name] = value === undefined ? Boolean(defaultValue(field)) : Boolean(value);
     } else if (field.type === "date" && typeof value === "string") {
       values[field.name] = value.split("T")[0];
     } else if (field.type === "datetime-local" && typeof value === "string") {

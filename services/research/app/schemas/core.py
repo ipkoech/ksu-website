@@ -7,7 +7,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from .base import (
     BaseSchema,
@@ -256,10 +256,20 @@ class ResearchProjectBase(BaseSchema, SlugMixin, SEOFieldsMixin):
     currency: str = Field(default="KES", max_length=3)
     grant_id: uuid.UUID | None = None
     cover_image_url: UrlStr | None = None
+    cover_image_id: uuid.UUID | None = None
+    gallery_media_ids: list[uuid.UUID] | None = None
+    attachment_media_ids: list[uuid.UUID] | None = None
+    document_media_ids: list[uuid.UUID] | None = None
     gallery: list[dict] | None = None
     documents: list[dict] | None = None
     status: str = Field(default="ongoing", max_length=32)
     progress_percentage: int = Field(default=0, ge=0, le=100)
+
+    @model_validator(mode="after")
+    def validate_project_dates(self):
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValueError("End date must be on or after the start date")
+        return self
 
 
 class ResearchProjectCreate(ResearchProjectBase, StatusMixin):

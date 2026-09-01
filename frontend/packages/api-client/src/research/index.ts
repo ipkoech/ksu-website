@@ -977,6 +977,10 @@ export const researchServiceApi = {
   ),
   projectDetail: (slug: string) =>
     researchApi.get<{ data: ResearchGenericRecord }>(`/api/v1/projects/${slug}/detail`),
+  publicProjectDetail: (slug: string) =>
+    researchApi.get<{ data: ResearchProject & ResearchGenericRecord }>(`/api/v1/projects/${slug}/public-detail`),
+  featuredProject: () =>
+    researchApi.get<{ data: ResearchProject & ResearchGenericRecord }>("/api/v1/projects/featured"),
   projectRelations: {
     activities: readonlyProjectRelationApi("activities"),
     impactStories: readonlyProjectRelationApi("impact-stories"),

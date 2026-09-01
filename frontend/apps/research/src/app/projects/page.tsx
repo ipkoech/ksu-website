@@ -20,13 +20,14 @@ import {
   compactText,
   formatLabel,
   getCenters,
+  getFeaturedProject,
   getProjectFilterRecords,
   getPrograms,
   getProjects,
+  getResearchPortfolioStats,
 } from "../../lib/research-public-data";
 import type { ResearchGenericRecord, ResearchProject } from "@ksu/api-client";
 import {
-  filterProjectsByMonth,
   getProjectMonths,
   getProjectYears,
 } from "./project-page-model";
@@ -87,7 +88,7 @@ export default async function ProjectsPage({
   const sortField = sort === "title_desc" ? "title" : sort;
   const order = sort === "title" ? "asc" : "desc";
   const activeFlags = getActiveFlags(params.active);
-  const [projects, projectFilterRecords, centers, programs] = await Promise.all([
+  const [projects, projectFilterRecords, centers, programs, featuredProject, portfolioStats] = await Promise.all([
     getProjects(
       {
         search: params.q,
@@ -96,6 +97,7 @@ export default async function ProjectsPage({
         centerId: params.center,
         programId: params.program,
         year: params.year,
+        month: params.month,
         sort: sortField,
         order,
         perPage,
@@ -106,22 +108,13 @@ export default async function ProjectsPage({
     getProjectFilterRecords(),
     getCenters(),
     getPrograms(),
+    getFeaturedProject(),
+    getResearchPortfolioStats(),
   ]);
   const years = getProjectYears(projectFilterRecords.data);
   const months = getProjectMonths(projectFilterRecords.data, params.year);
-  const monthProjectIds = params.month
-    ? new Set(
-        filterProjectsByMonth(projectFilterRecords.data, params.year, params.month)
-          .map((project) => project.id)
-          .filter(Boolean),
-      )
-    : null;
-  const visibleProjects = monthProjectIds
-    ? projects.data.filter((project) => monthProjectIds.has(project.id))
-    : projects.data;
-  const totalPages = Math.ceil(
-    (params.month ? visibleProjects.length : projects.total) / projects.perPage,
-  );
+  const visibleProjects = projects.data;
+  const totalPages = Math.ceil(projects.total / projects.perPage);
 
   return (
     <ResearchBackground
@@ -142,10 +135,10 @@ export default async function ProjectsPage({
       />
 
       <ProjectEditorialLead
-        featured={visibleProjects.find((project) => project.is_featured) ?? visibleProjects[0]}
-        projectCount={projects.total}
-        programCount={programs.data.length}
-        centerCount={centers.data.length}
+        featured={featuredProject.data ?? visibleProjects[0]}
+        projectCount={getPortfolioStat(portfolioStats, "research_projects", projects.total)}
+        programCount={getPortfolioStat(portfolioStats, "research_programmes", programs.total)}
+        centerCount={getPortfolioStat(portfolioStats, "research_centres", centers.total)}
       />
 
       <ResearchPortfolioShell
@@ -168,7 +161,7 @@ export default async function ProjectsPage({
             <ResearchListPagination
               page={page}
               totalPages={totalPages}
-              total={params.month ? visibleProjects.length : projects.total}
+              total={projects.total}
               perPage={projects.perPage}
               path="/projects"
               params={params}
@@ -206,6 +199,11 @@ export default async function ProjectsPage({
 
     </ResearchBackground>
   );
+}
+
+function getPortfolioStat(stats: Awaited<ReturnType<typeof getResearchPortfolioStats>>, key: string, fallback: number) {
+  const value = stats?.stats.find((item) => item.key === key)?.value;
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
 function ProjectClosingCta() {

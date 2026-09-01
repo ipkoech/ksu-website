@@ -20,10 +20,39 @@ from ...schemas import (
     ResearchThemeCreate,
     ResearchThemeUpdate,
 )
-from ...services import FocusAreaService, ProjectDetailService, ProjectRelationshipService, ProjectService, TagService, ThemeRelationshipService, ThemeService
+from ...services import FocusAreaService, ProjectDetailService, ProjectPublicDetailService, ProjectRelationshipService, ProjectService, TagService, ThemeRelationshipService, ThemeService
 from ._crud import build_crud_router
 
 router = APIRouter()
+
+
+@router.get(
+    "/projects/featured",
+    tags=["Research Projects"],
+    response_model=SuccessEnvelope[JsonObject],
+)
+@cached_public(timeout=300)
+async def get_featured_project(db: AsyncSession = Depends(get_db)):
+    project = await ProjectPublicDetailService.get_featured(db)
+    if project is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No featured research project found")
+    return success(data=project)
+
+
+@router.get(
+    "/projects/{slug}/public-detail",
+    tags=["Research Projects"],
+    response_model=SuccessEnvelope[JsonObject],
+)
+@cached_public(timeout=300)
+async def get_public_project_detail(
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+):
+    detail = await ProjectPublicDetailService.get_by_slug(db, slug)
+    if detail is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Research Project not found")
+    return success(data=detail)
 
 
 @router.get(

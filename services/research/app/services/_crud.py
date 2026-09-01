@@ -92,6 +92,15 @@ class CRUDService(Generic[M]):
         return query
 
     @classmethod
+    def _apply_month(cls, query, month: int | None = None):
+        if month is None:
+            return query
+        for field in ("start_date", "publication_date", "event_date", "created_at"):
+            if hasattr(cls.model, field):
+                return query.where(extract("month", getattr(cls.model, field)) == month)
+        return query
+
+    @classmethod
     def _apply_order(cls, query, sort: str | None = None, order: str | None = None):
         if sort and hasattr(cls.model, sort):
             column = getattr(cls.model, sort)
@@ -159,6 +168,7 @@ class CRUDService(Generic[M]):
         search: str | None = None,
         filters: dict[str, Any] | None = None,
         year: int | None = None,
+        month: int | None = None,
         sort: str | None = None,
         order: str | None = None,
         load_options: tuple[Any, ...] | list[Any] = (),
@@ -169,6 +179,7 @@ class CRUDService(Generic[M]):
         query = cls._apply_search(query, search)
         query = cls._apply_filters(query, filters)
         query = cls._apply_year(query, year)
+        query = cls._apply_month(query, month)
         query = cls._apply_order(query, sort=sort, order=order)
         return await paginate(db, query, page=page, per_page=per_page)
 
@@ -182,6 +193,7 @@ class CRUDService(Generic[M]):
         search: str | None = None,
         filters: dict[str, Any] | None = None,
         year: int | None = None,
+        month: int | None = None,
         sort: str | None = None,
         order: str | None = None,
         load_options: tuple[Any, ...] | list[Any] = (),
@@ -193,6 +205,7 @@ class CRUDService(Generic[M]):
         query = cls._apply_search(query, search)
         query = cls._apply_filters(query, filters)
         query = cls._apply_year(query, year)
+        query = cls._apply_month(query, month)
         query = cls._apply_order(query, sort=sort, order=order)
         return await paginate(db, query, page=page, per_page=per_page)
 
