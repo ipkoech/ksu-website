@@ -21,6 +21,7 @@ Local options:
 
 VM options:
   --host HOST          SSH host, for example ubuntu@203.0.113.10. Required.
+  --jump-host HOST     SSH bastion/jump host used before connecting to --host.
   --env ENV            Deployment environment: dev, staging, or production. Required.
   --branch BRANCH      Branch to deploy. Defaults to dev.
   --repo-url URL       Git repository URL. Defaults to the local origin URL.
@@ -1113,6 +1114,7 @@ deploy_vm() {
   shift
 
   local host=""
+  local jump_host=""
   local env_name=""
   local branch="dev"
   local repo_url
@@ -1153,6 +1155,10 @@ deploy_vm() {
     case "$1" in
       --host)
         host="${2:-}"
+        shift 2
+        ;;
+      --jump-host)
+        jump_host="${2:-}"
         shift 2
         ;;
       --env)
@@ -1379,9 +1385,19 @@ deploy_vm() {
   remote="$(vm_remote_script "${mode}" "${env_name}" "${branch}" "${repo_url}" "${repo_path}" "${project_name}" "${public_host}" "${api_host}" "${research_host}" "${bootstrap}" "${pull}" "${backup}" "${backup_dir}" "${with_gateway}" "${skip_frontend}" "${skip_build}" "${enable_https}" "${cert_email}" "${run_migrations}" "${inspect_services}" "${log_tail}" "${log_follow}" "${image_prefix}" "${image_tag}" "${push_images}" "${pull_images}" "${cleanup_images}" "${deploy_scope}" "${edge_http_port}")"
 
   if [[ "${DRY_RUN}" -eq 1 ]]; then
-    printf '+ ssh %q %q\n' "${host}" "${remote}"
+    if [[ -n "${jump_host}" ]]; then
+      printf '+ ssh %q ssh %q %q\n' "${jump_host}" "${host}" "${remote}"
+    else
+      printf '+ ssh %q %q\n' "${host}" "${remote}"
+    fi
   else
-    ssh "${host}" "${remote}"
+    if [[ -n "${jump_host}" ]]; then
+      # The jump host must have key-based access to the target VM. This keeps
+      # the only interactive authentication prompt on the bastion connection.
+      ssh "${jump_host}" "ssh $(shell_quote "${host}") $(shell_quote "${remote}")"
+    else
+      ssh "${host}" "${remote}"
+    fi
   fi
 }
 
