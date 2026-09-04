@@ -103,9 +103,12 @@ class ProgrammeCreate(BaseSchema):
     name: str = Field(min_length=1, max_length=255)
     code: CodeStr
     slug: SlugStr | None = None
+    external_source: str | None = Field(default=None, max_length=64)
+    external_source_id: str | None = Field(default=None, max_length=128)
+    external_name: str | None = Field(default=None, max_length=255)
     level: str = Field(min_length=1, max_length=32)
     mode_of_study: str = Field(default="full_time", max_length=32)
-    duration: str = Field(min_length=1, max_length=64)
+    duration: str | None = Field(default=None, max_length=64)
     credits_required: int | None = Field(default=None, ge=0)
     department_id: uuid.UUID
     about: str | None = None
@@ -140,6 +143,9 @@ class ProgrammeUpdate(BaseSchema):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     code: CodeStr | None = None
     slug: SlugStr | None = None
+    external_source: str | None = Field(default=None, max_length=64)
+    external_source_id: str | None = Field(default=None, max_length=128)
+    external_name: str | None = Field(default=None, max_length=255)
     level: str | None = Field(default=None, max_length=32)
     mode_of_study: str | None = Field(default=None, max_length=32)
     duration: str | None = Field(default=None, max_length=64)
@@ -177,9 +183,12 @@ class ProgrammeRead(BaseReadSchema):
     name: str
     code: str
     slug: str
+    external_source: str | None = None
+    external_source_id: str | None = None
+    external_name: str | None = None
     level: str
     mode_of_study: str
-    duration: str
+    duration: str | None = None
     credits_required: int | None = None
     department_id: uuid.UUID
     about: str | None = None

@@ -26,10 +26,13 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
+    ".next-check-2/types/**/*.ts",
+    ".next-check/types/**/*.ts",
     ".next-dev/types/**/*.ts",
+    ".next-verify/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-verify/types/**/*.ts"
+    ".next-check-final/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

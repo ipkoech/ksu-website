@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowRight, Landmark, PenLine, Settings, UserCheck } from "lucide-react";
+import { ArrowRight, Landmark, LogOut, PenLine, Settings, UserCheck } from "lucide-react";
 import { useAuth, getHighestRole, formatRoleName } from "@ksu/auth";
 import type { Service } from "@ksu/auth";
 import { usePortalAccess, type PortalAccess } from "@ksu/api-client";
@@ -149,7 +149,7 @@ function directoryItemFromAccess(access: PortalAccess): PortalDirectoryItem {
         access.scope_type === "global"
           ? fallback.description
           : `${fallback.description} Current scope: ${access.scope_label}.`,
-      baseHref: isAlias ? fallback.baseHref : access.href || fallback.baseHref,
+      baseHref: canonicalKey === "heri" ? "/heri-portal" : (isAlias ? fallback.baseHref : access.href || fallback.baseHref),
       access,
     };
   }
@@ -181,7 +181,7 @@ function directoryItemsFromAccess(accessRecords: PortalAccess[]) {
 
 export default function SelectServicePage() {
   const router = useRouter();
-  const { user, switchService } = useAuth();
+  const { user, switchService, logout } = useAuth();
   const portalAccessQuery = usePortalAccess();
 
   if (!user) return null;
@@ -211,6 +211,11 @@ export default function SelectServicePage() {
     router.push(href);
   };
 
+  const handleLogout = async () => {
+    await logout();
+    router.replace("/login");
+  };
+
   return (
     <div className="min-h-screen bg-muted/40 p-4 sm:p-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -224,9 +229,15 @@ export default function SelectServicePage() {
               </p>
             </div>
           </div>
-          <Badge variant="secondary" className="w-fit">
-            {visiblePortals.length} portals available
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge variant="secondary" className="w-fit">
+              {visiblePortals.length} portals available
+            </Badge>
+            <Button type="button" variant="outline" size="sm" onClick={() => void handleLogout()}>
+              <LogOut data-icon="inline-start" />
+              Log out
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

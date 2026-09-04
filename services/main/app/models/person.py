@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date
+from datetime import date, datetime
 from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa
@@ -48,6 +48,10 @@ class Person(Base):
 
     # Contact
     email: Mapped[str] = mapped_column(sa.String(320), unique=True, nullable=False, index=True)
+    external_source: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True, index=True)
+    external_source_id: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True, index=True)
+    external_updated_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    external_avatar_url: Mapped[Optional[str]] = mapped_column(sa.String(1024), nullable=True)
     phone: Mapped[Optional[str]] = mapped_column(sa.String(24), nullable=True)
     alternative_email: Mapped[Optional[str]] = mapped_column(sa.String(320), nullable=True)
     alternative_phone: Mapped[Optional[str]] = mapped_column(sa.String(24), nullable=True)
@@ -63,6 +67,7 @@ class Person(Base):
         JSONB,
         nullable=True,
     )  # [{degree, institution, year, field}]
+    skills: Mapped[Optional[list[str]]] = mapped_column(JSONB, nullable=True)
 
     # Employment
     employee_number: Mapped[Optional[str]] = mapped_column(sa.String(32), unique=True, nullable=True, index=True)
@@ -156,6 +161,9 @@ class Person(Base):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
+    work_experience: Mapped[list["PersonWorkExperience"]] = relationship(
+        "PersonWorkExperience", back_populates="person", cascade="all, delete-orphan", lazy="selectin"
+    )
     programme_tutorships: Mapped[list["ProgrammeTutor"]] = relationship(
         "ProgrammeTutor",
         back_populates="person",
@@ -204,4 +212,22 @@ class Person(Base):
         return f"<Person {self.full_name}>"
 
 
-__all__ = ["Person"]
+class PersonWorkExperience(Base):
+    """Employment history imported from an external staff directory."""
+
+    __tablename__ = "person_work_experience"
+
+    person_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey("persons.id", ondelete="CASCADE"), nullable=False, index=True)
+    external_source: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True, index=True)
+    external_source_id: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True, index=True)
+    organization: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    designation: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
+    assignment: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
+    start_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
+    end_date: Mapped[Optional[date]] = mapped_column(sa.Date, nullable=True)
+    source_status: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True)
+
+    person: Mapped["Person"] = relationship("Person", back_populates="work_experience")
+
+
+__all__ = ["Person", "PersonWorkExperience"]

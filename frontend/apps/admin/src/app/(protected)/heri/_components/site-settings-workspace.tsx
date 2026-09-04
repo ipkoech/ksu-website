@@ -32,7 +32,10 @@ function parseJson(value: string) {
 
 export function SiteSettingsWorkspace() {
   const { hasPermission, isAdmin } = usePermissions();
-  const canWrite = isAdmin || hasPermission("heri.settings.write");
+  // Site settings are persisted through the HERI content administration
+  // endpoint, which is intentionally governed by the same scoped write
+  // permission as the other managed HERI records.
+  const canWrite = isAdmin || hasPermission("heri.content.write");
   const query = useHeriResourceQuery<Settings>("site-settings", {
     page: 1,
     per_page: 1,
@@ -89,7 +92,7 @@ export function SiteSettingsWorkspace() {
   };
   if (query.isLoading || !record)
     return (
-      <div className="p-6 md:p-10">
+      <div className="p-4 md:p-6">
         <p className="rounded-xl border bg-white p-6 text-sm text-slate-500">
           <Loader2 className="mr-2 inline size-4 animate-spin" />
           Loading site settings…
@@ -97,7 +100,7 @@ export function SiteSettingsWorkspace() {
       </div>
     );
   return (
-    <main className="space-y-6 p-6 md:p-10">
+    <main className="space-y-5 p-4 md:p-6">
       <header>
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">
           HERI Africa administration

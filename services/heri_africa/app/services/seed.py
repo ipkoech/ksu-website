@@ -21,6 +21,7 @@ from ..models.content import (
     ResearchTheme,
     SiteSettings,
 )
+from ..models.chair import ChairProfile
 
 
 ModelT = TypeVar("ModelT")
@@ -66,6 +67,30 @@ async def seed_heri(db: AsyncSession) -> None:
     else:
         for field, value in site_payload.items():
             setattr(site, field, value)
+
+    await _upsert(
+        db,
+        ChairProfile,
+        ChairProfile.name == "HERI Africa Language Education Research Chair",
+        {
+            "name": "HERI Africa Language Education Research Chair",
+            "acronym": "HERI Africa",
+            "host_institution": "Kisii University",
+            "initiative_name": "HERI Africa",
+            "about": "The Language Education Research Chair at Kisii University generates evidence that strengthens language teaching, foundational literacy, policy and practice across Africa.",
+            "tagline": "Africa-led language education research for real-world impact",
+            "vision": "An Africa where every learner can learn, read and thrive in their own languages.",
+            "mission": "To advance relevant, Africa-led language education research and connect evidence with policy, practice and communities.",
+            "mandate": "To strengthen language education research, communication and capacity across Africa.",
+            "objectives": "Generate relevant evidence, support researchers and educators, communicate findings accessibly, and influence language education policy and practice.",
+            "values": ["Integrity", "Inclusivity", "Collaboration", "Excellence", "Impact"],
+            "why_it_matters": "Language is central to how learners understand, participate and succeed. Locally grounded research helps education systems respond to the realities of African classrooms and communities.",
+            "logo_url": "/logos/heri-africa-logo.svg",
+            "cover_image_url": LAUNCH_IMAGE_URL,
+            "seo": {"title": "HERI Africa Language Education Research Chair", "description": "Africa-led language education and foundational literacy research hosted by Kisii University."},
+            "is_active": True,
+        },
+    )
 
     theme = await _upsert(
         db,

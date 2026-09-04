@@ -268,7 +268,7 @@ async def _upsert_profile_photo(db: AsyncSession, spec: dict[str, Any]) -> Media
         "public_url": str(public_url),
         "title": f"Portrait of {spec['full_name']}",
         "alt_text": f"Portrait of {spec['full_name']}",
-        "description": f"Official staff portrait published on {spec['source_url']}.",
+        "description": f"Profile photograph of {spec['full_name']}, serving as {spec.get('position') or 'a member of staff'}.",
         "tags": ["staff", "portrait", "official-profile"],
         "credit": "Kisii University",
         "media_type": "image",

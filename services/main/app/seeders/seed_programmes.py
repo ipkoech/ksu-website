@@ -18,7 +18,7 @@ from ._shared import (
     upsert_programme,
     upsert_programme_intake,
 )
-from .programme_catalogue import BROCHURE_PROGRAMMES, BROCHURE_URL
+from .programme_catalogue import BROCHURE_PROGRAMMES
 
 
 def programme_code(name: str, level: str) -> str:
@@ -146,14 +146,14 @@ async def seed_programmes(db: AsyncSession, ctx: SeedContext) -> None:
             credits_required=spec.get("credits_required"),
             department_id=department.id,
             about=spec.get("about") or (
-                f"{spec['name']} is published in the official Kisii University course brochure "
-                f"and is associated here with {department.name} under {department.school.name if department.school else 'the university academic structure'}."
+                f"{spec['name']} provides structured study in the subject area of {department.name}, "
+                "with coursework and assessment suited to the qualification level."
             ),
             objectives=spec.get("objectives"),
             career_prospects=spec.get("career_prospects"),
             curriculum_overview=spec.get("curriculum_overview") or (
-                f"Programme published in the official Kisii University course brochure under {department.name}. "
-                f"Source: {BROCHURE_URL}"
+                f"The curriculum covers foundational and advanced units in {department.name}, together with "
+                "applied learning, assessment, and research or project work where required."
             ),
             entry_requirements=str(spec["entry_requirements"]),
             cluster_subjects=spec.get("cluster_subjects"),
@@ -161,7 +161,7 @@ async def seed_programmes(db: AsyncSession, ctx: SeedContext) -> None:
             intake_months=spec.get("intake_months"),
             min_students=spec.get("min_students"),
             max_students=spec.get("max_students"),
-            accreditation_status=spec.get("accreditation_status", "published_in_brochure"),
+            accreditation_status=spec.get("accreditation_status", "To be confirmed from current University and regulator records"),
             accrediting_body=spec.get("accrediting_body", "Commission for University Education"),
             is_active=True,
             display_order=display_order,
@@ -179,5 +179,5 @@ async def seed_programmes(db: AsyncSession, ctx: SeedContext) -> None:
 
     existing_programmes = (await db.execute(select(Programme))).scalars().all()
     for programme in existing_programmes:
-        if programme.slug not in active_slugs:
+        if programme.slug not in active_slugs and programme.external_source is None:
             programme.is_active = False

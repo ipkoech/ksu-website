@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     template: "%s | HERI Africa",
   },
   description:
-    "Africa-led language education and foundational literacy research. The HERI Africa Language Education Research Chair, hosted by Kisii University.",
+    "The HERI Africa Language Education Research Chair at Kisii University advances Africa-led research in language education and foundational literacy.",
   keywords: [
     "HERI Africa",
     "language education research",

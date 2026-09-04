@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..models.analytics import AnalyticsEvent
+from ..models.chair import ChairProfile
 from ..models.content import Event, FooterLink, HeroSlide, ImpactMetric, NavigationItem, NewsArticle, Opportunity, Page, PageSection, ResearchPublication, ResearchProject, ResearchTheme, SiteSettings
 from ..models.media import MediaAsset
 from ..models.people import TeamMember
@@ -28,6 +29,7 @@ RESOURCE_MODELS: dict[str, type[Any]] = {
     "hero-slides": HeroSlide,
     "footer": FooterLink,
     "site-settings": SiteSettings,
+    "chair-profiles": ChairProfile,
     "analytics": AnalyticsEvent,
     "social-publications": SocialPublication,
 }

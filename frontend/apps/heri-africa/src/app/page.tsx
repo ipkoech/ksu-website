@@ -15,6 +15,7 @@ import { Reveal, RevealItem } from "../components/motion/reveal";
 import { withBasePath } from "../lib/base-path";
 import {
   getEvents,
+  getChair,
   getHeroSlides,
   getNews,
   getPartners,
@@ -24,40 +25,45 @@ import {
 
 const pillars = [
   {
-    title: "Foundational Literacy",
-    description: "Strengthening early reading and writing for every learner.",
+    title: "Relevant Research",
+    description: "Research that meets the real needs of schools, communities and education systems.",
     icon: BookOpen,
     iconColor: "bg-heri-lime",
-    image: withBasePath("/images/landing-page/tc-fore.png"),
+    image: withBasePath("/images/student-life/empowering-student-life/image4.jpg"),
   },
   {
-    title: "African Languages",
-    description: "Promoting and researching the teaching of African languages.",
+    title: "African Perspective",
+    description: "Africa-led research and locally grounded solutions that strengthen global understanding.",
     icon: Languages,
     iconColor: "bg-heri-teal",
-    image: withBasePath("/images/landing-page/why-kisii/pathway-2.jpg"),
+    image: withBasePath("/images/HERIAfricaLaunch.jpg"),
   },
   {
-    title: "Research to Policy",
-    description: "Generating evidence that informs language education policy.",
+    title: "Research Communication",
+    description: "Making research accessible so findings inform policy, practice and communities.",
     icon: FileText,
     iconColor: "bg-heri-blue",
-    image: withBasePath("/images/landing-page/why-kisii/sakgwa-academic-block.jpg"),
+    image: withBasePath("/images/student-life/Life-around-studies/career-mentorship.jpg"),
   },
   {
     title: "Capacity Strengthening",
-    description:
-      "Building skills and systems for sustainable research and practice.",
+    description: "Strengthening the skills of researchers and institutions for high-quality, impactful research.",
     icon: GraduationCap,
     iconColor: "bg-heri-lime",
-    image: withBasePath("/images/landing-page/why-kisii/bg-3.jpg"),
+    image: withBasePath("/images/student-life/innovation-week/image3.jpg"),
   },
 ];
 
 const commitments = [
-  "Centre African perspectives in language education research.",
-  "Turn evidence into policy and classroom practice.",
-  "Grow the next generation of African researchers.",
+  "Set a Language Education Research Agenda that guides relevant studies.",
+  "Build the skills of early-career university researchers, with a focus on women and inclusion.",
+  "Share research outputs in accessible formats that influence policy and practice.",
+];
+
+const focusAreas = [
+  ["Vision", "An Africa where language education research is locally led, relevant and used to improve learning and opportunity."],
+  ["Mission", "To put African language education researchers in the driver’s seat and connect evidence with policy, practice and communities."],
+  ["Key activities", "Research, capacity strengthening, research communication and collaboration across universities, government, schools and communities."],
 ];
 
 const pathways = [
@@ -97,9 +103,10 @@ const newsTints = [
 ];
 
 export default async function HeriHomePage() {
-  const [site, news, team, partners, events, heroSlides] =
+  const [site, chair, news, team, partners, events, heroSlides] =
     await Promise.allSettled([
       getSite(),
+      getChair(),
       getNews(),
       getTeam(),
       getPartners(),
@@ -107,6 +114,7 @@ export default async function HeriHomePage() {
       getHeroSlides(),
     ]);
   const siteData = site.status === "fulfilled" ? site.value : null;
+  const chairData = chair.status === "fulfilled" ? chair.value : null;
   const newsData = news.status === "fulfilled" ? news.value.slice(0, 3) : [];
   const teamData = team.status === "fulfilled" ? team.value.slice(0, 4) : [];
   const partnerData =
@@ -203,6 +211,28 @@ export default async function HeriHomePage() {
           </div>
         </section>
 
+        <section className="bg-heri-cream px-6 py-16 lg:py-20">
+          <div className="mx-auto max-w-7xl">
+            <Reveal>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-heri-teal">About HERI Africa</p>
+              <h2 className="mt-3 max-w-3xl text-3xl font-bold leading-tight text-heri-blue sm:text-4xl">
+                Investing in locally led solutions and the African researchers who drive them
+              </h2>
+              <div className="mt-4 h-1 w-10 bg-heri-lime" />
+            </Reveal>
+            <div className="mt-9 grid gap-5 md:grid-cols-3">
+              {focusAreas.map(([title, description], index) => (
+                <RevealItem key={title} index={index}>
+                  <article className="h-full rounded-2xl bg-white p-7 shadow-sm ring-1 ring-heri-teal/10">
+                    <h3 className="text-2xl font-bold text-heri-blue">{title}</h3>
+                    <p className="mt-3 text-sm leading-7 text-slate-600">{description}</p>
+                  </article>
+                </RevealItem>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="bg-heri-ink px-6 py-16 text-white lg:py-20">
           <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[0.9fr_1.1fr]">
             <Reveal>
@@ -259,7 +289,7 @@ export default async function HeriHomePage() {
             </h2>
             <div className="mt-4 h-1 w-10 bg-heri-lime" />
             <p className="mt-5 max-w-xl text-base leading-7 text-slate-600">
-              {siteData?.tagline ??
+              {chairData?.about ?? siteData?.tagline ??
                 "Hosted by Kisii University, the Chair bridges research, policy and practice in language education and foundational literacy for Africa."}
             </p>
             <Link

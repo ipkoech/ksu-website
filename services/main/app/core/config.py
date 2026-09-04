@@ -71,6 +71,7 @@ class Settings(BaseSettings):
     LIBRARY_SERVICE_URL: str
     RESEARCH_SERVICE_API_KEY: str | None = None
     LIBRARY_SERVICE_API_KEY: str | None = None
+    DIGITAL_LECTURERS_URL: str = "https://digital.kisiiuniversity.ac.ke/api/lecturers"
     PASSWORD_RESET_RATE_LIMIT_COUNT: int
     PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS: int
     AUTH_LOGIN_MAX_ATTEMPTS: int = 5

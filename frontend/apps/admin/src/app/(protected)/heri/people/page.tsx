@@ -3,7 +3,13 @@ import { TeamWorkspace } from "../_components/team-workspace";
 
 export default function HeriPeoplePage() {
   return (
-    <div className="space-y-8">
+    <div className="min-h-full bg-slate-50/70">
+      <header className="border-b border-slate-200 bg-white px-6 py-8 md:px-10">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">HERI Africa administration</p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">People & partners</h1>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Present the chair’s research network with accurate profiles, institutional relationships, visibility controls, and public ordering.</p>
+      </header>
+      <div className="space-y-8 py-8">
       <TeamWorkspace />
       <HeriCrudWorkspace
         config={{
@@ -51,6 +57,7 @@ export default function HeriPeoplePage() {
           ],
         }}
       />
+      </div>
     </div>
   );
 }

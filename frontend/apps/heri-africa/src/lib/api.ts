@@ -6,6 +6,24 @@ export type SiteSettings = {
   seo_defaults: Record<string, unknown>;
   research_center_slug: string | null;
 };
+export type ChairProfile = {
+  id: string;
+  name: string;
+  acronym: string | null;
+  host_institution: string;
+  initiative_name: string;
+  about: string;
+  tagline: string | null;
+  vision: string;
+  mission: string;
+  mandate: string;
+  objectives: string;
+  values: string[] | Record<string, unknown> | null;
+  why_it_matters: string;
+  logo_url: string | null;
+  cover_image_url: string | null;
+  seo: Record<string, unknown>;
+};
 
 export type NewsSummary = {
   id: string;
@@ -26,12 +44,25 @@ export type TeamSummary = {
   role: string;
   biography: string;
   photo_url: string | null;
+  title?: string | null;
+  expertise?: string[] | Record<string, unknown> | null;
+  education?: string | null;
+  research_interests?: string | null;
+  email?: string | null;
+  social_links?: Record<string, unknown> | null;
+  is_featured?: boolean;
 };
 export type ResearchSummary = {
   id: string;
   slug: string;
   title: string;
   summary: string;
+  cover_image_url?: string | null;
+  publication_date?: string | null;
+  publication_type?: string | null;
+  theme_id?: string | null;
+  is_featured?: boolean;
+  position?: number;
 };
 export type PartnerSummary = {
   id: string;
@@ -50,6 +81,12 @@ export type EventSummary = {
   starts_at: string | null;
   ends_at: string | null;
   location: string | null;
+  event_type?: string | null;
+  featured_image_url?: string | null;
+  is_virtual?: boolean;
+  virtual_url?: string | null;
+  is_featured?: boolean;
+  position?: number;
 };
 export type HeroSlide = {
   id: string;
@@ -92,6 +129,9 @@ async function get<T>(path: string): Promise<T> {
 export async function getSite(): Promise<SiteSettings> {
   return get<SiteSettings>("/site");
 }
+export async function getChair(): Promise<ChairProfile> {
+  return get<ChairProfile>("/chair");
+}
 
 export async function getNews(): Promise<NewsSummary[]> {
   return get<NewsSummary[]>("/news?limit=24");
@@ -130,6 +170,13 @@ export type OpportunitySummary = {
   summary: string;
   application_url: string | null;
   closing_at: string | null;
+  description?: string;
+  eligibility?: string;
+  application_instructions?: string;
+  opportunity_type?: string | null;
+  featured_image_url?: string | null;
+  is_featured?: boolean;
+  position?: number;
 };
 export type ImpactMetricSummary = {
   id: string;

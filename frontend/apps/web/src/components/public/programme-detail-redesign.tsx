@@ -41,7 +41,7 @@ function label(value?: string | null) {
     ? value
         .replace(/[_-]+/g, " ")
         .replace(/\b\w/g, (character) => character.toUpperCase())
-    : "To be confirmed";
+    : "Fee details pending University confirmation";
 }
 
 function level(value: string | null | undefined, title: string) {
@@ -88,7 +88,7 @@ function feesFrom(value: unknown): ProgrammeFeeDisplay[] {
     const amount = String(
       row.display ??
         [row.currency, row.amount].filter(Boolean).join(" ") ??
-        "To be confirmed",
+        "Fee details pending University confirmation",
     );
     const notes = String(
       row.notes ?? row.description ?? label(String(row.period ?? "")),
@@ -96,7 +96,7 @@ function feesFrom(value: unknown): ProgrammeFeeDisplay[] {
     return [
       {
         item,
-        amount: amount || "To be confirmed",
+        amount: amount || "Fee details pending University confirmation",
         notes:
           notes === "To Be Confirmed" ? "Confirm with the University" : notes,
       },
@@ -150,10 +150,10 @@ export function ProgrammeDetailRedesign({
       .join(" ");
   const programmeLevel = level(programme?.level, title);
   const studyMode = mode(programme?.mode_of_study);
-  const duration = programme?.duration?.trim() || "To be confirmed";
+  const duration = programme?.duration?.trim() || "Duration details pending University confirmation";
   const intake = programme?.intake_months?.length
     ? programme.intake_months.join(", ")
-    : "Intake to be confirmed";
+    : "Intake dates pending University confirmation";
   const department =
     programme?.department?.name ??
     programme?.department_name ??
@@ -172,7 +172,7 @@ export function ProgrammeDetailRedesign({
       item: item.title,
       amount: item.total_amount
         ? `${item.currency} ${new Intl.NumberFormat("en-KE").format(item.total_amount)}`
-        : "To be confirmed",
+        : "Fee details pending University confirmation",
       notes: [label(item.applicant_type), label(item.fee_category), item.notes]
         .filter(Boolean)
         .join(" · "),
@@ -359,7 +359,7 @@ export function ProgrammeDetailRedesign({
                     Fees & funding
                   </p>
                   <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-normal tracking-tight text-primary">
-                    {fees[0]?.amount ?? "To be confirmed"}
+                    {fees[0]?.amount ?? "Fee details pending University confirmation"}
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     {fees[0]?.notes ??

@@ -705,6 +705,8 @@ SCHOOL_SPECS: list[dict[str, Any]] = [
             {"name": "Department of Agricultural Sciences", "code": "AGRSCI"},
             {"name": "Department of Agricultural Education and Extension", "code": "AGEDX"},
             {"name": "Department of Applied Aquatic Sciences", "code": "AAS"},
+            {"name": "Department of Environment, Natural Resources & Applied Aquatic Sciences", "code": "ENRAAS"},
+            {"name": "Agricultural Resource Economics and Management", "code": "AREM"},
         ],
     },
     {
@@ -738,9 +740,9 @@ SCHOOL_SPECS: list[dict[str, Any]] = [
         "website": "https://kisiiuniversity.ac.ke/school/school-of-education-and-human-resource-development",
         "office_location": "Sakagwa Building, Kisii University Main Campus",
         "departments": [
-            {"name": "Department of Educational Foundations & Educational Administration Planning and Economics of Education", "code": "EFAPE"},
+            {"name": "Department of Educational Foundations & Educational Administration, Planning and Economics (EDFO & EAPE)", "code": "EFAPE"},
             {"name": "Department of Curriculum Instruction and Media (CIM)", "code": "CIM"},
-            {"name": "Department of Early Childhood Development Education (ECDE), Special Needs Education (SNE) & Educational Psychology (EPSC)", "code": "ECDESNEEPSC"},
+            {"name": "Department of Educational Psychology, Special Needs Education & Early Childhood Education (EPSC, SNES & ECDE)", "code": "ECDESNEEPSC"},
         ],
     },
     {
@@ -760,7 +762,7 @@ SCHOOL_SPECS: list[dict[str, Any]] = [
             {"name": "Department of Pharmacy", "code": "PHARM"},
             {"name": "Department of Medical Microbiology and Parasitology", "code": "MMP"},
             {"name": "Department of Public Health", "code": "PUBH"},
-            {"name": "Department of Community Health & Development", "code": "CHD"},
+            {"name": "Department of Community Health & Behavioral Sciences", "code": "CHD"},
             {"name": "Department of Medical Laboratory Sciences", "code": "MLS"},
             {"name": "Department of Nursing", "code": "NURS"},
             {"name": "Department of Internal Medicine", "code": "IMED"},
@@ -770,10 +772,11 @@ SCHOOL_SPECS: list[dict[str, Any]] = [
             {"name": "Department of Medical Physiology", "code": "MPHYS"},
             {"name": "Department of Human Pathology", "code": "HPATH"},
             {"name": "Department of Surgery", "code": "SURG"},
-            {"name": "Department of Obstetrics and Gynaecology", "code": "OBGYN"},
+            {"name": "Department of Obstertrics and Gynacology", "code": "OBGYN"},
             {"name": "Department of Pediatrics and Child Health", "code": "PCH"},
             {"name": "Department of Clinical Pharmacology", "code": "CPHARM"},
             {"name": "Department of Medicine", "code": "MED"},
+            {"name": "Department of Reproductive Health", "code": "REPRO"},
         ],
     },
     {
@@ -840,7 +843,9 @@ SCHOOL_SPECS: list[dict[str, Any]] = [
         "mandate": "To teach the theory and substance of law, build ethical and research-ready legal professionals, and support legal scholarship, outreach, and practice.",
         "website": "https://kisiiuniversity.ac.ke/school/school-of-law",
         "departments": [
-            {"name": "Department of Law", "code": "LAW"},
+            {"name": "Department of Commercial Law", "code": "CLAW"},
+            {"name": "Department of Public Law", "code": "PLAW"},
+            {"name": "Department of Private Law", "code": "PRLAW"},
         ],
     },
 ]
@@ -850,7 +855,7 @@ for school_spec in SCHOOL_SPECS:
     handbook_fact = HANDBOOK_SCHOOL_FACTS.get(school_spec["code"])
     if not handbook_fact:
         continue
-    school_spec["about"] = f"{school_spec['about']} Handbook context: {handbook_fact['about']}"
+    school_spec["about"] = f"{school_spec['about']} {handbook_fact['about']}"
     school_spec["handbook_departments"] = list(handbook_fact["handbook_departments"])
     school_spec["handbook_source_url"] = HANDBOOK_SOURCE["url"]
     if handbook_fact.get("email"):
@@ -878,27 +883,27 @@ for school_spec in SCHOOL_SPECS:
 
 ADMIN_DEPARTMENTS: list[dict[str, Any]] = [
     {"name": "Vice-Chancellor's Office", "code": "VCO", "wing_code": None, "head_key": "vice_chancellor", "about": "Executive office that provides strategic leadership and institutional coordination.", "is_public": False},
-    {"name": "Registrar Academic Affairs", "code": "ACAFFAIRS", "wing_code": "RAA", "head_key": "registrar_academic", "about": "Registrar Academic Affairs is listed as an official administration department headed by the Acting Registrar Academic Affairs. Its current public page publishes academic-affairs navigation, team, news, events, and downloads sections, with no additional mandate text beyond the office listing.", "source_url": "https://kisiiuniversity.ac.ke/dpt/registrar-academic-affairs"},
+    {"name": "Registrar Academic Affairs", "code": "ACAFFAIRS", "wing_code": "RAA", "head_key": "registrar_academic", "about": "Registrar Academic Affairs supports student records, registration, examinations, academic progression, graduation, and official academic correspondence.", "source_url": "https://kisiiuniversity.ac.ke/dpt/registrar-academic-affairs"},
     {"name": "Dean of Students", "code": "STUAFFAIRS", "wing_code": "STUAFFAIRS", "head_key": "dean_students", "about": "The Dean of Students Department offers support and welfare services to students and coordinates essential academic and non-academic student support services that enhance retention.", "mandate": "Develop, nurture, and promote an enabling environment that supports and enhances students' academic and developmental pursuits, including first-year registration and orientation, student leadership elections, KSUSA induction and budgeting, cultural awareness and integration, student handbook review, clubs and societies, loans and bursaries, student bereavement support, counselling, sports and games, and chaplaincy services.", "source_url": "https://kisiiuniversity.ac.ke/dpt/dean-of-students"},
     {"name": "Research, Extension, Innovation and Resource Mobilization", "code": "REIRM", "wing_code": "REIRM", "head_key": None, "about": "Official research office responsible for research information, policy, partnerships, grants, and ethics review.", "source_url": "https://research.kisiiuniversity.ac.ke/", "email": "research@kisiiuniversity.ac.ke", "phone": "+254773452323 +254020491131", "office_location": "408 - 40200 Kisii, Kenya", "is_public": False},
     {"name": "University Library", "code": "LIB", "wing_code": "RAA", "head_key": "university_librarian", "about": "Official library support unit serving teaching, learning, and research through print and electronic information services.", "source_url": "https://kisiiuniversity.ac.ke/library/library-website", "is_public": False},
-    {"name": "Registrar Administration", "code": "AHRCS", "wing_code": "AHRCS", "head_key": "registrar_admin", "about": "Registrar Administration is listed as an official administration department headed by the Acting Registrar Administration, Human Resource and Central Services. Its current public page publishes administration navigation, team, news, events, and downloads sections, with current downloads for university adverts.", "source_url": "https://kisiiuniversity.ac.ke/dpt/registrar-administration"},
-    {"name": "Finance", "code": "FIN", "wing_code": "FIN", "head_key": "finance_officer", "about": "Finance is listed as an official administration department headed by the Finance Officer. Its current public page publishes finance navigation, team, news, events, and downloads sections, with no additional mandate text beyond the office listing.", "source_url": "https://kisiiuniversity.ac.ke/dpt/finance"},
-    {"name": "Planning", "code": "PLNDEV", "wing_code": "PLANNING", "head_key": None, "about": "Planning is listed as an official administration department on the university website.", "source_url": "https://kisiiuniversity.ac.ke/dpt/planning"},
+    {"name": "Registrar Administration", "code": "AHRCS", "wing_code": "AHRCS", "head_key": "registrar_admin", "about": "Registrar Administration coordinates administrative records, human-resource processes, central services, staff communication, and related institutional support.", "source_url": "https://kisiiuniversity.ac.ke/dpt/registrar-administration"},
+    {"name": "Finance", "code": "FIN", "wing_code": "FIN", "head_key": "finance_officer", "about": "Finance supports fee processing, payment records, financial enquiries, budgeting, accounting, and institutional financial controls.", "source_url": "https://kisiiuniversity.ac.ke/dpt/finance"},
+    {"name": "Planning", "code": "PLNDEV", "wing_code": "PLANNING", "head_key": None, "about": "The Planning Department coordinates institutional planning, performance monitoring, reporting, and development initiatives across the University.", "source_url": "https://kisiiuniversity.ac.ke/dpt/planning"},
     {"name": "Information Communication and Technology (ICT)", "code": "ICT", "wing_code": "ICT", "head_key": "ict_manager", "about": "The Information and Communication Technology Department supports Kisii University's academic, research, and administrative functions through ICT resources, digital infrastructure, systems, connectivity, web platforms, user support, and data protection.", "mandate": "Provide innovative, reliable, and secure ICT services including ERP support, university web platforms, internet connectivity, hardware maintenance, MIS innovation, networking and website administration, email and communication services, user support, security and data protection, and technology integration.", "core_values": "Transformative thinking, respect, inclusivity, and fairness.", "service_charter": "The ICT client service delivery charter lists free ICT equipment repair/service and internet support within 1 day, user account opening within 1 hour, ICT equipment issuance within 1 day, website information posting within 1 day, staff profile updates within 1 day, and student/staff password or account resets within 10 minutes.", "source_url": "https://kisiiuniversity.ac.ke/dpt/information-communication-and-technology-ict"},
     {"name": "Medical Services", "code": "MEDSERV", "wing_code": "MEDICAL", "head_key": None, "about": "The University Medical Services department caters for the health needs of students, staff, their dependants, and the community in general through timely, quality, efficient, round-the-clock service delivery.", "mandate": "Provide general outpatient preventive, curative, and rehabilitative services; laboratory and medical diagnostic screening and testing; prevention and management of alcohol and drug abuse; referrals for specialized care and management; comprehensive HIV and AIDS prevention and support; and public health and sanitation.", "service_charter": "Medical Services is presented as an essential service provider offering 24-hour service every day of the week throughout the year.", "source_url": "https://kisiiuniversity.ac.ke/dpt/medical-services"},
-    {"name": "Internal Audit", "code": "AUDIT", "wing_code": "AUDIT", "head_key": None, "about": "Internal Audit is listed as an official administration department on the university website.", "source_url": "https://kisiiuniversity.ac.ke/dpt/internal-audit"},
-    {"name": "Corporate Communication", "code": "CORPCOMM", "wing_code": "CORPCOMM", "head_key": None, "about": "Corporate Communication is listed as an official administration department on the university website.", "source_url": "https://kisiiuniversity.ac.ke/dpt/corporate-communication"},
+    {"name": "Internal Audit", "code": "AUDIT", "wing_code": "AUDIT", "head_key": None, "about": "The Internal Audit Department reviews institutional systems, controls, expenditure, compliance, risk, and operational efficiency.", "source_url": "https://kisiiuniversity.ac.ke/dpt/internal-audit"},
+    {"name": "Corporate Communication", "code": "CORPCOMM", "wing_code": "CORPCOMM", "head_key": None, "about": "Corporate Communication manages official University communication, media relations, public notices, branding, and stakeholder engagement.", "source_url": "https://kisiiuniversity.ac.ke/dpt/corporate-communication"},
     {"name": "Procurement and Supplies", "code": "PROC", "wing_code": "PROC", "head_key": None, "about": "The Procurement and Supplies Department is divided into Administration, Planning and Budgetary Control; Procurement Processing; Stores and Inventory Management; and Contract Management and Disposal sections as provided under the Public Procurement and Assets Disposal Act, 2015.", "mandate": "Prepare the university consolidated procurement plan; register general suppliers; acquire goods, works, and services; dispose of surplus stores, equipment, and other unserviceable assets; manage supplier relationships; receive, store, control, and issue procured items or works; manage contracts; and advise the Accounting Officer and Management on procurement strategies that achieve value for money.", "core_values": "The department is guided by constitutional values and principles, equality and freedom from discrimination, affirmative action, integrity, public finance principles, public service values, procurement-profession principles and international norms, value for money, local industry promotion, sustainable development, environmental protection, and citizen contractor promotion.", "source_url": "https://kisiiuniversity.ac.ke/dpt/procurement-and-supplies"},
-    {"name": "Legal Department", "code": "LEGAL", "wing_code": "LEGAL", "head_key": None, "about": "Legal Department is listed as an official administration department on the university website.", "source_url": "https://kisiiuniversity.ac.ke/dpt/legal-department"},
-    {"name": "E-Learning Directorate", "code": "ELEARN", "wing_code": "ELEARN", "head_key": "director_elearning", "about": "E-Learning Directorate is listed as an official administration department on the university website.", "source_url": "https://kisiiuniversity.ac.ke/dpt/e-learning-directorate"},
-    {"name": "Board of Post Graduate Studies", "code": "BPGS", "wing_code": "RAA", "head_key": "registrar_academic", "about": "Board of Post Graduate Studies is listed as an official administration department on the university website.", "source_url": "https://kisiiuniversity.ac.ke/dpt/board-of-post-graduate-studies"},
-    {"name": "Salaries", "code": "SAL", "wing_code": "FIN", "head_key": None, "about": "Salaries is listed as an official administration department on the university website.", "source_url": "https://kisiiuniversity.ac.ke/dpt/salaries"},
-    {"name": "Student Career Services", "code": "CAREER", "wing_code": "STUAFFAIRS", "head_key": None, "about": "Student Career Services is listed as an official administration department on the university website.", "source_url": "https://kisiiuniversity.ac.ke/dpt/student-career-services"},
-    {"name": "Games and Sports Services", "code": "SPORTSERV", "wing_code": "STUAFFAIRS", "head_key": None, "about": "Games and Sports Services is listed as an official administration department on the university website.", "source_url": "https://kisiiuniversity.ac.ke/dpt/games-and-sports-services"},
-    {"name": "Security", "code": "SEC", "wing_code": "AHRCS", "head_key": None, "about": "Security is listed as an official administration department on the university website.", "source_url": "https://kisiiuniversity.ac.ke/dpt/security"},
-    {"name": "Central Services", "code": "CENTRAL", "wing_code": "AHRCS", "head_key": None, "about": "Central Services is listed as an official administration department on the university website.", "source_url": "https://kisiiuniversity.ac.ke/dpt/central-services"},
-    {"name": "Town Annexes", "code": "TOWNANNEX", "wing_code": "AHRCS", "head_key": None, "about": "Town Annexes is listed as an official administration department on the university website.", "source_url": "https://kisiiuniversity.ac.ke/dpt/town-annexes"},
+    {"name": "Legal Department", "code": "LEGAL", "wing_code": "LEGAL", "head_key": None, "about": "The Legal Department provides legal advice, reviews agreements, supports regulatory compliance, manages legal proceedings, and protects the University's institutional interests.", "source_url": "https://kisiiuniversity.ac.ke/dpt/legal-department"},
+    {"name": "E-Learning Directorate", "code": "ELEARN", "wing_code": "ELEARN", "head_key": "director_elearning", "about": "The E-Learning Directorate coordinates digital teaching and learning, supports the e-learning platform, and assists lecturers and students with online delivery.", "source_url": "https://kisiiuniversity.ac.ke/dpt/e-learning-directorate"},
+    {"name": "Board of Post Graduate Studies", "code": "BPGS", "wing_code": "RAA", "head_key": "registrar_academic", "about": "The Board of Postgraduate Studies oversees postgraduate admissions, registration, supervision, examination, thesis submission, and completion processes.", "source_url": "https://kisiiuniversity.ac.ke/dpt/board-of-post-graduate-studies"},
+    {"name": "Salaries", "code": "SAL", "wing_code": "FIN", "head_key": None, "about": "The Salaries section processes staff payroll, salary records, statutory deductions, payslips, and related payroll enquiries.", "source_url": "https://kisiiuniversity.ac.ke/dpt/salaries"},
+    {"name": "Student Career Services", "code": "CAREER", "wing_code": "STUAFFAIRS", "head_key": None, "about": "Student Career Services provides career guidance, employability preparation, internships, placement support, and employer engagement.", "source_url": "https://kisiiuniversity.ac.ke/dpt/student-career-services"},
+    {"name": "Games and Sports Services", "code": "SPORTSERV", "wing_code": "STUAFFAIRS", "head_key": None, "about": "Games and Sports Services coordinates student sports, recreation, training, competitions, facilities, and participation in inter-university events.", "source_url": "https://kisiiuniversity.ac.ke/dpt/games-and-sports-services"},
+    {"name": "Security", "code": "SEC", "wing_code": "AHRCS", "head_key": None, "about": "The Security Department protects students, staff, visitors, facilities, and University property through access control, patrols, incident response, and security coordination.", "source_url": "https://kisiiuniversity.ac.ke/dpt/security"},
+    {"name": "Central Services", "code": "CENTRAL", "wing_code": "AHRCS", "head_key": None, "about": "Central Services coordinates shared operational support for the University's administration, facilities, logistics, and daily operations.", "source_url": "https://kisiiuniversity.ac.ke/dpt/central-services"},
+    {"name": "Town Annexes", "code": "TOWNANNEX", "wing_code": "AHRCS", "head_key": None, "about": "Town Annexes coordinate University services and learning activities delivered through town campuses and annex facilities.", "source_url": "https://kisiiuniversity.ac.ke/dpt/town-annexes"},
 ]
 
 
@@ -1078,7 +1083,7 @@ async def get_or_create_person(session: AsyncSession, ctx: SeedContext, key: str
             "public_url": public_url,
             "title": spec.get("cv_title") or f"Curriculum Vitae - {full_name}",
             "alt_text": spec.get("cv_alt_text") or f"Curriculum vitae for {full_name}",
-            "description": spec.get("cv_description") or "Official curriculum vitae published by Kisii University.",
+            "description": spec.get("cv_description") or f"Curriculum vitae of {spec['full_name']}, covering academic qualifications, professional appointments, and scholarly work.",
             "tags": ["kisii-university", "staff-profile", "curriculum-vitae"],
             "credit": "Kisii University",
             "media_type": "document",

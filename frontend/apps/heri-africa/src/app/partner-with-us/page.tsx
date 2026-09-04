@@ -71,7 +71,7 @@ const fallbackPartners = [
   {
     id: "kisii",
     name: "Kisii University",
-    description: "Host institution",
+    description: "Host institution for the Language Education Research Chair",
     logo_url: "/logos/ksu-logo.png",
     website_url: null,
     country: "Kenya",
@@ -79,7 +79,7 @@ const fallbackPartners = [
   {
     id: "heri",
     name: "HERI Africa",
-    description: "Language Education Research Chair",
+    description: "Continental initiative supporting Africa-led education research",
     logo_url: null,
     website_url: null,
     country: "Africa",
@@ -87,7 +87,7 @@ const fallbackPartners = [
   {
     id: "kenyatta",
     name: "Kenyatta University",
-    description: "Research and education partner",
+    description: "Language education research partner",
     logo_url: null,
     website_url: null,
     country: "Kenya",
@@ -95,7 +95,7 @@ const fallbackPartners = [
   {
     id: "maseno",
     name: "Maseno University",
-    description: "Research and education partner",
+    description: "Language education research partner",
     logo_url: null,
     website_url: null,
     country: "Kenya",

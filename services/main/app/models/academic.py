@@ -181,6 +181,9 @@ class Department(Base):
     name: Mapped[str] = mapped_column(sa.String(255), nullable=False)
     slug: Mapped[str] = mapped_column(sa.String(128), nullable=False, index=True)
     code: Mapped[str] = mapped_column(sa.String(32), unique=True, nullable=False, index=True)  # CS, EE, HR, FIN
+    external_source: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True, index=True)
+    external_source_id: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True, index=True)
+    external_name: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
 
     department_type: Mapped[str] = mapped_column(
         sa.String(32),

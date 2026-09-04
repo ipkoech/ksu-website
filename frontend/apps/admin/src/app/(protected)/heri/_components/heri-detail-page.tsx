@@ -5,7 +5,15 @@ import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ArrowLeft, History, Loader2, Save } from "lucide-react";
 import { toast } from "@ksu/ui";
-import { RichTextEditor } from "@ksu/ui/components";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  RichTextEditor,
+  RichTextRenderer,
+} from "@ksu/ui/components";
 import {
   useHeriRecordQuery,
   useHeriResourceMutation,
@@ -59,6 +67,10 @@ function printable(value: unknown) {
   return value && typeof value === "object"
     ? JSON.stringify(value, null, 2)
     : String(value ?? "");
+}
+
+function isRichValue(field: string, value: unknown) {
+  return richFields.has(field) || (typeof value === "string" && /<(p|h[1-6]|ul|ol|li|strong|em|a)\b/i.test(value));
 }
 
 type AuditEntry = {
@@ -116,11 +128,14 @@ export function HeriDetailPage() {
     );
   const updateStatus = async (status: string) => {
     try {
-      await mutation.mutateAsync({ id, payload: { status } });
+      await heriRequest(`/admin/${resource}/${id}/transition`, {
+        method: "POST",
+        body: JSON.stringify({ status, note: "Updated from HERI record detail" }),
+      });
       toast.success("Workflow status updated");
       await recordQuery.refetch();
-    } catch {
-      toast.error("Unable to update workflow status");
+    } catch (reason) {
+      toast.error(reason instanceof Error ? reason.message : "Unable to update workflow status");
     }
   };
   const restore = async (entry: AuditEntry, direction: "previous" | "new") => {
@@ -143,14 +158,14 @@ export function HeriDetailPage() {
 
   if (recordQuery.isPending)
     return (
-      <main className="p-6 md:p-10">
+      <main className="p-4 md:p-6">
         <Loader2 className="size-5 animate-spin" />
         Loading record…
       </main>
     );
   if (recordQuery.error || !record)
     return (
-      <main className="space-y-4 p-6 md:p-10">
+      <main className="space-y-4 p-4 md:p-6">
         <h1 className="text-2xl font-semibold">Record unavailable</h1>
         <p className="text-sm text-red-700">
           {recordQuery.error instanceof Error
@@ -168,7 +183,7 @@ export function HeriDetailPage() {
     );
 
   return (
-    <main className="space-y-6 p-6 md:p-10">
+    <main className="space-y-5 p-4 md:p-6">
       <header className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
         <div>
           <Link
@@ -228,7 +243,18 @@ export function HeriDetailPage() {
               {labelFor(field)}
             </h2>
             <div className="mt-3 whitespace-pre-wrap break-words text-sm leading-6">
-              {record[field] === true
+              {isMediaField(field) && typeof record[field] === "string" && record[field] ? (
+                <div className="space-y-3">
+                  {String(record[field]).match(/\.(avif|gif|jpe?g|png|webp)(\?.*)?$/i) ? (
+                    <img src={String(record[field])} alt={labelFor(field)} className="max-h-56 w-full rounded-xl border object-cover" />
+                  ) : null}
+                  <a href={String(record[field])} target="_blank" rel="noreferrer" className="break-all font-medium text-emerald-700 hover:underline">
+                    {String(record[field])}
+                  </a>
+                </div>
+              ) : isRichValue(field, record[field]) ? (
+                <RichTextRenderer content={String(record[field] ?? "")} className="prose-sm max-w-none" emptyFallback={<span className="text-slate-400">—</span>} />
+              ) : record[field] === true
                 ? "Yes"
                 : record[field] === false
                   ? "No"
@@ -237,28 +263,16 @@ export function HeriDetailPage() {
           </article>
         ))}
       </section>
-      {editing && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/40 p-4 md:p-10">
+      <Dialog open={editing} onOpenChange={setEditing}>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-4xl">
           <form
             onSubmit={save}
-            className="w-full max-w-3xl space-y-5 rounded-2xl bg-white p-6 shadow-xl"
+            className="space-y-5"
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-xl font-semibold">Edit {title}</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Save changes to create an audited revision.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setEditing(false)}
-                className="text-2xl text-slate-400"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
+            <DialogHeader>
+              <DialogTitle>Edit {title}</DialogTitle>
+              <DialogDescription>Save changes to create an audited revision.</DialogDescription>
+            </DialogHeader>
             {fields.map((field) => (
               <label
                 className="block text-sm font-medium text-slate-700"
@@ -328,17 +342,13 @@ export function HeriDetailPage() {
               </button>
             </div>
           </form>
-        </div>
-      )}
-      {history && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/40 p-4 md:p-10">
-          <section
-            role="dialog"
-            aria-modal="true"
-            className="w-full max-w-2xl space-y-4 rounded-2xl bg-white p-6 shadow-xl"
-          >
+        </DialogContent>
+      </Dialog>
+      <Dialog open={Boolean(history)} onOpenChange={(open) => !open && setHistory(null)}>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
+          <section className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Revision history</h2>
+              <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Audited changes</p><h2 className="mt-1 text-xl font-semibold">Revision history</h2><p className="mt-1 text-sm text-slate-500">Review changes and restore a previous record state.</p></div>
               <button
                 onClick={() => setHistory(null)}
                 className="text-2xl text-slate-400"
@@ -347,7 +357,7 @@ export function HeriDetailPage() {
                 ×
               </button>
             </div>
-            {history.length ? (
+            {history?.length ? (
               history.map((entry) => (
                 <article
                   className="rounded-lg border p-3 text-sm"
@@ -390,8 +400,8 @@ export function HeriDetailPage() {
               <p className="text-sm text-slate-500">No revisions found.</p>
             )}
           </section>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

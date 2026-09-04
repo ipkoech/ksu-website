@@ -107,7 +107,7 @@ const sectionMeta: Record<DepartmentDetailSectionKey, SectionMeta> = {
   downloads: {
     eyebrow: "Downloads",
     title: "Documents and files",
-    body: "Official documents connected to this department.",
+      body: "Policies, notices, forms, and other resources related to this department.",
     icon: Download,
   },
   contact: {
@@ -284,7 +284,7 @@ function registrarSectionMeta(
     downloads: {
       eyebrow: "Office Downloads",
       title: "Registrar's office documents",
-      body: "Official documents and files published for this registrar's office.",
+      body: "Policies, notices, forms, and service documents available from this registrar's office.",
       icon: Download,
     },
     contact: {

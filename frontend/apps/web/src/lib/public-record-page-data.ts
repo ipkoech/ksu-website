@@ -401,7 +401,7 @@ function eventCard(item: Event): PublicCard {
   const location =
     item.venue ||
     item.location ||
-    (item.is_virtual ? "Virtual event" : "Venue to be confirmed");
+    (item.is_virtual ? "Virtual event" : "Venue details will be provided by the event organiser");
   return pageCard(
     item.title,
     `/media/events/${item.slug}`,
@@ -1274,7 +1274,7 @@ export async function getEventsPageConfig(
               "Venue",
               event.venue ||
                 event.location ||
-                (event.is_virtual ? "Virtual" : "To be confirmed"),
+                (event.is_virtual ? "Virtual" : "Venue details pending"),
               "landmark",
             ),
             infoCard(

@@ -11,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "@ksu/ui";
+import { RichTextEditor } from "@ksu/ui/components";
 import { usePermissions } from "@/hooks/use-permissions";
 import {
   heriRequest,
@@ -31,6 +32,13 @@ type Item = HeriRecord & {
   application_url?: string;
   closing_at?: string;
   status?: string;
+  event_type?: string;
+  is_virtual?: boolean;
+  virtual_url?: string;
+  opportunity_type?: string;
+  eligibility?: string;
+  application_instructions?: string;
+  featured_image_url?: string;
 };
 type Draft = Partial<Item> & { id?: string };
 const statuses = [
@@ -103,6 +111,10 @@ export function EventsOpportunitiesWorkspace({
               ends_at: "",
               location: "",
               registration_url: "",
+              event_type: "webinar",
+              featured_image_url: "",
+              is_virtual: false,
+              virtual_url: "",
               status: "draft",
             }
           : {
@@ -111,6 +123,11 @@ export function EventsOpportunitiesWorkspace({
               summary: "",
               application_url: "",
               closing_at: "",
+              description: "",
+              eligibility: "",
+              application_instructions: "",
+              opportunity_type: "call_for_proposals",
+              featured_image_url: "",
               status: "draft",
             },
     );
@@ -161,7 +178,7 @@ export function EventsOpportunitiesWorkspace({
             item.closing_at && new Date(String(item.closing_at)) >= new Date(),
         ).length;
   return (
-    <main className="space-y-6 p-6 md:p-10">
+    <main className="space-y-5 p-4 md:p-6">
       <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">
@@ -307,7 +324,7 @@ export function EventsOpportunitiesWorkspace({
                   <>
                     <Field
                       label="Description"
-                      textarea
+                      richtext
                       value={String(draft.description ?? "")}
                       onChange={(value) =>
                         setDraft({ ...draft, description: value })
@@ -347,6 +364,9 @@ export function EventsOpportunitiesWorkspace({
                         setDraft({ ...draft, registration_url: value })
                       }
                     />
+                    <Field label="Event type" value={String(draft.event_type ?? "")} onChange={(value) => setDraft({ ...draft, event_type: value })} />
+                    <Field label="Featured image URL" value={String(draft.featured_image_url ?? "")} onChange={(value) => setDraft({ ...draft, featured_image_url: value })} />
+                    <Field label="Virtual meeting URL" value={String(draft.virtual_url ?? "")} onChange={(value) => setDraft({ ...draft, virtual_url: value, is_virtual: Boolean(value) })} />
                   </>
                 ) : (
                   <>
@@ -366,6 +386,11 @@ export function EventsOpportunitiesWorkspace({
                         setDraft({ ...draft, closing_at: value })
                       }
                     />
+                    <Field label="Opportunity type" value={String(draft.opportunity_type ?? "")} onChange={(value) => setDraft({ ...draft, opportunity_type: value })} />
+                    <Field label="Full description" richtext value={String(draft.description ?? "")} onChange={(value) => setDraft({ ...draft, description: value })} />
+                    <Field label="Eligibility" richtext value={String(draft.eligibility ?? "")} onChange={(value) => setDraft({ ...draft, eligibility: value })} />
+                    <Field label="Application instructions" richtext value={String(draft.application_instructions ?? "")} onChange={(value) => setDraft({ ...draft, application_instructions: value })} />
+                    <Field label="Featured image URL" value={String(draft.featured_image_url ?? "")} onChange={(value) => setDraft({ ...draft, featured_image_url: value })} />
                   </>
                 )}
                 <label className="text-sm font-medium text-slate-700">
@@ -481,6 +506,7 @@ function Field({
   value,
   onChange,
   textarea,
+  richtext,
   type = "text",
   required,
   error,
@@ -489,6 +515,7 @@ function Field({
   value: string;
   onChange: (value: string) => void;
   textarea?: boolean;
+  richtext?: boolean;
   type?: string;
   required?: boolean;
   error?: string;
@@ -500,7 +527,9 @@ function Field({
       {error && (
         <span className="ml-2 text-xs font-normal text-red-600">{error}</span>
       )}
-      {textarea ? (
+      {richtext ? (
+        <RichTextEditor value={value} onChange={onChange} minHeight="10rem" placeholder={`Write ${label.toLowerCase()}…`} />
+      ) : textarea ? (
         <textarea
           value={value}
           onChange={(event) => onChange(event.target.value)}

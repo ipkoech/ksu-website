@@ -83,7 +83,7 @@ export function SubmissionsInbox() {
     }
   };
   return (
-    <main className="space-y-6 p-6 md:p-10">
+    <main className="space-y-5 p-4 md:p-6">
       <header>
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">
           HERI Africa administration

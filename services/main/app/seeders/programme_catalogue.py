@@ -31,6 +31,28 @@ def _expand_programmes(
             "entry_requirements": entry_requirements,
             "fees_structure": fees_structure,
             "intake_months": list(intake_months),
+            "about": (
+                f"{name} is a {level.replace('_', ' ')} programme in the {department_code} academic area. "
+                "It combines subject knowledge, applied coursework, supervised study, and assessment appropriate "
+                "to its level of training."
+            ),
+            "objectives": (
+                f"The programme develops the knowledge and practical skills required for further study and work in "
+                f"{name.lower().replace('phd in ', '').replace('master of ', '').replace('msc in ', '')}. "
+                "Students complete structured coursework and demonstrate their understanding through assignments, "
+                "projects, examinations, or research as required by the programme."
+            ),
+            "career_prospects": (
+                f"Graduates of {name} may work in roles related to their area of study in public institutions, "
+                "private organisations, non-governmental organisations, professional practice, education, or research. "
+                "The qualification also provides a foundation for relevant professional certification or further study."
+            ),
+            "curriculum_overview": (
+                f"The curriculum for {name} covers the foundations of the discipline, core subject units, applied "
+                "learning, research or project work, and assessment activities appropriate to the programme level."
+            ),
+            "accreditation_status": "To be confirmed from the current University and regulator records",
+            "accrediting_body": "Commission for University Education",
         }
         for name, department_code in programmes
     ]
@@ -45,7 +67,8 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
         mode_of_study="full_time",
         duration="6 years",
         entry_requirements=(
-            "KCSE mean grade B (Plain) with B (Plain) in each cluster subject, or equivalent A-Level, diploma, or biological sciences degree progression routes as published in the official brochure."
+            "KCSE mean grade B (Plain) with B (Plain) in each cluster subject, or an equivalent A-Level qualification. "
+            "Applicants with a relevant diploma or biological sciences degree may be considered through the University's approved progression route."
         ),
         fees_structure=_fees(400000, "Ksh. 400,000 per year"),
         intake_months=("September",),
@@ -53,7 +76,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     {
         "name": "Bachelor of Laws",
         "code": "LLB",
-        "department_code": "LAW",
+        "department_code": "CLAW",
         "level": "undergraduate",
         "mode_of_study": "full_time",
         "duration": "4 years",
@@ -125,7 +148,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
     },
     *_expand_programmes(
         programmes=(
-            ("Diploma in Laws", "LAW"),
+            ("Diploma in Laws", "CLAW"),
         ),
         level="diploma",
         mode_of_study="full_time",
@@ -177,7 +200,7 @@ BROCHURE_PROGRAMMES: list[dict[str, object]] = [
         level="undergraduate",
         mode_of_study="full_time_part_time",
         duration="4 years",
-        entry_requirements="KCSE mean grade C+ with C+ in two preferred teaching subjects, D+ in Mathematics, and C Plain in English, or equivalent diploma or principal pass routes as published in the brochure.",
+        entry_requirements="KCSE mean grade C+ with C+ in two preferred teaching subjects, D+ in Mathematics, and C Plain in English; equivalent diploma and principal-pass routes may also be considered.",
         fees_structure=_fees(88000, "Ksh. 88,000 per year"),
     ),
     *_expand_programmes(

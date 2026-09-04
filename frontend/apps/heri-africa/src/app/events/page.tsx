@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Reveal, RevealItem } from "../../components/motion/reveal";
 import { SiteShell } from "../../components/site-shell";
 import { getEvents } from "../../lib/api";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "Events",
@@ -24,9 +25,11 @@ export default async function EventsPage() {
         <div className="mt-12 grid gap-5 md:grid-cols-3">
           {events.map((event, index) => (
             <RevealItem key={event.id} index={index} className="h-full">
-              <article className="h-full rounded-3xl bg-white p-7 ring-1 ring-heri-teal/10">
+              <article className="h-full overflow-hidden rounded-3xl bg-white ring-1 ring-heri-teal/10">
+                {event.featured_image_url ? <div className="relative h-40"><Image src={event.featured_image_url} alt="" fill unoptimized className="object-cover" /></div> : <div className="h-2 bg-heri-lime" />}
+                <div className="p-7">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-heri-teal">
-                  Event
+                  {event.event_type ?? "Event"}
                 </p>
                 <h2 className="mt-3 text-2xl font-semibold text-heri-blue">
                   {event.title}
@@ -37,6 +40,7 @@ export default async function EventsPage() {
                 <p className="mt-4 text-sm font-medium text-heri-ink/60">
                   {event.location ?? "Online and in person"}
                 </p>
+                </div>
               </article>
             </RevealItem>
           ))}

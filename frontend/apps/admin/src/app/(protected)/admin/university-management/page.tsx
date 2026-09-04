@@ -1,3 +1,5 @@
+"use client";
+
 import { CouncilDashboard } from "../../governance/university-council/_components/council-dashboard";
 import { managementBoardGovernanceProfile } from "@/lib/api/organization";
 

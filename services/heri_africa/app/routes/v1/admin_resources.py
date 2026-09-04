@@ -6,7 +6,7 @@ from ksu_common.internal_client import get_integration_pool, internal_headers
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...core.auth import require_permission
+from ...core.auth import authorize_permission, require_permission
 from ...core.config import get_settings
 from ...core.database import get_db
 from ...models.audit import AuditLog
@@ -18,8 +18,51 @@ from ...services.admin_resources import (
     writable_fields,
 )
 from ...services.audit import record_audit
+from ...services.workflow import WorkflowError, WorkflowService
 
 router = APIRouter(prefix="/admin", tags=["HERI Admin CRUD"])
+
+
+@router.post("/{resource}/{record_id}/transition")
+async def transition_resource(
+    resource: str,
+    record_id: UUID,
+    payload: dict[str, object],
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: TokenPayload = Depends(require_permission("heri.content.write")),
+):
+    """Apply the shared draft/review/publish workflow to any status-bearing resource."""
+    try:
+        model = model_for_resource(resource)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    if resource in READ_ONLY_RESOURCES or not hasattr(model, "status"):
+        raise HTTPException(status_code=422, detail="Resource does not support editorial workflow")
+    record = await db.get(model, record_id)
+    target = str(payload.get("status", ""))
+    if record is None or record.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Record not found")
+    current = getattr(record, "status")
+    current_value = getattr(current, "value", str(current))
+    try:
+        required = WorkflowService().transition_permission(current_value, target)
+    except WorkflowError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if not authorize_permission(user, required).allowed:
+        raise HTTPException(status_code=403, detail="Insufficient privileges for this workflow transition")
+    before = {"status": current_value}
+    try:
+        record.status = model.status.type.enum_class(target)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Invalid workflow status") from exc
+    await record_audit(
+        db, action="transition", entity_type=resource, entity_id=str(record.id),
+        actor_id=str(user.sub), previous_value=before,
+        new_value={"status": target, "note": payload.get("note")},
+        ip_address=request.client.host if request.client else None,
+    )
+    return record
 
 
 @router.post("/partners/sync")

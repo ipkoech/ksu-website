@@ -112,6 +112,8 @@ class StaffAssignmentEntitySummary(BaseSchema):
 
 class StaffAssignmentRead(BaseReadSchema):
     person_id: uuid.UUID
+    external_source: str | None = None
+    external_source_id: str | None = None
     user_id: uuid.UUID | None = None
     entity_type: str
     entity_id: uuid.UUID | None = None

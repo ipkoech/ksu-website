@@ -5,12 +5,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.database import get_db
 from ...models.content import FooterLink, HeroSlide, NavigationItem, NewsArticle, SiteSettings
+from ...models.chair import ChairProfile
 from ...schemas.public import NewsDetail, NewsSummary, SiteResponse
+from ...schemas.chair import ChairProfileResponse
 from ...schemas.site import FooterLinkResponse, NavigationItemResponse
 from ...services.public import PublicService
 from ._rate_limits import public_content_rate_limit
 
 router = APIRouter(tags=["HERI Public"])
+
+
+@router.get("/chair", response_model=ChairProfileResponse)
+@public_content_rate_limit
+@cached_public(timeout=300)
+async def chair(request: Request, db: AsyncSession = Depends(get_db)) -> ChairProfileResponse:
+    profile = (await db.execute(select(ChairProfile).where(ChairProfile.is_active.is_(True)).order_by(ChairProfile.created_at.asc()))).scalars().first()
+    if profile is None:
+        return ChairProfileResponse(id="00000000-0000-0000-0000-000000000000", name="HERI Africa Language Education Research Chair", acronym="HERI Africa", host_institution="Kisii University", initiative_name="HERI Africa", about="", tagline=None, vision="", mission="", mandate="", objectives="", values=None, why_it_matters="", logo_url=None, cover_image_url=None, seo={})
+    return ChairProfileResponse.model_validate(profile)
 
 
 @router.get("/site", response_model=SiteResponse)

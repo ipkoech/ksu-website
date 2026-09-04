@@ -1,14 +1,11 @@
+import Link from "next/link";
+import { ArrowRight, BarChart3, BookOpen, FileText, Image, Inbox, Settings, Users } from "lucide-react";
+import { Card, CardContent } from "@ksu/ui/components";
+import { SchoolWorkspace, SchoolWorkspaceHeader } from "@/components/schools/shared/school-workspace";
 import { HeriDashboardClient } from "./heri-dashboard-client";
 
-const modules = [
-  ["Content & pages", "Draft, review, schedule, and publish HERI stories.", "/heri/content"],
-  ["Research", "Manage themes, projects, publications, and resources.", "/heri/research"],
-  ["Team & partners", "Keep leadership, researchers, and partner records current.", "/heri/people"],
-  ["Submissions", "Review contact, partnership, and network applications.", "/heri/submissions"],
-  ["Media library", "Manage approved images, documents, credits, and alt text.", "/heri/media"],
-  ["Site settings", "Update navigation, footer, SEO, and contact details.", "/heri/settings"],
-] as const;
+const modules = [["Content & pages", "Draft, review, schedule, and publish HERI stories.", "/heri/content", FileText], ["Research", "Manage themes, projects, publications, and resources.", "/heri/research", BookOpen], ["Team & partners", "Keep leadership, researchers, and partner records current.", "/heri/people", Users], ["Submissions", "Review contact, partnership, and network applications.", "/heri/submissions", Inbox], ["Media library", "Manage approved images, documents, credits, and alt text.", "/heri/media", Image], ["Site settings", "Update navigation, footer, SEO, and contact details.", "/heri/settings", Settings]] as const;
 
 export default function HeriWorkspacePage() {
-  return <main className="space-y-8 p-6 md:p-10"><div><p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">HERI Africa workspace</p><h1 className="mt-2 text-3xl font-semibold text-slate-900">Research communication and publishing</h1><p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">Manage the HERI Africa public platform, publishing workflow, research records, partners, and enquiries from one operational workspace.</p></div><HeriDashboardClient /><div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{modules.map(([title, description, href]) => <a className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md" href={href} key={href}><h2 className="text-lg font-semibold text-slate-900">{title}</h2><p className="mt-2 text-sm leading-6 text-slate-600">{description}</p><span className="mt-5 inline-block text-sm font-semibold text-emerald-700">Open module <span aria-hidden="true">→</span></span></a>)}</div></main>;
+  return <SchoolWorkspace><SchoolWorkspaceHeader eyebrow="HERI Africa workspace" title="Research communication and publishing" description="Manage the Language Education Research Chair’s public platform, research records, partners, and enquiries from one operational workspace." icon={BarChart3} /><HeriDashboardClient /><section aria-label="HERI modules" className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{modules.map(([title, description, href, Icon]) => <Link href={href} key={href}><Card className="h-full transition-colors hover:border-primary/40"><CardContent className="flex h-full items-start gap-3 p-4"><span className="rounded-xl bg-primary/10 p-2.5 text-primary"><Icon className="size-5" /></span><span className="min-w-0 flex-1"><span className="block font-semibold">{title}</span><span className="mt-1 block text-sm leading-5 text-muted-foreground">{description}</span><span className="mt-3 inline-flex items-center text-xs font-semibold text-primary">Open module <ArrowRight className="ml-1 size-3.5" /></span></span></CardContent></Card></Link>)}</section></SchoolWorkspace>;
 }

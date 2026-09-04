@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import Integer, String, Text
+from sqlalchemy import Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
@@ -20,3 +20,5 @@ class MediaAsset(UUIDMixin, Base):
     credit: Mapped[str | None] = mapped_column(String(255))
     width: Mapped[int | None] = mapped_column(Integer)
     height: Mapped[int | None] = mapped_column(Integer)
+    focal_x: Mapped[float | None] = mapped_column(Float)
+    focal_y: Mapped[float | None] = mapped_column(Float)

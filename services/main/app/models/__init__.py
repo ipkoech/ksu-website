@@ -11,7 +11,7 @@ from .auth import Session, User
 from .rbac import Permission, Role, RolePermission, UserRole
 
 # Person & Staff
-from .person import Person
+from .person import Person, PersonWorkExperience
 from .staff import ACADEMIC_RANK_ORDER, ENTITY_ROLES, ROLE_HIERARCHY, StaffAssignment
 
 # Governance

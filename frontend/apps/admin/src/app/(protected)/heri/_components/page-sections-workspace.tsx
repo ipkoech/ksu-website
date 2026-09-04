@@ -25,6 +25,13 @@ type Section = HeriRecord & {
   position?: number;
   is_visible?: boolean;
   configuration?: Record<string, unknown>;
+  title?: string;
+  eyebrow?: string;
+  description?: string;
+  background_variant?: string;
+  image_url?: string;
+  cta_label?: string;
+  cta_href?: string;
 };
 type Draft = Partial<Section> & { id?: string };
 function parseConfig(value: string) {
@@ -142,7 +149,7 @@ export function PageSectionsWorkspace() {
     setDragged(null);
   };
   return (
-    <main className="space-y-6 p-6 md:p-10">
+    <main className="space-y-5 p-4 md:p-6">
       <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">
@@ -292,16 +299,27 @@ export function PageSectionsWorkspace() {
                 </label>
                 <label className="text-sm font-medium text-slate-700">
                   Section type
-                  <input
+                  <select
                     required
                     value={String(draft.section_type ?? "")}
                     onChange={(event) =>
                       setDraft({ ...draft, section_type: event.target.value })
                     }
-                    placeholder="focus-areas, research-approach, impact-metrics"
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
-                  />
+                  >
+                    {[
+                      "chair_intro", "vision_mission", "values", "research_focus", "research_approach", "key_activities", "impact_metrics", "featured_research", "featured_news", "featured_events", "featured_opportunities", "team_spotlight", "partner_strip", "partner_map", "newsletter_cta", "contact_cta",
+                    ].map((type) => <option key={type} value={type}>{type.replaceAll("_", " ")}</option>)}
+                  </select>
                 </label>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {(["eyebrow", "title", "description", "background_variant", "image_url", "cta_label", "cta_href"] as const).map((field) => (
+                    <label key={field} className={`text-sm font-medium text-slate-700 ${field === "description" ? "sm:col-span-2" : ""}`}>
+                      {field.replaceAll("_", " ")}
+                      {field === "description" ? <textarea value={String(draft[field] ?? "")} onChange={(event) => setDraft({ ...draft, [field]: event.target.value })} rows={3} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" /> : <input value={String(draft[field] ?? "")} onChange={(event) => setDraft({ ...draft, [field]: event.target.value })} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" />}
+                    </label>
+                  ))}
+                </div>
                 <label className="text-sm font-medium text-slate-700">
                   Configuration JSON
                   <textarea

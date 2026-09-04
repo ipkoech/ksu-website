@@ -21,10 +21,10 @@ export type HeroSlideView = {
 const defaultSlides: HeroSlideView[] = [
   {
     id: "default",
-    eyebrow: "Kisii University × HERI Africa",
-    title: "Research that moves African language education forward",
+    eyebrow: "Harnessing Education Research for Impact in Africa",
+    title: "Together, we can transform education across the continent",
     description:
-      "The Language Education Research Chair at Kisii University generates evidence that improves reading, teaching and policy across Africa.",
+      "HERI Africa puts African researchers in the driver’s seat, generating evidence that improves learning, youth opportunities and community outcomes.",
     image: withBasePath("/images/HERIAfricaLaunch.jpg"),
     alt: "HERI Africa researchers and education leaders at a launch event",
   },

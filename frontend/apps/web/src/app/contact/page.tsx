@@ -860,7 +860,7 @@ async function LegacyContactPage({
                   <PublicImage
                     src={config.heroImageUrl}
                     fallbackSrc="/images/about/about-overview.webp"
-                    alt="Official portrait of Kisii University"
+                    alt="Kisii University leadership portrait"
                     ratio="news"
                     sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
                   />
@@ -1260,7 +1260,7 @@ export default async function ContactPage({
             <PublicImage
               src="/images/about-us/gate-1.jpg"
               fallbackSrc="/images/headers/main-admin.jpg"
-              alt="Official portrait of Kisii University Main Campus"
+              alt="Kisii University Main Campus"
               ratio="fill"
               className="absolute inset-0 h-full w-full"
               imageClassName="object-cover"
@@ -1375,7 +1375,7 @@ export default async function ContactPage({
                 <PublicImage
                   src="/images/about-us/gate-1.jpg"
                   fallbackSrc="/images/headers/main-admin.jpg"
-                  alt="Official portrait of Kisii University"
+                  alt="Kisii University leadership portrait"
                   ratio="news"
                   sizes="150px"
                   className="rounded-md"

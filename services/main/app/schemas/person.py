@@ -30,6 +30,9 @@ class PersonCreate(BaseSchema):
     last_name: str = Field(min_length=1, max_length=100)
     full_name: str = Field(min_length=1, max_length=255)
     email: EmailStr
+    external_source: str | None = Field(default=None, max_length=64)
+    external_source_id: str | None = Field(default=None, max_length=128)
+    external_avatar_url: str | None = Field(default=None, max_length=1024)
     phone: PhoneStr | None = None
     alternative_email: EmailStr | None = None
     alternative_phone: PhoneStr | None = None
@@ -37,6 +40,7 @@ class PersonCreate(BaseSchema):
     bio: str | None = None
     full_bio: str | None = None
     qualifications: list[QualificationItem] | None = None
+    skills: list[str] | None = None
     employee_number: str | None = Field(default=None, max_length=32)
     employment_type: str = Field(default="full_time", max_length=32)
     employment_start_date: date | None = None
@@ -92,6 +96,9 @@ class PersonUpdate(BaseSchema):
     last_name: str | None = Field(default=None, min_length=1, max_length=100)
     full_name: str | None = Field(default=None, min_length=1, max_length=255)
     email: EmailStr | None = None
+    external_source: str | None = Field(default=None, max_length=64)
+    external_source_id: str | None = Field(default=None, max_length=128)
+    external_avatar_url: str | None = Field(default=None, max_length=1024)
     phone: PhoneStr | None = None
     alternative_email: EmailStr | None = None
     alternative_phone: PhoneStr | None = None
@@ -99,6 +106,7 @@ class PersonUpdate(BaseSchema):
     bio: str | None = None
     full_bio: str | None = None
     qualifications: list[QualificationItem] | None = None
+    skills: list[str] | None = None
     employee_number: str | None = Field(default=None, max_length=32)
     employment_type: str | None = Field(default=None, max_length=32)
     employment_start_date: date | None = None
@@ -210,6 +218,9 @@ class PersonRead(BaseReadSchema):
     last_name: str
     full_name: str
     email: EmailStr
+    external_source: str | None = None
+    external_source_id: str | None = None
+    external_avatar_url: str | None = None
     phone: str | None = None
     alternative_email: str | None = None
     alternative_phone: str | None = None
@@ -219,6 +230,7 @@ class PersonRead(BaseReadSchema):
     bio: str | None = None
     full_bio: str | None = None
     qualifications: list[dict[str, Any]] | None = None
+    skills: list[str] | None = None
     employee_number: str | None = None
     employment_type: str
     employment_start_date: date | None = None

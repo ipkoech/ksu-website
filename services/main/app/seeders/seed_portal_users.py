@@ -112,7 +112,7 @@ PORTAL_USER_SPECS = [
     },
     {
         "key": "portal_heri_admin",
-        "email": "heri.admin@ksu.dev.com",
+        "email": "heriadmin@kisiiuni.ac.ke",
         "full_name": "KSU HERI Africa Admin",
         "role": "heri_admin",
         "institutional_role": "heri_admin",

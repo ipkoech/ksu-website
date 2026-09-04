@@ -81,11 +81,14 @@ class Programme(Base):
     name: Mapped[str] = mapped_column(sa.String(255), nullable=False)
     code: Mapped[str] = mapped_column(sa.String(32), nullable=False, unique=True, index=True)
     slug: Mapped[str] = mapped_column(sa.String(128), nullable=False, unique=True, index=True)
+    external_source: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True, index=True)
+    external_source_id: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True, index=True)
+    external_name: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
 
     level: Mapped[str] = mapped_column(sa.String(32), nullable=False, index=True)
     mode_of_study: Mapped[str] = mapped_column(sa.String(32), nullable=False, server_default="full_time", index=True)
 
-    duration: Mapped[str] = mapped_column(sa.String(64), nullable=False)
+    duration: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True)
     credits_required: Mapped[Optional[int]] = mapped_column(sa.Integer, nullable=True)
 
     department_id: Mapped[uuid.UUID] = mapped_column(

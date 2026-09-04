@@ -49,8 +49,8 @@ export default async function OurWorkPage() {
         <section className="bg-heri-ink px-6 py-16 text-white sm:py-20">
           <div className="mx-auto max-w-7xl">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-heri-lime">What we do</p>
-            <h1 className="mt-4 max-w-4xl text-5xl font-bold leading-[1.02] sm:text-6xl">Research that moves from evidence to action.</h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/80">We connect Africa-led research, policy and practice so every learner can read, understand and thrive.</p>
+            <h1 className="mt-4 max-w-4xl text-5xl font-bold leading-[1.02] sm:text-6xl">Language education research that moves from evidence to action.</h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/80">We connect Africa-led language research, policy and practice so every learner can read, understand and thrive.</p>
           </div>
         </section>
 
@@ -93,7 +93,7 @@ export default async function OurWorkPage() {
 
         {(eventData.length > 0 || opportunityData.length > 0) && <section className="border-t border-slate-200 px-6 py-14"><div className="mx-auto max-w-7xl"><Reveal><h2 className="text-3xl font-bold text-heri-blue">Open opportunities and events</h2></Reveal><div className="mt-7 grid gap-5 md:grid-cols-2">{[...opportunityData, ...eventData].slice(0, 4).map((item, index) => <RevealItem key={item.id} index={index} className="h-full"><article className="h-full rounded-2xl border border-slate-200 p-6"><p className="text-xs font-bold uppercase tracking-[0.16em] text-heri-teal">{"application_url" in item ? "Opportunity" : "Event"}</p><h3 className="mt-2 text-xl font-bold text-heri-blue">{item.title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{item.summary}</p></article></RevealItem>)}</div></div></section>}
 
-        <section className="bg-gradient-to-r from-heri-lime to-heri-teal px-6 py-10"><Reveal className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-5"><h2 className="max-w-2xl text-3xl font-bold text-heri-blue">Work with HERI Africa to advance language education research.</h2><Link className="inline-flex items-center gap-3 rounded-xl bg-heri-blue px-5 py-3 text-sm font-bold text-white" href="/partner-with-us">Partner with us <ArrowRight className="size-4" /></Link></Reveal></section>
+        <section className="bg-gradient-to-r from-heri-lime to-heri-teal px-6 py-10"><Reveal className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-5"><h2 className="max-w-2xl text-3xl font-bold text-heri-blue">Work with the Language Education Research Chair to advance learning across Africa.</h2><Link className="inline-flex items-center gap-3 rounded-xl bg-heri-blue px-5 py-3 text-sm font-bold text-white" href="/partner-with-us">Partner with us <ArrowRight className="size-4" /></Link></Reveal></section>
       </main>
     </SiteShell>
   );

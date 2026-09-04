@@ -87,14 +87,14 @@ async def project_detail(request: Request, slug: str, db: AsyncSession = Depends
 @cached_public(timeout=300, vary_on=("limit",))
 async def publications(request: Request, limit: int = Query(20, ge=1, le=100), db: AsyncSession = Depends(get_db)):
     records = await PublicService().list(db, ResearchPublication, limit=limit)
-    return [ResearchSummary(id=item.id, slug=item.slug, title=item.title, summary=item.abstract or "") for item in records]
+    return [ResearchSummary.model_validate({**item.__dict__, "summary": item.abstract or ""}) for item in records]
 
 
 @router.get("/research/publications/paginated", response_model=PaginatedCollection)
 @public_content_rate_limit
 @cached_public(timeout=300, vary_on=("page", "per_page"))
 async def publications_paginated(request: Request, page: int = Query(1, ge=1), per_page: int = Query(12, ge=1, le=100), db: AsyncSession = Depends(get_db)):
-    return await _paged(db, ResearchPublication, lambda item: ResearchSummary(id=item.id, slug=item.slug, title=item.title, summary=item.abstract or ""), page, per_page)
+    return await _paged(db, ResearchPublication, lambda item: ResearchSummary.model_validate({**item.__dict__, "summary": item.abstract or ""}), page, per_page)
 
 
 @router.get("/research/publications/{slug}", response_model=ResearchSummary)
@@ -104,7 +104,7 @@ async def publication_detail(request: Request, slug: str, db: AsyncSession = Dep
     item = await PublicService().by_slug(db, ResearchPublication, slug)
     if item is None:
         raise HTTPException(status_code=404, detail="Research publication not found")
-    return ResearchSummary(id=item.id, slug=item.slug, title=item.title, summary=item.abstract or "")
+    return ResearchSummary.model_validate({**item.__dict__, "summary": item.abstract or ""})
 
 
 @router.get("/research/themes", response_model=list[ResearchSummary])

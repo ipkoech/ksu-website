@@ -13,6 +13,13 @@ class TeamSummary(BaseModel):
     role: str
     biography: str
     photo_url: str | None
+    title: str | None = None
+    expertise: list | dict | None = None
+    education: str | None = None
+    research_interests: str | None = None
+    email: str | None = None
+    social_links: dict | None = None
+    is_featured: bool = False
 
 
 class PartnerSummary(BaseModel):
@@ -44,6 +51,12 @@ class ResearchSummary(BaseModel):
     slug: str
     title: str
     summary: str
+    cover_image_url: str | None = None
+    publication_date: object | None = None
+    publication_type: str | None = None
+    theme_id: UUID | None = None
+    is_featured: bool = False
+    position: int = 0
 
 
 class EventSummary(BaseModel):
@@ -55,6 +68,12 @@ class EventSummary(BaseModel):
     starts_at: object | None
     ends_at: object | None
     location: str | None
+    event_type: str | None = None
+    featured_image_url: str | None = None
+    is_virtual: bool = False
+    virtual_url: str | None = None
+    is_featured: bool = False
+    position: int = 0
 
 
 class OpportunitySummary(BaseModel):
@@ -65,6 +84,13 @@ class OpportunitySummary(BaseModel):
     summary: str
     application_url: str | None
     closing_at: object | None
+    description: str | None = None
+    eligibility: str | None = None
+    application_instructions: str | None = None
+    opportunity_type: str | None = None
+    featured_image_url: str | None = None
+    is_featured: bool = False
+    position: int = 0
 
 
 class ImpactMetricSummary(BaseModel):
@@ -83,6 +109,13 @@ class PageSectionSummary(BaseModel):
     section_type: str
     position: int
     configuration: dict[str, object]
+    title: str | None = None
+    eyebrow: str | None = None
+    description: str | None = None
+    background_variant: str = "default"
+    image_url: str | None = None
+    cta_label: str | None = None
+    cta_href: str | None = None
 
 
 class PublicPageResponse(BaseModel):

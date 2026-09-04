@@ -7,7 +7,7 @@ export function SiteFooter() {
         <div>
           <p className="text-xl font-semibold">HERI AFRICA</p>
           <p className="mt-2 max-w-sm text-sm text-white/75">
-            Africa-led language education research hosted by Kisii University.
+            The Language Education Research Chair at Kisii University, contributing Africa-led evidence for policy, practice and communities.
           </p>
         </div>
         <div>
@@ -33,7 +33,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="mx-auto mt-8 max-w-7xl border-t border-white/20 pt-5 text-xs text-white/60">
-        © {new Date().getFullYear()} HERI Africa Language Education Research
+        © {new Date().getFullYear()} HERI Africa Language Education Research Chair
         Chair. All rights reserved.
       </div>
     </footer>

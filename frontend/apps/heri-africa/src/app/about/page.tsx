@@ -13,6 +13,7 @@ import {
 import { SiteShell } from "../../components/site-shell";
 import { Reveal, RevealItem } from "../../components/motion/reveal";
 import { withBasePath } from "../../lib/base-path";
+import { getChair } from "../../lib/api";
 
 export const metadata: Metadata = {
   title: "About the Research Chair",
@@ -68,7 +69,8 @@ const approaches = [
   ],
 ] as const;
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const chair = await getChair().catch(() => null);
   return (
     <SiteShell>
       <main className="bg-white">
@@ -116,11 +118,7 @@ export default function AboutPage() {
               Who We Are
             </h2>
             <p className="mt-5 text-base leading-7 text-slate-600">
-              The HERI Africa Language Education Research Chair at Kisii
-              University advances Africa-led research in language education and
-              foundational literacy. We produce rigorous evidence, inform
-              policy, strengthen practice and build capacity across the
-              continent.
+              {chair?.about ?? "The HERI Africa Language Education Research Chair at Kisii University advances Africa-led research in language education and foundational literacy. We produce rigorous evidence, inform policy, strengthen practice and build capacity across the continent."}
             </p>
             <p className="mt-5 text-base leading-7 text-slate-600">
               Our work is grounded in the belief that children learn best in and
@@ -237,9 +235,7 @@ export default function AboutPage() {
                   </h2>
                   <div className="mt-3 h-1 w-10 bg-heri-lime" />
                   <p className="mt-5 text-sm leading-6 text-slate-600">
-                    To be a leading Africa-led Centre of Excellence in language
-                    education research, advancing foundational literacy,
-                    educational transformation, and global societal impact.
+                    {chair?.vision ?? "To be a leading Africa-led Centre of Excellence in language education research, advancing foundational literacy, educational transformation, and global societal impact."}
                   </p>
                 </div>
               </article>
@@ -253,9 +249,7 @@ export default function AboutPage() {
                   </h2>
                   <div className="mt-3 h-1 w-10 bg-heri-lime" />
                   <p className="mt-5 text-sm leading-6 text-slate-600">
-                    To advance impactful, policy-responsive, and practice-oriented
-                    research in language education and foundational literacy for
-                    educational transformation in Africa and beyond.
+                    {chair?.mission ?? "To advance impactful, policy-responsive, and practice-oriented research in language education and foundational literacy for educational transformation in Africa and beyond."}
                   </p>
                 </div>
               </article>

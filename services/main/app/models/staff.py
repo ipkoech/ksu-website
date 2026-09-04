@@ -198,6 +198,9 @@ class StaffAssignment(Base):
         nullable=False,
         index=True,
     )
+    external_source: Mapped[Optional[str]] = mapped_column(sa.String(64), nullable=True, index=True)
+    external_source_id: Mapped[Optional[str]] = mapped_column(sa.String(128), nullable=True, index=True)
+    external_updated_at: Mapped[Optional[datetime]] = mapped_column(sa.DateTime(timezone=True), nullable=True)
     user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         sa.ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,

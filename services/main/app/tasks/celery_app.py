@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from celery.schedules import crontab
+from datetime import timedelta
 
 from ksu_common.task_queue import TaskQueueConfig, create_celery_app
 
@@ -50,6 +51,8 @@ celery_app = create_celery_app(
             "main.outbox.prune": {"queue": "main.maintenance"},
             "main.analytics.prune": {"queue": "main.maintenance"},
             "main.idempotency.prune": {"queue": "main.maintenance"},
+            "main.digital_sync.lecturers": {"queue": "main.integrations"},
+            "main.digital_sync.programmes": {"queue": "main.integrations"},
         },
         beat_schedule={
             "expire-notifications-every-15-minutes": {
@@ -100,6 +103,14 @@ celery_app = create_celery_app(
                 "task": "main.idempotency.prune",
                 "schedule": crontab(hour=4, minute=20),
             },
+            "synchronize-digital-lecturers-every-72-hours": {
+                "task": "main.digital_sync.lecturers",
+                "schedule": timedelta(hours=72),
+            },
+            "synchronize-digital-programmes-every-72-hours": {
+                "task": "main.digital_sync.programmes",
+                "schedule": timedelta(hours=72),
+            },
         },
         imports=(
             "app.tasks.audit",
@@ -114,6 +125,7 @@ celery_app = create_celery_app(
             "app.tasks.outbox",
             "app.tasks.webhooks",
             "app.tasks.retention",
+            "app.tasks.digital_sync",
         ),
         shutdown_hooks=(_shutdown_main_resources,),
     ),

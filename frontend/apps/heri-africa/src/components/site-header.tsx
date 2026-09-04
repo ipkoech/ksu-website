@@ -54,7 +54,7 @@ export function SiteHeader() {
         Skip to content
       </a>
       <div className="bg-heri-lime px-6 py-2 text-center text-xs font-semibold text-heri-ink">
-        Advancing language education and foundational literacy across Africa
+        Together, we can transform education across the continent
       </div>
       <header className="sticky top-0 z-40 px-4 pt-0 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-[1370px] items-center justify-between gap-5 rounded-b-[2rem] border border-slate-100 bg-white px-5 py-5 shadow-[0_12px_28px_rgba(8,44,43,0.16)] sm:px-8 sm:py-6 lg:gap-8 lg:px-10">

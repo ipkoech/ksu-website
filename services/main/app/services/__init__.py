@@ -63,6 +63,7 @@ from .public_entity_content import PublicEntityContentService
 from .rbac import RBACService
 from .search import SearchService
 from .staff import StaffService
+from .digital_lecturers import DigitalLecturerSyncService
 from .student_life import (
     AccommodationService,
     ArtsCultureService,

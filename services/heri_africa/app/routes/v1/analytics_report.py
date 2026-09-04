@@ -27,8 +27,10 @@ async def report(
     totals = (await db.execute(select(AnalyticsEvent.event_name, func.count(AnalyticsEvent.id)).where(scope).group_by(AnalyticsEvent.event_name))).all()
     by_name = {str(name): int(count) for name, count in totals}
     pages = (await db.execute(select(AnalyticsEvent.path, func.count(AnalyticsEvent.id)).where(scope, AnalyticsEvent.event_name == "page_view").group_by(AnalyticsEvent.path).order_by(func.count(AnalyticsEvent.id).desc()).limit(10))).all()
-    searches = (await db.execute(select(AnalyticsEvent.properties["query"].as_string().label("term"), func.count(AnalyticsEvent.id)).where(scope, AnalyticsEvent.event_name == "search").group_by(AnalyticsEvent.properties["query"].as_string()).order_by(func.count(AnalyticsEvent.id).desc()).limit(10))).all()
-    ctas = (await db.execute(select(AnalyticsEvent.properties["cta"].as_string().label("cta"), func.count(AnalyticsEvent.id)).where(scope, AnalyticsEvent.event_name == "cta_click").group_by(AnalyticsEvent.properties["cta"].as_string()).order_by(func.count(AnalyticsEvent.id).desc()).limit(10))).all()
+    search_term = AnalyticsEvent.properties["query"].as_string()
+    searches = (await db.execute(select(search_term.label("term"), func.count(AnalyticsEvent.id)).where(scope, AnalyticsEvent.event_name == "search").group_by(search_term).order_by(func.count(AnalyticsEvent.id).desc()).limit(10))).all()
+    cta_term = AnalyticsEvent.properties["cta"].as_string()
+    ctas = (await db.execute(select(cta_term.label("cta"), func.count(AnalyticsEvent.id)).where(scope, AnalyticsEvent.event_name == "cta_click").group_by(cta_term).order_by(func.count(AnalyticsEvent.id).desc()).limit(10))).all()
     return AnalyticsReport(
         start_date=start_date,
         end_date=end_date,

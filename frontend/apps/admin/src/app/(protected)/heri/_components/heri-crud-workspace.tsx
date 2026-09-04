@@ -7,6 +7,11 @@ import {
   History,
   Loader2,
   Download,
+  Eye,
+  BarChart3,
+  CheckCircle2,
+  Clock3,
+  FileText,
   Pencil,
   Plus,
   RefreshCw,
@@ -14,7 +19,18 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "@ksu/ui";
-import { RichTextEditor } from "@ksu/ui/components";
+import {
+  Card,
+  CardContent,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  Label,
+  RichTextEditor,
+  RichTextRenderer,
+} from "@ksu/ui/components";
 import { useHeriPartnerSync, useHeriResourceMutation, useHeriResourceQuery } from "@/lib/api/heri";
 import { HeriMediaPicker } from "./heri-media-picker";
 
@@ -92,6 +108,10 @@ function display(value: RecordValue) {
   if (typeof value === "boolean") return value ? "Yes" : "No";
   if (value && typeof value === "object") return JSON.stringify(value);
   return value == null || value === "" ? "—" : String(value);
+}
+
+function isRichTextField(field: Field) {
+  return field.type === "richtext";
 }
 
 export function HeriCrudWorkspace({ config }: { config: Config }) {
@@ -192,6 +212,7 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
             "seo_defaults",
             "payload",
             "collaboration_areas",
+            "values",
           ].includes(field.name)
             ? JSON.parse(String(value))
             : field.type === "number"
@@ -290,9 +311,9 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
     try {
       await Promise.all(
         Array.from(selectedIds, (id) =>
-          request(`/admin/${config.resource}/${id}`, {
-            method: "PATCH",
-            body: JSON.stringify({ status: nextStatus }),
+          request(`/admin/${config.resource}/${id}/transition`, {
+            method: "POST",
+            body: JSON.stringify({ status: nextStatus, note: "Bulk workflow update from HERI admin workspace" }),
           }),
         ),
       );
@@ -345,12 +366,8 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
         }),
       });
       await load();
-    } catch {
-      await request(`/admin/${config.resource}/${record.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: next }),
-      });
-      await load();
+    } catch (reason) {
+      toast.error(reason instanceof Error ? reason.message : "Unable to update workflow");
     }
   };
   const showHistory = async (record: HeriRecord) => {
@@ -363,16 +380,17 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
   };
 
   return (
-    <main className="space-y-6 p-6 md:p-10">
-      <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+    <main className="min-h-full bg-muted/20 p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-[1600px] space-y-5">
+      <header className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">
             HERI Africa administration
           </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
             {config.title}
           </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+          <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-600">
             {config.description}
           </p>
         </div>
@@ -400,7 +418,7 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
                   ),
                 })
               }
-              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-emerald-700 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
             >
               <Plus className="size-4" />
               Create record
@@ -503,6 +521,25 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
           {error}
         </p>
       )}
+      <section aria-label={`${config.title} overview`} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: "Total records", value: resourceQuery.data?.meta.total ?? records.length, detail: "Across this HERI workspace", icon: FileText, tone: "text-slate-700" },
+          { label: "Published", value: records.filter((record) => record.status === "published").length, detail: "Visible on the public site", icon: CheckCircle2, tone: "text-emerald-700" },
+          { label: "Needs attention", value: records.filter((record) => ["draft", "in_review"].includes(String(record.status))).length, detail: "Draft or under review", icon: Clock3, tone: "text-amber-700" },
+          { label: "On this page", value: records.length, detail: `Page ${page} of ${pages}`, icon: BarChart3, tone: "text-sky-700" },
+        ].map((metric) => (
+          <Card key={metric.label} className="border-slate-200 shadow-sm">
+            <CardContent className="flex items-start justify-between p-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{metric.label}</p>
+                <p className={`mt-2 text-2xl font-bold tracking-tight ${metric.tone}`}>{metric.value}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{metric.detail}</p>
+              </div>
+              <metric.icon className={`size-5 ${metric.tone}`} />
+            </CardContent>
+          </Card>
+        ))}
+      </section>
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
@@ -591,8 +628,15 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
                     ))}
                     <td className="whitespace-nowrap px-4 py-3">
                       <div className="flex flex-wrap items-center gap-3">
+                        <a
+                          href={`/heri/${config.resource}/${record.id}`}
+                          className="inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-emerald-800"
+                        >
+                          <Eye className="size-3.5" />
+                          View
+                        </a>
                         <button
-                          onClick={() => setSelected(record)}
+                          onClick={() => openEditor(record)}
                           className="inline-flex cursor-pointer items-center gap-1 font-semibold text-emerald-700 hover:text-emerald-900"
                           disabled={!canWrite}
                         >
@@ -658,47 +702,27 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
           </div>
         </div>
       </section>
-      {selected && (
-        <div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/40 p-4 md:p-10"
-          role="presentation"
-        >
+      <Dialog
+        open={Boolean(selected)}
+        onOpenChange={(open) => {
+          if (open) return;
+          if (isDirty && !window.confirm("Discard unsaved changes?")) return;
+          setSelected(null);
+          setHistory(null);
+          setIsDirty(false);
+        }}
+      >
+        <DialogContent className="max-h-[92vh] overflow-y-auto p-0 sm:max-w-4xl">
+          {selected && (
           <form
             onChange={() => setIsDirty(true)}
             onSubmit={save}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="heri-editor-title"
-            className="w-full max-w-2xl space-y-5 rounded-2xl bg-white p-6 shadow-xl"
+            className="space-y-5"
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <h2
-                  id="heri-editor-title"
-                  className="text-xl font-semibold text-slate-900"
-                >
-                  {selected.id ? "Edit record" : "Create record"}
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Changes are audited and remain subject to your assigned HERI
-                  permissions.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (isDirty && !window.confirm("Discard unsaved changes?"))
-                    return;
-                  setSelected(null);
-                  setHistory(null);
-                  setIsDirty(false);
-                }}
-                className="cursor-pointer text-2xl leading-none text-slate-400 hover:text-slate-700"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
+            <DialogHeader className="border-b px-6 py-5">
+              <DialogTitle>{selected.id ? "Edit record" : "Create record"}</DialogTitle>
+              <DialogDescription>Changes are audited and remain subject to your assigned HERI permissions.</DialogDescription>
+            </DialogHeader>
             {history ? (
               <div className="space-y-3">
                 <h3 className="font-semibold text-slate-900">
@@ -738,18 +762,19 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
               </div>
             ) : (
               <>
+                <div className="space-y-4 px-6 pb-2">
                 {config.fields.map((field) => (
-                  <label
-                    className="block text-sm font-medium text-slate-700"
-                    key={field.name}
-                  >
-                    {field.label}
-                    {field.required && <span className="text-red-600"> *</span>}
+                  <div className="space-y-2" key={field.name}>
+                    <Label>{field.label}{field.required && <span className="text-red-600"> *</span>}</Label>
                     {field.type === "richtext" ? (
                       <RichTextEditor
                         value={String(selected[field.name] ?? "")}
-                        onChange={() => setIsDirty(true)}
-                        minHeight="14rem"
+                        onChange={(value) => {
+                          setSelected((current) => current ? { ...current, [field.name]: value } : current);
+                          setEditorValues((current) => ({ ...current, [field.name]: value }));
+                          setIsDirty(true);
+                        }}
+                        minHeight="10rem"
                         placeholder={`Write ${field.label.toLowerCase()}…`}
                       />
                     ) : field.type === "media" ? (
@@ -767,14 +792,14 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
                         }
                         required={field.required}
                         rows={4}
-                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
                       />
                     ) : field.type === "select" ? (
                       <select
                         name={field.name}
                         defaultValue={String(selected[field.name] ?? "")}
                         required={field.required}
-                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
                       >
                         <option value="">Select…</option>
                         {(field.options ?? []).map((option) => (
@@ -800,12 +825,13 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
                         }
                         defaultValue={String(selected[field.name] ?? "")}
                         required={field.required}
-                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
                       />
                     )}
-                  </label>
+                  </div>
                 ))}
-                <div className="flex justify-end gap-3">
+                </div>
+                <div className="flex justify-end gap-3 border-t px-6 py-4">
                   <button
                     type="button"
                     onClick={() => {
@@ -833,8 +859,10 @@ export function HeriCrudWorkspace({ config }: { config: Config }) {
             )}
             {/* audit history is read-only */}
           </form>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
+      </div>
     </main>
   );
 }

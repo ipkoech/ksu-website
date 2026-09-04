@@ -285,114 +285,114 @@ HANDBOOK_DEPARTMENT_SEED_SPECS = {
         {
             "name": "Department of fisheries and aquatic sciences",
             "code": "SANRM-FAS",
-            "about": "Handbook context: offers fisheries, limnology, aquaculture, and applied aquatic sciences programmes.",
+            "about": "Supports fisheries, limnology, aquaculture, and applied aquatic sciences through teaching, research, and community engagement.",
         },
         {
             "name": "Department of crops and soil sciences",
             "code": "SANRM-CSS",
-            "about": "Handbook context: offers agronomy, sustainable agriculture, and agriculture programmes.",
+            "about": "Supports agronomy, sustainable agriculture, and agriculture programmes through teaching, research, and practical training.",
         },
         {
             "name": "Department of Environmental Science and Natural Resource Management",
             "code": "SANRM-ESNRM",
-            "about": "Handbook context: covers natural resources, environmental science, and water resources management.",
+            "about": "Covers natural resources, environmental science, and water resources management through academic training and applied research.",
         },
         {
             "name": "Department of Agricultural Education and Extension",
-            "about": "Handbook context: covers agricultural education, agricultural extension, and rural development.",
+            "about": "Covers agricultural education, agricultural extension, and rural development, linking classroom learning with field practice.",
         },
         {
             "name": "Department of Animal Science",
             "code": "SANRM-ANSCI",
-            "about": "Handbook context: covers livestock production systems, animal science, and animal health and production.",
+            "about": "Covers livestock production systems, animal science, and animal health and production through teaching, research, and practical training.",
         },
         {
             "name": "Department of Agricultural and Resource Economics",
             "code": "SANRM-ARE",
-            "about": "Handbook context: covers agricultural and applied economics, agribusiness management, and agricultural economics.",
+            "about": "Covers agricultural and applied economics, agribusiness management, and agricultural economics through teaching, research, and field application.",
         },
     ),
     "SIST": (
         {
             "name": "Department of Media and Communication Studies",
             "code": "SIST-MCS",
-            "about": "Handbook context: prepares learners in media, journalism, TV, radio, photo-journalism, new media, and graphic design.",
+            "about": "Prepares learners in media, journalism, television, radio, photojournalism, new media, and graphic design.",
         },
         {
             "name": "Department of Computing Science",
-            "about": "Handbook context: trains well-rounded IT individuals for innovation and development in the digital space.",
+            "about": "Prepares learners for information technology, digital systems, innovation, and technology-enabled development.",
         },
         {
             "name": "Department of Library and Information Science",
             "code": "SIST-LIS",
-            "about": "Handbook context: focuses on knowledge organization, archives, digital library, access, retrieval, storage, and dissemination.",
+            "about": "Focuses on knowledge organization, archives, digital libraries, information access, retrieval, storage, and dissemination.",
         },
     ),
     "SBE": (
         {
             "name": "Department of Accounting and Finance",
-            "about": "Handbook context: one of five departments in the oldest school in the university.",
+            "about": "Covers accounting, finance, financial reporting, taxation, auditing, and related business practice.",
         },
         {
             "name": "Department of Business Administration",
-            "about": "Handbook context: one of five business and economics departments headed by Chairpersons of Department.",
+            "about": "Provides teaching and research in business administration, organisational practice, entrepreneurship, and management.",
         },
         {
             "name": "Department of Human Resource and Strategic Management",
-            "about": "Handbook context: supports business, management, and human resource programmes.",
+            "about": "Supports business, management, and human resource programmes through teaching, research, and professional development.",
         },
         {
             "name": "Department of Management Science",
-            "about": "Handbook context: supports management science and related business programmes.",
+            "about": "Supports management science and related business programmes through quantitative analysis, decision-making, and operations study.",
         },
         {
             "name": "Department of Tourism and Hospitality Management",
-            "about": "Handbook context: supports tourism, hospitality, hotel, catering, and travel programmes.",
+            "about": "Supports tourism, hospitality, hotel, catering, and travel programmes through academic and practical training.",
         },
     ),
     "SASS": (
         {
             "name": "Department of Psychology",
-            "about": "Handbook context: responds to mental health service needs and prepares competent mental health workers.",
+            "about": "Responds to mental health service needs and prepares learners for psychological assessment, counselling, and related practice.",
         },
         {
             "name": "Department of Philosophy and Religious Studies",
-            "about": "Handbook context: prepares people to mitigate moral challenges in society through philosophical and religious studies.",
+            "about": "Examines philosophical and religious thought, ethics, belief systems, and their contribution to social life and moral reasoning.",
         },
         {
             "name": "Department of Political Science & Peace Studies",
-            "about": "Handbook context: trains human resource for development needs, research, and advancement of humanity.",
+            "about": "Studies governance, political institutions, peace, conflict, public policy, and research for social development.",
         },
         {
             "name": "Department of Languages, Linguistics, and Literature",
-            "about": "Handbook context: supports language, linguistics, literature, pedagogy, and research.",
+            "about": "Supports language, linguistics, literature, pedagogy, communication, and related research.",
         },
         {
             "name": "Department of Postgraduate Studies",
             "code": "SASS-PG",
-            "about": "Handbook context: listed among the School of Arts and Social Sciences departments.",
+            "about": "Coordinates postgraduate study, research supervision, and advanced academic work in the School of Arts and Social Sciences.",
         },
     ),
     "SOL": (
         {
             "name": "Department of Public Law",
             "code": "SOL-PUB",
-            "about": "Handbook context: one of the four School of Law departments headed by a Chairperson of Department.",
+            "about": "Develops teaching and research in public law, constitutional law, governance, and regulatory practice.",
         },
         {
             "name": "Department of Private Law",
             "code": "SOL-PRIV",
-            "about": "Handbook context: one of the four School of Law departments headed by a Chairperson of Department.",
+            "about": "Develops teaching and research in private law, civil procedure, family law, property, and related legal practice.",
         },
         {
             "name": "Department of Commercial Law",
             "code": "SOL-COM",
-            "about": "Handbook context: one of the four School of Law departments headed by a Chairperson of Department.",
+            "about": "Develops teaching and research in commercial transactions, company law, trade, taxation, and business regulation.",
         },
         {
             "name": "Department of Research and Post-graduate Studies",
             "code": "SOL-RPGS",
-            "about": "Handbook context: supports research and post-graduate studies in the School of Law.",
+            "about": "Coordinates research support and postgraduate study within the School of Law.",
         },
     ),
 }

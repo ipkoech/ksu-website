@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, ChevronLeft, LogOut, Menu, Minus, Plus } from "lucide-react";
+import { ChevronLeft, LogOut, Menu } from "lucide-react";
 import { useAuth, usePermissions, ServiceGuard } from "@ksu/auth";
 import {
   Avatar,
@@ -31,7 +31,7 @@ import { Toolbar } from "@/components/layout/toolbar";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { getPortalConfig } from "@/lib/portals/registry";
 import type { PortalConfig, PortalKey, PortalNavItem } from "@/lib/portals/types";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 
 interface PortalShellProps {
   portalKey: PortalKey;
@@ -120,8 +120,6 @@ function PortalSidebar({
   const { user, logout } = useAuth();
   const { hasScope } = usePermissions();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set());
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(() => new Set());
 
   const hasItemScope = useCallback((item: PortalNavItem) => {
     if (!item.scope) return true;
@@ -164,64 +162,6 @@ function PortalSidebar({
     [filteredNav, pathname, searchParams],
   );
 
-  useEffect(() => {
-    const activeGroups = grouped
-      .filter((section) => section.group && section.items.some((item) => navItemContainsHref(item, activeHref)))
-      .map((section) => section.group as string);
-    if (activeGroups.length === 0) return;
-    setExpandedGroups((current) => {
-      let changed = false;
-      const next = new Set(current);
-      for (const group of activeGroups) {
-        if (!next.has(group)) {
-          next.add(group);
-          changed = true;
-        }
-      }
-      return changed ? next : current;
-    });
-  }, [activeHref, grouped]);
-
-  useEffect(() => {
-    const activeParents = filteredNav.flatMap((item) => collectActiveParents(item, activeHref));
-    if (activeParents.length === 0) return;
-    setExpandedItems((current) => {
-      let changed = false;
-      const next = new Set(current);
-      for (const href of activeParents) {
-        if (!next.has(href)) {
-          next.add(href);
-          changed = true;
-        }
-      }
-      return changed ? next : current;
-    });
-  }, [activeHref, filteredNav]);
-
-  const toggleGroup = (group: string) => {
-    setExpandedGroups((current) => {
-      const next = new Set(current);
-      if (next.has(group)) {
-        next.delete(group);
-      } else {
-        next.add(group);
-      }
-      return next;
-    });
-  };
-
-  const toggleItem = (href: string) => {
-    setExpandedItems((current) => {
-      const next = new Set(current);
-      if (next.has(href)) {
-        next.delete(href);
-      } else {
-        next.add(href);
-      }
-      return next;
-    });
-  };
-
   const initials = (user?.name || "User")
     .split(" ")
     .map((part) => part[0])
@@ -236,7 +176,10 @@ function PortalSidebar({
         animate={{ width: isMobileOpen ? 280 : collapsed ? 68 : 280 }}
         transition={{ duration: 0.2, ease: "easeInOut" }}
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-screen flex-col border-r bg-sidebar",
+          "fixed left-0 top-0 z-40 flex h-screen flex-col border-r",
+          portal.key === "heri"
+            ? "border-emerald-950/30 bg-[#003c39] text-white [&_.text-sidebar-foreground]:text-white/85 [&_.text-sidebar-accent-foreground]:text-white [&_.bg-sidebar-accent]:bg-white/10 [&_.bg-sidebar-primary]:bg-lime-300 [&_.text-sidebar-primary-foreground]:text-emerald-950"
+            : "bg-sidebar",
           "md:relative",
           isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
@@ -271,10 +214,7 @@ function PortalSidebar({
             variant="ghost"
             size="icon-sm"
             onClick={onToggle}
-            className={cn(
-              collapsed && !isMobileOpen &&
-                "absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 bg-sidebar/95 opacity-0 shadow-sm transition-opacity hover:bg-sidebar-accent focus-visible:opacity-100 group-hover/sidebar-header:opacity-100",
-            )}
+            className="shrink-0 bg-sidebar/80 shadow-sm hover:bg-sidebar-accent"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? <Menu /> : <ChevronLeft />}
@@ -286,25 +226,15 @@ function PortalSidebar({
             {grouped.map((section, sIdx) => (
               <div key={section.group ?? `_ungrouped_${sIdx}`}>
                 {section.group && (!collapsed || isMobileOpen) ? (
-                  <button
-                    type="button"
-                    className="mb-1 mt-3 flex w-full items-center justify-between gap-2 rounded-md px-3 py-1 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors first:mt-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                    aria-expanded={expandedGroups.has(section.group)}
-                    onClick={() => toggleGroup(section.group as string)}
-                  >
-                    <span className="truncate">{section.group}</span>
-                    {expandedGroups.has(section.group) ? <Minus className="size-3" /> : <Plus className="size-3" />}
-                  </button>
+                  <p className="mb-1 mt-3 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground first:mt-0">{section.group}</p>
                 ) : null}
-                {(section.group && (!collapsed || isMobileOpen) && !expandedGroups.has(section.group) ? [] : section.items).map((item) => (
+                {section.items.map((item) => (
                   <PortalNavItemNode
                     key={item.href}
                     item={item}
                     activeHref={activeHref}
                     collapsed={collapsed}
                     isMobileOpen={isMobileOpen}
-                    expandedItems={expandedItems}
-                    onToggleItem={toggleItem}
                     onMobileClose={onMobileClose}
                   />
                 ))}
@@ -379,8 +309,6 @@ function PortalNavItemNode({
   activeHref,
   collapsed,
   isMobileOpen,
-  expandedItems,
-  onToggleItem,
   onMobileClose,
   depth = 0,
 }: {
@@ -388,8 +316,6 @@ function PortalNavItemNode({
   activeHref: string;
   collapsed: boolean;
   isMobileOpen: boolean;
-  expandedItems: Set<string>;
-  onToggleItem: (href: string) => void;
   onMobileClose: () => void;
   depth?: number;
 }) {
@@ -397,7 +323,6 @@ function PortalNavItemNode({
   const hasChildren = Boolean(item.children?.length);
   const active = item.href === activeHref;
   const activeChild = Boolean(item.children?.some((child) => navItemContainsHref(child, activeHref)));
-  const expanded = expandedItems.has(item.href) || activeChild;
   const className = cn(
     "flex w-full items-center gap-3 rounded-lg text-sm font-medium transition-colors",
     collapsed && !isMobileOpen
@@ -427,24 +352,11 @@ function PortalNavItemNode({
 
   return (
     <div>
-      {hasChildren ? (
-        <button
-          type="button"
-          className={className}
-          aria-expanded={expanded}
-          onClick={() => onToggleItem(item.href)}
-        >
-          <Icon />
-          <span className="min-w-0 flex-1 truncate text-left">{item.title}</span>
-          <ChevronDown className={cn("size-3.5 shrink-0 transition-transform", expanded && "rotate-180")} />
-        </button>
-      ) : (
-        <Link href={item.href} onClick={onMobileClose} className={className}>
+      <Link href={item.href} onClick={onMobileClose} className={className}>
           <Icon />
           <span className="truncate">{item.title}</span>
-        </Link>
-      )}
-      {hasChildren && expanded ? (
+      </Link>
+      {hasChildren ? (
         <div className="ml-5 mt-1 flex flex-col gap-1 border-l border-sidebar-border pl-2">
           {item.children?.map((child) => (
             <PortalNavItemNode
@@ -453,8 +365,6 @@ function PortalNavItemNode({
               activeHref={activeHref}
               collapsed={collapsed}
               isMobileOpen={isMobileOpen}
-              expandedItems={expandedItems}
-              onToggleItem={onToggleItem}
               onMobileClose={onMobileClose}
               depth={depth + 1}
             />
@@ -467,13 +377,6 @@ function PortalNavItemNode({
 
 function navItemContainsHref(item: PortalNavItem, href: string): boolean {
   return item.href === href || Boolean(item.children?.some((child) => navItemContainsHref(child, href)));
-}
-
-function collectActiveParents(item: PortalNavItem, activeHref: string): string[] {
-  if (!item.children?.length) return [];
-  const childParents = item.children.flatMap((child) => collectActiveParents(child, activeHref));
-  const hasActiveChild = item.children.some((child) => child.href === activeHref || navItemContainsHref(child, activeHref));
-  return hasActiveChild ? [item.href, ...childParents] : childParents;
 }
 
 function getBestActiveHref(

@@ -63,6 +63,13 @@ class PageSection(UUIDMixin, Base):
     section_type: Mapped[str] = mapped_column(String(80))
     position: Mapped[int] = mapped_column(Integer, default=0)
     is_visible: Mapped[bool] = mapped_column(Boolean, default=True)
+    title: Mapped[str | None] = mapped_column(String(255))
+    eyebrow: Mapped[str | None] = mapped_column(String(160))
+    description: Mapped[str | None] = mapped_column(Text)
+    background_variant: Mapped[str] = mapped_column(String(40), default="default")
+    image_url: Mapped[str | None] = mapped_column(String(500))
+    cta_label: Mapped[str | None] = mapped_column(String(120))
+    cta_href: Mapped[str | None] = mapped_column(String(500))
     configuration: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
 
 
@@ -95,6 +102,13 @@ class ResearchProject(UUIDMixin, Base):
     status: Mapped[PublicationStatus] = mapped_column(Enum(PublicationStatus), default=PublicationStatus.DRAFT, index=True)
     scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     theme_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("heri.research_themes.id"))
+    cover_image_url: Mapped[str | None] = mapped_column(String(500))
+    start_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    end_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    objectives: Mapped[str] = mapped_column(Text, default="")
+    methodology: Mapped[str] = mapped_column(Text, default="")
+    is_featured: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0, index=True)
 
 
 class ResearchPublication(UUIDMixin, Base):
@@ -106,6 +120,12 @@ class ResearchPublication(UUIDMixin, Base):
     status: Mapped[PublicationStatus] = mapped_column(Enum(PublicationStatus), default=PublicationStatus.DRAFT, index=True)
     scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     resource_url: Mapped[str | None] = mapped_column(String(500))
+    cover_image_url: Mapped[str | None] = mapped_column(String(500))
+    publication_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    publication_type: Mapped[str | None] = mapped_column(String(80))
+    theme_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("heri.research_themes.id"))
+    is_featured: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0, index=True)
 
 
 class ImpactMetric(UUIDMixin, Base):
@@ -132,6 +152,12 @@ class Event(UUIDMixin, Base):
     registration_url: Mapped[str | None] = mapped_column(String(500))
     status: Mapped[PublicationStatus] = mapped_column(Enum(PublicationStatus), default=PublicationStatus.DRAFT, index=True)
     scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    event_type: Mapped[str | None] = mapped_column(String(80))
+    featured_image_url: Mapped[str | None] = mapped_column(String(500))
+    is_virtual: Mapped[bool] = mapped_column(Boolean, default=False)
+    virtual_url: Mapped[str | None] = mapped_column(String(500))
+    is_featured: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0, index=True)
 
 
 class Opportunity(UUIDMixin, Base):
@@ -143,6 +169,13 @@ class Opportunity(UUIDMixin, Base):
     closing_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     status: Mapped[PublicationStatus] = mapped_column(Enum(PublicationStatus), default=PublicationStatus.DRAFT, index=True)
     scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    description: Mapped[str] = mapped_column(Text, default="")
+    eligibility: Mapped[str] = mapped_column(Text, default="")
+    application_instructions: Mapped[str] = mapped_column(Text, default="")
+    opportunity_type: Mapped[str | None] = mapped_column(String(80))
+    featured_image_url: Mapped[str | None] = mapped_column(String(500))
+    is_featured: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0, index=True)
 
 
 class NavigationItem(UUIDMixin, Base):

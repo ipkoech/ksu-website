@@ -152,6 +152,7 @@ async function notificationRequest(path: string, init?: RequestInit) {
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const {
     notifications: liveNotifications,
@@ -167,14 +168,20 @@ export function NotificationBell() {
   const hasUnread = unreadCount > 0;
 
   const handleMarkRead = async (id: string) => {
-    await markAsRead(id);
-    markNotificationRead(id);
-    queryClient.invalidateQueries({ queryKey: ["current-user", "notifications"] });
+    try {
+      await markAsRead(id);
+      markNotificationRead(id);
+      setActionError(null);
+      await queryClient.invalidateQueries({ queryKey: ["current-user", "notifications"] });
+    } catch { setActionError("Unable to update this notification."); }
   };
   const handleMarkAllRead = async () => {
-    await notificationRequest("/api/v1/notifications/read-all", { method: "POST" });
-    markAllNotificationsRead();
-    await queryClient.invalidateQueries({ queryKey: ["current-user", "notifications"] });
+    try {
+      await notificationRequest("/api/v1/notifications/read-all", { method: "POST" });
+      markAllNotificationsRead();
+      setActionError(null);
+      await queryClient.invalidateQueries({ queryKey: ["current-user", "notifications"] });
+    } catch { setActionError("Unable to mark notifications as read."); }
   };
   const updatePreference = async (
     key: "in_app" | "email" | "sms" | "push",
@@ -182,11 +189,14 @@ export function NotificationBell() {
   ) => {
     const current = preferencesQuery.data?.data;
     if (!current) return;
-    await notificationRequest("/api/v1/notifications/preferences", {
-      method: "PUT",
-      body: JSON.stringify({ ...current, [key]: checked }),
-    });
-    await preferencesQuery.refetch();
+    try {
+      await notificationRequest("/api/v1/notifications/preferences", {
+        method: "PUT",
+        body: JSON.stringify({ ...current, [key]: checked }),
+      });
+      setActionError(null);
+      await preferencesQuery.refetch();
+    } catch { setActionError("Unable to save notification preferences."); }
   };
   const liveLabel =
     status === "connected"
@@ -298,11 +308,8 @@ export function NotificationBell() {
             ))}
           </div>
         ) : null}
-        {notifications.length > 0 ? (
-          <div className="flex items-center gap-1 border-t px-2 py-2">
-            <Button variant="ghost" size="sm" className="text-xs" onClick={handleMarkAllRead}>
-              Mark all read
-            </Button>
+        <div className="flex items-center gap-1 border-t px-2 py-2">
+            {hasUnread ? <Button variant="ghost" size="sm" className="text-xs" onClick={handleMarkAllRead}>Mark all read</Button> : null}
             <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowPreferences((current) => !current)}>
               <Settings className="mr-1 size-3" /> Preferences
             </Button>
@@ -316,8 +323,8 @@ export function NotificationBell() {
                 View all notifications
               </Link>
             </Button>
-          </div>
-        ) : null}
+        </div>
+        {actionError ? <p role="alert" className="border-t bg-amber-50 px-4 py-2 text-xs text-amber-800">{actionError}</p> : null}
       </PopoverContent>
     </Popover>
   );

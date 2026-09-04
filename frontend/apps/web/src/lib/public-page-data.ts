@@ -473,7 +473,7 @@ function parseAdmissionDate(value?: string | null) {
 
 function formatAdmissionDate(value?: string | null) {
   const date = parseAdmissionDate(value);
-  if (!date) return value ?? "date to be confirmed";
+  if (!date) return value ?? "Date details pending";
 
   return new Intl.DateTimeFormat("en-GB", {
     day: "numeric",

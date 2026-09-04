@@ -28,7 +28,7 @@ secrets:
     file: ${ALERTMANAGER_CONFIG_FILE:-./monitoring/alertmanager.yml}
 
 x-frontend-dev: &frontend-dev
-  image: node@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43bb9c86130c3e2
+  image: node:22-alpine
   working_dir: /app
   networks: [ksu]
   volumes:
@@ -227,7 +227,7 @@ services:
       MAIN_SERVICE_URL: http://main:8000
       MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       LIBRARY_SERVICE_API_KEY: ${LIBRARY_INTERNAL_API_KEY:-}
-      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000","http://localhost:3001","http://localhost:3002","http://localhost:3003","http://localhost:3004"]}
       REALTIME_HEARTBEAT_SECONDS: ${REALTIME_HEARTBEAT_SECONDS:-25}
       REALTIME_MAX_CONNECTIONS_PER_USER: ${REALTIME_MAX_CONNECTIONS_PER_USER:-5}
       REALTIME_MAX_CONNECTIONS_PER_IP: ${REALTIME_MAX_CONNECTIONS_PER_IP:-20}
@@ -288,7 +288,7 @@ services:
       MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       INTERNAL_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
       REFERENCE_VALIDATION_MODE: strict
-      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000","http://localhost:3001","http://localhost:3002","http://localhost:3003","http://localhost:3004"]}
       LOG_LEVEL: ${RESEARCH_LOG_LEVEL:-INFO}
       LOG_FORMAT: ${RESEARCH_LOG_FORMAT:-json}
       LOG_DIR: /app/logs
@@ -347,7 +347,7 @@ services:
       RESEARCH_SERVICE_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
       MAIN_SERVICE_URL: http://main:8000
       MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
-      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000","http://localhost:3001","http://localhost:3002","http://localhost:3003","http://localhost:3004"]}
       LOG_LEVEL: ${HERI_LOG_LEVEL:-INFO}
       LOG_FORMAT: ${HERI_LOG_FORMAT:-json}
       LOG_DIR: /app/logs
@@ -402,7 +402,7 @@ services:
       MAIN_SERVICE_URL: http://main:8000
       MAIN_SERVICE_API_KEY: ${MAIN_INTERNAL_API_KEY:-}
       INTERNAL_API_KEY: ${LIBRARY_INTERNAL_API_KEY:-}
-      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000","http://localhost:3001","http://localhost:3002","http://localhost:3003","http://localhost:3004"]}
       LOG_LEVEL: ${LIBRARY_LOG_LEVEL:-INFO}
       LOG_FORMAT: ${LIBRARY_LOG_FORMAT:-json}
       LOG_DIR: /app/logs
@@ -460,7 +460,7 @@ services:
       LIBRARY_SERVICE_URL: http://library:8002
       RESEARCH_SERVICE_API_KEY: ${RESEARCH_INTERNAL_API_KEY:-}
       LIBRARY_SERVICE_API_KEY: ${LIBRARY_INTERNAL_API_KEY:-}
-      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000","http://localhost:3001","http://localhost:3002","http://localhost:3003","http://localhost:3004"]}
       SCHOOL_PORTAL_EVENTS_ENABLED: ${SCHOOL_PORTAL_EVENTS_ENABLED:-true}
       KSU_WORKER_METRICS_HOST: 0.0.0.0
       KSU_WORKER_METRICS_PORT: 9100
@@ -524,7 +524,7 @@ services:
       KSU_WORKER_METRICS_PORT: 9101
       PROMETHEUS_MULTIPROC_DIR: /tmp/ksu-prometheus
       KSU_WORKER_METRICS_REDIS_URL: redis://redis:6379/1
-      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000","http://localhost:3001","http://localhost:3002","http://localhost:3003","http://localhost:3004"]}
       LOG_DIR: /app/logs
     expose:
       - "9101"
@@ -575,7 +575,7 @@ services:
       KSU_WORKER_METRICS_PORT: 9102
       PROMETHEUS_MULTIPROC_DIR: /tmp/ksu-prometheus
       KSU_WORKER_METRICS_REDIS_URL: redis://redis:6379/2
-      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000","http://localhost:3001","http://localhost:3002","http://localhost:3003","http://localhost:3004"]}
       LOG_DIR: /app/logs
       EXPORT_DIR: /app/exports
     volumes:
@@ -631,7 +631,7 @@ services:
       KSU_WORKER_METRICS_PORT: 9103
       PROMETHEUS_MULTIPROC_DIR: /tmp/ksu-prometheus
       KSU_WORKER_METRICS_REDIS_URL: redis://redis:6379/3
-      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000","http://localhost:3001","http://localhost:3002","http://localhost:3003","http://localhost:3004"]}
       LOG_DIR: /app/logs
     volumes:
       - ./logs/heri:/app/logs
@@ -766,6 +766,7 @@ services:
       NEXT_PUBLIC_MAIN_API_URL: ${NEXT_PUBLIC_MAIN_API_URL:-http://localhost:${GATEWAY_PORT:-8080}}
       NEXT_PUBLIC_RESEARCH_API_URL: ${NEXT_PUBLIC_RESEARCH_API_URL:-http://localhost:${GATEWAY_PORT:-8080}}
       NEXT_PUBLIC_LIBRARY_API_URL: ${NEXT_PUBLIC_LIBRARY_API_URL:-http://localhost:${GATEWAY_PORT:-8080}}
+      NEXT_PUBLIC_HERI_API_URL: ${NEXT_PUBLIC_HERI_API_URL:-http://localhost:${GATEWAY_PORT:-8080}/api/v1/heri}
     command: >
       sh -lc "set -e &&
       corepack enable &&
@@ -799,6 +800,7 @@ services:
     ports:
       - "${HERI_FRONTEND_PORT:-3004}:3004"
     environment:
+      NEXT_PUBLIC_HERI_API_URL: ${NEXT_PUBLIC_HERI_API_URL:-http://localhost:${GATEWAY_PORT:-8080}/api/v1/heri}
       <<: *frontend-dev-env
       NEXT_BASE_PATH: /heri-africa
     command: >

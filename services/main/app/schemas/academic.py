@@ -239,6 +239,9 @@ class DepartmentRead(BaseReadSchema):
     name: str
     slug: str
     code: str
+    external_source: str | None = None
+    external_source_id: str | None = None
+    external_name: str | None = None
     department_type: str
     school_id: uuid.UUID | None = None
     wing_id: uuid.UUID | None = None

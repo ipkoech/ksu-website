@@ -12,6 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "@ksu/ui";
+import { RichTextEditor } from "@ksu/ui/components";
 import { usePermissions } from "@/hooks/use-permissions";
 import {
   heriRequest,
@@ -136,7 +137,7 @@ export function HeroSlidesWorkspace() {
   };
 
   return (
-    <main className="space-y-6 p-6 md:p-10">
+    <main className="space-y-5 p-4 md:p-6">
       <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">
@@ -312,7 +313,7 @@ export function HeroSlidesWorkspace() {
               />
               <Field
                 label="Description"
-                textarea
+                richtext
                 value={String(draft.description ?? "")}
                 onChange={(value) => setDraft({ ...draft, description: value })}
               />
@@ -408,6 +409,7 @@ function Field({
   value,
   onChange,
   textarea,
+  richtext,
   type = "text",
   required,
   error,
@@ -416,6 +418,7 @@ function Field({
   value: string;
   onChange: (value: string) => void;
   textarea?: boolean;
+  richtext?: boolean;
   type?: string;
   required?: boolean;
   error?: string;
@@ -427,7 +430,9 @@ function Field({
       {error && (
         <span className="ml-2 text-xs font-normal text-red-600">{error}</span>
       )}
-      {textarea ? (
+      {richtext ? (
+        <RichTextEditor value={value} onChange={onChange} minHeight="8rem" placeholder="Write the hero description…" />
+      ) : textarea ? (
         <textarea
           value={value}
           onChange={(event) => onChange(event.target.value)}

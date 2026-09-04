@@ -946,7 +946,7 @@ export async function getContentListingData(
     eyebrow: listingEyebrow(kind),
     body:
       kind === "media"
-        ? "Public images and media records published by Kisii University."
+        ? "Photographs, illustrations, and other media supporting University news, events, services, and public information."
         : "Latest official news, notices, events, and stories from Kisii University.",
     href: recordHrefPrefix(kind),
     mode,
